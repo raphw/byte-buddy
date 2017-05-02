@@ -12,7 +12,6 @@ import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
-import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -128,7 +127,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
                 new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
-                        new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(DefaultValue.ANY_REFERENCE, MethodReturn.REFERENCE)))));
+                        new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(DefaultValue.REFERENCE, MethodReturn.REFERENCE)))));
     }
 
     @Test(expected = IllegalStateException.class)

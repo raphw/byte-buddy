@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -14,6 +15,7 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -29,10 +31,8 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.lang.reflect.Type;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -262,15 +262,9 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(Object... argument) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(argument.length);
         for (Object anArgument : argument) {
-            argumentLoaders.add(ArgumentLoader.ForInstance.Factory.of(anArgument));
+            argumentLoaders.add(ArgumentLoader.ForStackManipulation.of(anArgument));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -283,15 +277,9 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(TypeDescription... typeDescription) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
-            argumentLoaders.add(new ArgumentLoader.ForClassConstant(aTypeDescription));
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(ClassConstant.of(aTypeDescription), Class.class));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -304,15 +292,9 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(EnumerationDescription... enumerationDescription) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(enumerationDescription.length);
         for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
-            argumentLoaders.add(new ArgumentLoader.ForEnumerationValue(anEnumerationDescription));
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(FieldAccess.forEnumeration(anEnumerationDescription), anEnumerationDescription.getEnumerationType()));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -325,15 +307,9 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(JavaConstant... javaConstant) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaConstant.length);
         for (JavaConstant aJavaConstant : javaConstant) {
-            argumentLoaders.add(new ArgumentLoader.ForJavaConstant(aJavaConstant));
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(aJavaConstant.asStackManipulation(), aJavaConstant.getType()));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -351,13 +327,7 @@ public class MethodCall implements Implementation.Composable {
                     ? ArgumentLoader.ForNullConstant.INSTANCE
                     : new ArgumentLoader.ForInstance.Factory(anArgument));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -376,28 +346,25 @@ public class MethodCall implements Implementation.Composable {
             }
             argumentLoaders.add(new ArgumentLoader.ForMethodParameter.Factory(anIndex));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
      * Adds all arguments of the instrumented method as arguments to the invoked method to this method call.
      *
-     * @return A method call that hands all arguments arguments of the instrumented method to the invoked method.
+     * @return A method call that hands all arguments of the instrumented method to the invoked method.
      */
     public MethodCall withAllArguments() {
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE);
+    }
+
+    /**
+     * Adds an array containing all arguments of the instrumented method to this method call.
+     *
+     * @return A method call that adds an array containing all arguments of the instrumented method to the invoked method.
+     */
+    public MethodCall withArgumentArray() {
+        return with(ArgumentLoader.ForMethodParameterArray.ForInstrumentedMethod.INSTANCE);
     }
 
     /**
@@ -417,13 +384,7 @@ public class MethodCall implements Implementation.Composable {
         if (index < 0) {
             throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, new ArgumentLoader.ForMethodParameterArray.OfInvokedMethod(index)),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(new ArgumentLoader.ForMethodParameterArrayElement.OfInvokedMethod(index));
     }
 
     /**
@@ -471,15 +432,9 @@ public class MethodCall implements Implementation.Composable {
         }
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(size);
         for (int position = 0; position < size; position++) {
-            argumentLoaders.add(new ArgumentLoader.ForMethodParameterArray.OfParameter(index, start + position));
+            argumentLoaders.add(new ArgumentLoader.ForMethodParameterArrayElement.OfParameter(index, start + position));
         }
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(argumentLoaders);
     }
 
     /**
@@ -489,13 +444,7 @@ public class MethodCall implements Implementation.Composable {
      * of the instance of the intercepted method.
      */
     public MethodCall withThis() {
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(argumentLoaders, ArgumentLoader.ForThisReference.Factory.INSTANCE),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(ArgumentLoader.ForThisReference.Factory.INSTANCE);
     }
 
     /**
@@ -505,13 +454,7 @@ public class MethodCall implements Implementation.Composable {
      * value of the instrumented type.
      */
     public MethodCall withOwnType() {
-        return new MethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(argumentLoaders, ArgumentLoader.ForInstrumentedType.Factory.INSTANCE),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return with(ArgumentLoader.ForInstrumentedType.Factory.INSTANCE);
     }
 
     /**
@@ -536,6 +479,48 @@ public class MethodCall implements Implementation.Composable {
         for (String aFieldName : name) {
             argumentLoaders.add(new ArgumentLoader.ForField.Factory(aFieldName, fieldLocatorFactory));
         }
+        return with(argumentLoaders);
+    }
+
+    /**
+     * Adds a stack manipulation as an assignment to the next parameter.
+     *
+     * @param stackManipulation The stack manipulation loading the value.
+     * @param type              The type of the argument being loaded.
+     * @return A method call that adds the stack manipulation as the next argument to the invoked method.
+     */
+    public MethodCall with(StackManipulation stackManipulation, Type type) {
+        return with(stackManipulation, TypeDefinition.Sort.describe(type));
+    }
+
+    /**
+     * Adds a stack manipulation as an assignment to the next parameter.
+     *
+     * @param stackManipulation The stack manipulation loading the value.
+     * @param typeDefinition    The type of the argument being loaded.
+     * @return A method call that adds the stack manipulation as the next argument to the invoked method.
+     */
+    public MethodCall with(StackManipulation stackManipulation, TypeDefinition typeDefinition) {
+        return with(new ArgumentLoader.ForStackManipulation(stackManipulation, typeDefinition));
+    }
+
+    /**
+     * Defines a method call that resolves arguments by the supplied argument loader factories.
+     *
+     * @param argumentLoader The argument loaders to apply to the subsequent arguments of the
+     * @return A method call that adds the arguments of the supplied argument loaders to the invoked method.
+     */
+    public MethodCall with(ArgumentLoader.Factory... argumentLoader) {
+        return with(Arrays.asList(argumentLoader));
+    }
+
+    /**
+     * Defines a method call that resolves arguments by the supplied argument loader factories.
+     *
+     * @param argumentLoaders The argument loaders to apply to the subsequent arguments of the
+     * @return A method call that adds the arguments of the supplied argument loaders to the invoked method.
+     */
+    public MethodCall with(List<? extends ArgumentLoader.Factory> argumentLoaders) {
         return new MethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, argumentLoaders),
@@ -682,6 +667,741 @@ public class MethodCall implements Implementation.Composable {
                 } else {
                     throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method for " + matcher);
                 }
+            }
+        }
+    }
+
+    /**
+     * An argument loader is responsible for loading an argument for an invoked method
+     * onto the operand stack.
+     */
+    public interface ArgumentLoader {
+
+        /**
+         * Loads the argument that is represented by this instance onto the operand stack.
+         *
+         * @param target   The target parameter.
+         * @param assigner The assigner to be used.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @return The stack manipulation that loads the represented argument onto the stack.
+         */
+        StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing);
+
+        /**
+         * A factory that produces {@link ArgumentLoader}s for a given instrumented method.
+         */
+        interface Factory {
+
+            /**
+             * Prepares the instrumented type in order to allow the loading of the represented argument.
+             *
+             * @param instrumentedType The instrumented type.
+             * @return The prepared instrumented type.
+             */
+            InstrumentedType prepare(InstrumentedType instrumentedType);
+
+            /**
+             * Creates any number of argument loaders for an instrumentation.
+             *
+             * @param instrumentedType   The instrumented type.
+             * @param instrumentedMethod The instrumented method.
+             * @param invokedMethod      The invoked method.
+             * @return Any number of argument loaders to supply for the method call.
+             */
+            List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod);
+        }
+
+        /**
+         * An argument loader that loads the {@code null} value onto the operand stack.
+         */
+        enum ForNullConstant implements ArgumentLoader, Factory {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                return Collections.<ArgumentLoader>singletonList(this);
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                if (target.getType().isPrimitive()) {
+                    throw new IllegalStateException("Cannot assign null to " + target);
+                }
+                return NullConstant.INSTANCE;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
+
+        /**
+         * An argument loader that assigns the {@code this} reference to a parameter.
+         */
+        @EqualsAndHashCode
+        class ForThisReference implements ArgumentLoader {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates an argument loader that supplies the {@code this} instance as an argument.
+             *
+             * @param instrumentedType The instrumented type.
+             */
+            public ForThisReference(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.loadThis(),
+                        assigner.assign(instrumentedType.asGenericType(), target.getType(), typing));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * A factory for an argument loader that supplies the {@code this} value as an argument.
+             */
+            public enum Factory implements ArgumentLoader.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException(instrumentedMethod + " is static and cannot supply an invoker instance");
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForThisReference(instrumentedType));
+                }
+            }
+        }
+
+        /**
+         * Loads the instrumented type onto the operand stack.
+         */
+        @EqualsAndHashCode
+        class ForInstrumentedType implements ArgumentLoader {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates an argument loader for supporting the instrumented type as a type constant as an argument.
+             *
+             * @param instrumentedType The instrumented type.
+             */
+            public ForInstrumentedType(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        ClassConstant.of(instrumentedType),
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target.getType(), typing));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign Class value to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * A factory for an argument loader that supplies the instrumented type as an argument.
+             */
+            public enum Factory implements ArgumentLoader.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
+                }
+            }
+        }
+
+        /**
+         * Loads a parameter of the instrumented method onto the operand stack.
+         */
+        @EqualsAndHashCode
+        class ForMethodParameter implements ArgumentLoader {
+
+            /**
+             * The index of the parameter to be loaded onto the operand stack.
+             */
+            private final int index;
+
+            /**
+             * The instrumented method.
+             */
+            private final MethodDescription instrumentedMethod;
+
+            /**
+             * Creates an argument loader for a parameter of the instrumented method.
+             *
+             * @param index              The index of the parameter to be loaded onto the operand stack.
+             * @param instrumentedMethod The instrumented method.
+             */
+            public ForMethodParameter(int index, MethodDescription instrumentedMethod) {
+                this.index = index;
+                this.instrumentedMethod = instrumentedMethod;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.load(parameterDescription),
+                        assigner.assign(parameterDescription.getType(), target.getType(), typing));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
+             */
+            protected enum OfInstrumentedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                        argumentLoaders.add(new ForMethodParameter(parameterDescription.getIndex(), instrumentedMethod));
+                    }
+                    return argumentLoaders;
+                }
+            }
+
+            /**
+             * A factory for an argument loader that supplies a method parameter as an argument.
+             */
+            @EqualsAndHashCode
+            protected static class Factory implements ArgumentLoader.Factory {
+
+                /**
+                 * The index of the parameter to be loaded onto the operand stack.
+                 */
+                private final int index;
+
+                /**
+                 * Creates a factory for an argument loader that supplies a method parameter as an argument.
+                 *
+                 * @param index The index of the parameter to supply.
+                 */
+                public Factory(int index) {
+                    this.index = index;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (index >= instrumentedMethod.getParameters().size()) {
+                        throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index);
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameter(index, instrumentedMethod));
+                }
+            }
+        }
+
+        /**
+         * Loads an array containing all arguments of a method.
+         */
+        @EqualsAndHashCode
+        class ForMethodParameterArray implements ArgumentLoader {
+
+            /**
+             * The parameters to load.
+             */
+            private final ParameterList<?> parameters;
+
+            /**
+             * Creates an argument loader that loads the supplied parameters onto the operand stack.
+             *
+             * @param parameters The parameters to load.
+             */
+            public ForMethodParameterArray(ParameterList<?> parameters) {
+                this.parameters = parameters;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                TypeDescription.Generic componentType;
+                if (target.getType().represents(Object.class)) {
+                    componentType = TypeDescription.Generic.OBJECT;
+                } else if (target.getType().isArray()) {
+                    componentType = target.getType().getComponentType();
+                } else {
+                    throw new IllegalStateException();
+                }
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
+                for (ParameterDescription parameter : parameters) {
+                    StackManipulation stackManipulation = new StackManipulation.Compound(
+                            MethodVariableAccess.load(parameter),
+                            assigner.assign(parameter.getType(), componentType, typing)
+                    );
+                    if (stackManipulation.isValid()) {
+                        stackManipulations.add(stackManipulation);
+                    } else {
+                        throw new IllegalStateException("Cannot assign " + parameter + " to " + componentType);
+                    }
+                }
+                return new StackManipulation.Compound(ArrayFactory.forType(componentType).withValues(stackManipulations));
+            }
+
+            /**
+             * A factory that creates an arguments loader that loads all parameters of the instrumented method contained in an array.
+             */
+            public enum ForInstrumentedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters()));
+                }
+            }
+        }
+
+        /**
+         * An argument loader that loads an element of a parameter of an array type.
+         */
+        @EqualsAndHashCode
+        class ForMethodParameterArrayElement implements ArgumentLoader {
+
+            /**
+             * The parameter to load the array from.
+             */
+            private final ParameterDescription parameterDescription;
+
+            /**
+             * The array index to load.
+             */
+            private final int index;
+
+            /**
+             * Creates an argument loader for a parameter of the instrumented method where an array element is assigned to the invoked method.
+             *
+             * @param parameterDescription The parameter from which to load an array element.
+             * @param index                The array index to load.
+             */
+            public ForMethodParameterArrayElement(ParameterDescription parameterDescription, int index) {
+                this.parameterDescription = parameterDescription;
+                this.index = index;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.load(parameterDescription),
+                        IntegerConstant.forValue(index),
+                        ArrayAccess.of(parameterDescription.getType().getComponentType()).load(),
+                        assigner.assign(parameterDescription.getType().getComponentType(), target.getType(), typing)
+                );
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + parameterDescription.getType().getComponentType() + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * Creates an argument loader for an array element that of a specific parameter.
+             */
+            @EqualsAndHashCode
+            protected static class OfParameter implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * The array index to load.
+                 */
+                private final int arrayIndex;
+
+                /**
+                 * Creates a factory for an argument loader that loads a given parameter's array value.
+                 *
+                 * @param index      The index of the parameter.
+                 * @param arrayIndex The array index to load.
+                 */
+                public OfParameter(int index, int arrayIndex) {
+                    this.index = index;
+                    this.arrayIndex = arrayIndex;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(index), arrayIndex));
+                }
+            }
+
+            /**
+             * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
+             */
+            @EqualsAndHashCode
+            public static class OfInvokedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates an argument loader factory for an invoked method.
+                 *
+                 * @param index The parameter index.
+                 */
+                public OfInvokedMethod(int index) {
+                    this.index = index;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
+                        argumentLoaders.add(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(this.index), index++));
+                    }
+                    return argumentLoaders;
+                }
+            }
+        }
+
+        /**
+         * Loads a value onto the operand stack that is stored in a static field.
+         */
+        @EqualsAndHashCode
+        class ForInstance implements ArgumentLoader {
+
+            /**
+             * The description of the field.
+             */
+            private final FieldDescription fieldDescription;
+
+            /**
+             * Creates an argument loader that supplies the value of a static field as an argument.
+             *
+             * @param fieldDescription The description of the field.
+             */
+            public ForInstance(FieldDescription fieldDescription) {
+                this.fieldDescription = fieldDescription;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        FieldAccess.forField(fieldDescription).read(),
+                        assigner.assign(fieldDescription.getType(), target.getType(), typing));
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + fieldDescription.getType() + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * A factory that supplies the value of a static field as an argument.
+             */
+            @EqualsAndHashCode(exclude = "name")
+            protected static class Factory implements ArgumentLoader.Factory {
+
+                /**
+                 * The name prefix of the field to store the argument.
+                 */
+                private static final String FIELD_PREFIX = "methodCall";
+
+                /**
+                 * The value to be stored in the field.
+                 */
+                private final Object value;
+
+                /**
+                 * The name of the field.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a factory that loads the value of a static field as an argument.
+                 *
+                 * @param value The value to supply as an argument.
+                 */
+                public Factory(Object value) {
+                    this.value = value;
+                    name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType
+                            .withField(new FieldDescription.Token(name,
+                                    Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass())))
+                            .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
+                }
+            }
+        }
+
+        /**
+         * Loads the value of an existing field onto the operand stack.
+         */
+        @EqualsAndHashCode
+        class ForField implements ArgumentLoader {
+
+            /**
+             * The field containing the loaded value.
+             */
+            private final FieldDescription fieldDescription;
+
+            /**
+             * The instrumented method.
+             */
+            private final MethodDescription instrumentedMethod;
+
+            /**
+             * Creates a new argument loader for loading an existing field.
+             *
+             * @param fieldDescription   The field containing the loaded value.
+             * @param instrumentedMethod The instrumented method.
+             */
+            public ForField(FieldDescription fieldDescription, MethodDescription instrumentedMethod) {
+                this.fieldDescription = fieldDescription;
+                this.instrumentedMethod = instrumentedMethod;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                    throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
+                }
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        fieldDescription.isStatic()
+                                ? StackManipulation.Trivial.INSTANCE
+                                : MethodVariableAccess.loadThis(),
+                        FieldAccess.forField(fieldDescription).read(),
+                        assigner.assign(fieldDescription.getType(), target.getType(), typing)
+                );
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * A factory for an argument loaded that loads the value of an existing field as an argument.
+             */
+            @EqualsAndHashCode
+            protected static class Factory implements ArgumentLoader.Factory {
+
+                /**
+                 * The name of the field.
+                 */
+                private final String name;
+
+                /**
+                 * The field locator to use.
+                 */
+                private final FieldLocator.Factory fieldLocatorFactory;
+
+                /**
+                 * Creates a new argument loader for an existing field.
+                 *
+                 * @param name                The name of the field.
+                 * @param fieldLocatorFactory The field locator to use.
+                 */
+                public Factory(String name, FieldLocator.Factory fieldLocatorFactory) {
+                    this.name = name;
+                    this.fieldLocatorFactory = fieldLocatorFactory;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
+                }
+            }
+        }
+
+        /**
+         * Loads a stack manipulation resulting in a specific type as an argument.
+         */
+        @EqualsAndHashCode
+        class ForStackManipulation implements ArgumentLoader, Factory {
+
+            /**
+             * The stack manipulation to load.
+             */
+            private final StackManipulation stackManipulation;
+
+            /**
+             * The type of the resulting value.
+             */
+            private final TypeDefinition typeDefinition;
+
+            /**
+             * Creates an argument loader that loads a stack manipulation as an argument.
+             *
+             * @param stackManipulation The stack manipulation to load.
+             * @param type              The type of the resulting value.
+             */
+            public ForStackManipulation(StackManipulation stackManipulation, Type type) {
+                this(stackManipulation, TypeDescription.Generic.Sort.describe(type));
+            }
+
+            /**
+             * Creates an argument loader that loads a stack manipulation as an argument.
+             *
+             * @param stackManipulation The stack manipulation to load.
+             * @param typeDefinition    The type of the resulting value.
+             */
+            public ForStackManipulation(StackManipulation stackManipulation, TypeDefinition typeDefinition) {
+                this.stackManipulation = stackManipulation;
+                this.typeDefinition = typeDefinition;
+            }
+
+            /**
+             * Creates an argument loader that loads the supplied value as a constant. If the value cannot be represented
+             * in the constant pool, a field is created to store the value.
+             *
+             * @param value The value to load as an argument or {@code null}.
+             * @return An appropriate argument loader.
+             */
+            public static ArgumentLoader.Factory of(Object value) {
+                if (value == null) {
+                    return ForNullConstant.INSTANCE;
+                } else if (value instanceof String) {
+                    return new ForStackManipulation(new TextConstant((String) value), String.class);
+                } else if (value instanceof Boolean) {
+                    return new ForStackManipulation(IntegerConstant.forValue((Boolean) value), boolean.class);
+                } else if (value instanceof Byte) {
+                    return new ForStackManipulation(IntegerConstant.forValue((Byte) value), byte.class);
+                } else if (value instanceof Short) {
+                    return new ForStackManipulation(IntegerConstant.forValue((Short) value), short.class);
+                } else if (value instanceof Character) {
+                    return new ForStackManipulation(IntegerConstant.forValue((Character) value), char.class);
+                } else if (value instanceof Integer) {
+                    return new ForStackManipulation(IntegerConstant.forValue((Integer) value), int.class);
+                } else if (value instanceof Long) {
+                    return new ForStackManipulation(LongConstant.forValue((Long) value), long.class);
+                } else if (value instanceof Float) {
+                    return new ForStackManipulation(FloatConstant.forValue((Float) value), float.class);
+                } else if (value instanceof Double) {
+                    return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
+                } else if (value instanceof Class) {
+                    return new ForStackManipulation(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value)), Class.class);
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                    return new ForStackManipulation(JavaConstant.MethodHandle.ofLoaded(value).asStackManipulation(), JavaType.METHOD_HANDLE.getTypeStub());
+                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                    return new ForStackManipulation(JavaConstant.MethodType.ofLoaded(value).asStackManipulation(), JavaType.METHOD_TYPE.getTypeStub());
+                } else if (value instanceof Enum<?>) {
+                    EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
+                    return new ForStackManipulation(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
+                } else {
+                    return new ForInstance.Factory(value);
+                }
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                return Collections.<ArgumentLoader>singletonList(this);
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation assigment = assigner.assign(typeDefinition.asGenericType(), target.getType(), typing);
+                if (!assigment.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + target + " to " + typeDefinition);
+                }
+                return new StackManipulation.Compound(stackManipulation, assigment);
             }
         }
     }
@@ -911,1119 +1631,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
-            }
-        }
-    }
-
-    /**
-     * An argument loader is responsible for loading an argument for an invoked method
-     * onto the operand stack.
-     */
-    protected interface ArgumentLoader {
-
-        /**
-         * Loads the argument that is represented by this instance onto the operand stack.
-         *
-         * @param target   The target parameter.
-         * @param assigner The assigner to be used.
-         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @return The stack manipulation that loads the represented argument onto the stack.
-         */
-        StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing);
-
-        /**
-         * A factory that produces {@link ArgumentLoader}s for a given instrumented method.
-         */
-        interface Factory {
-
-            /**
-             * Prepares the instrumented type in order to allow the loading of the represented argument.
-             *
-             * @param instrumentedType The instrumented type.
-             * @return The prepared instrumented type.
-             */
-            InstrumentedType prepare(InstrumentedType instrumentedType);
-
-            /**
-             * Creates any number of argument loaders for an instrumentation.
-             *
-             * @param instrumentedType   The instrumented type.
-             * @param instrumentedMethod The instrumented method.
-             * @param invokedMethod      The invoked method.
-             * @return Any number of argument loaders to supply for the method call.
-             */
-            List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod);
-        }
-
-        /**
-         * An argument loader that loads the {@code null} value onto the operand stack.
-         */
-        enum ForNullConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                if (target.getType().isPrimitive()) {
-                    throw new IllegalStateException("Cannot assign null to " + target);
-                }
-                return NullConstant.INSTANCE;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-        }
-
-        /**
-         * An argument loader that assigns the {@code this} reference to a parameter.
-         */
-        @EqualsAndHashCode
-        class ForThisReference implements ArgumentLoader {
-
-            /**
-             * The instrumented type.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates an argument loader that supplies the {@code this} instance as an argument.
-             *
-             * @param instrumentedType The instrumented type.
-             */
-            protected ForThisReference(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.loadThis(),
-                        assigner.assign(instrumentedType.asGenericType(), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * A factory for an argument loader that supplies the {@code this} value as an argument.
-             */
-            protected enum Factory implements ArgumentLoader.Factory {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException(instrumentedMethod + " is static and cannot supply an invoker instance");
-                    }
-                    return Collections.<ArgumentLoader>singletonList(new ForThisReference(instrumentedType));
-                }
-            }
-        }
-
-        /**
-         * Loads the instrumented type onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForInstrumentedType implements ArgumentLoader {
-
-            /**
-             * The instrumented type.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
-             * Creates an argument loader for supporting the instrumented type as a type constant as an argument.
-             *
-             * @param instrumentedType The instrumented type.
-             */
-            protected ForInstrumentedType(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        ClassConstant.of(instrumentedType),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign Class value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * A factory for an argument loader that supplies the instrumented type as an argument.
-             */
-            protected enum Factory implements ArgumentLoader.Factory {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
-                }
-            }
-        }
-
-        /**
-         * Loads a parameter of the instrumented method onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForMethodParameter implements ArgumentLoader {
-
-            /**
-             * The index of the parameter to be loaded onto the operand stack.
-             */
-            private final int index;
-
-            /**
-             * The instrumented method.
-             */
-            private final MethodDescription instrumentedMethod;
-
-            /**
-             * Creates an argument loader for a parameter of the instrumented method.
-             *
-             * @param index              The index of the parameter to be loaded onto the operand stack.
-             * @param instrumentedMethod The instrumented method.
-             */
-            protected ForMethodParameter(int index, MethodDescription instrumentedMethod) {
-                this.index = index;
-                this.instrumentedMethod = instrumentedMethod;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.load(parameterDescription),
-                        assigner.assign(parameterDescription.getType(), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
-             */
-            protected enum OfInstrumentedMethod implements ArgumentLoader.Factory {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
-                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                        argumentLoaders.add(new ForMethodParameter(parameterDescription.getIndex(), instrumentedMethod));
-                    }
-                    return argumentLoaders;
-                }
-            }
-
-            /**
-             * A factory for an argument loader that supplies a method parameter as an argument.
-             */
-            @EqualsAndHashCode
-            protected static class Factory implements ArgumentLoader.Factory {
-
-                /**
-                 * The index of the parameter to be loaded onto the operand stack.
-                 */
-                private final int index;
-
-                /**
-                 * Creates a factory for an argument loader that supplies a method parameter as an argument.
-                 *
-                 * @param index The index of the parameter to supply.
-                 */
-                protected Factory(int index) {
-                    this.index = index;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (index >= instrumentedMethod.getParameters().size()) {
-                        throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index);
-                    }
-                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameter(index, instrumentedMethod));
-                }
-            }
-        }
-
-        /**
-         * Loads a value onto the operand stack that is stored in a static field.
-         */
-        @EqualsAndHashCode
-        class ForInstance implements ArgumentLoader {
-
-            /**
-             * The description of the field.
-             */
-            private final FieldDescription fieldDescription;
-
-            /**
-             * Creates an argument loader that supplies the value of a static field as an argument.
-             *
-             * @param fieldDescription The description of the field.
-             */
-            protected ForInstance(FieldDescription fieldDescription) {
-                this.fieldDescription = fieldDescription;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        FieldAccess.forField(fieldDescription).read(),
-                        assigner.assign(fieldDescription.getType(), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + fieldDescription.getType() + " to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * A factory that supplies the value of a static field as an argument.
-             */
-            @EqualsAndHashCode(exclude = "name")
-            protected static class Factory implements ArgumentLoader.Factory {
-
-                /**
-                 * The name prefix of the field to store the argument.
-                 */
-                private static final String FIELD_PREFIX = "methodCall";
-
-                /**
-                 * The value to be stored in the field.
-                 */
-                private final Object value;
-
-                /**
-                 * The name of the field.
-                 */
-                private final String name;
-
-                /**
-                 * Creates a factory that loads the value of a static field as an argument.
-                 *
-                 * @param value The value to supply as an argument.
-                 */
-                protected Factory(Object value) {
-                    this.value = value;
-                    name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
-                }
-
-                /**
-                 * Creates a factory for loading the supplied value as an argument, either stored as a static field or as a constant pool value.
-                 *
-                 * @param value The value to supply as an argument.
-                 * @return An appropriate factory for an argument loader.
-                 */
-                protected static ArgumentLoader.Factory of(Object value) {
-                    if (value == null) {
-                        return ForNullConstant.INSTANCE;
-                    } else if (value instanceof String) {
-                        return new ForTextConstant((String) value);
-                    } else if (value instanceof Boolean) {
-                        return new ForBooleanConstant((Boolean) value);
-                    } else if (value instanceof Byte) {
-                        return new ForByteConstant((Byte) value);
-                    } else if (value instanceof Short) {
-                        return new ForShortConstant((Short) value);
-                    } else if (value instanceof Character) {
-                        return new ForCharacterConstant((Character) value);
-                    } else if (value instanceof Integer) {
-                        return new ForIntegerConstant((Integer) value);
-                    } else if (value instanceof Long) {
-                        return new ForLongConstant((Long) value);
-                    } else if (value instanceof Float) {
-                        return new ForFloatConstant((Float) value);
-                    } else if (value instanceof Double) {
-                        return new ForDoubleConstant((Double) value);
-                    } else if (value instanceof Class) {
-                        return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
-                    } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                        return new ForJavaConstant(JavaConstant.MethodHandle.ofLoaded(value));
-                    } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                        return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
-                    } else if (value instanceof Enum<?>) {
-                        return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
-                    } else {
-                        return new ForInstance.Factory(value);
-                    }
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType
-                            .withField(new FieldDescription.Token(name,
-                                    Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass())))
-                            .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
-                }
-            }
-        }
-
-        /**
-         * Loads the value of an existing field onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForField implements ArgumentLoader {
-
-            /**
-             * The field containing the loaded value.
-             */
-            private final FieldDescription fieldDescription;
-
-            /**
-             * The instrumented method.
-             */
-            private final MethodDescription instrumentedMethod;
-
-            /**
-             * Creates a new argument loader for loading an existing field.
-             *
-             * @param fieldDescription   The field containing the loaded value.
-             * @param instrumentedMethod The instrumented method.
-             */
-            protected ForField(FieldDescription fieldDescription, MethodDescription instrumentedMethod) {
-                this.fieldDescription = fieldDescription;
-                this.instrumentedMethod = instrumentedMethod;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
-                    throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
-                }
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        fieldDescription.isStatic()
-                                ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.loadThis(),
-                        FieldAccess.forField(fieldDescription).read(),
-                        assigner.assign(fieldDescription.getType(), target.getType(), typing)
-                );
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * A factory for an argument loaded that loads the value of an existing field as an argument.
-             */
-            @EqualsAndHashCode
-            protected static class Factory implements ArgumentLoader.Factory {
-
-                /**
-                 * The name of the field.
-                 */
-                private final String name;
-
-                /**
-                 * The field locator to use.
-                 */
-                private final FieldLocator.Factory fieldLocatorFactory;
-
-                /**
-                 * Creates a new argument loader for an existing field.
-                 *
-                 * @param name                The name of the field.
-                 * @param fieldLocatorFactory The field locator to use.
-                 */
-                protected Factory(String name, FieldLocator.Factory fieldLocatorFactory) {
-                    this.name = name;
-                    this.fieldLocatorFactory = fieldLocatorFactory;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
-                    if (!resolution.isResolved()) {
-                        throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
-                    }
-                    return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
-                }
-            }
-        }
-
-        /**
-         * An argument loader that loads an element of a parameter of an array type.
-         */
-        @EqualsAndHashCode
-        class ForMethodParameterArray implements ArgumentLoader {
-
-            /**
-             * The parameter to load the array from.
-             */
-            private final ParameterDescription parameterDescription;
-
-            /**
-             * The array index to load.
-             */
-            private final int index;
-
-            /**
-             * Creates an argument loader for a parameter of the instrumented method where an array element is assigned to the invoked method.
-             *
-             * @param parameterDescription The parameter from which to load an array element.
-             * @param index                The array index to load.
-             */
-            protected ForMethodParameterArray(ParameterDescription parameterDescription, int index) {
-                this.parameterDescription = parameterDescription;
-                this.index = index;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.load(parameterDescription),
-                        IntegerConstant.forValue(index),
-                        ArrayAccess.of(parameterDescription.getType().getComponentType()).load(),
-                        assigner.assign(parameterDescription.getType().getComponentType(), target.getType(), typing)
-                );
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + parameterDescription.getType().getComponentType() + " to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * Creates an argument loader for an array element that of a specific parameter.
-             */
-            @EqualsAndHashCode
-            protected static class OfParameter implements ArgumentLoader.Factory {
-
-                /**
-                 * The parameter index.
-                 */
-                private final int index;
-
-                /**
-                 * The array index to load.
-                 */
-                private final int arrayIndex;
-
-                /**
-                 * Creates a factory for an argument loader that loads a given parameter's array value.
-                 *
-                 * @param index      The index of the parameter.
-                 * @param arrayIndex The array index to load.
-                 */
-                protected OfParameter(int index, int arrayIndex) {
-                    this.index = index;
-                    this.arrayIndex = arrayIndex;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
-                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
-                    }
-                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters().get(index), arrayIndex));
-                }
-            }
-
-            /**
-             * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
-             */
-            @EqualsAndHashCode
-            protected static class OfInvokedMethod implements ArgumentLoader.Factory {
-
-                /**
-                 * The parameter index.
-                 */
-                private final int index;
-
-                /**
-                 * Creates an argument loader factory for an invoked method.
-                 *
-                 * @param index The parameter index.
-                 */
-                protected OfInvokedMethod(int index) {
-                    this.index = index;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
-                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
-                    }
-                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
-                    for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
-                        argumentLoaders.add(new ForMethodParameterArray(instrumentedMethod.getParameters().get(this.index), index++));
-                    }
-                    return argumentLoaders;
-                }
-            }
-        }
-
-        /**
-         * Loads a {@code boolean} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForBooleanConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code boolean} value to load onto the operand stack.
-             */
-            private final boolean value;
-
-            /**
-             * Creates a new argument loader for a {@code boolean} value.
-             *
-             * @param value The {@code boolean} value to load onto the operand stack.
-             */
-            protected ForBooleanConstant(boolean value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign boolean value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code byte} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForByteConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code boolean} value to load onto the operand stack.
-             */
-            private final byte value;
-
-            /**
-             * Creates a new argument loader for a {@code boolean} value.
-             *
-             * @param value The {@code boolean} value to load onto the operand stack.
-             */
-            protected ForByteConstant(byte value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(byte.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign byte value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code short} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForShortConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code short} value to load onto the operand stack.
-             */
-            private final short value;
-
-            /**
-             * Creates a new argument loader for a {@code short} value.
-             *
-             * @param value The {@code short} value to load onto the operand stack.
-             */
-            protected ForShortConstant(short value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(short.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign short value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code char} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForCharacterConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code char} value to load onto the operand stack.
-             */
-            private final char value;
-
-            /**
-             * Creates a new argument loader for a {@code char} value.
-             *
-             * @param value The {@code char} value to load onto the operand stack.
-             */
-            protected ForCharacterConstant(char value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(char.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign char value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads an {@code int} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForIntegerConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code int} value to load onto the operand stack.
-             */
-            private final int value;
-
-            /**
-             * Creates a new argument loader for a {@code int} value.
-             *
-             * @param value The {@code int} value to load onto the operand stack.
-             */
-            protected ForIntegerConstant(int value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign integer value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code long} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForLongConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code long} value to load onto the operand stack.
-             */
-            private final long value;
-
-            /**
-             * Creates a new argument loader for a {@code long} value.
-             *
-             * @param value The {@code long} value to load onto the operand stack.
-             */
-            protected ForLongConstant(long value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        LongConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(long.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign long value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code float} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForFloatConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code float} value to load onto the operand stack.
-             */
-            private final float value;
-
-            /**
-             * Creates a new argument loader for a {@code float} value.
-             *
-             * @param value The {@code float} value to load onto the operand stack.
-             */
-            protected ForFloatConstant(float value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        FloatConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(float.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign float value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@code double} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForDoubleConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@code double} value to load onto the operand stack.
-             */
-            private final double value;
-
-            /**
-             * Creates a new argument loader for a {@code double} value.
-             *
-             * @param value The {@code double} value to load onto the operand stack.
-             */
-            protected ForDoubleConstant(double value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        DoubleConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(double.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign double value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@link java.lang.String} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForTextConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The {@link java.lang.String} value to load onto the operand stack.
-             */
-            private final String value;
-
-            /**
-             * Creates a new argument loader for a {@link java.lang.String} value.
-             *
-             * @param value The {@link java.lang.String} value to load onto the operand stack.
-             */
-            protected ForTextConstant(String value) {
-                this.value = value;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        new TextConstant(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign String value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a {@link java.lang.Class} value onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForClassConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The type to load onto the operand stack.
-             */
-            private final TypeDescription typeDescription;
-
-            /**
-             * Creates a new class constant representation.
-             *
-             * @param typeDescription The type to represent.
-             */
-            protected ForClassConstant(TypeDescription typeDescription) {
-                this.typeDescription = typeDescription;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        ClassConstant.of(typeDescription),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign class value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * An argument loader that loads an enumeration constant.
-         */
-        @EqualsAndHashCode
-        class ForEnumerationValue implements ArgumentLoader, Factory {
-
-            /**
-             * The enumeration to describe.
-             */
-            private final EnumerationDescription enumerationDescription;
-
-            /**
-             * Creates a new argument loader for an enumeration constant.
-             *
-             * @param enumerationDescription The enumeration to describe.
-             */
-            protected ForEnumerationValue(EnumerationDescription enumerationDescription) {
-                this.enumerationDescription = enumerationDescription;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        FieldAccess.forEnumeration(enumerationDescription),
-                        assigner.assign(enumerationDescription.getEnumerationType().asGenericType(), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + enumerationDescription.getEnumerationType() + " value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
-            }
-        }
-
-        /**
-         * Loads a Java instance onto the operand stack.
-         */
-        @EqualsAndHashCode
-        class ForJavaConstant implements ArgumentLoader, Factory {
-
-            /**
-             * The Java instance to load onto the operand stack.
-             */
-            private final JavaConstant javaConstant;
-
-            /**
-             * Creates a new argument loader for a Java instance.
-             *
-             * @param javaConstant The Java instance to load as an argument.
-             */
-            public ForJavaConstant(JavaConstant javaConstant) {
-                this.javaConstant = javaConstant;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        javaConstant.asStackManipulation(),
-                        assigner.assign(javaConstant.getType().asGenericType(), target.getType(), typing));
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign Class value to " + target);
-                }
-                return stackManipulation;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-
-            @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                return Collections.<ArgumentLoader>singletonList(this);
             }
         }
     }

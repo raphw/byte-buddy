@@ -127,18 +127,24 @@ public @interface AllArguments {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
-            if (!target.getType().isArray()) {
+            TypeDescription.Generic componentType;
+            if (target.getType().represents(Object.class)) {
+                componentType = TypeDescription.Generic.OBJECT;
+            } else if (target.getType().isArray()) {
+                componentType = target.getType().getComponentType();
+            } else {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().getComponentType());
             boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
             for (TypeDescription.Generic sourceParameter : includeThis
                     ? CompoundList.of(implementationTarget.getInstrumentedType().asGenericType(), source.getParameters().asTypeList())
                     : source.getParameters().asTypeList()) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(MethodVariableAccess.of(sourceParameter).loadFrom(offset),
-                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), typing));
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.of(sourceParameter).loadFrom(offset),
+                        assigner.assign(sourceParameter, componentType, typing)
+                );
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
                 } else if (annotation.loadSilent().value().isStrict()) {
@@ -146,7 +152,7 @@ public @interface AllArguments {
                 }
                 offset += sourceParameter.getStackSize().getSize();
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(ArrayFactory.forType(componentType).withValues(stackManipulations));
         }
     }
 }

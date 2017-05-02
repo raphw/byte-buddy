@@ -319,6 +319,25 @@ public class MethodCallTest {
     }
 
     @Test
+    public void testWithExplicitArgumentStackManipulation() throws Exception {
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().with(new TextConstant(FOO), String.class))
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallWithExplicitArgument instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
+        assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
+        assertThat(instance.foo(BAR), is(FOO));
+    }
+
+    @Test
     public void testWithExplicitArgumentField() throws Exception {
         DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
                 .subclass(MethodCallWithExplicitArgument.class)
@@ -400,6 +419,25 @@ public class MethodCallTest {
         MethodCallWithTwoExplicitArguments instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithTwoExplicitArguments.class)));
         assertThat(instance, instanceOf(MethodCallWithTwoExplicitArguments.class));
+        assertThat(instance.foo(FOO, BAR), is(FOO + BAR));
+    }
+
+    @Test
+    public void testWithArgumentsAsArray() throws Exception {
+        DynamicType.Loaded<ArrayConsuming> loaded = new ByteBuddy()
+                .subclass(ArrayConsuming.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(ArrayConsuming.class.getDeclaredMethod(BAR, String[].class)).withArgumentArray())
+                .make()
+                .load(ArrayConsuming.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class, String.class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        ArrayConsuming instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ArrayConsuming.class)));
+        assertThat(instance, instanceOf(ArrayConsuming.class));
         assertThat(instance.foo(FOO, BAR), is(FOO + BAR));
     }
 
@@ -967,24 +1005,15 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForBooleanConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForDoubleConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForFloatConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForIntegerConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForLongConstant.class).apply();
+//        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStackManipulation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForEnumerationValue.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.OfParameter.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.OfInvokedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.OfParameter.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.OfInvokedMethod.class).apply();
     }
 
     public static class SimpleMethod {
@@ -1202,6 +1231,15 @@ public class MethodCallTest {
 
         public static void foo() {
             /* empty */
+        }
+    }
+
+    public abstract static class ArrayConsuming {
+
+        public abstract String foo(String arg1, String arg2);
+
+        public String bar(String[] arg) {
+            return arg[0] + arg[1];
         }
     }
 }
