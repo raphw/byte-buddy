@@ -19,6 +19,9 @@ import org.objectweb.asm.Opcodes;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+
 /**
  * <p>
  * A visitor wrapper that removes fields or methods that match a given {@link ElementMatcher}.
@@ -79,9 +82,29 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
      * Specifies that any method that matches the specified matcher should be removed.
      *
      * @param matcher The matcher that decides upon method removal.
-     * @return A new member removal instance that removes all previously specified members and any method that match the specified matcher.
+     * @return A new member removal instance that removes all previously specified members and any method that matches the specified matcher.
      */
     public MemberRemoval stripMethods(ElementMatcher<? super MethodDescription> matcher) {
+        return stripInvokables(isMethod().and(matcher));
+    }
+
+    /**
+     * Specifies that any constructor that matches the specified matcher should be removed.
+     *
+     * @param matcher The matcher that decides upon constructor removal.
+     * @return A new member removal instance that removes all previously specified members and any constructor that matches the specified matcher.
+     */
+    public MemberRemoval stripConstructors(ElementMatcher<? super MethodDescription> matcher) {
+        return stripInvokables(isConstructor().and(matcher));
+    }
+
+    /**
+     * Specifies that any method or constructor that matches the specified matcher should be removed.
+     *
+     * @param matcher The matcher that decides upon method and constructor removal.
+     * @return A new member removal instance that removes all previously specified members and any method or constructor that matches the specified matcher.
+     */
+    public MemberRemoval stripInvokables(ElementMatcher<? super MethodDescription> matcher) {
         return new MemberRemoval(fieldMatcher, methodMatcher.or(matcher));
     }
 

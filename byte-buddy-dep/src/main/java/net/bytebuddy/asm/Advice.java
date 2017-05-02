@@ -3,6 +3,7 @@ package net.bytebuddy.asm;
 import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -33,12 +34,13 @@ import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -1291,10 +1293,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Factory<T extends Annotation> {
 
-            boolean DELEGATION = true;
-
-            boolean INLINING = false;
-
             /**
              * Returns the annotation type of this factory.
              *
@@ -1307,10 +1305,49 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param target     The parameter description for which to resolve an offset mapping.
              * @param annotation The annotation that triggered this factory.
-             * @param delegation {@code true} if the binding is applied using advice method delegation.
+             * @param adviceType {@code true} if the binding is applied using advice method delegation.
              * @return A resolved offset mapping or {@code null} if no mapping can be resolved for this parameter.
              */
-            OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation);
+            OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType);
+
+            /**
+             * Describes the type of advice being applied.
+             */
+            enum AdviceType {
+
+                /**
+                 * Indicates advice where the invocation is delegated.
+                 */
+                DELEGATION(true),
+
+                /**
+                 * Indicates advice where the invocation's code is copied into the target method.
+                 */
+                INLINING(false);
+
+                /**
+                 * {@code true} if delegation is used.
+                 */
+                private final boolean delegation;
+
+                /**
+                 * Creates a new advice type.
+                 *
+                 * @param delegation {@code true} if delegation is used.
+                 */
+                AdviceType(boolean delegation) {
+                    this.delegation = delegation;
+                }
+
+                /**
+                 * Returns {@code true} if delegation is used.
+                 *
+                 * @return {@code true} if delegation is used.
+                 */
+                public boolean isDelegation() {
+                    return delegation;
+                }
+            }
         }
 
         /**
@@ -1372,6 +1409,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract ParameterDescription resolve(MethodDescription instrumentedMethod);
 
+            /**
+             * An offset mapping for a parameter of the instrumented method with a specific index.
+             */
             @EqualsAndHashCode(callSuper = true)
             public static class Unresolved extends ForArgument {
 
@@ -1380,14 +1420,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final int index;
 
-                public Unresolved(TypeDescription.Generic target, Argument argument) {
+                /**
+                 * Creates a new offset binding for a parameter with a given index.
+                 *
+                 * @param target   The target type.
+                 * @param argument The annotation that triggers this binding.
+                 */
+                protected Unresolved(TypeDescription.Generic target, Argument argument) {
                     this(target, argument.readOnly(), argument.typing(), argument.value());
                 }
 
+                /**
+                 * Creates a new offset binding for a parameter with a given index.
+                 *
+                 * @param parameterDescription The parameter triggering this binding.
+                 */
                 protected Unresolved(ParameterDescription parameterDescription) {
                     this(parameterDescription.getType(), true, Assigner.Typing.STATIC, parameterDescription.getIndex());
                 }
 
+                /**
+                 * Creates a new offset binding for a parameter with a given index.
+                 *
+                 * @param target   The type expected by the advice method.
+                 * @param readOnly Determines if the parameter is to be treated as read-only.
+                 * @param typing   The typing to apply.
+                 * @param index    The index of the parameter.
+                 */
                 public Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, int index) {
                     super(target, readOnly, typing);
                     this.index = index;
@@ -1408,6 +1467,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected enum Factory implements OffsetMapping.Factory<Argument> {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -1418,8 +1480,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<Argument> annotation,
-                                              boolean delegation) {
-                        if (delegation && !annotation.loadSilent().readOnly()) {
+                                              AdviceType adviceType) {
+                        if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + target + " when using delegation");
                         } else {
                             return new ForArgument.Unresolved(target.getType(), annotation.loadSilent());
@@ -1428,11 +1490,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * An offset mapping for a specific parameter of the instrumented method.
+             */
             @EqualsAndHashCode(callSuper = true)
             public static class Resolved extends ForArgument {
 
+                /**
+                 * The parameter being bound.
+                 */
                 private final ParameterDescription parameterDescription;
 
+                /**
+                 * Creates an offset mapping that binds a parameter of the instrumented method.
+                 *
+                 * @param target               The type expected by the advice method.
+                 * @param readOnly             Determines if the parameter is to be treated as read-only.
+                 * @param typing               The typing to apply.
+                 * @param parameterDescription The parameter being bound.
+                 */
                 public Resolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, ParameterDescription parameterDescription) {
                     super(target, readOnly, typing);
                     this.parameterDescription = parameterDescription;
@@ -1441,21 +1517,62 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 protected ParameterDescription resolve(MethodDescription instrumentedMethod) {
                     if (!parameterDescription.getDeclaringMethod().equals(instrumentedMethod)) {
-                        throw new IllegalStateException();
-                    } else {
-                        return parameterDescription;
+                        throw new IllegalStateException(parameterDescription + " is not a parameter of " + instrumentedMethod);
                     }
+                    return parameterDescription;
                 }
 
+                /**
+                 * A factory for a parameter argument of the instrumented method.
+                 *
+                 * @param <T> The type of the bound annotation.
+                 */
+                @EqualsAndHashCode
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                    /**
+                     * The annotation type.
+                     */
                     private final Class<T> annotationType;
 
+                    /**
+                     * The bound parameter.
+                     */
                     private final ParameterDescription parameterDescription;
 
+                    /**
+                     * {@code true} if the factory should create a read-only binding.
+                     */
+                    private final boolean readOnly;
+
+                    /**
+                     * The typing to use.
+                     */
+                    private final Assigner.Typing typing;
+
+                    /**
+                     * Creates a new factory for binding a parameter of the instrumented method with read-only semantics and static typing.
+                     *
+                     * @param annotationType       The annotation type.
+                     * @param parameterDescription The bound parameter.
+                     */
                     public Factory(Class<T> annotationType, ParameterDescription parameterDescription) {
+                        this(annotationType, parameterDescription, true, Assigner.Typing.STATIC);
+                    }
+
+                    /**
+                     * Creates a new factory for binding a parameter of the instrumented method.
+                     *
+                     * @param annotationType       The annotation type.
+                     * @param parameterDescription The bound parameter.
+                     * @param readOnly             {@code true} if the factory should create a read-only binding.
+                     * @param typing               The typing to use.
+                     */
+                    public Factory(Class<T> annotationType, ParameterDescription parameterDescription, boolean readOnly, Assigner.Typing typing) {
                         this.annotationType = annotationType;
                         this.parameterDescription = parameterDescription;
+                        this.readOnly = readOnly;
+                        this.typing = typing;
                     }
 
                     @Override
@@ -1464,8 +1581,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
-                        return new Resolved(target.getType(), true, Assigner.Typing.DYNAMIC, parameterDescription);
+                    public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                              AnnotationDescription.Loadable<T> annotation,
+                                              AdviceType adviceType) {
+                        return new Resolved(target.getType(), readOnly, typing, parameterDescription);
                     }
                 }
             }
@@ -1520,7 +1639,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param typing   The typing to apply.
              * @param optional {@code true} if the parameter should be bound to {@code null} if the instrumented method is static.
              */
-            protected ForThisReference(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean optional) {
+            public ForThisReference(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, boolean optional) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -1557,6 +1676,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected enum Factory implements OffsetMapping.Factory<This> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -1567,8 +1689,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<This> annotation,
-                                          boolean delegation) {
-                    if (delegation && !annotation.loadSilent().readOnly()) {
+                                          AdviceType adviceType) {
+                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot write to this reference for " + target + " in read-only context");
                     } else {
                         return new ForThisReference(target.getType(), annotation.loadSilent());
@@ -1615,7 +1737,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly {@code true} if the array is read-only.
              * @param typing   The typing to apply.
              */
-            protected ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            public ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -1651,6 +1773,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected enum Factory implements OffsetMapping.Factory<AllArguments> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -1661,14 +1786,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<AllArguments> annotation,
-                                          boolean delegation) {
+                                          AdviceType adviceType) {
                     if (!target.getType().represents(Object.class) && !target.getType().isArray()) {
                         throw new IllegalStateException("Cannot use AllArguments annotation on a non-array type");
-                    } else if (delegation && !annotation.loadSilent().readOnly()) {
+                    } else if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot define writable field access for " + target);
                     } else {
                         return new ForAllArguments(target.getType().represents(Object.class)
-                                ? TypeDescription.Generic.OBJECT // TODO: Test
+                                ? TypeDescription.Generic.OBJECT
                                 : target.getType().getComponentType(), annotation.loadSilent());
                     }
                 }
@@ -1783,17 +1908,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * The expected type that the field can be assigned to.
              */
-            protected final TypeDescription.Generic target;
+            private final TypeDescription.Generic target;
 
             /**
              * {@code true} if this mapping is read-only.
              */
-            protected final boolean readOnly;
+            private final boolean readOnly;
 
             /**
              * The typing to apply.
              */
-            protected final Assigner.Typing typing;
+            private final Assigner.Typing typing;
 
             /**
              * Creates an offset mapping for a field.
@@ -1802,7 +1927,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly {@code true} if this mapping is read-only.
              * @param typing   The typing to apply.
              */
-            protected ForField(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            public ForField(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -1830,16 +1955,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * Resolves the field being bound.
+             *
+             * @param instrumentedType The instrumented type.
+             * @return The field being bound.
+             */
             protected abstract FieldDescription resolve(TypeDescription instrumentedType);
 
+            /**
+             * An offset mapping for a field that is resolved from the instrumented type by its name.
+             */
             @EqualsAndHashCode(callSuper = true)
             public abstract static class Unresolved extends ForField {
 
                 /**
                  * The name of the field.
                  */
-                protected final String name;
+                private final String name;
 
+                /**
+                 * Creates an offset mapping for a field that is not yet resolved.
+                 *
+                 * @param target   The target type.
+                 * @param readOnly {@code true} if this mapping is read-only.
+                 * @param typing   The typing to apply.
+                 * @param name     The name of the field.
+                 */
                 public Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name) {
                     super(target, readOnly, typing);
                     this.name = name;
@@ -1866,7 +2008,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field with an implicit declaring type.
                  */
-                protected static class WithImplicitType extends Unresolved {
+                public static class WithImplicitType extends Unresolved {
 
                     /**
                      * Creates an offset mapping for a field with an implicit declaring type.
@@ -1889,7 +2031,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param readOnly {@code true} if the field is read-only.
                      * @param typing   The typing to apply.
                      */
-                    protected WithImplicitType(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name) {
+                    public WithImplicitType(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name) {
                         super(target, readOnly, typing, name);
                     }
 
@@ -1903,7 +2045,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * An offset mapping for a field with an explicit declaring type.
                  */
                 @EqualsAndHashCode(callSuper = true)
-                protected static class WithExplicitType extends Unresolved {
+                public static class WithExplicitType extends Unresolved {
 
                     /**
                      * The type declaring the field.
@@ -1917,7 +2059,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param annotation    The annotation to represent.
                      * @param declaringType The field's declaring type.
                      */
-                    protected WithExplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation, TypeDescription declaringType) {
+                    protected WithExplicitType(TypeDescription.Generic target,
+                                               AnnotationDescription.Loadable<FieldValue> annotation,
+                                               TypeDescription declaringType) {
                         this(target,
                                 annotation.getValue(READ_ONLY).resolve(Boolean.class),
                                 annotation.getValue(TYPING).loadSilent(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
@@ -1934,7 +2078,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param typing        The typing to apply.
                      * @param declaringType The field's declaring type.
                      */
-                    protected WithExplicitType(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, String name, TypeDescription declaringType) {
+                    public WithExplicitType(TypeDescription.Generic target,
+                                            boolean readOnly,
+                                            Assigner.Typing typing,
+                                            String name,
+                                            TypeDescription declaringType) {
                         super(target, readOnly, typing, name);
                         this.declaringType = declaringType;
                     }
@@ -1949,10 +2097,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * A factory for a {@link ForField} offset mapping.
+                 * A factory for a {@link Unresolved} offset mapping.
                  */
                 protected enum Factory implements OffsetMapping.Factory<FieldValue> {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -1963,8 +2114,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<FieldValue> annotation,
-                                              boolean delegation) {
-                        if (delegation && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
+                                              AdviceType adviceType) {
+                        if (adviceType.isDelegation() && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
                             throw new IllegalStateException("Cannot write to field for " + target + " in read-only context");
                         } else {
                             TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
@@ -1976,11 +2127,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * A binding for an offset mapping that represents a specific field.
+             */
             @EqualsAndHashCode(callSuper = true)
             public static class Resolved extends ForField {
 
+                /**
+                 * The accessed field.
+                 */
                 private final FieldDescription fieldDescription;
 
+                /**
+                 * Creates a resolved offset mapping for a field.
+                 *
+                 * @param target           The target type.
+                 * @param readOnly         {@code true} if this mapping is read-only.
+                 * @param typing           The typing to apply.
+                 * @param fieldDescription The accessed field.
+                 */
                 public Resolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, FieldDescription fieldDescription) {
                     super(target, readOnly, typing);
                     this.fieldDescription = fieldDescription;
@@ -1988,23 +2153,65 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected FieldDescription resolve(TypeDescription instrumentedType) {
-                    if (!fieldDescription.isAccessibleTo(instrumentedType)) {
-                        throw new IllegalStateException();
-                    } else if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
-                        throw new IllegalStateException();
+                    if (!fieldDescription.isStatic() && !fieldDescription.getDeclaringType().asErasure().isAssignableFrom(instrumentedType)) {
+                        throw new IllegalStateException(fieldDescription + " is no member of " + instrumentedType);
+                    } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
+                        throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                     }
                     return fieldDescription;
                 }
 
+                /**
+                 * A factory that binds a field.
+                 *
+                 * @param <T> The annotation type this factory binds.
+                 */
+                @EqualsAndHashCode
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                    /**
+                     * The annotation type.
+                     */
                     private final Class<T> annotationType;
 
+                    /**
+                     * The field to be bound.
+                     */
                     private final FieldDescription fieldDescription;
 
+                    /**
+                     * {@code true} if this factory should create a read-only binding.
+                     */
+                    private final boolean readOnly;
+
+                    /**
+                     * The typing to use.
+                     */
+                    private final Assigner.Typing typing;
+
+                    /**
+                     * Creates a new factory for binding a specific field with read-only semantics and static typing.
+                     *
+                     * @param annotationType   The annotation type.
+                     * @param fieldDescription The field to bind.
+                     */
                     public Factory(Class<T> annotationType, FieldDescription fieldDescription) {
+                        this(annotationType, fieldDescription, true, Assigner.Typing.STATIC);
+                    }
+
+                    /**
+                     * Creates a new factory for binding a specific field.
+                     *
+                     * @param annotationType   The annotation type.
+                     * @param fieldDescription The field to bind.
+                     * @param readOnly         {@code true} if this factory should create a read-only binding.
+                     * @param typing           The typing to use.
+                     */
+                    public Factory(Class<T> annotationType, FieldDescription fieldDescription, boolean readOnly, Assigner.Typing typing) {
                         this.annotationType = annotationType;
                         this.fieldDescription = fieldDescription;
+                        this.readOnly = readOnly;
+                        this.typing = typing;
                     }
 
                     @Override
@@ -2015,8 +2222,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<T> annotation,
-                                              boolean delegation) {
-                        return new Resolved(target.getType(), false, Assigner.Typing.DYNAMIC, fieldDescription);
+                                              AdviceType adviceType) {
+                        return new Resolved(target.getType(), readOnly, typing, fieldDescription);
                     }
                 }
             }
@@ -2048,7 +2255,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param renderers The renderers to apply.
              */
-            protected ForOrigin(List<Renderer> renderers) {
+            public ForOrigin(List<Renderer> renderers) {
                 this.renderers = renderers;
             }
 
@@ -2058,7 +2265,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param pattern The supplied pattern.
              * @return An appropriate offset mapping.
              */
-            protected static OffsetMapping parse(String pattern) {
+            public static OffsetMapping parse(String pattern) {
                 if (pattern.equals(Origin.DEFAULT)) {
                     return new ForOrigin(Collections.<Renderer>singletonList(Renderer.ForStringRepresentation.INSTANCE));
                 } else {
@@ -2111,7 +2318,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A renderer for an origin pattern element.
              */
-            protected interface Renderer {
+            public interface Renderer {
 
                 /**
                  * Returns a string representation for this renderer.
@@ -2269,7 +2476,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param value The constant value.
                      */
-                    protected ForConstantValue(String value) {
+                    public ForConstantValue(String value) {
                         this.value = value;
                     }
 
@@ -2298,7 +2505,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Origin> annotation,
-                                          boolean delegation) {
+                                          AdviceType adviceType) {
                     if (target.getType().asErasure().represents(Class.class)) {
                         return OffsetMapping.ForInstrumentedType.INSTANCE;
                     } else if (target.getType().asErasure().represents(Method.class)) {
@@ -2332,7 +2539,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param target The unused type.
              */
-            protected ForUnusedValue(TypeDefinition target) {
+            public ForUnusedValue(TypeDefinition target) {
                 this.target = target;
             }
 
@@ -2344,7 +2551,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A factory for an offset mapping for an unused value.
              */
-            enum Factory implements OffsetMapping.Factory<Unused> {
+            protected enum Factory implements OffsetMapping.Factory<Unused> {
 
                 /**
                  * A factory for representing an unused value.
@@ -2359,7 +2566,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Unused> annotation,
-                                          boolean delegation) {
+                                          AdviceType adviceType) {
                     return new ForUnusedValue(target.getType());
                 }
             }
@@ -2391,7 +2598,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                       AnnotationDescription.Loadable<StubValue> annotation,
-                                      boolean delegation) {
+                                      AdviceType adviceType) {
                 if (!target.getType().represents(Object.class)) {
                     throw new IllegalStateException("Cannot use StubValue on non-Object parameter type " + target);
                 } else {
@@ -2445,7 +2652,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly  {@code true} if the annotated value is read-only.
              * @param typing    The typing to apply.
              */
-            protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, boolean readOnly, Assigner.Typing typing) {
+            public ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.enterType = enterType;
                 this.readOnly = readOnly;
@@ -2496,8 +2703,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Enter> annotation,
-                                          boolean delegation) {
-                    if (delegation && !annotation.loadSilent().readOnly()) {
+                                          AdviceType adviceType) {
+                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
                         return new ForEnterValue(target.getType(), enterType.asGenericType(), annotation.loadSilent());
@@ -2544,7 +2751,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly Determines if the parameter is to be treated as read-only.
              * @param typing   The typing to apply.
              */
-            protected ForReturnValue(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            public ForReturnValue(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -2576,6 +2783,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected enum Factory implements OffsetMapping.Factory<Return> {
 
+                /**
+                 * The singelton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -2586,8 +2796,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Return> annotation,
-                                          boolean delegation) {
-                    if (delegation && !annotation.loadSilent().readOnly()) {
+                                          AdviceType adviceType) {
+                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot write return value for " + target + " in read-only context");
                     } else {
                         return new ForReturnValue(target.getType(), annotation.loadSilent());
@@ -2634,7 +2844,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param readOnly {@code true} if the parameter is read-only.
              * @param typing   The typing to apply.
              */
-            protected ForThrowable(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+            public ForThrowable(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
                 this.readOnly = readOnly;
                 this.typing = typing;
@@ -2662,6 +2872,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected enum Factory implements OffsetMapping.Factory<Thrown> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 /**
@@ -2687,8 +2900,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Thrown> annotation,
-                                          boolean delegation) {
-                    if (delegation && !annotation.loadSilent().readOnly()) {
+                                          AdviceType adviceType) {
+                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
                         return new ForThrowable(target.getType(), annotation.loadSilent());
@@ -2697,17 +2910,40 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * An offset mapping for binding a stack manipulation.
+         */
         @EqualsAndHashCode
         class ForStackManipulation implements OffsetMapping {
 
+            /**
+             * The stack manipulation that loads the bound value.
+             */
             private final StackManipulation stackManipulation;
 
+            /**
+             * The type of the loaded value.
+             */
             private final TypeDescription.Generic typeDescription;
 
+            /**
+             * The target type of the annotated parameter.
+             */
             private final TypeDescription.Generic targetType;
 
+            /**
+             * The typing to apply.
+             */
             private final Assigner.Typing typing;
 
+            /**
+             * Creates an offset mapping that binds a stack manipulation.
+             *
+             * @param stackManipulation The stack manipulation that loads the bound value.
+             * @param typeDescription   The type of the loaded value.
+             * @param targetType        The target type of the annotated parameter.
+             * @param typing            The typing to apply.
+             */
             public ForStackManipulation(StackManipulation stackManipulation,
                                         TypeDescription.Generic typeDescription,
                                         TypeDescription.Generic targetType,
@@ -2722,26 +2958,75 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                 StackManipulation assigment = assigner.assign(typeDescription, targetType, typing);
                 if (!assigment.isValid()) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot assign " + typeDescription + " to " + targetType);
                 }
                 return new Target.ForStackManipulation(new StackManipulation.Compound(stackManipulation, assigment));
             }
 
+            /**
+             * A factory that binds a stack manipulation.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
             @EqualsAndHashCode
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                /**
+                 * The annotation type.
+                 */
                 private final Class<T> annotationType;
 
+                /**
+                 * The stack manipulation that loads the bound value.
+                 */
                 private final StackManipulation stackManipulation;
 
+                /**
+                 * The type of the loaded value.
+                 */
                 private final TypeDescription.Generic typeDescription;
 
+                /**
+                 * Creates a new factory for binding a type description.
+                 *
+                 * @param annotationType  The annotation type.
+                 * @param typeDescription The type to bind.
+                 */
+                public Factory(Class<T> annotationType, TypeDescription typeDescription) {
+                    this(annotationType, ClassConstant.of(typeDescription), TypeDescription.CLASS.asGenericType());
+                }
+
+                /**
+                 * Creates a new factory for binding an enumeration.
+                 *
+                 * @param annotationType         The annotation type.
+                 * @param enumerationDescription The enumeration to bind.
+                 */
+                public Factory(Class<T> annotationType, EnumerationDescription enumerationDescription) {
+                    this(annotationType, FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType().asGenericType());
+                }
+
+                /**
+                 * Creates a new factory for binding a stack manipulation.
+                 *
+                 * @param annotationType    The annotation type.
+                 * @param stackManipulation The stack manipulation that loads the bound value.
+                 * @param typeDescription   The type of the loaded value.
+                 */
                 public Factory(Class<T> annotationType, StackManipulation stackManipulation, TypeDescription.Generic typeDescription) {
                     this.annotationType = annotationType;
                     this.stackManipulation = stackManipulation;
                     this.typeDescription = typeDescription;
                 }
 
+                /**
+                 * Creates a binding for a fixed {@link String} or primitive value.
+                 *
+                 * @param annotationType The annotation type.
+                 * @param value          The primitive (wrapper) value or {@link String} value to bind.
+                 * @param <S>            The annotation type.
+                 * @return A factory for creating an offset mapping that binds the supplied value.
+                 */
                 public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Object value) {
                     StackManipulation stackManipulation;
                     TypeDescription typeDescription;
@@ -2774,9 +3059,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
                         typeDescription = TypeDescription.STRING;
-                    } else if (value instanceof Class<?>) {
-                        stackManipulation = ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value));
-                        typeDescription = TypeDescription.CLASS;
                     } else {
                         throw new IllegalStateException("Not a constant value: " + value);
                     }
@@ -2791,16 +3073,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<T> annotation,
-                                          boolean delegation) {
+                                          AdviceType adviceType) {
                     return new ForStackManipulation(stackManipulation, typeDescription, target.getType(), Assigner.Typing.STATIC);
                 }
             }
 
+            /**
+             * A factory for binding the annotated parameter's default value.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
             @EqualsAndHashCode
             public static class OfDefaultValue<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                /**
+                 * The annotation type.
+                 */
                 private final Class<T> annotationType;
 
+                /**
+                 * Creates a factory for an offset mapping tat binds the parameter's default value.
+                 *
+                 * @param annotationType The annotation type.
+                 */
                 public OfDefaultValue(Class<T> annotationType) {
                     this.annotationType = annotationType;
                 }
@@ -2811,28 +3106,56 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
                     return new ForStackManipulation(DefaultValue.of(target.getType()), target.getType(), target.getType(), Assigner.Typing.STATIC);
                 }
             }
 
+            /**
+             * A factory for binding an annotation's property.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
             @EqualsAndHashCode
             public static class OfAnnotationProperty<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                /**
+                 * The annotation type.
+                 */
                 private final Class<T> annotationType;
 
+                /**
+                 * The annotation property.
+                 */
                 private final MethodDescription.InDefinedShape property;
 
-                public OfAnnotationProperty(Class<T> annotationType, MethodDescription.InDefinedShape property) {
+                /**
+                 * Creates a factory for binding an annotation property.
+                 *
+                 * @param annotationType The annotation type.
+                 * @param property       The annotation property.
+                 */
+                protected OfAnnotationProperty(Class<T> annotationType, MethodDescription.InDefinedShape property) {
                     this.annotationType = annotationType;
                     this.property = property;
                 }
 
+                /**
+                 * Creates a factory for an offset mapping that binds an annotation property.
+                 *
+                 * @param annotationType The annotion type to bind.
+                 * @param property       The property to bind.
+                 * @param <S>            The annotation type.
+                 * @return A factory for binding a property of the annotation type.
+                 */
                 public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, String property) {
+                    if (!annotationType.isAnnotation()) {
+                        throw new IllegalArgumentException("Not an annotation type: " + annotationType);
+                    }
                     try {
                         return new OfAnnotationProperty<S>(annotationType, new MethodDescription.ForLoadedMethod(annotationType.getMethod(property)));
                     } catch (NoSuchMethodException exception) {
-                        throw new IllegalStateException(exception);
+                        throw new IllegalArgumentException("Cannot find a property " + property + " on " + annotationType, exception);
                     }
                 }
 
@@ -2842,21 +3165,51 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
-                    return Factory.of(annotationType, annotation.getValue(property).resolve()).make(target, annotation, delegation);
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
+                    Object value = annotation.getValue(property).resolve();
+                    OffsetMapping.Factory<T> factory;
+                    if (value instanceof TypeDescription) {
+                        factory = new Factory<T>(annotationType, (TypeDescription) value);
+                    } else if (value instanceof EnumerationDescription) {
+                        factory = new Factory<T>(annotationType, (EnumerationDescription) value);
+                    } else if (value instanceof AnnotationDescription) {
+                        throw new IllegalStateException("Cannot bind annotation as fixed value for " + property);
+                    } else {
+                        factory = Factory.of(annotationType, value);
+                    }
+                    return factory.make(target, annotation, adviceType);
                 }
             }
         }
 
+        /**
+         * An offset mapping that loads a serialized value.
+         */
         @EqualsAndHashCode
         class ForSerializedValue implements OffsetMapping {
 
+            /**
+             * The type of the serialized value as it is used.
+             */
             private final TypeDescription.Generic target;
 
+            /**
+             * The class type of the serialized value.
+             */
             private final TypeDescription typeDescription;
 
+            /**
+             * The stack manipulation deserializing the represented value.
+             */
             private final StackManipulation deserialization;
 
+            /**
+             * Creates a new offset mapping for a serialized value.
+             *
+             * @param target          The type of the serialized value as it is used.
+             * @param typeDescription The class type of the serialized value.
+             * @param deserialization The stack manipulation deserializing the represented value.
+             */
             public ForSerializedValue(TypeDescription.Generic target, TypeDescription typeDescription, StackManipulation deserialization) {
                 this.target = target;
                 this.typeDescription = typeDescription;
@@ -2872,26 +3225,56 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return new Target.ForStackManipulation(new StackManipulation.Compound(deserialization, assignment));
             }
 
+            /**
+             * A factory for loading a deserialized value.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
             @EqualsAndHashCode
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
+                /**
+                 * The annotation type.
+                 */
                 private final Class<T> annotationType;
 
+                /**
+                 * The type description as which to treat the deserialized value.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * The stack manipulation that loads the represented value.
+                 */
                 private final StackManipulation deserialization;
 
+                /**
+                 * Creates a factory for loading a deserialized value.
+                 *
+                 * @param annotationType  The annotation type.
+                 * @param typeDescription The type description as which to treat the deserialized value.
+                 * @param deserialization The stack manipulation that loads the represented value.
+                 */
                 protected Factory(Class<T> annotationType, TypeDescription typeDescription, StackManipulation deserialization) {
                     this.annotationType = annotationType;
                     this.typeDescription = typeDescription;
                     this.deserialization = deserialization;
                 }
 
-                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Serializable target, Class<?> type) {
-                    if (!type.isInstance(target)) {
-                        throw new IllegalArgumentException(target + " is no instance of " + type);
+                /**
+                 * Creates a factory for an offset mapping that loads the provided value.
+                 *
+                 * @param annotationType The annotation type to be bound.
+                 * @param target         The instance representing the value to be deserialized.
+                 * @param targetType     The target type as which to use the target value.
+                 * @param <S>            The annotation type the created factory binds.
+                 * @return An appropriate offset mapping factory.
+                 */
+                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Serializable target, Class<?> targetType) {
+                    if (!targetType.isInstance(target)) {
+                        throw new IllegalArgumentException(target + " is no instance of " + targetType);
                     }
-                    return new Factory<S>(annotationType, new TypeDescription.ForLoadedType(type), SerializedConstant.of(target));
+                    return new Factory<S>(annotationType, new TypeDescription.ForLoadedType(targetType), SerializedConstant.of(target));
                 }
 
                 @Override
@@ -2900,17 +3283,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
                     return new ForSerializedValue(target.getType(), typeDescription, deserialization);
                 }
             }
         }
 
+        /**
+         * A factory for an annotation whose use is not permitted.
+         *
+         * @param <T> The annotation type this factory binds.
+         */
         @EqualsAndHashCode
         class Illegal<T extends Annotation> implements Factory<T> {
 
+            /**
+             * The annotation type.
+             */
             private final Class<T> annotationType;
 
+            /**
+             * Creates a factory that does not permit the usage of the represented annotation.
+             *
+             * @param annotationType The annotation type.
+             */
             public Illegal(Class<T> annotationType) {
                 this.annotationType = annotationType;
             }
@@ -2921,8 +3317,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
-                throw new IllegalStateException();
+            public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
+                throw new IllegalStateException("Usage of " + annotationType + " is not allowed on " + target);
             }
         }
     }
@@ -4778,7 +5174,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 @SuppressWarnings("unchecked")
                                 OffsetMapping current = factory.make(parameterDescription,
                                         (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()),
-                                        OffsetMapping.Factory.INLINING);
+                                        OffsetMapping.Factory.AdviceType.INLINING);
                                 if (offsetMapping == null) {
                                     offsetMapping = current;
                                 } else {
@@ -5974,11 +6370,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract static class Resolved<T extends Bound> implements Dispatcher.Resolved {
 
                 /**
-                 * Indicates a read-only mapping for an offset.
-                 */
-                private static final boolean READ_ONLY = true;
-
-                /**
                  * The represented advice method.
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
@@ -6017,7 +6408,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 @SuppressWarnings("unchecked")
                                 OffsetMapping current = factory.make(parameterDescription,
                                         (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()),
-                                        OffsetMapping.Factory.DELEGATION);
+                                        OffsetMapping.Factory.AdviceType.DELEGATION);
                                 if (offsetMapping == null) {
                                     offsetMapping = current;
                                 } else {
@@ -7892,7 +8283,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
-         * instrumented type and must be declared by a super type of the instrumented field.
+         * instrumented type and must be declared by a super type of the instrumented field. The binding is defined
+         * as read-only and applied static typing.
          *
          * @param type             The type of the annotation being bound.
          * @param fieldDescription The field to bind to this annotation.
@@ -7940,7 +8332,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Binds the supplied annotation to the supplied parameter's argument.
+         * Binds the supplied annotation to the supplied parameter's argument. The binding is declared read-only and
+         * applies static typing.
          *
          * @param type                 The type of the annotation being bound.
          * @param parameterDescription The parameter for which to bind an argument.
@@ -7949,6 +8342,54 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, ParameterDescription parameterDescription) {
             return bind(type, new OffsetMapping.ForArgument.Resolved.Factory<T>(type, parameterDescription));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied type constant.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The type constant to bind.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Class<?> value) {
+            return bind(type, new TypeDescription.ForLoadedType(value));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied type constant.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The type constant to bind.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, TypeDescription value) {
+            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied enumeration constant.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The enumeration constant to bind.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, Enum<?> value) {
+            return bind(type, new EnumerationDescription.ForLoadedEnumeration(value));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied enumeration constant.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The enumeration constant to bind.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, EnumerationDescription value) {
+            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
         }
 
         /**
@@ -7990,10 +8431,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return bind(type, OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
         }
 
+        /**
+         * Binds the supplied annotation to the annotation's property of the specified name.
+         *
+         * @param type              The type of the annotation being bound.
+         * @param stackManipulation The stack manipulation loading the bound value.
+         * @param targetType        The type of the loaded value.
+         * @param <T>               The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, java.lang.reflect.Type targetType) {
             return bind(type, stackManipulation, TypeDefinition.Sort.describe(targetType));
         }
 
+        /**
+         * Binds the supplied annotation to the annotation's property of the specified name.
+         *
+         * @param type              The type of the annotation being bound.
+         * @param stackManipulation The stack manipulation loading the bound value.
+         * @param targetType        The type of the loaded value.
+         * @param <T>               The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
             return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
         }

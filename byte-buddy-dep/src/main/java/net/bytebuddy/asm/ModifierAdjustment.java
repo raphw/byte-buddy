@@ -18,7 +18,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * <p>
@@ -205,6 +205,94 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
      */
     public ModifierAdjustment withMethodModifiers(ElementMatcher<? super MethodDescription> matcher,
                                                   List<? extends ModifierContributor.ForMethod> modifierContributors) {
+        return withInvokableModifiers(isMethod().and(matcher), modifierContributors);
+    }
+
+    /**
+     * Adjusts any constructor's modifiers.
+     *
+     * @param modifierContributor The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withConstructorModifiers(ModifierContributor.ForMethod... modifierContributor) {
+        return withConstructorModifiers(Arrays.asList(modifierContributor));
+    }
+
+    /**
+     * Adjusts any constructor's modifiers.
+     *
+     * @param modifierContributors The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withConstructorModifiers(List<? extends ModifierContributor.ForMethod> modifierContributors) {
+        return withConstructorModifiers(any(), modifierContributors);
+    }
+
+    /**
+     * Adjusts a constructor's modifiers if it fulfills the supplied matcher.
+     *
+     * @param matcher             The matcher that determines if a constructor's modifiers should be adjusted.
+     * @param modifierContributor The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withConstructorModifiers(ElementMatcher<? super MethodDescription> matcher,
+                                                       ModifierContributor.ForMethod... modifierContributor) {
+        return withConstructorModifiers(matcher, Arrays.asList(modifierContributor));
+    }
+
+    /**
+     * Adjusts a constructor's modifiers if it fulfills the supplied matcher.
+     *
+     * @param matcher              The matcher that determines if a constructor's modifiers should be adjusted.
+     * @param modifierContributors The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withConstructorModifiers(ElementMatcher<? super MethodDescription> matcher,
+                                                       List<? extends ModifierContributor.ForMethod> modifierContributors) {
+        return withInvokableModifiers(isConstructor().and(matcher), modifierContributors);
+    }
+
+    /**
+     * Adjusts any method's or constructor's modifiers.
+     *
+     * @param modifierContributor The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withInvokableModifiers(ModifierContributor.ForMethod... modifierContributor) {
+        return withInvokableModifiers(Arrays.asList(modifierContributor));
+    }
+
+    /**
+     * Adjusts any method's or constructor's modifiers.
+     *
+     * @param modifierContributors The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withInvokableModifiers(List<? extends ModifierContributor.ForMethod> modifierContributors) {
+        return withInvokableModifiers(any(), modifierContributors);
+    }
+
+    /**
+     * Adjusts a method's or constructor's modifiers if it fulfills the supplied matcher.
+     *
+     * @param matcher             The matcher that determines if a method's or constructor's modifiers should be adjusted.
+     * @param modifierContributor The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withInvokableModifiers(ElementMatcher<? super MethodDescription> matcher,
+                                                     ModifierContributor.ForMethod... modifierContributor) {
+        return withInvokableModifiers(matcher, Arrays.asList(modifierContributor));
+    }
+
+    /**
+     * Adjusts a method's or constructor's modifiers if it fulfills the supplied matcher.
+     *
+     * @param matcher              The matcher that determines if a method's or constructor's modifiers should be adjusted.
+     * @param modifierContributors The modifier contributors to enforce.
+     * @return A new modifier adjustment that enforces the given modifier contributors and any previous adjustments.
+     */
+    public ModifierAdjustment withInvokableModifiers(ElementMatcher<? super MethodDescription> matcher,
+                                                     List<? extends ModifierContributor.ForMethod> modifierContributors) {
         return new ModifierAdjustment(typeAdjustments, fieldAdjustments, CompoundList.of(methodAdjustments, new Adjustment<MethodDescription>(matcher,
                 ModifierContributor.Resolver.of(modifierContributors))));
     }

@@ -1368,9 +1368,9 @@ public class MethodCall implements Implementation.Composable {
                 } else if (value instanceof Long) {
                     return new ForStackManipulation(LongConstant.forValue((Long) value), long.class);
                 } else if (value instanceof Float) {
-                    return new ForStackManipulation(FloatConstant.forValue((Float) value), long.class);
+                    return new ForStackManipulation(FloatConstant.forValue((Float) value), float.class);
                 } else if (value instanceof Double) {
-                    return new ForStackManipulation(DoubleConstant.forValue((Double) value), long.class);
+                    return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
                 } else if (value instanceof Class) {
                     return new ForStackManipulation(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value)), Class.class);
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {

@@ -120,8 +120,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @param matcher The matcher to determine what methods to substitute.
      * @return A specification that allows to determine how to substitute any method invocations that match the supplied matcher.
      */
-    public WithoutSpecification method(ElementMatcher<? super MethodDescription> matcher) {
-        return invokable(isMethod().and(matcher));
+    public WithoutSpecification.ForMatchedMethod method(ElementMatcher<? super MethodDescription> matcher) {
+        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, strict, substitution, matcher);
     }
 
     /**
@@ -364,17 +364,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
             @Override
             protected Substitution doStub() {
-                return new Substitution.ForElementMatchers(matcher, matcher, Substitution.Resolver.Stubbing.INSTANCE);
+                return Substitution.ForElementMatchers.of(matcher, Substitution.Resolver.Stubbing.INSTANCE);
             }
 
             @Override
             protected Substitution doReplaceWith(FieldDescription fieldDescription) {
-                return new Substitution.ForElementMatchers(matcher, matcher, new Substitution.Resolver.FieldAccessing(fieldDescription));
+                return Substitution.ForElementMatchers.of(matcher, new Substitution.Resolver.FieldAccessing(fieldDescription));
             }
 
             @Override
             protected Substitution doReplaceWith(MethodDescription methodDescription) {
-                return new Substitution.ForElementMatchers(matcher, matcher, new Substitution.Resolver.MethodInvoking(methodDescription));
+                return Substitution.ForElementMatchers.of(matcher, new Substitution.Resolver.MethodInvoking(methodDescription));
             }
         }
 
@@ -456,17 +456,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
             @Override
             protected Substitution doStub() {
-                return new Substitution.ForElementMatchers(matcher, none(), matchRead, matchWrite, Substitution.Resolver.Stubbing.INSTANCE);
+                return Substitution.ForElementMatchers.ofField(matcher, matchRead, matchWrite, Substitution.Resolver.Stubbing.INSTANCE);
             }
 
             @Override
             protected Substitution doReplaceWith(FieldDescription fieldDescription) {
-                return new Substitution.ForElementMatchers(matcher, none(), matchRead, matchWrite, new Substitution.Resolver.FieldAccessing(fieldDescription));
+                return Substitution.ForElementMatchers.ofField(matcher, matchRead, matchWrite, new Substitution.Resolver.FieldAccessing(fieldDescription));
             }
 
             @Override
             protected Substitution doReplaceWith(MethodDescription methodDescription) {
-                return new Substitution.ForElementMatchers(matcher, none(), matchRead, matchWrite, new Substitution.Resolver.MethodInvoking(methodDescription));
+                return Substitution.ForElementMatchers.ofField(matcher, matchRead, matchWrite, new Substitution.Resolver.MethodInvoking(methodDescription));
             }
         }
 
@@ -474,12 +474,22 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Describes a member substitution that requires a specification for how to replace a method or constructor.
          */
         @EqualsAndHashCode(callSuper = true)
-        protected static class ForMatchedMethod extends WithoutSpecification {
+        public static class ForMatchedMethod extends WithoutSpecification {
 
             /**
              * A matcher for any method or constructor that should be substituted.
              */
             private final ElementMatcher<? super MethodDescription> matcher;
+
+            /**
+             * {@code true} if this specification includes virtual invocations.
+             */
+            private final boolean includeVirtualCalls;
+
+            /**
+             * {@code true} if this specification includes {@code super} invocations.
+             */
+            private final boolean includeSuperCalls;
 
             /**
              * Creates a new member substitution for a matched method that requires a specification for how to perform a substitution.
@@ -493,23 +503,68 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                        boolean strict,
                                        Substitution substitution,
                                        ElementMatcher<? super MethodDescription> matcher) {
+                this(methodGraphCompiler, strict, substitution, matcher, true, true);
+            }
+
+            /**
+             * Creates a new member substitution for a matched method that requires a specification for how to perform a substitution.
+             *
+             * @param methodGraphCompiler The method graph compiler to use.
+             * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+             * @param substitution        The substitution to apply.
+             * @param matcher             A matcher for any method or constructor that should be substituted.
+             * @param includeVirtualCalls {@code true} if this specification includes virtual invocations.
+             * @param includeSuperCalls   {@code true} if this specification includes {@code super} invocations.
+             */
+            protected ForMatchedMethod(MethodGraph.Compiler methodGraphCompiler,
+                                       boolean strict,
+                                       Substitution substitution,
+                                       ElementMatcher<? super MethodDescription> matcher,
+                                       boolean includeVirtualCalls,
+                                       boolean includeSuperCalls) {
                 super(methodGraphCompiler, strict, substitution);
                 this.matcher = matcher;
+                this.includeVirtualCalls = includeVirtualCalls;
+                this.includeSuperCalls = includeSuperCalls;
+            }
+
+            /**
+             * Limits the substituted method calls to method calls that invoke a method virtually (as opposed to a {@code super} invocation).
+             *
+             * @return This specification where only virtual methods are matched if they are not invoked as a virtual call.
+             */
+            public WithoutSpecification onVirtualCall() {
+                return new ForMatchedMethod(methodGraphCompiler, strict, substitution, isVirtual().and(matcher), true, false);
+            }
+
+            /**
+             * Limits the substituted method calls to method calls that invoke a method as a {@code super} call.
+             *
+             * @return This specification where only virtual methods are matched if they are not invoked as a super call.
+             */
+            public WithoutSpecification onSuperCall() {
+                return new ForMatchedMethod(methodGraphCompiler, strict, substitution, isVirtual().and(matcher), false, true);
             }
 
             @Override
             protected Substitution doStub() {
-                return new Substitution.ForElementMatchers(none(), matcher, Substitution.Resolver.Stubbing.INSTANCE);
+                return Substitution.ForElementMatchers.ofMethod(matcher, includeVirtualCalls, includeSuperCalls, Substitution.Resolver.Stubbing.INSTANCE);
             }
 
             @Override
             protected Substitution doReplaceWith(FieldDescription fieldDescription) {
-                return new Substitution.ForElementMatchers(none(), matcher, new Substitution.Resolver.FieldAccessing(fieldDescription));
+                return Substitution.ForElementMatchers.ofMethod(matcher,
+                        includeVirtualCalls,
+                        includeSuperCalls,
+                        new Substitution.Resolver.FieldAccessing(fieldDescription));
             }
 
             @Override
             protected Substitution doReplaceWith(MethodDescription methodDescription) {
-                return new Substitution.ForElementMatchers(none(), matcher, new Substitution.Resolver.MethodInvoking(methodDescription));
+                return Substitution.ForElementMatchers.ofMethod(matcher,
+                        includeVirtualCalls,
+                        includeSuperCalls,
+                        new Substitution.Resolver.MethodInvoking(methodDescription));
             }
         }
     }
@@ -523,18 +578,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Resolves a field access within a method body.
          *
          * @param fieldDescription The field being accessed.
-         * @param write            {@code true} if the access is for writing to the field.
+         * @param writeAccess      {@code true} if the access is for writing to the field, {@code false} if the field is read.
          * @return A resolver for the supplied field access.
          */
-        Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean write);
+        Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess);
 
         /**
          * Resolves a method invocation within a method body.
          *
          * @param methodDescription The method being invoked.
+         * @param invocationType    The method's invocation type.
          * @return A resolver for the supplied method invocation.
          */
-        Resolver resolve(MethodDescription methodDescription);
+        Resolver resolve(MethodDescription methodDescription, InvocationType invocationType);
 
         /**
          * A resolver supplies an implementation for a substitution.
@@ -722,6 +778,66 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         /**
+         * Determines a method's invocation type.
+         */
+        enum InvocationType {
+
+            /**
+             * Indicates that a method is called virtually.
+             */
+            VIRTUAL,
+
+            /**
+             * Indicates that a method is called via a super method call.
+             */
+            SUPER,
+
+            /**
+             * Indicates that an invoked method is not a virtual method.
+             */
+            OTHER;
+
+            /**
+             * Creates an invocation type.
+             *
+             * @param opcode            The method call's opcode.
+             * @param methodDescription The method being invoked.
+             * @return The method's invocation type.
+             */
+            protected static InvocationType of(int opcode, MethodDescription methodDescription) {
+                switch (opcode) {
+                    case Opcodes.INVOKEVIRTUAL:
+                    case Opcodes.INVOKEINTERFACE:
+                        return InvocationType.VIRTUAL;
+                    case Opcodes.INVOKESPECIAL:
+                        return methodDescription.isVirtual()
+                                ? SUPER
+                                : OTHER;
+                    default:
+                        return OTHER;
+                }
+            }
+
+            /**
+             * Determines if a method is matched by this invocation type.
+             *
+             * @param includeVirtualCalls {@code true} if virtual calls are included.
+             * @param includeSuperCalls   {@code true} if super method calls are included.
+             * @return {@code true} if this instance matches the given setup.
+             */
+            protected boolean matches(boolean includeVirtualCalls, boolean includeSuperCalls) {
+                switch (this) {
+                    case VIRTUAL:
+                        return includeVirtualCalls;
+                    case SUPER:
+                        return includeSuperCalls;
+                    default:
+                        return true;
+                }
+            }
+        }
+
+        /**
          * A substution that does not substitute any byte code elements.
          */
         enum NoOp implements Substitution {
@@ -732,12 +848,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             INSTANCE;
 
             @Override
-            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean write) {
+            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 return Resolver.Unresolved.INSTANCE;
             }
 
             @Override
-            public Resolver resolve(MethodDescription methodDescription) {
+            public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
                 return Resolver.Unresolved.INSTANCE;
             }
         }
@@ -769,54 +885,100 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             private final boolean matchFieldWrite;
 
             /**
+             * {@code true} if virtual method calls should be substituted.
+             */
+            private final boolean includeVirtualCalls;
+
+            /**
+             * {@code true} if super method calls should be substituted.
+             */
+            private final boolean includeSuperCalls;
+
+            /**
              * The resolver to apply on elements to substitute.
              */
             private final Resolver resolver;
 
             /**
-             * Creates a new substitution for the supplied element matchers.
+             * Creates a substitution for any byte code element that matches the supplied matcher.
              *
-             * @param fieldMatcher  A matcher to determine field substitution.
-             * @param methodMatcher A matcher to determine method substitution.
-             * @param resolver      The resolver to apply on elements to substitute.
+             * @param matcher  The matcher to determine the substituted byte code elements.
+             * @param resolver The resolver to apply on elements to substitute.
+             * @return A substitution for all matched byte code elements.
              */
-            protected ForElementMatchers(ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher,
-                                         ElementMatcher<? super MethodDescription> methodMatcher,
-                                         Resolver resolver) {
-                this(fieldMatcher, methodMatcher, true, true, resolver);
+            protected static Substitution of(ElementMatcher<? super ByteCodeElement> matcher, Resolver resolver) {
+                return new ForElementMatchers(matcher, matcher, true, true, true, true, resolver);
             }
 
             /**
-             * Creates a new substitution for the supplied element matchers.
+             * Creates a substitution for any method that matches the supplied matcher.
              *
-             * @param fieldMatcher    A matcher to determine field substitution.
-             * @param methodMatcher   A matcher to determine method substitution.
+             * @param matcher         The matcher to determine the substituted fields.
              * @param matchFieldRead  {@code true} if field read access should be substituted.
              * @param matchFieldWrite {@code true} if field write access should be substituted.
-             * @param resolver        The resolver to apply on elements to substitute.
+             * @param resolver        The resolver to apply on fields to substitute.
+             * @return A substitution for all matched fields.
+             */
+            protected static Substitution ofField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
+                                                  boolean matchFieldRead,
+                                                  boolean matchFieldWrite,
+                                                  Resolver resolver) {
+                return new ForElementMatchers(matcher, none(), matchFieldRead, matchFieldWrite, false, false, resolver);
+            }
+
+            /**
+             * Creates a substitution for any method that matches the supplied matcher.
+             *
+             * @param matcher             The matcher to determine the substituted fields.
+             * @param includeVirtualCalls {@code true} if virtual method calls should be substituted.
+             * @param includeSuperCalls   {@code true} if super method calls should be substituted.
+             * @param resolver            The resolver to apply on fields to substitute.
+             * @return A substitution for all matched fields.
+             */
+            protected static Substitution ofMethod(ElementMatcher<? super MethodDescription> matcher,
+                                                   boolean includeVirtualCalls,
+                                                   boolean includeSuperCalls,
+                                                   Resolver resolver) {
+                return new ForElementMatchers(none(), matcher, false, false, includeVirtualCalls, includeSuperCalls, resolver);
+            }
+
+            /**
+             * Creates a new subsitution that applies element matchers to determine what byte code elements to substitute.
+             *
+             * @param fieldMatcher        The field matcher to determine fields to substitute.
+             * @param methodMatcher       The method matcher to determine methods to substitute.
+             * @param matchFieldRead      {@code true} if field read access should be substituted.
+             * @param matchFieldWrite     {@code true} if field write access should be substituted.
+             * @param includeVirtualCalls {@code true} if virtual method calls should be substituted.
+             * @param includeSuperCalls   {@code true} if super method calls should be substituted.
+             * @param resolver            The resolver to apply on elements to substitute.
              */
             protected ForElementMatchers(ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher,
                                          ElementMatcher<? super MethodDescription> methodMatcher,
                                          boolean matchFieldRead,
                                          boolean matchFieldWrite,
+                                         boolean includeVirtualCalls,
+                                         boolean includeSuperCalls,
                                          Resolver resolver) {
                 this.fieldMatcher = fieldMatcher;
                 this.methodMatcher = methodMatcher;
                 this.matchFieldRead = matchFieldRead;
                 this.matchFieldWrite = matchFieldWrite;
+                this.includeVirtualCalls = includeVirtualCalls;
+                this.includeSuperCalls = includeSuperCalls;
                 this.resolver = resolver;
             }
 
             @Override
-            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean write) {
-                return (write ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
+            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
+                return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
                         ? resolver
                         : Resolver.Unresolved.INSTANCE;
             }
 
             @Override
-            public Resolver resolve(MethodDescription methodDescription) {
-                return methodMatcher.matches(methodDescription)
+            public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
+                return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
                         ? resolver
                         : Resolver.Unresolved.INSTANCE;
             }
@@ -859,9 +1021,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean write) {
+            public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 for (Substitution substitution : substitutions) {
-                    Resolver resolver = substitution.resolve(fieldDescription, write);
+                    Resolver resolver = substitution.resolve(fieldDescription, writeAccess);
                     if (resolver.isResolved()) {
                         return resolver;
                     }
@@ -870,9 +1032,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
-            public Resolver resolve(MethodDescription methodDescription) {
+            public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
                 for (Substitution substitution : substitutions) {
-                    Resolver resolver = substitution.resolve(methodDescription);
+                    Resolver resolver = substitution.resolve(methodDescription, invocationType);
                     if (resolver.isResolved()) {
                         return resolver;
                     }
@@ -1015,7 +1177,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             .filter(named(internalName).and(hasDescriptor(descriptor)));
                 }
                 if (!candidates.isEmpty()) {
-                    Substitution.Resolver resolver = substitution.resolve(candidates.getOnly());
+                    Substitution.Resolver resolver = substitution.resolve(candidates.getOnly(), Substitution.InvocationType.of(opcode, candidates.getOnly()));
                     if (resolver.isResolved()) {
                         resolver.apply(instrumentedType,
                                 candidates.getOnly(),

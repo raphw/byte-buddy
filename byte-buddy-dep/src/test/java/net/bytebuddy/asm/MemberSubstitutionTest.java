@@ -3,8 +3,10 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
@@ -521,6 +523,32 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), nullValue(Object.class));
     }
 
+    @Test
+    public void testVirtualMethodVirtualCallSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).onVirtualCall().stub().on(named(RUN)))
+                .make()
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
+                        ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 1));
+    }
+
+    @Test
+    public void testVirtualMethodSuperCallSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).onSuperCall().stub().on(named(RUN)))
+                .make()
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
+                        ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 2));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
@@ -741,6 +769,25 @@ public class MemberSubstitutionTest {
 
         public Object foo() {
             return FOO;
+        }
+    }
+
+    public static class VirtualMethodCallSubstitutionSample {
+
+        public int foo() {
+            return 1;
+        }
+
+        public static class Extension extends VirtualMethodCallSubstitutionSample {
+
+            @Override
+            public int foo() {
+                return 2;
+            }
+
+            public int run() {
+                return foo() + super.foo();
+            }
         }
     }
 

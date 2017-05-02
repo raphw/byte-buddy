@@ -1005,7 +1005,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStackManipulation.class).apply();
+//        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStackManipulation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.class).apply();
