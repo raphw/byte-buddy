@@ -190,6 +190,13 @@ public interface ModifierReviewable {
          * @return This field's manifestation.
          */
         FieldManifestation getFieldManifestation();
+
+        /**
+         * Returns this field's persistence.
+         *
+         * @return This field's persistence.
+         */
+        FieldPersistence getFieldPersistence();
     }
 
     /**
@@ -446,17 +453,26 @@ public interface ModifierReviewable {
         @Override
         public FieldManifestation getFieldManifestation() {
             int modifiers = getModifiers();
-            switch (modifiers & (Opcodes.ACC_VOLATILE | Opcodes.ACC_FINAL | Opcodes.ACC_TRANSIENT)) {
+            switch (modifiers & (Opcodes.ACC_VOLATILE | Opcodes.ACC_FINAL)) {
                 case Opcodes.ACC_FINAL:
                     return FieldManifestation.FINAL;
                 case Opcodes.ACC_VOLATILE:
                     return FieldManifestation.VOLATILE;
-                case Opcodes.ACC_TRANSIENT:
-                    return FieldManifestation.TRANSIENT;
-                case Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE:
-                    return FieldManifestation.VOLATILE_TRANSIENT;
                 case EMPTY_MASK:
                     return FieldManifestation.PLAIN;
+                default:
+                    throw new IllegalStateException("Unexpected modifiers: " + modifiers);
+            }
+        }
+
+        @Override
+        public FieldPersistence getFieldPersistence() {
+            int modifiers = getModifiers();
+            switch (modifiers & Opcodes.ACC_TRANSIENT) {
+                case Opcodes.ACC_TRANSIENT:
+                    return FieldPersistence.TRANSIENT;
+                case EMPTY_MASK:
+                    return FieldPersistence.PLAIN;
                 default:
                     throw new IllegalStateException("Unexpected modifiers: " + modifiers);
             }

@@ -20,17 +20,7 @@ public enum FieldManifestation implements ModifierContributor.ForField {
     /**
      * Modifier for a volatile field.
      */
-    VOLATILE(Opcodes.ACC_VOLATILE),
-
-    /**
-     * Modifier for a transient field.
-     */
-    TRANSIENT(Opcodes.ACC_TRANSIENT),
-
-    /**
-     * Modifier for a volatile, transient field.
-     */
-    VOLATILE_TRANSIENT(Opcodes.ACC_VOLATILE | Opcodes.ACC_TRANSIENT);
+    VOLATILE(Opcodes.ACC_VOLATILE);
 
     /**
      * The mask the modifier contributor.
@@ -53,7 +43,7 @@ public enum FieldManifestation implements ModifierContributor.ForField {
 
     @Override
     public int getRange() {
-        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE | Opcodes.ACC_TRANSIENT;
+        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE;
     }
 
     @Override
@@ -80,20 +70,11 @@ public enum FieldManifestation implements ModifierContributor.ForField {
     }
 
     /**
-     * Returns {@code true} if this manifestation represents a field that is {@code transient}.
+     * Returns {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
      *
-     * @return {@code true} if this manifestation represents a field that is {@code transient}.
-     */
-    public boolean isTransient() {
-        return (mask & Opcodes.ACC_TRANSIENT) != 0;
-    }
-
-    /**
-     * Returns {@code true} if this manifestation represents a field that is neither {@code final}, {@code transient} or {@code volatile}.
-     *
-     * @return {@code true} if this manifestation represents a field that is neither {@code final}, {@code transient} or {@code volatile}.
+     * @return {@code true} if this manifestation represents a field that is neither {@code final} or {@code volatile}.
      */
     public boolean isPlain() {
-        return !(isFinal() || isVolatile() || isTransient());
+        return !isFinal() && !isVolatile();
     }
 }
