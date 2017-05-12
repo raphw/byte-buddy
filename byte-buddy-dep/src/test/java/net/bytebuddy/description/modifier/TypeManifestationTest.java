@@ -3,7 +3,7 @@ package net.bytebuddy.description.modifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.asm.Opcodes;
+import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.Collection;

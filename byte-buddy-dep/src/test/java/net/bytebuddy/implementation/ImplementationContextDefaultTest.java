@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassVisitor;
@@ -37,7 +36,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
@@ -162,9 +161,9 @@ public class ImplementationContextDefaultTest {
         when(otherAuxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(MethodAccessorFactory.class)))
                 .thenReturn(secondDynamicType);
         when(secondDynamicType.getTypeDescription()).thenReturn(secondDescription);
-        when(classVisitor.visitMethod(any(int.class), any(String.class), any(String.class), any(String.class), any(String[].class)))
+        when(classVisitor.visitMethod(any(int.class), any(String.class), any(String.class), Mockito.<String>any(), Mockito.<String[]>any()))
                 .thenReturn(methodVisitor);
-        when(classVisitor.visitField(any(int.class), any(String.class), any(String.class), any(String.class), any(Object.class)))
+        when(classVisitor.visitField(any(int.class), any(String.class), any(String.class), Mockito.<String>any(), Mockito.any()))
                 .thenReturn(fieldVisitor);
         when(firstFieldValue.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(secondFieldValue.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
@@ -258,6 +257,7 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialType.asErasure()).thenReturn(firstSpecialType);
         when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
         when(secondSpecialType.asErasure()).thenReturn(secondSpecialType);
+        when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(FOO);
     }
 
     @Test
@@ -355,13 +355,13 @@ public class ImplementationContextDefaultTest {
         verify(classVisitor).visitField(eq(cacheFieldModifiers),
                 Mockito.startsWith(Implementation.Context.Default.FIELD_CACHE_PREFIX),
                 eq(BAR),
-                Mockito.isNull(String.class),
-                Mockito.isNull(Object.class));
+                Mockito.<String>isNull(),
+                Mockito.isNull());
         verify(classVisitor).visitField(eq(cacheFieldModifiers),
                 Mockito.startsWith(Implementation.Context.Default.FIELD_CACHE_PREFIX),
                 eq(QUX),
-                Mockito.isNull(String.class),
-                Mockito.isNull(Object.class));
+                Mockito.<String>isNull(),
+                Mockito.isNull());
         verify(typeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
     }
@@ -404,10 +404,10 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("(" + BAZ + ")" + QUX), Mockito.<String>isNull(), aryEq(new String[]{FOO}));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("(" + BAR + ")" + FOO), Mockito.<String>isNull(), aryEq(new String[]{BAZ}));
     }
 
     @Test
@@ -420,8 +420,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("(" + BAZ + ")" + QUX), Mockito.<String>isNull(), aryEq(new String[]{FOO}));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
@@ -442,8 +442,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("(" + BAR + ")" + FOO), Mockito.<String>isNull(), aryEq(new String[]{BAZ}));
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(secondSpecialInvocation).apply(methodVisitor, implementationContext);
@@ -476,10 +476,10 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondFieldGetter));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("()" + BAR), isNull(String.class), isNull(String[].class));
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("()" + QUX), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("()" + BAR), Mockito.<String>isNull(), Mockito.<String[]>isNull());
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("()" + QUX), Mockito.<String>isNull(), Mockito.<String[]>isNull());
     }
 
     @Test
@@ -492,8 +492,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("()" + BAR), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("()" + BAR), Mockito.<String>isNull(), Mockito.<String[]>isNull());
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitFieldInsn(Opcodes.GETFIELD, QUX, FOO, BAR);
@@ -513,8 +513,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("()" + QUX), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("()" + QUX), Mockito.<String>isNull(), Mockito.<String[]>isNull());
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, BAR, FOO);
         verify(methodVisitor).visitInsn(Opcodes.ARETURN);
@@ -546,10 +546,10 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondFieldSetter));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("(" + BAR + ")V"), Mockito.<String>isNull(), Mockito.<String[]>isNull());
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("(" + QUX + ")V"), Mockito.<String>isNull(), Mockito.<String[]>isNull());
     }
 
     @Test
@@ -562,8 +562,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
-                eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Mockito.startsWith(FOO),
+                eq("(" + BAR + ")V"), Mockito.<String>isNull(), Mockito.<String[]>isNull());
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 1);
@@ -584,8 +584,8 @@ public class ImplementationContextDefaultTest {
         MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
-                eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
+        verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Mockito.startsWith(BAR),
+                eq("(" + QUX + ")V"), Mockito.<String>isNull(), Mockito.<String[]>isNull());
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitVarInsn(Opcodes.ALOAD, 0);
         verify(methodVisitor).visitFieldInsn(Opcodes.PUTSTATIC, BAZ, BAR, FOO);

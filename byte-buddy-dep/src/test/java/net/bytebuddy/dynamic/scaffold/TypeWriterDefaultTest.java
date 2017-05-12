@@ -8,10 +8,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.modifier.MethodManifestation;
-import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.TypeManifestation;
-import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -113,7 +110,7 @@ public class TypeWriterDefaultTest {
     public void testNonPublicFieldOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineField(FOO, String.class, Ownership.STATIC)
+                .defineField(FOO, String.class, Ownership.STATIC, FieldManifestation.FINAL)
                 .make();
     }
 
@@ -121,7 +118,7 @@ public class TypeWriterDefaultTest {
     public void testNonPublicFieldOnAnnotationAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineField(FOO, String.class, Ownership.STATIC)
+                .defineField(FOO, String.class, Ownership.STATIC, FieldManifestation.FINAL)
                 .make();
     }
 
@@ -129,7 +126,7 @@ public class TypeWriterDefaultTest {
     public void testNonStaticFieldOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineField(FOO, String.class, Visibility.PUBLIC)
+                .defineField(FOO, String.class, Visibility.PUBLIC, FieldManifestation.FINAL)
                 .make();
     }
 
@@ -137,7 +134,23 @@ public class TypeWriterDefaultTest {
     public void testNonStaticFieldOnAnnotationAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineField(FOO, String.class, Visibility.PUBLIC)
+                .defineField(FOO, String.class, Visibility.PUBLIC, FieldManifestation.FINAL)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonFinalFieldOnInterfaceAssertion() throws Exception {
+        new ByteBuddy()
+                .makeInterface()
+                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonFinalFieldOnAnnotationAssertion() throws Exception {
+        new ByteBuddy()
+                .makeAnnotation()
+                .defineField(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
                 .make();
     }
 

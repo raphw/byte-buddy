@@ -3,7 +3,7 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
-import org.mockito.asm.Type;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 
 import static org.hamcrest.CoreMatchers.is;

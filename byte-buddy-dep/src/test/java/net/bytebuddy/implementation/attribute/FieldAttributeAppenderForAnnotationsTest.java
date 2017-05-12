@@ -3,7 +3,7 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.asm.Type;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
 

@@ -12,8 +12,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
@@ -135,9 +135,9 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
     }
 }

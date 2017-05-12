@@ -55,8 +55,7 @@
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
         <version.asm>5.2</version.asm>
         <version.junit>4.12</version.junit>
-        <!-- Version 2.* uses Byte Buddy such that newer versions should not be used as a dependency. -->
-        <version.mockito>1.10.19</version.mockito>
+        <version.mockito>2.7.22</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.3.0</version.plugin.bundle>
         <version.plugin.compiler>3.6.1</version.plugin.compiler>

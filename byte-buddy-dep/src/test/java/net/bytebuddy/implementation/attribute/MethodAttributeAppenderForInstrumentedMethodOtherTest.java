@@ -7,7 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.asm.Type;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 
 import static org.hamcrest.CoreMatchers.is;

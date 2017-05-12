@@ -83,7 +83,7 @@ public class ByteBuddyExtensionTest {
         when(project.configure(any(Transformation.class), eq(closure))).then(new Answer<Transformation>() {
             @Override
             public Transformation answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return invocationOnMock.getArgumentAt(0, Transformation.class);
+                return invocationOnMock.getArgument(0);
             }
         });
         ByteBuddyExtension byteBuddyExtension = new ByteBuddyExtension(project);
@@ -96,7 +96,7 @@ public class ByteBuddyExtensionTest {
         when(project.configure(any(Initialization.class), eq(closure))).then(new Answer<Initialization>() {
             @Override
             public Initialization answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return invocationOnMock.getArgumentAt(0, Initialization.class);
+                return invocationOnMock.getArgument(0);
             }
         });
         ByteBuddyExtension byteBuddyExtension = new ByteBuddyExtension(project);
@@ -115,7 +115,7 @@ public class ByteBuddyExtensionTest {
         when(project.configure(any(Initialization.class), eq(closure))).then(new Answer<Initialization>() {
             @Override
             public Initialization answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return invocationOnMock.getArgumentAt(0, Initialization.class);
+                return invocationOnMock.getArgument(0);
             }
         });
         ByteBuddyExtension byteBuddyExtension = new ByteBuddyExtension(project);

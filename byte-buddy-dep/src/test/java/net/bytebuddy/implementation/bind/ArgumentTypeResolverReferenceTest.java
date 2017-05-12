@@ -6,11 +6,13 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.AdditionalMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Mockito.*;
 
 public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResolverTest {
@@ -60,9 +62,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS));
         verify(source, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
     }
 
     @Test
@@ -77,11 +79,11 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(2)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1, 2))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1, 2))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(2)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1, 2))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1, 2))));
     }
 
     @Test
@@ -96,9 +98,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
         verify(source, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
     }
 
     @Test
@@ -113,9 +115,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         assertThat(resolution, is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
         verify(source, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
     }
 
     @Test
@@ -134,9 +136,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(leftMethod, atLeast(1)).getParameters();
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
     }
 
     @Test
@@ -155,9 +157,9 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(leftMethod, atLeast(1)).getParameters();
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0))));
     }
 
     @Test
@@ -179,10 +181,10 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
     }
 
     @Test
@@ -203,10 +205,10 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(left, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
     }
 
     @Test
@@ -227,10 +229,10 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(rightMethod, atLeast(1)).getParameters();
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(left, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(left, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(left, never()).getTargetParameterIndex(not(argThat((describesArgument(0, 1)))));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
-        verify(right, never()).getTargetParameterIndex(argThat(not(describesArgument(0, 1))));
+        verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
     }
 
     @Test

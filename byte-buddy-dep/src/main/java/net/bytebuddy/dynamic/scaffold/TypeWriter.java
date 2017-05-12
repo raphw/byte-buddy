@@ -1885,7 +1885,11 @@ public interface TypeWriter<T> {
                         }
                     }
                 }
-                constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0, signature != null);
+                constraint.assertField(name,
+                        (modifiers & Opcodes.ACC_PUBLIC) != 0,
+                        (modifiers & Opcodes.ACC_STATIC) != 0,
+                        (modifiers & Opcodes.ACC_FINAL) != 0,
+                        signature != null);
                 FieldVisitor fieldVisitor = super.visitField(modifiers, name, descriptor, signature, defaultValue);
                 return fieldVisitor == null
                         ? IGNORE_FIELD
@@ -1931,9 +1935,10 @@ public interface TypeWriter<T> {
                  * @param name      The name of the field.
                  * @param isPublic  {@code true} if this field is public.
                  * @param isStatic  {@code true} if this field is static.
+                 * @param isFinal   {@code true} if this field is final.
                  * @param isGeneric {@code true} if this field defines a generic signature.
                  */
-                void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric);
+                void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric);
 
                 /**
                  * Asserts a method for being valid.
@@ -2040,7 +2045,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         /* do nothing */
                     }
 
@@ -2116,7 +2121,7 @@ public interface TypeWriter<T> {
                     INSTANCE;
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         throw new IllegalStateException("Cannot define a field for a package description type");
                     }
 
@@ -2218,9 +2223,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
-                        if (!isStatic || !isPublic) {
-                            throw new IllegalStateException("Cannot define non-static or non-public field '" + name + "' for interface type");
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
+                        if (!isStatic || !isPublic || !isFinal) {
+                            throw new IllegalStateException("Cannot only define public, static, final field '" + name + "' for interface type");
                         }
                     }
 
@@ -2328,9 +2333,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
-                        if (!isStatic || !isPublic) {
-                            throw new IllegalStateException("Cannot define non-static or non-public field '" + name + "' for annotation type");
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
+                        if (!isStatic || !isPublic || !isFinal) {
+                            throw new IllegalStateException("Cannot only define public, static, final field '" + name + "' for interface type");
                         }
                     }
 
@@ -2424,7 +2429,7 @@ public interface TypeWriter<T> {
                      *
                      * @param classFileVersion The enforced class file version.
                      */
-                    public ForClassFileVersion(ClassFileVersion classFileVersion) {
+                    protected ForClassFileVersion(ClassFileVersion classFileVersion) {
                         this.classFileVersion = classFileVersion;
                     }
 
@@ -2438,7 +2443,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define generic field '" + name + "' for class file version " + classFileVersion);
                         }
@@ -2558,9 +2563,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         for (Constraint constraint : constraints) {
-                            constraint.assertField(name, isPublic, isStatic, isGeneric);
+                            constraint.assertField(name, isPublic, isStatic, isFinal, isGeneric);
                         }
                     }
 

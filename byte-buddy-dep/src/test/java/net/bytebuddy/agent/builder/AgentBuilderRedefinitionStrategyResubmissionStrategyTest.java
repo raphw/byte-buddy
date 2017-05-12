@@ -7,12 +7,11 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -80,7 +79,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -130,7 +129,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -160,15 +159,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         argumentCaptor.getValue().run();
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
-        verify(instrumentation).redefineClasses(Mockito.argThat(new BaseMatcher<ClassDefinition[]>() {
+        verify(instrumentation).redefineClasses(Mockito.argThat(new ArgumentMatcher<ClassDefinition>() {
             @Override
-            public boolean matches(Object o) {
-                return ((ClassDefinition) o).getDefinitionClass() == Foo.class
-                        && Arrays.equals(((ClassDefinition) o).getDefinitionClassFile(), new byte[]{1, 2, 3});
-            }
-
-            @Override
-            public void describeTo(Description description) {
+            public boolean matches(ClassDefinition classDefinition) {
+                return classDefinition.getDefinitionClass() == Foo.class && Arrays.equals(classDefinition.getDefinitionClassFile(), new byte[]{1, 2, 3});
             }
         }));
         verifyNoMoreInteractions(instrumentation);
@@ -193,7 +187,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -236,7 +230,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -282,7 +276,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -319,7 +313,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -357,7 +351,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -398,7 +392,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -446,7 +440,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -497,7 +491,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -538,7 +532,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -582,7 +576,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -624,7 +618,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -669,7 +663,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         RuntimeException runtimeException = new RuntimeException();
@@ -720,7 +714,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+                return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
         RuntimeException runtimeException = new RuntimeException();

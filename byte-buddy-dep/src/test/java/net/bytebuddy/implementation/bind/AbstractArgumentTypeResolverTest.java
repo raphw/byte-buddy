@@ -3,21 +3,15 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.junit.Before;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static org.hamcrest.core.AnyOf.anyOf;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.when;
 
 public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverTest {
@@ -34,12 +28,18 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
     @Mock
     private ParameterDescription sourceParameter;
 
-    protected static Matcher<? super ArgumentTypeResolver.ParameterIndexToken> describesArgument(int... index) {
-        Matcher<? super ArgumentTypeResolver.ParameterIndexToken> token = CoreMatchers.anything();
-        for (int anIndex : index) {
-            token = anyOf(new IndexTokenMatcher(anIndex), token);
-        }
-        return token;
+    protected static ArgumentMatcher<? super ArgumentTypeResolver.ParameterIndexToken> describesArgument(final int... index) {
+        return new ArgumentMatcher<ArgumentTypeResolver.ParameterIndexToken>() {
+            @Override
+            public boolean matches(ArgumentTypeResolver.ParameterIndexToken parameterIndexToken) {
+                for (int anIndex : index) {
+                    if (parameterIndexToken.equals(new ArgumentTypeResolver.ParameterIndexToken(anIndex))) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
     }
 
     @Override
@@ -53,26 +53,6 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         when(genericSourceType.asErasure()).thenReturn(sourceType);
         when(leftMethod.getParameters()).thenReturn((ParameterList) leftParameterList);
         when(rightMethod.getParameters()).thenReturn((ParameterList) rightParameterList);
-    }
-
-    private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {
-
-        private final int index;
-
-        private IndexTokenMatcher(int index) {
-            assert index >= 0;
-            this.index = index;
-        }
-
-        @Override
-        public boolean matches(Object item) {
-            return new ArgumentTypeResolver.ParameterIndexToken(index).equals(item);
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description.appendText("Expected matching token for parameter index ").appendValue(index);
-        }
     }
 
     protected static class TokenAnswer implements Answer<Integer> {

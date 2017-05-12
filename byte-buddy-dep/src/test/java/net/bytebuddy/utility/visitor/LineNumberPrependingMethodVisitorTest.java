@@ -1,12 +1,10 @@
 package net.bytebuddy.utility.visitor;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.mockito.Matchers.any;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Mockito.*;
 
 public class LineNumberPrependingMethodVisitorTest {
@@ -21,7 +19,7 @@ public class LineNumberPrependingMethodVisitorTest {
         Label label = new Label();
         methodVisitor.visitLineNumber(LINE, label);
         verify(delegate, times(2)).visitLabel(any(Label.class));
-        verify(delegate).visitLineNumber(eq(LINE), argThat(not(label)));
+        verify(delegate).visitLineNumber(eq(LINE), not(eq(label)));
         verifyNoMoreInteractions(delegate);
     }
 }

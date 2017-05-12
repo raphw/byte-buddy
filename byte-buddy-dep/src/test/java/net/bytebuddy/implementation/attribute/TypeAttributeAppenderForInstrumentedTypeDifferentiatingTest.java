@@ -8,7 +8,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.asm.Type;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 
 import java.util.Arrays;

@@ -6,8 +6,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.asm.Type;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

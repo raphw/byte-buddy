@@ -1,7 +1,6 @@
 package net.bytebuddy.build.maven;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.aether.RepositorySystem;
@@ -31,10 +30,7 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ClassLoaderResolverTest {
 
@@ -72,7 +68,7 @@ public class ClassLoaderResolverTest {
         when(root.accept(any(DependencyVisitor.class))).then(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-                DependencyVisitor dependencyVisitor = invocationOnMock.getArgumentAt(0, DependencyVisitor.class);
+                DependencyVisitor dependencyVisitor = invocationOnMock.getArgument(0);
                 dependencyVisitor.visitEnter(child);
                 dependencyVisitor.visitLeave(child);
                 return null;

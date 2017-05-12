@@ -19,6 +19,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,8 @@ import java.util.Set;
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class ByteBuddyMojoTest {
 
@@ -57,7 +58,8 @@ public class ByteBuddyMojoTest {
 
     @Before
     public void setUp() throws Exception {
-        when(repositorySystem.collectDependencies(any(RepositorySystemSession.class), any(CollectRequest.class))).thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
+        when(repositorySystem.collectDependencies(Mockito.<RepositorySystemSession>any(), Mockito.<CollectRequest>any()))
+                .thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
         project = File.createTempFile(FOO, TEMP);
         assertThat(project.delete(), is(true));
         assertThat(project.mkdir(), is(true));

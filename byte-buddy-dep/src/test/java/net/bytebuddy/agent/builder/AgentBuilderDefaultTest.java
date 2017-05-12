@@ -18,13 +18,12 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -1054,7 +1053,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
-        verify(instrumentation).redefineClasses(any(ClassDefinition[].class));
+        verify(instrumentation).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
@@ -1090,7 +1089,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
-        verify(instrumentation).redefineClasses(any(ClassDefinition[].class));
+        verify(instrumentation).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
@@ -1126,7 +1125,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
         verify(instrumentation, times(2)).isModifiableClass(REDEFINED);
-        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition[].class));
+        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation, times(2)).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
@@ -1166,7 +1165,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).removeTransformer(classFileTransformer);
         verify(instrumentation, times(2)).getAllLoadedClasses();
         verify(instrumentation, times(2)).isModifiableClass(REDEFINED);
-        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition[].class));
+        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation, times(2)).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
@@ -1503,7 +1502,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).isModifiableClass(OTHER);
-        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition[].class));
+        verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
@@ -2246,7 +2245,7 @@ public class AgentBuilderDefaultTest {
         }
     }
 
-    private static class ClassRedefinitionMatcher extends BaseMatcher<ClassDefinition> {
+    private static class ClassRedefinitionMatcher implements ArgumentMatcher<ClassDefinition> {
 
         private final Class<?> type;
 
@@ -2255,17 +2254,12 @@ public class AgentBuilderDefaultTest {
         }
 
         @Override
-        public boolean matches(Object item) {
-            return ((ClassDefinition) item).getDefinitionClass() == type;
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            /* empty */
+        public boolean matches(ClassDefinition classDefinition) {
+            return classDefinition.getDefinitionClass() == type;
         }
     }
 
-    private static class CauseMatcher extends BaseMatcher<Throwable> {
+    private static class CauseMatcher implements ArgumentMatcher<Throwable> {
 
         private final Throwable throwable;
 
@@ -2274,12 +2268,8 @@ public class AgentBuilderDefaultTest {
         }
 
         @Override
-        public boolean matches(Object item) {
-            return throwable.equals(((Throwable) item).getCause());
-        }
-
-        @Override
-        public void describeTo(Description description) {
+        public boolean matches(Throwable item) {
+            return throwable.equals((item).getCause());
         }
     }
 }

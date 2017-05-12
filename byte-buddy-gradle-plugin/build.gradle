@@ -29,7 +29,9 @@ dependencies {
     }
     testCompile gradleTestKit()
     testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito'
+    testCompile (group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
     compileOnly group: 'org.projectlombok', name: 'lombok', version: outerPom.properties.'version.lombok'
 }
 
