@@ -1215,7 +1215,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param methodDescription The method or constructor to represent.
                  * @return A mapping for a method or constructor constant.
                  */
-                protected static Target of(MethodDescription.InDefinedShape methodDescription) {
+                public static Target of(MethodDescription.InDefinedShape methodDescription) {
                     return new ForStackManipulation(MethodConstant.forMethod(methodDescription));
                 }
 
@@ -1225,7 +1225,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param typeDescription The type constant to represent.
                  * @return A mapping for a type constant.
                  */
-                protected static Target of(TypeDescription typeDescription) {
+                public static Target of(TypeDescription typeDescription) {
                     return new ForStackManipulation(ClassConstant.of(typeDescription));
                 }
 
@@ -1235,7 +1235,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param value The constant string value to represent.
                  * @return A mapping for a constant string.
                  */
-                protected static Target of(String value) {
+                public static Target of(String value) {
                     return new ForStackManipulation(new TextConstant(value));
                 }
 
@@ -1245,7 +1245,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param value The constant value to represent.
                  * @return An appropriate target for an offset mapping.
                  */
-                protected static Target of(Object value) {
+                public static Target of(Object value) {
                     if (value instanceof Boolean) {
                         return new ForStackManipulation(IntegerConstant.forValue((Boolean) value));
                     } else if (value instanceof Byte) {
