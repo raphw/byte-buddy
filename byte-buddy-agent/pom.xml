@@ -98,6 +98,7 @@
                                 <Export-Package>
                                     net.bytebuddy.agent
                                 </Export-Package>
+                                <Automatic-Module-Name>${project.groupId}.agent</Automatic-Module-Name>
                             </instructions>
                         </configuration>
                     </plugin>

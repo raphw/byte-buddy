@@ -25,6 +25,11 @@ import java.util.logging.Logger;
 public class Nexus extends WeakReference<ClassLoader> {
 
     /**
+     * A system property that allows to disable the use of the {@link Nexus} class which is normally injected into the system class loader.
+     */
+    public static final String PROPERTY = "net.bytebuddy.nexus.disabled";
+
+    /**
      * An type-safe constant for a non-operational reference queue.
      */
     protected static final ReferenceQueue<ClassLoader> NO_QUEUE = null;

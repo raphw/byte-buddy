@@ -154,6 +154,7 @@
                                     net.bytebuddy.utility.visitor,
                                     ${shade.target}
                                 </Export-Package>
+                                <Automatic-Module-Name>${project.groupId}</Automatic-Module-Name>
                             </instructions>
                         </configuration>
                     </plugin>

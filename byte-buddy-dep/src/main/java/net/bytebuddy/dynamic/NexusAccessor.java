@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -33,6 +34,8 @@ import java.util.Collections;
  */
 @EqualsAndHashCode
 public class NexusAccessor {
+
+    public static final String PROPERTY;
 
     /**
      * The dispatcher to use.
@@ -193,19 +196,23 @@ public class NexusAccessor {
             @Override
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
-                try {
-                    Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), Nexus.class.getProtectionDomain())
-                            .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
-                            .get(new TypeDescription.ForLoadedType(Nexus.class));
-                    return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
-                            nexusType.getMethod("clean", Reference.class));
-                } catch (Exception exception) {
+                if (Boolean.getBoolean(Nexus.PROPERTY)) {
+                    return new Unavailable(new IllegalStateException("Nexus injection was explicitly disabled"));
+                } else {
                     try {
-                        Class<?> nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
+                        Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
+                                .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                                .get(new TypeDescription.ForLoadedType(Nexus.class));
                         return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
                                 nexusType.getMethod("clean", Reference.class));
-                    } catch (Exception ignored) {
-                        return new Dispatcher.Unavailable(exception);
+                    } catch (Exception exception) {
+                        try {
+                            Class<?> nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
+                            return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
+                                    nexusType.getMethod("clean", Reference.class));
+                        } catch (Exception ignored) {
+                            return new Dispatcher.Unavailable(exception);
+                        }
                     }
                 }
             }
