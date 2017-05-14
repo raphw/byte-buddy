@@ -1205,7 +1205,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param stackManipulation The represented stack manipulation.
                  */
-                protected ForStackManipulation(StackManipulation stackManipulation) {
+                public ForStackManipulation(StackManipulation stackManipulation) {
                     this.stackManipulation = stackManipulation;
                 }
 
