@@ -16,6 +16,10 @@ import java.util.logging.Logger;
  * loaded type initializer registered before hand.
  * </p>
  * <p>
+ * <b>Note</b>: Availability of the {@link Nexus} class and its injection into the system class loader
+ * can be disabled entirely by setting the {@link Nexus#PROPERTY} system property to {@code false}.
+ * </p>
+ * <p>
  * <b>Important</b>: The nexus must never be accessed directly but only by the {@link NexusAccessor}
  * which makes sure that the nexus is loaded by the system class loader. Otherwise, a class might not
  * be able to initialize itself if it is loaded by different class loader that does not have the

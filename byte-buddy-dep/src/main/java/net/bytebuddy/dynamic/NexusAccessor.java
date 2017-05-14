@@ -35,8 +35,6 @@ import java.util.Collections;
 @EqualsAndHashCode
 public class NexusAccessor {
 
-    public static final String PROPERTY;
-
     /**
      * The dispatcher to use.
      */
