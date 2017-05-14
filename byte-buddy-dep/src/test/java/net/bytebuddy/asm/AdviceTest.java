@@ -9,6 +9,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -1295,6 +1296,20 @@ public class AdviceTest {
     }
 
     @Test
+    public void testUserOffsetMapping() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.OffsetMapping.ForStackManipulation(ClassConstant.of(TypeDescription.OBJECT),
+                        TypeDescription.STRING.asGenericType(),
+                        TypeDescription.STRING.asGenericType(),
+                        Assigner.Typing.STATIC)).to(CustomAdvice.class).on(named(BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR), is((Object) BAR));
+    }
+
+    @Test
     public void testLineNumberPrepend() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -2027,7 +2042,13 @@ public class AdviceTest {
                 return types.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.OffsetMapping.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.Factory.Simple.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.Factory.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return types.next();

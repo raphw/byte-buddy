@@ -1348,6 +1348,79 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return delegation;
                 }
             }
+
+            /**
+             * A simple factory that binds a constant offset mapping.
+             *
+             * @param <T>
+             */
+            @EqualsAndHashCode
+            class Simple<T extends Annotation> implements Factory<T> {
+
+                /**
+                 * The annotation type being bound.
+                 */
+                private final Class<T> annotationType;
+
+                /**
+                 * The fixed offset mapping.
+                 */
+                private final OffsetMapping offsetMapping;
+
+                /**
+                 * Creates a simple factory for a simple binding for an offset mapping.
+                 *
+                 * @param annotationType The annotation type being bound.
+                 * @param offsetMapping  The fixed offset mapping.
+                 */
+                public Simple(Class<T> annotationType, OffsetMapping offsetMapping) {
+                    this.annotationType = annotationType;
+                    this.offsetMapping = offsetMapping;
+                }
+
+                @Override
+                public Class<T> getAnnotationType() {
+                    return annotationType;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
+                    return offsetMapping;
+                }
+            }
+
+            /**
+             * A factory for an annotation whose use is not permitted.
+             *
+             * @param <T> The annotation type this factory binds.
+             */
+            @EqualsAndHashCode
+            class Illegal<T extends Annotation> implements Factory<T> {
+
+                /**
+                 * The annotation type.
+                 */
+                private final Class<T> annotationType;
+
+                /**
+                 * Creates a factory that does not permit the usage of the represented annotation.
+                 *
+                 * @param annotationType The annotation type.
+                 */
+                public Illegal(Class<T> annotationType) {
+                    this.annotationType = annotationType;
+                }
+
+                @Override
+                public Class<T> getAnnotationType() {
+                    return annotationType;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
+                    throw new IllegalStateException("Usage of " + annotationType + " is not allowed on " + target);
+                }
+            }
         }
 
         /**
@@ -2889,7 +2962,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             .ofType(OnMethodExit.class)
                             .getValue(ON_THROWABLE)
                             .resolve(TypeDescription.class)
-                            .represents(NoExceptionHandler.class) ? new OffsetMapping.Illegal(Thrown.class) : Factory.INSTANCE;
+                            .represents(NoExceptionHandler.class) ? new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class) : Factory.INSTANCE;
                 }
 
                 @Override
@@ -3286,39 +3359,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
                     return new ForSerializedValue(target.getType(), typeDescription, deserialization);
                 }
-            }
-        }
-
-        /**
-         * A factory for an annotation whose use is not permitted.
-         *
-         * @param <T> The annotation type this factory binds.
-         */
-        @EqualsAndHashCode
-        class Illegal<T extends Annotation> implements Factory<T> {
-
-            /**
-             * The annotation type.
-             */
-            private final Class<T> annotationType;
-
-            /**
-             * Creates a factory that does not permit the usage of the represented annotation.
-             *
-             * @param annotationType The annotation type.
-             */
-            public Illegal(Class<T> annotationType) {
-                this.annotationType = annotationType;
-            }
-
-            @Override
-            public Class<T> getAnnotationType() {
-                return annotationType;
-            }
-
-            @Override
-            public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
-                throw new IllegalStateException("Usage of " + annotationType + " is not allowed on " + target);
             }
         }
     }
@@ -5524,7 +5564,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              ClassReader classReader) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
@@ -5532,9 +5572,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class),
-                                        new OffsetMapping.Illegal(Enter.class),
-                                        new OffsetMapping.Illegal(Return.class)), userFactories),
+                                        new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
+                                        new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
+                                        new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
@@ -6784,16 +6824,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory<?>> userFactories) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class),
-                                        new OffsetMapping.Illegal(Enter.class),
-                                        new OffsetMapping.Illegal(Return.class)), userFactories),
+                                        new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
+                                        new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
+                                        new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
@@ -8265,7 +8305,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Object value) {
-            return bind(type, OffsetMapping.ForStackManipulation.Factory.of(type, value));
+            return bind(OffsetMapping.ForStackManipulation.Factory.of(type, value));
         }
 
         /**
@@ -8292,7 +8332,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, FieldDescription fieldDescription) {
-            return bind(type, new OffsetMapping.ForField.Resolved.Factory<T>(type, fieldDescription));
+            return bind(new OffsetMapping.ForField.Resolved.Factory<T>(type, fieldDescription));
         }
 
         /**
@@ -8341,7 +8381,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, ParameterDescription parameterDescription) {
-            return bind(type, new OffsetMapping.ForArgument.Resolved.Factory<T>(type, parameterDescription));
+            return bind(new OffsetMapping.ForArgument.Resolved.Factory<T>(type, parameterDescription));
         }
 
         /**
@@ -8365,7 +8405,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, TypeDescription value) {
-            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
         }
 
         /**
@@ -8389,7 +8429,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, EnumerationDescription value) {
-            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, value));
         }
 
         /**
@@ -8416,7 +8456,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation, S extends Serializable> WithCustomMapping bindSerialized(Class<T> type, S value, Class<? super S> targetType) {
-            return bind(type, OffsetMapping.ForSerializedValue.Factory.of(type, value, targetType));
+            return bind(OffsetMapping.ForSerializedValue.Factory.of(type, value, targetType));
         }
 
         /**
@@ -8428,7 +8468,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bindProperty(Class<T> type, String property) {
-            return bind(type, OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
+            return bind(OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
         }
 
         /**
@@ -8454,24 +8494,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
-            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
+            return bind(new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
         }
 
         /**
-         * Binds an annotation type to dynamically computed value. Whenever the {@link Advice} component discovers the given annotation on
+         * Binds the supplied annotation to the annotation's property of the specified name.
+         *
+         * @param type          The type of the annotation being bound.
+         * @param offsetMapping The offset mapping being bound.
+         * @param <T>           The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, OffsetMapping offsetMapping) {
+            return bind(new OffsetMapping.Factory.Simple<T>(type, offsetMapping));
+        }
+
+        /**
+         * Binds an annotation to a dynamically computed value. Whenever the {@link Advice} component discovers the given annotation on
          * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
          *
-         * @param type          The annotation type that triggers the mapping.
          * @param offsetMapping The dynamic value that is computed for binding the parameter to a value.
          * @param <T>           The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<T> type, OffsetMapping.Factory<? super T> offsetMapping) {
+        public <T extends Annotation> WithCustomMapping bind(OffsetMapping.Factory<? super T> offsetMapping) {
             Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new HashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
-            if (!type.isAnnotation()) {
-                throw new IllegalArgumentException("Not an annotation type: " + type);
-            } else if (offsetMappings.put(type, offsetMapping) != null) {
-                throw new IllegalArgumentException("Annotation type already mapped: " + type);
+            if (!offsetMapping.getAnnotationType().isAnnotation()) {
+                throw new IllegalArgumentException("Not an annotation type: " + offsetMapping.getAnnotationType());
+            } else if (offsetMappings.put(offsetMapping.getAnnotationType(), offsetMapping) != null) {
+                throw new IllegalArgumentException("Annotation type already mapped: " + offsetMapping.getAnnotationType());
             }
             return new WithCustomMapping(offsetMappings);
         }
