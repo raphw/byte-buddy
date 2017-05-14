@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. Mai 2017: version 1.7.0
+
+- Define names for automatic modules in Java 9.
+- Introduce property `net.bytebuddy.nexus.disabled` to allow disabling `Nexus` mechanism.
+- Do not use context `ProtectionDomain` when using `Nexus` class.
+- Normalize `Advice` class custom bindings via opening internally used `OffsetMapping` API. Remove `CustomValue` binding which is less powerful.
+- Do not group `transient` with `volatile` modifier.
+- Introduce `MemberRemoval` component for removing fields and/or methods.
+- Introduce first version for `MemberSubstituion` class for replacing field/method access.
+
 ### 26. April 2017: version 1.6.14
 
 - Extended `AgentBuilder` listener API.
