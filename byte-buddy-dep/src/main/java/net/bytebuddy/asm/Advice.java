@@ -1432,12 +1432,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * The type expected by the advice method.
              */
-            private final TypeDescription.Generic target;
+            protected final TypeDescription.Generic target;
 
             /**
              * Determines if the parameter is to be treated as read-only.
              */
-            private final boolean readOnly;
+            protected final boolean readOnly;
 
             /**
              * The typing to apply when assigning values.
@@ -1494,13 +1494,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final int index;
 
                 /**
+                 * {@code true} if the parameter binding is optional.
+                 */
+                private final boolean optional;
+
+                /**
                  * Creates a new offset binding for a parameter with a given index.
                  *
                  * @param target   The target type.
                  * @param argument The annotation that triggers this binding.
                  */
                 protected Unresolved(TypeDescription.Generic target, Argument argument) {
-                    this(target, argument.readOnly(), argument.typing(), argument.value());
+                    this(target, argument.readOnly(), argument.typing(), argument.value(), argument.optional());
                 }
 
                 /**
@@ -1513,7 +1518,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * Creates a new offset binding for a parameter with a given index.
+                 * Creates a non-optional offset binding for a parameter with a given index.
                  *
                  * @param target   The type expected by the advice method.
                  * @param readOnly Determines if the parameter is to be treated as read-only.
@@ -1521,8 +1526,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param index    The index of the parameter.
                  */
                 public Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, int index) {
+                    this(target, readOnly, typing, index, false);
+                }
+
+                /**
+                 * Creates a new offset binding for a parameter with a given index.
+                 *
+                 * @param target   The type expected by the advice method.
+                 * @param readOnly Determines if the parameter is to be treated as read-only.
+                 * @param typing   The typing to apply.
+                 * @param index    The index of the parameter.
+                 * @param optional {@code true} if the parameter binding is optional.
+                 */
+                public Unresolved(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing, int index, boolean optional) {
                     super(target, readOnly, typing);
                     this.index = index;
+                    this.optional = optional;
                 }
 
                 @Override
@@ -1533,6 +1552,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         return parameters.get(index);
                     }
+                }
+
+                @Override
+                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+                    if (optional && instrumentedMethod.getParameters().size() <= index) {
+                        return readOnly
+                                ? new Target.ForDefaultValue.ReadOnly(target)
+                                : new Target.ForDefaultValue.ReadWrite(target);
+                    }
+                    return super.resolve(instrumentedType, instrumentedMethod, assigner, context);
                 }
 
                 /**
@@ -7997,6 +8026,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The typing to apply upon assignment.
          */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Indicates if a parameter binding is optional. If a binding is optional and a parameter with the specified index does not exist,
+         * the parameter's default value is bound.
+         *
+         * @return {@code true} if the binding is optional.
+         */
+        boolean optional() default false;
     }
 
     /**

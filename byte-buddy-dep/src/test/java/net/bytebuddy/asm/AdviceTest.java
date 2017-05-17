@@ -1376,7 +1376,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testExceptionPriniting() throws Exception {
+    public void testExceptionPrinting() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(ExceptionWriterTest.class).withExceptionPrinting().on(named(FOO)))
@@ -1394,6 +1394,17 @@ public class AdviceTest {
             }
         }
         verify(printStream, times(2)).println(Mockito.any(RuntimeException.class));
+    }
+
+    @Test
+    public void testOptionalArgument() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(OptionalArgumentAdvice.class)
+                .visit(Advice.to(OptionalArgumentAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -3128,6 +3139,20 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = new Object();
+        }
+    }
+
+    public static class OptionalArgumentAdvice {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(value = 0, optional = true) String value) {
+            if (value != null) {
+                throw new AssertionError();
+            }
         }
     }
 
