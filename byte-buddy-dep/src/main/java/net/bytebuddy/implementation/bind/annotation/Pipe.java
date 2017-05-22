@@ -40,45 +40,20 @@ import java.util.Map;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
+ * <p>
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
  * invocation to another instance. The instance to which a method call is forwarded must be of the most specific
  * type that declares the intercepted method on the intercepted type.
- * <p>&nbsp;</p>
+ * </p>
+ * <p>
  * Unfortunately, before Java 8, the Java Class Library does not define any interface type which takes a single
  * {@link java.lang.Object} type and returns another {@link java.lang.Object} type. For this reason, a
  * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder} needs to be installed explicitly
  * and registered on a {@link net.bytebuddy.implementation.MethodDelegation}. The installed type is allowed to be an
  * interface without any super types that declares a single method which maps an {@link java.lang.Object} type to
  * a another {@link java.lang.Object} type as a result value. It is however not prohibited to use generics in the
- * process. The following example demonstrates how the {@code @Pipe} annotation can be installed on a user type.
- * As a preparation, one needs to define a type for which the {@code @Pipe} implements the forwarding behavior:
- * <pre>
- * interface Forwarder&lt;T, S&gt; {
- *   T forwardTo(S s);
- * }
- * </pre>
- * Based on this type, one can now implement an interceptor:
- * <pre>
- * class Interceptor {
- *   private final Foo foo;
- *
- *   public Interceptor(Foo foo) {
- *     this.foo = foo;
- *   }
- *
- *   public String intercept(@Pipe Forwarder&lt;String, Foo&gt; forwarder) {
- *     return forwarder.forwardTo(foo);
- *   }
- * }
- * </pre>
- * Using both of these types, one can now install the
- * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder} and register it on a
- * {@link net.bytebuddy.implementation.MethodDelegation}:
- * <pre>
- * MethodDelegation
- *   .to(new Interceptor(new Foo()))
- *   .appendParameterBinder(Pipe.Binder.install(ForwardingType.class))
- * </pre>
+ * process.
+ * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder

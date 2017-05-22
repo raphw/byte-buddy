@@ -21,7 +21,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -434,8 +433,8 @@ public class ByteBuddyAgent {
                 throw new IllegalStateException("Could not self-attach to current VM using external process");
             }
         } finally {
-            if (attachmentJar != null && !attachmentJar.delete()) {
-                Logger.getAnonymousLogger().warning("Could not delete attachment jar: " + attachmentJar);
+            if (attachmentJar != null) {
+                attachmentJar.delete();
             }
         }
     }
@@ -954,7 +953,7 @@ public class ByteBuddyAgent {
                  * Creates a new Java 9 capable dispatcher for reading the current process's id.
                  *
                  * @param current The {@code java.lang.ProcessHandle#current()} method.
-                 * @param pid  The {@code java.lang.ProcessHandle#pid()} method.
+                 * @param pid     The {@code java.lang.ProcessHandle#pid()} method.
                  */
                 protected ForJava9CapableVm(Method current, Method pid) {
                     this.current = current;

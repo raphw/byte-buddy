@@ -5760,6 +5760,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType     The type of the value supplied by the enter advice method or
                      *                      a description of {@code void} if no such value exists.
                      */
+                    @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
@@ -6941,6 +6942,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType     The type of the value supplied by the enter advice method or
                      *                      a description of {@code void} if no such value exists.
                      */
+                    @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             TypeDefinition enterType) {

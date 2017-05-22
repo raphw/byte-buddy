@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -311,9 +310,7 @@ public interface VirtualMachine {
                     } catch (InterruptedException exception) {
                         throw new IllegalStateException("Interrupted during wait for process", exception);
                     } finally {
-                        if (!attachFile.delete()) {
-                            Logger.getLogger("net.bytebuddy").warning("Could not delete attach file: " + attachFile);
-                        }
+                        attachFile.delete();
                     }
                 }
                 ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));

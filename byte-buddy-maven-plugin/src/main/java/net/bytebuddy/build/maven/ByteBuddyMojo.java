@@ -139,13 +139,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().warn("No transformations are specified. Skipping plugin application.");
             return;
         }
-        ByteBuddyLogHandler byteBuddyLogHandler = ByteBuddyLogHandler.initialize(getLog());
         try {
             processOutputDirectory(new File(getOutputDirectory()), getClassPathElements());
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
-        } finally {
-            byteBuddyLogHandler.reset();
         }
     }
 

@@ -5,7 +5,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -145,9 +144,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      *                        it does however not matter which class loader loaded this latter type.
      */
     public static void register(String name, ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
-        if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, referenceQueue, identification), typeInitializer) != null) {
-            Logger.getLogger("net.bytebuddy").warning("Initializer with id " + identification + " is already registered for " + name);
-        }
+        TYPE_INITIALIZERS.put(new Nexus(name, classLoader, referenceQueue, identification), typeInitializer);
     }
 
     /**

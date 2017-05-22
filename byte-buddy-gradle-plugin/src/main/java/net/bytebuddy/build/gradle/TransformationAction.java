@@ -61,13 +61,10 @@ public class TransformationAction implements Action<Task> {
 
     @Override
     public void execute(Task task) {
-        ByteBuddyLogHandler byteBuddyLogHandler = ByteBuddyLogHandler.initialize(project);
         try {
             processOutputDirectory(this.task.getDestinationDir(), this.task.getClasspath());
         } catch (IOException exception) {
             throw new GradleException("Error accessing file system", exception);
-        } finally {
-            byteBuddyLogHandler.reset();
         }
     }
 

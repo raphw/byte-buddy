@@ -508,7 +508,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -532,7 +532,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambdaIsConstant() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -555,7 +555,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testLambdaFactoryIsReset() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -575,7 +575,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testArgumentCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -599,7 +599,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testArgumentCapturingLambdaIsNotConstant() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -622,7 +622,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testInstanceCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -646,7 +646,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -669,7 +669,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -692,7 +692,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testSerializableLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -716,6 +716,52 @@ public class AgentBuilderDefaultApplicationTest {
             Callable<String> deserialized = (Callable<String>) objectInputStream.readObject();
             assertThat(deserialized.call(), is(FOO));
             objectInputStream.close();
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
+    public void testReturnTypeTransformingLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
+                .installOn(ByteBuddyAgent.getInstrumentation());
+        try {
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            Runnable instance = (Runnable) sampleFactory.getDeclaredMethod("returnTypeTransforming").invoke(sampleFactory.getDeclaredConstructor().newInstance());
+            instance.run();
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
+    public void testInstanceReturningLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
+                .installOn(ByteBuddyAgent.getInstrumentation());
+        try {
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            Callable<?> instance = (Callable<?>) sampleFactory.getDeclaredMethod("instanceReturning").invoke(sampleFactory.getDeclaredConstructor().newInstance());
+            assertThat(instance.call(), notNullValue(Object.class));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());

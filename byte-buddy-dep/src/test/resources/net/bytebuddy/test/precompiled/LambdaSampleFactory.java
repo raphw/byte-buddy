@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
-public class LambdaSampleFactory{
+public class LambdaSampleFactory {
 
     private static final String FOO = "foo";
 
@@ -33,4 +33,8 @@ public class LambdaSampleFactory{
     public Callable<String> serializable(String foo) {
         return (Callable<String> & Serializable) () -> foo;
     }
+
+    public Runnable returnTypeTransforming() { return this::nonCapturing; }
+
+    public Callable<Object> instanceReturning() { return Object::new; }
 }

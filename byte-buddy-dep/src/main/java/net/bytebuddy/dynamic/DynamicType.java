@@ -34,7 +34,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.jar.*;
-import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -4187,9 +4186,7 @@ public interface DynamicType {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null) {
-                if (!target.getParentFile().mkdirs()) {
-                    Logger.getLogger("net.bytebuddy").info("Writing file to existing folder structure: " + target.getParent());
-                }
+                target.getParentFile().mkdirs();
             }
             OutputStream outputStream = new FileOutputStream(target);
             try {
@@ -4208,9 +4205,7 @@ public interface DynamicType {
         public File inject(File sourceJar, File targetJar) throws IOException {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
-                if (!targetJar.createNewFile()) {
-                    Logger.getLogger("net.bytebuddy").info("Overwriting file " + targetJar);
-                }
+                targetJar.createNewFile();
                 JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(targetJar), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
@@ -4269,9 +4264,7 @@ public interface DynamicType {
                     jarInputStream.close();
                 }
             } finally {
-                if (!temporary.delete()) {
-                    Logger.getLogger("net.bytebuddy").warning("Cannot delete " + temporary);
-                }
+                temporary.delete();
             }
             return jar;
         }
@@ -4285,9 +4278,7 @@ public interface DynamicType {
 
         @Override
         public File toJar(File file, Manifest manifest) throws IOException {
-            if (!file.createNewFile()) {
-                Logger.getLogger("net.bytebuddy").info("Overwriting existing file: " + file);
-            }
+            file.createNewFile();
             JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {

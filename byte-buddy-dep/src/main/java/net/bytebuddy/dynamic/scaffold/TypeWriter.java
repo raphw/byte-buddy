@@ -49,8 +49,6 @@ import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
@@ -1321,7 +1319,6 @@ public interface TypeWriter<T> {
                 dumpFolder = AccessController.doPrivileged(new GetSystemPropertyAction(DUMP_PROPERTY));
             } catch (RuntimeException exception) {
                 dumpFolder = null;
-                Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not enable dumping of class files", exception);
             }
             DUMP_FOLDER = dumpFolder;
         }
@@ -1637,8 +1634,8 @@ public interface TypeWriter<T> {
             if (DUMP_FOLDER != null) {
                 try {
                     AccessController.doPrivileged(new ClassDumpAction(DUMP_FOLDER, instrumentedType, unresolvedType.getBinaryRepresentation()));
-                } catch (Exception exception) {
-                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception);
+                } catch (Exception ignored) {
+                    /* empty */
                 }
             }
             return unresolvedType.toDynamicType(typeResolutionStrategy);

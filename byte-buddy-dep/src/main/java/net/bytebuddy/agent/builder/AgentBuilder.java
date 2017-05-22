@@ -6382,7 +6382,7 @@ public interface AgentBuilder {
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(targetMethod.getOwnerType()
                             .getDeclaredMethods()
-                            .filter(named(targetMethod.getName())
+                            .filter(hasMethodName(targetMethod.getName())
                                     .and(returns(targetMethod.getReturnType()))
                                     .and(takesArguments(targetMethod.getParameterTypes())))
                             .getOnly(),
@@ -6433,7 +6433,10 @@ public interface AgentBuilder {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                        List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2);
+                        StackManipulation preparation = targetMethod.isConstructor()
+                                ? new StackManipulation.Compound(TypeCreation.of(targetMethod.getDeclaringType().asErasure()), Duplication.SINGLE)
+                                : StackManipulation.Trivial.INSTANCE;
+                        List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2 + 1);
                         for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
                             fieldAccess.add(MethodVariableAccess.loadThis());
                             fieldAccess.add(FieldAccess.forField(fieldDescription).read());
@@ -6446,10 +6449,16 @@ public interface AgentBuilder {
                                     Assigner.Typing.DYNAMIC));
                         }
                         return new Size(new StackManipulation.Compound(
+                                preparation,
                                 new StackManipulation.Compound(fieldAccess),
                                 new StackManipulation.Compound(parameterAccess),
                                 MethodInvocation.invoke(targetMethod),
-                                MethodReturn.of(targetMethod.getReturnType())
+                                Assigner.DEFAULT.assign(targetMethod.isConstructor()
+                                                ? targetMethod.getDeclaringType().asGenericType()
+                                                : targetMethod.getReturnType(),
+                                        specializedLambdaMethod.getReturnType().asGenericType(),
+                                        Assigner.Typing.DYNAMIC),
+                                MethodReturn.of(specializedLambdaMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
                 }
