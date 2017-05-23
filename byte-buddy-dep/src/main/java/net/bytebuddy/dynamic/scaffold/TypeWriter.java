@@ -1634,8 +1634,8 @@ public interface TypeWriter<T> {
             if (DUMP_FOLDER != null) {
                 try {
                     AccessController.doPrivileged(new ClassDumpAction(DUMP_FOLDER, instrumentedType, unresolvedType.getBinaryRepresentation()));
-                } catch (Exception ignored) {
-                    /* empty */
+                } catch (Exception exception) {
+                    exception.printStackTrace();
                 }
             }
             return unresolvedType.toDynamicType(typeResolutionStrategy);

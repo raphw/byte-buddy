@@ -4185,8 +4185,8 @@ public interface DynamicType {
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
-            if (target.getParentFile() != null) {
-                target.getParentFile().mkdirs();
+            if (target.getParentFile() != null && !target.getParentFile().exists() && !target.getParentFile().mkdirs()) {
+                throw new IllegalArgumentException("Could not create directory: " + target.getParentFile());
             }
             OutputStream outputStream = new FileOutputStream(target);
             try {
@@ -4205,7 +4205,9 @@ public interface DynamicType {
         public File inject(File sourceJar, File targetJar) throws IOException {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
-                targetJar.createNewFile();
+                if (!targetJar.exists() && !targetJar.createNewFile()) {
+                    throw new IllegalStateException("Could not create file: " + targetJar);
+                }
                 JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(targetJar), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
@@ -4264,7 +4266,9 @@ public interface DynamicType {
                     jarInputStream.close();
                 }
             } finally {
-                temporary.delete();
+                if (!temporary.delete()) {
+                    temporary.deleteOnExit();
+                }
             }
             return jar;
         }
@@ -4278,7 +4282,9 @@ public interface DynamicType {
 
         @Override
         public File toJar(File file, Manifest manifest) throws IOException {
-            file.createNewFile();
+            if (!file.exists() && !file.createNewFile()) {
+                throw new IllegalArgumentException("Could not create file: " + file);
+            }
             JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {

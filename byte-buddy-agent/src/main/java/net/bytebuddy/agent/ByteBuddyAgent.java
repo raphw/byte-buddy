@@ -434,7 +434,9 @@ public class ByteBuddyAgent {
             }
         } finally {
             if (attachmentJar != null) {
-                attachmentJar.delete();
+                if (!attachmentJar.delete()) {
+                    attachmentJar.deleteOnExit();
+                }
             }
         }
     }

@@ -310,7 +310,9 @@ public interface VirtualMachine {
                     } catch (InterruptedException exception) {
                         throw new IllegalStateException("Interrupted during wait for process", exception);
                     } finally {
-                        attachFile.delete();
+                        if (!attachFile.delete()) {
+                            attachFile.deleteOnExit();
+                        }
                     }
                 }
                 ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));
