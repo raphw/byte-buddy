@@ -4206,7 +4206,7 @@ public interface DynamicType {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
                 if (!targetJar.exists() && !targetJar.createNewFile()) {
-                    throw new IllegalStateException("Could not create file: " + targetJar);
+                    throw new IllegalArgumentException("Could not create file: " + targetJar);
                 }
                 JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(targetJar), jarInputStream.getManifest());
                 try {
