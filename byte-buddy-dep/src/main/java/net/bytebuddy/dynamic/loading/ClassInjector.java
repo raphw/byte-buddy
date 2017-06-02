@@ -407,9 +407,9 @@ public interface ClassInjector {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
                     }
                 }
 
@@ -418,9 +418,9 @@ public interface ClassInjector {
                     try {
                         return (Package) getPackage.invoke(classLoader, name);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#getPackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getCause());
                     }
                 }
 
@@ -445,9 +445,9 @@ public interface ClassInjector {
                                 implementationVendor,
                                 sealBase);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#definePackage", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
                     }
                 }
 
