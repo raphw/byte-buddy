@@ -276,6 +276,7 @@ public class ByteBuddyMojoTest {
         mojoRule.setVariableValueToObject(mojo, "groupId", FOO);
         mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
         mojoRule.setVariableValueToObject(mojo, "version", QUX);
+        mojoRule.setVariableValueToObject(mojo, "packaging", "jar");
         mojo.setLog(new SilentLog());
         mojo.execute();
     }

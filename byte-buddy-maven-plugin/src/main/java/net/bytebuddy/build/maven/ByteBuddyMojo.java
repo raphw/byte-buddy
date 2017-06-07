@@ -35,6 +35,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     private static final String CLASS_FILE_EXTENSION = ".class";
 
     /**
+     * The {@code POM} packaging format.
+     */
+    private static final String POM_PACKAGING = "pom";
+
+    /**
      * The built project's group id.
      */
     @Parameter(defaultValue = "${project.groupId}", required = true, readonly = true)
@@ -51,6 +56,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     protected String version;
+
+    /**
+     * The built project's packaging.
+     */
+    @Parameter(defaultValue = "${project.packaging}", required = true, readonly = true)
+    protected String packaging;
 
     /**
      * <p>
@@ -116,6 +127,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected boolean failOnLiveInitializer;
 
     /**
+     * When set to {@code true}, this mojo is not applied to the current module.
+     */
+    @Parameter(defaultValue = "false", required = true)
+    protected boolean skip;
+
+    /**
      * The currently used repository system.
      */
     @Component
@@ -135,7 +152,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (transformations == null || transformations.isEmpty()) {
+        if (POM_PACKAGING.equalsIgnoreCase(packaging) || skip)  {
+            getLog().info("Skipping transformation due to packaging or explicit option.");
+            return;
+        } else if (transformations == null || transformations.isEmpty()) {
             getLog().warn("No transformations are specified. Skipping plugin application.");
             return;
         }
