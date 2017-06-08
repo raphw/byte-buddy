@@ -35,11 +35,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     private static final String CLASS_FILE_EXTENSION = ".class";
 
     /**
-     * The {@code POM} packaging format.
-     */
-    private static final String POM_PACKAGING = "pom";
-
-    /**
      * The built project's group id.
      */
     @Parameter(defaultValue = "${project.groupId}", required = true, readonly = true)
@@ -152,8 +147,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (POM_PACKAGING.equalsIgnoreCase(packaging) || skip)  {
-            getLog().info("Skipping transformation due to packaging or explicit option.");
+        if (skip)  {
+            getLog().info("Not applying instrumentation as a result of plugin configuration.");
             return;
         } else if (transformations == null || transformations.isEmpty()) {
             getLog().warn("No transformations are specified. Skipping plugin application.");
@@ -192,7 +187,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
     private void processOutputDirectory(File root, List<? extends String> classPath) throws MojoExecutionException, MojoFailureException, IOException {
         if (!root.isDirectory()) {
-            throw new MojoExecutionException("Target location does not exist or is no directory: " + root);
+            getLog().info("Skipping instrumentation due to missing output directory.");
+            return;
         }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession, remoteRepositories);
         try {
