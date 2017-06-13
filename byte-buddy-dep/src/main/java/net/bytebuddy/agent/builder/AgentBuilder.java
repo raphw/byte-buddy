@@ -67,6 +67,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -1635,7 +1637,7 @@ public interface AgentBuilder {
 
             @Override
             public void release() {
-                        /* do nothing */
+                /* do nothing */
             }
         }
 
@@ -1663,6 +1665,63 @@ public interface AgentBuilder {
             @Override
             public void release() {
                 set(NOT_ACQUIRED);
+            }
+        }
+
+        /**
+         * A circularity lock that holds a global monitor and does not permit concurrent access.
+         */
+        @EqualsAndHashCode
+        class Global implements CircularityLock {
+
+            /**
+             * The lock to hold.
+             */
+            private final Lock lock;
+
+            /**
+             * The time to wait for the lock.
+             */
+            private final long time;
+
+            /**
+             * The time's time unit.
+             */
+            private final TimeUnit timeUnit;
+
+            /**
+             * Creates a new global circularity lock that does not wait for a release.
+             */
+            public Global() {
+                this(0, TimeUnit.MILLISECONDS);
+            }
+
+            /**
+             * Creates a new global circularity lock.
+             *
+             * @param time     The time to wait for the lock.
+             * @param timeUnit The time's time unit.
+             */
+            public Global(long time, TimeUnit timeUnit) {
+                lock = new ReentrantLock();
+                this.time = time;
+                this.timeUnit = timeUnit;
+            }
+
+            @Override
+            public boolean acquire() {
+                try {
+                    return time == 0
+                            ? lock.tryLock()
+                            : lock.tryLock(time, timeUnit);
+                } catch (InterruptedException ignored) {
+                    return false;
+                }
+            }
+
+            @Override
+            public void release() {
+                lock.unlock();
             }
         }
     }
