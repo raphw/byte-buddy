@@ -53,12 +53,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected String version;
 
     /**
-     * The built project's packaging.
-     */
-    @Parameter(defaultValue = "${project.packaging}", required = true, readonly = true)
-    protected String packaging;
-
-    /**
      * <p>
      * The list of transformations. A transformation <b>must</b> specify the {@code plugin} property, containing the name of a class to apply.
      * Additionally, it is possible to optionally specify Maven coordinates for a project that contains this plugin class as {@code groupId},
@@ -128,6 +122,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected boolean skip;
 
     /**
+     * When set to {@code true}, this mojo warns of an non-existent output directory.
+     */
+    @Parameter(defaultValue = "true", required = true)
+    protected boolean warnOnMissingOutputDirectory;
+
+    /**
      * The currently used repository system.
      */
     @Component
@@ -147,7 +147,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (skip)  {
+        if (skip) {
             getLog().info("Not applying instrumentation as a result of plugin configuration.");
             return;
         } else if (transformations == null || transformations.isEmpty()) {
@@ -186,9 +186,16 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
     private void processOutputDirectory(File root, List<? extends String> classPath) throws MojoExecutionException, MojoFailureException, IOException {
-        if (!root.isDirectory()) {
-            getLog().info("Skipping instrumentation due to missing output directory.");
+        if (!root.exists()) {
+            String message = "Skipping instrumentation due to missing directory: " + root;
+            if (warnOnMissingOutputDirectory) {
+                getLog().warn(message);
+            } else {
+                getLog().info(message);
+            }
             return;
+        } else if (!root.isDirectory()) {
+            throw new MojoExecutionException("Not a directory: " + root);
         }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession, remoteRepositories);
         try {
