@@ -802,9 +802,31 @@ public interface AgentBuilder {
         AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher);
 
         /**
+         * An agent builder configuration strategy that allows the definition of a discovery strategy.
+         */
+        interface WithImplicitDiscoveryStrategy extends RedefinitionListenable {
+
+            /**
+             * Limits the redefinition attempt to the specified types.
+             *
+             * @param type The types to consider for redefinition.
+             * @return A new instance of this agent builder which only considers the supplied types for redefinition.
+             */
+            RedefinitionListenable redefineOnly(Class<?>... type);
+
+            /**
+             * A discovery strategy is responsible for locating loaded types that should be considered for redefinition.
+             *
+             * @param redefinitionDiscoveryStrategy The redefinition discovery strategy to use.
+             * @return A new instance of this agent builder which makes use of the specified discovery strategy.
+             */
+            RedefinitionListenable with(RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy);
+        }
+
+        /**
          * An agent builder configuration that allows the configuration of a batching strategy.
          */
-        interface WithoutBatchStrategy extends RedefinitionListenable {
+        interface WithoutBatchStrategy extends WithImplicitDiscoveryStrategy {
 
             /**
              * A batch allocator is responsible for diving a redefining of existing types into several chunks. This allows
@@ -814,7 +836,7 @@ public interface AgentBuilder {
              * @param redefinitionBatchAllocator The batch allocator to use.
              * @return A new instance of this agent builder which makes use of the specified batch allocator.
              */
-            RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
+            WithImplicitDiscoveryStrategy with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
         }
     }
 
@@ -4015,6 +4037,7 @@ public interface AgentBuilder {
                               CircularityLock circularityLock,
                               PoolStrategy poolStrategy,
                               LocationStrategy locationStrategy,
+                              DiscoveryStrategy discoveryStrategy,
                               BatchAllocator redefinitionBatchAllocator,
                               Listener redefinitionListener,
                               LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
@@ -4159,6 +4182,7 @@ public interface AgentBuilder {
          * @param circularityLock               The circularity lock to use.
          * @param poolStrategy                  The type locator to use.
          * @param locationStrategy              The location strategy to use.
+         * @param redefinitionDiscoveryStrategy The discovery strategy for loaded types to be redefined.
          * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
          * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
@@ -4173,6 +4197,7 @@ public interface AgentBuilder {
                           CircularityLock circularityLock,
                           PoolStrategy poolStrategy,
                           LocationStrategy locationStrategy,
+                          DiscoveryStrategy redefinitionDiscoveryStrategy,
                           BatchAllocator redefinitionBatchAllocator,
                           Listener redefinitionListener,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
@@ -4181,48 +4206,51 @@ public interface AgentBuilder {
                           RawMatcher typeMatcher,
                           RawMatcher ignoredTypeMatcher) {
             check(instrumentation);
-            RedefinitionStrategy.Collector collector = make();
-            for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                if (type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
-                    continue;
-                }
-                JavaModule module = JavaModule.ofType(type);
-                try {
-                    TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+            int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
+            for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
+                RedefinitionStrategy.Collector collector = make();
+                for (Class<?> type : types) {
+                    if (type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
+                        continue;
+                    }
+                    JavaModule module = JavaModule.ofType(type);
                     try {
-                        collector.consider(typeMatcher,
-                                ignoredTypeMatcher,
-                                listener,
-                                descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
-                                type,
-                                type,
-                                module,
-                                !instrumentation.isModifiableClass(type));
-                    } catch (Throwable throwable) {
-                        if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                        TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                        try {
                             collector.consider(typeMatcher,
                                     ignoredTypeMatcher,
                                     listener,
-                                    typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                    descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
                                     type,
-                                    module);
-                        } else {
-                            throw throwable;
+                                    type,
+                                    module,
+                                    !instrumentation.isModifiableClass(type));
+                        } catch (Throwable throwable) {
+                            if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                collector.consider(typeMatcher,
+                                        ignoredTypeMatcher,
+                                        listener,
+                                        typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                        type,
+                                        module);
+                            } else {
+                                throw throwable;
+                            }
                         }
-                    }
-                } catch (Throwable throwable) {
-                    try {
+                    } catch (Throwable throwable) {
                         try {
-                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
-                        } finally {
-                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                            try {
+                                listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                            } finally {
+                                listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                            }
+                        } catch (Throwable ignored) {
+                            // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                         }
-                    } catch (Throwable ignored) {
-                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                     }
                 }
+                batch = collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener, batch);
             }
-            collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
         }
 
         /**
@@ -4232,6 +4260,11 @@ public interface AgentBuilder {
          * the load of a retransformation over time.
          */
         public interface BatchAllocator {
+
+            /**
+             * The index of the first batch.
+             */
+            int FIRST_BATCH = 0;
 
             /**
              * Splits a list of types to be retransformed into seperate batches.
@@ -5099,6 +5132,178 @@ public interface AgentBuilder {
         }
 
         /**
+         * A strategy for discovering types to redefine.
+         */
+        public interface DiscoveryStrategy {
+
+            /**
+             * Resolves an iterable of types to retransform. Types might be loaded during a previous retransformation which might require
+             * multiple passes for a retransformation.
+             *
+             * @param instrumentation The instrumentation instance used for the redefinition.
+             * @return An iterable of types to consider for retransformation.
+             */
+            Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation);
+
+            /**
+             * A discovery strategy that considers all loaded types supplied by {@link Instrumentation#getAllLoadedClasses()}.
+             */
+            enum SinglePass implements DiscoveryStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
+                    return Collections.<Iterable<Class<?>>>singleton(Arrays.<Class<?>>asList(instrumentation.getAllLoadedClasses()));
+                }
+            }
+
+            /**
+             * A discovery strategy that considers all loaded types supplied by {@link Instrumentation#getAllLoadedClasses()}. For each reiteration,
+             * this strategy checks if additional types were loaded after the previously supplied types. Doing so, types that were loaded during
+             * instrumentations can be retransformed as such types are not passed to any class file transformer.
+             */
+            enum Reiterating implements DiscoveryStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
+                    return new ReiteratingIterable(instrumentation);
+                }
+
+                /**
+                 * An iterable that returns any loaded types and checks if any additional types were loaded during the last instrumentation.
+                 */
+                @EqualsAndHashCode
+                protected static class ReiteratingIterable implements Iterable<Iterable<Class<?>>> {
+
+                    /**
+                     * The instrumentation instance to use.
+                     */
+                    private final Instrumentation instrumentation;
+
+                    /**
+                     * Creates a new reiterating iterable.
+                     *
+                     * @param instrumentation The instrumentation instance to use.
+                     */
+                    protected ReiteratingIterable(Instrumentation instrumentation) {
+                        this.instrumentation = instrumentation;
+                    }
+
+                    @Override
+                    public Iterator<Iterable<Class<?>>> iterator() {
+                        return new ReiteratingIterator(instrumentation);
+                    }
+                }
+
+                /**
+                 * A reiterating iterator that considers types that were loaded during an instrumentation.
+                 */
+                protected static class ReiteratingIterator implements Iterator<Iterable<Class<?>>> {
+
+                    /**
+                     * The instrumentation instance to use.
+                     */
+                    private final Instrumentation instrumentation;
+
+                    /**
+                     * A set containing all previously discovered types.
+                     */
+                    private final Set<Class<?>> processed;
+
+                    /**
+                     * The current list of types or {@code null} if the current list of types is not prepared.
+                     */
+                    private List<Class<?>> types;
+
+                    /**
+                     * Creates a new reiterating iterator.
+                     *
+                     * @param instrumentation The instrumentation instance to use.
+                     */
+                    protected ReiteratingIterator(Instrumentation instrumentation) {
+                        this.instrumentation = instrumentation;
+                        processed = new HashSet<Class<?>>();
+                    }
+
+                    @Override
+                    public boolean hasNext() {
+                        if (types == null) {
+                            types = new ArrayList<Class<?>>();
+                            for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                                if (processed.add(type)) {
+                                    types.add(type);
+                                }
+                            }
+                        }
+                        return !types.isEmpty();
+                    }
+
+                    @Override
+                    public Iterable<Class<?>> next() {
+                        if (hasNext()) {
+                            try {
+                                return types;
+                            } finally {
+                                types = null;
+                            }
+                        } else {
+                            throw new NoSuchElementException();
+                        }
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException("remove");
+                    }
+                }
+            }
+
+            /**
+             * An explicit discovery strategy that only attempts the redefinition of specific types.
+             */
+            @EqualsAndHashCode
+            class Explicit implements DiscoveryStrategy {
+
+                /**
+                 * The types to redefine.
+                 */
+                private final Set<Class<?>> types;
+
+                /**
+                 * Creates a new explicit discovery strategy.
+                 *
+                 * @param type The types to redefine.
+                 */
+                public Explicit(Class<?>... type) {
+                    this(new LinkedHashSet<Class<?>>(Arrays.asList(type)));
+                }
+
+                /**
+                 * Creates a new explicit discovery strategy.
+                 *
+                 * @param types The types to redefine.
+                 */
+                public Explicit(Set<Class<?>> types) {
+                    this.types = types;
+                }
+
+                @Override
+                public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
+                    return Collections.<Iterable<Class<?>>>singleton(types);
+                }
+            }
+        }
+
+        /**
          * A resubmission scheduler is responsible for scheduling a job that is resubmitting unloaded types that failed during retransformation.
          */
         public interface ResubmissionScheduler {
@@ -5596,9 +5801,9 @@ public interface AgentBuilder {
                                         locationStrategy,
                                         listener,
                                         redefinitionBatchAllocator,
-                                        redefinitionBatchListener);
+                                        redefinitionBatchListener,
+                                        BatchAllocator.FIRST_BATCH);
                             }
-
                         } finally {
                             if (release) {
                                 circularityLock.release();
@@ -5847,28 +6052,31 @@ public interface AgentBuilder {
              * @param listener                   The listener to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator to use.
              * @param redefinitionListener       The redefinition listener to use.
+             * @param batch                      The next batch's index.
+             * @return The next batch's index after this application.
              */
-            protected void apply(Instrumentation instrumentation,
-                                 CircularityLock circularityLock,
-                                 LocationStrategy locationStrategy,
-                                 AgentBuilder.Listener listener,
-                                 BatchAllocator redefinitionBatchAllocator,
-                                 Listener redefinitionListener) {
-                int index = 0;
+            protected int apply(Instrumentation instrumentation,
+                                CircularityLock circularityLock,
+                                LocationStrategy locationStrategy,
+                                AgentBuilder.Listener listener,
+                                BatchAllocator redefinitionBatchAllocator,
+                                Listener redefinitionListener,
+                                int batch) {
                 Map<List<Class<?>>, Throwable> failures = new HashMap<List<Class<?>>, Throwable>();
                 PrependableIterator prepanedableIterator = new PrependableIterator(redefinitionBatchAllocator.batch(this.types));
                 while (prepanedableIterator.hasNext()) {
                     List<Class<?>> types = prepanedableIterator.next();
-                    redefinitionListener.onBatch(index, types, this.types);
+                    redefinitionListener.onBatch(batch, types, this.types);
                     try {
                         doApply(instrumentation, circularityLock, types, locationStrategy, listener);
                     } catch (Throwable throwable) {
-                        prepanedableIterator.prepend(redefinitionListener.onError(index, types, throwable, this.types));
+                        prepanedableIterator.prepend(redefinitionListener.onError(batch, types, throwable, this.types));
                         failures.put(types, throwable);
                     }
-                    index += 1;
+                    batch += 1;
                 }
-                redefinitionListener.onComplete(index, types, failures);
+                redefinitionListener.onComplete(batch, types, failures);
+                return batch;
             }
 
             /**
@@ -7275,6 +7483,11 @@ public interface AgentBuilder {
         protected final RedefinitionStrategy redefinitionStrategy;
 
         /**
+         * The discovery strategy for loaded types to be redefined.
+         */
+        protected final RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy;
+
+        /**
          * The batch allocator for the redefinition strategy to apply.
          */
         protected final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
@@ -7350,6 +7563,7 @@ public interface AgentBuilder {
                     NativeMethodStrategy.Disabled.INSTANCE,
                     new InitializationStrategy.SelfInjection.Split(),
                     RedefinitionStrategy.DISABLED,
+                    RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
                     RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
@@ -7376,6 +7590,7 @@ public interface AgentBuilder {
          * @param nativeMethodStrategy             The native method strategy to apply.
          * @param initializationStrategy           The initialization strategy to use for transformed types.
          * @param redefinitionStrategy             The redefinition strategy to apply.
+         * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
          * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
          * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
          * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
@@ -7397,6 +7612,7 @@ public interface AgentBuilder {
                           NativeMethodStrategy nativeMethodStrategy,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
+                          RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                           RedefinitionStrategy.Listener redefinitionListener,
                           RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
@@ -7416,6 +7632,7 @@ public interface AgentBuilder {
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
+            this.redefinitionDiscoveryStrategy = redefinitionDiscoveryStrategy;
             this.redefinitionBatchAllocator = redefinitionBatchAllocator;
             this.redefinitionListener = redefinitionListener;
             this.redefinitionResubmissionStrategy = redefinitionResubmissionStrategy;
@@ -7485,6 +7702,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7508,6 +7726,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7531,6 +7750,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7554,6 +7774,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7577,6 +7798,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7600,6 +7822,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7623,6 +7846,7 @@ public interface AgentBuilder {
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7646,6 +7870,7 @@ public interface AgentBuilder {
                     NativeMethodStrategy.Disabled.INSTANCE,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7669,6 +7894,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
                     RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
@@ -7692,6 +7918,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7715,6 +7942,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7738,6 +7966,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7761,6 +7990,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7784,6 +8014,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7807,6 +8038,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7830,6 +8062,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7853,6 +8086,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -7876,6 +8110,7 @@ public interface AgentBuilder {
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
@@ -8025,6 +8260,7 @@ public interface AgentBuilder {
                                 circularityLock,
                                 poolStrategy,
                                 locationStrategy,
+                                redefinitionDiscoveryStrategy,
                                 redefinitionBatchAllocator,
                                 redefinitionListener,
                                 lambdaInstrumentationStrategy,
@@ -9103,6 +9339,7 @@ public interface AgentBuilder {
             @Override
             public synchronized boolean reset(Instrumentation instrumentation,
                                               RedefinitionStrategy redefinitionStrategy,
+                                              RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                                               RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                               RedefinitionStrategy.Listener redefinitionListener) {
                 if (instrumentation.removeTransformer(this)) {
@@ -9111,6 +9348,7 @@ public interface AgentBuilder {
                             CircularityLock.Inactive.INSTANCE,
                             poolStrategy,
                             locationStrategy,
+                            redefinitionDiscoveryStrategy,
                             redefinitionBatchAllocator,
                             redefinitionListener,
                             lambdaInstrumentationStrategy,
@@ -9755,6 +9993,7 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
@@ -9818,6 +10057,7 @@ public interface AgentBuilder {
              * @param nativeMethodStrategy             The native method strategy to apply.
              * @param initializationStrategy           The initialization strategy to use for transformed types.
              * @param redefinitionStrategy             The redefinition strategy to apply.
+             * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
              * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
              * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
              * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
@@ -9839,6 +10079,7 @@ public interface AgentBuilder {
                                  NativeMethodStrategy nativeMethodStrategy,
                                  InitializationStrategy initializationStrategy,
                                  RedefinitionStrategy redefinitionStrategy,
+                                 RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                                  RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                  RedefinitionStrategy.Listener redefinitionListener,
                                  RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
@@ -9858,6 +10099,7 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
@@ -9871,7 +10113,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+            public WithImplicitDiscoveryStrategy with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot set redefinition batch allocator when redefinition is disabled");
                 }
@@ -9884,6 +10127,39 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        redefinitionResubmissionStrategy,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        fallbackStrategy,
+                        installationListener,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public RedefinitionListenable redefineOnly(Class<?>... type) {
+                return with(new RedefinitionStrategy.DiscoveryStrategy.Explicit(type));
+            }
+
+            @Override
+            public RedefinitionListenable with(RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy) {
+                if (!redefinitionStrategy.isEnabled()) {
+                    throw new IllegalStateException("Cannot set redefinition discovery strategy when redefinition is disabled");
+                }
+                return new Redefining(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
@@ -9910,6 +10186,7 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
                         redefinitionResubmissionStrategy,
@@ -9941,6 +10218,7 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher),
@@ -10000,6 +10278,7 @@ public interface AgentBuilder {
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,

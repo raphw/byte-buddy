@@ -3,12 +3,10 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
@@ -37,7 +35,6 @@ import java.io.ObjectOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -309,6 +306,31 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
+    public void testRedefinitionWithExplicitTypes() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .disableClassFormatChanges()
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .redefineOnly(classLoader.loadClass(SimpleType.class.getName()))
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     @IntegrationRule.Enforce
     public void testRetransformation() throws Exception {
@@ -408,6 +430,31 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1))
                 .installOnByteBuddyAgent());
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
+    public void testRetransformationWithExplicitTypes() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .disableClassFormatChanges()
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .redefineOnly(classLoader.loadClass(SimpleType.class.getName()))
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
     }
 
     @Test
