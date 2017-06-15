@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. June 2017: version 1.7.1
+
+- Added `DiscoveryStrategy` for redefinition to determine types to be redefined.
+- Changed Maven plugin to only warn of missing output directory which might be missing.
+- Added global circularity lock.
+- Removed sporadic use of Java util logging API.
+
 ### 14. Mai 2017: version 1.7.0
 
 - Define names for automatic modules in Java 9.
