@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -508,6 +509,210 @@ public interface MethodDelegationBinder {
     }
 
     /**
+     * A binding resolver is responsible to choose a method binding between several possible candidates.
+     */
+    interface BindingResolver {
+
+        /**
+         * Resolves a method binding for the {@code source} method.
+         *
+         * @param ambiguityResolver The ambiguity resolver to use.
+         * @param source            The source method being bound.
+         * @param targets           The possible target candidates. The list contains at least one element.
+         * @return The method binding that was chosen.
+         */
+        MethodBinding resolve(AmbiguityResolver ambiguityResolver, MethodDescription source, List<MethodBinding> targets);
+
+        /**
+         * A default implementation of a binding resolver that fully relies on an {@link AmbiguityResolver}.
+         */
+        enum Default implements BindingResolver {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * Represents the index of the only value of two elements in a list.
+             */
+            private static final int ONLY = 0;
+
+            /**
+             * Represents the index of the left value of two elements in a list.
+             */
+            private static final int LEFT = 0;
+
+            /**
+             * Represents the index of the right value of two elements in a list.
+             */
+            private static final int RIGHT = 1;
+
+            @Override
+            public MethodBinding resolve(AmbiguityResolver ambiguityResolver, MethodDescription source, List<MethodBinding> targets) {
+                return doResolve(ambiguityResolver, source, new ArrayList<MethodBinding>(targets));
+            }
+
+            /**
+             * Resolves a method binding for the {@code source} method.
+             *
+             * @param ambiguityResolver The ambiguity resolver to use.
+             * @param source            The source method being bound.
+             * @param targets           The possible target candidates. The list contains at least one element and is mutable.
+             * @return The method binding that was chosen.
+             */
+            private MethodBinding doResolve(AmbiguityResolver ambiguityResolver, MethodDescription source, List<MethodBinding> targets) {
+                switch (targets.size()) {
+                    case 1:
+                        return targets.get(ONLY);
+                    case 2: {
+                        MethodBinding left = targets.get(LEFT);
+                        MethodBinding right = targets.get(RIGHT);
+                        switch (ambiguityResolver.resolve(source, left, right)) {
+                            case LEFT:
+                                return left;
+                            case RIGHT:
+                                return right;
+                            case AMBIGUOUS:
+                            case UNKNOWN:
+                                throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
+                            default:
+                                throw new AssertionError();
+                        }
+                    }
+                    default: /* case 3+: */ {
+                        MethodBinding left = targets.get(LEFT);
+                        MethodBinding right = targets.get(RIGHT);
+                        switch (ambiguityResolver.resolve(source, left, right)) {
+                            case LEFT:
+                                targets.remove(RIGHT);
+                                return doResolve(ambiguityResolver, source, targets);
+                            case RIGHT:
+                                targets.remove(LEFT);
+                                return doResolve(ambiguityResolver, source, targets);
+                            case AMBIGUOUS:
+                            case UNKNOWN:
+                                targets.remove(RIGHT); // Remove right element first due to index alteration!
+                                targets.remove(LEFT);
+                                MethodBinding subResult = doResolve(ambiguityResolver, source, targets);
+                                switch (ambiguityResolver.resolve(source, left, subResult).merge(ambiguityResolver.resolve(source, right, subResult))) {
+                                    case RIGHT:
+                                        return subResult;
+                                    case LEFT:
+                                    case AMBIGUOUS:
+                                    case UNKNOWN:
+                                        throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
+                                    default:
+                                        throw new AssertionError();
+                                }
+                            default:
+                                throw new IllegalStateException("Unexpected amount of targets: " + targets);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * A binding resolver that only binds a method if it has a unique binding.
+         */
+        enum Unique implements BindingResolver {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * Indicates the first index of a list only containing one element.
+             */
+            private static final int ONLY = 0;
+
+            @Override
+            public MethodBinding resolve(AmbiguityResolver ambiguityResolver, MethodDescription source, List<MethodBinding> targets) {
+                if (targets.size() == 1) {
+                    return targets.get(ONLY);
+                } else {
+                    throw new IllegalStateException(source + " allowed for more than one binding: " + targets);
+                }
+            }
+        }
+
+        /**
+         * Bindinds a method using another resolver and prints the selected binding to a {@link PrintStream}.
+         */
+        @EqualsAndHashCode
+        class StreamWriting implements BindingResolver {
+
+            /**
+             * The delegate binding resolver.
+             */
+            private final BindingResolver delegate;
+
+            /**
+             * The print stream to bind write the chosen binding to.
+             */
+            private final PrintStream printStream;
+
+            /**
+             * Creates a new stream writing binding resolver.
+             *
+             * @param delegate    The delegate binding resolver.
+             * @param printStream The print stream to bind write the chosen binding to.
+             */
+            public StreamWriting(BindingResolver delegate, PrintStream printStream) {
+                this.delegate = delegate;
+                this.printStream = printStream;
+            }
+
+            /**
+             * Creates a binding resolver that writes results to {@link System#out} and delegates to the {@link Default} resolver.
+             *
+             * @return An appropriate binding resolver.
+             */
+            public static BindingResolver toSystemOut() {
+                return toSystemOut(Default.INSTANCE);
+            }
+
+            /**
+             * Creates a binding resolver that writes results to {@link System#out} and delegates to the {@link Default} resolver.
+             * @param bindingResolver The delegate binding resolver.
+             *
+             * @return An appropriate binding resolver.
+             */
+            public static BindingResolver toSystemOut(BindingResolver bindingResolver) {
+                return new StreamWriting(bindingResolver, System.out);
+            }
+
+            /**
+             * Creates a binding resolver that writes results to {@link System#err} and delegates to the {@link Default} resolver.
+             *
+             * @return An appropriate binding resolver.
+             */
+            public static BindingResolver toSystemError() {
+                return toSystemError(Default.INSTANCE);
+            }
+
+            /**
+             * Creates a binding resolver that writes results to {@link System#err}.
+             *
+             * @param bindingResolver The delegate binding resolver.
+             * @return An appropriate binding resolver.
+             */
+            public static BindingResolver toSystemError(BindingResolver bindingResolver) {
+                return new StreamWriting(bindingResolver, System.err);
+            }
+
+            @Override
+            public MethodBinding resolve(AmbiguityResolver ambiguityResolver, MethodDescription source, List<MethodBinding> targets) {
+                MethodBinding methodBinding = delegate.resolve(ambiguityResolver, source, targets);
+                printStream.println("Binding " + source + " as delegation to " + methodBinding.getTarget());
+                return methodBinding;
+            }
+        }
+    }
+
+    /**
      * Implementations of this interface are able to attempt the resolution of two successful bindings of a method
      * to two different target methods in order to identify a dominating binding.
      */
@@ -777,21 +982,6 @@ public interface MethodDelegationBinder {
     class Processor implements MethodDelegationBinder.Record {
 
         /**
-         * Represents the index of the only value of two elements in a list.
-         */
-        private static final int ONLY = 0;
-
-        /**
-         * Represents the index of the left value of two elements in a list.
-         */
-        private static final int LEFT = 0;
-
-        /**
-         * Represents the index of the right value of two elements in a list.
-         */
-        private static final int RIGHT = 1;
-
-        /**
          * The delegation records to consider.
          */
         private final List<? extends Record> records;
@@ -802,14 +992,21 @@ public interface MethodDelegationBinder {
         private final AmbiguityResolver ambiguityResolver;
 
         /**
+         * The binding resolver being used to select the relevant method binding.
+         */
+        private final BindingResolver bindingResolver;
+
+        /**
          * Creates a new processor.
          *
          * @param records           The delegation records to consider.
          * @param ambiguityResolver The ambiguity resolver to apply.
+         * @param bindingResolver   The binding resolver being used to select the relevant method binding.
          */
-        public Processor(List<? extends Record> records, AmbiguityResolver ambiguityResolver) {
+        public Processor(List<? extends Record> records, AmbiguityResolver ambiguityResolver, BindingResolver bindingResolver) {
             this.records = records;
             this.ambiguityResolver = ambiguityResolver;
+            this.bindingResolver = bindingResolver;
         }
 
         @Override
@@ -828,65 +1025,7 @@ public interface MethodDelegationBinder {
             if (targets.isEmpty()) {
                 throw new IllegalArgumentException("None of " + records + " allows for delegation from " + source);
             }
-            return resolve(source, targets);
-        }
-
-        /**
-         * Resolves the most specific target method of a list of legal method bindings.
-         *
-         * @param source  The source method that is to be bound.
-         * @param targets A list of possible binding targets.
-         * @return The most specific method binding that was located from the given list of candidate targets.
-         */
-        private MethodBinding resolve(MethodDescription source, List<MethodBinding> targets) {
-            switch (targets.size()) {
-                case 1:
-                    return targets.get(ONLY);
-                case 2: {
-                    MethodBinding left = targets.get(LEFT);
-                    MethodBinding right = targets.get(RIGHT);
-                    switch (ambiguityResolver.resolve(source, left, right)) {
-                        case LEFT:
-                            return left;
-                        case RIGHT:
-                            return right;
-                        case AMBIGUOUS:
-                        case UNKNOWN:
-                            throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
-                        default:
-                            throw new AssertionError();
-                    }
-                }
-                default: /* case 3+: */ {
-                    MethodBinding left = targets.get(LEFT);
-                    MethodBinding right = targets.get(RIGHT);
-                    switch (ambiguityResolver.resolve(source, left, right)) {
-                        case LEFT:
-                            targets.remove(RIGHT);
-                            return resolve(source, targets);
-                        case RIGHT:
-                            targets.remove(LEFT);
-                            return resolve(source, targets);
-                        case AMBIGUOUS:
-                        case UNKNOWN:
-                            targets.remove(RIGHT); // Remove right element first due to index alteration!
-                            targets.remove(LEFT);
-                            MethodBinding subResult = resolve(source, targets);
-                            switch (ambiguityResolver.resolve(source, left, subResult).merge(ambiguityResolver.resolve(source, right, subResult))) {
-                                case RIGHT:
-                                    return subResult;
-                                case LEFT:
-                                case AMBIGUOUS:
-                                case UNKNOWN:
-                                    throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
-                                default:
-                                    throw new AssertionError();
-                            }
-                        default:
-                            throw new IllegalStateException("Unexpected targets: " + targets);
-                    }
-                }
-            }
+            return bindingResolver.resolve(ambiguityResolver, source, targets);
         }
     }
 }

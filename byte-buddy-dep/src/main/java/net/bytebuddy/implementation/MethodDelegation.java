@@ -188,6 +188,11 @@ public class MethodDelegation implements Implementation.Composable {
     private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
 
     /**
+     * The binding resolver being used to select the relevant method binding.
+     */
+    private final MethodDelegationBinder.BindingResolver bindingResolver;
+
+    /**
      * The {@link net.bytebuddy.implementation.bytecode.assign.Assigner} to be used by this method delegation.
      */
     private final Assigner assigner;
@@ -202,7 +207,12 @@ public class MethodDelegation implements Implementation.Composable {
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        this(implementationDelegate, parameterBinders, ambiguityResolver, MethodDelegationBinder.TerminationHandler.Default.RETURNING, Assigner.DEFAULT);
+        this(implementationDelegate,
+                parameterBinders,
+                ambiguityResolver,
+                MethodDelegationBinder.TerminationHandler.Default.RETURNING,
+                MethodDelegationBinder.BindingResolver.Default.INSTANCE,
+                Assigner.DEFAULT);
     }
 
     /**
@@ -212,17 +222,20 @@ public class MethodDelegation implements Implementation.Composable {
      * @param parameterBinders       The parameter binders to use by this method delegator.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param terminationHandler     The termination handler to apply.
+     * @param bindingResolver        The binding resolver being used to select the relevant method binding.
      * @param assigner               The assigner to be supplied by this method delegator.
      */
     private MethodDelegation(ImplementationDelegate implementationDelegate,
                              List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                              MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                              TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
+                             MethodDelegationBinder.BindingResolver bindingResolver,
                              Assigner assigner) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
         this.terminationHandler = terminationHandler;
         this.ambiguityResolver = ambiguityResolver;
+        this.bindingResolver = bindingResolver;
         this.assigner = assigner;
     }
 
@@ -499,6 +512,7 @@ public class MethodDelegation implements Implementation.Composable {
                 parameterBinders,
                 ambiguityResolver,
                 terminationHandler,
+                bindingResolver,
                 assigner);
     }
 
@@ -508,6 +522,7 @@ public class MethodDelegation implements Implementation.Composable {
                 parameterBinders,
                 ambiguityResolver,
                 MethodDelegationBinder.TerminationHandler.Default.DROPPING,
+                bindingResolver,
                 assigner), implementation);
     }
 
@@ -520,7 +535,7 @@ public class MethodDelegation implements Implementation.Composable {
     public ByteCodeAppender appender(Target implementationTarget) {
         ImplementationDelegate.Compiled compiled = implementationDelegate.compile(implementationTarget.getInstrumentedType());
         return new Appender(implementationTarget,
-                new MethodDelegationBinder.Processor(compiled.getRecords(), ambiguityResolver),
+                new MethodDelegationBinder.Processor(compiled.getRecords(), ambiguityResolver, bindingResolver),
                 terminationHandler,
                 assigner,
                 compiled);
@@ -989,7 +1004,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * The method delegation binder processor which is responsible for implementing the method delegation.
          */
-        private final MethodDelegationBinder.Processor processor;
+        private final MethodDelegationBinder.Record processor;
 
         /**
          * A termination handler for a method delegation binder.
@@ -1016,7 +1031,7 @@ public class MethodDelegation implements Implementation.Composable {
          * @param compiled             The compiled implementation delegate.
          */
         protected Appender(Target implementationTarget,
-                           MethodDelegationBinder.Processor processor,
+                           MethodDelegationBinder.Record processor,
                            MethodDelegationBinder.TerminationHandler terminationHandler,
                            Assigner assigner,
                            ImplementationDelegate.Compiled compiled) {
@@ -1054,6 +1069,11 @@ public class MethodDelegation implements Implementation.Composable {
         private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
 
         /**
+         * The binding resolver being used to select the relevant method binding.
+         */
+        private final MethodDelegationBinder.BindingResolver bindingResolver;
+
+        /**
          * The matcher to use for filtering relevant methods.
          */
         private final ElementMatcher<? super MethodDescription> matcher;
@@ -1066,7 +1086,7 @@ public class MethodDelegation implements Implementation.Composable {
          */
         protected WithCustomProperties(MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                        List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders) {
-            this(ambiguityResolver, parameterBinders, any());
+            this(ambiguityResolver, parameterBinders, MethodDelegationBinder.BindingResolver.Default.INSTANCE, any());
         }
 
         /**
@@ -1074,13 +1094,16 @@ public class MethodDelegation implements Implementation.Composable {
          *
          * @param ambiguityResolver The ambiguity resolver to use.
          * @param parameterBinders  The parameter binders to use.
+         * @param bindingResolver   The binding resolver being used to select the relevant method binding.
          * @param matcher           The matcher to use for filtering relevant methods.
          */
         private WithCustomProperties(MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                      List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                                     MethodDelegationBinder.BindingResolver bindingResolver,
                                      ElementMatcher<? super MethodDescription> matcher) {
             this.ambiguityResolver = ambiguityResolver;
             this.parameterBinders = parameterBinders;
+            this.bindingResolver = bindingResolver;
             this.matcher = matcher;
         }
 
@@ -1104,7 +1127,7 @@ public class MethodDelegation implements Implementation.Composable {
          */
         public WithCustomProperties withResolvers(List<? extends MethodDelegationBinder.AmbiguityResolver> ambiguityResolvers) {
             return new WithCustomProperties(new MethodDelegationBinder.AmbiguityResolver.Compound(CompoundList.of(this.ambiguityResolver,
-                    ambiguityResolvers)), parameterBinders, matcher);
+                    ambiguityResolvers)), parameterBinders, bindingResolver, matcher);
         }
 
         /**
@@ -1126,7 +1149,18 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A new delegation configuration which also applies the supplied parameter binders.
          */
         public WithCustomProperties withBinders(List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders) {
-            return new WithCustomProperties(ambiguityResolver, CompoundList.of(this.parameterBinders, parameterBinders), matcher);
+            return new WithCustomProperties(ambiguityResolver, CompoundList.of(this.parameterBinders, parameterBinders), bindingResolver, matcher);
+        }
+
+        /**
+         * Configures a custom binding resolver which is responsible for choosing a method binding among multiple candidates. Configuring
+         * a resolver overrides any previous configuration.
+         *
+         * @param bindingResolver The binding resolver being used to select the relevant method binding.
+         * @return A new delegation configuration which applies the supplied binding resolver.
+         */
+        public WithCustomProperties withBindingResolver(MethodDelegationBinder.BindingResolver bindingResolver) {
+            return new WithCustomProperties(ambiguityResolver, parameterBinders, bindingResolver, matcher);
         }
 
         /**
@@ -1138,6 +1172,7 @@ public class MethodDelegation implements Implementation.Composable {
         public WithCustomProperties filter(ElementMatcher<? super MethodDescription> matcher) {
             return new WithCustomProperties(ambiguityResolver,
                     parameterBinders,
+                    bindingResolver,
                     new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher));
         }
 

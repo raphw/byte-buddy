@@ -159,7 +159,7 @@ public class AgentBuilderInstallationListenerTest {
     public void testStreamWritingToSystem() throws Exception {
         assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemOut(),
                 is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
-        assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemErr(),
+        assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemError(),
                 is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
     }
 

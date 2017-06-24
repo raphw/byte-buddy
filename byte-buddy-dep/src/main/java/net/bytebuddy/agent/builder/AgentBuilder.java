@@ -3916,7 +3916,7 @@ public interface AgentBuilder {
              *
              * @return An installation listener that prints to {@link System#err}.
              */
-            public static InstallationListener toSystemErr() {
+            public static InstallationListener toSystemError() {
                 return new StreamWriting(System.err);
             }
 
