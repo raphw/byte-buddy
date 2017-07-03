@@ -4,10 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -30,7 +27,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
@@ -594,6 +590,18 @@ public class TypeWriterDefaultTest {
         assertThat(child[0].length(), is(3L));
         assertThat(child[0].delete(), is(true));
         assertThat(file.delete(), is(true));
+    }
+
+    @Test
+    public void testMembersWithLatentTypeDescription() throws Exception {
+        TypeDescription type = new TypeDescription.Latent("B", 0, TypeDescription.Generic.UNDEFINED);
+        assertThat(new ByteBuddy()
+                .subclass(Object.class)
+                .name(FOO)
+                .defineField(FOO, type)
+                .defineMethod(FOO, type).withParameters(type)
+                .intercept(FixedValue.nullValue())
+                .make(), notNullValue(DynamicType.class));
     }
 
     @Test

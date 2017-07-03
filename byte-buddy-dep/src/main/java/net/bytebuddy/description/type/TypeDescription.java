@@ -7537,6 +7537,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
+        public Latent(String name, int modifiers, Generic superClass, Generic... anInterface) {
+            this(name, modifiers, superClass, Arrays.asList(anInterface));
+        }
+
+        /**
+         * Creates a new latent type.
+         *
+         * @param name       The name of the type.
+         * @param modifiers  The modifiers of the type.
+         * @param superClass The super type or {@code null} if no such type exists.
+         * @param interfaces The interfaces that this type implements.
+         */
         public Latent(String name, int modifiers, Generic superClass, List<? extends Generic> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
@@ -7567,6 +7579,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public TypeList getDeclaredTypes() {
             throw new IllegalStateException("Cannot resolve inner types of a latent type description: " + this);
+        }
+
+        @Override
+        public int getSegmentCount() {
+            return 0;
         }
 
         @Override
