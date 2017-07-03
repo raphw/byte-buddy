@@ -203,6 +203,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @param implementationDelegate The implementation delegate to use by this method delegator.
      * @param parameterBinders       The parameter binders to use by this method delegator.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
+     * @param bindingResolver        The binding resolver being used to select the relevant method binding.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,

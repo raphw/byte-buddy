@@ -7532,10 +7532,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * Creates a new latent type.
          *
-         * @param name       The name of the type.
-         * @param modifiers  The modifiers of the type.
-         * @param superClass The super type or {@code null} if no such type exists.
-         * @param interfaces The interfaces that this type implements.
+         * @param name        The name of the type.
+         * @param modifiers   The modifiers of the type.
+         * @param superClass  The super type or {@code null} if no such type exists.
+         * @param anInterface The interfaces that this type implements.
          */
         public Latent(String name, int modifiers, Generic superClass, Generic... anInterface) {
             this(name, modifiers, superClass, Arrays.asList(anInterface));
