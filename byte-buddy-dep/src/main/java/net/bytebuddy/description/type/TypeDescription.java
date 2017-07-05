@@ -7505,7 +7505,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     }
 
     /**
+     * <p>
      * A latent type description for a type without methods or fields.
+     * </p>
+     * <p>
+     * <b>Important</b>: This type does not define most of its properties and should only be used as a simple placeholder. For more
+     * complex placeholders, use an {@link net.bytebuddy.dynamic.scaffold.InstrumentedType.Default}.
+     * </p>
      */
     class Latent extends AbstractBase.OfSimpleType {
 
@@ -7579,11 +7585,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public TypeList getDeclaredTypes() {
             throw new IllegalStateException("Cannot resolve inner types of a latent type description: " + this);
-        }
-
-        @Override
-        public int getSegmentCount() {
-            return 0;
         }
 
         @Override

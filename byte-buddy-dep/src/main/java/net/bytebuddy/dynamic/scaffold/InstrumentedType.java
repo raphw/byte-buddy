@@ -425,6 +425,30 @@ public interface InstrumentedType extends TypeDescription {
             this.localClass = localClass;
         }
 
+        /**
+         * Creates a new instrumented type.
+         *
+         * @param name                The type's name.
+         * @param superClass          The type's super class.
+         * @param modifierContributor The type's modifiers.
+         * @return An appropriate instrumented type.
+         */
+        public static InstrumentedType of(String name, TypeDescription.Generic superClass, ModifierContributor.ForType... modifierContributor) {
+            return of(name, superClass, ModifierContributor.Resolver.of(modifierContributor).resolve());
+        }
+
+        /**
+         * Creates a new instrumented type.
+         *
+         * @param name       The type's name.
+         * @param superClass The type's super class.
+         * @param modifiers  The type's modifiers.
+         * @return An appropriate instrumented type.
+         */
+        public static InstrumentedType of(String name, TypeDescription.Generic superClass, int modifiers) {
+            return Factory.Default.MODIFIABLE.subclass(name, modifiers, superClass);
+        }
+
         @Override
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,

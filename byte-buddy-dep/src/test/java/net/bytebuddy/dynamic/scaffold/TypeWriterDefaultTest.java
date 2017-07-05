@@ -593,18 +593,6 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
-    public void testMembersWithLatentTypeDescription() throws Exception {
-        TypeDescription type = new TypeDescription.Latent("B", 0, TypeDescription.Generic.UNDEFINED);
-        assertThat(new ByteBuddy()
-                .subclass(Object.class)
-                .name(FOO)
-                .defineField(FOO, type)
-                .defineMethod(FOO, type).withParameters(type)
-                .intercept(FixedValue.nullValue())
-                .make(), notNullValue(DynamicType.class));
-    }
-
-    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.UnresolvedType.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ClassDumpAction.class).apply();
