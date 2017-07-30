@@ -4208,7 +4208,10 @@ public interface DynamicType {
                 if (!targetJar.isFile() && !targetJar.createNewFile()) {
                     throw new IllegalArgumentException("Could not create file: " + targetJar);
                 }
-                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(targetJar), jarInputStream.getManifest());
+                Manifest manifest = jarInputStream.getManifest();
+                JarOutputStream jarOutputStream = manifest == null
+                        ? new JarOutputStream(new FileOutputStream(targetJar))
+                        : new JarOutputStream(new FileOutputStream(targetJar), manifest);
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>();
