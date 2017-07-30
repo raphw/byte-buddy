@@ -1161,23 +1161,23 @@ public class ByteBuddyAgent {
             /**
              * The {@code java.lang.ProcessHandle#pid()} method.
              */
-            private final Method getPid;
+            private final Method pid;
 
             /**
              * Creates a new attachment type evaluator.
              *
              * @param current The {@code java.lang.ProcessHandle#current()} method.
-             * @param getPid  The {@code java.lang.ProcessHandle#pid()} method.
+             * @param pid  The {@code java.lang.ProcessHandle#pid()} method.
              */
-            protected ForJava9CapableVm(Method current, Method getPid) {
+            protected ForJava9CapableVm(Method current, Method pid) {
                 this.current = current;
-                this.getPid = getPid;
+                this.pid = pid;
             }
 
             @Override
             public boolean requiresExternalAttachment(String processId) {
                 try {
-                    return getPid.invoke(current.invoke(STATIC_MEMBER)).equals(processId);
+                    return pid.invoke(current.invoke(STATIC_MEMBER)).toString().equals(processId);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access Java 9 process API", exception);
                 } catch (InvocationTargetException exception) {
