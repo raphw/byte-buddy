@@ -443,7 +443,7 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
     <a href="http://en.wikipedia.org/wiki/Convention_over_configuration">convention over configuration</a> and
     provides you with defaults that we found convenient. As for the name of a type, the default Byte Buddy
     configuration provides a <code>NamingStrategy</code> which randomly creates a class name based on a dynamic
-    type's superclass name. Furthermore, the name is defined to be in the same package as the subclass such
+    type's superclass name. Furthermore, the name is defined to be in the same package as the super class such
     that package-private methods of the direct superclass are always visible to the dynamic type. If you for example
     subclassed a type named <code>example.Foo</code>, the generated name will be something like
     <code>example.Foo$$ByteBuddy$$1376491271</code> where the numeric sequence is random. An exception of this rule
