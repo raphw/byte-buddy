@@ -96,7 +96,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistribution>file:///${project.basedir}/${gradle.binary}</gradleDistribution>
                         </configuration>
                     </execution>
                 </executions>
