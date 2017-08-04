@@ -28,6 +28,7 @@
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
+            <version>${version.android.sdk}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -38,11 +39,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>${version.mockito}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>

@@ -5382,7 +5382,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   SuppressionHandler.Bound suppressionHandler,
                                                   ClassReader classReader) {
-                        super(Opcodes.ASM5);
+                        super(Opcodes.ASM6);
                         this.instrumentedType = instrumentedType;
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
@@ -5430,7 +5430,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new exception table extractor.
                          */
                         protected ExceptionTableExtractor() {
-                            super(Opcodes.ASM5);
+                            super(Opcodes.ASM6);
                         }
 
                         @Override
@@ -5458,7 +5458,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodVisitor The method visitor for which the try-catch-finally blocks should be written.
                          */
                         protected ExceptionTableCollector(MethodVisitor methodVisitor) {
-                            super(Opcodes.ASM5);
+                            super(Opcodes.ASM6);
                             this.methodVisitor = methodVisitor;
                         }
 
@@ -5498,7 +5498,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodVisitor The method visitor for which to substitute labels.
                          */
                         protected ExceptionTableSubstitutor(MethodVisitor methodVisitor) {
-                            super(Opcodes.ASM5, methodVisitor);
+                            super(Opcodes.ASM6, methodVisitor);
                             substitutions = new IdentityHashMap<Label, Label>();
                         }
 
@@ -6064,7 +6064,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, OffsetMapping.Target> offsetMappings,
                                                  SuppressionHandler.Bound suppressionHandler) {
-                    super(Opcodes.ASM5, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
+                    super(Opcodes.ASM6, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
                     this.methodVisitor = methodVisitor;
                     this.implementationContext = implementationContext;
                     this.methodSizeHandler = methodSizeHandler;
@@ -7160,7 +7160,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 List<? extends TypeDescription> yieldedTypes,
                                 int writerFlags,
                                 int readerFlags) {
-            super(Opcodes.ASM5, delegate);
+            super(Opcodes.ASM6, delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
@@ -7793,7 +7793,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param delegate      The delegate byte code appender.
              */
             protected EmulatingMethodVisitor(MethodVisitor methodVisitor, ByteCodeAppender delegate) {
-                super(Opcodes.ASM5, methodVisitor);
+                super(Opcodes.ASM6, methodVisitor);
                 this.delegate = delegate;
             }
 

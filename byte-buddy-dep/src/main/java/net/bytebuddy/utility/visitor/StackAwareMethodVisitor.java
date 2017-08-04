@@ -58,7 +58,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
      * @param instrumentedMethod The method description for which this method visitor is applied.
      */
     public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
-        super(Opcodes.ASM5, methodVisitor);
+        super(Opcodes.ASM6, methodVisitor);
         current = new ArrayList<StackSize>();
         sizes = new HashMap<Label, List<StackSize>>();
         freeIndex = instrumentedMethod.getStackSize();

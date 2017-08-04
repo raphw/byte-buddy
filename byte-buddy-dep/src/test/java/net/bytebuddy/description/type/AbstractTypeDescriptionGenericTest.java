@@ -1971,7 +1971,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         }
 
         public GenericDisintegrator(ClassVisitor classVisitor) {
-            super(Opcodes.ASM5, classVisitor);
+            super(Opcodes.ASM6, classVisitor);
         }
 
         @Override

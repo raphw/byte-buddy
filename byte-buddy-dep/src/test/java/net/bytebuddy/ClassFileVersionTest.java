@@ -15,7 +15,7 @@ public class ClassFileVersionTest {
 
     @Test
     public void testExplicitConstructionOfUnknownVersion() throws Exception {
-        assertThat(ClassFileVersion.ofMinorMajor(Opcodes.V1_8 + 1).getMinorMajorVersion(), is(Opcodes.V1_8 + 1));
+        assertThat(ClassFileVersion.ofMinorMajor(Opcodes.V1_9).getMinorMajorVersion(), is(Opcodes.V1_9));
     }
 
     @Test(expected = IllegalArgumentException.class)

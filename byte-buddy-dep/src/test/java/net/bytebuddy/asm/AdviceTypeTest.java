@@ -1935,7 +1935,7 @@ public class AdviceTypeTest {
         private static class SerializationClassVisitor extends ClassVisitor {
 
             public SerializationClassVisitor(ClassVisitor classVisitor) {
-                super(Opcodes.ASM5, classVisitor);
+                super(Opcodes.ASM6, classVisitor);
             }
 
             @Override
@@ -1947,7 +1947,7 @@ public class AdviceTypeTest {
         private static class SerializationMethodVisitor extends MethodVisitor {
 
             public SerializationMethodVisitor(MethodVisitor methodVisitor) {
-                super(Opcodes.ASM5, methodVisitor);
+                super(Opcodes.ASM6, methodVisitor);
             }
 
             @Override

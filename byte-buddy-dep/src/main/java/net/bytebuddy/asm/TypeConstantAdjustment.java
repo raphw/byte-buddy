@@ -69,7 +69,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
          * @param classVisitor The underlying class visitor.
          */
         protected TypeConstantDissolvingClassVisitor(ClassVisitor classVisitor) {
-            super(Opcodes.ASM5, classVisitor);
+            super(Opcodes.ASM6, classVisitor);
         }
 
         @Override
@@ -112,7 +112,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
              * @param methodVisitor The underlying method visitor.
              */
             protected TypeConstantDissolvingMethodVisitor(MethodVisitor methodVisitor) {
-                super(Opcodes.ASM5, methodVisitor);
+                super(Opcodes.ASM6, methodVisitor);
             }
 
             @Override

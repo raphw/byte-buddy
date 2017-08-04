@@ -22,10 +22,12 @@
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
+            <version>${version.asm}</version>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-commons</artifactId>
+            <version>${version.asm}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.ow2.asm</groupId>
@@ -34,18 +36,15 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-util</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>${version.mockito}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -60,7 +59,14 @@
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-util</artifactId>
+            <version>${version.asm}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
             <artifactId>asm-analysis</artifactId>
+            <version>${version.asm}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

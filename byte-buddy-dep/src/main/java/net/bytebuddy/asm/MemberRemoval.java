@@ -177,7 +177,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
                                              ElementMatcher.Junction<MethodDescription> methodMatcher,
                                              Map<String, FieldDescription.InDefinedShape> fields,
                                              Map<String, MethodDescription> methods) {
-            super(Opcodes.ASM5, classVisitor);
+            super(Opcodes.ASM6, classVisitor);
             this.fieldMatcher = fieldMatcher;
             this.methodMatcher = methodMatcher;
             this.fields = fields;

@@ -24,21 +24,21 @@ public class ExceptionTableSensitiveMethodVisitorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Opcodes.ASM5, "visitLabel", new Class<?>[]{Label.class}, new Object[]{new Label()}},
-                {Opcodes.ASM5, "visitIntInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
-                {Opcodes.ASM5, "visitVarInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
-                {Opcodes.ASM5, "visitTypeInsn", new Class<?>[]{int.class, String.class}, new Object[]{0, ""}},
-                {Opcodes.ASM5, "visitFieldInsn", new Class<?>[]{int.class, String.class, String.class, String.class}, new Object[]{0, "", "", ""}},
+                {Opcodes.ASM6, "visitLabel", new Class<?>[]{Label.class}, new Object[]{new Label()}},
+                {Opcodes.ASM6, "visitIntInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
+                {Opcodes.ASM6, "visitVarInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
+                {Opcodes.ASM6, "visitTypeInsn", new Class<?>[]{int.class, String.class}, new Object[]{0, ""}},
+                {Opcodes.ASM6, "visitFieldInsn", new Class<?>[]{int.class, String.class, String.class, String.class}, new Object[]{0, "", "", ""}},
                 {Opcodes.ASM4, "visitMethodInsn", new Class<?>[]{int.class, String.class, String.class, String.class}, new Object[]{0, "", "", ""}},
-                {Opcodes.ASM5, "visitMethodInsn", new Class<?>[]{int.class, String.class, String.class, String.class, boolean.class}, new Object[]{0, "", "", "", false}},
-                {Opcodes.ASM5, "visitInvokeDynamicInsn", new Class<?>[]{String.class, String.class, Handle.class, Object[].class}, new Object[]{"", "", new Handle(0, "", "", "", false), new Object[0]}},
-                {Opcodes.ASM5, "visitJumpInsn", new Class<?>[]{int.class, Label.class}, new Object[]{0, new Label()}},
-                {Opcodes.ASM5, "visitLdcInsn", new Class<?>[]{Object.class}, new Object[]{new Object()}},
-                {Opcodes.ASM5, "visitIincInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
-                {Opcodes.ASM5, "visitTableSwitchInsn", new Class<?>[]{int.class, int.class, Label.class, Label[].class}, new Object[]{0, 0, new Label(), new Label[0]}},
-                {Opcodes.ASM5, "visitLookupSwitchInsn", new Class<?>[]{Label.class, int[].class, Label[].class}, new Object[]{new Label(), new int[0], new Label[0]}},
-                {Opcodes.ASM5, "visitMultiANewArrayInsn", new Class<?>[]{String.class, int.class}, new Object[]{"", 0}},
-                {Opcodes.ASM5, "visitInsn", new Class<?>[]{int.class}, new Object[]{0}},
+                {Opcodes.ASM6, "visitMethodInsn", new Class<?>[]{int.class, String.class, String.class, String.class, boolean.class}, new Object[]{0, "", "", "", false}},
+                {Opcodes.ASM6, "visitInvokeDynamicInsn", new Class<?>[]{String.class, String.class, Handle.class, Object[].class}, new Object[]{"", "", new Handle(0, "", "", "", false), new Object[0]}},
+                {Opcodes.ASM6, "visitJumpInsn", new Class<?>[]{int.class, Label.class}, new Object[]{0, new Label()}},
+                {Opcodes.ASM6, "visitLdcInsn", new Class<?>[]{Object.class}, new Object[]{new Object()}},
+                {Opcodes.ASM6, "visitIincInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
+                {Opcodes.ASM6, "visitTableSwitchInsn", new Class<?>[]{int.class, int.class, Label.class, Label[].class}, new Object[]{0, 0, new Label(), new Label[0]}},
+                {Opcodes.ASM6, "visitLookupSwitchInsn", new Class<?>[]{Label.class, int[].class, Label[].class}, new Object[]{new Label(), new int[0], new Label[0]}},
+                {Opcodes.ASM6, "visitMultiANewArrayInsn", new Class<?>[]{String.class, int.class}, new Object[]{"", 0}},
+                {Opcodes.ASM6, "visitInsn", new Class<?>[]{int.class}, new Object[]{0}},
         });
     }
 

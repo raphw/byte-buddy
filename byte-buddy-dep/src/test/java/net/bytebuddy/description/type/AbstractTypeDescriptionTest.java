@@ -670,7 +670,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         private static final String FOO = "foo";
 
         public SignatureMalformer(ClassVisitor classVisitor) {
-            super(Opcodes.ASM5, classVisitor);
+            super(Opcodes.ASM6, classVisitor);
         }
 
         public static Class<?> malform(Class<?> type) throws Exception {

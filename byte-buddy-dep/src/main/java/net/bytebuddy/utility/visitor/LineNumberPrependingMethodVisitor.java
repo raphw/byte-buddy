@@ -25,7 +25,7 @@ public class LineNumberPrependingMethodVisitor extends ExceptionTableSensitiveMe
      * @param methodVisitor The method visitor to delegate to.
      */
     public LineNumberPrependingMethodVisitor(MethodVisitor methodVisitor) {
-        super(Opcodes.ASM5, methodVisitor);
+        super(Opcodes.ASM6, methodVisitor);
         startOfMethod = new Label();
         prependLineNumber = true;
     }

@@ -1102,7 +1102,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             TypeDescription instrumentedType,
                                             Implementation.Context implementationContext,
                                             TypePool typePool) {
-            super(Opcodes.ASM5, methodVisitor);
+            super(Opcodes.ASM6, methodVisitor);
             this.methodGraphCompiler = methodGraphCompiler;
             this.strict = strict;
             this.substitution = substitution;

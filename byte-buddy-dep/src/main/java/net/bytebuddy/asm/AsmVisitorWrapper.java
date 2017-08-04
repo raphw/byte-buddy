@@ -268,7 +268,7 @@ public interface AsmVisitorWrapper {
              * @param fields           The instrumented type's declared fields.
              */
             protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, Map<String, FieldDescription.InDefinedShape> fields) {
-                super(Opcodes.ASM5, classVisitor);
+                super(Opcodes.ASM6, classVisitor);
                 this.instrumentedType = instrumentedType;
                 this.fields = fields;
             }
@@ -543,7 +543,7 @@ public interface AsmVisitorWrapper {
                                          Map<String, MethodDescription> methods,
                                          int writerFlags,
                                          int readerFlags) {
-                super(Opcodes.ASM5, classVisitor);
+                super(Opcodes.ASM6, classVisitor);
                 this.instrumentedType = instrumentedType;
                 this.implementationContext = implementationContext;
                 this.typePool = typePool;

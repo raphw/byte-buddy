@@ -421,7 +421,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                                                 TypeDescription instrumentedType,
                                                 Map<String, FieldDescription.InDefinedShape> fields,
                                                 Map<String, MethodDescription> methods) {
-            super(Opcodes.ASM5, classVisitor);
+            super(Opcodes.ASM6, classVisitor);
             this.typeAdjustments = typeAdjustments;
             this.fieldAdjustments = fieldAdjustments;
             this.methodAdjustments = methodAdjustments;

@@ -376,7 +376,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 anyInt())).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
+                return new ClassVisitor(Opcodes.ASM6, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                         return new LocalVariablesSorter(access, desc, super.visitMethod(access, name, desc, signature, exceptions));
