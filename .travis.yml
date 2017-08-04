@@ -2,12 +2,10 @@ language: java
 
 sudo: false
 
+# Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
 addons:
   apt:
     packages:
-      # Travis is running v6u34 which uses outdated ciphers.
-      - oracle-java6-installer
-      # Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
       - oracle-java8-installer
 
 branches:
