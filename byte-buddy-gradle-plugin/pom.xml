@@ -27,7 +27,6 @@
         <version.plugin.antrun>1.8</version.plugin.antrun>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <gradle.binary>gradle/wrapper/gradle-2.14.1-bin.zip</gradle.binary>
-        <file.prefix>file:/</file.prefix>
     </properties>
 
     <dependencies>
@@ -77,7 +76,7 @@
                             <args>
                                 <arg>--info</arg>
                             </args>
-                            <gradleDistribution>${file.prefix}/${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
                         </configuration>
                     </execution>
                     <execution>
@@ -98,7 +97,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistribution>${file.prefix}/${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
                         </configuration>
                     </execution>
                 </executions>
@@ -129,17 +128,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>windows-prefix</id>
-            <activation>
-                <os>
-                    <family>windows</family>
-                </os>
-            </activation>
-            <properties>
-                <file.prefix>file://</file.prefix>
-            </properties>
-        </profile>
         <profile>
             <id>extras</id>
             <build>

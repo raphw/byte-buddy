@@ -41,6 +41,11 @@ public class ByteBuddyExtension {
     private boolean failOnLiveInitializer;
 
     /**
+     * {@code true} if this mojo should continue when a plugin fails its transformation.
+     */
+    private boolean continueOnFailedPlugin;
+
+    /**
      * A list of task names for which to apply a transformation or {@code null} if the task should apply to all tasks.
      */
     private Set<String> tasks;
@@ -134,6 +139,24 @@ public class ByteBuddyExtension {
      */
     public void setFailOnLiveInitializer(boolean failOnLiveInitializer) {
         this.failOnLiveInitializer = failOnLiveInitializer;
+    }
+
+    /**
+     * Returns {@code true} if this mojo should continue when a plugin fails its transformation.
+     *
+     * @return {@code true} if this mojo should continue when a plugin fails its transformation.
+     */
+    public boolean isContinueOnFailedPlugin() {
+        return continueOnFailedPlugin;
+    }
+
+    /**
+     * Determines if this mojo should continue when a plugin fails its transformation.
+     *
+     * @param continueOnFailedPlugin {@code true} if this mojo should continue when a plugin fails its transformation.
+     */
+    public void setContinueOnFailedPlugin(boolean continueOnFailedPlugin) {
+        this.continueOnFailedPlugin = continueOnFailedPlugin;
     }
 
     /**

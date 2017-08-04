@@ -128,6 +128,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected boolean warnOnMissingOutputDirectory;
 
     /**
+     * When set to {@code true}, this mojo continues when a plugin fails its transformation.
+     */
+    @Parameter(defaultValue = "false", required = true)
+    protected boolean continueOnFailedPlugin;
+
+    /**
      * The currently used repository system.
      */
     @Component
@@ -350,8 +356,16 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         for (Plugin plugin : plugins) {
             try {
                 if (plugin.matches(typeDescription)) {
-                    builder = plugin.apply(builder, typeDescription);
-                    transformed = true;
+                    try {
+                        builder = plugin.apply(builder, typeDescription);
+                        transformed = true;
+                    } catch (RuntimeException exception) {
+                        if (continueOnFailedPlugin) {
+                            getLog().warn("Failure during the application of " + plugin, exception);
+                        } else {
+                            throw exception;
+                        }
+                    }
                 }
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot apply " + plugin + " on " + typeName, throwable);

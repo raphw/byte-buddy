@@ -221,8 +221,16 @@ public class TransformationAction implements Action<Task> {
         for (Plugin plugin : plugins) {
             try {
                 if (plugin.matches(typeDescription)) {
-                    builder = plugin.apply(builder, typeDescription);
-                    transformed = true;
+                    try {
+                        builder = plugin.apply(builder, typeDescription);
+                        transformed = true;
+                    } catch (RuntimeException exception) {
+                        if (byteBuddyExtension.isContinueOnFailedPlugin()) {
+                            project.getLogger().warn("Failure during the application of {}", plugin, exception);
+                        } else {
+                            throw exception;
+                        }
+                    }
                 }
             } catch (Throwable throwable) {
                 throw new GradleException("Cannot apply " + plugin + " on " + typeName, throwable);
