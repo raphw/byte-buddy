@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 05. August 2017: version 1.7.2
+
+- Fixes possibility to customize binding in `MethodDelegation`.
+- Update to ASM 6 beta to support Java 9 fully.
+
 ### 15. June 2017: version 1.7.1
 
 - Added `DiscoveryStrategy` for redefinition to determine types to be redefined.
