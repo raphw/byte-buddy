@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
@@ -26,6 +27,7 @@
         <version.plugin.antrun>1.8</version.plugin.antrun>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <gradle.binary>gradle/wrapper/gradle-2.14.1-bin.zip</gradle.binary>
+        <file.prefix>file:/</file.prefix>
     </properties>
 
     <dependencies>
@@ -75,7 +77,7 @@
                             <args>
                                 <arg>--info</arg>
                             </args>
-                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistribution>${file.prefix}/${project.basedir}/${gradle.binary}</gradleDistribution>
                         </configuration>
                     </execution>
                     <execution>
@@ -96,7 +98,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistribution>file:///${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistribution>${file.prefix}/${project.basedir}/${gradle.binary}</gradleDistribution>
                         </configuration>
                     </execution>
                 </executions>
@@ -115,7 +117,9 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}.jar" todir="${project.build.directory}" overwrite="true" />
+                                <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}.jar"
+                                      todir="${project.build.directory}"
+                                      overwrite="true"/>
                             </target>
                         </configuration>
                     </execution>
@@ -125,6 +129,17 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>windows-prefix</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <file.prefix>file://</file.prefix>
+            </properties>
+        </profile>
         <profile>
             <id>extras</id>
             <build>
@@ -143,7 +158,9 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}-javadoc.jar" todir="${project.build.directory}" overwrite="true" />
+                                        <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}-javadoc.jar"
+                                              todir="${project.build.directory}"
+                                              overwrite="true"/>
                                     </target>
                                 </configuration>
                             </execution>
