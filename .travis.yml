@@ -2,11 +2,12 @@ language: java
 
 sudo: false
 
-# Triggers an update of the OracleJDK distribution. Travis is currently running v8u31 which
-# exposes problems with the instrumentation of invokedynamic call sites.
 addons:
   apt:
     packages:
+      # Travis is running v6u34 which uses outdated ciphers.
+      - oracle-java6-installer
+      # Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
       - oracle-java8-installer
 
 branches:
