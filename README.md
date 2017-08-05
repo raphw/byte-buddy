@@ -215,7 +215,8 @@ Where to go from here?
 Byte Buddy is a comprehensive library and we only scratched the surface of Byte Buddy's capabilities. However, Byte
 Buddy aims for being easy to use by providing a domain-specific language for creating classes. Most runtime code
 generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
-to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial).
+to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial) (There is also [a Chinese translation available](http://notes.diguage.com/byte-buddy-tutorial)).
+
 Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/#/javadoc) and extensive
 test case coverage which can also serve as example code. Finally, you can find an up-to-date list of articles and
 presentations on Byte Buddy [in the wiki](https://github.com/raphw/byte-buddy/wiki/Web-Resources). When using Byte
