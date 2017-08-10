@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.Duplication;
@@ -56,19 +57,38 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
     private final boolean strict;
 
     /**
+     * The type pool resolver to use.
+     */
+    private final TypePoolResolver typePoolResolver;
+
+    /**
      * The substitution to apply.
      */
     private final Substitution substitution;
 
     /**
+     * Creates a default member substitution.
+     *
+     * @param strict {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
+     */
+    protected MemberSubstitution(boolean strict) {
+        this(MethodGraph.Compiler.DEFAULT, TypePoolResolver.OfImplicitPool.INSTANCE, strict, Substitution.NoOp.INSTANCE);
+    }
+
+    /**
      * Creates a new member substitutor.
      *
      * @param methodGraphCompiler The method graph compiler to use.
+     * @param typePoolResolver    The type pool resolver to use.
      * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
      * @param substitution        The substitution to apply.
      */
-    protected MemberSubstitution(MethodGraph.Compiler methodGraphCompiler, boolean strict, Substitution substitution) {
+    private MemberSubstitution(MethodGraph.Compiler methodGraphCompiler,
+                               TypePoolResolver typePoolResolver,
+                               boolean strict,
+                               Substitution substitution) {
         this.methodGraphCompiler = methodGraphCompiler;
+        this.typePoolResolver = typePoolResolver;
         this.strict = strict;
         this.substitution = substitution;
     }
@@ -80,7 +100,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A strict member substitutor.
      */
     public static MemberSubstitution strict() {
-        return new MemberSubstitution(MethodGraph.Compiler.DEFAULT, true, Substitution.NoOp.INSTANCE);
+        return new MemberSubstitution(true);
     }
 
     /**
@@ -91,7 +111,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A relaxed member substitutor.
      */
     public static MemberSubstitution relaxed() {
-        return new MemberSubstitution(MethodGraph.Compiler.DEFAULT, false, Substitution.NoOp.INSTANCE);
+        return new MemberSubstitution(false);
     }
 
     /**
@@ -101,7 +121,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any interaction with byte code elements that match the supplied matcher.
      */
     public WithoutSpecification element(ElementMatcher<? super ByteCodeElement> matcher) {
-        return new WithoutSpecification.ForMatchedByteCodeElement(methodGraphCompiler, strict, substitution, matcher);
+        return new WithoutSpecification.ForMatchedByteCodeElement(methodGraphCompiler, typePoolResolver, strict, substitution, matcher);
     }
 
     /**
@@ -111,7 +131,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any field access that match the supplied matcher.
      */
     public WithoutSpecification.ForMatchedField field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
-        return new WithoutSpecification.ForMatchedField(methodGraphCompiler, strict, substitution, matcher);
+        return new WithoutSpecification.ForMatchedField(methodGraphCompiler, typePoolResolver, strict, substitution, matcher);
     }
 
     /**
@@ -121,7 +141,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any method invocations that match the supplied matcher.
      */
     public WithoutSpecification.ForMatchedMethod method(ElementMatcher<? super MethodDescription> matcher) {
-        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, strict, substitution, matcher);
+        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, substitution, matcher);
     }
 
     /**
@@ -141,7 +161,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A specification that allows to determine how to substitute any constructor invocations that match the supplied matcher.
      */
     public WithoutSpecification invokable(ElementMatcher<? super MethodDescription> matcher) {
-        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, strict, substitution, matcher);
+        return new WithoutSpecification.ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, substitution, matcher);
     }
 
     /**
@@ -151,7 +171,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return A new member substitution that is equal to this but uses the specified method graph compiler.
      */
     public MemberSubstitution with(MethodGraph.Compiler methodGraphCompiler) {
-        return new MemberSubstitution(methodGraphCompiler, strict, substitution);
+        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, substitution);
+    }
+
+    /**
+     * Specifies a type pool resolver to be used for locating members.
+     *
+     * @param typePoolResolver The type pool resolver to use.
+     * @return A new instance of this member substitution that uses the supplied type pool resolver.
+     */
+    public MemberSubstitution with(TypePoolResolver typePoolResolver) {
+        return new MemberSubstitution(methodGraphCompiler, typePoolResolver, strict, substitution);
     }
 
     /**
@@ -178,7 +208,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 substitution,
                 instrumentedType,
                 implementationContext,
-                typePool);
+                typePoolResolver.resolve(instrumentedType, instrumentedMethod, typePool));
     }
 
     /**
@@ -191,6 +221,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * The method graph compiler to use.
          */
         protected final MethodGraph.Compiler methodGraphCompiler;
+
+        /**
+         * The type pool resolver to use.
+         */
+        protected final TypePoolResolver typePoolResolver;
 
         /**
          * {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
@@ -206,13 +241,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * Creates a new member substitution that requires a specification for how to perform a substitution.
          *
          * @param methodGraphCompiler The method graph compiler to use.
+         * @param typePoolResolver    The type pool resolver to use.
          * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
          * @param substitution        The substitution to apply.
          */
         protected WithoutSpecification(MethodGraph.Compiler methodGraphCompiler,
+                                       TypePoolResolver typePoolResolver,
                                        boolean strict,
                                        Substitution substitution) {
             this.methodGraphCompiler = methodGraphCompiler;
+            this.typePoolResolver = typePoolResolver;
             this.strict = strict;
             this.substitution = substitution;
         }
@@ -226,6 +264,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         public MemberSubstitution stub() {
             return new MemberSubstitution(methodGraphCompiler,
+                    typePoolResolver,
                     strict,
                     new Substitution.Compound(doStub(), substitution));
         }
@@ -271,6 +310,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         public MemberSubstitution replaceWith(FieldDescription fieldDescription) {
             return new MemberSubstitution(methodGraphCompiler,
+                    typePoolResolver,
                     strict,
                     new Substitution.Compound(doReplaceWith(fieldDescription), substitution));
         }
@@ -323,6 +363,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 throw new IllegalArgumentException("Cannot use " + methodDescription + " as a replacement");
             }
             return new MemberSubstitution(methodGraphCompiler,
+                    typePoolResolver,
                     strict,
                     new Substitution.Compound(doReplaceWith(methodDescription), substitution));
         }
@@ -350,15 +391,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * Creates a new member substitution for a matched byte code element that requires a specification for how to perform a substitution.
              *
              * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
              * @param substitution        The substitution to apply.
              * @param matcher             A matcher for any byte code elements that should be substituted.
              */
             protected ForMatchedByteCodeElement(MethodGraph.Compiler methodGraphCompiler,
+                                                TypePoolResolver typePoolResolver,
                                                 boolean strict,
                                                 Substitution substitution,
                                                 ElementMatcher<? super ByteCodeElement> matcher) {
-                super(methodGraphCompiler, strict, substitution);
+                super(methodGraphCompiler, typePoolResolver, strict, substitution);
                 this.matcher = matcher;
             }
 
@@ -403,21 +446,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * Creates a new member substitution for a matched field that requires a specification for how to perform a substitution.
              *
              * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
              * @param substitution        The substitution to apply.
              * @param matcher             A matcher for any field that should be substituted.
              */
             protected ForMatchedField(MethodGraph.Compiler methodGraphCompiler,
+                                      TypePoolResolver typePoolResolver,
                                       boolean strict,
                                       Substitution substitution,
                                       ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
-                this(methodGraphCompiler, strict, substitution, matcher, true, true);
+                this(methodGraphCompiler, typePoolResolver, strict, substitution, matcher, true, true);
             }
 
             /**
              * Creates a new member substitution for a matched field that requires a specification for how to perform a substitution.
              *
              * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
              * @param substitution        The substitution to apply.
              * @param matcher             A matcher for any field that should be substituted.
@@ -425,12 +471,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param matchWrite          {@code true} if write access to a field should be substituted.
              */
             protected ForMatchedField(MethodGraph.Compiler methodGraphCompiler,
+                                      TypePoolResolver typePoolResolver,
                                       boolean strict,
                                       Substitution substitution,
                                       ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
                                       boolean matchRead,
                                       boolean matchWrite) {
-                super(methodGraphCompiler, strict, substitution);
+                super(methodGraphCompiler, typePoolResolver, strict, substitution);
                 this.matcher = matcher;
                 this.matchRead = matchRead;
                 this.matchWrite = matchWrite;
@@ -442,7 +489,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This instance with the limitation that only read access to the matched field is substituted.
              */
             public WithoutSpecification onRead() {
-                return new ForMatchedField(methodGraphCompiler, strict, substitution, matcher, true, false);
+                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, substitution, matcher, true, false);
             }
 
             /**
@@ -451,7 +498,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This instance with the limitation that only write access to the matched field is substituted.
              */
             public WithoutSpecification onWrite() {
-                return new ForMatchedField(methodGraphCompiler, strict, substitution, matcher, false, true);
+                return new ForMatchedField(methodGraphCompiler, typePoolResolver, strict, substitution, matcher, false, true);
             }
 
             @Override
@@ -495,21 +542,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * Creates a new member substitution for a matched method that requires a specification for how to perform a substitution.
              *
              * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
              * @param substitution        The substitution to apply.
              * @param matcher             A matcher for any method or constructor that should be substituted.
              */
             protected ForMatchedMethod(MethodGraph.Compiler methodGraphCompiler,
+                                       TypePoolResolver typePoolResolver,
                                        boolean strict,
                                        Substitution substitution,
                                        ElementMatcher<? super MethodDescription> matcher) {
-                this(methodGraphCompiler, strict, substitution, matcher, true, true);
+                this(methodGraphCompiler, typePoolResolver, strict, substitution, matcher, true, true);
             }
 
             /**
              * Creates a new member substitution for a matched method that requires a specification for how to perform a substitution.
              *
              * @param methodGraphCompiler The method graph compiler to use.
+             * @param typePoolResolver    The type pool resolver to use.
              * @param strict              {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
              * @param substitution        The substitution to apply.
              * @param matcher             A matcher for any method or constructor that should be substituted.
@@ -517,12 +567,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param includeSuperCalls   {@code true} if this specification includes {@code super} invocations.
              */
             protected ForMatchedMethod(MethodGraph.Compiler methodGraphCompiler,
+                                       TypePoolResolver typePoolResolver,
                                        boolean strict,
                                        Substitution substitution,
                                        ElementMatcher<? super MethodDescription> matcher,
                                        boolean includeVirtualCalls,
                                        boolean includeSuperCalls) {
-                super(methodGraphCompiler, strict, substitution);
+                super(methodGraphCompiler, typePoolResolver, strict, substitution);
                 this.matcher = matcher;
                 this.includeVirtualCalls = includeVirtualCalls;
                 this.includeSuperCalls = includeSuperCalls;
@@ -534,7 +585,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This specification where only virtual methods are matched if they are not invoked as a virtual call.
              */
             public WithoutSpecification onVirtualCall() {
-                return new ForMatchedMethod(methodGraphCompiler, strict, substitution, isVirtual().and(matcher), true, false);
+                return new ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, substitution, isVirtual().and(matcher), true, false);
             }
 
             /**
@@ -543,7 +594,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @return This specification where only virtual methods are matched if they are not invoked as a super call.
              */
             public WithoutSpecification onSuperCall() {
-                return new ForMatchedMethod(methodGraphCompiler, strict, substitution, isVirtual().and(matcher), false, true);
+                return new ForMatchedMethod(methodGraphCompiler, typePoolResolver, strict, substitution, isVirtual().and(matcher), false, true);
             }
 
             @Override
@@ -565,6 +616,116 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         includeVirtualCalls,
                         includeSuperCalls,
                         new Substitution.Resolver.MethodInvoking(methodDescription));
+            }
+        }
+    }
+
+    /**
+     * A type pool resolver is responsible for resolving a {@link TypePool} for locating substituted members.
+     */
+    public interface TypePoolResolver {
+
+        /**
+         * Resolves a type pool to use for locating substituted members.
+         *
+         * @param instrumentedType   The instrumented type.
+         * @param instrumentedMethod The instrumented method.
+         * @param typePool           The type pool implicit to the instrumentation.
+         * @return The type pool to use.
+         */
+        TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool);
+
+        /**
+         * Returns the implicit type pool.
+         */
+        enum OfImplicitPool implements TypePoolResolver {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                return typePool;
+            }
+        }
+
+        /**
+         * A type pool resolver that returns a specific type pool.
+         */
+        @EqualsAndHashCode
+        class ForExplicitPool implements TypePoolResolver {
+
+            /**
+             * The type pool to return.
+             */
+            private final TypePool typePool;
+
+            /**
+             * Creates a resolver for an explicit type pool.
+             *
+             * @param typePool The type pool to return.
+             */
+            public ForExplicitPool(TypePool typePool) {
+                this.typePool = typePool;
+            }
+
+            @Override
+            public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                return this.typePool;
+            }
+        }
+
+        /**
+         * A type pool resolver that resolves the implicit pool but additionally checks another class file locator.
+         */
+        @EqualsAndHashCode
+        class ForClassFileLocator implements TypePoolResolver {
+
+            /**
+             * The class file locator to use.
+             */
+            private final ClassFileLocator classFileLocator;
+
+            /**
+             * The reader mode to apply.
+             */
+            private final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new type pool resolver for a class file locator as a supplement of the implicit type pool.
+             *
+             * @param classFileLocator The class file locator to use.
+             */
+            public ForClassFileLocator(ClassFileLocator classFileLocator) {
+                this(classFileLocator, TypePool.Default.ReaderMode.FAST);
+            }
+
+            /**
+             * Creates a new type pool resolver for a class file locator as a supplement of the implicit type pool.
+             *
+             * @param classFileLocator The class file locator to use.
+             * @param readerMode       The reader mode to apply.
+             */
+            public ForClassFileLocator(ClassFileLocator classFileLocator, TypePool.Default.ReaderMode readerMode) {
+                this.classFileLocator = classFileLocator;
+                this.readerMode = readerMode;
+            }
+
+            /**
+             * Creates a new type pool resolver that supplements the supplied class loader to the implicit type pool.
+             *
+             * @param classLoader The class loader to use as a supplement which can be {@code null} to represent the bootstrap loader.
+             * @return An appropriate type pool resolver.
+             */
+            public static TypePoolResolver of(ClassLoader classLoader) {
+                return new ForClassFileLocator(ClassFileLocator.ForClassLoader.of(classLoader));
+            }
+
+            @Override
+            public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                return new TypePool.Default(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode, typePool);
             }
         }
     }
