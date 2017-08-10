@@ -217,7 +217,7 @@ public class TransformationAction implements Action<Task> {
         } catch (Throwable throwable) {
             throw new GradleException("Cannot transform type: " + typeName, throwable);
         }
-        boolean transformed = false;
+        boolean transformed = false, failed = false;
         for (Plugin plugin : plugins) {
             try {
                 if (plugin.matches(typeDescription)) {
@@ -225,10 +225,11 @@ public class TransformationAction implements Action<Task> {
                         builder = plugin.apply(builder, typeDescription);
                         transformed = true;
                     } catch (RuntimeException exception) {
-                        if (byteBuddyExtension.isContinueOnFailedPlugin()) {
-                            project.getLogger().warn("Failure during the application of {}", plugin, exception);
-                        } else {
+                        if (byteBuddyExtension.isFailFast()) {
                             throw exception;
+                        } else {
+                            project.getLogger().error("Failure during the application of {}", plugin, exception);
+                            failed = true;
                         }
                     }
                 }
@@ -236,7 +237,9 @@ public class TransformationAction implements Action<Task> {
                 throw new GradleException("Cannot apply " + plugin + " on " + typeName, throwable);
             }
         }
-        if (transformed) {
+        if (failed) {
+            throw new GradleException("At least one plugin failed its execution");
+        } else if (transformed) {
             project.getLogger().info("Transformed type: {}", typeName);
             DynamicType dynamicType = builder.make();
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {

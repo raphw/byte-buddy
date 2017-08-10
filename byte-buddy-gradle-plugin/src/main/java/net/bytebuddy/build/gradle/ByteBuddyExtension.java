@@ -41,9 +41,9 @@ public class ByteBuddyExtension {
     private boolean failOnLiveInitializer;
 
     /**
-     * {@code true} if this mojo should continue when a plugin fails its transformation.
+     * {@code true} if this mojo should fail fast upon a plugin's failure.
      */
-    private boolean continueOnFailedPlugin;
+    private boolean failFast;
 
     /**
      * A list of task names for which to apply a transformation or {@code null} if the task should apply to all tasks.
@@ -59,6 +59,7 @@ public class ByteBuddyExtension {
         this.project = project;
         transformations = new ArrayList<Transformation>();
         failOnLiveInitializer = true;
+        failFast = true;
     }
 
     /**
@@ -142,21 +143,21 @@ public class ByteBuddyExtension {
     }
 
     /**
-     * Returns {@code true} if this mojo should continue when a plugin fails its transformation.
+     * Returns {@code true} if this mojo should fail fast upon a plugin's failure.
      *
-     * @return {@code true} if this mojo should continue when a plugin fails its transformation.
+     * @return {@code true} if this mojo should fail fast upon a plugin's failure.
      */
-    public boolean isContinueOnFailedPlugin() {
-        return continueOnFailedPlugin;
+    public boolean isFailFast() {
+        return failFast;
     }
 
     /**
-     * Determines if this mojo should continue when a plugin fails its transformation.
+     * Determines if this mojo should fail fast upon a plugin's failure.
      *
-     * @param continueOnFailedPlugin {@code true} if this mojo should continue when a plugin fails its transformation.
+     * @param failFast {@code true} if this mojo should fail fast upon a plugin's failure.
      */
-    public void setContinueOnFailedPlugin(boolean continueOnFailedPlugin) {
-        this.continueOnFailedPlugin = continueOnFailedPlugin;
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
     }
 
     /**

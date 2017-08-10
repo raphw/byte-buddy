@@ -128,10 +128,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected boolean warnOnMissingOutputDirectory;
 
     /**
-     * When set to {@code true}, this mojo continues when a plugin fails its transformation.
+     * When set to {@code true}, this mojo fails immediately if a plugin cannot be applied.
      */
-    @Parameter(defaultValue = "false", required = true)
-    protected boolean continueOnFailedPlugin;
+    @Parameter(defaultValue = "true", required = true)
+    protected boolean failFast;
 
     /**
      * The currently used repository system.
@@ -352,7 +352,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } catch (Throwable throwable) {
             throw new MojoExecutionException("Cannot transform type: " + typeName, throwable);
         }
-        boolean transformed = false;
+        boolean transformed = false, failed = false;
         for (Plugin plugin : plugins) {
             try {
                 if (plugin.matches(typeDescription)) {
@@ -360,10 +360,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                         builder = plugin.apply(builder, typeDescription);
                         transformed = true;
                     } catch (RuntimeException exception) {
-                        if (continueOnFailedPlugin) {
-                            getLog().warn("Failure during the application of " + plugin, exception);
-                        } else {
+                        if (failFast) {
                             throw exception;
+                        } else {
+                            getLog().error("Failure during the application of " + plugin, exception);
+                            failed = true;
                         }
                     }
                 }
@@ -371,7 +372,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 throw new MojoExecutionException("Cannot apply " + plugin + " on " + typeName, throwable);
             }
         }
-        if (transformed) {
+        if (failed) {
+            throw new MojoExecutionException("At least one plugin failed its execution");
+        } else if (transformed) {
             getLog().info("Transformed type: " + typeName);
             DynamicType dynamicType = builder.make();
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
