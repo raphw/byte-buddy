@@ -3995,19 +3995,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1) > localVariableLength) {
                             throw new IllegalStateException("Inconsistent frame length for " + methodDescription + ": " + localVariableLength);
                         }
-                        int offset;
-                        if (methodDescription.isStatic()) {
-                            offset = 0;
-                        } else {
-                            if (!translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
-                            }
-                            offset = 1;
-                        }
-                        for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            if (!toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
-                            }
+                        if (!methodDescription.isStatic() && !translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
+                            throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
                         }
                         Object[] translated = new Object[localVariableLength
                                 - methodDescription.getParameters().size()
