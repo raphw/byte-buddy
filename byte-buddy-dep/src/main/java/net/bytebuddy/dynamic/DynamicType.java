@@ -19,6 +19,7 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.scaffold.*;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.*;
@@ -735,6 +736,44 @@ public interface DynamicType {
          * @return A builder that allows for defining an implementation for the method or constructor.
          */
         MethodDefinition.ImplementationDefinition<T> define(MethodDescription methodDescription);
+
+        /**
+         * Defines a Java bean property with the specified name.
+         *
+         * @param name     The name of the property.
+         * @param type     The property type.
+         * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
+         */
+        FieldDefinition.Optional<T> defineProperty(String name, Type type);
+
+        /**
+         * Defines a Java bean property with the specified name.
+         *
+         * @param name     The name of the property.
+         * @param type     The property type.
+         * @param readOnly {@code true} if the property is read only, i.e. no setter should be defined and the field should be {@code final}.
+         * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
+         */
+        FieldDefinition.Optional<T> defineProperty(String name, Type type, boolean readOnly);
+
+        /**
+         * Defines a Java bean property with the specified name.
+         *
+         * @param name     The name of the property.
+         * @param type     The property type.
+         * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
+         */
+        FieldDefinition.Optional<T> defineProperty(String name, TypeDefinition type);
+
+        /**
+         * Defines a Java bean property with the specified name.
+         *
+         * @param name     The name of the property.
+         * @param type     The property type.
+         * @param readOnly {@code true} if the property is read only, i.e. no setter should be defined and the field should be {@code final}.
+         * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
+         */
+        FieldDefinition.Optional<T> defineProperty(String name, TypeDefinition type, boolean readOnly);
 
         /**
          * <p>
@@ -2532,6 +2571,47 @@ public interface DynamicType {
                     typeVariableDefinition = typeVariableDefinition.typeVariable(typeVariable.getSymbol(), typeVariable.getUpperBounds());
                 }
                 return typeVariableDefinition;
+            }
+
+            @Override
+            public FieldDefinition.Optional<S> defineProperty(String name, Type type) {
+                return defineProperty(name, TypeDefinition.Sort.describe(type));
+            }
+
+            @Override
+            public FieldDefinition.Optional<S> defineProperty(String name, Type type, boolean readOnly) {
+                return defineProperty(name, TypeDefinition.Sort.describe(type), readOnly);
+            }
+
+            @Override
+            public FieldDefinition.Optional<S> defineProperty(String name, TypeDefinition type) {
+                return defineProperty(name, type, false);
+            }
+
+            @Override
+            public FieldDefinition.Optional<S> defineProperty(String name, TypeDefinition type, boolean readOnly) {
+                if (name.isEmpty()) {
+                    throw new IllegalArgumentException("A bean property cannot have an empty name");
+                } else if (type.represents(void.class)) {
+                    throw new IllegalArgumentException("A bean property cannot have a void type");
+                }
+                DynamicType.Builder<S> builder = this;
+                FieldManifestation fieldManifestation;
+                if (!readOnly) {
+                    builder = builder
+                            .defineMethod("set" + Character.toUpperCase(name.charAt(0)) + name.substring(1), void.class, Visibility.PUBLIC)
+                            .withParameters(type)
+                            .intercept(FieldAccessor.ofField(name));
+                    fieldManifestation = FieldManifestation.PLAIN;
+                } else {
+                    fieldManifestation = FieldManifestation.FINAL;
+                }
+                return builder
+                        .defineMethod((type.represents(boolean.class) || type.represents(Boolean.class)
+                                ? "is"
+                                : "get") + Character.toUpperCase(name.charAt(0)) + name.substring(1), type, Visibility.PUBLIC)
+                        .intercept(FieldAccessor.ofField(name))
+                        .defineField(name, type, Visibility.PRIVATE, fieldManifestation);
             }
 
             @Override

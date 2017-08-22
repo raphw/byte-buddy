@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -514,7 +515,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod("bar", Object.class).intercept(StubMethod.INSTANCE)
                 .defineMethod("bar", String.class).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Class<?> subclass = new ByteBuddy(ClassFileVersion.JAVA_V5)
                 .subclass(base)
@@ -539,7 +540,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(BAR, Object.class).intercept(StubMethod.INSTANCE)
                 .defineMethod(BAR, String.class).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Class<?> subclass = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(base)
@@ -560,7 +561,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
                 .defineMethod(FOO, void.class, Visibility.PUBLIC, MethodManifestation.BRIDGE).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Class<?> subclass = new ByteBuddy()
                 .subclass(base)
@@ -590,6 +591,42 @@ public class TypeWriterDefaultTest {
         assertThat(child[0].length(), is(3L));
         assertThat(child[0].delete(), is(true));
         assertThat(file.delete(), is(true));
+    }
+
+    @Test
+    public void testPropertyDefinition() throws Exception {
+        Class<?> bean = new ByteBuddy()
+                .subclass(Object.class)
+                .defineProperty(FOO, Object.class)
+                .defineProperty(BAR, boolean.class)
+                .defineProperty(FOO + BAR, String.class, true)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+
+        assertThat(bean.getDeclaredMethods().length, is(5));
+
+        assertThat(bean.getMethod("getFoo").getReturnType(), is((Object) Object.class));
+        assertThat(bean.getMethod("setFoo", Object.class).getReturnType(), is((Object) void.class));
+        assertThat(bean.getMethod("isBar").getReturnType(), is((Object) boolean.class));
+        assertThat(bean.getMethod("setBar", boolean.class).getReturnType(), is((Object) void.class));
+        assertThat(bean.getMethod("getFoobar").getReturnType(), is((Object) String.class));
+
+        assertThat(bean.getDeclaredFields().length, is(3));
+
+        assertThat(bean.getDeclaredField(FOO).getType(), is((Object) Object.class));
+        assertThat(bean.getDeclaredField(BAR).getType(), is((Object) boolean.class));
+        assertThat(bean.getDeclaredField(FOO + BAR).getType(), is((Object) String.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPropertyDefinitionVoidType() throws Exception {
+        new ByteBuddy().subclass(Object.class).defineProperty(FOO, void.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPropertyDefinitionEmptyName() throws Exception {
+        new ByteBuddy().subclass(Object.class).defineProperty("", Object.class);
     }
 
     @Test
