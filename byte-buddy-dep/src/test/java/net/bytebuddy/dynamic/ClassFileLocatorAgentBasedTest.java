@@ -6,7 +6,6 @@ import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -14,8 +13,6 @@ import org.junit.rules.MethodRule;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +31,7 @@ public class ClassFileLocatorAgentBasedTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
@@ -55,6 +53,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @JavaVersionRule.Enforce(value = 8, atMost = 8)
     public void testExtractionOfInflatedMethodAccessor() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Method bar = Foo.class.getDeclaredMethod("bar");

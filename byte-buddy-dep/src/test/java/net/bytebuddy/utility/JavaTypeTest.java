@@ -81,7 +81,7 @@ public class JavaTypeTest {
         assertThat(JavaType.MODULE.getTypeStub().getName(), is("java.lang.Module"));
         assertThat(JavaType.MODULE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
         assertThat(JavaType.MODULE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
-        assertThat(JavaType.MODULE.getTypeStub().getInterfaces().size(), is(0));
+        assertThat(JavaType.MODULE.getTypeStub().getInterfaces().size(), is(1));
     }
 
     @Test

@@ -239,7 +239,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Checks if this class file version is at least of the provided version.
+     * Checks if this class file version is at least as new as the provided version.
      *
      * @param classFileVersion The version to check against.
      * @return {@code true} if this version is at least of the given version.
@@ -249,10 +249,30 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Checks if this class file version is less than the provided version.
+     * Checks if this class file version is newer than the provided version.
      *
      * @param classFileVersion The version to check against.
-     * @return {@code true} if this version is less than the given version.
+     * @return {@code true} if this version is newer than the provided version.
+     */
+    public boolean isGreaterThan(ClassFileVersion classFileVersion) {
+        return compareTo(classFileVersion) > 0;
+    }
+
+    /**
+     * Checks if this class file version is at most as new as the provided version.
+     *
+     * @param classFileVersion The version to check against.
+     * @return {@code true} if this version is as most as new as the provided version.
+     */
+    public boolean isAtMost(ClassFileVersion classFileVersion) {
+        return compareTo(classFileVersion) < 1;
+    }
+
+    /**
+     * Checks if this class file version is older than the provided version.
+     *
+     * @param classFileVersion The version to check against.
+     * @return {@code true} if this version is older than the provided version.
      */
     public boolean isLessThan(ClassFileVersion classFileVersion) {
         return compareTo(classFileVersion) < 0;

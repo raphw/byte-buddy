@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind;
 
 import org.junit.Test;
-import org.omg.CORBA.UNKNOWN;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

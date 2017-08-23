@@ -316,6 +316,11 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
 
             @Override
             public void reset(Instrumentation instrumentation, ClassFileLocator classFileLocator, List<Class<?>> types) throws IOException, UnmodifiableClassException, ClassNotFoundException {
+                for (Class<?> type : types) {
+                    if (!instrumentation.isModifiableClass(type)) {
+                        throw new IllegalArgumentException("Cannot modify type: " + type);
+                    }
+                }
                 instrumentation.addTransformer(ClassResettingTransformer.INSTANCE, true);
                 try {
                     instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));

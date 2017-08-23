@@ -56,7 +56,7 @@ public class AttacherTest {
         }
 
         public void loadAgent(String path, String argument) {
-            if (!path.equals(new File(BAR).getAbsolutePath())) {
+            if (!path.equals(BAR)) {
                 ERROR.set("Unexpected file: " + path);
             } else if (!argument.equals(QUX + " " + BAZ)) {
                 ERROR.set("Unexpected argument: " + argument);
@@ -80,7 +80,7 @@ public class AttacherTest {
         }
 
         public void loadAgent(String path, String argument) {
-            if (!path.equals(new File(BAR).getAbsolutePath())) {
+            if (!path.equals(BAR)) {
                 ERROR.set("Unexpected file: " + path);
             } else if (argument != null) {
                 ERROR.set("Unexpected argument: " + argument);

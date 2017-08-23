@@ -2091,7 +2091,7 @@ public class AgentBuilderDefaultTest {
                 return null;
             }
         }).when(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class), true);
-        assertThat(executingTransformer.transform(JavaModule.of(Object.class).unwrap(),
+        assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
                 classLoader,
                 FOO,
                 Object.class,

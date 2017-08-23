@@ -51,8 +51,6 @@ public class ClassInjectorUsingReflectionTest {
     @Test
     public void testDirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Direct.make().initialize();
-        assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
-        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
         assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
         assertThat(dispatcher.definePackage(classLoader,
                 Foo.class.getPackage().getName(),
@@ -63,14 +61,14 @@ public class ClassInjectorUsingReflectionTest {
                 null,
                 null,
                 null), notNullValue(Package.class));
+        assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
+        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
     @Test
     public void testIndirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Indirect.make().initialize();
-        assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
-        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
         assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
         assertThat(dispatcher.definePackage(classLoader,
                 Foo.class.getPackage().getName(),
@@ -81,6 +79,8 @@ public class ClassInjectorUsingReflectionTest {
                 null,
                 null,
                 null), notNullValue(Package.class));
+        assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
+        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 

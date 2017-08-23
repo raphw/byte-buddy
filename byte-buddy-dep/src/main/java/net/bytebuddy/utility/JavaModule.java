@@ -244,7 +244,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                             module.getMethod("getName"),
                             module.getMethod("getResourceAsStream", String.class),
                             module.getMethod("canRead", module),
-                            module.getMethod("isModifiableModule", module),
+                            Instrumentation.class.getMethod("isModifiableModule", module),
                             Instrumentation.class.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
                 } catch (Exception ignored) {
                     return Dispatcher.Disabled.INSTANCE;

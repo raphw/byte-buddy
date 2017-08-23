@@ -370,7 +370,7 @@ public class ByteBuddyAgent {
             if (ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
                 installExternal(attachmentAccessor.getExternalAttachment(), processId, agentProvider.resolve(), argument);
             } else {
-                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve(), argument);
+                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve().getAbsolutePath(), argument);
             }
         } catch (RuntimeException exception) {
             throw exception;
@@ -416,19 +416,19 @@ public class ByteBuddyAgent {
             } finally {
                 inputStream.close();
             }
-            StringBuilder classPath = new StringBuilder().append('"').append(attachmentJar.getAbsolutePath()).append('"');
+            StringBuilder classPath = new StringBuilder().append(quote(attachmentJar.getCanonicalPath()));
             for (File jar : externalAttachment.getClassPath()) {
-                classPath.append(File.pathSeparatorChar).append('"').append(jar.getAbsolutePath()).append('"');
+                classPath.append(File.pathSeparatorChar).append(quote(jar.getCanonicalPath()));
             }
-            if (new ProcessBuilder(System.getProperty(JAVA_HOME)
+            if (new ProcessBuilder(quote(System.getProperty(JAVA_HOME)
                     + File.separatorChar + "bin"
-                    + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
+                    + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java")),
                     CLASS_PATH_ARGUMENT,
                     classPath.toString(),
                     Attacher.class.getName(),
                     externalAttachment.getVirtualMachineType(),
                     processId,
-                    "\"" + agent.getAbsolutePath() + "\"",
+                    quote(agent.getAbsolutePath()),
                     argument == null ? "" : ("=" + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process");
             }
@@ -439,6 +439,18 @@ public class ByteBuddyAgent {
                 }
             }
         }
+    }
+
+    /**
+     * Quotes a value if it contains a white space.
+     *
+     * @param value The value to quote.
+     * @return The value being quoted if necessary.
+     */
+    private static String quote(String value) {
+        return value.contains(" ")
+                ? '"' + value + '"'
+                : value;
     }
 
     /**
@@ -1167,7 +1179,7 @@ public class ByteBuddyAgent {
              * Creates a new attachment type evaluator.
              *
              * @param current The {@code java.lang.ProcessHandle#current()} method.
-             * @param pid  The {@code java.lang.ProcessHandle#pid()} method.
+             * @param pid     The {@code java.lang.ProcessHandle#pid()} method.
              */
             protected ForJava9CapableVm(Method current, Method pid) {
                 this.current = current;

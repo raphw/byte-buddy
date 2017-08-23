@@ -441,8 +441,8 @@ public interface ClassFileLocator extends Closeable {
                 Method getPackages = JavaType.MODULE.load().getMethod("getPackages");
                 for (Object rawModule : (Set<?>) layerType.getMethod("modules").invoke(layerType.getMethod("boot").invoke(null))) {
                     ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
-                    for (String packageName : (String[]) getPackages.invoke(rawModule)) {
-                        bootModules.put(packageName, classFileLocator);
+                    for (Object packageName : (Set<?>) getPackages.invoke(rawModule)) {
+                        bootModules.put((String) packageName, classFileLocator);
                     }
                 }
                 return new PackageDiscriminating(bootModules);

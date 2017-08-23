@@ -9424,7 +9424,7 @@ public interface AgentBuilder {
                                     .subclass(ExecutingTransformer.class)
                                     .name(ExecutingTransformer.class.getName() + "$ByteBuddy$ModuleSupport")
                                     .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
-                                    .intercept(MethodCall.invoke(ExecutingTransformer.class.getMethod("transform",
+                                    .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
                                             Object.class,
                                             ClassLoader.class,
                                             String.class,

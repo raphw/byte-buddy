@@ -2,7 +2,6 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -48,11 +47,11 @@ public class Attacher {
             } else {
                 StringBuilder stringBuilder = new StringBuilder(args[3].substring(1));
                 for (int index = 4; index < args.length; index++) {
-                    stringBuilder.append(" ").append(args[index]);
+                    stringBuilder.append(' ').append(args[index]);
                 }
                 argument = stringBuilder.toString();
             }
-            install(Class.forName(args[0]), args[1], new File(args[2]), argument);
+            install(Class.forName(args[0]), args[1], args[2], argument);
         } catch (Exception ignored) {
             System.exit(1);
         }
@@ -71,7 +70,7 @@ public class Attacher {
      */
     protected static void install(Class<?> virtualMachineType,
                                   String processId,
-                                  File agent,
+                                  String agent,
                                   String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
                 .getMethod(ATTACH_METHOD_NAME, String.class)
@@ -79,7 +78,7 @@ public class Attacher {
         try {
             virtualMachineType
                     .getMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                    .invoke(virtualMachineInstance, agent.getAbsolutePath(), argument);
+                    .invoke(virtualMachineInstance, agent, argument);
         } finally {
             virtualMachineType
                     .getMethod(DETACH_METHOD_NAME)

@@ -63,10 +63,11 @@
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
-        <version.plugin.shade>2.4.3</version.plugin.shade>
+        <version.plugin.shade>3.1.0</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.jar>3.0.2</version.plugin.jar>
+        <version.plugin.plugin>3.5</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.0.2</version.plugin.resources>
         <version.plugin.surefire>2.20</version.plugin.surefire>
@@ -76,12 +77,12 @@
         <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
-        <version.plugin.findbugs>3.0.4</version.plugin.findbugs>
+        <version.plugin.findbugs>3.0.5</version.plugin.findbugs>
         <version.annotations.findbugs>3.0.1u2</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.android.sdk>4.1.1.4</version.android.sdk>
-        <version.lombok>1.16.16</version.lombok>
+        <version.lombok>1.16.18</version.lombok>
     </properties>
 
     <licenses>
@@ -196,6 +197,7 @@
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
                     <failOnError>false</failOnError>
+                    <noClassOk>true</noClassOk>
                     <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
                 </configuration>
             </plugin>
@@ -259,6 +261,11 @@
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>${version.plugin.plugin}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -313,6 +320,16 @@
             </activation>
             <properties>
                 <code.level>1.8</code.level>
+            </properties>
+        </profile>
+        <!-- Runs the build with a target version for Java 9 -->
+        <profile>
+            <id>java9</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <code.level>1.9</code.level>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->

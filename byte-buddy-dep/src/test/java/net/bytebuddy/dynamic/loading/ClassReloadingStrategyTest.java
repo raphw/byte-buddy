@@ -201,7 +201,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(8)
+    @JavaVersionRule.Enforce(value = 8, atMost = 8)
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testAnonymousType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,

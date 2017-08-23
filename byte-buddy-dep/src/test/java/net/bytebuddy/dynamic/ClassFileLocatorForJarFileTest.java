@@ -85,7 +85,7 @@ public class ClassFileLocatorForJarFileTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, sort = JavaVersionRule.Sort.AT_MOST)
+    @JavaVersionRule.Enforce(atMost = 8)
     public void testRuntimeJar() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.ofRuntimeJar();
         try {

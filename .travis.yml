@@ -2,11 +2,11 @@ language: java
 
 sudo: false
 
-# Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
 addons:
   apt:
     packages:
-      - oracle-java8-installer
+      - oracle-java8-installer # Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
+      - oracle-java9-installer # JDK 9 is not currently installed by default.
 
 branches:
   only:
@@ -16,12 +16,14 @@ matrix:
   include:
     - jdk: openjdk6
     - jdk: oraclejdk7
-      env: TARGET=-Pjava7
+      env: TARGET=-Pjava7 -Pintegration
     - jdk: oraclejdk8
-      env: TARGET=-Pjava8
+      env: TARGET=-Pjava8 -Pintegration
+    - jdk: oraclejdk9
+      env: TARGET=-Pjava9 # Findbugs cannot currently process Java 9
 
 install: ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script: ./mvnw jacoco:prepare-agent verify jacoco:report $TARGET -Pintegration -Dnet.bytebuddy.test.travis=true -B -V
+script: ./mvnw jacoco:prepare-agent verify jacoco:report $TARGET -Dnet.bytebuddy.test.travis=true -B -V
 
 after_success:
   - ./mvnw coveralls:report

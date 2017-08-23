@@ -48,7 +48,7 @@ public enum JavaType {
     /**
      * The {@code java.lang.Module} type.
      */
-    MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class);
+    MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class);
 
     /**
      * The type description to represent this type which is either a loaded type or a stub.

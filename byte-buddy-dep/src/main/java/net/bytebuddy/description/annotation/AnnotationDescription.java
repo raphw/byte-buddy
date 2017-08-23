@@ -650,6 +650,7 @@ public interface AnnotationDescription {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {
