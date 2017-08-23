@@ -2,6 +2,11 @@ language: java
 
 sudo: false
 
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer # Travis is running v8u31 which exposes problems with instrumentation of invokedynamic call sites.
+
 branches:
   only:
     - master
