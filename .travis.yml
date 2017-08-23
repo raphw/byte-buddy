@@ -1,8 +1,7 @@
 language: java
 
-sudo: required
-dist: precise
-group: edge
+sudo: false
+dist: trusty
 
 addons:
   apt:
