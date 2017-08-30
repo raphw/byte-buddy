@@ -461,8 +461,6 @@
                                         <artifactId>java16</artifactId>
                                         <version>1.1</version>
                                     </signature>
-                                    <!-- Should be true but is wrongly set in plugin for taking wanted effect. -->
-                                    <ignoreDependencies>false</ignoreDependencies>
                                 </configuration>
                             </execution>
                         </executions>
