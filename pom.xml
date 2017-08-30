@@ -72,7 +72,7 @@
         <version.plugin.resources>3.0.2</version.plugin.resources>
         <version.plugin.surefire>2.20</version.plugin.surefire>
         <version.plugin.pitest>1.2.0</version.plugin.pitest>
-        <version.plugin.animal-sniffer>1.15</version.plugin.animal-sniffer>
+        <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
@@ -462,8 +462,6 @@
                                         <artifactId>java16</artifactId>
                                         <version>1.1</version>
                                     </signature>
-                                    <!-- Should be true but is wrongly set in plugin for taking wanted effect. -->
-                                    <ignoreDependencies>false</ignoreDependencies>
                                 </configuration>
                             </execution>
                         </executions>
