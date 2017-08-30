@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. August 2017: version 1.7.4
+
+- Add convenience methods for defining bean properties.
+- Minor fixes to support Java 9 and allow building on JDK9.
+
+### 11. August 2017: version 1.7.3
+
+- Allow configuring `TypePool` to use within `Advice`.
+
 ### 05. August 2017: version 1.7.2
 
 - Fixes possibility to customize binding in `MethodDelegation`.
