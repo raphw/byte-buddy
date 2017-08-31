@@ -272,6 +272,58 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
         assertThat(iterator.hasNext(), is(false));
     }
 
+    @Test
+    public void testSlicingUnderflow() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(1,
+                1,
+                new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(2));
+        Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Arrays.asList(Object.class, String.class, Void.class)).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Object.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(String.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Void.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testSlicingOverflow() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(3,
+                3,
+                new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(2));
+        Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Arrays.asList(Object.class, String.class, Void.class)).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Arrays.asList(Object.class, String.class, Void.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testSlicingDynamicMatch() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(1,
+                3,
+                new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(2));
+        Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Arrays.asList(Object.class, String.class, Void.class)).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Arrays.asList(Object.class, String.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Void.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testSlicingMatch() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(2,
+                2,
+                new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(2));
+        Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Arrays.asList(Object.class, String.class, Void.class)).iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Arrays.asList(Object.class, String.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Void.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testPartitioningIllegalArgument() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning.of(0);

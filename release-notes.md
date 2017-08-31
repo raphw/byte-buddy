@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. August 2017: version 1.7.5
+
+- Prevents premature termination of reattempting retransformation.
+
 ### 30. August 2017: version 1.7.4
 
 - Add convenience methods for defining bean properties.
