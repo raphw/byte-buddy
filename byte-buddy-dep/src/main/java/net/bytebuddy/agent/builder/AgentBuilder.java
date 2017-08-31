@@ -4586,7 +4586,7 @@ public interface AgentBuilder {
                             this.minimum = minimum;
                             this.maximum = maximum;
                             this.iterator = iterator;
-                            buffer = Collections.emptyList();
+                            buffer = new ArrayList<Class<?>>();
                         }
 
                         @Override
@@ -4606,13 +4606,13 @@ public interface AgentBuilder {
                                 try {
                                     return buffer.subList(0, maximum);
                                 } finally {
-                                    buffer = buffer.subList(maximum, buffer.size());
+                                    buffer = new ArrayList<Class<?>>(buffer.subList(maximum, buffer.size()));
                                 }
                             } else {
                                 try {
                                     return buffer;
                                 } finally {
-                                    buffer = Collections.emptyList();
+                                    buffer = new ArrayList<Class<?>>();
                                 }
                             }
                         }
@@ -6127,10 +6127,13 @@ public interface AgentBuilder {
                  * @param iterable The iterable to prepend.
                  */
                 public void prepend(Iterable<? extends List<Class<?>>> iterable) {
-                    if (current.hasNext()) {
-                        backlog.addLast(current);
+                    Iterator<? extends List<Class<?>>> iterator = iterable.iterator();
+                    if (iterator.hasNext()) {
+                        if (current.hasNext()) {
+                            backlog.addLast(current);
+                        }
+                        current = iterator;
                     }
-                    current = iterable.iterator();
                 }
 
                 @Override
@@ -6143,7 +6146,7 @@ public interface AgentBuilder {
                     try {
                         return current.next();
                     } finally {
-                        while (!backlog.isEmpty() && !current.hasNext()) {
+                        while (!current.hasNext() && !backlog.isEmpty()) {
                             current = backlog.removeLast();
                         }
                     }
