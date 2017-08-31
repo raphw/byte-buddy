@@ -21,8 +21,10 @@ import org.eclipse.aether.repository.RemoteRepository;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -221,7 +223,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     ? Initialization.makeDefault()
                     : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version);
             getLog().info("Resolved entry point: " + entryPoint);
-            transform(root, entryPoint, classPath, plugins);
+            ExecutionStatus transformStatus = transform(root, entryPoint, classPath, plugins);
+            if (transformStatus.failed()) {
+                throw new MojoExecutionException("At least one plugin failed its execution");
+            }
         } finally {
             classLoaderResolver.close();
         }
@@ -237,8 +242,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      * @throws IOException            If an I/O exception occurs.
+     * @return transformation execution status
      */
-    private void transform(File root,
+    private ExecutionStatus transform(File root,
                            EntryPoint entryPoint,
                            List<? extends String> classPath,
                            List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
@@ -263,7 +269,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
-            processDirectory(root,
+            ExecutionStatus processDirectoryStatus = processDirectory(root,
                     root,
                     byteBuddy,
                     entryPoint,
@@ -273,6 +279,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     classFileLocator,
                     typePool,
                     plugins);
+            return processDirectoryStatus;
         } finally {
             classFileLocator.close();
         }
@@ -291,8 +298,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param plugins               The plugins to apply.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
+     * @return execution status of directory processing
      */
-    private void processDirectory(File root,
+    private ExecutionStatus processDirectory(File root,
                                   File folder,
                                   ByteBuddy byteBuddy,
                                   EntryPoint entryPoint,
@@ -301,12 +309,14 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                   TypePool typePool,
                                   List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         File[] file = folder.listFiles();
+        Set<ExecutionStatus> overallStatus = new HashSet<ExecutionStatus>();
         if (file != null) {
             for (File aFile : file) {
                 if (aFile.isDirectory()) {
-                    processDirectory(root, aFile, byteBuddy, entryPoint, methodNameTransformer, classFileLocator, typePool, plugins);
+                    ExecutionStatus dirProcessStatus = processDirectory(root, aFile, byteBuddy, entryPoint, methodNameTransformer, classFileLocator, typePool, plugins);
+                    overallStatus.add(dirProcessStatus);
                 } else if (aFile.isFile() && aFile.getName().endsWith(CLASS_FILE_EXTENSION)) {
-                    processClassFile(root,
+                    ExecutionStatus fileProcessStatus = processClassFile(root,
                             root.toURI().relativize(aFile.toURI()).toString(),
                             byteBuddy,
                             entryPoint,
@@ -314,11 +324,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             classFileLocator,
                             typePool,
                             plugins);
+                    overallStatus.add(fileProcessStatus);
                 } else {
                     getLog().debug("Skipping ignored file: " + aFile);
                 }
             }
         }
+        return new ExecutionStatus.Combined(overallStatus);
     }
 
     /**
@@ -334,8 +346,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param plugins               The plugins to apply.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
+     * @return execution status of class processing
      */
-    private void processClassFile(File root,
+    private ExecutionStatus processClassFile(File root,
                                   String file,
                                   ByteBuddy byteBuddy,
                                   EntryPoint entryPoint,
@@ -373,7 +386,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
         }
         if (failed) {
-            throw new MojoExecutionException("At least one plugin failed its execution");
+            return new ExecutionStatus.Failed();
         } else if (transformed) {
             getLog().info("Transformed type: " + typeName);
             DynamicType dynamicType = builder.make();
@@ -390,6 +403,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         } else {
             getLog().debug("Skipping non-transformed type: " + typeName);
         }
+        return new ExecutionStatus.Successful();
     }
 
     /**
