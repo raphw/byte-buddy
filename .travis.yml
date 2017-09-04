@@ -1,6 +1,7 @@
 language: java
 
 sudo: false
+dist: precise
 
 addons:
   apt:
