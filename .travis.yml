@@ -14,7 +14,7 @@ branches:
 matrix:
   include:
     - jdk: openjdk6
-    - jdk: oraclejdk7
+    - jdk: openjdk7
       env: TARGET=-Pjava7 -Pintegration
     - jdk: oraclejdk8
       env: TARGET=-Pjava8 -Pintegration
