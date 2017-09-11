@@ -8556,7 +8556,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param <T>           The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
-        public <T extends Annotation> WithCustomMapping bind(OffsetMapping.Factory<? super T> offsetMapping) {
+        public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
             Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new HashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
             if (!offsetMapping.getAnnotationType().isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + offsetMapping.getAnnotationType());
