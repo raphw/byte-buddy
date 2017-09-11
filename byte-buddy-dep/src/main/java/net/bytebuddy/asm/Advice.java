@@ -1236,6 +1236,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return A mapping for a constant string.
                  */
                 public static Target of(String value) {
+                    if (value == null) {
+                        return new ForStackManipulation(NullConstant.INSTANCE);
+                    }
                     return new ForStackManipulation(new TextConstant(value));
                 }
 
@@ -1264,6 +1267,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new ForStackManipulation(DoubleConstant.forValue((Double) value));
                     } else if (value instanceof String) {
                         return new ForStackManipulation(new TextConstant((String) value));
+                    } else if (value == null) {
+                        return new ForStackManipulation(NullConstant.INSTANCE);
                     } else {
                         throw new IllegalArgumentException("Not a constant value: " + value);
                     }
