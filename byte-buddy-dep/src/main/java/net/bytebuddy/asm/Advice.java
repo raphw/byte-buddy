@@ -1230,26 +1230,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * Creates a target for an offset mapping for a constant string.
+                 * Creates a target for an offset mapping for a constant value or {@code null}.
                  *
-                 * @param value The constant string value to represent.
-                 * @return A mapping for a constant string.
-                 */
-                public static Target of(String value) {
-                    if (value == null) {
-                        return new ForStackManipulation(NullConstant.INSTANCE);
-                    }
-                    return new ForStackManipulation(new TextConstant(value));
-                }
-
-                /**
-                 * Creates a target for an offset mapping for a constant value.
-                 *
-                 * @param value The constant value to represent.
+                 * @param value The constant value to represent or {@code null}.
                  * @return An appropriate target for an offset mapping.
                  */
                 public static Target of(Object value) {
-                    if (value instanceof Boolean) {
+                    if (value == null) {
+                        return new ForStackManipulation(NullConstant.INSTANCE);
+                    } else if (value instanceof Boolean) {
                         return new ForStackManipulation(IntegerConstant.forValue((Boolean) value));
                     } else if (value instanceof Byte) {
                         return new ForStackManipulation(IntegerConstant.forValue((Byte) value));
@@ -1267,8 +1256,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new ForStackManipulation(DoubleConstant.forValue((Double) value));
                     } else if (value instanceof String) {
                         return new ForStackManipulation(new TextConstant((String) value));
-                    } else if (value == null) {
-                        return new ForStackManipulation(NullConstant.INSTANCE);
                     } else {
                         throw new IllegalArgumentException("Not a constant value: " + value);
                     }
