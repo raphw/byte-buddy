@@ -8545,10 +8545,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
          *
          * @param offsetMapping The dynamic value that is computed for binding the parameter to a value.
-         * @param <T>           The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
-        public <T extends Annotation> WithCustomMapping bind(OffsetMapping.Factory<? super T> offsetMapping) {
+        public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
             Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings = new HashMap<Class<? extends Annotation>, OffsetMapping.Factory<?>>(this.offsetMappings);
             if (!offsetMapping.getAnnotationType().isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + offsetMapping.getAnnotationType());
