@@ -1250,6 +1250,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testUserNullValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, (Object) null).to(CustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -3473,7 +3484,7 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         @Advice.OnMethodExit
         private static void advice(@Custom Object value) {
-            if (value != Object.class && value != RetentionPolicy.CLASS) {
+            if (value != Object.class && value != RetentionPolicy.CLASS && value != null) {
                 throw new AssertionError();
             }
         }
