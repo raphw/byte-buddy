@@ -8553,7 +8553,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
          *
          * @param offsetMapping The dynamic value that is computed for binding the parameter to a value.
-         * @param <T>           The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public WithCustomMapping bind(OffsetMapping.Factory<?> offsetMapping) {
