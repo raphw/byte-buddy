@@ -116,7 +116,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * <b>Note</b>: It is not possible to trigger break points in inlined advice methods as the debugging information of the inlined advice is not
  * preserved. It is not possible in Java to reference more than one source file per class what makes translating such debugging information
  * impossible. It is however possible to set break points in advice methods when invoking the original advice target. This allows debugging
- * of advice code within unit tests that invoke the advice method without instrumentation. As a conequence of not transferring debugging information,
+ * of advice code within unit tests that invoke the advice method without instrumentation. As a consequence of not transferring debugging information,
  * the names of the parameters of an advice method do not matter when inlining, neither does any meta information on the advice method's body
  * such as annotations or parameter modifiers.
  * </p>
