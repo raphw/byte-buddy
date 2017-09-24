@@ -19,4 +19,4 @@ build_script:
   - java -Xmx32m -version
   - javac -J-Xmx32m -version
   - .\mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-  - .\mvnw jacoco:prepare-agent verify jacoco:report %TARGET% -Pintegration -Dnet.bytebuddy.test.travis=true -B -V
+  - .\mvnw jacoco:prepare-agent verify jacoco:report %TARGET% -Pintegration -Dnet.bytebuddy.test.ci=true -B -V

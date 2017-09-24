@@ -23,7 +23,7 @@ matrix:
     #  env: TARGET=-Pjava9 # Findbugs cannot currently process Java 9
 
 install: ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script: ./mvnw jacoco:prepare-agent verify jacoco:report $TARGET -Dnet.bytebuddy.test.travis=true -B -V
+script: ./mvnw jacoco:prepare-agent verify jacoco:report $TARGET -Dnet.bytebuddy.test.ci=true -B -V
 
 after_success:
   - ./mvnw coveralls:report
