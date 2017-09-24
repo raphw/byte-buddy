@@ -27,7 +27,7 @@ jobs:
     working_directory: ~/coverage
     steps:
       - checkout
-      - run: ./mvnw jacoco:prepare-agent test jacoco:report coveralls:report -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+      - run: ./mvnw jacoco:prepare-agent test jacoco:report coveralls:report -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
 workflows:
   version: 2
   build_all:
