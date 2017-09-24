@@ -23,11 +23,11 @@ jobs:
       - run: ./mvnw jacoco:prepare-agent verify jacoco:report -pl '!byte-buddy-gradle-plugin' -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true
   jdk9:
     docker:
-      - image: openjdk:9-jdk
+      - image: maven:3.5.0-jdk-9
     working_directory: ~/jdk9
     steps:
       - checkout
-      - run: ./mvnw jacoco:prepare-agent verify jacoco:report -pl '!byte-buddy-gradle-plugin' -Pjava9 -Dnet.bytebuddy.test.ci=true
+      - run: mvn verify -pl '!byte-buddy-gradle-plugin' -Pjava9 -Dnet.bytebuddy.test.ci=true
 workflows:
   version: 2
   all_versions:
