@@ -1,9 +1,30 @@
 version: 2
 jobs:
-  build:
+  jdk6:
     docker:
-      - image: openjdk:8-jdk
-    working_directory: ~/byte-buddy
+      - image: openjdk:6-jdk
+    working_directory: ~/jdk6
     steps:
       - checkout
-      - run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true -B -V
+      - run: ./mvnw jacoco:prepare-agent verify jacoco:report -pl '!byte-buddy-gradle-plugin' -Pintegration -Dnet.bytebuddy.test.ci=true -B -V
+  jdk7:
+    docker:
+      - image: openjdk:7-jdk
+    working_directory: ~/jdk7
+    steps:
+      - checkout
+      - run: ./mvnw jacoco:prepare-agent verify jacoco:report -pl '!byte-buddy-gradle-plugin' -Pintegration -Pjava7 -Dnet.bytebuddy.test.ci=true -B -V
+  jdk8:
+    docker:
+      - image: openjdk:8-jdk
+    working_directory: ~/jdk8
+    steps:
+      - checkout
+      - run: ./mvnw jacoco:prepare-agent verify jacoco:report -pl '!byte-buddy-gradle-plugin' -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -B -V
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - jdk6
+      - jdk7
+      - jdk8
