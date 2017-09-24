@@ -6,12 +6,4 @@ jobs:
     working_directory: ~/byte-buddy
     steps:
       - checkout
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
-      - run: ./mvnw dependency:go-offline
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: v1-dependencies-{{ checksum "pom.xml" }}
       - run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true -B -V
