@@ -944,11 +944,8 @@ public interface InstrumentedType extends TypeDescription {
                         }
                     }
                 }
-                Set<TypeDescription.Generic> exceptionTypes = new HashSet<Generic>();
                 for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
-                    if (!exceptionTypes.add(exceptionType)) {
-                        throw new IllegalStateException("Duplicate exception type " + exceptionType + " for " + methodDescription);
-                    } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
+                    if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
                         throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
                     } else if (!exceptionType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
                         throw new IllegalStateException("Illegal type annotations on " + exceptionType + " for " + methodDescription);
