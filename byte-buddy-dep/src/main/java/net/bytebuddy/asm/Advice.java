@@ -4122,10 +4122,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
-                        if (instrumentedMethod.isConstructor()) {
-                            return Opcodes.UNINITIALIZED_THIS.equals(frame);
-                        }
-                        return toFrame(instrumentedType).equals(frame);
+                        return instrumentedMethod.isConstructor() && Opcodes.UNINITIALIZED_THIS.equals(frame) || toFrame(instrumentedType).equals(frame);
                     }
                 },
 
