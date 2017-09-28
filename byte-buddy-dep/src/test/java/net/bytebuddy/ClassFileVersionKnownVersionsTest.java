@@ -57,7 +57,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {6, Opcodes.V1_6, 50, 0, true, false, false},
                 {7, Opcodes.V1_7, 51, 0, true, true, false},
                 {8, Opcodes.V1_8, 52, 0, true, true, true},
-                {9, Opcodes.V1_9, 53, 0, true, true, true}
+                {9, Opcodes.V9, 53, 0, true, true, true}
         });
     }
 
