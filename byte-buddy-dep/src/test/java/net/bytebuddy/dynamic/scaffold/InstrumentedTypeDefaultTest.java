@@ -1158,9 +1158,9 @@ public class InstrumentedTypeDefaultTest {
                 .validated(), notNullValue(TypeDescription.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testMethodDuplicateExceptionType() throws Exception {
-        makePlainInstrumentedType()
+        assertThat(makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
@@ -1170,7 +1170,7 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
                         TypeDescription.Generic.UNDEFINED))
-                .validated();
+                .validated(), notNullValue(TypeDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
