@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. October 2017: version 1.7.6
+
+- Update ASM to version 6 final.
+- Accept `null` in custom bound `Advice`.
+- Fix fail fast in build plugins.
+- Permit repeated exception in method signature.
+
 ### 30. August 2017: version 1.7.5
 
 - Prevents premature termination of reattempting retransformation.
