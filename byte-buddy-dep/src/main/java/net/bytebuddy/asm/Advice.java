@@ -763,6 +763,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             StackManipulation resolveIncrement(int value);
 
             /**
+             * An adapter class for a target that only can be read.
+             */
+            abstract class AbstractReadOnlyAdapter implements Target {
+
+                @Override
+                public StackManipulation resolveWrite() {
+                    throw new IllegalStateException("Cannot write to read-only value");
+                }
+
+                @Override
+                public StackManipulation resolveIncrement(int value) {
+                    throw new IllegalStateException("Cannot write to read-only value");
+                }
+            }
+
+            /**
              * A target for an offset mapping that represents a non-operational value. All writes are discarded and a value's
              * default value is returned upon every read.
              */
@@ -798,14 +814,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A read-only target for a default value.
                  */
-                protected static class ReadOnly extends ForDefaultValue {
+                public static class ReadOnly extends ForDefaultValue {
 
                     /**
                      * Creates a new writable target for a default value.
                      *
                      * @param typeDefinition The represented type.
                      */
-                    protected ReadOnly(TypeDefinition typeDefinition) {
+                    public ReadOnly(TypeDefinition typeDefinition) {
                         this(typeDefinition, StackManipulation.Trivial.INSTANCE);
                     }
 
@@ -815,7 +831,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param typeDefinition The represented type.
                      * @param readAssignment A stack manipulation to apply after a read instruction.
                      */
-                    protected ReadOnly(TypeDefinition typeDefinition, StackManipulation readAssignment) {
+                    public ReadOnly(TypeDefinition typeDefinition, StackManipulation readAssignment) {
                         super(typeDefinition, readAssignment);
                     }
 
@@ -833,14 +849,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A read-write target for a default value.
                  */
-                protected static class ReadWrite extends ForDefaultValue {
+                public static class ReadWrite extends ForDefaultValue {
 
                     /**
                      * Creates a new read-only target for a default value.
                      *
                      * @param typeDefinition The represented type.
                      */
-                    protected ReadWrite(TypeDefinition typeDefinition) {
+                    public ReadWrite(TypeDefinition typeDefinition) {
                         this(typeDefinition, StackManipulation.Trivial.INSTANCE);
                     }
 
@@ -850,7 +866,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param typeDefinition The represented type.
                      * @param readAssignment A stack manipulation to apply after a read instruction.
                      */
-                    protected ReadWrite(TypeDefinition typeDefinition, StackManipulation readAssignment) {
+                    public ReadWrite(TypeDefinition typeDefinition, StackManipulation readAssignment) {
                         super(typeDefinition, readAssignment);
                     }
 
@@ -908,16 +924,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target for a read-only mapping of a local variable.
                  */
-                protected static class ReadOnly extends ForVariable {
+                public static class ReadOnly extends ForVariable {
 
                     /**
-                     * Creates a read-only mapping for a local variable.
+                     * Creates a read-only mapping for a method parameter.
+                     *
+                     * @param parameterDescription The mapped parameter.
+                     */
+                    public ReadOnly(ParameterDescription parameterDescription) {
+                        this(parameterDescription, StackManipulation.Trivial.INSTANCE);
+                    }
+
+                    /**
+                     * Creates a read-only mapping for a method parameter.
                      *
                      * @param parameterDescription The mapped parameter.
                      * @param readAssignment       An assignment to execute upon reading a value.
                      */
-                    protected ReadOnly(ParameterDescription parameterDescription, StackManipulation readAssignment) {
+                    public ReadOnly(ParameterDescription parameterDescription, StackManipulation readAssignment) {
                         this(parameterDescription.getType(), parameterDescription.getOffset(), readAssignment);
+                    }
+
+                    /**
+                     * Creates a read-only mapping for a local variable.
+                     *
+                     * @param typeDefinition The represented type.
+                     * @param offset         The value's offset.
+                     */
+                    public ReadOnly(TypeDefinition typeDefinition, int offset) {
+                        this(typeDefinition, offset, StackManipulation.Trivial.INSTANCE);
                     }
 
                     /**
@@ -927,7 +962,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offset         The value's offset.
                      * @param readAssignment An assignment to execute upon reading a value.
                      */
-                    protected ReadOnly(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment) {
+                    public ReadOnly(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment) {
                         super(typeDefinition, offset, readAssignment);
                     }
 
@@ -946,7 +981,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A target for a writable mapping of a local variable.
                  */
                 @EqualsAndHashCode(callSuper = true)
-                protected static class ReadWrite extends ForVariable {
+                public static class ReadWrite extends ForVariable {
 
                     /**
                      * A stack manipulation to apply upon a write to the variable.
@@ -954,14 +989,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     private final StackManipulation writeAssignment;
 
                     /**
-                     * Creates a new target mapping for a writable local variable.
+                     * Creates a new target mapping for a writable method parameter.
+                     *
+                     * @param parameterDescription The mapped parameter.
+                     */
+                    public ReadWrite(ParameterDescription parameterDescription) {
+                        this(parameterDescription, StackManipulation.Trivial.INSTANCE, StackManipulation.Trivial.INSTANCE);
+                    }
+
+                    /**
+                     * Creates a new target mapping for a writable method parameter.
                      *
                      * @param parameterDescription The mapped parameter.
                      * @param readAssignment       An assignment to execute upon reading a value.
                      * @param writeAssignment      A stack manipulation to apply upon a write to the variable.
                      */
-                    protected ReadWrite(ParameterDescription parameterDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                    public ReadWrite(ParameterDescription parameterDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
                         this(parameterDescription.getType(), parameterDescription.getOffset(), readAssignment, writeAssignment);
+                    }
+
+                    /**
+                     * Creates a new target mapping for a writable local variable.
+                     *
+                     * @param typeDefinition The represented type.
+                     * @param offset         The value's offset.
+                     */
+                    public ReadWrite(TypeDefinition typeDefinition, int offset) {
+                        this(typeDefinition, offset, StackManipulation.Trivial.INSTANCE, StackManipulation.Trivial.INSTANCE);
                     }
 
                     /**
@@ -972,7 +1026,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param readAssignment  An assignment to execute upon reading a value.
                      * @param writeAssignment A stack manipulation to apply upon a write to the variable.
                      */
-                    protected ReadWrite(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                    public ReadWrite(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment, StackManipulation writeAssignment) {
                         super(typeDefinition, offset, readAssignment);
                         this.writeAssignment = writeAssignment;
                     }
@@ -1031,7 +1085,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target mapping for a read-only target mapping for an array of local variables.
                  */
-                protected static class ReadOnly extends ForArray {
+                public static class ReadOnly extends ForArray {
 
                     /**
                      * Creates a read-only target mapping for an array of all local variables.
@@ -1039,7 +1093,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param target     The compound target type.
                      * @param valueReads The stack manipulations to apply upon reading a variable array.
                      */
-                    protected ReadOnly(TypeDescription.Generic target, List<? extends StackManipulation> valueReads) {
+                    public ReadOnly(TypeDescription.Generic target, List<? extends StackManipulation> valueReads) {
                         super(target, valueReads);
                     }
 
@@ -1053,7 +1107,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A target mapping for a writable target mapping for an array of local variables.
                  */
                 @EqualsAndHashCode(callSuper = true)
-                protected static class ReadWrite extends ForArray {
+                public static class ReadWrite extends ForArray {
 
                     /**
                      * The stack manipulations to apply upon writing to a variable array.
@@ -1067,7 +1121,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param valueReads  The stack manipulations to apply upon reading a variable array.
                      * @param valueWrites The stack manipulations to apply upon writing to a variable array.
                      */
-                    protected ReadWrite(TypeDescription.Generic target, List<? extends StackManipulation> valueReads, List<? extends StackManipulation> valueWrites) {
+                    public ReadWrite(TypeDescription.Generic target,
+                                     List<? extends StackManipulation> valueReads,
+                                     List<? extends StackManipulation> valueWrites) {
                         super(target, valueReads);
                         this.valueWrites = valueWrites;
                     }
@@ -1116,7 +1172,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A read-only mapping for a field value.
                  */
-                static class ReadOnly extends ForField {
+                public static class ReadOnly extends ForField {
+
+                    /**
+                     * Creates a new read-only mapping for a field.
+                     *
+                     * @param fieldDescription The field value to load.
+                     */
+                    public ReadOnly(FieldDescription fieldDescription) {
+                        this(fieldDescription, StackManipulation.Trivial.INSTANCE);
+                    }
 
                     /**
                      * Creates a new read-only mapping for a field.
@@ -1124,7 +1189,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param fieldDescription The field value to load.
                      * @param readAssignment   The stack manipulation to apply upon a read.
                      */
-                    protected ReadOnly(FieldDescription fieldDescription, StackManipulation readAssignment) {
+                    public ReadOnly(FieldDescription fieldDescription, StackManipulation readAssignment) {
                         super(fieldDescription, readAssignment);
                     }
 
@@ -1143,7 +1208,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A mapping for a writable field.
                  */
                 @EqualsAndHashCode(callSuper = true)
-                static class ReadWrite extends ForField {
+                public static class ReadWrite extends ForField {
 
                     /**
                      * An assignment to apply prior to a field write.
@@ -1154,10 +1219,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new target for a writable field.
                      *
                      * @param fieldDescription The field value to load.
+                     */
+                    public ReadWrite(FieldDescription fieldDescription) {
+                        this(fieldDescription, StackManipulation.Trivial.INSTANCE, StackManipulation.Trivial.INSTANCE);
+                    }
+
+                    /**
+                     * Creates a new target for a writable field.
+                     *
+                     * @param fieldDescription The field value to load.
                      * @param readAssignment   The stack manipulation to apply upon a read.
                      * @param writeAssignment  An assignment to apply prior to a field write.
                      */
-                    protected ReadWrite(FieldDescription fieldDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                    public ReadWrite(FieldDescription fieldDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
                         super(fieldDescription, readAssignment);
                         this.writeAssignment = writeAssignment;
                     }
@@ -1174,7 +1248,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     Removal.SINGLE
                             );
                         }
-                        return new StackManipulation.Compound(preparation, FieldAccess.forField(fieldDescription).write());
+                        return new StackManipulation.Compound(writeAssignment, preparation, FieldAccess.forField(fieldDescription).write());
                     }
 
                     @Override
