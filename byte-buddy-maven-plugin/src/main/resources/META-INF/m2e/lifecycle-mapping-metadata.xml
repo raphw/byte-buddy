@@ -1,0 +1,15 @@
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>transform</goal>
+          <goal>transform-test</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute />
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>
