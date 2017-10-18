@@ -21,7 +21,7 @@ The **Byte Buddy Maven Plugin** enables you to apply bytecode enhancements durin
         <configuration>
           <transformations>
             <transformation>
-              <plugin>com.nordstrom.automation.junit.HookInstallingPlugin</plugin>
+              <plugin>com.example.junit.HookInstallingPlugin</plugin>
             </transformation>
           </transformations>
         </configuration>
@@ -36,7 +36,7 @@ This `byte-buddy-maven-plugin` element informs Maven to execute the `transform-t
 
 ###### HookInstallingPlugin.java
 ```java
-package com.nordstrom.automation.junit;
+package com.example.junit;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
