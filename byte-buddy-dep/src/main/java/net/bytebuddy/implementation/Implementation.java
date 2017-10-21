@@ -792,7 +792,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 if (!fieldCacheCanAppendEntries) {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
-                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, fieldValue.hashCode());
+                int hashCode = fieldValue.hashCode();
+                do {
+                    fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, hashCode++);
+                } while (registeredFieldCacheEntries.values().contains(fieldCache));
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
