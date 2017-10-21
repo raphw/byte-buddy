@@ -76,8 +76,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(describe(first).hashCode(), is(new TypeDescription.ForLoadedType(FirstSample.class).hashCode() + 31 * first.getName().hashCode()));
-        assertThat(describe(second).hashCode(), is(new TypeDescription.ForLoadedType(SecondSample.class).hashCode() + 31 * second.getName().hashCode()));
+        assertThat(describe(first).hashCode(), is(new TypeDescription.ForLoadedType(FirstSample.class).hashCode() + 31 * (17 + first.getName().hashCode())));
+        assertThat(describe(second).hashCode(), is(new TypeDescription.ForLoadedType(SecondSample.class).hashCode() + 31 * (17 + second.getName().hashCode())));
         assertThat(describe(first).hashCode(), is(describe(first).hashCode()));
         assertThat(describe(second).hashCode(), is(describe(second).hashCode()));
         assertThat(describe(first).hashCode(), not(describe(second).hashCode()));

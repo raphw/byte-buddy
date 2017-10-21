@@ -44,14 +44,14 @@ public abstract class AbstractMethodDescriptionTest {
     protected Constructor<?> firstConstructor, secondConstructor;
 
     private static int hashCode(Method method) {
-        int hashCode = new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
+        int hashCode = 17 + new TypeDescription.ForLoadedType(method.getDeclaringClass()).hashCode();
         hashCode = 31 * hashCode + method.getName().hashCode();
         hashCode = 31 * hashCode + new TypeDescription.ForLoadedType(method.getReturnType()).hashCode();
         return 31 * hashCode + new TypeList.ForLoadedTypes(method.getParameterTypes()).hashCode();
     }
 
     private static int hashCode(Constructor<?> constructor) {
-        int hashCode = new TypeDescription.ForLoadedType(constructor.getDeclaringClass()).hashCode();
+        int hashCode = 17 + new TypeDescription.ForLoadedType(constructor.getDeclaringClass()).hashCode();
         hashCode = 31 * hashCode + MethodDescription.CONSTRUCTOR_INTERNAL_NAME.hashCode();
         hashCode = 31 * hashCode + TypeDescription.VOID.hashCode();
         return 31 * hashCode + new TypeList.ForLoadedTypes(constructor.getParameterTypes()).hashCode();

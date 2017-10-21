@@ -735,7 +735,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public int hashCode() {
-            int hashCode = getDeclaringType().hashCode();
+            int hashCode = 17 + getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();
             hashCode = 31 * hashCode + getReturnType().asErasure().hashCode();
             return 31 * hashCode + getParameters().asTypeList().asErasures().hashCode();

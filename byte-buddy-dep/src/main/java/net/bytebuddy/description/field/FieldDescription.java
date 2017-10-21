@@ -158,7 +158,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public int hashCode() {
-            return getDeclaringType().hashCode() + 31 * getName().hashCode();
+            return getDeclaringType().hashCode() + 31 * (17 + getName().hashCode());
         }
 
         @Override
