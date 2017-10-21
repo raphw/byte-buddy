@@ -567,7 +567,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * A persistence handler decides on weather the byte array that represents a loaded class is exposed by
+     * A persistence handler decides on whether the byte array that represents a loaded class is exposed by
      * the {@link java.lang.ClassLoader#getResourceAsStream(String)} method.
      */
     public enum PersistenceHandler {
