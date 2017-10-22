@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. October 2017: version 1.7.7
+
+- Make self-attachment more robust on Windows.
+- Add M2E instructions for Maven plugin.
+- Improve hash function for members and avoid collision field names.
+- Convenience for custom target binders.
+
 ### 8. October 2017: version 1.7.6
 
 - Update ASM to version 6 final.
