@@ -20,6 +20,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -6505,6 +6506,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * An abstract base implementation of a type description.
      */
     abstract class AbstractBase extends TypeVariableSource.AbstractBase implements TypeDescription {
+
+        /**
+         * The {@link TypeDefinition#RAW_TYPES_PROPERTY} property.
+         */
+        protected static final boolean RAW_TYPES;
+
+        /*
+         * Reads the raw type property.
+         */
+        static {
+            boolean rawTypes;
+            try {
+                rawTypes = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(RAW_TYPES_PROPERTY)));
+            } catch (Exception ignored) {
+                rawTypes = false;
+            }
+            RAW_TYPES = rawTypes;
+        }
 
         /**
          * Checks if a specific type is assignable to another type where the source type must be a super
