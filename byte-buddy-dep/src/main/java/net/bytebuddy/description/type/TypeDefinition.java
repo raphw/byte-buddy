@@ -17,15 +17,18 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
 
     /**
      * <p>
-     * If this property is set to {@code true}, Byte Buddy does not resolve generic types when traversing type hierarchies.
-     * Using this property can cause unexpected side-effects and cause {@link ClassCastException}s as type variables are
-     * resolved to their erasures and generic information might be lost when redefining classes. Setting this propery also
-     * affects the accessibility of type annotations which are no longer visible to Byte Buddy.
+     * If this property is set to {@code true}, non-generic {@link TypeDefinition}s do no longer resolve their referenced
+     * generic types when traversing type hierarchies. Setting this property can cause unexpected side effects such as
+     * {@link ClassCastException}s from overridden methods as type variables are resolved to their erasures where a method
+     * might return that is unexpected by the callee. Setting this property also makes type annotations unavailable using
+     * such type navigation.
      * </p>
      * <p>
-     * Setting this property can be useful to avoid bugs in implementations of the JVM where processing generic types can
-     * cause segmentation faults if generic type information is not required. Byte Buddy will undertake a best effort to
-     * retain the generic type information and information about type annotations within the redefined types' class files.
+     * Setting this property can be useful if generic type information is not required in order to avoid bugs in
+     * implementations of the JVM where processing generic types can cause segmentation faults. Byte Buddy will undertake
+     * a best effort to retain the generic type information and information about type annotations within the redefined
+     * types' class files. Typically, this property can be meaningful in combination with a Java agent that only changes
+     * byte code without changing a class type's structure.
      * </p>
      */
     String RAW_TYPES_PROPERTY = "net.bytebuddy.raw";

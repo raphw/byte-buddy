@@ -3327,6 +3327,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public Generic getSuperClass() {
                 TypeDescription erasure = asErasure();
                 Generic superClass = erasure.getSuperClass();
+                if (TypeDescription.AbstractBase.RAW_TYPES) {
+                    return superClass;
+                }
                 return superClass == null
                         ? Generic.UNDEFINED
                         : new Generic.LazyProjection.WithResolvedErasure(superClass, new Visitor.ForRawType(erasure), Empty.INSTANCE);
@@ -3335,19 +3338,26 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public TypeList.Generic getInterfaces() {
                 TypeDescription erasure = asErasure();
+                if (TypeDescription.AbstractBase.RAW_TYPES) {
+                    return erasure.getInterfaces();
+                }
                 return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(erasure.getInterfaces(), new Visitor.ForRawType(erasure));
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 TypeDescription erasure = asErasure();
-                return new FieldList.TypeSubstituting(this, erasure.getDeclaredFields(), new Visitor.ForRawType(erasure));
+                return new FieldList.TypeSubstituting(this, erasure.getDeclaredFields(), TypeDescription.AbstractBase.RAW_TYPES
+                        ? Visitor.TypeErasing.INSTANCE
+                        : new Visitor.ForRawType(erasure));
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 TypeDescription erasure = asErasure();
-                return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure));
+                return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), TypeDescription.AbstractBase.RAW_TYPES
+                        ? Visitor.TypeErasing.INSTANCE
+                        : new Visitor.ForRawType(erasure));
             }
 
             @Override
