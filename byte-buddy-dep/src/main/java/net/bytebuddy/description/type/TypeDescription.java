@@ -6510,7 +6510,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * The {@link TypeDefinition#RAW_TYPES_PROPERTY} property.
          */
-        protected static final boolean RAW_TYPES;
+        public static final boolean RAW_TYPES;
 
         /*
          * Reads the raw type property.
@@ -7163,6 +7163,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public Generic getSuperClass() {
+            if (RAW_TYPES) {
+                return type.getSuperclass() == null
+                        ? TypeDescription.Generic.UNDEFINED
+                        : new Generic.OfNonGenericType.ForLoadedType(type);
+            }
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
                     : new Generic.LazyProjection.ForLoadedSuperClass(type);
@@ -7170,6 +7175,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public TypeList.Generic getInterfaces() {
+            if (RAW_TYPES) {
+                return isArray()
+                        ? ARRAY_INTERFACES
+                        : new TypeList.Generic.ForLoadedTypes(type);
+            }
             return isArray()
                     ? ARRAY_INTERFACES
                     : new TypeList.Generic.OfLoadedInterfaceTypes(type);
@@ -7305,6 +7315,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public TypeList.Generic getTypeVariables() {
+            if (RAW_TYPES) {
+                return new TypeList.Generic.Empty();
+            }
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(type);
         }
 

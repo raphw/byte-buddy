@@ -952,6 +952,9 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeDescription.Generic getReturnType() {
+            if (TypeDescription.AbstractBase.RAW_TYPES) {
+                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(method.getReturnType());
+            }
             return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(method);
         }
 
@@ -962,6 +965,9 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getExceptionTypes() {
+            if (TypeDescription.AbstractBase.RAW_TYPES) {
+                return new TypeList.Generic.ForLoadedTypes(method.getExceptionTypes());
+            }
             return new TypeList.Generic.OfMethodExceptionTypes(method);
         }
 
@@ -1039,11 +1045,17 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
+            if (TypeDescription.AbstractBase.RAW_TYPES) {
+                return new TypeList.Generic.Empty();
+            }
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
         }
 
         @Override
         public TypeDescription.Generic getReceiverType() {
+            if (TypeDescription.AbstractBase.RAW_TYPES) {
+                return super.getReceiverType();
+            }
             TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method);
             return receiverType == null
                     ? super.getReceiverType()

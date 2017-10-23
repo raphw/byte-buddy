@@ -3708,7 +3708,9 @@ public interface TypeWriter<T> {
                                     // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
                                     | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousClass()) ? Opcodes.ACC_FINAL : 0),
                             instrumentedType.getInternalName(),
-                            instrumentedType.getGenericSignature(),
+                            TypeDescription.AbstractBase.RAW_TYPES
+                                    ? genericSignature
+                                    : instrumentedType.getGenericSignature(),
                             instrumentedType.getSuperClass() == null
                                     ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_SUPER_TYPE)
                                     : instrumentedType.getSuperClass().asErasure().getInternalName(),
@@ -3748,7 +3750,7 @@ public interface TypeWriter<T> {
                     if (fieldDescription != null) {
                         FieldPool.Record record = fieldPool.target(fieldDescription);
                         if (!record.isImplicit()) {
-                            return redefine(record, defaultValue);
+                            return redefine(record, defaultValue, genericSignature);
                         }
                     }
                     return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
@@ -3757,16 +3759,19 @@ public interface TypeWriter<T> {
                 /**
                  * Redefines a field using the given explicit field pool record and default value.
                  *
-                 * @param record       The field pool value to apply during visitation of the existing field.
-                 * @param defaultValue The default value to write onto the field which might be {@code null}.
+                 * @param record           The field pool value to apply during visitation of the existing field.
+                 * @param defaultValue     The default value to write onto the field which might be {@code null}.
+                 * @param genericSignature The original generic signature which can be {@code null}.
                  * @return A field visitor for visiting the existing field definition.
                  */
-                protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue) {
+                protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, String genericSignature) {
                     FieldDescription instrumentedField = record.getField();
                     FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers(),
                             instrumentedField.getInternalName(),
                             instrumentedField.getDescriptor(),
-                            instrumentedField.getGenericSignature(),
+                            TypeDescription.AbstractBase.RAW_TYPES
+                                    ? genericSignature
+                                    : instrumentedField.getGenericSignature(),
                             record.resolveDefault(defaultValue));
                     return fieldVisitor == null
                             ? IGNORE_FIELD
@@ -3794,7 +3799,7 @@ public interface TypeWriter<T> {
                         MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                         return methodDescription == null
                                 ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
-                                : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
+                                : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, genericSignature);
                     }
                 }
 
@@ -3807,13 +3812,15 @@ public interface TypeWriter<T> {
                  *                          to preserve.
                  * @return A method visitor which is capable of consuming the original method.
                  */
-                protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
+                protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, String genericSignature) {
                     MethodPool.Record record = methodPool.target(methodDescription);
                     if (!record.getSort().isDefined()) {
                         return super.visitMethod(methodDescription.getActualModifiers(),
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
-                                methodDescription.getGenericSignature(),
+                                TypeDescription.AbstractBase.RAW_TYPES
+                                        ? genericSignature
+                                        : methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asErasures().toInternalNames());
                     }
                     MethodDescription implementedMethod = record.getMethod();
@@ -3821,7 +3828,9 @@ public interface TypeWriter<T> {
                                     .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())),
                             implementedMethod.getInternalName(),
                             implementedMethod.getDescriptor(),
-                            implementedMethod.getGenericSignature(),
+                            TypeDescription.AbstractBase.RAW_TYPES
+                                    ? genericSignature
+                                    : implementedMethod.getGenericSignature(),
                             implementedMethod.getExceptionTypes().asErasures().toInternalNames());
                     if (methodVisitor == null) {
                         return IGNORE_METHOD;
@@ -3833,7 +3842,9 @@ public interface TypeWriter<T> {
                             MethodVisitor rebasedMethodVisitor = super.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
                                     resolution.getResolvedMethod().getInternalName(),
                                     resolution.getResolvedMethod().getDescriptor(),
-                                    resolution.getResolvedMethod().getGenericSignature(),
+                                    TypeDescription.AbstractBase.RAW_TYPES
+                                            ? genericSignature
+                                            : implementedMethod.getGenericSignature(),
                                     resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
                             if (rebasedMethodVisitor != null) {
                                 rebasedMethodVisitor.visitEnd();

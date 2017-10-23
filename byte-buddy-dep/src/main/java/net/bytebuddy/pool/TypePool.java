@@ -2789,7 +2789,9 @@ public interface TypePool {
                         ? NO_TYPE
                         : Type.getObjectType(superClassInternalName).getDescriptor();
                 this.genericSignature = genericSignature;
-                signatureResolution = GenericTypeExtractor.ForSignature.OfType.extract(genericSignature);
+                signatureResolution = RAW_TYPES
+                        ? GenericTypeToken.Resolution.Raw.INSTANCE
+                        : GenericTypeExtractor.ForSignature.OfType.extract(genericSignature);
                 if (interfaceInternalName == null) {
                     interfaceTypeDescriptors = Collections.emptyList();
                 } else {
@@ -5375,7 +5377,9 @@ public interface TypePool {
                     this.name = name;
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
-                    signatureResolution = GenericTypeExtractor.ForSignature.OfField.extract(genericSignature);
+                    signatureResolution = RAW_TYPES
+                            ? GenericTypeToken.Resolution.Raw.INSTANCE
+                            : GenericTypeExtractor.ForSignature.OfField.extract(genericSignature);
                     this.typeAnnotationTokens = typeAnnotationTokens;
                     this.annotationTokens = annotationTokens;
                 }
@@ -5524,7 +5528,9 @@ public interface TypePool {
                     this.name = name;
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
-                    signatureResolution = GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature);
+                    signatureResolution = RAW_TYPES
+                            ? GenericTypeToken.Resolution.Raw.INSTANCE
+                            : GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature);
                     this.exceptionName = exceptionName;
                     this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
                     this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
