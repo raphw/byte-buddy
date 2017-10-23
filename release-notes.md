@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. October 2017: version 1.7.8
+
+- Added property `net.bytebuddy.raw` to allow for suppress generic type navigation.
+
 ### 22. October 2017: version 1.7.7
 
 - Make self-attachment more robust on Windows.
