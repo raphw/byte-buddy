@@ -3761,7 +3761,7 @@ public interface TypeWriter<T> {
                  *
                  * @param record           The field pool value to apply during visitation of the existing field.
                  * @param defaultValue     The default value to write onto the field which might be {@code null}.
-                 * @param genericSignature The original generic signature which can be {@code null}.
+                 * @param genericSignature The field's original generic signature which can be {@code null}.
                  * @return A field visitor for visiting the existing field definition.
                  */
                 protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, String genericSignature) {
@@ -3808,8 +3808,8 @@ public interface TypeWriter<T> {
                  * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool}.
                  *
                  * @param methodDescription The method being considered for redefinition.
-                 * @param abstractOrigin    {@code true} if the original method is abstract, i.e. there is no implementation
-                 *                          to preserve.
+                 * @param abstractOrigin    {@code true} if the original method is abstract, i.e. there is no implementation to preserve.
+                 * @param genericSignature  The method's original generic signature which can be {@code null}.
                  * @return A method visitor which is capable of consuming the original method.
                  */
                 protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, String genericSignature) {

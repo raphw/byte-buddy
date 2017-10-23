@@ -19,11 +19,13 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      * <p>
      * If this property is set to {@code true}, Byte Buddy does not resolve generic types when traversing type hierarchies.
      * Using this property can cause unexpected side-effects and cause {@link ClassCastException}s as type variables are
-     * resolved to their erasures and generic information might be lost when redefining classes.
+     * resolved to their erasures and generic information might be lost when redefining classes. Setting this propery also
+     * affects the accessibility of type annotations which are no longer visible to Byte Buddy.
      * </p>
      * <p>
      * Setting this property can be useful to avoid bugs in implementations of the JVM where processing generic types can
-     * cause segmentation faults if generic type information is not required.
+     * cause segmentation faults if generic type information is not required. Byte Buddy will undertake a best effort to
+     * retain the generic type information and information about type annotations within the redefined types' class files.
      * </p>
      */
     String RAW_TYPES_PROPERTY = "net.bytebuddy.raw";
