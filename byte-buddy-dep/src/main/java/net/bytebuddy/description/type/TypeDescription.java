@@ -3348,7 +3348,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 TypeDescription erasure = asErasure();
                 return new FieldList.TypeSubstituting(this, erasure.getDeclaredFields(), TypeDescription.AbstractBase.RAW_TYPES
-                        ? Visitor.TypeErasing.INSTANCE
+                        ? Visitor.NoOp.INSTANCE
                         : new Visitor.ForRawType(erasure));
             }
 
@@ -3356,7 +3356,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 TypeDescription erasure = asErasure();
                 return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), TypeDescription.AbstractBase.RAW_TYPES
-                        ? Visitor.TypeErasing.INSTANCE
+                        ? Visitor.NoOp.INSTANCE
                         : new Visitor.ForRawType(erasure));
             }
 
