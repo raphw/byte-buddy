@@ -16,6 +16,19 @@ import java.util.NoSuchElementException;
 public interface TypeDefinition extends NamedElement, ModifierReviewable.ForTypeDefinition, Iterable<TypeDefinition> {
 
     /**
+     * <p>
+     * If this property is set to {@code true}, Byte Buddy does not resolve generic types when traversing type hierarchies.
+     * Using this property can cause unexpected side-effects and cause {@link ClassCastException}s as type variables are
+     * resolved to their erasures and generic information might be lost when redefining classes.
+     * </p>
+     * <p>
+     * Setting this property can be useful to avoid bugs in implementations of the JVM where processing generic types can
+     * cause segmentation faults if generic type information is not required.
+     * </p>
+     */
+    String RAW_TYPES_PROPERTY = "net.bytebuddy.raw";
+
+    /**
      * Returns this type definition as a generic type.
      *
      * @return This type definition represented as a generic type.
