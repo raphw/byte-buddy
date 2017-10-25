@@ -331,7 +331,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             private static final Object STATIC_METHOD = null;
 
             /**
-             * The {@code java java.lang.Runtime#current()} method.
+             * The {@code java.lang.Runtime#version()} method.
              */
             private final Method current;
 
@@ -343,7 +343,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             /**
              * Creates a new version locator for a Java 9 capable VM.
              *
-             * @param current The {@code java.lang.Runtime#current()} method.
+             * @param current The {@code java.lang.Runtime#version()} method.
              * @param major   The {@code java.lang.Runtime.Version#major()} method.
              */
             protected ForJava9CapableVm(Method current, Method major) {
@@ -364,7 +364,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         }
 
         /**
-         * A version locator for a JVM that does not provide the {@code jdk.Version} class.
+         * A version locator for a JVM that does not provide the {@code java.lang.Runtime.Version} class.
          */
         enum ForLegacyVm implements VersionLocator, PrivilegedAction<String> {
 
