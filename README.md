@@ -56,7 +56,7 @@ making Byte Buddy the success it has become. We really appreciate it!
 
 ___
 
-Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished frameworks and tools such as [Mockito](http://mockito.org), [Hibernate](http://hibernate.org), [Google's Bazel build system](http://bazel.io) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over a million times a year.
+Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished frameworks and tools such as [Mockito](http://mockito.org), [Hibernate](http://hibernate.org), [Jackson](https://github.com/FasterXML/jackson), [Google's Bazel build system](http://bazel.io) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over a million times a year.
 
 Hello World
 -----------
