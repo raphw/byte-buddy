@@ -106,7 +106,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
      * Creates a class file version for a given major release of Java. Currently, all versions reaching from
-     * Java 1 to Java 8 are supported.
+     * Java 1 to Java 9 are supported.
      *
      * @param javaVersion The Java version.
      * @return A wrapper for the given Java class file version.
