@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. November 2017: version 1.7.9
+
+- Fixes `RAW_TYPES` mode for loaded types where properties were resolved incorrectly.
+- Adds support for Java 10 version number.
+
 ### 24. October 2017: version 1.7.8
 
 - Added property `net.bytebuddy.raw` to allow for suppress generic type navigation.
