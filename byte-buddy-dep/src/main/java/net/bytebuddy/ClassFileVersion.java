@@ -72,6 +72,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V9 = new ClassFileVersion(Opcodes.V9);
 
     /**
+     * The class file version of Java 10 (preliminary).
+     */
+    public static final ClassFileVersion JAVA_V10 = new ClassFileVersion(Opcodes.V9);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.CreationAction.INSTANCE);
@@ -131,6 +136,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V8;
             case 9:
                 return JAVA_V9;
+            case 10:
+                return JAVA_V10;
             default:
                 throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
         }
