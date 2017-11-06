@@ -7176,7 +7176,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             if (RAW_TYPES) {
                 return type.getSuperclass() == null
                         ? TypeDescription.Generic.UNDEFINED
-                        : new Generic.OfNonGenericType.ForLoadedType(type);
+                        : new Generic.OfNonGenericType.ForLoadedType(type.getSuperclass());
             }
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
@@ -7188,7 +7188,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             if (RAW_TYPES) {
                 return isArray()
                         ? ARRAY_INTERFACES
-                        : new TypeList.Generic.ForLoadedTypes(type);
+                        : new TypeList.Generic.ForLoadedTypes(type.getInterfaces());
             }
             return isArray()
                     ? ARRAY_INTERFACES
