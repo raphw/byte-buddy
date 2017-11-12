@@ -1,9 +1,7 @@
 package net.bytebuddy.agent;
 
-import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -12,6 +10,7 @@ import static org.junit.Assert.fail;
 public class AttacherTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+
 
     @Test
     public void testPseudoAttachment() throws Exception {
@@ -23,9 +22,18 @@ public class AttacherTest {
     }
 
     @Test
-    public void testPseudoAttachmentNoArgument() throws Exception {
+    public void testPseudoAttachmentEmptyArgument() throws Exception {
         PseudoAttacherNoArgument.ERROR.set(null);
         Attacher.main(new String[]{PseudoAttacherNoArgument.class.getName(), FOO, BAR, ""});
+        if (PseudoAttacherNoArgument.ERROR.get() != null) {
+            throw new AssertionError(PseudoAttacherNoArgument.ERROR.get());
+        }
+    }
+
+    @Test
+    public void testPseudoAttachmentMissingArgument() throws Exception {
+        PseudoAttacherNoArgument.ERROR.set(null);
+        Attacher.main(new String[]{PseudoAttacherNoArgument.class.getName(), FOO, BAR});
         if (PseudoAttacherNoArgument.ERROR.get() != null) {
             throw new AssertionError(PseudoAttacherNoArgument.ERROR.get());
         }

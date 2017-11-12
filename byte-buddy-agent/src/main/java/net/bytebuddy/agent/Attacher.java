@@ -42,7 +42,7 @@ public class Attacher {
     public static void main(String[] args) {
         try {
             String argument;
-            if (args.length < 3 || args[3].isEmpty()) {
+            if (args.length < 4 || args[3].isEmpty()) {
                 argument = null;
             } else {
                 StringBuilder stringBuilder = new StringBuilder(args[3].substring(1));
