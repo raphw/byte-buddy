@@ -14,5 +14,5 @@ matrix:
       install: . ./.travis/install-jdk-10.sh
 
 script:
-  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -pl "!byte-buddy-gradle-plugin"
-  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true -pl "!byte-buddy-gradle-plugin"
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -pl "!byte-buddy-gradle-plugin" -Dnet.bytebuddy.test.ci=true
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true -pl "!byte-buddy-gradle-plugin" -Dnet.bytebuddy.test.ci=true

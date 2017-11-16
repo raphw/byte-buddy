@@ -56,9 +56,9 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        // Travis runs out of memory if all of these tests are run. This property serves as a protection (on some profiles).
+        // CI can run out of memory if all of these tests are run. This property serves as a protection (on some profiles).
         if (Boolean.getBoolean("net.bytebuddy.test.ci")) {
-            Logger.getLogger("net.bytebuddy").info("Running only a subset of type locator tests on Travis CI.");
+            Logger.getLogger("net.bytebuddy").info("Running only a subset of type locator tests on CI server.");
             return Arrays.asList(new Object[][]{
                     {AgentBuilder.PoolStrategy.Default.EXTENDED},
                     {AgentBuilder.PoolStrategy.Eager.EXTENDED},

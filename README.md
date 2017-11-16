@@ -260,8 +260,7 @@ cd byte-buddy
 mvn package
 ```
 
-On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
-[*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI.
+On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for versions 6 to 10 of the JDK on CI servers.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.
