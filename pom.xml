@@ -342,7 +342,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>10</code.level>
+                <code.level>9</code.level>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
