@@ -11,3 +11,4 @@ tar -xzf ${JDK_ARCHIVE}
 export JAVA_HOME=~/jdk-${JDK_FEATURE}
 export PATH=${JAVA_HOME}/bin:$PATH
 cd -
+java --version

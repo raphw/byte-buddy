@@ -11,7 +11,7 @@ matrix:
       install: echo "The default Travis install script is being skipped!"
 # Java 10
     - env: JDK_RELEASE='JDK 10 Early-Access' TARGET='-Pjava10'
-      install: ./.travis/install-jdk-10.sh
+      install: . ./.travis/install-jdk-10.sh
 
 script:
   - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -pl "!byte-buddy-gradle-plugin" -Dnet.bytebuddy.test.ci=true
