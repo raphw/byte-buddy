@@ -333,7 +333,7 @@
         </profile>
         <!-- Runs the build with a target version for Java 10 -->
         <profile>
-            <id>java9</id>
+            <id>java10</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
