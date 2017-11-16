@@ -59,7 +59,7 @@
         <version.mockito>2.12.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.3.0</version.plugin.bundle>
-        <version.plugin.compiler>3.6.1</version.plugin.compiler>
+        <version.plugin.compiler>3.7.0</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
@@ -84,6 +84,7 @@
         <version.spotbugs>3.1.0</version.spotbugs>
         <version.spotbugs.rc>RC8</version.spotbugs.rc>
         <version.lombok>1.16.18</version.lombok>
+        <spotbugs.skip>false</spotbugs.skip>
     </properties>
 
     <licenses>
@@ -194,6 +195,7 @@
                 <artifactId>spotbugs-maven-plugin</artifactId>
                 <version>${version.spotbugs}-${version.spotbugs.rc}</version>
                 <configuration>
+                    <skip>${spotbugs.skip}</skip>
                     <effort>Max</effort>
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
@@ -298,19 +300,8 @@
             </activation>
             <properties>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+                <spotbugs.skip>true</spotbugs.skip>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.spotbugs</groupId>
-                        <artifactId>spotbugs-maven-plugin</artifactId>
-                        <version>${version.spotbugs}-${version.spotbugs.rc}</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
         <!-- Runs the build with a target version for Java 7 -->
         <profile>
@@ -545,6 +536,7 @@
                                     <goal>check</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${spotbugs.skip}</skip>
                                     <effort>Max</effort>
                                     <threshold>Low</threshold>
                                     <xmlOutput>true</xmlOutput>
