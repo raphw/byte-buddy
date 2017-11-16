@@ -80,10 +80,10 @@
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
+        <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
-        <version.spotbugs>3.1.0</version.spotbugs>
-        <version.spotbugs.rc>RC8</version.spotbugs.rc>
-        <version.lombok>1.16.18</version.lombok>
+        <version.utility.lombok>1.16.18</version.utility.lombok>
+        <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
     </properties>
 
@@ -124,16 +124,16 @@
     <dependencies>
         <!-- Allows the suppression of spotbugs false-positives by annotations without adding an actual dependency. -->
         <dependency>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-annotations</artifactId>
-            <version>${version.spotbugs}</version>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>findbugs-annotations</artifactId>
+            <version>${version.utility.findbugs}</version>
             <scope>provided</scope>
         </dependency>
         <!-- Allow usage of Lombok annotations. -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${version.lombok}</version>
+            <version>${version.utility.lombok}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -193,7 +193,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>${version.spotbugs}-${version.spotbugs.rc}</version>
+                <version>${version.plugin.spotbugs}</version>
                 <configuration>
                     <skip>${spotbugs.skip}</skip>
                     <effort>Max</effort>
@@ -529,7 +529,7 @@
                     <plugin>
                         <groupId>com.github.spotbugs</groupId>
                         <artifactId>spotbugs-maven-plugin</artifactId>
-                        <version>${version.spotbugs}-${version.spotbugs.rc}</version>
+                        <version>${version.plugin.spotbugs}</version>
                         <executions>
                             <execution>
                                 <phase>verify</phase>

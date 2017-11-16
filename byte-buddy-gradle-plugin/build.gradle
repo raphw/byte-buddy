@@ -32,7 +32,7 @@ dependencies {
     testCompile (group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
         exclude group: 'net.bytebuddy'
     }
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: outerPom.properties.'version.lombok'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: outerPom.properties.'version.utility.lombok'
 }
 
 // Without the extras property, creating a javadoc artifact is not necessary.

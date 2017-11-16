@@ -80,7 +80,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>${version.spotbugs}-${version.spotbugs.rc}</version>
+                <version>${version.plugin.spotbugs}</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
