@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -21,7 +22,7 @@
       - extras: Creates additional artifacts containing source files and javadoc. (activated on release)
       - gpg: Sign all artifacts using gpg. (activated on release)
       - checks: Applies style checks to the source files. (activated by default, activated on release)
-      - integration: Runs additional unit tests and executes static code analysis (activated on Travis CI)
+      - integration: Runs additional unit tests and executes static code analysis (activated on CI server)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
 
       It is also possible to build Byte Buddy against a specific byte code level. By default, Byte Buddy is Java 6 compatible:
@@ -31,7 +32,7 @@
       Additionally, the following reports are available via Maven:
       - jacoco:prepare-agent verify jacoco:report - Computes coverage for test suite (all modules)
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
-      - findbugs:findbugs findbugs:gui - Runs findbugs and shows a report in a graphical interface (module specific)
+      - spotbugs:spotbugs spotbugs:gui - Runs spotbugs and shows a report in a graphical interface (module specific)
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
       - clirr:check - Checks for binary changes in the API
     -->
@@ -77,11 +78,11 @@
         <version.plugin.jacoco>0.7.9</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
-        <version.plugin.findbugs>3.0.5</version.plugin.findbugs>
-        <version.annotations.findbugs>3.0.1u2</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.android.sdk>4.1.1.4</version.android.sdk>
+        <version.spotbugs>3.1.0</version.spotbugs>
+        <version.spotbugs.rc>RC8</version.spotbugs.rc>
         <version.lombok>1.16.18</version.lombok>
     </properties>
 
@@ -120,11 +121,11 @@
     </scm>
 
     <dependencies>
-        <!-- Allows the suppression of find bugs false-positives by annotations without adding an actual dependency. -->
+        <!-- Allows the suppression of spotbugs false-positives by annotations without adding an actual dependency. -->
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>annotations</artifactId>
-            <version>${version.annotations.findbugs}</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>${version.spotbugs}</version>
             <scope>provided</scope>
         </dependency>
         <!-- Allow usage of Lombok annotations. -->
@@ -181,23 +182,23 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <!-- Generate coveralls reports from Travis. -->
+            <!-- Generate coveralls reports from CI server. -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
             </plugin>
-            <!-- Also allow for manual findbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
+            <!-- Also allow for manual spotbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>${version.plugin.findbugs}</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${version.spotbugs}-${version.spotbugs.rc}</version>
                 <configuration>
                     <effort>Max</effort>
                     <threshold>Low</threshold>
                     <xmlOutput>true</xmlOutput>
                     <failOnError>false</failOnError>
-                    <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+                    <spotbugsXmlOutputDirectory>${project.build.directory}/spotbugs</spotbugsXmlOutputDirectory>
                 </configuration>
             </plugin>
             <!-- Enable scanning for methods above the inlining threshold (JDK 7+) -->
@@ -296,10 +297,20 @@
                 <jdk>1.6</jdk>
             </activation>
             <properties>
-                <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
-                <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${version.spotbugs}-${version.spotbugs.rc}</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <!-- Runs the build with a target version for Java 7 -->
         <profile>
@@ -522,11 +533,11 @@
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
-                    <!-- Run findbugs if not specified differently in a module.-->
+                    <!-- Run spotbugs if not specified differently in a module.-->
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>${version.plugin.findbugs}</version>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${version.spotbugs}-${version.spotbugs.rc}</version>
                         <executions>
                             <execution>
                                 <phase>verify</phase>

@@ -78,9 +78,9 @@
             </plugin>
             <!-- For micro-benchmarks, a static code analysis is of no value. -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>${version.plugin.findbugs}</version>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${version.spotbugs}-${version.spotbugs.rc}</version>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
