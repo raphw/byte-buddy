@@ -300,6 +300,7 @@
             </activation>
             <properties>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+                <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
