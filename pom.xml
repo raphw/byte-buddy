@@ -312,6 +312,7 @@
             </activation>
             <properties>
                 <code.level>1.7</code.level>
+                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Runs the build with a target version for Java 8 -->
