@@ -331,6 +331,16 @@
                 <code.level>9</code.level>
             </properties>
         </profile>
+        <!-- Runs the build with a target version for Java 10 -->
+        <profile>
+            <id>java9</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <code.level>10</code.level>
+            </properties>
+        </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
         <profile>
             <id>extras</id>

@@ -21,6 +21,13 @@ jobs:
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  jdk9:
+    docker:
+      - image: avanzabank/ubuntu-openjdk9:latest # official image lacks TLS root certificate
+    working_directory: ~/jdk9
+    steps:
+      - checkout
+      - run: ./mvnw verify -Pintegration -Pjava9 -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
   coverage:
     docker:
       - image: openjdk:8-jdk
@@ -35,8 +42,10 @@ workflows:
       - jdk6
       - jdk7
       - jdk8
+      - jdk9
       - coverage:
           requires:
             - jdk6
             - jdk7
             - jdk8
+            - jdk9
