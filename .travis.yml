@@ -1,0 +1,20 @@
+language: java
+
+sudo: false
+dist: trusty
+
+matrix:
+  include:
+# Java 9 (openjdk-9.0.1 fails with java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty)
+    - jdk: oraclejdk9
+      env: JDK_RELEASE='JDK 9' TARGET='-Pjava9'
+      install: echo "Don't let Travis CI execute default install script!"
+# Java 10
+#    - env: JDK_RELEASE='JDK 10 Early-Access' TARGET='-Pjava10'
+#      install: . ./src/install/install-jdk-10.sh
+
+script:
+  - java --version
+  - javac --version
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -pl "!byte-buddy-gradle-plugin"
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true -pl "!byte-buddy-gradle-plugin"
