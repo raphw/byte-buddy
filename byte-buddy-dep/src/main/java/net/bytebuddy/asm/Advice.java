@@ -8166,9 +8166,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
-     * Indicates that the annotated parameter should be mapped to the return value of the instrumented method.  If the instrumented method terminates
-     * regularly, {@code null} is assigned to the annotated parameter. Note that the Java runtime does not enforce checked exceptions. In order to
-     * capture any error, the parameter type should be of type {@link Throwable}.
+     * Indicates that the annotated parameter should be mapped to the {@link Throwable} thrown by the instrumented method or to {@code null}
+     * if the method returned regularly. Note that the Java runtime does not enforce checked exceptions. In order to capture any error, the parameter
+     * type must therefore be of type {@link Throwable}. By assigning another value or {@code null} to this parameter, a thrown exception can be
+     * suppressed.
      * </p>
      * <p>
      * <b>Note</b>: This annotation must only be used on exit advice methods.
