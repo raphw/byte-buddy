@@ -476,8 +476,8 @@ public class MethodCall implements Implementation.Composable {
      */
     public MethodCall withField(FieldLocator.Factory fieldLocatorFactory, String... name) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(name.length);
-        for (String aFieldName : name) {
-            argumentLoaders.add(new ArgumentLoader.ForField.Factory(aFieldName, fieldLocatorFactory));
+        for (String aName : name) {
+            argumentLoaders.add(new ArgumentLoader.ForField.Factory(aName, fieldLocatorFactory));
         }
         return with(argumentLoaders);
     }
@@ -1440,7 +1440,11 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
+            public StackManipulation resolve(MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
@@ -1468,7 +1472,11 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
+            public StackManipulation resolve(MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
                 return new StackManipulation.Compound(TypeCreation.of(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
@@ -1575,6 +1583,10 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
                 } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
                     throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
+                } else if (!invokedMethod.isInvokableOn(resolution.getField().getType().asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + resolution.getField());
+                } else if (!invokedMethod.isAccessibleTo(instrumentedType)) {
+                    throw new IllegalStateException("Cannot access " + invokedMethod + " from " + instrumentedType);
                 }
                 StackManipulation stackManipulation = assigner.assign(resolution.getField().getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                 if (!stackManipulation.isValid()) {
@@ -1665,8 +1677,6 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (invokedMethod.isVirtual() && !invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
-                } else if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException(invokedMethod + " is not visible to " + implementationTarget.getInstrumentedType());
                 }
                 return invokedMethod.isVirtual()
                         ? MethodInvocation.invoke(invokedMethod).virtual(implementationTarget.getInstrumentedType())
@@ -1988,6 +1998,9 @@ public class MethodCall implements Implementation.Composable {
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
+            if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
+                throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + implementationContext.getInstrumentedType());
+            }
             List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(MethodCall.this.argumentLoaders.size());
             for (ArgumentLoader.Factory argumentLoader : MethodCall.this.argumentLoaders) {
                 argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod, invokedMethod));

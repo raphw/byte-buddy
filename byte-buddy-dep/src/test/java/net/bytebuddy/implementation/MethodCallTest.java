@@ -11,7 +11,10 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.CallTraceable;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
@@ -968,6 +971,16 @@ public class MethodCallTest {
                 .subclass(ExplicitTarget.class)
                 .method(isDeclaredBy(ExplicitTarget.class))
                 .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onField(FOO))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodCallIsNotAccessible() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invokeSelf().onField(FOO).withAllArguments())
                 .make();
     }
 
