@@ -101,8 +101,8 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * Creates a new class loader for a given definition of classes.
      *
-     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
-     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
      */
     public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
         this(parent, typeDefinitions, PersistenceHandler.LATENT);
@@ -231,18 +231,29 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
     @Override
     public Class<?> defineClass(String name, byte[] binaryRepresentation) throws ClassNotFoundException {
-        synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
-            byte[] previous = typeDefinitions.putIfAbsent(name, binaryRepresentation);
-            Class<?> type = null;
-            try {
-                return type = loadClass(name);
-            } finally {
-                if (type == null || type.getClassLoader() != this) {
-                    if (previous == null) {
-                        typeDefinitions.remove(name);
-                    } else {
-                        typeDefinitions.put(name, previous);
-                    }
+        return defineClasses(Collections.singletonMap(name, binaryRepresentation)).get(name);
+    }
+
+    @Override
+    public Map<String, Class<?>> defineClasses(Map<String, byte[]> typeDefinitions) throws ClassNotFoundException {
+        Map<String, byte[]> previous = new HashMap<String, byte[]>();
+        for (Map.Entry<String, byte[]> entry : typeDefinitions.entrySet()) {
+            previous.put(entry.getKey(), this.typeDefinitions.putIfAbsent(entry.getKey(), entry.getValue()));
+        }
+        try {
+            Map<String, Class<?>> types = new LinkedHashMap<String, Class<?>>();
+            for (String name : typeDefinitions.keySet()) {
+                synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
+                    types.put(name, loadClass(name));
+                }
+            }
+            return types;
+        } finally {
+            for (Map.Entry<String, byte[]> entry : previous.entrySet()) {
+                if (entry.getValue() == null) {
+                    persistenceHandler.release(entry.getKey(), this.typeDefinitions);
+                } else {
+                    this.typeDefinitions.put(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -593,7 +604,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 return binaryRepresentation == null
                         ? NO_URL
                         : AccessController.doPrivileged(new UrlDefinitionAction(resourceName, binaryRepresentation));
+            }
 
+            @Override
+            protected void release(String name, ConcurrentMap<String, byte[]> typeDefinitions) {
+                /* do nothing */
             }
         },
 
@@ -610,6 +625,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @Override
             protected URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions) {
                 return NO_URL;
+            }
+
+            @Override
+            protected void release(String name, ConcurrentMap<String, byte[]> typeDefinitions) {
+                typeDefinitions.remove(name);
             }
         };
 
@@ -658,6 +678,14 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @return A URL representing the type definition or {@code null} if the requested resource does not represent a class file.
          */
         protected abstract URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions);
+
+        /**
+         * Removes the binary representation of the supplied type if this class loader is latent.
+         *
+         * @param name            The name of the type.
+         * @param typeDefinitions A mapping of byte arrays by their type names.
+         */
+        protected abstract void release(String name, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
          * An action to define a URL that represents a class file.

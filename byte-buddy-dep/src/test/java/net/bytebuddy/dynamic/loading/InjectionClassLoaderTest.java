@@ -5,6 +5,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,7 +16,7 @@ public class InjectionClassLoaderTest {
     private static final String FOO = "foo";
 
     @Test(expected = IllegalArgumentException.class)
-    public void testBootrap() throws Exception {
+    public void testBootstrap() throws Exception {
         InjectionClassLoader.Strategy.INSTANCE.load(null, Collections.<TypeDescription, byte[]>emptyMap());
     }
 
@@ -26,10 +27,11 @@ public class InjectionClassLoaderTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         byte[] binaryRepresentation = new byte[0];
         when(typeDescription.getName()).thenReturn(FOO);
-        when(classLoader.defineClass(FOO, binaryRepresentation)).thenReturn((Class) Object.class);
+        when(classLoader.defineClasses(Collections.singletonMap(FOO, binaryRepresentation)))
+                .thenReturn((Map) Collections.singletonMap(FOO, Object.class));
         assertThat(InjectionClassLoader.Strategy.INSTANCE.load(classLoader, Collections.singletonMap(typeDescription, binaryRepresentation)),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Object.class)));
-        verify(classLoader).defineClass(FOO, binaryRepresentation);
+        verify(classLoader).defineClasses(Collections.singletonMap(FOO, binaryRepresentation));
         verifyNoMoreInteractions(classLoader);
     }
 
@@ -39,7 +41,7 @@ public class InjectionClassLoaderTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         byte[] binaryRepresentation = new byte[0];
         when(typeDescription.getName()).thenReturn(FOO);
-        when(classLoader.defineClass(FOO, binaryRepresentation)).thenThrow(new ClassNotFoundException(FOO));
+        when(classLoader.defineClasses(Collections.singletonMap(FOO, binaryRepresentation))).thenThrow(new ClassNotFoundException(FOO));
         InjectionClassLoader.Strategy.INSTANCE.load(classLoader, Collections.singletonMap(typeDescription, binaryRepresentation));
     }
 
