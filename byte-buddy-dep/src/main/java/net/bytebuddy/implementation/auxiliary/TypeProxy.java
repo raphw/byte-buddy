@@ -541,12 +541,11 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            TypeDescription proxyType = implementationContext
-                    .register(new TypeProxy(proxiedType,
-                            implementationTarget,
-                            InvocationFactory.Default.DEFAULT_METHOD,
-                            true,
-                            serializableProxy));
+            TypeDescription proxyType = implementationContext.register(new TypeProxy(proxiedType,
+                    implementationTarget,
+                    InvocationFactory.Default.DEFAULT_METHOD,
+                    true,
+                    serializableProxy));
             return new Compound(
                     TypeCreation.of(proxyType),
                     Duplication.SINGLE,
@@ -580,7 +579,7 @@ public class TypeProxy implements AuxiliaryType {
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
-                    Opcodes.ACC_SYNTHETIC,
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_VOLATILE,
                     implementationTarget.getInstrumentedType().asGenericType()));
         }
 

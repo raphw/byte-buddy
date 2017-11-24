@@ -873,7 +873,9 @@ public class MethodDelegation implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC, fieldType))
+                            .withField(new FieldDescription.Token(fieldName,
+                                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_VOLATILE | Opcodes.ACC_SYNTHETIC,
+                                    fieldType))
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
                 }
 
