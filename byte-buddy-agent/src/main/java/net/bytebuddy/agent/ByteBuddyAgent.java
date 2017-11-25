@@ -389,7 +389,6 @@ public class ByteBuddyAgent {
      * @param argument           The argument to provide to the agent or {@code null} if no argument should be supplied.
      * @throws Exception If an exception occurs during the attachment or the external process fails the attachment.
      */
-    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE_OF_NULL", justification = "Caused by Java 10 compiler")
     private static void installExternal(AttachmentProvider.Accessor.ExternalAttachment externalAttachment,
                                         String processId,
                                         File agent,
@@ -863,7 +862,6 @@ public class ByteBuddyAgent {
              *
              * @param attachmentProviders A list of attachment providers in the order of their application.
              */
-            @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE_OF_NULL", justification = "Caused by Java 10 compiler")
             public Compound(List<? extends AttachmentProvider> attachmentProviders) {
                 this.attachmentProviders = new ArrayList<AttachmentProvider>();
                 for (AttachmentProvider attachmentProvider : attachmentProviders) {
@@ -876,7 +874,6 @@ public class ByteBuddyAgent {
             }
 
             @Override
-            @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE_OF_NULL", justification = "Caused by Java 10 compiler")
             public Accessor attempt() {
                 for (AttachmentProvider attachmentProvider : attachmentProviders) {
                     Accessor accessor = attachmentProvider.attempt();

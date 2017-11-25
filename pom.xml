@@ -343,6 +343,7 @@
             </activation>
             <properties>
                 <code.level>9</code.level>
+                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
