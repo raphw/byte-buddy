@@ -121,7 +121,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
 
     @Test
     public void testParameterized() throws Exception {
-        when(erasure.getSegmentCount()).thenReturn(1);
+        when(erasure.getInnerClassCount()).thenReturn(1);
         when(typeDescription.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(second));
         when(typeDescription.getOwnerType()).thenReturn(third);
         assertThat(visitor.onParameterizedType(typeDescription), is(result));

@@ -286,7 +286,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return The number of outer classes relatively to this type.
      */
-    int getSegmentCount();
+    int getInnerClassCount();
+
+    /**
+     * Indicates if this class is an inner class.
+     *
+     * @return {@code true} if this class is an inner class.
+     */
+    boolean isInnerClass();
+
+    /**
+     * Indicates if this class is a nested class.
+     *
+     * @return {@code true} if this class is a nested class.
+     */
+    boolean isNestedClass();
 
     /**
      * Returns a description of this type that represents this type as a boxed type for primitive types, unless its {@code void}.
@@ -6855,14 +6869,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public int getSegmentCount() {
+        public int getInnerClassCount() {
             if (isStatic()) {
                 return 0;
             }
             TypeDescription declaringType = getDeclaringType();
             return declaringType == null
                     ? 0
-                    : declaringType.getSegmentCount() + 1;
+                    : declaringType.getInnerClassCount() + 1;
+        }
+
+        @Override
+        public boolean isInnerClass() {
+            return !isStatic() && isNestedClass();
+        }
+
+        @Override
+        public boolean isNestedClass() {
+            return getDeclaringType() != null;
         }
 
         @Override

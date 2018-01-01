@@ -757,6 +757,17 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
+    public void testSyntethicParameter() throws Exception {
+        Constructor<?> constructor = null;
+        for (Constructor<?> candidate : SyntheticParameter.class.getDeclaredConstructors()) {
+            if (candidate.getParameterTypes().length == 2) {
+                constructor = candidate;
+            }
+        }
+        assertThat(describe(constructor).getParameters().get(1).getDeclaredAnnotations().isAnnotationPresent(Deprecated.class), is(true));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testIsDefault() throws Exception {
         Map<String, AnnotationValue<?, ?>> properties = new LinkedHashMap<String, AnnotationValue<?, ?>>();
@@ -991,5 +1002,11 @@ public abstract class AbstractMethodDescriptionTest {
         SampleEnumeration enum_property();
 
         SampleEnumeration[] enum_property_array();
+    }
+
+    public class SyntheticParameter {
+
+        public SyntheticParameter(@Deprecated Void unused) {
+        }
     }
 }

@@ -603,11 +603,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testGetSegmentCount() throws Exception {
-        assertThat(describe(GenericSample.class).getSegmentCount(), is(0));
-        assertThat(describe(GenericSample.Inner.class).getSegmentCount(), is(1));
-        assertThat(describe(GenericSample.Nested.class).getSegmentCount(), is(0));
-        assertThat(describe(GenericSample.NestedInterface.class).getSegmentCount(), is(0));
-        assertThat(describe(Object.class).getSegmentCount(), is(0));
+        assertThat(describe(GenericSample.class).getInnerClassCount(), is(0));
+        assertThat(describe(GenericSample.Inner.class).getInnerClassCount(), is(1));
+        assertThat(describe(GenericSample.Nested.class).getInnerClassCount(), is(0));
+        assertThat(describe(GenericSample.NestedInterface.class).getInnerClassCount(), is(0));
+        assertThat(describe(Object.class).getInnerClassCount(), is(0));
     }
 
     @Test

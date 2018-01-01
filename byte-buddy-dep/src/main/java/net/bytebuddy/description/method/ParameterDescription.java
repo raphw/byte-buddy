@@ -5,9 +5,9 @@ import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -487,7 +487,13 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
+                if (getDeclaringMethod().getDeclaringType().isInnerClass()) {
+                    return index == 0
+                            ? new AnnotationList.Empty()
+                            : new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index - 1]);
+                } else {
+                    return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
+                }
             }
         }
 

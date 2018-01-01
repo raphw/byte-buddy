@@ -585,7 +585,7 @@ public interface AnnotationAppender {
         @Override
         public AnnotationAppender onParameterizedType(TypeDescription.Generic parameterizedType) {
             StringBuilder typePath = new StringBuilder(this.typePath);
-            for (int index = 0; index < parameterizedType.asErasure().getSegmentCount(); index++) {
+            for (int index = 0; index < parameterizedType.asErasure().getInnerClassCount(); index++) {
                 typePath = typePath.append(INNER_CLASS_PATH);
             }
             AnnotationAppender annotationAppender = apply(parameterizedType, typePath.toString());
@@ -614,7 +614,7 @@ public interface AnnotationAppender {
         @Override
         public AnnotationAppender onNonGenericType(TypeDescription.Generic typeDescription) {
             StringBuilder typePath = new StringBuilder(this.typePath);
-            for (int index = 0; index < typeDescription.asErasure().getSegmentCount(); index++) {
+            for (int index = 0; index < typeDescription.asErasure().getInnerClassCount(); index++) {
                 typePath = typePath.append(INNER_CLASS_PATH);
             }
             AnnotationAppender annotationAppender = apply(typeDescription, typePath.toString());

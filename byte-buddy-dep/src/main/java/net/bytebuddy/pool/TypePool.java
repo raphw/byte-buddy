@@ -3651,7 +3651,7 @@ public interface TypePool {
                             @Override
                             public AnnotationList getDeclaredAnnotations() {
                                 StringBuilder typePath = new StringBuilder(this.typePath);
-                                for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                                for (int index = 0; index < typeDescription.getInnerClassCount(); index++) {
                                     typePath = typePath.append(INNER_CLASS_PATH);
                                 }
                                 return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath.toString()));
@@ -6697,7 +6697,7 @@ public interface TypePool {
                      */
                     private String getTypePath() {
                         StringBuilder typePath = new StringBuilder();
-                        for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                        for (int index = 0; index < typeDescription.getInnerClassCount(); index++) {
                             typePath = typePath.append(GenericTypeToken.INNER_CLASS_PATH);
                         }
                         return typePath.toString();
@@ -6830,7 +6830,7 @@ public interface TypePool {
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
                         StringBuilder typePath = new StringBuilder();
-                        for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                        for (int index = 0; index < typeDescription.getInnerClassCount(); index++) {
                             typePath = typePath.append(GenericTypeToken.INNER_CLASS_PATH);
                         }
                         return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath.toString()));
