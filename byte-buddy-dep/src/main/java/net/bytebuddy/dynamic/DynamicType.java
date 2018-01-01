@@ -740,8 +740,8 @@ public interface DynamicType {
         /**
          * Defines a Java bean property with the specified name.
          *
-         * @param name     The name of the property.
-         * @param type     The property type.
+         * @param name The name of the property.
+         * @param type The property type.
          * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
          */
         FieldDefinition.Optional<T> defineProperty(String name, Type type);
@@ -759,8 +759,8 @@ public interface DynamicType {
         /**
          * Defines a Java bean property with the specified name.
          *
-         * @param name     The name of the property.
-         * @param type     The property type.
+         * @param name The name of the property.
+         * @param type The property type.
          * @return A builder that defines the specified property where the field holding the property can be refined by subsequent steps.
          */
         FieldDefinition.Optional<T> defineProperty(String name, TypeDefinition type);
@@ -4301,15 +4301,16 @@ public interface DynamicType {
                     files.put(typeDescription.getInternalName() + CLASS_FILE_EXTENSION, binaryRepresentation);
                     JarEntry jarEntry;
                     while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
-                        jarOutputStream.putNextEntry(jarEntry);
                         byte[] replacement = files.remove(jarEntry.getName());
                         if (replacement == null) {
+                            jarOutputStream.putNextEntry(jarEntry);
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int index;
                             while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
                                 jarOutputStream.write(buffer, FROM_BEGINNING, index);
                             }
                         } else {
+                            jarOutputStream.putNextEntry(new JarEntry(jarEntry.getName()));
                             jarOutputStream.write(replacement);
                         }
                         jarInputStream.closeEntry();
