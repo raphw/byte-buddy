@@ -487,10 +487,12 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                if (getDeclaringMethod().getDeclaringType().isInnerClass()) {
+                Annotation[][] annotation = executable.getParameterAnnotations();
+                MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
+                if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
                     return index == 0
                             ? new AnnotationList.Empty()
-                            : new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index - 1]);
+                            : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
                 } else {
                     return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
                 }
