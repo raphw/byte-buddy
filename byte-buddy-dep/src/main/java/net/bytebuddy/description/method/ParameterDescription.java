@@ -494,7 +494,7 @@ public interface ParameterDescription extends AnnotationSource,
                             ? new AnnotationList.Empty()
                             : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
                 } else {
-                    return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
+                    return new AnnotationList.ForLoadedAnnotations(annotation[index]);
                 }
             }
         }
@@ -645,7 +645,14 @@ public interface ParameterDescription extends AnnotationSource,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index]);
+                MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
+                if (parameterAnnotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
+                    return index == 0
+                            ? new AnnotationList.Empty()
+                            : new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index - 1]);
+                } else {
+                    return new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index]);
+                }
             }
         }
     }
