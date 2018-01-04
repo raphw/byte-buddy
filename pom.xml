@@ -56,7 +56,7 @@
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
         <version.asm>6.0</version.asm>
         <version.junit>4.12</version.junit>
-        <version.mockito>2.12.0</version.mockito>
+        <version.mockito>2.13.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.3.0</version.plugin.bundle>
         <version.plugin.compiler>3.7.0</version.plugin.compiler>
@@ -80,7 +80,7 @@
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+        <version.plugin.spotbugs>3.1.1</version.plugin.spotbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.lombok>1.16.18</version.utility.lombok>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
