@@ -895,6 +895,15 @@ public interface ClassInjector {
         }
 
         /**
+         * Checks if the current VM is capable of defining classes using a method handle lookup.
+         *
+         * @return {@code true} if the current VM is capable of defining classes using a lookup.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAlive();
+        }
+
+        /**
          * Returns the lookup type this injector is based upon.
          *
          * @return The lookup type.
@@ -908,7 +917,7 @@ public interface ClassInjector {
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
             for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
                 if (!entry.getKey().isSamePackage(new TypeDescription.ForLoadedType(lookupType()))) {
-                    throw new IllegalArgumentException(entry.getKey() + " cannot be defined in its package using " + lookup);
+                    throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 loaded.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));
             }
