@@ -201,7 +201,6 @@ public class TimerAgent {
       ).installOn(instrumentation);
     }
   }
-}
 ```
 
 Similar to Java's `main` method, the `premain` method is the entry point to any Java agent from which we apply the redefinition. As one argument, a Java agent receives an instace of the `Instrumentation` interface which allows Byte Buddy to hook into the JVM's standard API for runtime class redefinition.
