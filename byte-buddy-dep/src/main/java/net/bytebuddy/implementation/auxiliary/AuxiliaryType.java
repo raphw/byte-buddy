@@ -82,7 +82,7 @@ public interface AuxiliaryType {
 
             @Override
             public String name(TypeDescription instrumentedType) {
-                return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
+                return instrumentedType.getName() + "$" + suffix + "$" + randomString.nextString();
             }
         }
     }

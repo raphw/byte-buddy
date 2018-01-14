@@ -249,7 +249,7 @@ public @interface Pipe {
              * @return The field name that corresponds to the index.
              */
             private static String fieldName(int index) {
-                return String.format("%s%d", FIELD_NAME_PREFIX, index);
+                return FIELD_NAME_PREFIX + index;
             }
 
             @Override

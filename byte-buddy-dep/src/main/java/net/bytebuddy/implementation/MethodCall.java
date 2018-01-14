@@ -1199,7 +1199,7 @@ public class MethodCall implements Implementation.Composable {
                  */
                 public Factory(Object value) {
                     this.value = value;
-                    name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                    name = FIELD_PREFIX + "$" + RandomString.make();
                 }
 
                 @Override
@@ -1521,7 +1521,7 @@ public class MethodCall implements Implementation.Composable {
             protected ForValue(Object target, TypeDescription.Generic fieldType) {
                 this.target = target;
                 this.fieldType = fieldType;
-                name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                name = FIELD_PREFIX + "$" + RandomString.make();
             }
 
             @Override

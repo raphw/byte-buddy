@@ -1377,9 +1377,9 @@ public interface ClassInjector {
     class UsingInstrumentation implements ClassInjector {
 
         /**
-         * A prefix to use of generated files.
+         * The jar file name extension.
          */
-        private static final String PREFIX = "jar";
+        private static final String JAR = "jar";
 
         /**
          * The class file extension.
@@ -1438,7 +1438,7 @@ public interface ClassInjector {
 
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
-            File jarFile = new File(folder, String.format("%s%s.jar", PREFIX, randomString.nextString()));
+            File jarFile = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
                 if (!jarFile.createNewFile()) {
                     throw new IllegalStateException("Cannot create file " + jarFile);

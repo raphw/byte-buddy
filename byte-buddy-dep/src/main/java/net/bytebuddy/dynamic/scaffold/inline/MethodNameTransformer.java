@@ -56,7 +56,7 @@ public interface MethodNameTransformer {
 
         @Override
         public String transform(MethodDescription methodDescription) {
-            return String.format("%s$%s", methodDescription.getInternalName(), suffix);
+            return methodDescription.getInternalName() + "$" + suffix;
         }
     }
 
@@ -94,7 +94,7 @@ public interface MethodNameTransformer {
 
         @Override
         public String transform(MethodDescription methodDescription) {
-            return String.format("%s%s", prefix, methodDescription.getInternalName());
+            return prefix + methodDescription.getInternalName();
         }
     }
 }

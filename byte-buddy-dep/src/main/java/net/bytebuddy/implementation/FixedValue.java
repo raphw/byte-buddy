@@ -603,14 +603,14 @@ public abstract class FixedValue implements Implementation {
          * @param value The fixed value to be returned.
          */
         protected ForValue(Object value) {
-            this(String.format("%s$%s", PREFIX, RandomString.hashOf(value.hashCode())), value);
+            this(PREFIX + "$" + RandomString.hashOf(value.hashCode()), value);
         }
 
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param fieldName  The name of the field for storing the fixed value.
-         * @param value The fixed value to be returned.
+         * @param fieldName The name of the field for storing the fixed value.
+         * @param value     The fixed value to be returned.
          */
         protected ForValue(String fieldName, Object value) {
             this(Assigner.DEFAULT, Assigner.Typing.STATIC, fieldName, value);
@@ -619,11 +619,11 @@ public abstract class FixedValue implements Implementation {
         /**
          * Creates a new static field fixed value implementation.
          *
-         * @param fieldName  The name of the field for storing the fixed value.
-         * @param value The fixed value to be returned.
-         * @param assigner   The assigner to use for assigning the fixed value to the return type of the
-         *                   instrumented value.
-         * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param fieldName The name of the field for storing the fixed value.
+         * @param value     The fixed value to be returned.
+         * @param assigner  The assigner to use for assigning the fixed value to the return type of the
+         *                  instrumented value.
+         * @param typing    Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         private ForValue(Assigner assigner, Assigner.Typing typing, String fieldName, Object value) {
             super(assigner, typing);

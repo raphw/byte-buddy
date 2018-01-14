@@ -1304,7 +1304,7 @@ public class MethodDelegation implements Implementation.Composable {
         public MethodDelegation to(Object target, Type type, MethodGraph.Compiler methodGraphCompiler) {
             return to(target,
                     type,
-                    String.format("%s$%s", ImplementationDelegate.FIELD_NAME_PREFIX, RandomString.hashOf(target.hashCode())),
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.hashCode()),
                     methodGraphCompiler);
         }
 

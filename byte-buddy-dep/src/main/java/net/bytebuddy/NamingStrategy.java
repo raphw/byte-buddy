@@ -178,7 +178,7 @@ public interface NamingStrategy {
             if (baseName.startsWith(JAVA_PACKAGE) && !javaLangPackagePrefix.equals("")) {
                 baseName = javaLangPackagePrefix + "." + baseName;
             }
-            return String.format("%s$%s$%s", baseName, suffix, randomString.nextString());
+            return baseName + "$" + suffix + "$" + randomString.nextString();
         }
 
         /**
@@ -293,7 +293,7 @@ public interface NamingStrategy {
 
         @Override
         protected String name(TypeDescription superClass) {
-            return String.format("%s.%s$%s", prefix, superClass.getName(), randomString.nextString());
+            return prefix + "." + superClass.getName() + "$" + randomString.nextString();
         }
     }
 }

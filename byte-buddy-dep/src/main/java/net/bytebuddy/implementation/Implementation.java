@@ -845,14 +845,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final TypeDescription.Generic fieldType;
 
                 /**
-                 * The suffix to use for the cache field's name.
+                 * The name of the field.
                  */
-                private final String suffix;
-
-                /**
-                 * The hash value of the field's value for creating a unique field name.
-                 */
-                private final int hashCode;
+                private final String name;
 
                 /**
                  * Creates a new cache value field.
@@ -865,8 +860,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int hashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
-                    this.suffix = suffix;
-                    this.hashCode = hashCode;
+                    name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.hashOf(hashCode);
                 }
 
                 @Override
@@ -893,7 +887,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getName() {
-                    return String.format("%s$%s$%s", FIELD_CACHE_PREFIX, suffix, RandomString.hashOf(hashCode));
+                    return name;
                 }
             }
 
@@ -991,9 +985,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final MethodDescription methodDescription;
 
                 /**
-                 * The suffix to append to the accessor method's name.
+                 * The name of the method.
                  */
-                private final String suffix;
+                private final String name;
 
                 /**
                  * Creates a new accessor method.
@@ -1005,7 +999,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected AccessorMethod(TypeDescription instrumentedType, MethodDescription methodDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.methodDescription = methodDescription;
-                    this.suffix = suffix;
+                    name = methodDescription.getInternalName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
                 @Override
@@ -1052,7 +1046,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getInternalName() {
-                    return String.format("%s$%s$%s", methodDescription.getInternalName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                    return name;
                 }
             }
 
@@ -1072,9 +1066,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final FieldDescription fieldDescription;
 
                 /**
-                 * The name suffix for the field getter method.
+                 * The name of the getter method.
                  */
-                private final String suffix;
+                private final String name;
 
                 /**
                  * Creates a new field getter.
@@ -1086,7 +1080,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected FieldGetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldDescription = fieldDescription;
-                    this.suffix = suffix;
+                    name = fieldDescription.getName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
                 @Override
@@ -1133,7 +1127,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getInternalName() {
-                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                    return name;
                 }
             }
 
@@ -1153,9 +1147,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final FieldDescription fieldDescription;
 
                 /**
-                 * The name suffix for the field setter method.
+                 * The name of the field setter.
                  */
-                private final String suffix;
+                private final String name;
 
                 /**
                  * Creates a new field setter.
@@ -1167,7 +1161,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 protected FieldSetter(TypeDescription instrumentedType, FieldDescription fieldDescription, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldDescription = fieldDescription;
-                    this.suffix = suffix;
+                    name = fieldDescription.getName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
                 @Override
@@ -1214,7 +1208,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getInternalName() {
-                    return String.format("%s$%s$%s", fieldDescription.getName(), ACCESSOR_METHOD_SUFFIX, suffix);
+                    return name;
                 }
             }
 

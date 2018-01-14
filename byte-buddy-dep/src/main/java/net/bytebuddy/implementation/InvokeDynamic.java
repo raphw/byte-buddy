@@ -1418,7 +1418,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 protected ForInstance(Object value, TypeDescription fieldType) {
                     this.value = value;
                     this.fieldType = fieldType;
-                    name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                    name = FIELD_PREFIX + "$" + RandomString.make();
                 }
 
                 /**

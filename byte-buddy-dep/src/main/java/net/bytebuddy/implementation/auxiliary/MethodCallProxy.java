@@ -126,7 +126,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * @return The name for the given parameter.
      */
     private static String fieldName(int index) {
-        return String.format("%s%d", FIELD_NAME_PREFIX, index);
+        return FIELD_NAME_PREFIX + index;
     }
 
     @Override
