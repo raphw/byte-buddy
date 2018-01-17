@@ -4919,6 +4919,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                MethodDescription instrumentedMethod,
                                                Bound.SkipHandler skipHandler,
                                                boolean inverted) {
+                            if (instrumentedMethod.isConstructor()) {
+                                throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
+                            }
                             methodVisitor.visitVarInsn(load, instrumentedMethod.getStackSize());
                             convertValue(methodVisitor, methodSizeHandler);
                             Label noSkip = new Label();
@@ -5045,6 +5048,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                           MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
+                            if (instrumentedMethod.isConstructor()) {
+                                throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
+                            }
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
                             methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
                             Label noSkip = new Label();
@@ -5799,7 +5805,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             skipDispatcher.apply(methodVisitor,
                                     methodSizeHandler.bindEntry(adviceMethod),
                                     stackMapFrameHandler.bindEntry(adviceMethod),
-                                    instrumentedMethod, skipHandler);
+                                    instrumentedMethod,
+                                    skipHandler);
                         }
                     }
                 }

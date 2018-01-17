@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -1916,6 +1917,22 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(BoxedArgumentsCannotWrite.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInstanceOfSkipOnConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(InstanceOfSkip.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testValueSkipOnConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(DefaultValueIllegalPrimitiveSkip.class).on(isConstructor()))
                 .make();
     }
 
