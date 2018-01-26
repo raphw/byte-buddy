@@ -1,6 +1,6 @@
 package net.bytebuddy.description.modifier;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
@@ -100,7 +100,7 @@ public interface ModifierContributor {
      *
      * @param <T> The type of the {@link ModifierContributor}s being resolved.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Resolver<T extends ModifierContributor> {
 
         /**

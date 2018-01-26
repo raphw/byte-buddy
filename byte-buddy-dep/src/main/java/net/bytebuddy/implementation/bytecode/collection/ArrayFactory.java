@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -16,7 +16,7 @@ import java.util.List;
  * A {@link net.bytebuddy.implementation.bytecode.collection.CollectionFactory} that is capable of
  * creating an array of a given type with any number of given values.
  */
-@EqualsAndHashCode(of = {"componentType", "arrayCreator"})
+@AutoValue
 public class ArrayFactory implements CollectionFactory {
 
     /**
@@ -209,7 +209,7 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * An array creator implementation for reference types.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForReferenceType implements ArrayCreator {
 
             /**

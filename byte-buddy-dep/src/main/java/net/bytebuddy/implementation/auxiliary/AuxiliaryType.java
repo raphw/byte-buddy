@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.SyntheticState;
@@ -57,7 +57,7 @@ public interface AuxiliaryType {
          * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
          * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
          */
-        @EqualsAndHashCode(of = "suffix")
+        @AutoValue
         class SuffixingRandom implements NamingStrategy {
 
             /**

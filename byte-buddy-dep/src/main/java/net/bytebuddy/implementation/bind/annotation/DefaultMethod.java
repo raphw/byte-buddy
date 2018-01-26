@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -158,7 +158,7 @@ public @interface DefaultMethod {
             /**
              * A method locator for an explicit target type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForExplicitType implements MethodLocator {
 
                 /**
@@ -188,7 +188,7 @@ public @interface DefaultMethod {
         /**
          * Loads the delegation method constant onto the stack.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class DelegationMethod implements StackManipulation {
 
             /**

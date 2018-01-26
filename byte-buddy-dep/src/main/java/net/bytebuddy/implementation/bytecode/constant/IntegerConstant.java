@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -129,7 +129,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
      * legal for single byte integer values.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class SingleBytePush implements StackManipulation {
 
         /**
@@ -162,7 +162,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code SIPUSH} operation which is
      * legal for up to two byte integer values.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class TwoBytePush implements StackManipulation {
 
         /**
@@ -194,7 +194,7 @@ public enum IntegerConstant implements StackManipulation {
     /**
      * A stack manipulation that loads a JVM-integer value from a constant pool value onto the operand stack.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class ConstantPool implements StackManipulation {
 
         /**

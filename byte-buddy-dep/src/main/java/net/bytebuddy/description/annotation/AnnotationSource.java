@@ -1,6 +1,6 @@
 package net.bytebuddy.description.annotation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +36,7 @@ public interface AnnotationSource {
     /**
      * An annotation source that declares a given list of annotations.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Explicit implements AnnotationSource {
 
         /**

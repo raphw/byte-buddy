@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -123,7 +123,7 @@ public enum FieldAccess {
     /**
      * A dispatcher for implementing a generic read or write access on a field.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class OfGenericField implements Defined {
 
         /**

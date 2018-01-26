@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -233,7 +233,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
      *
      * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class ParameterIndexToken {
 
         /**

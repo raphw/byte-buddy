@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 /**
  * An element matcher that reverses the matching result of another matcher.
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -145,7 +145,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForImplicitField implements Record {
 
                 /**
@@ -206,7 +206,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a rich field with attributes and a potential default value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForExplicitField implements Record {
 
                 /**
@@ -439,7 +439,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForNonImplementedMethod implements Record {
 
                 /**
@@ -531,7 +531,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
@@ -632,7 +632,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class WithoutBody extends ForDefinedMethod {
 
                     /**
@@ -707,7 +707,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
                     /**
@@ -792,7 +792,7 @@ public interface TypeWriter<T> {
                 /**
                  * A record for a visibility bridge.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
@@ -996,7 +996,7 @@ public interface TypeWriter<T> {
              * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationValueFilter.Factory)}
              * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class AccessBridgeWrapper implements Record {
 
                 /**
@@ -1302,7 +1302,7 @@ public interface TypeWriter<T> {
      *
      * @param <S> The best known loaded type for the dynamically created type.
      */
-    @EqualsAndHashCode
+    @AutoValue
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
@@ -2413,7 +2413,7 @@ public interface TypeWriter<T> {
                 /**
                  * Represents the constraint implied by a class file version.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForClassFileVersion implements Constraint {
 
                     /**
@@ -2528,7 +2528,7 @@ public interface TypeWriter<T> {
                 /**
                  * A constraint implementation that summarizes several constraints.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class Compound implements Constraint {
 
                     /**
@@ -2810,7 +2810,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         public static class ForInlining<U> extends Default<U> {
 
             /**
@@ -4069,7 +4069,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         public static class ForCreation<U> extends Default<U> {
 
             /**
@@ -4180,7 +4180,7 @@ public interface TypeWriter<T> {
         /**
          * An action to write a class file to the dumping location.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class ClassDumpAction implements PrivilegedExceptionAction<Void> {
 
             /**

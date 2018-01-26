@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -19,7 +19,7 @@ import java.util.List;
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
-@EqualsAndHashCode
+@AutoValue
 public abstract class MethodConstant implements StackManipulation {
 
     /**
@@ -221,7 +221,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a cached method for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class CachedMethod implements StackManipulation {
 
         /**
@@ -259,7 +259,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a cached constructor for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class CachedConstructor implements StackManipulation {
 
         /**

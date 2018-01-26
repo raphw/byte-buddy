@@ -1,7 +1,7 @@
 package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -76,7 +76,7 @@ public interface TypePool {
         /**
          * A simple resolution that represents a given {@link TypeDescription}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Simple implements Resolution {
 
             /**
@@ -107,7 +107,7 @@ public interface TypePool {
         /**
          * A canonical representation of a non-successful resolution of a {@link net.bytebuddy.pool.TypePool}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Illegal implements Resolution {
 
             /**
@@ -269,7 +269,7 @@ public interface TypePool {
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
-    @EqualsAndHashCode
+    @AutoValue
     abstract class AbstractBase implements TypePool {
 
         /**
@@ -379,7 +379,7 @@ public interface TypePool {
          * is asked first if it can resolve a type. Only if the parent (and potentially its parents) are unable to resolve a type,
          * this instance is queried for a type description.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         public abstract static class Hierarchical extends AbstractBase {
 
             /**
@@ -419,7 +419,7 @@ public interface TypePool {
         /**
          * A resolution for a type that, if resolved, represents an array type.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class ArrayTypeResolution implements Resolution {
 
             /**
@@ -937,7 +937,7 @@ public interface TypePool {
      * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all.
      * </p>
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     class Default extends AbstractBase.Hierarchical {
 
         /**
@@ -1640,7 +1640,7 @@ public interface TypePool {
              * A component type locator that lazily analyses an annotation for resolving an annotation property's
              * array value's component type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForAnnotationProperty implements ComponentTypeLocator {
 
                 /**
@@ -1728,7 +1728,7 @@ public interface TypePool {
             /**
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForArrayType implements ComponentTypeLocator, RawDescriptionArray.ComponentTypeReference {
 
                 /**
@@ -2132,7 +2132,7 @@ public interface TypePool {
                 /**
                  * An incomplete token representing a generic type without an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 class ForTopLevelType extends AbstractBase {
 
                     /**
@@ -2170,7 +2170,7 @@ public interface TypePool {
                 /**
                  * An incomplete generic type token representing a type with an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 class ForInnerClass extends AbstractBase {
 
                     /**
@@ -3026,7 +3026,7 @@ public interface TypePool {
                 /**
                  * Describes a type that is contained within another type.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class WithinType implements TypeContainment {
 
                     /**
@@ -3079,7 +3079,7 @@ public interface TypePool {
                 /**
                  * Describes a type that is contained within a method or constructor.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class WithinMethod implements TypeContainment {
 
                     /**
@@ -3846,7 +3846,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of generic types of a {@link TypeDescription}.
                          */
-                        @EqualsAndHashCode
+                        @AutoValue
                         class Tokenized implements ForType {
 
                             /**
@@ -3955,7 +3955,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of generic types of a {@link MethodDescription}.
                          */
-                        @EqualsAndHashCode
+                        @AutoValue
                         class Tokenized implements ForMethod {
 
                             /**
@@ -4055,7 +4055,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
                          */
-                        @EqualsAndHashCode
+                        @AutoValue
                         class Tokenized implements ForField {
 
                             /**
@@ -4086,7 +4086,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a non-generic type.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForRawType implements GenericTypeToken {
 
                     /**
@@ -4130,7 +4130,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a type variable.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForTypeVariable implements GenericTypeToken {
 
                     /**
@@ -4287,7 +4287,7 @@ public interface TypePool {
                     /**
                      * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     protected static class Formal implements GenericTypeToken.OfFormalTypeVariable {
 
                         /**
@@ -4476,7 +4476,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a generic array.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForGenericArray implements GenericTypeToken {
 
                     /**
@@ -4574,7 +4574,7 @@ public interface TypePool {
                 /**
                  * A generic type token for a wildcard that is bound below.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForLowerBoundWildcard implements GenericTypeToken {
 
                     /**
@@ -4677,7 +4677,7 @@ public interface TypePool {
                 /**
                  * A generic type token for a wildcard that is bound above.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForUpperBoundWildcard implements GenericTypeToken {
 
                     /**
@@ -4783,7 +4783,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a parameterized type.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForParameterizedType implements GenericTypeToken {
 
                     /**
@@ -4825,7 +4825,7 @@ public interface TypePool {
                     /**
                      * A generic type token to describe a parameterized type description with a generic owner type.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     public static class Nested implements GenericTypeToken {
 
                         /**
@@ -5177,7 +5177,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on an annotation.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class AnnotationToken {
 
                 /**
@@ -5255,7 +5255,7 @@ public interface TypePool {
                     /**
                      * A simple resolved annotation.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     class Simple implements Resolution {
 
                         /**
@@ -5286,7 +5286,7 @@ public interface TypePool {
                     /**
                      * An illegal resolution.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     class Illegal implements Resolution {
 
                         /**
@@ -5319,7 +5319,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on a field.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class FieldToken {
 
                 /**
@@ -5404,7 +5404,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on a method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class MethodToken {
 
                 /**
@@ -5572,7 +5572,7 @@ public interface TypePool {
                 /**
                  * A token representing a method's parameter.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 protected static class ParameterToken {
 
                     /**
@@ -7568,7 +7568,7 @@ public interface TypePool {
     /**
      * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @AutoValue
     class LazyFacade extends AbstractBase {
 
         /**
@@ -7599,7 +7599,7 @@ public interface TypePool {
         /**
          * The lazy resolution for a lazy facade for a type pool.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class LazyResolution implements Resolution {
 
             /**
@@ -7675,7 +7675,7 @@ public interface TypePool {
     /**
      * A type pool that attempts to load a class.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     class ClassLoading extends AbstractBase.Hierarchical {
 
         /**
@@ -7752,7 +7752,7 @@ public interface TypePool {
     /**
      * A type pool that supplies explicitly known type descriptions.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     class Explicit extends AbstractBase.Hierarchical {
 
         /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -112,7 +112,7 @@ public interface MethodDelegationBinder {
         /**
          * A method invocation that enforces a virtual invocation that is dispatched on a given type.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Virtual implements MethodInvoker {
 
             /**
@@ -184,7 +184,7 @@ public interface MethodDelegationBinder {
         /**
          * An anonymous binding of a target method parameter.
          */
-        @EqualsAndHashCode(of = "delegate")
+        @AutoValue
         class Anonymous implements ParameterBinding<Object> {
 
             /**
@@ -232,7 +232,7 @@ public interface MethodDelegationBinder {
          * @param <T> The type of the identification token.
          * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Unique<T> implements ParameterBinding<T> {
 
             /**
@@ -427,7 +427,7 @@ public interface MethodDelegationBinder {
              * A method binding that was created by a
              * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder}.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Build implements MethodBinding {
 
                 /**
@@ -641,7 +641,7 @@ public interface MethodDelegationBinder {
         /**
          * Bindinds a method using another resolver and prints the selected binding to a {@link PrintStream}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class StreamWriting implements BindingResolver {
 
             /**
@@ -872,7 +872,7 @@ public interface MethodDelegationBinder {
          * A chain of {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Compound implements AmbiguityResolver {
 
             /**
@@ -978,7 +978,7 @@ public interface MethodDelegationBinder {
      * <li>Find a best method among the successful bindings using the {@code AmbiguityResolver}.</li>
      * </ol>
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Processor implements MethodDelegationBinder.Record {
 
         /**

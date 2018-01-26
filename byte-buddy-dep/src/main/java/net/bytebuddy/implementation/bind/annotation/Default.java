@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -133,7 +133,7 @@ public @interface Default {
             /**
              * A type locator that returns a given type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForType implements TypeLocator {
 
                 /**

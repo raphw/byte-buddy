@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -15,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 /**
  * An implementation target for creating a subclass of a given type.
  */
-@EqualsAndHashCode(callSuper = true)
+@AutoValue
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**

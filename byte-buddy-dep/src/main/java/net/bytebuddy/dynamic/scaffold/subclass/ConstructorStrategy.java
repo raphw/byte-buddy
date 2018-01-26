@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -242,7 +242,7 @@ public interface ConstructorStrategy {
         /**
          * A wrapper for a default constructor strategy which additionally applies a method attribute appender factory.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class WithMethodAttributeAppenderFactory implements ConstructorStrategy {
 
             /**

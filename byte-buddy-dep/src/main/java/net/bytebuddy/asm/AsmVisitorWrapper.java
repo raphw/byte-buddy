@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -124,7 +124,7 @@ public interface AsmVisitorWrapper {
     /**
      * An ASM visitor wrapper that allows to wrap declared fields of the instrumented type with a {@link FieldVisitorWrapper}.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @AutoValue
     class ForDeclaredFields extends AbstractBase {
 
         /**
@@ -207,7 +207,7 @@ public interface AsmVisitorWrapper {
         /**
          * An entry describing a field visitor wrapper paired with a matcher for fields to be wrapped.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Entry implements ElementMatcher<FieldDescription.InDefinedShape>, FieldVisitorWrapper {
 
             /**
@@ -297,7 +297,7 @@ public interface AsmVisitorWrapper {
      * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception.
      * </p>
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForDeclaredMethods implements AsmVisitorWrapper {
 
         /**
@@ -440,7 +440,7 @@ public interface AsmVisitorWrapper {
         /**
          * An entry describing a method visitor wrapper paired with a matcher for fields to be wrapped.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Entry implements ElementMatcher<MethodDescription>, MethodVisitorWrapper {
 
             /**
@@ -577,7 +577,7 @@ public interface AsmVisitorWrapper {
     /**
      * An ordered, immutable chain of {@link AsmVisitorWrapper}s.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements AsmVisitorWrapper {
 
         /**

@@ -82,6 +82,9 @@
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
+        <version.utility.auto.common>0.10</version.utility.auto.common>
+        <version.utility.auto.value>1.5.3</version.utility.auto.value>
+        <version.utility.guava>23.6-jre</version.utility.guava>
         <version.utility.lombok>1.16.18</version.utility.lombok>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
@@ -134,6 +137,25 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${version.utility.lombok}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Allow usage of Auto-Value annotations. -->
+        <dependency>
+            <groupId>com.google.auto</groupId>
+            <artifactId>auto-common</artifactId>
+            <version>${version.utility.auto.common}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value</artifactId>
+            <version>${version.utility.auto.value}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${version.utility.guava}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -261,6 +283,11 @@
                         <source>${code.level}</source>
                         <target>${code.level}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <annotationProcessors>
+                            <annotationProcessor>
+                                com.google.auto.value.processor.AutoAnnotationProcessor
+                            </annotationProcessor>
+                        </annotationProcessors>
                     </configuration>
                 </plugin>
                 <plugin>

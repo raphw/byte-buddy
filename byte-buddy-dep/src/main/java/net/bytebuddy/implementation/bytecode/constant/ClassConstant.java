@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -134,7 +134,7 @@ public enum ClassConstant implements StackManipulation {
     /**
      * A class constant for a non-primitive {@link java.lang.Class}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class ForReferenceType implements StackManipulation {
 
         /**

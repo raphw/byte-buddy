@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
@@ -33,7 +33,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * A type proxy creates accessor methods for all overridable methods of a given type by subclassing the given type and
  * delegating all method calls to accessor methods of the instrumented type it was created for.
  */
-@EqualsAndHashCode
+@AutoValue
 public class TypeProxy implements AuxiliaryType {
 
     /**
@@ -173,7 +173,7 @@ public class TypeProxy implements AuxiliaryType {
         /**
          * The appender for implementing a {@link net.bytebuddy.implementation.auxiliary.TypeProxy.SilentConstruction}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -350,7 +350,7 @@ public class TypeProxy implements AuxiliaryType {
      * stack manipulation is applied, an instance of the instrumented type must lie on top of the operand stack.
      * All constructor parameters will be assigned their default values when this stack operation is applied.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class ForSuperMethodByConstructor implements StackManipulation {
 
         /**
@@ -435,7 +435,7 @@ public class TypeProxy implements AuxiliaryType {
      * method which might not be available in any Java runtime. When this stack manipulation is applied, an instance of
      * the instrumented type must lie on top of the operand stack.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class ForSuperMethodByReflectionFactory implements StackManipulation {
 
         /**
@@ -501,7 +501,7 @@ public class TypeProxy implements AuxiliaryType {
      * Creates a type proxy which delegates its super method calls to any invokable default method of
      * a given interface and loads an instance of this proxy onto the operand stack.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class ForDefaultMethod implements StackManipulation {
 
         /**

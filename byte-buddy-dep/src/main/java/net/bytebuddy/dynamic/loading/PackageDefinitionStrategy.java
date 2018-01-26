@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -407,7 +407,7 @@ public interface PackageDefinitionStrategy {
     /**
      * A package definer that reads a class loader's manifest file.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ManifestReading implements PackageDefinitionStrategy {
 
         /**
@@ -569,7 +569,7 @@ public interface PackageDefinitionStrategy {
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**

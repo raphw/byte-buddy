@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -69,7 +69,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Resolved<S> implements LatentMatcher<S> {
 
         /**
@@ -95,7 +95,7 @@ public interface LatentMatcher<T> {
     /**
      * A latent matcher where the field token is being attached to the supplied type description before matching.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
         /**
@@ -120,7 +120,7 @@ public interface LatentMatcher<T> {
         /**
          * A resolved matcher of a latent field matcher for a field token.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {
 
             /**
@@ -147,7 +147,7 @@ public interface LatentMatcher<T> {
     /**
      * A latent matcher where the method token is being attached to the supplied type description before matching.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForMethodToken implements LatentMatcher<MethodDescription> {
 
         /**
@@ -172,7 +172,7 @@ public interface LatentMatcher<T> {
         /**
          * A resolved matcher of a latent method matcher for a method token.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class ResolvedMatcher implements ElementMatcher<MethodDescription> {
 
             /**
@@ -201,7 +201,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Conjunction<S> implements LatentMatcher<S> {
 
         /**
@@ -243,7 +243,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Disjunction<S> implements LatentMatcher<S> {
 
         /**

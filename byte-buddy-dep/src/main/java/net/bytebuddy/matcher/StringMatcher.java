@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 /**
  * An element matcher that compares two strings by a given pattern which is characterized by a
  * {@link net.bytebuddy.matcher.StringMatcher.Mode}.
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
     /**

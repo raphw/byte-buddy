@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -50,7 +50,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * <li>All arguments for the called method in the order in which they are required.</li>
  * </ol>
  */
-@EqualsAndHashCode
+@AutoValue
 public class MethodCallProxy implements AuxiliaryType {
 
     /**
@@ -243,7 +243,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.ConstructorCall}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -287,7 +287,7 @@ public class MethodCallProxy implements AuxiliaryType {
     /**
      * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class MethodCall implements Implementation {
 
         /**
@@ -387,7 +387,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
      * as the target method itself.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class AssignableSignatureCall implements StackManipulation {
 
         /**

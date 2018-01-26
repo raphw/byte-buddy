@@ -1,13 +1,13 @@
 package net.bytebuddy.utility.privilege;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 import java.security.PrivilegedAction;
 
 /**
  * An action for reading a system property as a privileged action.
  */
-@EqualsAndHashCode
+@AutoValue
 public class GetSystemPropertyAction implements PrivilegedAction<String> {
 
     /**

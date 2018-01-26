@@ -1,7 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -300,7 +300,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForJava8CapableVm implements Dispatcher {
 
                 /**

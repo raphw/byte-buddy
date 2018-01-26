@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.File;
@@ -139,7 +139,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
@@ -207,7 +207,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
@@ -345,7 +345,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * A lookup instance can define types only in the same class loader and in the same package as the type within which
      * it was created. The supplied lookup must have package privileges, i.e. it must not be a public lookup.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class UsingLookup implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -393,7 +393,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForBootstrapInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -429,7 +429,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**

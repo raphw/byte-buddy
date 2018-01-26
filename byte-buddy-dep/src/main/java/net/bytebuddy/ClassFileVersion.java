@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.objectweb.asm.ClassReader;
@@ -18,7 +18,7 @@ import java.security.PrivilegedAction;
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
-@EqualsAndHashCode
+@AutoValue
 public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
@@ -329,7 +329,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         /**
          * A version locator for a JVM of at least version 9.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForJava9CapableVm implements VersionLocator {
 
             /**

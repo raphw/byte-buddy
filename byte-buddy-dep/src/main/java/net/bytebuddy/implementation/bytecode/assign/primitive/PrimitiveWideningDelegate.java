@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -247,7 +247,7 @@ public enum PrimitiveWideningDelegate {
     /**
      * A stack manipulation that widens a primitive type into a more general primitive type.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class WideningStackManipulation implements StackManipulation {
 
         /**

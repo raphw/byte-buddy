@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -68,7 +68,7 @@ public interface MethodAttributeAppender {
          * A method attribute appender factory that combines several method attribute appender factories to be
          * represented as a single factory.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Compound implements Factory {
 
             /**
@@ -213,7 +213,7 @@ public interface MethodAttributeAppender {
      * Appends an annotation to a method or method parameter. The visibility of the annotation is determined by the
      * annotation type's {@link java.lang.annotation.RetentionPolicy} annotation.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Explicit implements MethodAttributeAppender, Factory {
 
         /**
@@ -321,7 +321,7 @@ public interface MethodAttributeAppender {
             /**
              * A method attribute appender target for writing annotations onto a given method parameter.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class OnMethodParameter implements Target {
 
                 /**
@@ -352,7 +352,7 @@ public interface MethodAttributeAppender {
     /**
      * A method attribute appender that writes a receiver type.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForReceiverType implements MethodAttributeAppender, Factory {
 
         /**
@@ -384,7 +384,7 @@ public interface MethodAttributeAppender {
      * A method attribute appender that combines several method attribute appenders to be represented as a single
      * method attribute appender.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements MethodAttributeAppender {
 
         /**

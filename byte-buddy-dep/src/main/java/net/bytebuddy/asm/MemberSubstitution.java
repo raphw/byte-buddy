@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -43,7 +43,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * necessary to use this component when subclassing a type where methods are only defined explicitly.
  * </p>
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
     /**
@@ -214,7 +214,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
     /**
      * A member substitution that lacks a specification for how to substitute the matched members references within a method body.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public abstract static class WithoutSpecification {
 
         /**
@@ -379,7 +379,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Describes a member substitution that requires a specification for how to replace a byte code element.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         protected static class ForMatchedByteCodeElement extends WithoutSpecification {
 
             /**
@@ -424,7 +424,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Describes a member substitution that requires a specification for how to replace a field.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         public static class ForMatchedField extends WithoutSpecification {
 
             /**
@@ -520,7 +520,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Describes a member substitution that requires a specification for how to replace a method or constructor.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @AutoValue
         public static class ForMatchedMethod extends WithoutSpecification {
 
             /**
@@ -654,7 +654,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * A type pool resolver that returns a specific type pool.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForExplicitPool implements TypePoolResolver {
 
             /**
@@ -680,7 +680,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * A type pool resolver that resolves the implicit pool but additionally checks another class file locator.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForClassFileLocator implements TypePoolResolver {
 
             /**
@@ -834,7 +834,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A resolver that replaces an interaction with a byte code element with a field access.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class FieldAccessing implements Resolver {
 
                 /**
@@ -888,7 +888,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A resolver that invokes a method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class MethodInvoking implements Resolver {
 
                 /**
@@ -1022,7 +1022,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * A substitution that uses element matchers for determining if a byte code element should be substituted.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForElementMatchers implements Substitution {
 
             /**
@@ -1148,7 +1148,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * A compound substitution.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Compound implements Substitution {
 
             /**

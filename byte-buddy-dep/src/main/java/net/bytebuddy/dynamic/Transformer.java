@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -65,7 +65,7 @@ public interface Transformer<T> {
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.field.FieldDescription.Token}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForField implements Transformer<FieldDescription> {
 
         /**
@@ -113,7 +113,7 @@ public interface Transformer<T> {
         /**
          * A transformer for a field's modifiers.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class FieldModifierTransformer implements Transformer<FieldDescription.Token> {
 
             /**
@@ -217,7 +217,7 @@ public interface Transformer<T> {
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.method.MethodDescription.Token}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForMethod implements Transformer<MethodDescription> {
 
         /**
@@ -267,7 +267,7 @@ public interface Transformer<T> {
         /**
          * A transformer for a method's modifiers.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class MethodModifierTransformer implements Transformer<MethodDescription.Token> {
 
             /**
@@ -538,7 +538,7 @@ public interface Transformer<T> {
      *
      * @param <S> The type of the transformed instance.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound<S> implements Transformer<S> {
 
         /**

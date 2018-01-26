@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -22,7 +22,7 @@ import java.util.Map;
  * virtually or they are invoked directly via the {@code INVOKESPECIAL} invocation to explicitly forbid a virtual
  * dispatch.
  */
-@EqualsAndHashCode(callSuper = true)
+@AutoValue
 public class RebaseImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
@@ -171,7 +171,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * A factory for creating a {@link RebaseImplementationTarget}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class Factory implements Implementation.Target.Factory {
 
         /**

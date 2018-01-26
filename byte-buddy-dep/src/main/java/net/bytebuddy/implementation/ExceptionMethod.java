@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -17,7 +17,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * Be aware that the Java Virtual machine does not care about exception declarations and will throw any
  * {@link java.lang.Throwable} from any method even if the method does not declared a checked exception.
  */
-@EqualsAndHashCode
+@AutoValue
 public class ExceptionMethod implements Implementation, ByteCodeAppender {
 
     /**
@@ -136,7 +136,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         /**
          * A construction delegate that calls the default constructor.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForDefaultConstructor implements ConstructionDelegate {
 
             /**
@@ -172,7 +172,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         /**
          * A construction delegate that calls a constructor that takes a single string as its argument.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForStringConstructor implements ConstructionDelegate {
 
             /**

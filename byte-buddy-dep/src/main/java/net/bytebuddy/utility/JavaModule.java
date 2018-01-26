@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.NamedElement;
 
 import java.io.InputStream;
@@ -255,7 +255,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * A dispatcher for a VM that does support the {@code java.lang.Module} API.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Enabled implements Dispatcher {
 
             /**

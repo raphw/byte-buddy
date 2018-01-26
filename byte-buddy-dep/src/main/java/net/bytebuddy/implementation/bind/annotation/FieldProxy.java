@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -77,7 +77,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @AutoValue
     class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**
@@ -339,7 +339,7 @@ public @interface FieldProxy {
                 /**
                  * A duplex factory for a type that both sets and gets a field value.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class Duplex implements Factory {
 
                     /**
@@ -385,7 +385,7 @@ public @interface FieldProxy {
                 /**
                  * A simplex factory where field getters and setters both have their own type.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class Simplex implements Factory {
 
                     /**
@@ -456,7 +456,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a getter accessor.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForGetter implements FieldResolver {
 
                 /**
@@ -495,7 +495,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a setter accessor.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForSetter implements FieldResolver {
 
                 /**
@@ -534,7 +534,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for an accessor that both gets and sets a field value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForGetterSetterPair implements FieldResolver {
 
                 /**
@@ -627,7 +627,7 @@ public @interface FieldProxy {
         /**
          * Represents an implementation for implementing a proxy type constructor when a non-static field is accessed.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class InstanceFieldConstructor implements Implementation {
 
             /**
@@ -661,7 +661,7 @@ public @interface FieldProxy {
              * An appender for implementing an
              * {@link FieldProxy.Binder.InstanceFieldConstructor}.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Appender implements ByteCodeAppender {
 
                 /**
@@ -700,7 +700,7 @@ public @interface FieldProxy {
         /**
          * Implementation for a getter method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class FieldGetter implements Implementation {
 
             /**
@@ -807,7 +807,7 @@ public @interface FieldProxy {
         /**
          * Implementation for a setter method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class FieldSetter implements Implementation {
 
             /**

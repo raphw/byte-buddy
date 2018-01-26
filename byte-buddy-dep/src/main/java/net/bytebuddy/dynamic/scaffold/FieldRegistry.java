@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
@@ -69,7 +69,7 @@ public interface FieldRegistry {
     /**
      * An immutable default implementation of a field registry.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Default implements FieldRegistry {
 
         /**
@@ -122,7 +122,7 @@ public interface FieldRegistry {
         /**
          * An entry of the default field registry.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Entry implements LatentMatcher<FieldDescription> {
 
             /**
@@ -199,7 +199,7 @@ public interface FieldRegistry {
         /**
          * A compiled default field registry.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Compiled implements FieldRegistry.Compiled {
 
             /**
@@ -236,7 +236,7 @@ public interface FieldRegistry {
             /**
              * An entry of a compiled field registry.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Entry implements ElementMatcher<FieldDescription> {
 
                 /**

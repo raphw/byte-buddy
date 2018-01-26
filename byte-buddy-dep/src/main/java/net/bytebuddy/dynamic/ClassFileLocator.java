@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -67,7 +67,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A canonical representation of an illegal binary representation.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Illegal implements Resolution {
 
             /**
@@ -98,7 +98,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Represents a byte array as binary data.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Explicit implements Resolution {
 
             /**
@@ -153,7 +153,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A simple class file locator that returns class files from a selection of given types.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Simple implements ClassFileLocator {
 
         /**
@@ -240,7 +240,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForClassLoader implements ClassFileLocator {
 
         /**
@@ -410,7 +410,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForModule implements ClassFileLocator {
 
         /**
@@ -571,7 +571,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that locates classes within a Java <i>jar</i> file.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForJarFile implements ClassFileLocator {
 
         /**
@@ -687,7 +687,7 @@ public interface ClassFileLocator extends Closeable {
      * A class file locator that locates classes within a Java <i>jmod</i> file. This class file locator should not be used
      * for reading modular jar files for which {@link ForJarFile} is appropriate.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForModuleFile implements ClassFileLocator {
 
         /**
@@ -868,7 +868,7 @@ public interface ClassFileLocator extends Closeable {
      * folders donating packages and class files being saved as {@code <classname>.class} files
      * within their package folder.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class ForFolder implements ClassFileLocator {
 
         /**
@@ -911,7 +911,7 @@ public interface ClassFileLocator extends Closeable {
      * locator causes a class to be loaded in order to look up its class file. Also, this locator does deliberately not
      * support the look-up of classes that represent lambda expressions.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class AgentBased implements ClassFileLocator {
 
         /**
@@ -1044,7 +1044,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * A default implementation of a class loading delegate.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Default implements ClassLoadingDelegate {
 
                 /**
@@ -1191,7 +1191,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could be located.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
 
                         /**
@@ -1233,7 +1233,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could not be located.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     class Unresolved implements Initializable {
 
                         /**
@@ -1263,7 +1263,7 @@ public interface ClassFileLocator extends Closeable {
              * be located by a class loader directly. This allows for locating classes that are loaded by
              * an anonymous class loader which does not register its classes in a system dictionary.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Explicit implements ClassLoadingDelegate {
 
                 /**
@@ -1394,7 +1394,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that discriminates by a type's package.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class PackageDiscriminating implements ClassFileLocator {
 
         /**
@@ -1435,7 +1435,7 @@ public interface ClassFileLocator extends Closeable {
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements ClassFileLocator, Closeable {
 
         /**

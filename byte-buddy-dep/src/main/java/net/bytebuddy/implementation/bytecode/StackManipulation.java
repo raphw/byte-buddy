@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
@@ -75,7 +75,7 @@ public interface StackManipulation {
      * A description of the size change that is imposed by some
      * {@link StackManipulation}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Size {
 
         /**
@@ -148,7 +148,7 @@ public interface StackManipulation {
     /**
      * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements StackManipulation {
 
         /**

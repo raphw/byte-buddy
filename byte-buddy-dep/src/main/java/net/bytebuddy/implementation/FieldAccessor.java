@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -35,7 +35,7 @@ import java.lang.reflect.Field;
  * value can be specified explicitly when {@code void} is not returned.
  * </p>
  */
-@EqualsAndHashCode
+@AutoValue
 public abstract class FieldAccessor implements Implementation {
 
     /**
@@ -209,7 +209,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * An absolute field description representing a previously resolved field.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Absolute implements FieldLocation, Prepared {
 
             /**
@@ -250,7 +250,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A relative field location where a field is located dynamically.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Relative implements FieldLocation {
 
             /**
@@ -296,7 +296,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * A prepared version of a field location.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Prepared implements FieldLocation.Prepared {
 
                 /**
@@ -379,7 +379,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A field name extractor that returns a fixed value.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForFixedValue implements FieldNameExtractor {
 
             /**
@@ -587,7 +587,7 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * A field accessor that sets a parameters value of a given index.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     protected static class ForParameterSetter extends FieldAccessor implements Implementation.Composable {
 
         /**

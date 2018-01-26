@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -28,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  *
  * @see FieldAccessor
  */
-@EqualsAndHashCode
+@AutoValue
 public abstract class FixedValue implements Implementation {
 
     /**
@@ -398,7 +398,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning {@code this}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -431,7 +431,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that returns a method's argument.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     protected static class ForArgument extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -498,7 +498,7 @@ public abstract class FixedValue implements Implementation {
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -573,7 +573,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
-    @EqualsAndHashCode(callSuper = true, exclude = "fieldType")
+    @AutoValue
     protected static class ForValue extends FixedValue implements AssignerConfigurable {
 
         /**
@@ -654,7 +654,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning the fixed value that was stored in a static field.
          */
-        @EqualsAndHashCode
+        @AutoValue
         private class StaticFieldByteCodeAppender implements ByteCodeAppender {
 
             /**

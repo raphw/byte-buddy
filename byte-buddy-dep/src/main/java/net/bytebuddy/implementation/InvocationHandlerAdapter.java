@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -31,7 +31,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
  * to also intercept method calls to non-interface methods.
  */
-@EqualsAndHashCode
+@AutoValue
 public abstract class InvocationHandlerAdapter implements Implementation {
 
     /**
@@ -210,7 +210,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in a static field.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     protected static class ForInstance extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
@@ -317,7 +317,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in an instance field.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     protected static class ForField extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
