@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 /**
  * An element matcher that returns a fixed result.
  *
  * @param <T> The actual matched type of this matcher.
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

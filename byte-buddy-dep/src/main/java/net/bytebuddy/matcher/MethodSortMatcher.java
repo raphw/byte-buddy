@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 
 /**
@@ -9,7 +9,7 @@ import net.bytebuddy.description.method.MethodDescription;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

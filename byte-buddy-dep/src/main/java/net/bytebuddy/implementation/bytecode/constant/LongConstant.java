@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -73,7 +73,7 @@ public enum LongConstant implements StackManipulation {
     /**
      * A stack manipulation for loading a {@code long} value from a class's constant pool onto the operand stack.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class ConstantPool implements StackManipulation {
 
         /**

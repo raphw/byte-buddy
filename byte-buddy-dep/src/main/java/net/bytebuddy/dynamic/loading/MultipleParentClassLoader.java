@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
@@ -158,7 +158,7 @@ public class MultipleParentClassLoader extends ClassLoader {
      * of the bootstrap class loader which is represented by {@code null} and which is an implicit parent of any
      * class loader.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class Builder {
 
         /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
@@ -61,7 +61,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses reflective method calls.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class UsingReflection implements ClassInjector {
 
         /**
@@ -310,7 +310,7 @@ public interface ClassInjector {
             /**
              * A class injection dispatcher that is using reflection on the {@link ClassLoader} methods.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class Direct implements Dispatcher, Initializable {
 
                 /**
@@ -481,7 +481,7 @@ public interface ClassInjector {
                 /**
                  * A resolved class dispatcher for a class injector on a VM running at least Java 7.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 protected static class ForJava7CapableVm extends Direct {
 
                     /**
@@ -560,7 +560,7 @@ public interface ClassInjector {
             /**
              * An indirect dispatcher that uses a redirection accessor class that was injected into the bootstrap class loader.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Indirect implements Dispatcher, Initializable {
 
                 /**
@@ -775,7 +775,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Unavailable implements Dispatcher, Initializable {
 
                 /**
@@ -850,7 +850,7 @@ public interface ClassInjector {
      * <b>Important</b>: This functionality is only available starting from Java 9.
      * </p>
      */
-    @EqualsAndHashCode
+    @AutoValue
     class UsingLookup implements ClassInjector {
 
         /**
@@ -1034,7 +1034,7 @@ public interface ClassInjector {
             /**
              * A dispatcher for a Java 9 capable VM that supports class definition via method handles.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForJava9CapableVm implements Dispatcher {
 
                 /**
@@ -1127,7 +1127,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses {@code sun.misc.Unsafe} to inject classes.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class UsingUnsafe implements ClassInjector {
 
         /**
@@ -1282,7 +1282,7 @@ public interface ClassInjector {
             /**
              * An enabled dispatcher.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Enabled implements Dispatcher, Initializable {
 
                 /**
@@ -1339,7 +1339,7 @@ public interface ClassInjector {
             /**
              * A disabled dispatcher.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Disabled implements Initializable {
 
                 /**
@@ -1373,7 +1373,7 @@ public interface ClassInjector {
      * A class injector using a {@link java.lang.instrument.Instrumentation} to append to either the boot classpath
      * or the system class path.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class UsingInstrumentation implements ClassInjector {
 
         /**

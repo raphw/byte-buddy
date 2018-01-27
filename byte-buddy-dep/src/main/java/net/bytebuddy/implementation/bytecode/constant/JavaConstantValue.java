@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -10,7 +10,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * A constant representing a {@link JavaConstant}.
  */
-@EqualsAndHashCode
+@AutoValue
 public class JavaConstantValue implements StackManipulation {
 
     /**

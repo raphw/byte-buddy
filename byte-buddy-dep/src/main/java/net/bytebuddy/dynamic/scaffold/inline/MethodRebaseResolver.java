@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -112,7 +112,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Preserved implements Resolution {
 
             /**
@@ -149,7 +149,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForRebasedMethod implements Resolution {
 
             /**
@@ -281,7 +281,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased constructor.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForRebasedConstructor implements Resolution {
 
             /**
@@ -401,7 +401,7 @@ public interface MethodRebaseResolver {
     /**
      * A default implementation of a method rebase resolver.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Default implements MethodRebaseResolver {
 
         /**

@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -75,7 +75,7 @@ public interface FieldLocator {
         /**
          * A simple implementation for a field resolution.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Simple implements Resolution {
 
             /**
@@ -147,7 +147,7 @@ public interface FieldLocator {
     /**
      * An abstract base implementation of a field locator.
      */
-    @EqualsAndHashCode
+    @AutoValue
     abstract class AbstractBase implements FieldLocator {
 
         /**
@@ -192,7 +192,7 @@ public interface FieldLocator {
     /**
      * A field locator that only looks up fields that are declared by a specific type.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     class ForExactType extends AbstractBase {
 
         /**
@@ -228,7 +228,7 @@ public interface FieldLocator {
         /**
          * A factory for creating a {@link ForExactType}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         public static class Factory implements FieldLocator.Factory {
 
             /**
@@ -255,7 +255,7 @@ public interface FieldLocator {
     /**
      * A field locator that looks up fields that are declared within a class's class hierarchy.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @AutoValue
     class ForClassHierarchy extends AbstractBase {
 
         /**

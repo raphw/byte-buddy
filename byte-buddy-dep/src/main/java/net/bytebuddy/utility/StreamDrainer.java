@@ -1,6 +1,6 @@
 package net.bytebuddy.utility;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * A utility for draining the contents of an {@link java.io.InputStream} into a {@code byte} array.
  */
-@EqualsAndHashCode
+@AutoValue
 public class StreamDrainer {
 
     /**

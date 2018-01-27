@@ -1,6 +1,6 @@
 package net.bytebuddy.utility.privilege;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 
 import java.lang.reflect.AccessibleObject;
 import java.security.PrivilegedAction;
@@ -10,7 +10,7 @@ import java.security.PrivilegedAction;
  *
  * @param <T> The type of the accessible object.
  */
-@EqualsAndHashCode
+@AutoValue
 public class SetAccessibleAction<T extends AccessibleObject> implements PrivilegedAction<T> {
 
     /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
@@ -731,7 +731,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a non-generic type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     class ForNonGenericType extends AbstractBase {
 
                         /**
@@ -796,7 +796,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a type variable.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     class ForTypeVariable extends AbstractBase {
 
                         /**
@@ -850,7 +850,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a parameterized type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     class ForParameterizedType extends AbstractBase {
 
                         /**
@@ -976,7 +976,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             /**
                              * A dispatcher for an invariant parameter of a parameterized type, i.e. a type without a wildcard.
                              */
-                            @EqualsAndHashCode
+                            @AutoValue
                             protected static class InvariantBinding implements Dispatcher {
 
                                 /**
@@ -1002,7 +1002,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             /**
                              * A dispatcher for an covariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
                              */
-                            @EqualsAndHashCode
+                            @AutoValue
                             protected static class CovariantBinding implements Dispatcher {
 
                                 /**
@@ -1033,7 +1033,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             /**
                              * A dispatcher for an contravariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
                              */
-                            @EqualsAndHashCode
+                            @AutoValue
                             protected static class ContravariantBinding implements Dispatcher {
 
                                 /**
@@ -1066,7 +1066,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a generic array type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     class ForGenericArray extends AbstractBase {
 
                         /**
@@ -1427,7 +1427,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Visits a generic type and appends the discovered type to the supplied signature visitor.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForSignatureVisitor implements Visitor<SignatureVisitor> {
 
                 /**
@@ -1623,7 +1623,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A substitutor that attaches type variables to a type variable source and replaces representations of
                  * {@link TargetType} with a given declaring type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class ForAttachment extends Substitutor {
 
                     /**
@@ -1720,7 +1720,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
                  * with {@link TargetType}.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class ForDetachment extends Substitutor {
 
                     /**
@@ -1763,7 +1763,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A visitor for binding type variables to their values.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
 
                     /**
@@ -1885,7 +1885,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 public static class ForTokenNormalization extends Substitutor {
 
                     /**
@@ -1971,7 +1971,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A visitor that reduces a detached generic type to its erasure.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Reducing implements Visitor<TypeDescription> {
 
                 /**
@@ -2293,7 +2293,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A dispatcher for a modern JVM that supports type annotations.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForJava8CapableVm implements Dispatcher {
 
                     /**
@@ -2428,7 +2428,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     protected static class Resolved extends Delegator {
 
                         /**
@@ -2454,7 +2454,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegating annotation reader for an annotated type variable.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @AutoValue
                     protected static class AnnotatedTypeVariableType extends Delegator {
 
                         /**
@@ -2944,7 +2944,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained delegator that bases its result on an underlying annotation reader.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 protected abstract static class Chained extends Delegator {
 
                     /**
@@ -3000,7 +3000,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A chained annotation reader for reading a wildcard type's upper bound type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForWildcardUpperBoundType extends Delegator.Chained {
 
                 /**
@@ -3044,7 +3044,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A chained annotation reader for reading a wildcard type's lower bound type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForWildcardLowerBoundType extends Delegator.Chained {
 
                 /**
@@ -3085,7 +3085,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A chained annotation reader for reading a type variable's type argument.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForTypeVariableBoundType extends Delegator.Chained {
 
                 /**
@@ -3125,7 +3125,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained annotation reader for reading a formal type variable's type argument.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 protected static class OfFormalTypeVariable extends Delegator {
 
                     /**
@@ -3172,7 +3172,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A chained annotation reader for reading a parameterized type's type argument.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForTypeArgument extends Delegator.Chained {
 
                 /**
@@ -5861,7 +5861,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * A builder for creating describing a generic type as a {@link Generic}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         abstract class Builder {
 
             /**
@@ -6308,7 +6308,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A generic type builder for building a non-generic type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class OfNonGenericType extends Builder {
 
                 /**
@@ -6382,7 +6382,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A generic type builder for building a parameterized type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class OfParameterizedType extends Builder {
 
                 /**
@@ -6443,7 +6443,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A generic type builder building a generic array type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class OfGenericArrayType extends Builder {
 
                 /**
@@ -6485,7 +6485,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A generic type builder building a symbolic type variable.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class OfTypeVariable extends Builder {
 
                 /**

@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -36,7 +36,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isMethod;
  * type description of the instrumented type.
  * </p>
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
 
     /**

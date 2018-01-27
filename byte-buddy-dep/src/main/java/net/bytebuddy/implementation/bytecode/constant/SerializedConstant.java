@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -15,7 +15,7 @@ import java.io.*;
 /**
  * A constant that represents a value in its serialized form.
  */
-@EqualsAndHashCode
+@AutoValue
 public class SerializedConstant implements StackManipulation {
 
     /**

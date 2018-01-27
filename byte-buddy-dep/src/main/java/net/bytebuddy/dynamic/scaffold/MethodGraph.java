@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Visibility;
@@ -101,7 +101,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a linked method graph that exposes views by delegation to given method graphs.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Delegation implements Linked {
 
             /**
@@ -306,7 +306,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a resolved node of a method without bridges.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Simple implements Node {
 
             /**
@@ -414,7 +414,7 @@ public interface MethodGraph {
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @AutoValue
         class Default<T> extends AbstractBase {
 
             /**
@@ -938,7 +938,7 @@ public interface MethodGraph {
                  *
                  * @param <V> The type of the token used for deciding on method equality.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 protected static class Store<V> {
 
                     /**
@@ -1215,7 +1215,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
-                        @EqualsAndHashCode
+                        @AutoValue
                         class Resolved<U> implements Entry<U> {
 
                             /**
@@ -1318,7 +1318,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing a non-ambiguous method.
                              */
-                            @EqualsAndHashCode
+                            @AutoValue
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1385,7 +1385,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
-                        @EqualsAndHashCode
+                        @AutoValue
                         class Ambiguous<U> implements Entry<U> {
 
                             /**
@@ -1493,7 +1493,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing an ambiguous method resolution.
                              */
-                            @EqualsAndHashCode
+                            @AutoValue
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1548,7 +1548,7 @@ public interface MethodGraph {
                     /**
                      * A graph implementation based on a key store.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     protected static class Graph implements MethodGraph {
 
                         /**
@@ -1634,7 +1634,7 @@ public interface MethodGraph {
     /**
      * A simple implementation of a method graph.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Simple implements MethodGraph {
 
         /**

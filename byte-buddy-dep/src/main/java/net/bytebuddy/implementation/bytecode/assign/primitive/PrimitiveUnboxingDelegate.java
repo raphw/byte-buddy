@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -281,7 +281,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * were not found to be of a given wrapper type. Instead, this unboxing responsible tries to assign the
      * source type to the primitive target type's wrapper type before performing an unboxing operation.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
         /**

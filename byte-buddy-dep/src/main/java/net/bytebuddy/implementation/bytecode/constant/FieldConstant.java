@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 /**
  * Represents a {@link Field} constant for a given type.
  */
-@EqualsAndHashCode
+@AutoValue
 public class FieldConstant implements StackManipulation {
 
     /**
@@ -62,7 +62,7 @@ public class FieldConstant implements StackManipulation {
     /**
      * A cached version of a {@link FieldConstant}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class Cached implements StackManipulation {
 
         /**

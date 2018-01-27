@@ -1,7 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassInjector;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * singleton and for becoming reachable from the JVM's meta factory. This class keeps a reference to all registered transformers which need
  * to be explicitly deregistered in order to avoid a memory leak.
  */
-@EqualsAndHashCode
+@AutoValue
 public class LambdaFactory {
 
     /**

@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -184,7 +184,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation that loads all parameters of a given method onto the operand stack.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class MethodLoading implements StackManipulation {
 
         /**
@@ -281,7 +281,7 @@ public enum MethodVariableAccess {
              * A type casting handler that casts all parameters of a method to the parameter types of a compatible method
              * with covariant parameter types. This allows a convenient implementation of bridge methods.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForBridgeTarget implements TypeCastingHandler {
 
                 /**
@@ -416,7 +416,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation that increments an integer variable.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class OffsetIncrementing implements StackManipulation {
 
         /**

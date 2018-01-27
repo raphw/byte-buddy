@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -194,7 +194,7 @@ public enum MethodInvocation {
     /**
      * A method invocation of a generically resolved method.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
 
         /**
@@ -485,7 +485,7 @@ public enum MethodInvocation {
     /**
      * Performs a method invocation on a method handle with a polymorphic type signature.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class HandleInvocation implements StackManipulation {
 
         /**

@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A stack manipulation for creating an <i>undefined</i> type on which a constructor is to be called.
  */
-@EqualsAndHashCode
+@AutoValue
 public class TypeCreation implements StackManipulation {
 
     /**

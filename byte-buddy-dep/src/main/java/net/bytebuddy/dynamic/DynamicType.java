@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -1252,7 +1252,7 @@ public interface DynamicType {
                          *
                          * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                          */
-                        @EqualsAndHashCode(callSuper = false)
+                        @AutoValue
                         protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
 
                             /**
@@ -2324,7 +2324,7 @@ public interface DynamicType {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @AutoValue
                 protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
@@ -2769,7 +2769,7 @@ public interface DynamicType {
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @AutoValue
             public abstract static class Adapter<U> extends AbstractBase<U> {
 
                 /**

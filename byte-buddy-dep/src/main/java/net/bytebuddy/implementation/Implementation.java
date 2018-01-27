@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -303,7 +303,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * An abstract base implementation for an {@link Implementation.Target}.
          */
-        @EqualsAndHashCode
+        @AutoValue
         abstract class AbstractBase implements Target {
 
             /**
@@ -500,7 +500,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract base implementation of an extractable view of an implementation context.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class AbstractBase implements ExtractableView {
 
                 /**
@@ -895,7 +895,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
@@ -1215,7 +1215,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @AutoValue
             protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 /**
@@ -1294,7 +1294,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
              * an accessor method.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class AccessorMethodDelegation extends DelegationRecord {
 
                 /**
@@ -1352,7 +1352,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field getter.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class FieldGetterDelegation extends DelegationRecord {
 
                 /**
@@ -1405,7 +1405,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field setter.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             protected static class FieldSetterDelegation extends DelegationRecord {
 
                 /**
@@ -1484,7 +1484,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      *
      * @see Implementation
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements Implementation {
 
         /**
@@ -1539,7 +1539,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     /**
      * A simple implementation that does not register any members with the instrumented type.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Simple implements Implementation {
 
         /**

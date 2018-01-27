@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
@@ -8,7 +8,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the object that is matched.
  */
-@EqualsAndHashCode(callSuper = false)
+@AutoValue
 public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -790,7 +790,7 @@ public interface AnnotationDescription {
     /**
      * A builder for pragmatically creating {@link net.bytebuddy.description.annotation.AnnotationDescription}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Builder {
 
         /**

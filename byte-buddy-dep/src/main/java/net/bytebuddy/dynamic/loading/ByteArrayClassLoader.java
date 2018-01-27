@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
@@ -373,7 +373,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A synchronization engine for a VM that is aware of parallel-capable class loaders.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForJava7CapableVm implements SynchronizationStrategy, Initializable {
 
             /**
@@ -547,7 +547,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A package lookup strategy for Java 9 or newer.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForJava9CapableVm implements PackageLookupStrategy {
 
             /**
@@ -690,7 +690,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * An action to define a URL that represents a class file.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class UrlDefinitionAction implements PrivilegedAction<URL> {
 
             /**
@@ -747,7 +747,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * A stream handler that returns the given binary representation.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @AutoValue
             protected static class ByteArrayUrlStreamHandler extends URLStreamHandler {
 
                 /**

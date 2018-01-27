@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -327,7 +327,7 @@ public interface JavaConstant {
             /**
              * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForJava7CapableVm implements Dispatcher {
 
                 /**
@@ -847,7 +847,7 @@ public interface JavaConstant {
             /**
              * An abstract base impleementation of a dispatcher.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class AbstractBase implements Dispatcher, Initializable {
 
                 /**
@@ -1013,7 +1013,7 @@ public interface JavaConstant {
              * A dispatcher for introspecting a {@code java.lang.invoke.MethodHandle} instance on a virtual machine that officially supports this
              * introspection, i.e. Java versions 8+.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForJava8CapableVm extends AbstractBase {
 
                 /**
@@ -1067,7 +1067,7 @@ public interface JavaConstant {
             /**
              * A dispatcher that extracts the information of a method handle by using private APIs that are available in Java 7+.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             class ForJava7CapableVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
 
                 /**

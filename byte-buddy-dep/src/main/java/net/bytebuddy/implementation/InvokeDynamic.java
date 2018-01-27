@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -40,7 +40,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An implementation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
-@EqualsAndHashCode
+@AutoValue
 public class InvokeDynamic implements Implementation.Composable {
 
     /**
@@ -884,7 +884,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * A simple implementation of
                  * {@link net.bytebuddy.implementation.InvokeDynamic.InvocationProvider.Target.Resolved}.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class Simple implements Resolved {
 
                     /**
@@ -950,7 +950,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A target that requests to dynamically invoke a method to substitute for a given method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForMethodDescription implements Target, Target.Resolved {
 
                 /**
@@ -1300,7 +1300,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * A simple implementation of a resolved argument provider.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class Simple implements Resolved {
 
                     /**
@@ -1350,7 +1350,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider that loads the intercepted instance.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForThisInstance implements ArgumentProvider {
 
                 /**
@@ -1386,7 +1386,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a value that is stored in a randomly named static field.
              */
-            @EqualsAndHashCode(exclude = "name")
+            @AutoValue
             class ForInstance implements ArgumentProvider {
 
                 /**
@@ -1455,7 +1455,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * Provides an argument from an existing field.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForField implements ArgumentProvider {
 
                 /**
@@ -1516,7 +1516,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * An argument provider for a field value with an explicit type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 protected static class WithExplicitType extends ForField {
 
                     /**
@@ -1550,7 +1550,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider that loads an argument of the intercepted method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForMethodParameter implements ArgumentProvider {
 
                 /**
@@ -1597,7 +1597,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * An argument provider for a method parameter with an explicit type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 protected static class WithExplicitType extends ForMethodParameter {
 
                     /**
@@ -1630,7 +1630,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code boolean} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForBooleanConstant implements ArgumentProvider {
 
                 /**
@@ -1661,7 +1661,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code byte} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForByteConstant implements ArgumentProvider {
 
                 /**
@@ -1692,7 +1692,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code short} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForShortConstant implements ArgumentProvider {
 
                 /**
@@ -1723,7 +1723,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code char} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForCharacterConstant implements ArgumentProvider {
 
                 /**
@@ -1754,7 +1754,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code int} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForIntegerConstant implements ArgumentProvider {
 
                 /**
@@ -1785,7 +1785,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code long} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForLongConstant implements ArgumentProvider {
 
                 /**
@@ -1816,7 +1816,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code float} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForFloatConstant implements ArgumentProvider {
 
                 /**
@@ -1847,7 +1847,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code double} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForDoubleConstant implements ArgumentProvider {
 
                 /**
@@ -1878,7 +1878,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@link java.lang.String} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForStringConstant implements ArgumentProvider {
 
                 /**
@@ -1909,7 +1909,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@link java.lang.Class} constant.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForClassConstant implements ArgumentProvider {
 
                 /**
@@ -1940,7 +1940,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for an {@link java.lang.Enum} constant.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForEnumerationValue implements ArgumentProvider {
 
                 /**
@@ -1971,7 +1971,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for the {@code null} value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForNullValue implements ArgumentProvider {
 
                 /**
@@ -2002,7 +2002,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a Java instance.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForJavaConstant implements ArgumentProvider {
 
                 /**
@@ -2063,7 +2063,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A name provider that provides an explicit name.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForExplicitName implements NameProvider {
 
                 /**
@@ -2119,7 +2119,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * Requests an explicit return type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForExplicitType implements ReturnTypeProvider {
 
                 /**
@@ -2147,7 +2147,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * An invocation provider that requests a synthetic dynamic invocation where all arguments are explicitly
          * provided by the user.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Default implements InvocationProvider {
 
             /**
@@ -2244,7 +2244,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A target for a synthetically bound method call.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Target implements InvocationProvider.Target {
 
                 /**

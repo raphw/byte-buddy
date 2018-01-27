@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -62,7 +62,7 @@ public interface FieldAttributeAppender {
          * A field attribute appender factory that combines several field attribute appender factories to be
          * represented as a single factory.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Compound implements Factory {
 
             /**
@@ -135,7 +135,7 @@ public interface FieldAttributeAppender {
      * Appends an annotation to a field. The visibility of the annotation is determined by the annotation type's
      * {@link java.lang.annotation.RetentionPolicy} annotation.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Explicit implements FieldAttributeAppender, Factory {
 
         /**
@@ -170,7 +170,7 @@ public interface FieldAttributeAppender {
      * A field attribute appender that combines several method attribute appenders to be represented as a single
      * field attribute appender.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Compound implements FieldAttributeAppender {
 
         /**

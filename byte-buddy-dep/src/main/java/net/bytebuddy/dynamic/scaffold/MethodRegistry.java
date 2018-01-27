@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
@@ -129,7 +129,7 @@ public interface MethodRegistry {
             /**
              * A compiled handler for a visibility bridge handler.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Compiled implements Handler.Compiled {
 
                 /**
@@ -172,7 +172,7 @@ public interface MethodRegistry {
         /**
          * A handler for a method that is implemented as byte code.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForImplementation implements Handler {
 
             /**
@@ -202,7 +202,7 @@ public interface MethodRegistry {
             /**
              * A compiled handler for implementing a method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Compiled implements Handler.Compiled {
 
                 /**
@@ -229,7 +229,7 @@ public interface MethodRegistry {
         /**
          * A handler for defining a default annotation value for a method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForAnnotationValue implements Handler, Compiled {
 
             /**
@@ -357,7 +357,7 @@ public interface MethodRegistry {
     /**
      * A default implementation of a method registry.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Default implements MethodRegistry {
 
         /**
@@ -471,7 +471,7 @@ public interface MethodRegistry {
         /**
          * An entry of a default method registry.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Entry implements LatentMatcher<MethodDescription> {
 
             /**
@@ -578,7 +578,7 @@ public interface MethodRegistry {
         /**
          * A prepared version of a default method registry.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Prepared implements MethodRegistry.Prepared {
 
             /**
@@ -695,7 +695,7 @@ public interface MethodRegistry {
             /**
              * An entry of a prepared method registry.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Entry {
 
                 /**
@@ -829,7 +829,7 @@ public interface MethodRegistry {
         /**
          * A compiled version of a default method registry.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Compiled implements MethodRegistry.Compiled {
 
             /**
@@ -922,7 +922,7 @@ public interface MethodRegistry {
             /**
              * An entry of a compiled method registry.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Entry {
 
                 /**

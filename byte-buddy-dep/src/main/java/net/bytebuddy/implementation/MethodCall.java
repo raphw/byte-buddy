@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -41,7 +41,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * This {@link Implementation} allows the invocation of a specified method while
  * providing explicit arguments to this method.
  */
-@EqualsAndHashCode
+@AutoValue
 public class MethodCall implements Implementation.Composable {
 
     /**
@@ -609,7 +609,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Invokes a given method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForExplicitMethod implements MethodLocator {
 
             /**
@@ -635,7 +635,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * A method locator that identifies a unique virtual method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForElementMatcher implements MethodLocator {
 
             /**
@@ -743,7 +743,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * An argument loader that assigns the {@code this} reference to a parameter.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForThisReference implements ArgumentLoader {
 
             /**
@@ -799,7 +799,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads the instrumented type onto the operand stack.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForInstrumentedType implements ArgumentLoader {
 
             /**
@@ -852,7 +852,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads a parameter of the instrumented method onto the operand stack.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForMethodParameter implements ArgumentLoader {
 
             /**
@@ -916,7 +916,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * A factory for an argument loader that supplies a method parameter as an argument.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -951,7 +951,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads an array containing all arguments of a method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForMethodParameterArray implements ArgumentLoader {
 
             /**
@@ -1018,7 +1018,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * An argument loader that loads an element of a parameter of an array type.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForMethodParameterArrayElement implements ArgumentLoader {
 
             /**
@@ -1059,7 +1059,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * Creates an argument loader for an array element that of a specific parameter.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class OfParameter implements ArgumentLoader.Factory {
 
                 /**
@@ -1102,7 +1102,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             public static class OfInvokedMethod implements ArgumentLoader.Factory {
 
                 /**
@@ -1143,7 +1143,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads a value onto the operand stack that is stored in a static field.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForInstance implements ArgumentLoader {
 
             /**
@@ -1174,7 +1174,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * A factory that supplies the value of a static field as an argument.
              */
-            @EqualsAndHashCode(exclude = "name")
+            @AutoValue
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -1221,7 +1221,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads the value of an existing field onto the operand stack.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForField implements ArgumentLoader {
 
             /**
@@ -1266,7 +1266,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * A factory for an argument loaded that loads the value of an existing field as an argument.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -1309,7 +1309,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads a stack manipulation resulting in a specific type as an argument.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForStackManipulation implements ArgumentLoader, Factory {
 
             /**
@@ -1489,7 +1489,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * A target handler that invokes a method on an instance that is stored in a static field.
          */
-        @EqualsAndHashCode(exclude = "name")
+        @AutoValue
         class ForValue implements TargetHandler {
 
             /**
@@ -1553,7 +1553,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Creates a target handler that stores the instance to invoke a method on in an instance field.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForField implements TargetHandler {
 
             /**
@@ -1608,7 +1608,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * A target handler that loads the parameter of the given index as the target object.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForMethodParameter implements TargetHandler {
 
             /**
@@ -1689,7 +1689,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Applies a virtual invocation on a given type.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForVirtualInvocation implements MethodInvoker {
 
             /**

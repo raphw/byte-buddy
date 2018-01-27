@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -74,7 +74,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         /**
@@ -179,7 +179,7 @@ public @interface Pipe {
          * An auxiliary type for performing the redirection of a method invocation as requested by the
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class Redirection implements AuxiliaryType, StackManipulation {
 
             /**
@@ -327,7 +327,7 @@ public @interface Pipe {
                  * The appender for implementing the
                  * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 private static class Appender implements ByteCodeAppender {
 
                     /**
@@ -373,7 +373,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class MethodCall implements Implementation {
 
                 /**

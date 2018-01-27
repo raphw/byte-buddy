@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -12,7 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * A latent method matcher that identifies methods to instrument when redefining or rebasing a type.
  */
-@EqualsAndHashCode
+@AutoValue
 public class InliningImplementationMatcher implements LatentMatcher<MethodDescription> {
 
     /**

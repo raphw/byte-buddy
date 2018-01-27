@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -133,7 +133,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * @see OnMethodEnter
  * @see OnMethodExit
  */
-@EqualsAndHashCode
+@AutoValue
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper, Implementation {
 
     /**
@@ -782,7 +782,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * A target for an offset mapping that represents a non-operational value. All writes are discarded and a value's
              * default value is returned upon every read.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class ForDefaultValue implements Target {
 
                 /**
@@ -885,7 +885,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that represents a local variable.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class ForVariable implements Target {
 
                 /**
@@ -980,7 +980,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target for a writable mapping of a local variable.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 public static class ReadWrite extends ForVariable {
 
                     /**
@@ -1048,7 +1048,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target mapping for an array of all local variables.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class ForArray implements Target {
 
                 /**
@@ -1106,7 +1106,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target mapping for a writable target mapping for an array of local variables.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 public static class ReadWrite extends ForArray {
 
                     /**
@@ -1138,7 +1138,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that loads a field value.
              */
-            @EqualsAndHashCode
+            @AutoValue
             abstract class ForField implements Target {
 
                 /**
@@ -1207,7 +1207,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping for a writable field.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 public static class ReadWrite extends ForField {
 
                     /**
@@ -1266,7 +1266,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that represents a read-only stack manipulation.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class ForStackManipulation implements Target {
 
                 /**
@@ -1420,7 +1420,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T>
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Simple<T extends Annotation> implements Factory<T> {
 
                 /**
@@ -1460,7 +1460,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Illegal<T extends Annotation> implements Factory<T> {
 
                 /**
@@ -1492,7 +1492,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a given parameter of the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         abstract class ForArgument implements OffsetMapping {
 
             /**
@@ -1551,7 +1551,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a parameter of the instrumented method with a specific index.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             public static class Unresolved extends ForArgument {
 
                 /**
@@ -1661,7 +1661,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a specific parameter of the instrumented method.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             public static class Resolved extends ForArgument {
 
                 /**
@@ -1695,7 +1695,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param <T> The type of the bound annotation.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                     /**
@@ -1761,7 +1761,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the {@code this} reference of the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForThisReference implements OffsetMapping {
 
             /**
@@ -1870,7 +1870,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that maps an array containing all arguments of the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForAllArguments implements OffsetMapping {
 
             /**
@@ -2039,7 +2039,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a field.
          */
-        @EqualsAndHashCode
+        @AutoValue
         abstract class ForField implements OffsetMapping {
 
             /**
@@ -2134,7 +2134,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a field that is resolved from the instrumented type by its name.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             public abstract static class Unresolved extends ForField {
 
                 /**
@@ -2212,7 +2212,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field with an explicit declaring type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @AutoValue
                 public static class WithExplicitType extends Unresolved {
 
                     /**
@@ -2298,7 +2298,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A binding for an offset mapping that represents a specific field.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @AutoValue
             public static class Resolved extends ForField {
 
                 /**
@@ -2334,7 +2334,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param <T> The annotation type this factory binds.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                     /**
@@ -2400,7 +2400,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for the {@link Advice.Origin} annotation.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForOrigin implements OffsetMapping {
 
             /**
@@ -2631,7 +2631,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A renderer for a constant value.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 class ForConstantValue implements Renderer {
 
                     /**
@@ -2694,7 +2694,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForUnusedValue implements OffsetMapping {
 
             /**
@@ -2778,7 +2778,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the value that is returned by the enter advice.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForEnterValue implements OffsetMapping {
 
             /**
@@ -2846,7 +2846,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A factory for creating a {@link ForEnterValue} offset mapping.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class Factory implements OffsetMapping.Factory<Enter> {
 
                 /**
@@ -2884,7 +2884,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the value that is returned by the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForReturnValue implements OffsetMapping {
 
             /**
@@ -2977,7 +2977,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for accessing a {@link Throwable} of the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForThrowable implements OffsetMapping {
 
             /**
@@ -3081,7 +3081,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for binding a stack manipulation.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForStackManipulation implements OffsetMapping {
 
             /**
@@ -3136,7 +3136,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @AutoValue
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3251,7 +3251,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @AutoValue
             public static class OfDefaultValue<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3284,7 +3284,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @AutoValue
             public static class OfAnnotationProperty<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3353,7 +3353,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that loads a serialized value.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class ForSerializedValue implements OffsetMapping {
 
             /**
@@ -3398,7 +3398,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @AutoValue
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -4571,7 +4571,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A suppression handler that suppresses a given throwable type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Suppressing implements SuppressionHandler {
 
                 /**
@@ -4991,7 +4991,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A skip dispatcher that skips a value if it is of a given instance.
                      */
-                    @EqualsAndHashCode
+                    @AutoValue
                     class ForType implements SkipDispatcher {
 
                         /**
@@ -5216,7 +5216,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for an advice method that is being inlined into the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Inlining implements Unresolved {
 
             /**
@@ -5992,7 +5992,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
-                    @EqualsAndHashCode(callSuper = true)
+                    @AutoValue
                     protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
@@ -6462,7 +6462,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for an advice method that is being invoked from the instrumented method.
          */
-        @EqualsAndHashCode
+        @AutoValue
         class Delegating implements Unresolved {
 
             /**
@@ -7097,7 +7097,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
-                    @EqualsAndHashCode(callSuper = true)
+                    @AutoValue
                     protected static class WithExceptionHandler extends Delegating.Resolved.ForMethodExit {
 
                         /**
@@ -7792,7 +7792,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A byte code appender for implementing {@link Advice}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -8381,7 +8381,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A builder step for creating an {@link Advice} that uses custom mappings of annotations to constant pool values.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class WithCustomMapping {
 
         /**

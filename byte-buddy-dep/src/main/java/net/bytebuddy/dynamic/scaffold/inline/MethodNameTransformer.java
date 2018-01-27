@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -23,7 +23,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Suffixing implements MethodNameTransformer {
 
         /**
@@ -63,7 +63,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed prefix to an original method name.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Prefixing implements MethodNameTransformer {
 
         /**

@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -81,7 +81,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
      */
-    @EqualsAndHashCode
+    @AutoValue
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> {
 
         /**
@@ -247,7 +247,7 @@ public @interface Morph {
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
-            @EqualsAndHashCode
+            @AutoValue
             class Explicit implements DefaultMethodLocator {
 
                 /**
@@ -278,7 +278,7 @@ public @interface Morph {
         /**
          * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
          */
-        @EqualsAndHashCode
+        @AutoValue
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
             /**
@@ -410,7 +410,7 @@ public @interface Morph {
             /**
              * Creates an instance of the proxy when instrumenting an instance method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class InstanceFieldConstructor implements Implementation {
 
                 /**
@@ -442,7 +442,7 @@ public @interface Morph {
                 /**
                  * The byte code appender that implements the constructor.
                  */
-                @EqualsAndHashCode
+                @AutoValue
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -481,7 +481,7 @@ public @interface Morph {
             /**
              * Implements a the method call of the morphing method.
              */
-            @EqualsAndHashCode
+            @AutoValue
             protected static class MethodCall implements Implementation {
 
                 /**

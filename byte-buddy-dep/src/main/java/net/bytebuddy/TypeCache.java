@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import com.google.auto.value.AutoValue;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;
@@ -362,7 +362,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
-    @EqualsAndHashCode
+    @AutoValue
     public static class SimpleKey {
 
         /**
