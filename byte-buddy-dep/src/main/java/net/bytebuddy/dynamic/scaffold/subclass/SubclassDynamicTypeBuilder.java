@@ -158,7 +158,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     @Override
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Compiled methodRegistry = constructorStrategy
-                .inject(this.methodRegistry)
+                .inject(instrumentedType, this.methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion);
         return TypeWriter.Default.<T>forCreation(methodRegistry,

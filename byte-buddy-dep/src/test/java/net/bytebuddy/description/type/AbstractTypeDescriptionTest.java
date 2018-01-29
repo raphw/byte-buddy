@@ -29,6 +29,7 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -131,6 +132,23 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(SampleClass.class).getStackSize(), is(StackSize.SINGLE));
         assertThat(describe(Object[].class).getStackSize(), is(StackSize.SINGLE));
         assertThat(describe(long[].class).getStackSize(), is(StackSize.SINGLE));
+    }
+
+    @Test
+    public void testDefaultValue() throws Exception {
+        assertThat(describe(void.class).getDefaultValue(), isNull());
+        assertThat(describe(boolean.class).getStackSize(), is(false));
+        assertThat(describe(byte.class).getStackSize(), is((byte) 0));
+        assertThat(describe(short.class).getStackSize(), is((short) 0));
+        assertThat(describe(char.class).getStackSize(), is((char) 0));
+        assertThat(describe(int.class).getStackSize(), is(0));
+        assertThat(describe(long.class).getStackSize(), is(0L));
+        assertThat(describe(float.class).getStackSize(), is(0f));
+        assertThat(describe(double.class).getStackSize(), is(0d));
+        assertThat(describe(Object.class).getStackSize(), isNull());
+        assertThat(describe(SampleClass.class).getStackSize(), isNull());
+        assertThat(describe(Object[].class).getStackSize(), isNull());
+        assertThat(describe(long[].class).getStackSize(), isNull());
     }
 
     @Test

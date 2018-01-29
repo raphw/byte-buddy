@@ -15,23 +15,22 @@
  */
 package net.bytebuddy.build.maven;
 
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Test;
 
-/**
- *
- * @author Kapralov Sergey
- */
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class ExecutionStatusTest {
+
     @Test
     public void emptyStatusCombinationIsSuccessful() {
         assertThat(
-            new ExecutionStatus.Combined(Collections.EMPTY_SET).failed(),
-            is(false)
+                new ExecutionStatus.Combined(Collections.emptySet()).failed(),
+                is(false)
         );
     }
 
@@ -42,8 +41,8 @@ public class ExecutionStatusTest {
         set.add(new ExecutionStatus.Successful());
         set.add(new ExecutionStatus.Successful());
         assertThat(
-            new ExecutionStatus.Combined(set).failed(),
-            is(false)
+                new ExecutionStatus.Combined(set).failed(),
+                is(false)
         );
     }
 
@@ -54,8 +53,8 @@ public class ExecutionStatusTest {
         set.add(new ExecutionStatus.Failed());
         set.add(new ExecutionStatus.Successful());
         assertThat(
-            new ExecutionStatus.Combined(set).failed(),
-            is(true)
+                new ExecutionStatus.Combined(set).failed(),
+                is(true)
         );
     }
 }
