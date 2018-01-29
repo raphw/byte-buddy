@@ -355,7 +355,7 @@ public interface ConstructorStrategy {
             for (TypeDescription typeDescription : candidates.getOnly().getParameters().asTypeList().asErasures()) {
                 methodCall = methodCall.with(typeDescription.getDefaultValue());
             }
-            return methodRegistry.append(new LatentMatcher.Resolved<>(isConstructor().and(takesArguments(0))),
+            return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor().and(takesArguments(0))),
                     new MethodRegistry.Handler.ForImplementation(methodCall),
                     methodAttributeAppenderFactory,
                     Transformer.NoOp.<MethodDescription>make());
