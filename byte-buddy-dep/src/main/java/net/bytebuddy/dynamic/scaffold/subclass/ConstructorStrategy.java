@@ -42,7 +42,8 @@ public interface ConstructorStrategy {
      * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(TypeDescription)}
      * method of this instance.
      *
-     * @param methodRegistry The original method registry.
+     * @param instrumentedType The instrumented type.
+     * @param methodRegistry   The original method registry.
      * @return A method registry that is capable of providing byte code for the constructors that were added by this strategy.
      */
     MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry);

@@ -6967,29 +6967,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public Object getDefaultValue() {
-            if (represents(boolean.class)) {
-                return false;
-            } else if (represents(byte.class)) {
-                return (byte) 0;
-            } else if (represents(short.class)) {
-                return (short) 0;
-            } else if (represents(char.class)) {
-                return (char) 0;
-            } else if (represents(int.class)) {
-                return 0;
-            } else if (represents(long.class)) {
-                return 0L;
-            } else if (represents(float.class)) {
-                return 0f;
-            } else if (represents(double.class)) {
-                return 0d;
-            } else {
-                return null;
-            }
-        }
-
-        @Override
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }

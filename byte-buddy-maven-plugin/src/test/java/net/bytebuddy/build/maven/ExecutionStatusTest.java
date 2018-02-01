@@ -29,7 +29,7 @@ public class ExecutionStatusTest {
     @Test
     public void emptyStatusCombinationIsSuccessful() {
         assertThat(
-                new ExecutionStatus.Combined(Collections.emptySet()).failed(),
+                new ExecutionStatus.Combined(Collections.<ExecutionStatus>emptySet()).failed(),
                 is(false)
         );
     }

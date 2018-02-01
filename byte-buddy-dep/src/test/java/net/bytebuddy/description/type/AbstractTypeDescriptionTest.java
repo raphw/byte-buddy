@@ -29,7 +29,6 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -136,19 +135,19 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testDefaultValue() throws Exception {
-        assertThat(describe(void.class).getDefaultValue(), isNull());
-        assertThat(describe(boolean.class).getStackSize(), is(false));
-        assertThat(describe(byte.class).getStackSize(), is((byte) 0));
-        assertThat(describe(short.class).getStackSize(), is((short) 0));
-        assertThat(describe(char.class).getStackSize(), is((char) 0));
-        assertThat(describe(int.class).getStackSize(), is(0));
-        assertThat(describe(long.class).getStackSize(), is(0L));
-        assertThat(describe(float.class).getStackSize(), is(0f));
-        assertThat(describe(double.class).getStackSize(), is(0d));
-        assertThat(describe(Object.class).getStackSize(), isNull());
-        assertThat(describe(SampleClass.class).getStackSize(), isNull());
-        assertThat(describe(Object[].class).getStackSize(), isNull());
-        assertThat(describe(long[].class).getStackSize(), isNull());
+        assertThat(describe(void.class).getDefaultValue(), nullValue(Object.class));
+        assertThat(describe(boolean.class).getDefaultValue(), is((Object) false));
+        assertThat(describe(byte.class).getDefaultValue(), is((Object) (byte) 0));
+        assertThat(describe(short.class).getDefaultValue(), is((Object) (short) 0));
+        assertThat(describe(char.class).getDefaultValue(), is((Object) (char) 0));
+        assertThat(describe(int.class).getDefaultValue(), is((Object) 0));
+        assertThat(describe(long.class).getDefaultValue(), is((Object) 0L));
+        assertThat(describe(float.class).getDefaultValue(), is((Object) 0f));
+        assertThat(describe(double.class).getDefaultValue(), is((Object) 0d));
+        assertThat(describe(Object.class).getDefaultValue(), nullValue(Object.class));
+        assertThat(describe(SampleClass.class).getDefaultValue(), nullValue(Object.class));
+        assertThat(describe(Object[].class).getDefaultValue(), nullValue(Object.class));
+        assertThat(describe(long[].class).getDefaultValue(), nullValue(Object.class));
     }
 
     @Test
