@@ -57,8 +57,7 @@ public class ByteBuddyMojoTest {
 
     @Before
     public void setUp() throws Exception {
-        when(repositorySystem.collectDependencies(Mockito.<RepositorySystemSession>any(), Mockito.<CollectRequest>any()))
-                .thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
+        when(repositorySystem.collectDependencies(Mockito.<RepositorySystemSession>any(), Mockito.<CollectRequest>any())).thenReturn(new CollectResult(new CollectRequest()).setRoot(root));
         project = File.createTempFile(FOO, TEMP);
         assertThat(project.delete(), is(true));
         assertThat(project.mkdir(), is(true));
@@ -117,8 +116,7 @@ public class ByteBuddyMojoTest {
 
     @Test(expected = MojoExecutionException.class)
     public void testLiveInitializer() throws Exception {
-        Set<File> files = new HashSet<File>();
-        files.addAll(addClass("foo.Bar"));
+        Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "live");
             ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
@@ -133,8 +131,7 @@ public class ByteBuddyMojoTest {
 
     @Test
     public void testLiveInitializerAllowed() throws Exception {
-        Set<File> files = new HashSet<File>();
-        files.addAll(addClass("foo.Bar"));
+        Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "live.allowed");
             ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
@@ -154,8 +151,7 @@ public class ByteBuddyMojoTest {
 
     @Test(expected = MojoExecutionException.class)
     public void testIllegalTransformer() throws Exception {
-        Set<File> files = new HashSet<File>();
-        files.addAll(addClass("foo.Bar"));
+        Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "illegal");
         } finally {
@@ -168,8 +164,7 @@ public class ByteBuddyMojoTest {
 
     @Test(expected = MojoExecutionException.class)
     public void testIllegalTransformation() throws Exception {
-        Set<File> files = new HashSet<File>();
-        files.addAll(addClass("foo.Bar"));
+        Set<File> files = new HashSet<File>(addClass("foo.Bar"));
         try {
             execute("transform", "illegal.apply");
         } finally {
@@ -290,7 +285,7 @@ public class ByteBuddyMojoTest {
                 .values();
     }
 
-    private void assertMethod(Class<?> type, String name, Object expected) throws Exception {
+    private static void assertMethod(Class<?> type, String name, Object expected) throws Exception {
         assertThat(type.getDeclaredMethod(name).invoke(type.getDeclaredConstructor().newInstance()), is(expected));
     }
 }

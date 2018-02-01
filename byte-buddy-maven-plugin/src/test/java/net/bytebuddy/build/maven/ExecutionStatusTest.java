@@ -28,10 +28,7 @@ public class ExecutionStatusTest {
 
     @Test
     public void emptyStatusCombinationIsSuccessful() {
-        assertThat(
-                new ExecutionStatus.Combined(Collections.<ExecutionStatus>emptySet()).failed(),
-                is(false)
-        );
+        assertThat(new ExecutionStatus.Combined(Collections.<ExecutionStatus>emptySet()).failed(), is(false));
     }
 
     @Test
@@ -40,10 +37,7 @@ public class ExecutionStatusTest {
         set.add(new ExecutionStatus.Successful());
         set.add(new ExecutionStatus.Successful());
         set.add(new ExecutionStatus.Successful());
-        assertThat(
-                new ExecutionStatus.Combined(set).failed(),
-                is(false)
-        );
+        assertThat(new ExecutionStatus.Combined(set).failed(), is(false));
     }
 
     @Test
@@ -52,9 +46,6 @@ public class ExecutionStatusTest {
         set.add(new ExecutionStatus.Successful());
         set.add(new ExecutionStatus.Failed());
         set.add(new ExecutionStatus.Successful());
-        assertThat(
-                new ExecutionStatus.Combined(set).failed(),
-                is(true)
-        );
+        assertThat(new ExecutionStatus.Combined(set).failed(), is(true));
     }
 }
