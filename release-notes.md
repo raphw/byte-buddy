@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. February 2018: version 1.7.10
+
+- Fixes self-attachment on Java 9+ on Windows.
+- Check for non-accessability on `MethodCall`.
+- Change static proxy fields to be `volatile`.
+- Do not copy security-related meta-data on jar file copying.
+- Guard resolution of annotations for methods with syntetic parameters.
+- Forbid skipping code in constructors for `Advice`.
+- Added constructor strategy for defining a default constructor that invokes a non-default constructor.
+- Improve performance of accessor methods and cache fields by reducing use of `String::format`.
+
 ### 6. November 2017: version 1.7.9
 
 - Fixes `RAW_TYPES` mode for loaded types where properties were resolved incorrectly.
