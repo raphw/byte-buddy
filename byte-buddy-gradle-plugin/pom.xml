@@ -22,10 +22,10 @@
     -->
 
     <properties>
-        <version.plugin.gradlerun>1.0.8</version.plugin.gradlerun>
         <version.plugin.antrun>1.8</version.plugin.antrun>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
-        <gradle.binary>gradle/wrapper/gradle-2.14.1-bin.zip</gradle.binary>
+        <version.plugin.gradlerun>1.0.10</version.plugin.gradlerun>
+        <version.gradle>4.5</version.gradle>
     </properties>
 
     <dependencies>
@@ -58,7 +58,7 @@
             </plugin>
             <!-- Tie Maven executions into the Gradle life-cycle. -->
             <plugin>
-                <groupId>org.fortasoft</groupId>
+                <groupId>codes.rafael.gradlemavenplugin</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
                 <version>${version.plugin.gradlerun}</version>
                 <executions>
@@ -75,7 +75,7 @@
                             <args>
                                 <arg>--info</arg>
                             </args>
-                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                     <execution>
@@ -96,7 +96,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistribution>file://${project.basedir}/${gradle.binary}</gradleDistribution>
+                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -125,6 +125,18 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>gradle-legacy</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <version.plugin.gradlerun>1.0.9</version.plugin.gradlerun>
+                <version.gradle>2.14.1</version.gradle>
+            </properties>
+        </profile>
+
         <profile>
             <id>extras</id>
             <build>

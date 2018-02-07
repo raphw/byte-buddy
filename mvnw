@@ -209,6 +209,6 @@ WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 # avoid using MAVEN_CMD_LINE_ARGS below since that would loose parameter escaping in $@
 exec "$JAVACMD" \
   $MAVEN_OPTS \
-  -classpath "$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar" \
+  -classpath "$MAVEN_PROJECTBASEDIR/.mvn/3.2.5/maven-wrapper.jar" \
   "-Dmaven.home=${M2_HOME}" "-Dmaven.multiModuleProjectDirectory=${MAVEN_PROJECTBASEDIR}" \
   ${WRAPPER_LAUNCHER} $MAVEN_CONFIG "$@"

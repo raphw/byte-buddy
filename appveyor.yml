@@ -18,5 +18,5 @@ environment:
 build_script:
   - java -Xmx32m -version
   - javac -J-Xmx32m -version
-  - .\mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -pl "!byte-buddy-gradle-plugin"
-  - .\mvnw jacoco:prepare-agent verify jacoco:report %TARGET% -Pintegration -Dnet.bytebuddy.test.ci=true -pl "!byte-buddy-gradle-plugin"
+  - .\mvnw install -DskipTests=true -Dmaven.javadoc.skip=true
+  - .\mvnw jacoco:prepare-agent verify jacoco:report %TARGET% -Pintegration -Dnet.bytebuddy.test.ci=true
