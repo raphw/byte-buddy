@@ -1416,7 +1416,7 @@ public interface TypeWriter<T> {
          * @param fieldPool                    The field pool to use.
          * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
          * @param fields                       The instrumented type's declared fields.
-         * @param methods                      The instrumented type's declared and virtually inhertied methods.
+         * @param methods                      The instrumented type's declared and virtually inherited methods.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
          * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -3198,7 +3198,7 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * A frame writer is responsible for adding empty frames on jumo instructions.
+                     * A frame writer is responsible for adding empty frames on jump instructions.
                      */
                     protected interface FrameWriter {
 

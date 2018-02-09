@@ -1902,7 +1902,7 @@ public class MethodCall implements Implementation.Composable {
          * Invokes the specified method on the instrumented method's argument of the given index.
          *
          * @param index The index of the method's argument on which the specified method should be invoked.
-         * @return Amethod call that invokes the provided method on the given method argument.
+         * @return A method call that invokes the provided method on the given method argument.
          */
         public MethodCall onArgument(int index) {
             if (index < 0) {

@@ -27,7 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  * This way a method can exist in two versions within a class:
  * <ol>
  * <li>The rebased method which represents the original implementation as it is present in a class file.</li>
- * <li>An overriden method which implements user code which is still able to invoke the original, rebased method.</li>
+ * <li>An overridden method which implements user code which is still able to invoke the original, rebased method.</li>
  * </ol>
  */
 public interface MethodRebaseResolver {

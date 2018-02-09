@@ -96,7 +96,7 @@ public enum PrimitiveBoxingDelegate {
      * Locates a boxing delegate for a given primitive type.
      *
      * @param typeDefinition A non-void primitive type.
-     * @return A delegate capable of boxing the given primitve type.
+     * @return A delegate capable of boxing the given primitive type.
      */
     public static PrimitiveBoxingDelegate forPrimitive(TypeDefinition typeDefinition) {
         if (typeDefinition.represents(boolean.class)) {

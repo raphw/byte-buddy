@@ -18,7 +18,7 @@ import net.bytebuddy.description.type.TypeDescription;
  * type is considered as dominant.</li>
  * <li>If this result is dominant for both the left and the right target method, this resolver will consider the binding as
  * ambiguous.</li>
- * <li>If none of the methods is dominant and if the comparison did not result in an ambigous resolution, the method that
+ * <li>If none of the methods is dominant and if the comparison did not result in an ambiguous resolution, the method that
  * consists of the most one-to-one parameter bindings is considered dominant.</li>
  * </ol>
  * Primitive types are considered dominant in the same manner as by the Java compiler.

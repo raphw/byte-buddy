@@ -37,7 +37,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     /**
      * Creates a new target method annotation-driven binder.
      *
-     * @param delegationProcessor The delegation proessor to use.
+     * @param delegationProcessor The delegation processor to use.
      */
     protected TargetMethodAnnotationDrivenBinder(DelegationProcessor delegationProcessor) {
         this.delegationProcessor = delegationProcessor;

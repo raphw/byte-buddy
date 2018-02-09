@@ -86,7 +86,7 @@ public class TypeCacheTest {
                 .getLoaded();
         assertThat(typeCache.insert(classLoader, key, type), is((Object) type));
         assertThat(typeCache.find(classLoader, key), is((Object) type));
-        type = null; // Make eligable for GC
+        type = null; // Make eligible for GC
         for (int index = 0; index < 2; index++) {
             System.gc();
             Thread.sleep(50L);

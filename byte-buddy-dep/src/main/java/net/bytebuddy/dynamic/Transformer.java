@@ -83,7 +83,7 @@ public interface Transformer<T> {
         }
 
         /**
-         * Creates a field transformer that patches the transformed field by the givien modifier contributors.
+         * Creates a field transformer that patches the transformed field by the given modifier contributors.
          *
          * @param modifierContributor The modifier contributors to apply.
          * @return A suitable field transformer.
@@ -93,7 +93,7 @@ public interface Transformer<T> {
         }
 
         /**
-         * Creates a field transformer that patches the transformed field by the givien modifier contributors.
+         * Creates a field transformer that patches the transformed field by the given modifier contributors.
          *
          * @param modifierContributors The modifier contributors to apply.
          * @return A suitable field transformer.

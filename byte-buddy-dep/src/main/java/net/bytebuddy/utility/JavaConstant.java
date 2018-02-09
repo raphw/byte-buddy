@@ -845,7 +845,7 @@ public interface JavaConstant {
             }
 
             /**
-             * An abstract base impleementation of a dispatcher.
+             * An abstract base implementation of a dispatcher.
              */
             @EqualsAndHashCode
             abstract class AbstractBase implements Dispatcher, Initializable {

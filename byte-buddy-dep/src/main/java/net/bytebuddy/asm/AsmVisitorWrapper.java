@@ -58,7 +58,7 @@ public interface AsmVisitorWrapper {
      * @param implementationContext The implementation context of the current instrumentation.
      * @param typePool              The type pool that was provided for the class creation.
      * @param fields                The instrumented type's fields.
-     * @param methods               The instrumented type's methods non-ingored declared and virtually inherited methods.
+     * @param methods               The instrumented type's methods non-ignored declared and virtually inherited methods.
      * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
      * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.

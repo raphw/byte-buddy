@@ -1311,7 +1311,7 @@ public interface AgentBuilder {
         }
 
         /**
-         * An adapter for a listener wher all methods are implemented as non-operational.
+         * An adapter for a listener where all methods are implemented as non-operational.
          */
         abstract class Adapter implements Listener {
 
@@ -1379,7 +1379,7 @@ public interface AgentBuilder {
             /**
              * Creates a new stream writing listener that writes to {@link System#err}.
              *
-             * @return A listener writing events to the standad error stream.
+             * @return A listener writing events to the standard error stream.
              */
             public static Listener toSystemError() {
                 return new StreamWriting(System.err);
@@ -2982,7 +2982,7 @@ public interface AgentBuilder {
             public static class Eager extends SelfInjection {
 
                 /**
-                 * Creates a new eager self-injection strategy that uses a default nexus accesor.
+                 * Creates a new eager self-injection strategy that uses a default nexus accessor.
                  */
                 public Eager() {
                     this(new NexusAccessor());
@@ -4267,7 +4267,7 @@ public interface AgentBuilder {
             int FIRST_BATCH = 0;
 
             /**
-             * Splits a list of types to be retransformed into seperate batches.
+             * Splits a list of types to be retransformed into separate batches.
              *
              * @param types A list of types which should be retransformed.
              * @return An iterable of retransformations within a batch.
@@ -4789,7 +4789,7 @@ public interface AgentBuilder {
                 },
 
                 /**
-                 * A listener that fails the retransformation after all batches were executed if any error occured.
+                 * A listener that fails the retransformation after all batches were executed if any error occurred.
                  */
                 FAIL_LAST {
                     @Override
@@ -5071,7 +5071,7 @@ public interface AgentBuilder {
                     }
 
                     /**
-                     * A compound iterator that combines several iteratables.
+                     * A compound iterator that combines several iterables.
                      */
                     protected static class CompoundIterator implements Iterator<List<Class<?>>> {
 
@@ -5086,7 +5086,7 @@ public interface AgentBuilder {
                         private final List<Iterable<? extends List<Class<?>>>> backlog;
 
                         /**
-                         * Creates a compount iterator.
+                         * Creates a compound iterator.
                          *
                          * @param iterables The iterables to consider.
                          */
@@ -5356,14 +5356,14 @@ public interface AgentBuilder {
                 class ForFuture implements Cancelable {
 
                     /**
-                     * The future to cancel upon cancelation of this instance.
+                     * The future to cancel upon cancellation of this instance.
                      */
                     private final Future<?> future;
 
                     /**
                      * Creates a cancelable for a future.
                      *
-                     * @param future The future to cancel upon cancelation of this instance.
+                     * @param future The future to cancel upon cancellation of this instance.
                      */
                     public ForFuture(Future<?> future) {
                         this.future = future;

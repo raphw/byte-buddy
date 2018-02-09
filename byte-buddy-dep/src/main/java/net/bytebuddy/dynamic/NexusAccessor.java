@@ -53,7 +53,7 @@ public class NexusAccessor {
     }
 
     /**
-     * Creates a new accessor for a {@link Nexus} where any GC eligible are enqueued to the supplid reference queue. Any such enqueued
+     * Creates a new accessor for a {@link Nexus} where any GC eligible are enqueued to the supplied reference queue. Any such enqueued
      * reference can be explicitly removed from the nexus via the {@link NexusAccessor#clean(Reference)} method. Nexus entries can
      * become stale if a class loader is garbage collected after a class was loaded but before a class was initialized.
      *

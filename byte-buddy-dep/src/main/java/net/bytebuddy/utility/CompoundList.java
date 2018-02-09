@@ -10,7 +10,7 @@ import java.util.List;
 public class CompoundList {
 
     /**
-     * A compund list cannot be created.
+     * A compound list cannot be created.
      */
     private CompoundList() {
         throw new UnsupportedOperationException("Cannot create a compound list");

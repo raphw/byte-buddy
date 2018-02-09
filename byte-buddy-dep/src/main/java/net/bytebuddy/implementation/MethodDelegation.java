@@ -337,7 +337,7 @@ public class MethodDelegation implements Implementation.Composable {
      * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param target The target instance for the delegation.
-     * @param type   The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+     * @param type   The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
      * @return A method delegation that redirects method calls to a static method of the supplied type.
      */
     public static MethodDelegation to(Object target, Type type) {
@@ -352,7 +352,7 @@ public class MethodDelegation implements Implementation.Composable {
      * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param target              The target instance for the delegation.
-     * @param type                The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+     * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
      * @param methodGraphCompiler The method graph compiler to use.
      * @return A method delegation that redirects method calls to a static method of the supplied type.
      */
@@ -368,7 +368,7 @@ public class MethodDelegation implements Implementation.Composable {
      * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param target    The target instance for the delegation.
-     * @param type      The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+     * @param type      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
      * @param fieldName The name of the field that is holding the {@code target} instance.
      * @return A method delegation that redirects method calls to a static method of the supplied type.
      */
@@ -384,7 +384,7 @@ public class MethodDelegation implements Implementation.Composable {
      * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param target              The target instance for the delegation.
-     * @param type                The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+     * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
      * @param fieldName           The name of the field that is holding the {@code target} instance.
      * @param methodGraphCompiler The method graph compiler to use.
      * @return A method delegation that redirects method calls to a static method of the supplied type.
@@ -426,7 +426,7 @@ public class MethodDelegation implements Implementation.Composable {
      * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
      * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-     * a delegation target if the ddelegation is targeting the instrumented type.
+     * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param name The field's name.
      * @return A delegation that redirects invocations to a method of the specified field's instance.
@@ -440,7 +440,7 @@ public class MethodDelegation implements Implementation.Composable {
      * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
      * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-     * a delegation target if the ddelegation is targeting the instrumented type.
+     * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param name                The field's name.
      * @param fieldLocatorFactory The field locator factory to use.
@@ -455,7 +455,7 @@ public class MethodDelegation implements Implementation.Composable {
      * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
      * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-     * a delegation target if the ddelegation is targeting the instrumented type.
+     * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param name                The field's name.
      * @param methodGraphCompiler The method graph compiler to use.
@@ -470,7 +470,7 @@ public class MethodDelegation implements Implementation.Composable {
      * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
      * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-     * a delegation target if the ddelegation is targeting the instrumented type.
+     * a delegation target if the delegation is targeting the instrumented type.
      *
      * @param name                The field's name.
      * @param fieldLocatorFactory The field locator factory to use.
@@ -1282,7 +1282,7 @@ public class MethodDelegation implements Implementation.Composable {
          * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param target The target instance for the delegation.
-         * @param type   The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+         * @param type   The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
          * @return A method delegation that redirects method calls to a static method of the supplied type.
          */
         public MethodDelegation to(Object target, Type type) {
@@ -1297,7 +1297,7 @@ public class MethodDelegation implements Implementation.Composable {
          * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param target              The target instance for the delegation.
-         * @param type                The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+         * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
          * @param methodGraphCompiler The method graph compiler to use.
          * @return A method delegation that redirects method calls to a static method of the supplied type.
          */
@@ -1316,7 +1316,7 @@ public class MethodDelegation implements Implementation.Composable {
          * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param target    The target instance for the delegation.
-         * @param type      The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+         * @param type      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
          * @param fieldName The name of the field that is holding the {@code target} instance.
          * @return A method delegation that redirects method calls to a static method of the supplied type.
          */
@@ -1332,7 +1332,7 @@ public class MethodDelegation implements Implementation.Composable {
          * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param target              The target instance for the delegation.
-         * @param type                The most specific type of which {@code target} should be cosnidered. Must be a super type of the target's actual type.
+         * @param type                The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
          * @param fieldName           The name of the field that is holding the {@code target} instance.
          * @param methodGraphCompiler The method graph compiler to use.
          * @return A method delegation that redirects method calls to a static method of the supplied type.
@@ -1414,7 +1414,7 @@ public class MethodDelegation implements Implementation.Composable {
          * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
          * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-         * a delegation target if the ddelegation is targeting the instrumented type.
+         * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param name                The field's name.
          * @param methodGraphCompiler The method graph compiler to use.
@@ -1429,7 +1429,7 @@ public class MethodDelegation implements Implementation.Composable {
          * considered a valid delegation target, a method must be visible and accessible to the instrumented type. This is the
          * case if the method's declaring type is either public or in the same package as the instrumented type and if the method
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
-         * a delegation target if the ddelegation is targeting the instrumented type.
+         * a delegation target if the delegation is targeting the instrumented type.
          *
          * @param name                The field's name.
          * @param fieldLocatorFactory The field locator factory to use.

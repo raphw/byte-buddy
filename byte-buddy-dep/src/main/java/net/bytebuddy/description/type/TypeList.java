@@ -397,7 +397,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * Creates a list of the type variables of the supplied generic declaration.
                  *
                  * @param genericDeclaration The generic declaration to represent.
-                 * @return A genric type list for the returned generic declaration.
+                 * @return A generic type list for the returned generic declaration.
                  */
                 public static Generic of(GenericDeclaration genericDeclaration) {
                     return new OfTypeVariables(genericDeclaration.getTypeParameters());
@@ -525,7 +525,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 /**
                  * Creates a list of generic type descriptions that are resolved lazily, i.e. type variables are not resolved
-                 * when computing an erausre.
+                 * when computing an erasure.
                  *
                  * @param detachedTypes The detached types this list represents.
                  * @param visitor       The visitor to use for attaching the detached types.

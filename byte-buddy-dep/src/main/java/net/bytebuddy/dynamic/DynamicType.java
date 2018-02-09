@@ -432,7 +432,7 @@ public interface DynamicType {
          *
          * @param matcher     The matcher to decide what type variables to transform.
          * @param transformer The transformer to apply to the matched type variables.
-         * @return A new builder that is equal to this builder but with the supplied transformer applied to all type varaibles.
+         * @return A new builder that is equal to this builder but with the supplied transformer applied to all type variables.
          */
         Builder<T> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer);
 
@@ -1727,7 +1727,7 @@ public interface DynamicType {
                 }
 
                 /**
-                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable.
+                 * An abstract base implementation for defining an implementation of a method and optionally defining a type variable.
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
@@ -1795,7 +1795,7 @@ public interface DynamicType {
                 ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types);
 
                 /**
-                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable or thrown exception.
+                 * An abstract base implementation for defining an implementation of a method and optionally defining a type variable or thrown exception.
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
@@ -1899,7 +1899,7 @@ public interface DynamicType {
                 interface Annotatable<V> extends ParameterDefinition<V> {
 
                     /**
-                     * Annotates the previously defined parameter with the specifed annotations.
+                     * Annotates the previously defined parameter with the specified annotations.
                      *
                      * @param annotation The annotations to declare on the previously defined parameter.
                      * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -1908,7 +1908,7 @@ public interface DynamicType {
                     Annotatable<V> annotateParameter(Annotation... annotation);
 
                     /**
-                     * Annotates the previously defined parameter with the specifed annotations.
+                     * Annotates the previously defined parameter with the specified annotations.
                      *
                      * @param annotations The annotations to declare on the previously defined parameter.
                      * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -1917,7 +1917,7 @@ public interface DynamicType {
                     Annotatable<V> annotateParameter(List<? extends Annotation> annotations);
 
                     /**
-                     * Annotates the previously defined parameter with the specifed annotations.
+                     * Annotates the previously defined parameter with the specified annotations.
                      *
                      * @param annotation The annotations to declare on the previously defined parameter.
                      * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -1926,7 +1926,7 @@ public interface DynamicType {
                     Annotatable<V> annotateParameter(AnnotationDescription... annotation);
 
                     /**
-                     * Annotates the previously defined parameter with the specifed annotations.
+                     * Annotates the previously defined parameter with the specified annotations.
                      *
                      * @param annotations The annotations to declare on the previously defined parameter.
                      * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -2041,7 +2041,7 @@ public interface DynamicType {
                     interface Annotatable<V> extends Simple<V> {
 
                         /**
-                         * Annotates the previously defined parameter with the specifed annotations.
+                         * Annotates the previously defined parameter with the specified annotations.
                          *
                          * @param annotation The annotations to declare on the previously defined parameter.
                          * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -2050,7 +2050,7 @@ public interface DynamicType {
                         Annotatable<V> annotateParameter(Annotation... annotation);
 
                         /**
-                         * Annotates the previously defined parameter with the specifed annotations.
+                         * Annotates the previously defined parameter with the specified annotations.
                          *
                          * @param annotations The annotations to declare on the previously defined parameter.
                          * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -2059,7 +2059,7 @@ public interface DynamicType {
                         Annotatable<V> annotateParameter(List<? extends Annotation> annotations);
 
                         /**
-                         * Annotates the previously defined parameter with the specifed annotations.
+                         * Annotates the previously defined parameter with the specified annotations.
                          *
                          * @param annotation The annotations to declare on the previously defined parameter.
                          * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -2068,7 +2068,7 @@ public interface DynamicType {
                         Annotatable<V> annotateParameter(AnnotationDescription... annotation);
 
                         /**
-                         * Annotates the previously defined parameter with the specifed annotations.
+                         * Annotates the previously defined parameter with the specified annotations.
                          *
                          * @param annotations The annotations to declare on the previously defined parameter.
                          * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
@@ -2249,7 +2249,7 @@ public interface DynamicType {
                 }
 
                 /**
-                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable, thrown exception or parameter type.
+                 * An abstract base implementation for defining an implementation of a method and optionally defining a type variable, thrown exception or parameter type.
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
@@ -3838,7 +3838,7 @@ public interface DynamicType {
                     /**
                      * Materializes the method definition with the supplied handler.
                      *
-                     * @param handler The handler that implementes any method matched by this instances matcher.
+                     * @param handler The handler that implements any method matched by this instances matcher.
                      * @return A method definition where any matched method is implemented by the supplied handler.
                      */
                     private MethodDefinition.ReceiverTypeDefinition<U> materialize(MethodRegistry.Handler handler) {
@@ -3886,7 +3886,7 @@ public interface DynamicType {
                          *
                          * @param handler                        The handler that determines how a method is implemented.
                          * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                         * @param transformer                    The method transformer to apply onto the method that is currently being implemnted.
+                         * @param transformer                    The method transformer to apply onto the method that is currently being implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler,
                                                     MethodAttributeAppender.Factory methodAttributeAppenderFactory,

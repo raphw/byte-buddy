@@ -206,7 +206,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         };
 
         /**
-         * Wrapes a type as a {@link Reference}.
+         * Wraps a type as a {@link Reference}.
          *
          * @param type The type to wrap.
          * @return The reference that represents the type.
@@ -314,7 +314,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     public static class WithInlineExpunction<S> extends TypeCache<S> {
 
         /**
-         * Creats a new type cache with inlined expunction.
+         * Creates a new type cache with inlined expunction.
          *
          * @param sort The reference type to use for stored types.
          */

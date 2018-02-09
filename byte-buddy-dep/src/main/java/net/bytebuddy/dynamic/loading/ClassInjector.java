@@ -279,7 +279,7 @@ public interface ClassInjector {
                 /**
                  * Initializes this dispatcher.
                  *
-                 * @return The initiailized dispatcher.
+                 * @return The initialized dispatcher.
                  */
                 Dispatcher initialize();
             }
@@ -290,7 +290,7 @@ public interface ClassInjector {
             enum CreationAction implements PrivilegedAction<Initializable> {
 
                 /**
-                 * The singelton instance.
+                 * The singleton instance.
                  */
                 INSTANCE;
 

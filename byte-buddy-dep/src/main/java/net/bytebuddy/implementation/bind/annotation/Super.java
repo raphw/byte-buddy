@@ -47,7 +47,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * proxy by default. If this is absolutely necessary, this can however be enabled by setting {@link Super#ignoreFinalizer()}
  * to {@code false}.
  * <p>&nbsp;</p>
- * If a method parameter is not a super type of the instrumented type, the method with the parameter that is annoted by
+ * If a method parameter is not a super type of the instrumented type, the method with the parameter that is annotated by
  * #{@code Super} is not considered a possible delegation target.
  *
  * @see net.bytebuddy.implementation.MethodDelegation

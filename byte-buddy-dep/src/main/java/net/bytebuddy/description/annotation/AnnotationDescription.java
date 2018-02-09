@@ -36,7 +36,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public interface AnnotationDescription {
 
     /**
-     * Indicates an inexistent annotation in a type-safe manner.
+     * Indicates a nonexistent annotation in a type-safe manner.
      */
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
@@ -540,7 +540,7 @@ public interface AnnotationDescription {
 
         /**
          * The annotation's loaded type which might be loaded by a different class loader than the value's
-         * annotation type but must be structually equal to it.
+         * annotation type but must be structurally equal to it.
          */
         private final Class<S> annotationType;
 
@@ -559,7 +559,7 @@ public interface AnnotationDescription {
          *
          * @param annotation     The annotation to represent.
          * @param annotationType The annotation's loaded type which might be loaded by a different class loader than the value's
-         *                       annotation type but must be structually equal to it.
+         *                       annotation type but must be structurally equal to it.
          */
         private ForLoadedAnnotation(S annotation, Class<S> annotationType) {
             this.annotation = annotation;
