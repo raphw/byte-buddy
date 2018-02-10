@@ -49,13 +49,13 @@ public class AbstractUserConfiguration {
         private final File file;
 
         /**
-         * The iterable containing the reminder files.
+         * The iterable containing the remainder files.
          */
         private final Iterable<? extends File> files;
 
         /**
          * @param file  The prefixed file.
-         * @param files The iterable containing the reminder files.
+         * @param files The iterable containing the remainder files.
          */
         protected PrefixIterable(File file, Iterable<? extends File> files) {
             this.file = file;
@@ -86,7 +86,7 @@ public class AbstractUserConfiguration {
             private final File file;
 
             /**
-             * An iterator over the reminind files.
+             * An iterator over the remainder files.
              */
             private final Iterator<? extends File> files;
 
@@ -99,7 +99,7 @@ public class AbstractUserConfiguration {
              * Creates a prefix iterator.
              *
              * @param file  The file being prefixed.
-             * @param files An iterator over the reminind files.
+             * @param files An iterator over the remainder files.
              */
             protected PrefixIterator(File file, Iterator<? extends File> files) {
                 this.file = file;

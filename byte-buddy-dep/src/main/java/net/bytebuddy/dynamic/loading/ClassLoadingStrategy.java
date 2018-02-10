@@ -359,7 +359,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         private final ClassLoader classLoader;
 
         /**
-         * Creaes a new class loading strategy that uses a lookup type.
+         * Creates a new class loading strategy that uses a lookup type.
          *
          * @param classInjector The class injector to use.
          * @param classLoader   The class loader in the supplied class injector defines classes.

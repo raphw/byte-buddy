@@ -467,7 +467,7 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     /**
-     * A field accessor for an implicit property where a getter or setter property is infered from the signature.
+     * A field accessor for an implicit property where a getter or setter property is inferred from the signature.
      */
     protected static class ForImplicitProperty extends FieldAccessor implements OwnerTypeLocatable {
 

@@ -364,7 +364,7 @@ public interface AnnotationAppender {
         private static final char INNER_CLASS_PATH = '.';
 
         /**
-         * Represents an index tzpe delimiter within a type path.
+         * Represents an index type delimiter within a type path.
          */
         private static final char INDEXED_TYPE_DELIMITER = ';';
 

@@ -46,7 +46,7 @@ public interface MethodDelegationBinder {
          *
          * @param implementationTarget The target of the current implementation onto which this binding is to be applied.
          * @param source               The method that is to be bound to the {@code target} method.
-         * @param terminationHandler   Ther termination handler to apply.
+         * @param terminationHandler   The termination handler to apply.
          * @param methodInvoker        The method invoker to use.
          * @param assigner             The assigner to use.
          * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
@@ -639,7 +639,7 @@ public interface MethodDelegationBinder {
         }
 
         /**
-         * Bindinds a method using another resolver and prints the selected binding to a {@link PrintStream}.
+         * Binds a method using another resolver and prints the selected binding to a {@link PrintStream}.
          */
         @EqualsAndHashCode
         class StreamWriting implements BindingResolver {
@@ -968,7 +968,7 @@ public interface MethodDelegationBinder {
     }
 
     /**
-     * A helper class that allows to identify a best binding for a given type and source method chosing from a list of given
+     * A helper class that allows to identify a best binding for a given type and source method choosing from a list of given
      * target methods by using a given {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}
      * and an {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}.
      * <p>&nbsp;</p>

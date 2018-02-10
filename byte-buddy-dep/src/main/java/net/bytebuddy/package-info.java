@@ -11,6 +11,6 @@
  *    .getLoaded();
  * dynamicType.newInstance().toString; // returns "Hello World!"</pre>
  * creates a subclass of the {@link java.lang.Object} class which implements the {@link java.io.Serializable}
- * interface. The {@link java.lang.Object#toString()} method is overriden to return {@code Hello World!}.
+ * interface. The {@link java.lang.Object#toString()} method is overridden to return {@code Hello World!}.
  */
 package net.bytebuddy;

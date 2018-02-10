@@ -109,7 +109,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * <b>Note</b>: For the purpose of inlining, Java 5 and Java 6 byte code can be seen as the best candidate for advice methods. These versions do
  * no longer allow subroutines, neither do they already allow invokedynamic instructions or method handles. This way, Java 5 and Java 6 byte
  * code is compatible to both older and newer versions. One exception for backwards-incompatible byte code is the possibility to load type references
- * from the constant pool onto the operand stack. These instructions can however easily be transformerd for classes compiled to Java 4 and older
+ * from the constant pool onto the operand stack. These instructions can however easily be transformed for classes compiled to Java 4 and older
  * by registering a {@link TypeConstantAdjustment} <b>before</b> the advice visitor.
  * </p>
  * <p>
@@ -137,7 +137,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper, Implementation {
 
     /**
-     * Indicates that no class reader is available to an adice method.
+     * Indicates that no class reader is available to an advice method.
      */
     private static final ClassReader UNDEFINED = null;
 
@@ -2742,7 +2742,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * An offset mapping for a parameter where assignments are fully ignored and that is assigned a boxed version of the instrumented
-         * method's return valueor {@code null} if the return type is not primitive or {@code void}.
+         * method's return value or {@code null} if the return type is not primitive or {@code void}.
          */
         enum ForStubValue implements OffsetMapping, Factory<StubValue> {
 
@@ -2952,7 +2952,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected enum Factory implements OffsetMapping.Factory<Return> {
 
                 /**
-                 * The singelton instance.
+                 * The singleton instance.
                  */
                 INSTANCE;
 
@@ -3311,7 +3311,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a factory for an offset mapping that binds an annotation property.
                  *
-                 * @param annotationType The annotion type to bind.
+                 * @param annotationType The annotation type to bind.
                  * @param property       The property to bind.
                  * @param <S>            The annotation type.
                  * @return A factory for binding a property of the annotation type.
@@ -3949,9 +3949,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param requiredTypes      A list of intermediate types to be considered as part of the instrumented method's steady signature.
              * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
              * @param classFileVersion   The instrumented type's class file version.
-             * @param writerFlags        The flags supplied to the ASM writier.
+             * @param writerFlags        The flags supplied to the ASM writer.
              * @param readerFlags        The reader flags supplied to the ASM reader.
-             * @return An approrpiate stack map frame handler for an instrumented method.
+             * @return An appropriate stack map frame handler for an instrumented method.
              */
             protected static ForInstrumentedMethod of(TypeDescription instrumentedType,
                                                       MethodDescription instrumentedMethod,
@@ -6672,7 +6672,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected final MethodSizeHandler.ForAdvice methodSizeHandler;
 
                     /**
-                     * A handler for translating and injecting stack map frmes.
+                     * A handler for translating and injecting stack map frames.
                      */
                     protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 

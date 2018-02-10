@@ -2829,7 +2829,7 @@ public class InvokeDynamic implements Implementation.Composable {
              * @param terminationHandler A handler that handles the method return.
              * @param assigner           The assigner to be used.
              * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
-             * @param index              The index of of the argument to supply to the bootstapped method.
+             * @param index              The index of of the argument to supply to the bootstrapped method.
              */
             protected OfArgument(MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> handleArguments,

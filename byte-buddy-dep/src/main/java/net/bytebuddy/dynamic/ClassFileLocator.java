@@ -778,7 +778,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * <p>
          * Resolves a class file locator for a Java module path that reads class files directly from the file system. All
-         * elements of the module path are resolved releatively to this VM's {@code user.dir}.
+         * elements of the module path are resolved relative to this VM's {@code user.dir}.
          * </p>
          * <p>
          * <b>Note</b>: The resulting class file locator does not include classes of the bootstrap class loader.
@@ -1156,7 +1156,7 @@ public interface ClassFileLocator extends Closeable {
                     Vector<Class<?>> extract(ClassLoader classLoader);
 
                     /**
-                     * An unitialized version of a dispatcher for extracting a class loader's loaded classes.
+                     * An uninitialized version of a dispatcher for extracting a class loader's loaded classes.
                      */
                     interface Initializable {
 

@@ -358,7 +358,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         Generic UNDEFINED = null;
 
         /**
-         * Returns this type as a raw type. This ressembles calling {@code asErasure().asGenericType()}.
+         * Returns this type as a raw type. This resembles calling {@code asErasure().asGenericType()}.
          *
          * @return This type as a raw type.
          */
@@ -1439,7 +1439,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             class ForSignatureVisitor implements Visitor<SignatureVisitor> {
 
                 /**
-                 * Index of a {@link String}'s only character to improve code readabilty.
+                 * Index of a {@link String}'s only character to improve code readability.
                  */
                 private static final int ONLY_CHARACTER = 0;
 
@@ -2045,7 +2045,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * An annotation reader is responsible for lazily evaluting type annotations if this language
+         * An annotation reader is responsible for lazily evaluating type annotations if this language
          * feature is available on the current JVM.
          */
         interface AnnotationReader {
@@ -4613,7 +4613,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                     @Override
                     public Generic get(int index) {
-                        // Onfuscators sometimes render parameterized type arguments as null values.
+                        // Obfuscators sometimes render parameterized type arguments as null values.
                         return Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
                     }
 
@@ -5248,7 +5248,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         /**
          * A lazy projection of a generic type. Such projections allow to only read generic type information in case it is required. This
-         * is meaningful as the Java virtual needs to process generic type information which requires extra ressources. Also, this allows
+         * is meaningful as the Java virtual needs to process generic type information which requires extra resources. Also, this allows
          * the extraction of non-generic type information even if the generic type information is invalid.
          */
         abstract class LazyProjection extends AbstractBase {
@@ -5989,7 +5989,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * Creates a symolic type variable of the given name.
+             * Creates a symbolic type variable of the given name.
              *
              * @param symbol The symbolic name of the type variable.
              * @return A builder for creating a type variable.
@@ -6250,7 +6250,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * Creates a new builder for the current type and the spplied type annotations.
+             * Creates a new builder for the current type and the applied type annotations.
              *
              * @param annotations Type annotations to be declared by the current type.
              * @return A new builder where the current type declares the supplied type annotations.
@@ -7418,7 +7418,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         private final int arity;
 
         /**
-         * Crrates a new array projection.
+         * Creates a new array projection.
          *
          * @param componentType The base component type of the array which is itself not an array.
          * @param arity         The arity of this array.
@@ -7429,7 +7429,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         /**
-         * Creates an array projection of an arrity of one.
+         * Creates an array projection of an arity of one.
          *
          * @param componentType The component type of the array.
          * @return A projection of the component type as an array of the given value with an arity of one.

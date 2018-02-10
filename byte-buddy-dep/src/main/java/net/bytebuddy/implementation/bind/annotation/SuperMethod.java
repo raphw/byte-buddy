@@ -40,7 +40,7 @@ public @interface SuperMethod {
     boolean cached() default true;
 
     /**
-     * Indicates that the assigned method should attemt the invocation of an unambiguous default method if no super method is available.
+     * Indicates that the assigned method should attempt the invocation of an unambiguous default method if no super method is available.
      *
      * @return {@code true} if a default method should be invoked if it is not ambiguous and no super class method is available.
      */

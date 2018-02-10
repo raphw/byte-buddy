@@ -20,7 +20,7 @@ public class PostCompilationAction implements Action<AbstractCompile> {
     private final ByteBuddyExtension byteBuddyExtension;
 
     /**
-     * Createsa a new post compilation action.
+     * Creates a new post compilation action.
      *
      * @param project            The current project.
      * @param byteBuddyExtension The Byte Buddy extension of this build.

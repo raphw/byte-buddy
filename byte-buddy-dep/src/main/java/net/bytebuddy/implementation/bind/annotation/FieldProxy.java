@@ -295,9 +295,9 @@ public @interface FieldProxy {
         protected interface FieldResolver {
 
             /**
-             * Returns {@code true} if the field access can be establised.
+             * Returns {@code true} if the field access can be established.
              *
-             * @return {@code true} if the field access can be establised.
+             * @return {@code true} if the field access can be established.
              */
             boolean isResolved();
 

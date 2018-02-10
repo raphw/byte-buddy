@@ -70,7 +70,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <pre>
  * ByteBuddy byteBuddy = new ByteBuddy();
  * byteBuddy.foo()</pre>
- * Instead, the following method chain is corrent use of the API:
+ * Instead, the following method chain is correct use of the API:
  * <pre>
  * ByteBuddy byteBuddy = new ByteBuddy().foo();</pre>
  * <p>

@@ -33,7 +33,7 @@ public class FieldConstant implements StackManipulation {
     }
 
     /**
-     * Retruns a cached version of this field constant.
+     * Returns a cached version of this field constant.
      *
      * @return A cached version of this field constant.
      */

@@ -257,7 +257,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
         /**
          * Subs any interaction with a matched byte code element. Any value read from the element will be replaced with the stubbed
-         * value's default, i.e. {@code null} for reference types and the specific {@code 0} value for primitive types. Any writen
+         * value's default, i.e. {@code null} for reference types and the specific {@code 0} value for primitive types. Any written
          * value will simply be discarded.
          *
          * @return A member substitution that stubs any interaction with a matched byte code element.
@@ -330,7 +330,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * </p>
          * <p>
          * A replacement can only be applied if the method is compatible to the original byte code element, i.e. consumes compatible
-         * arguments and returns a compatible value. If the method is not {@code static}, it is treated as if {@code this} was an implcit
+         * arguments and returns a compatible value. If the method is not {@code static}, it is treated as if {@code this} was an implicit
          * first argument.
          * </p>
          *
@@ -348,11 +348,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * </p>
          * <p>
          * A replacement can only be applied if the method is compatible to the original byte code element, i.e. consumes compatible
-         * arguments and returns a compatible value. If the method is not {@code static}, it is treated as if {@code this} was an implcit
+         * arguments and returns a compatible value. If the method is not {@code static}, it is treated as if {@code this} was an implicit
          * first argument.
          * </p>
          * <p>
-         * <b>Important</b>: It is not allowed to specifiy a constructor or the static type initializer as a replacement.
+         * <b>Important</b>: It is not allowed to specify a constructor or the static type initializer as a replacement.
          * </p>
          *
          * @param methodDescription The method to invoke instead of interacting with any of the matched byte code elements.
@@ -999,7 +999,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         /**
-         * A substution that does not substitute any byte code elements.
+         * A substitution that does not substitute any byte code elements.
          */
         enum NoOp implements Substitution {
 
@@ -1031,7 +1031,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             private final ElementMatcher<? super FieldDescription.InDefinedShape> fieldMatcher;
 
             /**
-             * A matcher to determine method substituion.
+             * A matcher to determine method substitution.
              */
             private final ElementMatcher<? super MethodDescription> methodMatcher;
 
@@ -1104,7 +1104,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             /**
-             * Creates a new subsitution that applies element matchers to determine what byte code elements to substitute.
+             * Creates a new substitution that applies element matchers to determine what byte code elements to substitute.
              *
              * @param fieldMatcher        The field matcher to determine fields to substitute.
              * @param methodMatcher       The method matcher to determine methods to substitute.
