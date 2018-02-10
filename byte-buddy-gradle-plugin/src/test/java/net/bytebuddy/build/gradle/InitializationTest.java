@@ -115,7 +115,7 @@ public class InitializationTest {
     public static class Foo implements EntryPoint {
 
         @Override
-        public ByteBuddy getByteBuddy() {
+        public ByteBuddy byteBuddy() {
             throw new AssertionError();
         }
 

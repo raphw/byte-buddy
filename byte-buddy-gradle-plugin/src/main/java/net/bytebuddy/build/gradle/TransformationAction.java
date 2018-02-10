@@ -130,7 +130,7 @@ public class TransformationAction implements Action<Task> {
             project.getLogger().info("Processing class files located in in: {}", root);
             ByteBuddy byteBuddy;
             try {
-                byteBuddy = entryPoint.getByteBuddy();
+                byteBuddy = entryPoint.byteBuddy(); // TODO: How to get class file version?
             } catch (Throwable throwable) {
                 throw new GradleException("Cannot create Byte Buddy instance", throwable);
             }

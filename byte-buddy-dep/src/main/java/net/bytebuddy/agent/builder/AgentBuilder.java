@@ -7687,7 +7687,49 @@ public interface AgentBuilder {
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(EntryPoint entryPoint, List<? extends Plugin> plugins) {
-            AgentBuilder agentBuilder = new AgentBuilder.Default(entryPoint.getByteBuddy()).with(new TypeStrategy.ForBuildEntryPoint(entryPoint));
+            return of(entryPoint, ClassFileVersion.ofThisVm(), plugins);
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
+         *
+         * @param plugin The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(ClassFileVersion classFileVersion, Plugin... plugin) {
+            return of(classFileVersion, Arrays.asList(plugin));
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
+         *
+         * @param plugins The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(ClassFileVersion classFileVersion, List<? extends Plugin> plugins) {
+            return of(EntryPoint.Default.REBASE, classFileVersion, plugins);
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins.
+         *
+         * @param entryPoint The build entry point to use.
+         * @param plugin     The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(EntryPoint entryPoint, ClassFileVersion classFileVersion, Plugin... plugin) {
+            return of(entryPoint, classFileVersion, Arrays.asList(plugin));
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins.
+         *
+         * @param entryPoint The build entry point to use.
+         * @param plugins    The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(EntryPoint entryPoint, ClassFileVersion classFileVersion, List<? extends Plugin> plugins) {
+            AgentBuilder agentBuilder = new AgentBuilder.Default(entryPoint.byteBuddy(classFileVersion)).with(new TypeStrategy.ForBuildEntryPoint(entryPoint));
             for (Plugin plugin : plugins) {
                 agentBuilder = agentBuilder.type(plugin).transform(new Transformer.ForBuildPlugin(plugin));
             }

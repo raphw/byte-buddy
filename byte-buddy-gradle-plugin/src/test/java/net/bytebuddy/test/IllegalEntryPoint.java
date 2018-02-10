@@ -10,7 +10,7 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 public class IllegalEntryPoint implements EntryPoint {
 
     @Override
-    public ByteBuddy getByteBuddy() {
+    public ByteBuddy byteBuddy() {
         throw new RuntimeException();
     }
 

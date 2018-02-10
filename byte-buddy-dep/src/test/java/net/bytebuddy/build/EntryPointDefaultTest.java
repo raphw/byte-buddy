@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -42,7 +43,7 @@ public class EntryPointDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testRebase() throws Exception {
-        assertThat(EntryPoint.Default.REBASE.getByteBuddy(), is(new ByteBuddy()));
+        assertThat(EntryPoint.Default.REBASE.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy()));
         when(byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer)).thenReturn((DynamicType.Builder) builder);
         assertThat(EntryPoint.Default.REBASE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) builder));
     }
@@ -50,7 +51,7 @@ public class EntryPointDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testRedefine() throws Exception {
-        assertThat(EntryPoint.Default.REDEFINE.getByteBuddy(), is(new ByteBuddy()));
+        assertThat(EntryPoint.Default.REDEFINE.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy()));
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) builder);
         assertThat(EntryPoint.Default.REDEFINE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) builder));
     }
@@ -58,7 +59,7 @@ public class EntryPointDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testRedefineLocal() throws Exception {
-        assertThat(EntryPoint.Default.REDEFINE_LOCAL.getByteBuddy(), is(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE)));
+        assertThat(EntryPoint.Default.REDEFINE_LOCAL.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE)));
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) builder);
         when(builder.ignoreAlso(not(isDeclaredBy(typeDescription)))).thenReturn((DynamicType.Builder) otherBuilder);
         assertThat(EntryPoint.Default.REDEFINE_LOCAL.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) otherBuilder));

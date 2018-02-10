@@ -1,6 +1,7 @@
 package net.bytebuddy.test;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -10,7 +11,7 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 public class IllegalEntryPoint implements EntryPoint {
 
     @Override
-    public ByteBuddy getByteBuddy() {
+    public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
         throw new RuntimeException();
     }
 

@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
@@ -2145,7 +2146,7 @@ public class AgentBuilderDefaultTest {
         Plugin plugin = mock(Plugin.class);
         EntryPoint entryPoint = mock(EntryPoint.class);
         ByteBuddy byteBuddy = mock(ByteBuddy.class);
-        when(entryPoint.getByteBuddy()).thenReturn(byteBuddy);
+        when(entryPoint.byteBuddy(ClassFileVersion.ofThisVm())).thenReturn(byteBuddy);
         assertThat(AgentBuilder.Default.of(entryPoint, plugin), is((AgentBuilder) new AgentBuilder.Default(byteBuddy)
                 .with(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(entryPoint))
                 .type(plugin)

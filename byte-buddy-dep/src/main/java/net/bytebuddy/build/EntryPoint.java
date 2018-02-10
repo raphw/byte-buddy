@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -21,7 +22,7 @@ public interface EntryPoint {
      *
      * @return The Byte Buddy instance to use.
      */
-    ByteBuddy getByteBuddy();
+    ByteBuddy byteBuddy(ClassFileVersion classFileVersion);
 
     /**
      * Applies a transformation.
@@ -46,7 +47,12 @@ public interface EntryPoint {
         /**
          * An entry point that rebases a type.
          */
-        REBASE(new ByteBuddy()) {
+        REBASE {
+            @Override
+            public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+                return new ByteBuddy(classFileVersion);
+            }
+
             @Override
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
@@ -59,7 +65,12 @@ public interface EntryPoint {
         /**
          * An entry point that redefines a type.
          */
-        REDEFINE(new ByteBuddy()) {
+        REDEFINE {
+            @Override
+            public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+                return new ByteBuddy(classFileVersion);
+            }
+
             @Override
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
@@ -73,7 +84,12 @@ public interface EntryPoint {
          * An entry point that redefines a type and which does not change the dynamic type's shape, i.e. does
          * not add any methods or considers intercepting inherited methods.
          */
-        REDEFINE_LOCAL(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE)) {
+        REDEFINE_LOCAL {
+            @Override
+            public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+                return new ByteBuddy(classFileVersion).with(Implementation.Context.Disabled.Factory.INSTANCE);
+            }
+
             @Override
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
@@ -81,25 +97,6 @@ public interface EntryPoint {
                                                     MethodNameTransformer methodNameTransformer) {
                 return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(not(isDeclaredBy(typeDescription)));
             }
-        };
-
-        /**
-         * The Byte Buddy instance to use.
-         */
-        private final ByteBuddy byteBuddy;
-
-        /**
-         * Creates a default entry point.
-         *
-         * @param byteBuddy The Byte Buddy instance to use.
-         */
-        Default(ByteBuddy byteBuddy) {
-            this.byteBuddy = byteBuddy;
-        }
-
-        @Override
-        public ByteBuddy getByteBuddy() {
-            return byteBuddy;
         }
     }
 }

@@ -1,6 +1,7 @@
 package net.bytebuddy.build.maven;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -119,7 +120,7 @@ public class InitializationTest {
     public static class Foo implements EntryPoint {
 
         @Override
-        public ByteBuddy getByteBuddy() {
+        public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
             throw new AssertionError();
         }
 

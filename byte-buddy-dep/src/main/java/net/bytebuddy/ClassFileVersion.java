@@ -109,6 +109,33 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return classFileVersion;
     }
 
+    public static ClassFileVersion ofJavaVersion(String javaVersion) {
+        if (javaVersion.equals("1.0") || javaVersion.equals("1.1")) {
+            return JAVA_V1;
+        } else if (javaVersion.equals("1.2")) {
+            return JAVA_V2;
+        } else if (javaVersion.equals("1.3")) {
+            return JAVA_V3;
+        } else if (javaVersion.equals("1.4")) {
+            return JAVA_V4;
+        } else if (javaVersion.equals("1.5")) {
+            return JAVA_V5;
+        } else if (javaVersion.equals("1.6")) {
+            return JAVA_V6;
+        } else if (javaVersion.equals("1.7")) {
+            return JAVA_V7;
+        } else if (javaVersion.equals("1.8")) {
+            return JAVA_V8;
+        } else if (javaVersion.equals("9")) {
+            return JAVA_V9;
+        } else if (javaVersion.equals("10")) {
+            return JAVA_V10;
+        } else {
+            throw new IllegalArgumentException("Unknown Java version string: " + javaVersion);
+        }
+    }
+
+
     /**
      * Creates a class file version for a given major release of Java. Currently, all versions reaching from
      * Java 1 to Java 9 are supported.

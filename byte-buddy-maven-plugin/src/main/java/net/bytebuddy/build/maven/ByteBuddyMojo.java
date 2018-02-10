@@ -2,6 +2,7 @@ package net.bytebuddy.build.maven;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
@@ -53,6 +54,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     protected String version;
+
+    @Parameter(defaultValue = "${maven.compiler.target}", required = false, readonly = true)
+    protected String javaVersion;
 
     /**
      * <p>
@@ -265,7 +269,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Processing class files located in in: " + root);
             ByteBuddy byteBuddy;
             try {
-                byteBuddy = entryPoint.getByteBuddy();
+                byteBuddy = entryPoint.byteBuddy(javaVersion == null
+                        ? ClassFileVersion.ofThisVm()
+                        : ClassFileVersion.ofJavaVersion(javaVersion));
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
