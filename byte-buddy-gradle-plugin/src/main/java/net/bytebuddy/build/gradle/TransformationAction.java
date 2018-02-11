@@ -128,19 +128,13 @@ public class TransformationAction implements Action<Task> {
                     classFileLocator,
                     TypePool.Default.ReaderMode.FAST,
                     TypePool.ClassLoading.ofBootPath());
-            final JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
-            Provider<JavaVersion> javaVersionProvider = convention == null ? null : project.provider(new Callable<JavaVersion>() {
-                @Override
-                public JavaVersion call() {
-                    return convention.getTargetCompatibility();
-                }
-            });
             project.getLogger().info("Processing class files located in in: {}", root);
+            JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
             ByteBuddy byteBuddy;
             try {
-                byteBuddy = entryPoint.byteBuddy(javaVersionProvider == null
+                byteBuddy = entryPoint.byteBuddy(convention == null
                         ? ClassFileVersion.ofThisVm()
-                        : ClassFileVersion.ofJavaVersion(Integer.parseInt(javaVersionProvider.get().getMajorVersion())));
+                        : ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion())));
             } catch (Throwable throwable) {
                 throw new GradleException("Cannot create Byte Buddy instance", throwable);
             }
