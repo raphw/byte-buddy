@@ -12,6 +12,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.Convention;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.junit.After;
 import org.junit.Before;
@@ -31,8 +32,8 @@ import java.util.*;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,9 @@ public class TransformationActionTest {
 
     @Mock
     private Project project;
+
+    @Mock
+    private Convention convention;
 
     @Mock
     private Logger logger;
@@ -78,6 +82,8 @@ public class TransformationActionTest {
         target = File.createTempFile(FOO, TEMP);
         assertThat(target.delete(), is(true));
         assertThat(target.mkdir(), is(true));
+        when(project.getConvention()).thenReturn(convention);
+        when(convention.getPlugins()).thenReturn(Collections.<String, Object>emptyMap());
         when(project.getLogger()).thenReturn(logger);
         when(byteBuddyExtension.getTransformations()).thenReturn(Collections.singletonList(transformation));
         when(byteBuddyExtension.getInitialization()).thenReturn(initialization);

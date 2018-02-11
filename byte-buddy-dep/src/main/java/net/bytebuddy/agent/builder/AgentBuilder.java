@@ -5784,7 +5784,7 @@ public interface AgentBuilder {
                                                 }
                                             }
                                         } catch (Throwable ignored) {
-                                        /* do nothing */
+                                            /* do nothing */
                                         } finally {
                                             iterator.remove();
                                         }
@@ -6276,7 +6276,7 @@ public interface AgentBuilder {
             protected void apply(ByteBuddy byteBuddy,
                                  Instrumentation instrumentation,
                                  ClassFileTransformer classFileTransformer) {
-                    /* do nothing */
+                /* do nothing */
             }
 
             @Override
@@ -6491,7 +6491,7 @@ public interface AgentBuilder {
                                 ? classFile
                                 : transformedClassFile;
                     } catch (Throwable ignored) {
-                            /* do nothing */
+                        /* do nothing */
                     }
                 }
                 return classFile;
@@ -7693,7 +7693,8 @@ public interface AgentBuilder {
         /**
          * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
          *
-         * @param plugin The build plugins to apply as a Java agent.
+         * @param classFileVersion The class file version to use.
+         * @param plugin           The build plugins to apply as a Java agent.
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(ClassFileVersion classFileVersion, Plugin... plugin) {
@@ -7703,7 +7704,8 @@ public interface AgentBuilder {
         /**
          * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
          *
-         * @param plugins The build plugins to apply as a Java agent.
+         * @param classFileVersion The class file version to use.
+         * @param plugins          The build plugins to apply as a Java agent.
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(ClassFileVersion classFileVersion, List<? extends Plugin> plugins) {
@@ -7713,8 +7715,9 @@ public interface AgentBuilder {
         /**
          * Creates an {@link AgentBuilder} that realizes the provided build plugins.
          *
-         * @param entryPoint The build entry point to use.
-         * @param plugin     The build plugins to apply as a Java agent.
+         * @param entryPoint       The build entry point to use.
+         * @param classFileVersion The class file version to use.
+         * @param plugin           The build plugins to apply as a Java agent.
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(EntryPoint entryPoint, ClassFileVersion classFileVersion, Plugin... plugin) {
@@ -7724,8 +7727,9 @@ public interface AgentBuilder {
         /**
          * Creates an {@link AgentBuilder} that realizes the provided build plugins.
          *
-         * @param entryPoint The build entry point to use.
-         * @param plugins    The build plugins to apply as a Java agent.
+         * @param entryPoint       The build entry point to use.
+         * @param classFileVersion The class file version to use.
+         * @param plugins          The build plugins to apply as a Java agent.
          * @return An appropriate agent builder.
          */
         public static AgentBuilder of(EntryPoint entryPoint, ClassFileVersion classFileVersion, List<? extends Plugin> plugins) {

@@ -55,8 +55,11 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
     protected String version;
 
-    @Parameter(defaultValue = "${maven.compiler.target}", required = false, readonly = true)
-    protected String javaVersion;
+    /**
+     * The Maven compiler target version.
+     */
+    @Parameter(defaultValue = "${maven.compiler.target}", readonly = true)
+    protected String javaVersionString;
 
     /**
      * <p>
@@ -269,9 +272,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Processing class files located in in: " + root);
             ByteBuddy byteBuddy;
             try {
-                byteBuddy = entryPoint.byteBuddy(javaVersion == null
+                byteBuddy = entryPoint.byteBuddy(javaVersionString == null
                         ? ClassFileVersion.ofThisVm()
-                        : ClassFileVersion.ofJavaVersion(javaVersion));
+                        : ClassFileVersion.ofJavaVersionString(javaVersionString));
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }

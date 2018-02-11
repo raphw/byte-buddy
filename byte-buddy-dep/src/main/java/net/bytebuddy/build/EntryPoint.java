@@ -20,6 +20,7 @@ public interface EntryPoint {
     /**
      * Returns the Byte Buddy instance to use.
      *
+     * @param classFileVersion The class file version in which to represent class files.
      * @return The Byte Buddy instance to use.
      */
     ByteBuddy byteBuddy(ClassFileVersion classFileVersion);

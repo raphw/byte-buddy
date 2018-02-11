@@ -74,7 +74,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 10 (preliminary).
      */
-    public static final ClassFileVersion JAVA_V10 = new ClassFileVersion(Opcodes.V9);
+    public static final ClassFileVersion JAVA_V10 = new ClassFileVersion(Opcodes.V9 + 1);
 
     /**
      * A version locator for the executing JVM.
@@ -109,29 +109,35 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return classFileVersion;
     }
 
-    public static ClassFileVersion ofJavaVersion(String javaVersion) {
-        if (javaVersion.equals("1.0") || javaVersion.equals("1.1")) {
+    /**
+     * Returns the Java class file by its representation by a version string in accordance to the formats known to <i>javac</i>.
+     *
+     * @param javaVersionString The Java version string.
+     * @return The appropriate class file version.
+     */
+    public static ClassFileVersion ofJavaVersionString(String javaVersionString) {
+        if (javaVersionString.equals("1.1")) {
             return JAVA_V1;
-        } else if (javaVersion.equals("1.2")) {
+        } else if (javaVersionString.equals("1.2")) {
             return JAVA_V2;
-        } else if (javaVersion.equals("1.3")) {
+        } else if (javaVersionString.equals("1.3")) {
             return JAVA_V3;
-        } else if (javaVersion.equals("1.4")) {
+        } else if (javaVersionString.equals("1.4")) {
             return JAVA_V4;
-        } else if (javaVersion.equals("1.5")) {
+        } else if (javaVersionString.equals("1.5") || javaVersionString.equals("5")) {
             return JAVA_V5;
-        } else if (javaVersion.equals("1.6")) {
+        } else if (javaVersionString.equals("1.6") || javaVersionString.equals("6")) {
             return JAVA_V6;
-        } else if (javaVersion.equals("1.7")) {
+        } else if (javaVersionString.equals("1.7") || javaVersionString.equals("7")) {
             return JAVA_V7;
-        } else if (javaVersion.equals("1.8")) {
+        } else if (javaVersionString.equals("1.8") || javaVersionString.equals("8")) {
             return JAVA_V8;
-        } else if (javaVersion.equals("9")) {
+        } else if (javaVersionString.equals("1.9") || javaVersionString.equals("9")) {
             return JAVA_V9;
-        } else if (javaVersion.equals("10")) {
+        } else if (javaVersionString.equals("1.10") || javaVersionString.equals("10")) {
             return JAVA_V10;
         } else {
-            throw new IllegalArgumentException("Unknown Java version string: " + javaVersion);
+            throw new IllegalArgumentException("Unknown Java version string: " + javaVersionString);
         }
     }
 
