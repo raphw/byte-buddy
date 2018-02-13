@@ -1,5 +1,27 @@
 package net.bytebuddy.build.maven;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.maven.Maven;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.RemoteRepository;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
@@ -11,21 +33,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.*;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.repository.RemoteRepository;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -56,10 +63,35 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected String version;
 
     /**
-     * The Maven compiler target version.
+     * The Maven project.
      */
-    @Parameter(defaultValue = "${maven.compiler.target}", readonly = true)
-    protected String javaVersionString;
+    @Parameter(defaultValue = "${project}", readonly = true)
+    protected MavenProject project;
+
+    /**
+     * Returns the Maven compiler target version.
+     * ${maven.compiler.target}
+     * @return java target of the maven compiler plugin
+     */
+    protected String getJavaVersionString() {
+      MavenProject currentProject = this.project;
+        do{
+          for (org.apache.maven.model.Plugin plugin : project.getPluginManagement().getPlugins()) {
+            if("maven-compiler-plugin".equals(plugin.getArtifactId())){
+              return ""+ plugin.getConfiguration();
+            }
+          }
+          for (org.apache.maven.model.Plugin plugin : project.getBuildPlugins()) {
+            if("maven-compiler-plugin".equals(plugin.getArtifactId())){
+              return ""+ plugin.getConfiguration();
+            }
+          }
+
+          currentProject = this.project.getParent();
+        }while (currentProject != null);
+
+       return null;
+    }
 
     /**
      * <p>
@@ -219,16 +251,16 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                 String plugin = transformation.getPlugin();
                 try {
                     plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version)))
-                            .getDeclaredConstructor()
-                            .newInstance());
+                      .getDeclaredConstructor()
+                      .newInstance());
                     getLog().info("Created plugin: " + plugin);
                 } catch (Exception exception) {
                     throw new MojoExecutionException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
             EntryPoint entryPoint = (initialization == null
-                    ? Initialization.makeDefault()
-                    : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version);
+              ? Initialization.makeDefault()
+              : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version);
             getLog().info("Resolved entry point: " + entryPoint);
             ExecutionStatus transformStatus = transform(root, entryPoint, classPath, plugins);
             if (transformStatus.failed()) {
@@ -252,42 +284,43 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @return transformation execution status
      */
     private ExecutionStatus transform(File root,
-                           EntryPoint entryPoint,
-                           List<? extends String> classPath,
-                           List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
+                                      EntryPoint entryPoint,
+                                      List<? extends String> classPath,
+                                      List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size() + 1);
         classFileLocators.add(new ClassFileLocator.ForFolder(root));
         for (String target : classPath) {
             File artifact = new File(target);
             classFileLocators.add(artifact.isFile()
-                    ? ClassFileLocator.ForJarFile.of(artifact)
-                    : new ClassFileLocator.ForFolder(artifact));
+              ? ClassFileLocator.ForJarFile.of(artifact)
+              : new ClassFileLocator.ForFolder(artifact));
         }
         ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
         try {
             TypePool typePool = new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Simple(),
-                    classFileLocator,
-                    TypePool.Default.ReaderMode.FAST,
-                    TypePool.ClassLoading.ofBootPath());
+              classFileLocator,
+              TypePool.Default.ReaderMode.FAST,
+              TypePool.ClassLoading.ofBootPath());
             getLog().info("Processing class files located in in: " + root);
             ByteBuddy byteBuddy;
             try {
+                final String javaVersionString = getJavaVersionString();
                 byteBuddy = entryPoint.byteBuddy(javaVersionString == null
-                        ? ClassFileVersion.ofThisVm()
-                        : ClassFileVersion.ofJavaVersionString(javaVersionString));
+                  ? ClassFileVersion.ofThisVm()
+                  : ClassFileVersion.ofJavaVersionString(javaVersionString));
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
             ExecutionStatus processDirectoryStatus = processDirectory(root,
-                    root,
-                    byteBuddy,
-                    entryPoint,
-                    suffix == null || suffix.isEmpty()
-                            ? MethodNameTransformer.Suffixing.withRandomSuffix()
-                            : new MethodNameTransformer.Suffixing(suffix),
-                    classFileLocator,
-                    typePool,
-                    plugins);
+              root,
+              byteBuddy,
+              entryPoint,
+              suffix == null || suffix.isEmpty()
+                ? MethodNameTransformer.Suffixing.withRandomSuffix()
+                : new MethodNameTransformer.Suffixing(suffix),
+              classFileLocator,
+              typePool,
+              plugins);
             return processDirectoryStatus;
         } finally {
             classFileLocator.close();
@@ -310,13 +343,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @return execution status of directory processing
      */
     private ExecutionStatus processDirectory(File root,
-                                  File folder,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+                                             File folder,
+                                             ByteBuddy byteBuddy,
+                                             EntryPoint entryPoint,
+                                             MethodNameTransformer methodNameTransformer,
+                                             ClassFileLocator classFileLocator,
+                                             TypePool typePool,
+                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         File[] file = folder.listFiles();
         Set<ExecutionStatus> overallStatus = new HashSet<ExecutionStatus>();
         if (file != null) {
@@ -326,13 +359,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     overallStatus.add(dirProcessStatus);
                 } else if (aFile.isFile() && aFile.getName().endsWith(CLASS_FILE_EXTENSION)) {
                     ExecutionStatus fileProcessStatus = processClassFile(root,
-                            root.toURI().relativize(aFile.toURI()).toString(),
-                            byteBuddy,
-                            entryPoint,
-                            methodNameTransformer,
-                            classFileLocator,
-                            typePool,
-                            plugins);
+                      root.toURI().relativize(aFile.toURI()).toString(),
+                      byteBuddy,
+                      entryPoint,
+                      methodNameTransformer,
+                      classFileLocator,
+                      typePool,
+                      plugins);
                     overallStatus.add(fileProcessStatus);
                 } else {
                     getLog().debug("Skipping ignored file: " + aFile);
@@ -358,13 +391,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @return execution status of class processing
      */
     private ExecutionStatus processClassFile(File root,
-                                  String file,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+                                             String file,
+                                             ByteBuddy byteBuddy,
+                                             EntryPoint entryPoint,
+                                             MethodNameTransformer methodNameTransformer,
+                                             ClassFileLocator classFileLocator,
+                                             TypePool typePool,
+                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         getLog().debug("Processing class file: " + typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
@@ -419,9 +452,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * A Byte Buddy plugin that transforms a project's production class files.
      */
     @Mojo(name = "transform",
-            defaultPhase = LifecyclePhase.PROCESS_CLASSES,
-            threadSafe = true,
-            requiresDependencyResolution = ResolutionScope.COMPILE)
+      defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+      threadSafe = true,
+      requiresDependencyResolution = ResolutionScope.COMPILE)
     public static class ForProductionTypes extends ByteBuddyMojo {
 
         /**
@@ -451,9 +484,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * A Byte Buddy plugin that transforms a project's test class files.
      */
     @Mojo(name = "transform-test",
-            defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES,
-            threadSafe = true,
-            requiresDependencyResolution = ResolutionScope.TEST)
+      defaultPhase = LifecyclePhase.PROCESS_TEST_CLASSES,
+      threadSafe = true,
+      requiresDependencyResolution = ResolutionScope.TEST)
     public static class ForTestTypes extends ByteBuddyMojo {
 
         /**
