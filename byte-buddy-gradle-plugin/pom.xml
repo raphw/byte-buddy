@@ -75,7 +75,7 @@
                             <args>
                                 <arg>--info</arg>
                             </args>
-                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <gradleDistributionFile>./byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                     <execution>
@@ -96,7 +96,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <gradleDistributionFile>./byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                 </executions>
