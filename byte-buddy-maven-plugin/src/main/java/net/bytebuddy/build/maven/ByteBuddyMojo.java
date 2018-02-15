@@ -69,7 +69,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected MavenProject project;
 
     /**
-     * Returns the Maven compiler target version.
+     * Returns the maven compiler target java version.
      *
      * @return java target of the maven compiler plugin
      */
@@ -80,7 +80,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             if (target != null) {
                 return target; // prefer the property if present
             }
-            //look at the build plugins and the plugin manahement after that
+            //look at the build plugins and the pluginManagement after that
             List<org.apache.maven.model.Plugin> plugins = new ArrayList<org.apache.maven.model.Plugin>(currentProject.getBuildPlugins());
             plugins.addAll(currentProject.getPluginManagement().getPlugins());
             for (org.apache.maven.model.Plugin plugin : plugins) {
