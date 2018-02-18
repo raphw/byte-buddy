@@ -57,34 +57,6 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-            <!-- Find the root directory -->
-            <plugin>
-                <groupId>org.commonjava.maven.plugins</groupId>
-                <artifactId>directory-maven-plugin</artifactId>
-                <version>${version.plugin.directory}</version>
-                <executions>
-                    <execution>
-                        <id>gradle-clean-property</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>highest-basedir</goal>
-                        </goals>
-                        <configuration>
-                            <property>main.basedir</property>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>gradle-compile-property</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>highest-basedir</goal>
-                        </goals>
-                        <configuration>
-                            <property>main.basedir</property>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
 
             <!-- Tie Maven executions into the Gradle life-cycle. -->
             <plugin>
@@ -105,7 +77,7 @@
                             <args>
                                 <arg>--info</arg>
                             </args>
-                            <gradleDistributionFile>${main.basedir}/byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <gradleDistributionFile>${project.basedir}/byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                     <execution>
@@ -126,7 +98,7 @@
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
                             </jvmArgs>
-                            <gradleDistributionFile>${main.basedir}/byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <gradleDistributionFile>${project.basedir}/byte-buddy-gradle-plugin/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
                         </configuration>
                     </execution>
                 </executions>
