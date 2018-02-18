@@ -3,28 +3,24 @@ jobs:
   jdk6:
     docker:
       - image: openjdk:6-jdk
-    working_directory: ~/jdk6
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -Dnet.bytebuddy.test.ci=true
   jdk7:
     docker:
       - image: openjdk:7-jdk
-    working_directory: ~/jdk7
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -Pjava7 -Dnet.bytebuddy.test.ci=true
   jdk8:
     docker:
       - image: openjdk:8-jdk
-    working_directory: ~/jdk8
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true
   coverage:
     docker:
       - image: openjdk:8-jdk
-    working_directory: ~/coverage
     steps:
       - checkout
       - run: ./mvnw jacoco:prepare-agent test jacoco:report coveralls:report -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -DrepoToken=$COVERALLS_REPO_TOKEN
