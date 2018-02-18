@@ -21,8 +21,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -256,22 +255,41 @@ public class ByteBuddyMojoTest {
     }
 
     private void execute(String goal, String target) throws Exception {
-        Mojo mojo = mojoRule.lookupMojo(goal, new File("src/test/resources/net/bytebuddy/test/" + target + ".pom.xml"));
-        if (goal.equals("transform")) {
-            mojoRule.setVariableValueToObject(mojo, "outputDirectory", project.getAbsolutePath());
-            mojoRule.setVariableValueToObject(mojo, "compileClasspathElements", Collections.emptyList());
-        } else if (goal.equals("transform-test")) {
-            mojoRule.setVariableValueToObject(mojo, "testOutputDirectory", project.getAbsolutePath());
-            mojoRule.setVariableValueToObject(mojo, "testClasspathElements", Collections.emptyList());
-        } else {
-            throw new AssertionError("Unknown goal: " + goal);
+        InputStream in = ByteBuddyMojoTest.class.getResourceAsStream("/net/bytebuddy/test/" + target + ".pom.xml");
+        if (in == null) {
+            throw new AssertionError("Cannot find resource for: " + target);
         }
-        mojoRule.setVariableValueToObject(mojo, "repositorySystem", repositorySystem);
-        mojoRule.setVariableValueToObject(mojo, "groupId", FOO);
-        mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
-        mojoRule.setVariableValueToObject(mojo, "version", QUX);
-        mojo.setLog(new SilentLog());
-        mojo.execute();
+        try {
+            File pom = File.createTempFile("maven", ".pom");
+            OutputStream out = new FileOutputStream(pom);
+            try {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, length);
+                }
+            } finally {
+                out.close();
+            }
+            Mojo mojo = mojoRule.lookupMojo(goal, pom);
+            if (goal.equals("transform")) {
+                mojoRule.setVariableValueToObject(mojo, "outputDirectory", project.getAbsolutePath());
+                mojoRule.setVariableValueToObject(mojo, "compileClasspathElements", Collections.emptyList());
+            } else if (goal.equals("transform-test")) {
+                mojoRule.setVariableValueToObject(mojo, "testOutputDirectory", project.getAbsolutePath());
+                mojoRule.setVariableValueToObject(mojo, "testClasspathElements", Collections.emptyList());
+            } else {
+                throw new AssertionError("Unknown goal: " + goal);
+            }
+            mojoRule.setVariableValueToObject(mojo, "repositorySystem", repositorySystem);
+            mojoRule.setVariableValueToObject(mojo, "groupId", FOO);
+            mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
+            mojoRule.setVariableValueToObject(mojo, "version", QUX);
+            mojo.setLog(new SilentLog());
+            mojo.execute();
+        } finally {
+            in.close();
+        }
     }
 
     private Collection<File> addClass(String name) throws IOException {

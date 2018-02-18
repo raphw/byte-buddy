@@ -278,7 +278,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
-            ExecutionStatus processDirectoryStatus = processDirectory(root,
+            return processDirectory(root,
                     root,
                     byteBuddy,
                     entryPoint,
@@ -288,7 +288,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     classFileLocator,
                     typePool,
                     plugins);
-            return processDirectoryStatus;
         } finally {
             classFileLocator.close();
         }
