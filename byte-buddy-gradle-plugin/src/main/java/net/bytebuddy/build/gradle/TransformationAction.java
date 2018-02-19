@@ -133,9 +133,14 @@ public class TransformationAction implements Action<Task> {
             JavaPluginConvention convention = (JavaPluginConvention) project.getConvention().getPlugins().get("java");
             ByteBuddy byteBuddy;
             try {
-                byteBuddy = entryPoint.byteBuddy(convention == null
-                        ? ClassFileVersion.ofThisVm()
-                        : ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion())));
+                if (convention == null) {
+                    ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
+                    project.getLogger().warn("Could not locate Java target version, build is JDK dependant: {}", classFileVersion.getMajorVersion());
+                    byteBuddy = entryPoint.byteBuddy(classFileVersion);
+                } else {
+                    project.getLogger().debug("Java version detected: {}", convention.getTargetCompatibility().getMajorVersion());
+                    byteBuddy = entryPoint.byteBuddy(ClassFileVersion.ofJavaVersion(Integer.parseInt(convention.getTargetCompatibility().getMajorVersion())));
+                }
             } catch (Throwable throwable) {
                 throw new GradleException("Cannot create Byte Buddy instance", throwable);
             }

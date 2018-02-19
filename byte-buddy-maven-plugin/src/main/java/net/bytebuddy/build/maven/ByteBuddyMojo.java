@@ -11,6 +11,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.CompoundList;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -23,11 +24,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -62,36 +59,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      */
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
-
-    /**
-     * Returns the maven compiler target java version.
-     *
-     * @return java target of the maven compiler plugin
-     */
-    protected String getJavaVersionString() {
-      MavenProject currentProject = this.project;
-        do {
-            String target = currentProject.getProperties().getProperty("maven.compiler.target");
-            if (target != null) {
-                return target; // prefer the property if present
-            }
-            //look at the build plugins and the pluginManagement after that
-            List<org.apache.maven.model.Plugin> plugins = new ArrayList<org.apache.maven.model.Plugin>(currentProject.getBuildPlugins());
-            plugins.addAll(currentProject.getPluginManagement().getPlugins());
-            for (org.apache.maven.model.Plugin plugin : plugins) {
-                if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
-                    if (plugin.getConfiguration() instanceof Xpp3Dom) {
-                        Xpp3Dom targetNode = ((Xpp3Dom) plugin.getConfiguration()).getChild("target");
-                        if (targetNode != null) {
-                            return targetNode.getValue();
-                        }
-                    }
-                }
-            }
-            currentProject = this.project.getParent();
-        }while (currentProject != null);
-        return null;
-    }
 
     /**
      * <p>
@@ -278,15 +245,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param entryPoint The transformation's entry point.
      * @param classPath  A list of class path elements expected by the processed classes.
      * @param plugins    The plugins to apply.
+     * @return The transformation execution status.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      * @throws IOException            If an I/O exception occurs.
-     * @return transformation execution status
      */
     private ExecutionStatus transform(File root,
-                           EntryPoint entryPoint,
-                           List<? extends String> classPath,
-                           List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
+                                      EntryPoint entryPoint,
+                                      List<? extends String> classPath,
+                                      List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size() + 1);
         classFileLocators.add(new ClassFileLocator.ForFolder(root));
         for (String target : classPath) {
@@ -304,10 +271,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Processing class files located in in: " + root);
             ByteBuddy byteBuddy;
             try {
-                String javaVersionString = getJavaVersionString();
-                byteBuddy = entryPoint.byteBuddy(javaVersionString == null
-                        ? ClassFileVersion.ofThisVm()
-                        : ClassFileVersion.ofJavaVersionString(javaVersionString));
+                String javaVersionString = findJavaVersionString(project);
+                if (javaVersionString == null) {
+                    ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
+                    getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
+                    byteBuddy = entryPoint.byteBuddy(classFileVersion);
+                } else {
+                    getLog().debug("Java version detected: " + javaVersionString);
+                    byteBuddy = entryPoint.byteBuddy(ClassFileVersion.ofJavaVersionString(javaVersionString));
+                }
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
@@ -337,18 +309,18 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
+     * @return execution status of directory processing
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
-     * @return execution status of directory processing
      */
     private ExecutionStatus processDirectory(File root,
-                                  File folder,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+                                             File folder,
+                                             ByteBuddy byteBuddy,
+                                             EntryPoint entryPoint,
+                                             MethodNameTransformer methodNameTransformer,
+                                             ClassFileLocator classFileLocator,
+                                             TypePool typePool,
+                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         File[] file = folder.listFiles();
         Set<ExecutionStatus> overallStatus = new HashSet<ExecutionStatus>();
         if (file != null) {
@@ -385,18 +357,18 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
+     * @return execution status of class processing
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
-     * @return execution status of class processing
      */
     private ExecutionStatus processClassFile(File root,
-                                  String file,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+                                             String file,
+                                             ByteBuddy byteBuddy,
+                                             EntryPoint entryPoint,
+                                             MethodNameTransformer methodNameTransformer,
+                                             ClassFileLocator classFileLocator,
+                                             TypePool typePool,
+                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         getLog().debug("Processing class file: " + typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
@@ -445,6 +417,33 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().debug("Skipping non-transformed type: " + typeName);
         }
         return new ExecutionStatus.Successful();
+    }
+
+    /**
+     * Makes a best effort of locating the configured Java target version.
+     *
+     * @param project The relevant Maven project.
+     * @return The Java version string of the configured build target version or {@code null} if no explicit configuration was detected.
+     */
+    private static String findJavaVersionString(MavenProject project) {
+        while (project != null) {
+            String target = project.getProperties().getProperty("maven.compiler.target");
+            if (target != null) {
+                return target;
+            }
+            for (org.apache.maven.model.Plugin plugin : CompoundList.of(project.getBuildPlugins(), project.getPluginManagement().getPlugins())) {
+                if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
+                    if (plugin.getConfiguration() instanceof Xpp3Dom) {
+                        Xpp3Dom node = ((Xpp3Dom) plugin.getConfiguration()).getChild("target");
+                        if (node != null) {
+                            return node.getValue();
+                        }
+                    }
+                }
+            }
+            project = project.getParent();
+        }
+        return null;
     }
 
     /**
