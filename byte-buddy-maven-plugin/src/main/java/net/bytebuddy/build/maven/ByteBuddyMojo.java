@@ -15,6 +15,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -56,10 +58,40 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected String version;
 
     /**
-     * The Maven compiler target version.
+     * The Maven project.
      */
-    @Parameter(defaultValue = "${maven.compiler.target}", readonly = true)
-    protected String javaVersionString;
+    @Parameter(defaultValue = "${project}", readonly = true)
+    protected MavenProject project;
+
+    /**
+     * Returns the maven compiler target java version.
+     *
+     * @return java target of the maven compiler plugin
+     */
+    protected String getJavaVersionString() {
+      MavenProject currentProject = this.project;
+        do {
+            String target = currentProject.getProperties().getProperty("maven.compiler.target");
+            if (target != null) {
+                return target; // prefer the property if present
+            }
+            //look at the build plugins and the pluginManagement after that
+            List<org.apache.maven.model.Plugin> plugins = new ArrayList<org.apache.maven.model.Plugin>(currentProject.getBuildPlugins());
+            plugins.addAll(currentProject.getPluginManagement().getPlugins());
+            for (org.apache.maven.model.Plugin plugin : plugins) {
+                if ("maven-compiler-plugin".equals(plugin.getArtifactId())) {
+                    if (plugin.getConfiguration() instanceof Xpp3Dom) {
+                        Xpp3Dom targetNode = ((Xpp3Dom) plugin.getConfiguration()).getChild("target");
+                        if (targetNode != null) {
+                            return targetNode.getValue();
+                        }
+                    }
+                }
+            }
+            currentProject = this.project.getParent();
+        }while (currentProject != null);
+        return null;
+    }
 
     /**
      * <p>
@@ -272,6 +304,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             getLog().info("Processing class files located in in: " + root);
             ByteBuddy byteBuddy;
             try {
+                String javaVersionString = getJavaVersionString();
                 byteBuddy = entryPoint.byteBuddy(javaVersionString == null
                         ? ClassFileVersion.ofThisVm()
                         : ClassFileVersion.ofJavaVersionString(javaVersionString));
