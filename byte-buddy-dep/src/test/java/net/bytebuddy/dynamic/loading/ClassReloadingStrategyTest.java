@@ -40,14 +40,14 @@ public class ClassReloadingStrategyTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testFromAgentClassReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
@@ -68,7 +68,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testFromAgentClassWithAuxiliaryReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
@@ -92,7 +92,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testClassRedefinitionRenamingWithStackMapFrames() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
@@ -115,7 +115,7 @@ public class ClassReloadingStrategyTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(), ClassReloadingStrategy.Strategy.REDEFINITION);
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent(ClassReloadingStrategy.Strategy.REDEFINITION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -136,7 +136,7 @@ public class ClassReloadingStrategyTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(), ClassReloadingStrategy.Strategy.RETRANSFORMATION);
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent(ClassReloadingStrategy.Strategy.RETRANSFORMATION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -233,9 +233,9 @@ public class ClassReloadingStrategyTest {
     @Test
     public void testResetEmptyNoEffectImplicitLocator() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassReloadingStrategy.of(instrumentation).reset();
-        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
     }
 
@@ -243,9 +243,9 @@ public class ClassReloadingStrategyTest {
     public void testResetEmptyNoEffect() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassReloadingStrategy.of(instrumentation).reset(classFileLocator);
-        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(classFileLocator);
     }

@@ -110,15 +110,42 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      * @return A suitable class reloading strategy.
      */
     public static ClassReloadingStrategy of(Instrumentation instrumentation) {
-        Strategy strategy;
-        if (instrumentation.isRedefineClassesSupported()) {
-            strategy = Strategy.REDEFINITION;
-        } else if (instrumentation.isRetransformClassesSupported()) {
-            strategy = Strategy.RETRANSFORMATION;
+        if (instrumentation.isRetransformClassesSupported()) {
+            return new ClassReloadingStrategy(instrumentation, Strategy.RETRANSFORMATION);
+        } else if (instrumentation.isRedefineClassesSupported()) {
+            return new ClassReloadingStrategy(instrumentation, Strategy.REDEFINITION);
         } else {
-            throw new IllegalArgumentException("Instrumentation does not support manipulation of loaded classes: " + instrumentation);
+            throw new IllegalArgumentException("Instrumentation does not support reloading of classes: " + instrumentation);
         }
-        return new ClassReloadingStrategy(instrumentation, strategy);
+    }
+
+    /**
+     * <p>
+     * Obtains a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy} from an installed Byte Buddy agent. This
+     * agent must be installed either by adding the {@code byte-buddy-agent.jar} when starting up the JVM by
+     * </p>
+     * <p>
+     * <code>
+     * java -javaagent:byte-buddy-agent.jar -jar app.jar
+     * </code>
+     * </p>
+     * or after the start up using the Attach API. A convenience installer for the OpenJDK is provided by the
+     * {@code ByteBuddyAgent} within the {@code byte-buddy-agent} module. The strategy is determined by the agent's support
+     * for redefinition where are retransformation is prefered over a redefinition.
+     *
+     * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
+     */
+    public static ClassReloadingStrategy fromInstalledAgent() {
+        try {
+            return ClassReloadingStrategy.of((Instrumentation) ClassLoader.getSystemClassLoader()
+                    .loadClass(INSTALLER_TYPE)
+                    .getMethod(INSTRUMENTATION_GETTER)
+                    .invoke(STATIC_MEMBER));
+        } catch (RuntimeException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+        }
     }
 
     /**
@@ -134,14 +161,15 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      * or after the start up using the Attach API. A convenience installer for the OpenJDK is provided by the
      * {@code ByteBuddyAgent} within the {@code byte-buddy-agent} module.
      *
+     * @param strategy The strategy to use.
      * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
      */
-    public static ClassReloadingStrategy fromInstalledAgent() {
+    public static ClassReloadingStrategy fromInstalledAgent(Strategy strategy) {
         try {
-            return ClassReloadingStrategy.of((Instrumentation) ClassLoader.getSystemClassLoader()
+            return new ClassReloadingStrategy((Instrumentation) ClassLoader.getSystemClassLoader()
                     .loadClass(INSTALLER_TYPE)
                     .getMethod(INSTRUMENTATION_GETTER)
-                    .invoke(STATIC_MEMBER));
+                    .invoke(STATIC_MEMBER), strategy);
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception exception) {
