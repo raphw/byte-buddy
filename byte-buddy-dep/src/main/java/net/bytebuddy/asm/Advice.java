@@ -3605,14 +3605,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private final MethodDescription instrumentedMethod;
 
             /**
-             * The list of types that the instrumented method requires in addition to the method parameters.
+             * A list of virtual method arguments that are available before the instrumented method is executed.
              */
-            private final TypeList requiredTypes;
+            private final TypeList entryTypes;
 
             /**
-             * A list of types that are yielded by the instrumented method and available to the exit advice.
+             * A list of virtual method arguments that are available after the instrumented method has completed.
              */
-            private final TypeList yieldedTypes;
+            private final TypeList exitTypes;
 
             /**
              * The maximum stack size required by a visited advice method.
@@ -3628,37 +3628,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a new default meta data handler that recomputes the space requirements of an instrumented method.
              *
              * @param instrumentedMethod The instrumented method.
-             * @param requiredTypes      The types this meta data handler expects to be available additionally to the instrumented method's parameters.
-             * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
+             * @param entryTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              */
-            protected Default(MethodDescription instrumentedMethod, TypeList requiredTypes, TypeList yieldedTypes) {
+            protected Default(MethodDescription instrumentedMethod, TypeList entryTypes, TypeList exitTypes) {
                 this.instrumentedMethod = instrumentedMethod;
-                this.requiredTypes = requiredTypes;
-                this.yieldedTypes = yieldedTypes;
+                this.entryTypes = entryTypes;
+                this.exitTypes = exitTypes;
             }
 
             /**
              * Creates a method size handler applicable for the given instrumented method.
              *
              * @param instrumentedMethod The instrumented method.
-             * @param requiredTypes      The list of types that the instrumented method requires in addition to the method parameters.
-             * @param yieldedTypes       A list of types that are yielded by the instrumented method and available to the exit advice.
+             * @param entryTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param writerFlags        The flags supplied to the ASM class writer.
              * @return An appropriate method size handler.
              */
             protected static MethodSizeHandler.ForInstrumentedMethod of(MethodDescription instrumentedMethod,
-                                                                        List<? extends TypeDescription> requiredTypes,
-                                                                        List<? extends TypeDescription> yieldedTypes,
+                                                                        List<? extends TypeDescription> entryTypes,
+                                                                        List<? extends TypeDescription> exitTypes,
                                                                         int writerFlags) {
                 return (writerFlags & (ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES)) != 0
                         ? NoOp.INSTANCE
-                        : new Default(instrumentedMethod, new TypeList.Explicit(requiredTypes), new TypeList.Explicit(yieldedTypes));
+                        : new Default(instrumentedMethod, new TypeList.Explicit(entryTypes), new TypeList.Explicit(exitTypes));
             }
 
             @Override
             public MethodSizeHandler.ForAdvice bindEntry(MethodDescription.InDefinedShape adviceMethod) {
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
-                return new ForAdvice(adviceMethod, new TypeList.Empty(), new TypeList.Explicit(requiredTypes));
+                return new ForAdvice(adviceMethod, new TypeList.Empty(), new TypeList.Explicit(entryTypes));
             }
 
             @Override
@@ -3666,7 +3666,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().maximum(skipThrowable
                         ? StackSize.ZERO
                         : StackSize.SINGLE).getSize());
-                return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(requiredTypes, yieldedTypes)), new TypeList.Empty());
+                return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(entryTypes, exitTypes)), new TypeList.Empty());
             }
 
             @Override
@@ -3677,8 +3677,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public int compoundLocalVariableLength(int localVariableLength) {
                 return Math.max(this.localVariableLength, localVariableLength
-                        + requiredTypes.getStackSize()
-                        + yieldedTypes.getStackSize());
+                        + entryTypes.getStackSize()
+                        + exitTypes.getStackSize());
             }
 
             @Override
@@ -3697,14 +3697,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final MethodDescription.InDefinedShape adviceMethod;
 
                 /**
-                 * A list of types required by this advice method.
+                 * A list of virtual method arguments that are available before the instrumented method is executed.
                  */
-                private final TypeList requiredTypes;
+                private final TypeList entryTypes;
 
                 /**
-                 * A list of types yielded by this advice method.
+                 * A list of virtual method arguments that are available after the instrumented method has completed.
                  */
-                private final TypeList yieldedTypes;
+                private final TypeList exitTypes;
 
                 /**
                  * The padding that this advice method requires additionally to its computed size.
@@ -3714,14 +3714,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new method size handler for an advice method.
                  *
-                 * @param adviceMethod  The advice method.
-                 * @param requiredTypes A list of types required by this advice method.
-                 * @param yieldedTypes  A list of types yielded by this advice method.
+                 * @param adviceMethod The advice method.
+                 * @param entryTypes   A list of virtual method arguments that are available before the instrumented method is executed.
+                 * @param exitTypes    A list of virtual method arguments that are available after the instrumented method has completed.
                  */
-                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod, TypeList requiredTypes, TypeList yieldedTypes) {
+                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod, TypeList entryTypes, TypeList exitTypes) {
                     this.adviceMethod = adviceMethod;
-                    this.requiredTypes = requiredTypes;
-                    this.yieldedTypes = yieldedTypes;
+                    this.entryTypes = entryTypes;
+                    this.exitTypes = exitTypes;
                     stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
                 }
 
@@ -3741,8 +3741,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Default.this.localVariableLength = Math.max(Default.this.localVariableLength, localVariableLength
                             - adviceMethod.getStackSize()
                             + instrumentedMethod.getStackSize()
-                            + requiredTypes.getStackSize()
-                            + yieldedTypes.getStackSize());
+                            + entryTypes.getStackSize()
+                            + exitTypes.getStackSize());
                 }
 
                 @Override
@@ -3901,14 +3901,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected final MethodDescription instrumentedMethod;
 
             /**
-             * A list of intermediate types to be considered as part of the instrumented method's steady signature.
+             * A list of virtual method arguments that are available before the instrumented method is executed.
              */
-            protected final TypeList requiredTypes;
+            protected final TypeList entryTypes;
 
             /**
-             * The types that are expected to be added after the instrumented method returns.
+             * A list of virtual method arguments that are available after the instrumented method has completed.
              */
-            protected final TypeList yieldedTypes;
+            protected final TypeList exitTypes;
 
             /**
              * {@code true} if the meta data handler is expected to expand its frames.
@@ -3925,19 +3925,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
-             * @param requiredTypes      A list of intermediate types to be considered as part of the instrumented method's steady signature.
-             * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
+             * @param entryTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
              */
             protected Default(TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
-                              TypeList requiredTypes,
-                              TypeList yieldedTypes,
+                              TypeList entryTypes,
+                              TypeList exitTypes,
                               boolean expandFrames) {
                 this.instrumentedType = instrumentedType;
                 this.instrumentedMethod = instrumentedMethod;
-                this.requiredTypes = requiredTypes;
-                this.yieldedTypes = yieldedTypes;
+                this.entryTypes = entryTypes;
+                this.exitTypes = exitTypes;
                 this.expandFrames = expandFrames;
             }
 
@@ -3946,8 +3946,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
-             * @param requiredTypes      A list of intermediate types to be considered as part of the instrumented method's steady signature.
-             * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
+             * @param entryTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param classFileVersion   The instrumented type's class file version.
              * @param writerFlags        The flags supplied to the ASM writer.
              * @param readerFlags        The reader flags supplied to the ASM reader.
@@ -3955,14 +3955,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected static ForInstrumentedMethod of(TypeDescription instrumentedType,
                                                       MethodDescription instrumentedMethod,
-                                                      List<? extends TypeDescription> requiredTypes,
-                                                      List<? extends TypeDescription> yieldedTypes,
+                                                      List<? extends TypeDescription> entryTypes,
+                                                      List<? extends TypeDescription> exitTypes,
                                                       ClassFileVersion classFileVersion,
                                                       int writerFlags,
                                                       int readerFlags) {
                 return (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)
                         ? NoOp.INSTANCE
-                        : new Default(instrumentedType, instrumentedMethod, new TypeList.Explicit(requiredTypes), new TypeList.Explicit(yieldedTypes), (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                        : new Default(instrumentedType, instrumentedMethod, new TypeList.Explicit(entryTypes), new TypeList.Explicit(exitTypes), (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
             }
 
             /**
@@ -3991,12 +3991,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public StackMapFrameHandler.ForAdvice bindEntry(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, new TypeList.Empty(), requiredTypes, TranslationMode.ENTRY);
+                return new ForAdvice(adviceMethod, new TypeList.Empty(), entryTypes, TranslationMode.ENTRY);
             }
 
             @Override
             public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(requiredTypes, yieldedTypes)), new TypeList.Empty(), TranslationMode.EXIT);
+                return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(entryTypes, exitTypes)), new TypeList.Empty(), TranslationMode.EXIT);
             }
 
             @Override
@@ -4016,7 +4016,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 translateFrame(methodVisitor,
                         TranslationMode.COPY,
                         instrumentedMethod,
-                        requiredTypes,
+                        entryTypes,
                         type,
                         localVariableLength,
                         localVariable,
@@ -4112,7 +4112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
                     }
                 } else {
-                    injectFullFrame(methodVisitor, requiredTypes, instrumentedMethod.getReturnType().represents(void.class)
+                    injectFullFrame(methodVisitor, entryTypes, instrumentedMethod.getReturnType().represents(void.class)
                             ? Collections.<TypeDescription>emptyList()
                             : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
                 }
@@ -4123,7 +4123,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!expandFrames && currentFrameDivergence == 0) {
                     methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                 } else {
-                    injectFullFrame(methodVisitor, requiredTypes, Collections.singletonList(TypeDescription.THROWABLE));
+                    injectFullFrame(methodVisitor, entryTypes, Collections.singletonList(TypeDescription.THROWABLE));
                 }
             }
 
@@ -4133,15 +4133,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (secondary) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        Object[] local = new Object[yieldedTypes.size()];
+                        Object[] local = new Object[exitTypes.size()];
                         int index = 0;
-                        for (TypeDescription typeDescription : yieldedTypes) {
+                        for (TypeDescription typeDescription : exitTypes) {
                             local[index++] = toFrame(typeDescription);
                         }
                         methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                     }
                 } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
+                    injectFullFrame(methodVisitor, CompoundList.of(entryTypes, exitTypes), Collections.<TypeDescription>emptyList());
                 }
             }
 
@@ -4297,14 +4297,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
                 /**
-                 * A list of intermediate types to be considered as part of the instrumented method's steady signature.
+                 * A list of virtual method arguments that are available before the instrumented method is executed.
                  */
-                protected final TypeList requiredTypes;
+                protected final TypeList entryTypes;
 
                 /**
-                 * The types that this method yields as a result.
+                 * A list of virtual method arguments that are available after the instrumented method has completed.
                  */
-                private final TypeList yieldedTypes;
+                private final TypeList exitTypes;
 
                 /**
                  * The translation mode to apply for this advice method. Should be either {@link TranslationMode#ENTRY} or {@link TranslationMode#EXIT}.
@@ -4315,18 +4315,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new meta data handler for an advice method.
                  *
                  * @param adviceMethod    The method description for which frames are translated.
-                 * @param requiredTypes   A list of expected types to be considered as part of the instrumented method's steady signature.
-                 * @param yieldedTypes    The types that this method yields as a result.
+                 * @param entryTypes      A list of virtual method arguments that are available before the instrumented method is executed.
+                 * @param exitTypes       A list of virtual method arguments that are available after the instrumented method has completed.
                  * @param translationMode The translation mode to apply for this advice method. Should be
                  *                        either {@link TranslationMode#ENTRY} or {@link TranslationMode#EXIT}.
                  */
                 protected ForAdvice(MethodDescription.InDefinedShape adviceMethod,
-                                    TypeList requiredTypes,
-                                    TypeList yieldedTypes,
+                                    TypeList entryTypes,
+                                    TypeList exitTypes,
                                     TranslationMode translationMode) {
                     this.adviceMethod = adviceMethod;
-                    this.requiredTypes = requiredTypes;
-                    this.yieldedTypes = yieldedTypes;
+                    this.entryTypes = entryTypes;
+                    this.exitTypes = exitTypes;
                     this.translationMode = translationMode;
                 }
 
@@ -4340,7 +4340,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Default.this.translateFrame(methodVisitor,
                             translationMode,
                             adviceMethod,
-                            requiredTypes,
+                            entryTypes,
                             type,
                             localVariableLength,
                             localVariable,
@@ -4351,13 +4351,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        if (yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)) {
+                        if (exitTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, requiredTypes, yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, entryTypes, exitTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
@@ -4368,25 +4368,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, requiredTypes, Collections.singletonList(TypeDescription.THROWABLE));
+                        injectFullFrame(methodVisitor, entryTypes, Collections.singletonList(TypeDescription.THROWABLE));
                     }
                 }
 
                 @Override
                 public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
-                    if ((!expandFrames && currentFrameDivergence == 0 && yieldedTypes.size() < 4)) {
-                        if (secondary || yieldedTypes.isEmpty()) {
+                    if ((!expandFrames && currentFrameDivergence == 0 && exitTypes.size() < 4)) {
+                        if (secondary || exitTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
-                            Object[] local = new Object[yieldedTypes.size()];
+                            Object[] local = new Object[exitTypes.size()];
                             int index = 0;
-                            for (TypeDescription typeDescription : yieldedTypes) {
+                            for (TypeDescription typeDescription : exitTypes) {
                                 local[index++] = toFrame(typeDescription);
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, CompoundList.of(entryTypes, exitTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
             }
@@ -7217,7 +7217,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param instrumentedMethod    The instrumented method.
          * @param methodEnter           The method enter advice.
          * @param methodExit            The method exit advice.
-         * @param yieldedTypes          The types that are expected to be added after the instrumented method returns.
+         * @param exitTypes             A list of virtual method arguments that are available after the instrumented method has completed.
          * @param writerFlags           The ASM writer flags that were set.
          * @param readerFlags           The ASM reader flags that were set.
          */
@@ -7230,21 +7230,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 MethodDescription instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                 Dispatcher.Resolved.ForMethodExit methodExit,
-                                List<? extends TypeDescription> yieldedTypes,
+                                List<? extends TypeDescription> exitTypes,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM6, delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
-            List<TypeDescription> requiredTypes = methodEnter.getEnterType().represents(void.class)
+            List<TypeDescription> entryTypes = methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType().asErasure());
-            methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, requiredTypes, yieldedTypes, writerFlags);
+            methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, entryTypes, exitTypes, writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
-                    requiredTypes,
-                    yieldedTypes,
+                    entryTypes,
+                    exitTypes,
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
@@ -7481,7 +7481,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedMethod    A description of the instrumented method.
              * @param methodEnter           The dispatcher to be used for method entry.
              * @param methodExit            The dispatcher to be used for method exit.
-             * @param yieldedTypes          The types that are expected to be added after the instrumented method returns.
+             * @param exitTypes             A list of virtual method arguments that are available after the instrumented method has completed.
              * @param writerFlags           The ASM writer flags that were set.
              * @param readerFlags           The ASM reader flags that were set.
              */
@@ -7493,7 +7493,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                      MethodDescription instrumentedMethod,
                                      Dispatcher.Resolved.ForMethodEnter methodEnter,
                                      Dispatcher.Resolved.ForMethodExit methodExit,
-                                     List<? extends TypeDescription> yieldedTypes,
+                                     List<? extends TypeDescription> exitTypes,
                                      int writerFlags,
                                      int readerFlags) {
                 super(methodVisitor,
@@ -7505,7 +7505,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         instrumentedMethod,
                         methodEnter,
                         methodExit,
-                        yieldedTypes,
+                        exitTypes,
                         writerFlags,
                         readerFlags);
                 returnHandler = new Label();
