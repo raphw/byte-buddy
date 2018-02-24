@@ -46,6 +46,23 @@ public class AdviceInconsistentFrameTest {
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
+    public void testFrameDropImplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(new DropImplicitMethod())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(7)
     public void testFrameInconsistentThisParameter() throws Exception {
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
@@ -79,7 +96,6 @@ public class AdviceInconsistentFrameTest {
                 .make();
     }
 
-
     @SuppressWarnings("all")
     private static class TrivialAdvice {
 
@@ -104,6 +120,27 @@ public class AdviceInconsistentFrameTest {
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
+            methodVisitor.visitLdcInsn(BAR);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            return new Size(1, 2);
+        }
+    }
+
+    private static class DropImplicitMethod implements Implementation, ByteCodeAppender {
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return this;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            methodVisitor.visitFrame(Opcodes.F_CHOP, 1, new Object[0], 0, null);
             methodVisitor.visitLdcInsn(BAR);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);

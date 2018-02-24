@@ -4055,6 +4055,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         break;
                     case Opcodes.F_CHOP:
                         currentFrameDivergence -= localVariableLength;
+                        if (currentFrameDivergence < 0) {
+                            throw new IllegalStateException(methodDescription + " dropped " + Math.abs(currentFrameDivergence) + " implicit frames");
+                        }
                         break;
                     case Opcodes.F_FULL:
                     case Opcodes.F_NEW:
