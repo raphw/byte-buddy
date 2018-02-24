@@ -176,6 +176,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
+    private static final MethodDescription.InDefinedShape COPY_ARGUMENTS;
+
     /*
      * Extracts the annotation values for the enter and exit advice annotations.
      */
@@ -189,6 +191,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
+        COPY_ARGUMENTS = exit.filter(named("copyArguments")).getOnly();
     }
 
     /**
@@ -4938,6 +4941,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 TypeDescription getThrowable();
 
+                boolean isCopyArguments();
+
                 @Override
                 Bound.ForMethodExit bind(TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod,
@@ -5023,6 +5028,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public TypeDescription getThrowable() {
                 return NoExceptionHandler.DESCRIPTION;
+            }
+
+            @Override
+            public boolean isCopyArguments() {
+                return false;
             }
 
             @Override
@@ -5691,6 +5701,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDefinition enterType;
 
+                    private final boolean copyArguments;
+
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
@@ -5720,6 +5732,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
+                        copyArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(COPY_ARGUMENTS).resolve(Boolean.class);
                     }
 
                     /**
@@ -5772,6 +5785,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 enterType.getStackSize().getSize() + getPadding().getSize());
                     }
 
+                    @Override
+                    public boolean isCopyArguments() {
+                        return copyArguments;
+                    }
 
                     @Override
                     public Bound.ForMethodExit bind(TypeDescription instrumentedType,
@@ -5800,7 +5817,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @return The additional padding this exit advice implies.
                      */
-                    protected abstract StackSize getPadding();
+                    protected abstract StackSize getPadding(); // TODO: How to solve better?
 
                     /**
                      * An advice method inliner for a method exit.
@@ -6883,6 +6900,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDefinition enterType;
 
+                    private final boolean copyArguments;
+
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
@@ -6909,6 +6928,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
+                        copyArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(COPY_ARGUMENTS).resolve(Boolean.class);
                     }
 
                     /**
@@ -6925,7 +6945,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
+                                .getValue(ON_THROWABLE)
+                                .resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, enterType)
                                 : new WithExceptionHandler(adviceMethod, userFactories, enterType, throwable);
@@ -6956,6 +6977,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler));
+                    }
+
+                    @Override
+                    public boolean isCopyArguments() {
+                        return copyArguments;
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
@@ -7125,12 +7151,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
+            OffsetHandler offsetHandler = OffsetHandler.Factory.of(methodExit.isCopyArguments()).make(instrumentedMethod);
             this.methodEnter = methodEnter.bind(instrumentedType,
                     instrumentedMethod,
                     methodVisitor,
                     implementationContext,
                     assigner,
-                    null, // TODO
+                    offsetHandler,
                     methodSizeHandler,
                     stackMapFrameHandler,
                     exceptionHandler);
@@ -7139,7 +7166,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor,
                     implementationContext,
                     assigner,
-                    null, // TODO
+                    offsetHandler,
                     methodSizeHandler,
                     stackMapFrameHandler,
                     exceptionHandler);
@@ -7879,6 +7906,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The type of {@link Throwable} for which this exit advice handler is invoked.
          */
         Class<? extends Throwable> onThrowable() default NoExceptionHandler.class;
+
+        boolean copyArguments() default false;
 
         /**
          * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method

@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -18,7 +19,7 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
 
     enum Factory {
 
-        RETAINING {
+        SIMPLE {
             @Override
             protected OffsetHandler make(MethodDescription instrumentedMethod) {
                 return new Retaining(instrumentedMethod);
@@ -31,6 +32,10 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
                 return new Copying(instrumentedMethod);
             }
         };
+
+        protected static Factory of(boolean copyArguments) {
+            return copyArguments ? COPYING : SIMPLE;
+        }
 
         protected abstract OffsetHandler make(MethodDescription instrumentedMethod);
     }
@@ -49,6 +54,7 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
 
         int thrown();
 
+        @EqualsAndHashCode
         class ForMethodEnter implements Resolved {
 
             private final MethodDescription instrumentedMethod;
@@ -88,6 +94,7 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
             }
         }
 
+        @EqualsAndHashCode
         class ForMethodExit implements Resolved {
 
             private final MethodDescription instrumentedMethod;
@@ -134,6 +141,7 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
         }
     }
 
+    @EqualsAndHashCode
     class Retaining implements OffsetHandler {
 
         private final MethodDescription instrumentedMethod;
@@ -158,6 +166,7 @@ public interface OffsetHandler { // TODO: Expose additional enterTypes
         }
     }
 
+    @EqualsAndHashCode
     class Copying implements OffsetHandler {
 
         private final MethodDescription instrumentedMethod;
