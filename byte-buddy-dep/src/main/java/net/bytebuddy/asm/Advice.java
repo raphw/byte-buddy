@@ -7143,6 +7143,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             List<TypeDescription> enterTypes = methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType().asErasure());
+            OffsetHandler offsetHandler = OffsetHandler.Factory.of(methodExit.isCopyArguments()).make(instrumentedMethod);
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, enterTypes, exitTypes, writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
@@ -7151,7 +7152,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
-            OffsetHandler offsetHandler = OffsetHandler.Factory.of(methodExit.isCopyArguments()).make(instrumentedMethod);
             this.methodEnter = methodEnter.bind(instrumentedType,
                     instrumentedMethod,
                     methodVisitor,
