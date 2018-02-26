@@ -51,9 +51,7 @@ public interface OffsetHandler {
 
         boolean isNonInitialized();
 
-        int self();
-
-        int argument(int index);
+        int argument(int offset);
 
         int enter();
 
@@ -76,13 +74,8 @@ public interface OffsetHandler {
             }
 
             @Override
-            public int self() {
-                return 0;
-            }
-
-            @Override
-            public int argument(int index) {
-                return instrumentedMethod.getParameters().get(index).getOffset();
+            public int argument(int offset) {
+                return offset;
             }
 
             @Override
@@ -102,17 +95,14 @@ public interface OffsetHandler {
         }
 
         @EqualsAndHashCode
-        class ForMethodExit implements Resolved {
+        abstract class ForMethodExit implements Resolved {
 
-            private final MethodDescription instrumentedMethod;
+            protected final MethodDescription instrumentedMethod;
 
-            private final int base;
+            protected final TypeDefinition enterType;
 
-            private final TypeDefinition enterType;
-
-            protected ForMethodExit(MethodDescription instrumentedMethod, int base, TypeDefinition enterType) {
+            protected ForMethodExit(MethodDescription instrumentedMethod, TypeDefinition enterType) {
                 this.instrumentedMethod = instrumentedMethod;
-                this.base = base;
                 this.enterType = enterType;
             }
 
@@ -122,28 +112,52 @@ public interface OffsetHandler {
             }
 
             @Override
-            public int self() {
-                return base;
-            }
-
-            @Override
-            public int argument(int index) {
-                return base + instrumentedMethod.getParameters().get(index).getOffset();
-            }
-
-            @Override
             public int enter() {
-                return base + instrumentedMethod.getStackSize();
+                return instrumentedMethod.getStackSize();
             }
 
-            @Override
-            public int returned() {
-                return base + instrumentedMethod.getStackSize() + enterType.getStackSize().getSize();
+            protected static class Simple extends ForMethodExit {
+
+                protected Simple(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    super(instrumentedMethod, enterType);
+                }
+
+                @Override
+                public int argument(int offset) {
+                    return offset;
+                }
+
+                @Override
+                public int returned() {
+                    return enterType.getStackSize().getSize() + instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public int thrown() {
+                    return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                }
             }
 
-            @Override
-            public int thrown() {
-                return base + instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+            protected static class WithCopiedArguments extends ForMethodExit {
+
+                protected WithCopiedArguments(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    super(instrumentedMethod, enterType);
+                }
+
+                @Override
+                public int argument(int offset) {
+                    return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + offset;
+                }
+
+                @Override
+                public int returned() {
+                    return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize();
+                }
+
+                @Override
+                public int thrown() {
+                    return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                }
             }
         }
     }
@@ -174,7 +188,7 @@ public interface OffsetHandler {
 
         @Override
         public Resolved resolveExit(TypeDefinition enterType) {
-            return new Resolved.ForMethodExit(instrumentedMethod, 0, enterType);
+            return new Resolved.ForMethodExit.Simple(instrumentedMethod, enterType);
         }
     }
 
@@ -192,16 +206,16 @@ public interface OffsetHandler {
             StackSize stackSize;
             if (!instrumentedMethod.isStatic()) {
                 Type type = Type.getType(instrumentedMethod.getDeclaringType().asErasure().getDescriptor());
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ALOAD), 0);
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ASTORE), instrumentedMethod.getStackSize());
+                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), 0);
+                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                 stackSize = StackSize.SINGLE;
             } else {
                 stackSize = StackSize.ZERO;
             }
             for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                 Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ALOAD), parameterDescription.getOffset());
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ASTORE), instrumentedMethod.getStackSize() + parameterDescription.getOffset());
+                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
+                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize() + parameterDescription.getOffset());
                 stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
             }
             return stackSize.getSize();
@@ -221,7 +235,7 @@ public interface OffsetHandler {
 
         @Override
         public Resolved resolveExit(TypeDefinition enterType) {
-            return new Resolved.ForMethodExit(instrumentedMethod, instrumentedMethod.getStackSize(), enterType);
+            return new Resolved.ForMethodExit.WithCopiedArguments(instrumentedMethod, enterType);
         }
     }
 }
