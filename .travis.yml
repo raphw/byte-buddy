@@ -10,8 +10,11 @@ matrix:
       env: JDK_RELEASE='JDK 9' TARGET='-Pjava9'
       install: echo "The default Travis install script is being skipped!"
 # Java 10
-    - env: JDK_RELEASE='JDK 10 Early-Access' TARGET='-Pjava10'
-      install: . ./.travis/install-jdk-10.sh
+    - env: JDK_RELEASE='JDK 10' TARGET='-Pjava10'
+      install: . ./.travis/install-jdk.sh -F 10 -L BCL
+# Java 11
+    - env: JDK_RELEASE='JDK 11-ea' TARGET='-Pjava11'
+      install: . ./.travis/install-jdk.sh -F 11 -L BCL
 
 script:
   - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true
