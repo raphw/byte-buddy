@@ -2,7 +2,6 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
@@ -84,7 +83,7 @@ public class AdviceOffsetHandlerTest {
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(copyArguments = true)
+        @Advice.OnMethodExit(backupArguments = true)
         private static void advice() {
             /* empty */
         }
@@ -94,7 +93,7 @@ public class AdviceOffsetHandlerTest {
     public static class UsingAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(copyArguments = true)
+        @Advice.OnMethodExit(backupArguments = true)
         private static void advice(@Advice.Argument(0) String arg) {
             if (!BAR.equals(arg)) {
                 throw new AssertionError();

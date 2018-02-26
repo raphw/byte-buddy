@@ -176,7 +176,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
-    private static final MethodDescription.InDefinedShape COPY_ARGUMENTS;
+    private static final MethodDescription.InDefinedShape BACKUP_ARGUMENTS;
 
     /*
      * Extracts the annotation values for the enter and exit advice annotations.
@@ -191,7 +191,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
-        COPY_ARGUMENTS = exit.filter(named("copyArguments")).getOnly();
+        BACKUP_ARGUMENTS = exit.filter(named("backupArguments")).getOnly();
     }
 
     /**
@@ -4930,7 +4930,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 TypeDescription getThrowable();
 
-                boolean isCopyArguments();
+                boolean isBackupArguments();
 
                 @Override
                 Bound.ForMethodExit bind(TypeDescription instrumentedType,
@@ -5020,7 +5020,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean isCopyArguments() {
+            public boolean isBackupArguments() {
                 return false;
             }
 
@@ -5207,7 +5207,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
                                                        Implementation.Context implementationContext,
                                                        Assigner assigner,
-                                                       OffsetHandler offsetHandler,
+                                                       OffsetHandler.Resolved offsetHandler,
                                                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                        TypeDescription instrumentedType,
@@ -5263,7 +5263,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final Assigner assigner;
 
-                    private final OffsetHandler offsetHandler;
+                    private final OffsetHandler.Resolved offsetHandler;
 
                     /**
                      * A handler for computing the method size requirements.
@@ -5308,7 +5308,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   MethodVisitor methodVisitor,
                                                   Implementation.Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler offsetHandler,
+                                                  OffsetHandler.Resolved offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   SuppressionHandler.Bound suppressionHandler,
@@ -5558,7 +5558,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                offsetHandler,
+                                offsetHandler.resolveEnter(),
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
@@ -5580,7 +5580,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler offsetHandler,
+                                                  OffsetHandler.Resolved offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -5588,10 +5588,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    offsetHandler.resolveEnter()));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler));
                         }
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
                                 implementationContext,
@@ -5649,7 +5646,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       MethodVisitor methodVisitor,
                                                       Implementation.Context implementationContext,
                                                       Assigner assigner,
-                                                      OffsetHandler offsetHandler,
+                                                      OffsetHandler.Resolved offsetHandler,
                                                       MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                       SuppressionHandler.Bound suppressionHandler,
@@ -5690,7 +5687,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDefinition enterType;
 
-                    private final boolean copyArguments;
+                    private final boolean backupArguments;
 
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
@@ -5721,7 +5718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
-                        copyArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(COPY_ARGUMENTS).resolve(Boolean.class);
+                        backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
                     /**
@@ -5750,7 +5747,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   Implementation.Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler offsetHandler,
+                                                  OffsetHandler.Resolved offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -5758,10 +5755,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    offsetHandler.resolveExit(enterType)));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
                                 implementationContext,
@@ -5775,8 +5769,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean isCopyArguments() {
-                        return copyArguments;
+                    public boolean isBackupArguments() {
+                        return backupArguments;
                     }
 
                     @Override
@@ -5794,7 +5788,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                offsetHandler,
+                                offsetHandler.resolveExit(),
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
@@ -5831,7 +5825,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                    MethodVisitor methodVisitor,
                                                    Implementation.Context implementationContext,
                                                    Assigner assigner,
-                                                   OffsetHandler offsetHandler,
+                                                   OffsetHandler.Resolved offsetHandler,
                                                    MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                    SuppressionHandler.Bound suppressionHandler,
@@ -6889,7 +6883,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDefinition enterType;
 
-                    private final boolean copyArguments;
+                    private final boolean backupArguments;
 
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
@@ -6917,7 +6911,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
-                        copyArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(COPY_ARGUMENTS).resolve(Boolean.class);
+                        backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
                     /**
@@ -6956,7 +6950,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
                                     instrumentedMethod,
                                     assigner,
-                                    offsetHandler.resolveExit(enterType)));
+                                    offsetHandler.resolveExit()));
                         }
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
                                 instrumentedMethod,
@@ -6969,8 +6963,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean isCopyArguments() {
-                        return copyArguments;
+                    public boolean isBackupArguments() {
+                        return backupArguments;
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
@@ -7134,7 +7128,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             List<TypeDescription> enterTypes = methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType().asErasure());
-            offsetHandler = OffsetHandler.Factory.of(methodExit.isCopyArguments()).make(instrumentedMethod);
+            offsetHandler = OffsetHandler.Factory.of(methodExit.isBackupArguments()).make(instrumentedMethod, methodEnter.getEnterType());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, enterTypes, offsetHandler.getIntermediateTypes(), exitTypes, writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
@@ -7901,7 +7895,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         Class<? extends Throwable> onThrowable() default NoExceptionHandler.class;
 
-        boolean copyArguments() default false;
+        boolean backupArguments() default false;
 
         /**
          * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method

@@ -14,7 +14,7 @@ import org.objectweb.asm.Type;
 import java.util.Collections;
 import java.util.List;
 
-public interface OffsetHandler {
+public interface OffsetHandler { // TODO: Refactor to steps: bound, resolved
 
     int prepare(MethodVisitor methodVisitor);
 
@@ -22,29 +22,29 @@ public interface OffsetHandler {
 
     Resolved resolveEnter();
 
-    Resolved resolveExit(TypeDefinition enterType);
+    Resolved resolveExit();
 
     enum Factory {
 
         SIMPLE {
             @Override
-            protected OffsetHandler make(MethodDescription instrumentedMethod) {
-                return new Simple(instrumentedMethod);
+            protected OffsetHandler make(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                return new Simple(instrumentedMethod, enterType);
             }
         },
 
         COPYING {
             @Override
-            protected OffsetHandler make(MethodDescription instrumentedMethod) {
-                return new Copying(instrumentedMethod);
+            protected OffsetHandler make(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                return new Copying(instrumentedMethod, enterType);
             }
         };
 
-        protected static Factory of(boolean copyArguments) {
-            return copyArguments ? COPYING : SIMPLE;
+        protected static Factory of(boolean backupArguments) {
+            return backupArguments ? COPYING : SIMPLE;
         }
 
-        protected abstract OffsetHandler make(MethodDescription instrumentedMethod);
+        protected abstract OffsetHandler make(MethodDescription instrumentedMethod, TypeDefinition enterType);
     }
 
     interface Resolved {
@@ -167,8 +167,11 @@ public interface OffsetHandler {
 
         private final MethodDescription instrumentedMethod;
 
-        protected Simple(MethodDescription instrumentedMethod) {
+        private final TypeDefinition enterType;
+
+        protected Simple(MethodDescription instrumentedMethod, TypeDefinition enterType) {
             this.instrumentedMethod = instrumentedMethod;
+            this.enterType = enterType;
         }
 
         @Override
@@ -187,7 +190,7 @@ public interface OffsetHandler {
         }
 
         @Override
-        public Resolved resolveExit(TypeDefinition enterType) {
+        public Resolved resolveExit() {
             return new Resolved.ForMethodExit.Simple(instrumentedMethod, enterType);
         }
     }
@@ -197,17 +200,19 @@ public interface OffsetHandler {
 
         private final MethodDescription instrumentedMethod;
 
-        protected Copying(MethodDescription instrumentedMethod) {
+        private final TypeDefinition enterType;
+
+        protected Copying(MethodDescription instrumentedMethod, TypeDefinition enterType) {
             this.instrumentedMethod = instrumentedMethod;
+            this.enterType = enterType;
         }
 
         @Override
         public int prepare(MethodVisitor methodVisitor) {
             StackSize stackSize;
             if (!instrumentedMethod.isStatic()) {
-                Type type = Type.getType(instrumentedMethod.getDeclaringType().asErasure().getDescriptor());
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), 0);
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
+                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + enterType.getStackSize().getSize());
                 stackSize = StackSize.SINGLE;
             } else {
                 stackSize = StackSize.ZERO;
@@ -215,7 +220,7 @@ public interface OffsetHandler {
             for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                 Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
                 methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
-                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize() + parameterDescription.getOffset());
+                methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + parameterDescription.getOffset());
                 stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
             }
             return stackSize.getSize();
@@ -234,7 +239,7 @@ public interface OffsetHandler {
         }
 
         @Override
-        public Resolved resolveExit(TypeDefinition enterType) {
+        public Resolved resolveExit() {
             return new Resolved.ForMethodExit.WithCopiedArguments(instrumentedMethod, enterType);
         }
     }
