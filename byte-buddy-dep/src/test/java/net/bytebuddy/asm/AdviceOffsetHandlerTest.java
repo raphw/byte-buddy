@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
@@ -17,6 +18,7 @@ public class AdviceOffsetHandlerTest {
     public void testShortMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ShortMethod.class)
+                .visit(DebuggingWrapper.makeDefault(true))
                 .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)

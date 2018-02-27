@@ -7067,11 +7067,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final MethodDescription instrumentedMethod;
 
         /**
-         * The required padding before using local variables after the instrumented method's arguments.
-         */
-        private final int padding;
-
-        /**
          * The dispatcher to be used for method entry.
          */
         private final Dispatcher.Bound.ForMethodEnter methodEnter;
@@ -7081,7 +7076,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final Dispatcher.Bound.ForMethodExit methodExit;
 
-        private final OffsetHandler offsetHandler;
+        protected final OffsetHandler offsetHandler;
 
         /**
          * A handler for computing the method size requirements.
@@ -7124,7 +7119,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super(Opcodes.ASM6, delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
-            padding = methodEnter.getEnterType().getStackSize().getSize();
             List<TypeDescription> enterTypes = methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType().asErasure());
@@ -7181,31 +7175,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onVisitVarInsn(int opcode, int offset) {
-            mv.visitVarInsn(opcode, resolve(offset));
+            mv.visitVarInsn(opcode, offsetHandler.argument(offset));
         }
 
         @Override
         protected void onVisitIincInsn(int offset, int increment) {
-            mv.visitIincInsn(resolve(offset), increment);
-        }
-
-        /**
-         * Access the first variable after the instrumented variables and return type are stored.
-         *
-         * @param opcode The opcode for accessing the variable.
-         */
-        protected void variable(int opcode) {
-            variable(opcode, NO_OFFSET);
-        }
-
-        /**
-         * Access the first variable after the instrumented variables and return type are stored.
-         *
-         * @param opcode The opcode for accessing the variable.
-         * @param offset The additional offset of the variable.
-         */
-        protected void variable(int opcode, int offset) {
-            methodVisitor.visitVarInsn(opcode, instrumentedMethod.getStackSize() + padding + offset);
+            mv.visitIincInsn(offsetHandler.argument(offset), increment);
         }
 
         @Override
@@ -7221,7 +7196,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            mv.visitLocalVariable(name, descriptor, signature, start, end, resolve(index));
+            mv.visitLocalVariable(name, descriptor, signature, start, end, offsetHandler.argument(index)); // TODO: Index is not offset?
         }
 
         @Override
@@ -7232,33 +7207,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                               int[] index,
                                                               String descriptor,
                                                               boolean visible) {
-            return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, resolve(index), descriptor, visible);
-        }
-
-        /**
-         * Resolves the index of a local variable in the context of the instrumentation.
-         *
-         * @param index The indices to adjust.
-         * @return An array with adjusted indices.
-         */
-        private int[] resolve(int[] index) {
-            int[] resolved = new int[index.length];
+            int[] translated = new int[index.length];
             for (int anIndex = 0; anIndex < index.length; anIndex++) {
-                resolved[anIndex] = resolve(index[anIndex]);
+                translated[anIndex] = offsetHandler.argument(index[anIndex]);
             }
-            return resolved;
-        }
-
-        /**
-         * Resolves the index of a local variable in the context of the instrumentation.
-         *
-         * @param index The index to adjust.
-         * @return The adjusted index.
-         */
-        private int resolve(int index) {
-            return index < instrumentedMethod.getStackSize()
-                    ? index
-                    : padding + index;
+            return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, translated, descriptor, visible); // TODO: Index is not offset?
         }
 
         /**
@@ -7463,7 +7416,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (doesReturn) {
                     stackMapFrameHandler.injectReturnFrame(methodVisitor);
                     if (!returnType.equals(Type.VOID_TYPE)) {
-                        variable(returnType.getOpcode(Opcodes.ISTORE));
+                        methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), offsetHandler.enter());
                     }
                 }
                 onUserReturn();
@@ -7472,7 +7425,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (returnType.equals(Type.VOID_TYPE)) {
                     methodVisitor.visitInsn(Opcodes.RETURN);
                 } else {
-                    variable(returnType.getOpcode(Opcodes.ILOAD));
+                    methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ILOAD), offsetHandler.enter());
                     methodVisitor.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
                 }
             }
@@ -7633,12 +7586,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Label endOfHandler = new Label();
                     if (doesReturn) {
                         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                        variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                        methodVisitor.visitVarInsn(Opcodes.ASTORE, offsetHandler.thrown());
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                     }
                     methodVisitor.visitLabel(exceptionHandler);
                     stackMapFrameHandler.injectExceptionFrame(methodVisitor);
-                    variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, offsetHandler.thrown());
                     storeDefaultReturn();
                     if (doesReturn) {
                         methodVisitor.visitLabel(endOfHandler);
@@ -7648,10 +7601,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onExitAdviceReturn() {
-                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offsetHandler.thrown());
                     Label endOfHandler = new Label();
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfHandler);
-                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, offsetHandler.thrown());
                     methodVisitor.visitInsn(Opcodes.ATHROW);
                     methodVisitor.visitLabel(endOfHandler);
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
@@ -7667,19 +7620,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             || instrumentedMethod.getReturnType().represents(char.class)
                             || instrumentedMethod.getReturnType().represents(int.class)) {
                         methodVisitor.visitInsn(Opcodes.ICONST_0);
-                        variable(Opcodes.ISTORE);
+                        methodVisitor.visitVarInsn(Opcodes.ISTORE, offsetHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
                         methodVisitor.visitInsn(Opcodes.LCONST_0);
-                        variable(Opcodes.LSTORE);
+                        methodVisitor.visitVarInsn(Opcodes.LSTORE, offsetHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(float.class)) {
                         methodVisitor.visitInsn(Opcodes.FCONST_0);
-                        variable(Opcodes.FSTORE);
+                        methodVisitor.visitVarInsn(Opcodes.FSTORE, offsetHandler.returned());
                     } else if (instrumentedMethod.getReturnType().represents(double.class)) {
                         methodVisitor.visitInsn(Opcodes.DCONST_0);
-                        variable(Opcodes.DSTORE);
+                        methodVisitor.visitVarInsn(Opcodes.DSTORE, offsetHandler.returned());
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
                         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                        variable(Opcodes.ASTORE);
+                        methodVisitor.visitVarInsn(Opcodes.ASTORE, offsetHandler.returned());
                     }
                 }
             }

@@ -18,6 +18,14 @@ public interface OffsetHandler { // TODO: Refactor to steps: bound, resolved
 
     int prepare(MethodVisitor methodVisitor);
 
+    int argument(int offset);
+
+    int enter();
+
+    int returned();
+
+    int thrown();
+
     List<TypeDescription> getIntermediateTypes();
 
     Resolved resolveEnter();
@@ -180,6 +188,28 @@ public interface OffsetHandler { // TODO: Refactor to steps: bound, resolved
         }
 
         @Override
+        public int argument(int offset) {
+            return offset < instrumentedMethod.getStackSize()
+                    ? offset
+                    : offset + enterType.getStackSize().getSize();
+        }
+
+        @Override
+        public int enter() {
+            return instrumentedMethod.getStackSize();
+        }
+
+        @Override
+        public int returned() {
+            return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize();
+        }
+
+        @Override
+        public int thrown() {
+            return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+        }
+
+        @Override
         public List<TypeDescription> getIntermediateTypes() {
             return Collections.emptyList();
         }
@@ -224,6 +254,28 @@ public interface OffsetHandler { // TODO: Refactor to steps: bound, resolved
                 stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
             }
             return stackSize.getSize();
+        }
+
+        @Override
+        public int argument(int offset) {
+            return offset < instrumentedMethod.getStackSize()
+                    ? offset
+                    : enterType.getStackSize().getSize() + instrumentedMethod.getStackSize() + offset;
+        }
+
+        @Override
+        public int enter() {
+            return instrumentedMethod.getStackSize();
+        }
+
+        @Override
+        public int returned() {
+            return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize();
+        }
+
+        @Override
+        public int thrown() {
+            return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
         }
 
         @Override
