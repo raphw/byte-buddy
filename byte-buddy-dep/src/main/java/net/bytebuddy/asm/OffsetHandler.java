@@ -189,9 +189,9 @@ public interface OffsetHandler { // TODO: Refactor to steps: bound, resolved
 
         @Override
         public int argument(int offset) {
-            return offset < instrumentedMethod.getStackSize()
-                    ? offset
-                    : offset + enterType.getStackSize().getSize();
+            return offset > instrumentedMethod.getStackSize()
+                    ? offset + enterType.getStackSize().getSize()
+                    : offset;
         }
 
         @Override

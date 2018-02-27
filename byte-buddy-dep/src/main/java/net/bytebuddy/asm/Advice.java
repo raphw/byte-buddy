@@ -1743,7 +1743,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                     }
                     valueReads.add(new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType())
-                            .loadFrom(offsetHandler.argument(parameterDescription.getIndex())), readAssignment));
+                            .loadFrom(offsetHandler.argument(parameterDescription.getOffset())), readAssignment));
                 }
                 if (readOnly) {
                     return new Target.ForArray.ReadOnly(target, valueReads);
@@ -1755,7 +1755,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot assign " + target + " to " + parameterDescription);
                         }
                         valueWrites.add(new StackManipulation.Compound(writeAssignment, MethodVariableAccess.of(parameterDescription.getType())
-                                .storeAt(offsetHandler.argument(parameterDescription.getIndex()))));
+                                .storeAt(offsetHandler.argument(parameterDescription.getOffset()))));
                     }
                     return new Target.ForArray.ReadWrite(target, valueReads, valueWrites);
                 }
