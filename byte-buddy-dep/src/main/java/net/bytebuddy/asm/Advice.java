@@ -7416,7 +7416,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (doesReturn) {
                     stackMapFrameHandler.injectReturnFrame(methodVisitor);
                     if (!returnType.equals(Type.VOID_TYPE)) {
-                        methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), offsetHandler.enter());
+                        methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), offsetHandler.returned());
                     }
                 }
                 onUserReturn();
@@ -7425,7 +7425,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (returnType.equals(Type.VOID_TYPE)) {
                     methodVisitor.visitInsn(Opcodes.RETURN);
                 } else {
-                    methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ILOAD), offsetHandler.enter());
+                    methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ILOAD), offsetHandler.returned());
                     methodVisitor.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
                 }
             }
