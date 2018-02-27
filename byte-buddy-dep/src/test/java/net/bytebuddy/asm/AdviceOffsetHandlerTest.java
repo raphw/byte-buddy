@@ -18,7 +18,6 @@ public class AdviceOffsetHandlerTest {
     public void testShortMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ShortMethod.class)
-                .visit(DebuggingWrapper.makeDefault(true))
                 .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)

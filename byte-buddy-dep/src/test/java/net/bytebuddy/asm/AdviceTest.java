@@ -535,7 +535,6 @@ public class AdviceTest {
     public void testAdviceWithEntranceValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(EntranceValueAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
