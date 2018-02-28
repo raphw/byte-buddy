@@ -7486,7 +7486,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            mv.visitLocalVariable(name, descriptor, signature, start, end, argumentHandler.argument(index)); // TODO: Index is not offset?
+            mv.visitLocalVariable(name, descriptor, signature, start, end, argumentHandler.variable(index));
         }
 
         @Override
@@ -7499,9 +7499,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                               boolean visible) {
             int[] translated = new int[index.length];
             for (int anIndex = 0; anIndex < index.length; anIndex++) {
-                translated[anIndex] = argumentHandler.argument(index[anIndex]);
+                translated[anIndex] = argumentHandler.variable(index[anIndex]);
             }
-            return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, translated, descriptor, visible); // TODO: Index is not offset?
+            return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, translated, descriptor, visible);
         }
 
         /**
