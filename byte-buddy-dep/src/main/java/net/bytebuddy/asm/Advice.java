@@ -598,7 +598,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param assigner           The assigner to use.
          * @return A suitable target mapping.
          */
-        Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler);
+        Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler);
 
         /**
          * A target offset of an offset mapping.
@@ -1350,7 +1350,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 ParameterDescription parameterDescription = resolve(instrumentedMethod);
                 StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
                 if (!readAssignment.isValid()) {
@@ -1447,7 +1447,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                     if (optional && instrumentedMethod.getParameters().size() <= index) {
                         return readOnly
                                 ? new Target.ForDefaultValue.ReadOnly(target)
@@ -1638,8 +1638,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
-                if (instrumentedMethod.isStatic() || offsetHandler.isNonInitialized()) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
+                if (instrumentedMethod.isStatic() || offsetHandler.isPremature()) {
                     if (optional) {
                         return readOnly
                                 ? new Target.ForDefaultValue.ReadOnly(instrumentedType)
@@ -1735,7 +1735,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 List<StackManipulation> valueReads = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
                 for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                     StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
@@ -1804,7 +1804,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             INSTANCE;
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 return Target.ForStackManipulation.of(instrumentedType);
             }
         }
@@ -1845,7 +1845,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             };
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 if (!isRepresentable(instrumentedMethod)) {
                     throw new IllegalStateException("Cannot represent " + instrumentedMethod + " as given method constant");
                 }
@@ -1927,11 +1927,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 FieldDescription fieldDescription = resolve(instrumentedType);
                 if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
-                } else if (offsetHandler.isNonInitialized() && !fieldDescription.isStatic()) {
+                } else if (offsetHandler.isPremature() && !fieldDescription.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                 }
                 StackManipulation readAssignment = assigner.assign(fieldDescription.getType(), target, typing);
@@ -2300,7 +2300,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StringBuilder stringBuilder = new StringBuilder();
                 for (Renderer renderer : renderers) {
                     stringBuilder.append(renderer.apply(instrumentedType, instrumentedMethod));
@@ -2537,7 +2537,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 return new Target.ForDefaultValue.ReadWrite(target);
             }
 
@@ -2577,7 +2577,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             INSTANCE;
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 return new Target.ForDefaultValue.ReadOnly(instrumentedMethod.getReturnType(), assigner.assign(instrumentedMethod.getReturnType(),
                         TypeDescription.Generic.OBJECT,
                         Assigner.Typing.DYNAMIC));
@@ -2653,7 +2653,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StackManipulation readAssignment = assigner.assign(enterType, target, typing);
                 if (!readAssignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + enterType + " to " + target);
@@ -2751,7 +2751,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StackManipulation readAssignment = assigner.assign(instrumentedMethod.getReturnType(), target, typing);
                 if (!readAssignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedMethod.getReturnType() + " to " + target);
@@ -2843,7 +2843,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StackManipulation readAssignment = assigner.assign(TypeDescription.THROWABLE.asGenericType(), target, typing);
                 if (!readAssignment.isValid()) {
                     throw new IllegalStateException("Cannot assign Throwable to " + target);
@@ -2946,7 +2946,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StackManipulation assigment = assigner.assign(typeDescription, targetType, typing);
                 if (!assigment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + targetType);
@@ -3208,7 +3208,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, OffsetHandler.Resolved offsetHandler) {
+            public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, ArgumentHandler.ForAdvice offsetHandler) {
                 StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target, Assigner.Typing.DYNAMIC);
                 if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + target);
@@ -3276,6 +3276,298 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, AdviceType adviceType) {
                     return new ForSerializedValue(target.getType(), typeDescription, deserialization);
+                }
+            }
+        }
+    }
+
+    protected interface ArgumentHandler {
+
+        int THIS_REFERENCE = 0;
+
+        int argument(int offset);
+
+        int enter();
+
+        int returned();
+
+        int thrown();
+
+        interface ForInstrumentedMethod extends ArgumentHandler {
+
+            int prepare(MethodVisitor methodVisitor);
+
+            List<TypeDescription> getIntermediateTypes();
+
+            int variable(int index);
+
+            ArgumentHandler.ForAdvice bindEnter();
+
+            ArgumentHandler.ForAdvice bindExit();
+        }
+
+        interface ForAdvice extends ArgumentHandler {
+
+            boolean isPremature();
+
+            @EqualsAndHashCode
+            class ForMethodEnter implements ForAdvice {
+
+                private final MethodDescription instrumentedMethod;
+
+                protected ForMethodEnter(MethodDescription instrumentedMethod) {
+                    this.instrumentedMethod = instrumentedMethod;
+                }
+
+                @Override
+                public boolean isPremature() {
+                    return instrumentedMethod.isConstructor();
+                }
+
+                @Override
+                public int argument(int offset) {
+                    return offset;
+                }
+
+                @Override
+                public int enter() {
+                    return instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public int returned() {
+                    throw new IllegalStateException();
+                }
+
+                @Override
+                public int thrown() {
+                    throw new IllegalStateException();
+                }
+            }
+
+            @EqualsAndHashCode
+            abstract class ForMethodExit implements ForAdvice {
+
+                protected final MethodDescription instrumentedMethod;
+
+                protected final TypeDefinition enterType;
+
+                protected ForMethodExit(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.enterType = enterType;
+                }
+
+                @Override
+                public boolean isPremature() {
+                    return false;
+                }
+
+                @Override
+                public int enter() {
+                    return instrumentedMethod.getStackSize();
+                }
+
+                protected static class Simple extends ForMethodExit {
+
+                    protected Simple(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                        super(instrumentedMethod, enterType);
+                    }
+
+                    @Override
+                    public int argument(int offset) {
+                        return offset;
+                    }
+
+                    @Override
+                    public int returned() {
+                        return enterType.getStackSize().getSize() + instrumentedMethod.getStackSize();
+                    }
+
+                    @Override
+                    public int thrown() {
+                        return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                    }
+                }
+
+                protected static class WithCopiedArguments extends ForMethodExit {
+
+                    protected WithCopiedArguments(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                        super(instrumentedMethod, enterType);
+                    }
+
+                    @Override
+                    public int argument(int offset) {
+                        return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + offset;
+                    }
+
+                    @Override
+                    public int returned() {
+                        return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize();
+                    }
+
+                    @Override
+                    public int thrown() {
+                        return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                    }
+                }
+            }
+        }
+
+        enum Factory {
+
+            SIMPLE {
+                @Override
+                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    return new ArgumentHandler.Factory.Simple(instrumentedMethod, enterType);
+                }
+            },
+
+            COPYING {
+                @Override
+                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    return new ArgumentHandler.Factory.Copying(instrumentedMethod, enterType);
+                }
+            };
+
+            protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType);
+
+            @EqualsAndHashCode
+            protected static class Simple implements ForInstrumentedMethod {
+
+                private final MethodDescription instrumentedMethod;
+
+                private final TypeDefinition enterType;
+
+                protected Simple(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.enterType = enterType;
+                }
+
+                @Override
+                public int prepare(MethodVisitor methodVisitor) {
+                    return 0;
+                }
+
+                @Override
+                public int variable(int index) {
+                    return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
+                            ? index
+                            : index + (enterType.represents(void.class) ? 0 : 1);
+                }
+
+                @Override
+                public int argument(int offset) {
+                    return offset < instrumentedMethod.getStackSize()
+                            ? offset
+                            : offset + enterType.getStackSize().getSize();
+                }
+
+                @Override
+                public int enter() {
+                    return instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public int returned() {
+                    return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize();
+                }
+
+                @Override
+                public int thrown() {
+                    return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                }
+
+                @Override
+                public List<TypeDescription> getIntermediateTypes() {
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public ForAdvice bindEnter() {
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod);
+                }
+
+                @Override
+                public ForAdvice bindExit() {
+                    return new ForAdvice.ForMethodExit.Simple(instrumentedMethod, enterType);
+                }
+            }
+
+            @EqualsAndHashCode
+            protected static class Copying implements ForInstrumentedMethod {
+
+                private final MethodDescription instrumentedMethod;
+
+                private final TypeDefinition enterType;
+
+                protected Copying(MethodDescription instrumentedMethod, TypeDefinition enterType) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.enterType = enterType;
+                }
+
+                @Override
+                public int prepare(MethodVisitor methodVisitor) {
+                    StackSize stackSize;
+                    if (!instrumentedMethod.isStatic()) {
+                        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                        methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + enterType.getStackSize().getSize());
+                        stackSize = StackSize.SINGLE;
+                    } else {
+                        stackSize = StackSize.ZERO;
+                    }
+                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                        Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
+                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
+                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + parameterDescription.getOffset());
+                        stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
+                    }
+                    return stackSize.getSize();
+                }
+
+                @Override
+                public int variable(int index) {
+                    return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
+                            ? index
+                            : index + (enterType.represents(void.class) ? 0 : 1) + (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size();
+                }
+
+                @Override
+                public int argument(int offset) {
+                    return offset < instrumentedMethod.getStackSize()
+                            ? offset
+                            : offset + enterType.getStackSize().getSize() + instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public int enter() {
+                    return instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public int returned() {
+                    return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize();
+                }
+
+                @Override
+                public int thrown() {
+                    return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                }
+
+                @Override
+                public List<TypeDescription> getIntermediateTypes() { // TODO: Include self-type and test constructor
+                    return instrumentedMethod.isStatic()
+                            ? instrumentedMethod.getParameters().asTypeList().asErasures()
+                            : CompoundList.of(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures());
+                }
+
+                @Override
+                public ForAdvice bindEnter() {
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod);
+                }
+
+                @Override
+                public ForAdvice bindExit() {
+                    return new ForAdvice.ForMethodExit.WithCopiedArguments(instrumentedMethod, enterType);
                 }
             }
         }
@@ -4555,7 +4847,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                        MethodVisitor methodVisitor,
                        Implementation.Context implementationContext,
                        Assigner assigner,
-                       OffsetHandler offsetHandler,
+                       ArgumentHandler.ForInstrumentedMethod offsetHandler,
                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                        StackManipulation exceptionHandler);
@@ -4586,7 +4878,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodVisitor methodVisitor,
                                           Implementation.Context implementationContext,
                                           Assigner assigner,
-                                          OffsetHandler offsetHandler,
+                                          ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                           StackManipulation exceptionHandler);
@@ -4930,7 +5222,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 TypeDescription getThrowable();
 
-                boolean isBackupArguments();
+                ArgumentHandler.Factory getArgumentHandlerFactory();
 
                 @Override
                 Bound.ForMethodExit bind(TypeDescription instrumentedType,
@@ -4938,7 +5230,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                          MethodVisitor methodVisitor,
                                          Implementation.Context implementationContext,
                                          Assigner assigner,
-                                         OffsetHandler offsetHandler,
+                                         ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                          MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                          StackManipulation exceptionHandler);
@@ -5020,8 +5312,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean isBackupArguments() {
-                return false;
+            public ArgumentHandler.Factory getArgumentHandlerFactory() {
+                return ArgumentHandler.Factory.SIMPLE;
             }
 
             @Override
@@ -5068,7 +5360,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                  MethodVisitor methodVisitor,
                                  Implementation.Context implementationContext,
                                  Assigner assigner,
-                                 OffsetHandler offsetHandler,
+                                 ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                  MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                  StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                  StackManipulation exceptionHandler) {
@@ -5207,7 +5499,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
                                                        Implementation.Context implementationContext,
                                                        Assigner assigner,
-                                                       OffsetHandler.Resolved offsetHandler,
+                                                       ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                        TypeDescription instrumentedType,
@@ -5263,7 +5555,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final Assigner assigner;
 
-                    private final OffsetHandler.Resolved offsetHandler;
+                    private final ArgumentHandler.ForInstrumentedMethod offsetHandler;
 
                     /**
                      * A handler for computing the method size requirements.
@@ -5308,7 +5600,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   MethodVisitor methodVisitor,
                                                   Implementation.Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler.Resolved offsetHandler,
+                                                  ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   SuppressionHandler.Bound suppressionHandler,
@@ -5549,7 +5841,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                      MethodVisitor methodVisitor,
                                                      Implementation.Context implementationContext,
                                                      Assigner assigner,
-                                                     OffsetHandler offsetHandler,
+                                                     ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                      MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                      StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                      StackManipulation exceptionHandler) {
@@ -5558,7 +5850,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                offsetHandler.resolveEnter(),
+                                offsetHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
@@ -5580,7 +5872,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler.Resolved offsetHandler,
+                                                  ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -5588,7 +5880,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler.bindEnter()));
                         }
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
                                 implementationContext,
@@ -5646,7 +5938,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       MethodVisitor methodVisitor,
                                                       Implementation.Context implementationContext,
                                                       Assigner assigner,
-                                                      OffsetHandler.Resolved offsetHandler,
+                                                      ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                       MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                       SuppressionHandler.Bound suppressionHandler,
@@ -5747,7 +6039,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   Implementation.Context implementationContext,
                                                   Assigner assigner,
-                                                  OffsetHandler.Resolved offsetHandler,
+                                                  ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -5755,7 +6047,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler.bindExit()));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
                                 implementationContext,
@@ -5769,8 +6061,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean isBackupArguments() {
-                        return backupArguments;
+                    public ArgumentHandler.Factory getArgumentHandlerFactory() {
+                        return backupArguments
+                                ? ArgumentHandler.Factory.COPYING
+                                : ArgumentHandler.Factory.SIMPLE;
                     }
 
                     @Override
@@ -5779,7 +6073,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                     MethodVisitor methodVisitor,
                                                     Implementation.Context implementationContext,
                                                     Assigner assigner,
-                                                    OffsetHandler offsetHandler,
+                                                    ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                     MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                     StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                     StackManipulation exceptionHandler) {
@@ -5788,7 +6082,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor,
                                 implementationContext,
                                 assigner,
-                                offsetHandler.resolveExit(),
+                                offsetHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
@@ -5825,7 +6119,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                    MethodVisitor methodVisitor,
                                                    Implementation.Context implementationContext,
                                                    Assigner assigner,
-                                                   OffsetHandler.Resolved offsetHandler,
+                                                   ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                    MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                    SuppressionHandler.Bound suppressionHandler,
@@ -6449,7 +6743,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               MethodVisitor methodVisitor,
                               Implementation.Context implementationContext,
                               Assigner assigner,
-                              OffsetHandler offsetHandler,
+                              ArgumentHandler.ForInstrumentedMethod offsetHandler,
                               MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                               StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                               StackManipulation exceptionHandler) {
@@ -6485,7 +6779,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              MethodVisitor methodVisitor,
                                              Implementation.Context implementationContext,
                                              Assigner assigner,
-                                             OffsetHandler offsetHandler,
+                                             ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                              MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                              StackManipulation exceptionHandler);
@@ -6833,16 +7127,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                            MethodVisitor methodVisitor,
                                                            Implementation.Context implementationContext,
                                                            Assigner assigner,
-                                                           OffsetHandler offsetHandler,
+                                                           ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                            MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                            StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                            StackManipulation exceptionHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
-                            offsetMappings.add(offsetMapping.resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    offsetHandler.resolveEnter()));
+                            offsetMappings.add(offsetMapping.resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler.bindEnter()));
                         }
                         return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
                                 instrumentedMethod,
@@ -6941,16 +7232,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                           MethodVisitor methodVisitor,
                                                           Implementation.Context implementationContext,
                                                           Assigner assigner,
-                                                          OffsetHandler offsetHandler,
+                                                          ArgumentHandler.ForInstrumentedMethod offsetHandler,
                                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                           StackManipulation exceptionHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
-                            offsetMappings.add(offsetMapping.resolve(instrumentedType,
-                                    instrumentedMethod,
-                                    assigner,
-                                    offsetHandler.resolveExit()));
+                            offsetMappings.add(offsetMapping.resolve(instrumentedType, instrumentedMethod, assigner, offsetHandler.bindExit()));
                         }
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
                                 instrumentedMethod,
@@ -6963,8 +7251,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean isBackupArguments() {
-                        return backupArguments;
+                    public ArgumentHandler.Factory getArgumentHandlerFactory() {
+                        return backupArguments
+                                ? ArgumentHandler.Factory.COPYING
+                                : ArgumentHandler.Factory.SIMPLE;
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
@@ -7076,7 +7366,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final Dispatcher.Bound.ForMethodExit methodExit;
 
-        protected final OffsetHandler offsetHandler;
+        protected final ArgumentHandler.ForInstrumentedMethod offsetHandler;
 
         /**
          * A handler for computing the method size requirements.
@@ -7122,7 +7412,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             List<TypeDescription> enterTypes = methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType().asErasure());
-            offsetHandler = OffsetHandler.Factory.of(methodExit.isBackupArguments()).make(instrumentedMethod, methodEnter.getEnterType());
+            offsetHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod, methodEnter.getEnterType());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, enterTypes, offsetHandler.getIntermediateTypes(), exitTypes, writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
