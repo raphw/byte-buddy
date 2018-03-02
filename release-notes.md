@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. March 2018: version 1.7.11
+
+- Fix Maven and Gradle plugins to resolve correct class file version.
+- Add method to `ClassReloadingStrategy` to allow specification of explicit redefinition strategy. Change default redefinition strategy.
+- Improve stack map frame validation in `Advice`.
+- Fix type resolution for virtual calls in `MemberSubstitution`.
+
 ### 2. February 2018: version 1.7.10
 
 - Fixes self-attachment on Java 9+ on Windows.
