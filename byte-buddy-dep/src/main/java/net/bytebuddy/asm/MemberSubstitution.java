@@ -892,6 +892,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             class MethodInvoking implements Resolver {
 
                 /**
+                 * Indicates the argument index of the {@code this} reference for a virtual method call.
+                 */
+                private static final int THIS_REFERENCE = 0;
+
+                /**
                  * The method that is used for substitution.
                  */
                 private final MethodDescription methodDescription;
@@ -932,7 +937,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                         }
                     }
                     return methodDescription.isVirtual()
-                            ? MethodInvocation.invoke(methodDescription).virtual(target.getDeclaringType().asErasure())
+                            ? MethodInvocation.invoke(methodDescription).virtual(mapped.get(THIS_REFERENCE).asErasure())
                             : MethodInvocation.invoke(methodDescription);
                 }
             }
