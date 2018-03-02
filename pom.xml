@@ -345,6 +345,17 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
+        <!-- Runs the build with a target version for Java 11 -->
+        <profile>
+            <id>java11</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <code.level>9</code.level>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
         <profile>
             <id>extras</id>
