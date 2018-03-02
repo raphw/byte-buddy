@@ -9,6 +9,8 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
+import java.util.concurrent.Callable;
+
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -549,6 +551,23 @@ public class MemberSubstitutionTest {
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 2));
     }
 
+    @Test
+    public void testVirtualMethodSuperCallSubstitutionExternal() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(VirtualMethodCallSubstitutionExternalSample.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWith(Callable.class.getDeclaredMethod("call")).on(named(BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(BAR, Callable.class).invoke(instance, new Callable<String>() {
+            @Override
+            public String call() {
+                return FOO;
+            }
+        }), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
@@ -788,6 +807,17 @@ public class MemberSubstitutionTest {
             public int run() {
                 return foo() + super.foo();
             }
+        }
+    }
+
+    public static class VirtualMethodCallSubstitutionExternalSample {
+
+        public Object bar(Callable<String> argument) {
+            return foo(argument);
+        }
+
+        private static Object foo(Callable<String> argument) {
+            throw new AssertionError();
         }
     }
 
