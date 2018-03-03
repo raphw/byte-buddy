@@ -62,10 +62,57 @@ public class AdviceArgumentHandlerTest {
                 .invoke(type.getDeclaredConstructor().newInstance(), BAR, QUX, BAZ), is((Object) (BAR + QUX + BAZ)));
     }
 
+
+    @Test
+    public void testShortExitOnlyMethod() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ShortMethod.class)
+                .visit(Advice.to(EmptyExitOnlyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR), is((Object) BAR));
+    }
+
+    @Test
+    public void testLongExitOnlyMethod() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(LongMethod.class)
+                .visit(Advice.to(EmptyExitOnlyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class, String.class, String.class)
+                .invoke(type.getDeclaredConstructor().newInstance(), BAR, QUX, BAZ), is((Object) (BAR + QUX + BAZ)));
+    }
+
+    @Test
+    public void testShortExitOnlyMethodAssignment() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ShortMethod.class)
+                .visit(Advice.to(UsingExitOnlyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR), is((Object) BAR));
+    }
+
+    @Test
+    public void testLongExitOnlyMethodAssignment() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(LongMethod.class)
+                .visit(Advice.to(UsingExitOnlyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class, String.class, String.class)
+                .invoke(type.getDeclaredConstructor().newInstance(), BAR, QUX, BAZ), is((Object) (BAR + QUX + BAZ)));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testConstructorNotSupported() {
         new ByteBuddy()
-                .redefine(LongMethod.class)
+                .redefine(EmptyAdvice.class)
                 .visit(Advice.to(UsingAdvice.class).on(isConstructor()))
                 .make();
     }
@@ -104,6 +151,26 @@ public class AdviceArgumentHandlerTest {
     public static class UsingAdvice {
 
         @Advice.OnMethodEnter
+        @Advice.OnMethodExit(backupArguments = true)
+        private static void advice(@Advice.Argument(0) String arg) {
+            if (!BAR.equals(arg)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyExitOnlyAdvice {
+
+        @Advice.OnMethodExit(backupArguments = true)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class UsingExitOnlyAdvice {
+
         @Advice.OnMethodExit(backupArguments = true)
         private static void advice(@Advice.Argument(0) String arg) {
             if (!BAR.equals(arg)) {
