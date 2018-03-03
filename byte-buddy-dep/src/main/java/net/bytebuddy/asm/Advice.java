@@ -3452,7 +3452,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int argument(int offset) {
                         return offset < instrumentedMethod.getStackSize()
                                 ? offset
-                                : offset + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize(); // TODO: Thrown
+                                : offset + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize() + throwableSize.getSize();
                     }
 
                     @Override
@@ -3486,7 +3486,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int argument(int offset) {
                         return instrumentedMethod.getStackSize() + (offset < instrumentedMethod.getStackSize()
                                 ? offset
-                                : offset + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize()); // TODO: Thrown
+                                : offset + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize() + throwableSize.getSize());
                     }
 
                     @Override
