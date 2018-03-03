@@ -6646,11 +6646,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
                 /**
-                 * The instrumented method.
-                 */
-                protected final MethodDescription instrumentedMethod;
-
-                /**
                  * The advice method.
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
@@ -6698,7 +6693,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.argumentHandler = argumentHandler;
                     this.methodSizeHandler = methodSizeHandler;
                     this.stackMapFrameHandler = stackMapFrameHandler;
-                    this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.offsetMappings = offsetMappings;
                     this.suppressionHandler = suppressionHandler;
