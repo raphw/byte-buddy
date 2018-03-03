@@ -1,16 +1,18 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class AdviceOffsetHandlerTest {
+public class AdviceArgumentHandlerTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -18,7 +20,7 @@ public class AdviceOffsetHandlerTest {
     public void testShortMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ShortMethod.class)
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -29,7 +31,7 @@ public class AdviceOffsetHandlerTest {
     public void testLongMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(LongMethod.class)
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -41,7 +43,7 @@ public class AdviceOffsetHandlerTest {
     public void testShortMethodAssignment() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ShortMethod.class)
-                .visit(Advice.to(UsingAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(UsingAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -52,12 +54,20 @@ public class AdviceOffsetHandlerTest {
     public void testLongMethodAssignment() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(LongMethod.class)
-                .visit(Advice.to(UsingAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(UsingAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class, String.class, String.class)
                 .invoke(type.getDeclaredConstructor().newInstance(), BAR, QUX, BAZ), is((Object) (BAR + QUX + BAZ)));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorNotSupported() {
+        new ByteBuddy()
+                .redefine(LongMethod.class)
+                .visit(Advice.to(UsingAdvice.class).on(isConstructor()))
+                .make();
     }
 
     @SuppressWarnings("unused")
