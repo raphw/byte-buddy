@@ -175,6 +175,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
+    /**
+     * A reference to the {@link OnMethodExit#backupArguments()} method.
+     */
     private static final MethodDescription.InDefinedShape BACKUP_ARGUMENTS;
 
     /*
@@ -595,6 +598,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method for which the mapping is to be resolved.
          * @param assigner           The assigner to use.
+         * @param argumentHandler    The argument handler to use for resolving offsets of the local variable array of the instrumented method.
+         * @param sort               The sort of the advice method being resolved.
          * @return A suitable target mapping.
          */
         Target resolve(TypeDescription instrumentedType,
@@ -1318,13 +1323,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * Describes the sort of the executed advice.
+         */
         enum Sort {
 
-            ENTER, EXIT;
+            /**
+             * Indicates that an offset is mapped for an enter advice.
+             */
+            ENTER {
+                @Override
+                public boolean isPremature(MethodDescription methodDescription) {
+                    return methodDescription.isConstructor();
+                }
+            },
 
-            public boolean isPremature(MethodDescription methodDescription) {
-                return this == ENTER && methodDescription.isConstructor();
-            }
+            /**
+             * Indicates that an offset is mapped for an exit advice.
+             */
+            EXIT {
+                @Override
+                public boolean isPremature(MethodDescription methodDescription) {
+                    return false;
+                }
+            };
+
+            /**
+             * Checks if an advice is executed in a premature state, i.e. the instrumented method is a constructor where the super constructor is not
+             * yet invoked. In this case, the {@code this} reference is not yet initialized and therefore not available.
+             *
+             * @param methodDescription The instrumented method.
+             * @return {@code true} if the advice is executed premature for the instrumented method.
+             */
+            public abstract boolean isPremature(MethodDescription methodDescription);
         }
 
         /**
@@ -3483,7 +3514,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public int enter() {
-                    return instrumentedMethod.getStackSize();
+                    throw new IllegalStateException("Cannot resolve the enter value offset during enter advice");
                 }
 
                 @Override
@@ -3545,6 +3576,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public int enter() {
+                    if (enterType.represents(void.class)) {
+                        throw new IllegalStateException("Enter type is not defined for advice on " + instrumentedMethod);
+                    }
                     return instrumentedMethod.getStackSize();
                 }
 
@@ -3574,11 +3608,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int returned() {
+                        if (instrumentedMethod.getReturnType().represents(void.class)) {
+                            throw new IllegalStateException("Return type is void for " + instrumentedMethod);
+                        }
                         return enterType.getStackSize().getSize() + instrumentedMethod.getStackSize();
                     }
 
                     @Override
                     public int thrown() {
+                        if (throwableSize == StackSize.ZERO) {
+                            throw new IllegalStateException("Throwable is not captured for " + instrumentedMethod);
+                        }
                         return instrumentedMethod.getStackSize() + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
                     }
 
@@ -3620,11 +3660,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int returned() {
+                        if (instrumentedMethod.getReturnType().represents(void.class)) {
+                            throw new IllegalStateException("Return type is void for " + instrumentedMethod);
+                        }
                         return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize();
                     }
 
                     @Override
                     public int thrown() {
+                        if (throwableSize == StackSize.ZERO) {
+                            throw new IllegalStateException("Throwable is not captured for " + instrumentedMethod);
+                        }
                         return instrumentedMethod.getStackSize() * 2 + enterType.getStackSize().getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
                     }
 
@@ -3657,7 +3703,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             },
 
             /**
-             * A factory for creating an argument handler that
+             * A factory for creating an argument handler that copies all arguments before executing the instrumented method.
              */
             COPYING {
                 @Override
@@ -3678,13 +3724,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType);
 
+            /**
+             * A simple argument handler for an instrumented method.
+             */
             @EqualsAndHashCode
             protected static class Simple implements ForInstrumentedMethod {
 
+                /**
+                 * The instrumented method.
+                 */
                 private final MethodDescription instrumentedMethod;
 
+                /**
+                 * The enter type or {@code void} if no enter type is defined.
+                 */
                 private final TypeDefinition enterType;
 
+                /**
+                 * Creates a new simple argument handler for an instrumented method.
+                 *
+                 * @param instrumentedMethod The instrumented method.
+                 * @param enterType          The enter type or {@code void} if no enter type is defined.
+                 */
                 protected Simple(MethodDescription instrumentedMethod, TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.enterType = enterType;
@@ -3740,13 +3801,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
+             */
             @EqualsAndHashCode
             protected static class Copying implements ForInstrumentedMethod {
 
+                /**
+                 * The instrumented method.
+                 */
                 private final MethodDescription instrumentedMethod;
 
+                /**
+                 * The enter type or {@code void} if no enter type is defined.
+                 */
                 private final TypeDefinition enterType;
 
+                /**
+                 * Creates a new argument-copying argument handler for an instrumented method.
+                 *
+                 * @param instrumentedMethod The instrumented method.
+                 * @param enterType          The enter type or {@code void} if no enter type is defined.
+                 */
                 protected Copying(MethodDescription instrumentedMethod, TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.enterType = enterType;
@@ -3971,6 +4047,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private final List<? extends TypeDescription> enterTypes;
 
+            /**
+             * A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
+             */
             private final List<? extends TypeDescription> intermediateTypes;
 
             /**
@@ -3993,6 +4072,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedMethod The instrumented method.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              */
             protected Default(MethodDescription instrumentedMethod,
@@ -4010,6 +4090,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedMethod The instrumented method.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param writerFlags        The flags supplied to the ASM class writer.
              * @return An appropriate method size handler.
@@ -4027,7 +4108,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public MethodSizeHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
-                return new ForAdvice(adviceMethod, Collections.emptyList(), enterTypes);
+                return new ForAdvice(adviceMethod, Collections.<TypeDescription>emptyList(), enterTypes);
             }
 
             @Override
@@ -4035,7 +4116,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().maximum(skipThrowable
                         ? StackSize.ZERO
                         : StackSize.SINGLE).getSize());
-                return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.emptyList());
+                return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList());
             }
 
             @Override
@@ -4071,8 +4152,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final MethodDescription.InDefinedShape adviceMethod;
 
+                /**
+                 * The types provided before execution of the advice code.
+                 */
                 private final List<? extends TypeDescription> startTypes;
 
+                /**
+                 * The types provided after execution of the advice code.
+                 */
                 private final List<? extends TypeDescription> endTypes;
 
                 /**
@@ -4084,8 +4171,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new method size handler for an advice method.
                  *
                  * @param adviceMethod The advice method.
-                 * @param startTypes   A list of virtual method arguments that are available before the instrumented method is executed.
-                 * @param endTypes     A list of virtual method arguments that are available after the instrumented method has completed.
+                 * @param startTypes   The types provided before execution of the advice code.
+                 * @param endTypes     The types provided after execution of the advice code.
                  */
                 protected ForAdvice(MethodDescription.InDefinedShape adviceMethod,
                                     List<? extends TypeDescription> startTypes,
@@ -4191,6 +4278,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             int getReaderHint();
 
+            /**
+             * Injects a frame before executing the instrumented method.
+             *
+             * @param methodVisitor The method visitor to write any frames to.
+             */
             void injectStartFrame(MethodVisitor methodVisitor);
         }
 
@@ -4283,6 +4375,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final List<? extends TypeDescription> enterTypes;
 
+            /**
+             * A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
+             */
             protected final List<? extends TypeDescription> intermediateTypes;
 
             /**
@@ -4306,6 +4401,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
              */
@@ -4329,6 +4425,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+             * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param classFileVersion   The instrumented type's class file version.
              * @param writerFlags        The flags supplied to the ASM writer.
@@ -4374,12 +4471,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, Collections.emptyList(), enterTypes, TranslationMode.ENTER);
+                return new ForAdvice(adviceMethod, Collections.<TypeDescription>emptyList(), enterTypes, TranslationMode.ENTER);
             }
 
             @Override
             public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.emptyList(), TranslationMode.EXIT);
+                return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList(), TranslationMode.EXIT);
             }
 
             @Override
@@ -4695,8 +4792,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
+                /**
+                 * The types provided before execution of the advice code.
+                 */
                 protected final List<? extends TypeDescription> startTypes;
 
+                /**
+                 * The types provided after execution of the advice code.
+                 */
                 protected final List<? extends TypeDescription> endTypes;
 
                 /**
@@ -4708,8 +4811,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new meta data handler for an advice method.
                  *
                  * @param adviceMethod    The method description for which frames are translated.
-                 * @param startTypes      A list of virtual method arguments that are available before the instrumented method is executed.
-                 * @param endTypes        A list of virtual method arguments that are available after the instrumented method has completed.
+                 * @param startTypes      The types provided before execution of the advice code.
+                 * @param endTypes        The types provided after execution of the advice code.
                  * @param translationMode The translation mode to apply for this advice method. Should be
                  *                        either {@link TranslationMode#ENTER} or {@link TranslationMode#EXIT}.
                  */
@@ -5089,6 +5192,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodVisitor         The method visitor for writing the instrumented method.
              * @param implementationContext The implementation context to use.
              * @param assigner              The assigner to use.
+             * @param argumentHandler       A handler for accessing values on the local variable array.
              * @param methodSizeHandler     A handler for computing the method size requirements.
              * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
              * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
@@ -6194,6 +6298,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
                          * @param assigner              The assigner to use.
+                         * @param argumentHandler       A handler for accessing values on the local variable array.
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
@@ -6246,6 +6351,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDefinition enterType;
 
+                    /**
+                     * {@code true} if the arguments of the instrumented method should be copied before executing the instrumented method.
+                     */
                     private final boolean backupArguments;
 
                     /**
@@ -6807,6 +6915,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
                      * @param implementationContext The implementation context to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param instrumentedMethod    The instrumented method.
