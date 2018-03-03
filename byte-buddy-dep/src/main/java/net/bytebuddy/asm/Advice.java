@@ -3497,14 +3497,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final MethodDescription adviceMethod;
 
                 /**
+                 * The enter type or {@code void} if no enter type is defined.
+                 */
+                private final TypeDefinition enterType;
+
+                /**
                  * Creates a new argument handler for an enter advice.
                  *
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
+                 * @param enterType          The enter type or {@code void} if no enter type is defined.
                  */
-                protected ForMethodEnter(MethodDescription instrumentedMethod, MethodDescription adviceMethod) {
+                protected ForMethodEnter(MethodDescription instrumentedMethod, MethodDescription adviceMethod, TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
+                    this.enterType = enterType;
                 }
 
                 @Override
@@ -3514,7 +3521,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public int enter() {
-                    throw new IllegalStateException("Cannot resolve the enter value offset during enter advice");
+                    if (enterType.represents(void.class)) {
+                        throw new IllegalStateException("Advice method does ");
+                    }
+                    return instrumentedMethod.getStackSize();
                 }
 
                 @Override
@@ -3550,7 +3560,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final MethodDescription adviceMethod;
 
                 /**
-                 * The type type or {@code void} if no enter type is defined.
+                 * The enter type or {@code void} if no enter type is defined.
                  */
                 protected final TypeDefinition enterType;
 
@@ -3564,7 +3574,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
-                 * @param enterType          The type type or {@code void} if no enter type is defined.
+                 * @param enterType          The enter type or {@code void} if no enter type is defined.
                  * @param throwableSize      The stack size of a possibly stored throwable.
                  */
                 protected ForMethodExit(MethodDescription instrumentedMethod, MethodDescription adviceMethod, TypeDefinition enterType, StackSize throwableSize) {
@@ -3592,7 +3602,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
-                     * @param enterType          The type type or {@code void} if no enter type is defined.
+                     * @param enterType          The enter type or {@code void} if no enter type is defined.
                      * @param throwableSize      The stack size of a possibly stored throwable.
                      */
                     protected Simple(MethodDescription instrumentedMethod, MethodDescription adviceMethod, TypeDefinition enterType, StackSize throwableSize) {
@@ -3644,7 +3654,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
-                     * @param enterType          The type type or {@code void} if no enter type is defined.
+                     * @param enterType          The enter type or {@code void} if no enter type is defined.
                      * @param throwableSize      The stack size of a possibly stored throwable.
                      */
                     protected WithCopiedArguments(MethodDescription instrumentedMethod, MethodDescription adviceMethod, TypeDefinition enterType, StackSize throwableSize) {
@@ -3792,7 +3802,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod);
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, enterType);
                 }
 
                 @Override
@@ -3885,7 +3895,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod);
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, enterType);
                 }
 
                 @Override
@@ -5249,15 +5259,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Applies this skip dispatcher.
                      *
                      * @param methodVisitor        The method visitor to write to.
+                     * @param instrumentedMethod   The instrumented method.
+                     * @param argumentHandler      A handler for accessing values on the local variable array.
                      * @param methodSizeHandler    The method size handler of the advice method to use.
                      * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
-                     * @param instrumentedMethod   The instrumented method.
                      * @param skipHandler          The skip handler to use.
                      */
                     void apply(MethodVisitor methodVisitor,
+                               MethodDescription instrumentedMethod,
+                               ArgumentHandler.ForAdvice argumentHandler,
                                MethodSizeHandler.ForAdvice methodSizeHandler,
                                StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                               MethodDescription instrumentedMethod,
                                Bound.SkipHandler skipHandler);
 
                     /**
@@ -5272,9 +5284,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodDescription instrumentedMethod,
+                                          ArgumentHandler.ForAdvice argumentHandler,
                                           MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             /* do nothing */
                         }
@@ -5398,33 +5411,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodDescription instrumentedMethod,
+                                          ArgumentHandler.ForAdvice argumentHandler,
                                           MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
-                            doApply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler, false);
+                            doApply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler, false);
                         }
 
                         /**
                          * Applies this skip dispatcher.
                          *
                          * @param methodVisitor        The method visitor to write to.
+                         * @param instrumentedMethod   The instrumented method.
+                         * @param argumentHandler      A handler for accessing values on the local variable array.
                          * @param methodSizeHandler    The method size handler of the advice method to use.
                          * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
-                         * @param instrumentedMethod   The instrumented method.
                          * @param skipHandler          The skip handler to use.
                          * @param inverted             {@code true} if the skip condition should be inverted.
                          */
                         protected void doApply(MethodVisitor methodVisitor,
+                                               MethodDescription instrumentedMethod,
+                                               ArgumentHandler.ForAdvice argumentHandler,
                                                MethodSizeHandler.ForAdvice methodSizeHandler,
                                                StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                               MethodDescription instrumentedMethod,
                                                Bound.SkipHandler skipHandler,
                                                boolean inverted) {
                             if (instrumentedMethod.isConstructor()) {
                                 throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
                             }
-                            methodVisitor.visitVarInsn(load, instrumentedMethod.getStackSize());
+                            methodVisitor.visitVarInsn(load, argumentHandler.enter());
                             convertValue(methodVisitor, methodSizeHandler);
                             Label noSkip = new Label();
                             methodVisitor.visitJumpInsn(inverted
@@ -5459,11 +5475,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             @Override
                             public void apply(MethodVisitor methodVisitor,
+                                              MethodDescription instrumentedMethod,
+                                              ArgumentHandler.ForAdvice argumentHandler,
                                               MethodSizeHandler.ForAdvice methodSizeHandler,
                                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                              MethodDescription instrumentedMethod,
                                               Bound.SkipHandler skipHandler) {
-                                doApply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler, true);
+                                doApply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler, true);
                             }
 
                             /**
@@ -5546,14 +5563,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodDescription instrumentedMethod,
+                                          ArgumentHandler.ForAdvice argumentHandler,
                                           MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             if (instrumentedMethod.isConstructor()) {
                                 throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
                             }
-                            methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
+                            methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.enter());
                             methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
                             Label noSkip = new Label();
                             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
@@ -5920,7 +5938,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A handler for accessing values on the local variable array.
                      */
-                    private final ArgumentHandler.ForInstrumentedMethod argumentHandler;
+                    protected final ArgumentHandler.ForInstrumentedMethod argumentHandler;
 
                     /**
                      * A handler for computing the method size requirements.
@@ -6333,9 +6351,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void apply(SkipHandler skipHandler) {
                             doApply();
                             skipDispatcher.apply(methodVisitor,
+                                    instrumentedMethod,
+                                    argumentHandler.bindEnter(adviceMethod),
                                     methodSizeHandler.bindEnter(adviceMethod),
                                     stackMapFrameHandler.bindEnter(adviceMethod),
-                                    instrumentedMethod,
                                     skipHandler);
                         }
                     }
@@ -6900,7 +6919,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Type returnType = Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor());
                         if (doesReturn && !returnType.equals(Type.VOID_TYPE)) {
                             stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                            methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
+                            methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), argumentHandler.enter());
                         }
                     }
                 }
@@ -7190,6 +7209,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected final Implementation.Context implementationContext;
 
                     /**
+                     * A handler for accessing values on the local variable array.
+                     */
+                    protected final ArgumentHandler.ForAdvice argumentHandler;
+
+                    /**
                      * A handler for computing the method size requirements.
                      */
                     protected final MethodSizeHandler.ForAdvice methodSizeHandler;
@@ -7212,6 +7236,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offsetMappings        The offset mappings available to this advice.
                      * @param methodVisitor         The method visitor for writing the instrumented method.
                      * @param implementationContext The implementation context to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
@@ -7221,6 +7246,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Context implementationContext,
+                                                 ArgumentHandler.ForAdvice argumentHandler,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler) {
@@ -7229,6 +7255,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.implementationContext = implementationContext;
+                        this.argumentHandler = argumentHandler;
                         this.methodSizeHandler = methodSizeHandler;
                         this.stackMapFrameHandler = stackMapFrameHandler;
                         this.suppressionHandler = suppressionHandler;
@@ -7285,6 +7312,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param offsetMappings        The offset mappings available to this advice.
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
+                         * @param argumentHandler       A handler for accessing values on the local variable array.
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
@@ -7295,6 +7323,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Implementation.Context implementationContext,
+                                                 ArgumentHandler.ForAdvice argumentHandler,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
@@ -7304,6 +7333,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
+                                    argumentHandler,
                                     methodSizeHandler,
                                     stackMapFrameHandler,
                                     suppressionHandler);
@@ -7317,22 +7347,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     || adviceMethod.getReturnType().represents(short.class)
                                     || adviceMethod.getReturnType().represents(char.class)
                                     || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
                             } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
                             }
                         }
 
                         @Override
                         public void apply(SkipHandler skipHandler) {
                             doApply();
-                            skipDispatcher.apply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler);
+                            skipDispatcher.apply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler);
                         }
 
                         @Override
@@ -7343,19 +7373,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     || adviceMethod.getReturnType().represents(char.class)
                                     || adviceMethod.getReturnType().represents(int.class)) {
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(long.class)) {
                                 methodVisitor.visitInsn(Opcodes.LCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(float.class)) {
                                 methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
                             } else if (adviceMethod.getReturnType().represents(double.class)) {
                                 methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
                             } else if (!adviceMethod.getReturnType().represents(void.class)) {
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
                             }
                         }
                     }
@@ -7373,6 +7403,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param offsetMappings        The offset mappings available to this advice.
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
+                         * @param argumentHandler       A handler for accessing values on the local variable array.
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
@@ -7382,6 +7413,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
+                                                ArgumentHandler.ForAdvice argumentHandler,
                                                 MethodSizeHandler.ForAdvice methodSizeHandler,
                                                 StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                 SuppressionHandler.Bound suppressionHandler) {
@@ -7390,6 +7422,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
+                                    argumentHandler,
                                     methodSizeHandler,
                                     stackMapFrameHandler,
                                     suppressionHandler);
@@ -7495,6 +7528,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
+                                argumentHandler.bindEnter(adviceMethod),
                                 methodSizeHandler.bindEnter(adviceMethod),
                                 stackMapFrameHandler.bindEnter(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler),
@@ -7607,6 +7641,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
+                                argumentHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler));
