@@ -54,6 +54,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         protected TypeList wrap(List<TypeDescription> values) {
             return new Explicit(values);
         }
+
+        @Override
+        public int getStackSize() {
+            return StackSize.of(this);
+        }
     }
 
     /**
@@ -105,11 +110,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     ? NO_INTERFACES
                     : internalNames;
         }
-
-        @Override
-        public int getStackSize() {
-            return StackSize.sizeOf(types);
-        }
     }
 
     /**
@@ -160,15 +160,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             return internalNames.length == 0
                     ? NO_INTERFACES
                     : internalNames;
-        }
-
-        @Override
-        public int getStackSize() {
-            int stackSize = 0;
-            for (TypeDescription typeDescription : typeDescriptions) {
-                stackSize += typeDescription.getStackSize().getSize();
-            }
-            return stackSize;
         }
     }
 

@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
@@ -391,7 +392,7 @@ public enum MethodInvocation {
         /**
          * The parameter types of the method to be bootstrapped.
          */
-        private final TypeList parameterTypes;
+        private final List<? extends TypeDescription> parameterTypes;
 
         /**
          * The bootstrap method.
@@ -414,7 +415,7 @@ public enum MethodInvocation {
          */
         public DynamicInvocation(String methodName,
                                  TypeDescription returnType,
-                                 TypeList parameterTypes,
+                                 List<? extends TypeDescription> parameterTypes,
                                  MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> arguments) {
             this.methodName = methodName;
@@ -444,7 +445,7 @@ public enum MethodInvocation {
                             bootstrapMethod.getDescriptor(),
                             bootstrapMethod.getDeclaringType().isInterface()),
                     arguments.toArray(new Object[arguments.size()]));
-            int stackSize = returnType.getStackSize().getSize() - parameterTypes.getStackSize();
+            int stackSize = returnType.getStackSize().getSize() - StackSize.of(parameterTypes);
             return new Size(stackSize, Math.max(stackSize, 0));
         }
 

@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.TestCase.fail;
@@ -22,7 +23,7 @@ public class CompoundListTest {
 
     @Mock
     private Object first, second, third, forth;
-    
+
     @Test(expected = UnsupportedOperationException.class)
     public void testConstruction() throws Throwable {
         Constructor<?> constructor = CompoundList.class.getDeclaredConstructor();
@@ -63,5 +64,14 @@ public class CompoundListTest {
         assertThat(list.get(1), is(second));
         assertThat(list.get(2), is(third));
         assertThat(list.get(3), is(forth));
+    }
+
+    @Test
+    public void testListOfLists() throws Exception {
+        List<Object> list = CompoundList.of(Collections.singletonList(first), Collections.singletonList(second), Collections.singletonList(third));
+        assertThat(list.size(), is(3));
+        assertThat(list.get(0), is(first));
+        assertThat(list.get(1), is(second));
+        assertThat(list.get(2), is(third));
     }
 }
