@@ -3,19 +3,27 @@ language: java
 sudo: false
 dist: trusty
 
+before_install:
+  - unset _JAVA_OPTIONS
+  - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
+
 matrix:
   include:
-# Java 9 (openjdk-9.0.1 fails with java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty)
+# Java 9
     - jdk: oraclejdk9
-      env: JDK_RELEASE='JDK 9' TARGET='-Pjava9'
+      env: JDK='JDK 9' TARGET='-Pjava9'
       install: echo "The default Travis install script is being skipped!"
 # Java 10
-    - env: JDK_RELEASE='JDK 10' TARGET='-Pjava10'
-      install: . ./.travis/install-jdk.sh -F 10 -L BCL
+    - env: JDK='JDK 10' TARGET='-Pjava10'
+      install: . ./install-jdk.sh -F 10 -L BCL
 # Java 11
-    - env: JDK_RELEASE='JDK 11-ea' TARGET='-Pjava11'
-      install: . ./.travis/install-jdk.sh -F 11 -L BCL
+    - env: JDK='JDK 11' TARGET='-Pjava11'
+      install: . ./install-jdk.sh -F 11 -L BCL
+# The following environments are known to fail
+  allow_failures:
+    - env: JDK='JDK 10' TARGET='-Pjava10'
+    - env: JDK='JDK 11' TARGET='-Pjava11'
 
 script:
-  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true
-  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
