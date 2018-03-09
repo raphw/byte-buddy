@@ -792,10 +792,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 if (!fieldCacheCanAppendEntries) {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
-                int hashCode = fieldValue.hashCode();
-                do {
-                    fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, hashCode++);
-                } while (registeredFieldCacheEntries.values().contains(fieldCache));
+                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix);
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -855,12 +852,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * @param instrumentedType The instrumented type.
                  * @param fieldType        The type of the cache's field.
                  * @param suffix           The suffix to use for the cache field's name.
-                 * @param hashCode         The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int hashCode) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
-                    name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.hashOf(hashCode);
+                    name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.make();
                 }
 
                 @Override
