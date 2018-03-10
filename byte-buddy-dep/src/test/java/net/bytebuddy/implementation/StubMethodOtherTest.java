@@ -20,10 +20,18 @@ public class StubMethodOtherTest {
     @Mock
     private InstrumentedType instrumentedType;
 
+    @Mock
+    private Implementation implementation;
+
     @Test
     public void testPreparation() throws Exception {
         assertThat(StubMethod.INSTANCE.prepare(instrumentedType), is(instrumentedType));
         verifyZeroInteractions(instrumentedType);
+    }
+
+    @Test
+    public void testComposition() throws Exception {
+        assertThat(StubMethod.INSTANCE.andThen(implementation), is(implementation));
     }
 
     @Test

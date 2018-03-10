@@ -19,7 +19,7 @@ import org.objectweb.asm.MethodVisitor;
  * <li>A {@code null} reference for any reference types. Note that this includes primitive wrapper types.</li>
  * </ol>
  */
-public enum StubMethod implements Implementation, ByteCodeAppender {
+public enum StubMethod implements Implementation.Composable, ByteCodeAppender {
 
     /**
      * The singleton instance.
@@ -34,6 +34,11 @@ public enum StubMethod implements Implementation, ByteCodeAppender {
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
         return this;
+    }
+
+    @Override
+    public Implementation andThen(Implementation implementation) {
+        return implementation;
     }
 
     @Override
