@@ -3,7 +3,6 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.method.AbstractMethodDescriptionTest;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -13,7 +12,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescriptionTest {
 
@@ -51,6 +49,7 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
         return true;
     }
 
+    @Test
     @Override
     @Ignore("Fails due to bug in ASM 6.1: https://gitlab.ow2.org/asm/asm/issues/317814")
     public void testSyntethicParameter() throws Exception {
