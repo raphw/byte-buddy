@@ -696,6 +696,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final Map<FieldCacheEntry, FieldDescription.InDefinedShape> registeredFieldCacheEntries;
 
             /**
+             * A set of hash codes that are used for field cache entry names.
+             */
+            private final Set<Integer> usedFieldCacheEntryHashCodes;
+
+            /**
              * A random suffix to append to the names of accessor methods.
              */
             private final String suffix;
@@ -728,6 +733,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredSetters = new HashMap<FieldDescription, DelegationRecord>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
+                usedFieldCacheEntryHashCodes = new HashSet<Integer>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
             }
@@ -792,7 +798,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 if (!fieldCacheCanAppendEntries) {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
-                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix);
+                int hashCode = fieldValue.hashCode();
+                while (!usedFieldCacheEntryHashCodes.add(hashCode)) {
+                    hashCode += 1;
+                }
+                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, hashCode);
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -852,11 +862,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * @param instrumentedType The instrumented type.
                  * @param fieldType        The type of the cache's field.
                  * @param suffix           The suffix to use for the cache field's name.
+                 * @param hashCode         The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int hashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
-                    name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.make();
+                    name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.hashOf(hashCode);
                 }
 
                 @Override
