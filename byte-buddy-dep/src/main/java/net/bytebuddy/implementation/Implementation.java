@@ -696,9 +696,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private final Map<FieldCacheEntry, FieldDescription.InDefinedShape> registeredFieldCacheEntries;
 
             /**
-             * A set of hash codes that are used for field cache entry names.
+             * A set of registered field cache entries.
              */
-            private final Set<Integer> usedFieldCacheEntryHashCodes;
+            private final Set<FieldDescription.InDefinedShape> registeredFieldCacheFields;
 
             /**
              * A random suffix to append to the names of accessor methods.
@@ -733,7 +733,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredSetters = new HashMap<FieldDescription, DelegationRecord>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
-                usedFieldCacheEntryHashCodes = new HashSet<Integer>();
+                registeredFieldCacheFields = new HashSet<FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
             }
@@ -799,10 +799,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
                 int hashCode = fieldValue.hashCode();
-                while (!usedFieldCacheEntryHashCodes.add(hashCode)) {
-                    hashCode += 1;
-                }
-                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, hashCode);
+                do {
+                    fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, hashCode++);
+                } while (!registeredFieldCacheFields.add(fieldCache));
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
