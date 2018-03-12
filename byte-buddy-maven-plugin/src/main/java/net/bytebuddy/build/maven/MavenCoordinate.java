@@ -24,16 +24,23 @@ public class MavenCoordinate {
     private final String version;
 
     /**
+     * The projects packing.
+     */
+    private String packing;
+
+    /**
      * Creates a new Maven coordinate.
      *
      * @param groupId    The project's group id.
      * @param artifactId The project's artifact id.
      * @param version    The project's version.
+     * @param packing    The project's packing
      */
-    protected MavenCoordinate(String groupId, String artifactId, String version) {
+    protected MavenCoordinate(String groupId, String artifactId, String version, String packing) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
+        this.packing = packing;
     }
 
     /**
@@ -42,13 +49,17 @@ public class MavenCoordinate {
      * @return An artifact representation of this coordinate.
      */
     public Artifact asArtifact() {
-        return new DefaultArtifact(groupId, artifactId, "jar", version);
+        return new DefaultArtifact(groupId, artifactId, packing, version);
     }
 
     @Override
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof MavenCoordinate)) return false;
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof MavenCoordinate)) {
+            return false;
+        }
         MavenCoordinate that = (MavenCoordinate) object;
         return groupId.equals(that.groupId)
                 && artifactId.equals(that.artifactId)
