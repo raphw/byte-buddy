@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 
 public class ClassLoaderResolverTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", JAR = "jar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -78,26 +78,26 @@ public class ClassLoaderResolverTest {
 
     @Test
     public void testResolution() throws Exception {
-        assertThat(classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX)), sameInstance(classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX))));
+        assertThat(classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR)), sameInstance(classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR))));
     }
 
     @Test(expected = MojoExecutionException.class)
     public void testCollectionFailure() throws Exception {
         when(repositorySystem.collectDependencies(eq(repositorySystemSession), any(CollectRequest.class)))
                 .thenThrow(new DependencyCollectionException(new CollectResult(new CollectRequest())));
-        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX));
+        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR));
     }
 
     @Test(expected = MojoExecutionException.class)
     public void testResolutionFailure() throws Exception {
         when(repositorySystem.resolveDependencies(eq(repositorySystemSession), any(DependencyRequest.class)))
                 .thenThrow(new DependencyResolutionException(new DependencyResult(new DependencyRequest(root, mock(DependencyFilter.class))), new Throwable()));
-        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX));
+        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR));
     }
 
     @Test
     public void testClose() throws Exception {
-        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX));
+        classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX, JAR));
         classLoaderResolver.close();
     }
 }

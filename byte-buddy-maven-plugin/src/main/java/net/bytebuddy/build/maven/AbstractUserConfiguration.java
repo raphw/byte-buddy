@@ -24,6 +24,11 @@ public class AbstractUserConfiguration {
     protected String version;
 
     /**
+     * The version of the project containing the plugin type or {@code null} if the current project's packing should be used.
+     */
+    protected String packing;
+
+    /**
      * Returns the group id to use.
      *
      * @param groupId The current project's group id.
@@ -57,7 +62,19 @@ public class AbstractUserConfiguration {
     protected String getVersion(String version) {
         return this.version == null || this.version.isEmpty()
                 ? version
-                : this.version;
+                        : this.version;
+    }
+
+    /**
+     * Returns the version to use.
+     *
+     * @param packing The current project's packing.
+     * @return The packing to use.
+     */
+    protected String getPacking(String packing) {
+        return this.packing == null || this.packing.isEmpty()
+                ? packing
+                        : this.packing;
     }
 
     /**
@@ -66,9 +83,10 @@ public class AbstractUserConfiguration {
      * @param groupId    The current project's build id.
      * @param artifactId The current project's artifact id.
      * @param version    The current project's version.
+     * @param packing    The current project's packing
      * @return The resolved Maven coordinate.
      */
-    public MavenCoordinate asCoordinate(String groupId, String artifactId, String version) {
-        return new MavenCoordinate(getGroupId(groupId), getArtifactId(artifactId), getVersion(version));
+    public MavenCoordinate asCoordinate(String groupId, String artifactId, String version, String packing) {
+        return new MavenCoordinate(getGroupId(groupId), getArtifactId(artifactId), getVersion(version), getPacking(packing));
     }
 }
