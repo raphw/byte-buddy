@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. March 2018: version 1.8.0
+
+- Refactored `Advice` argument handling to be controlled by a decicated structure.
+- Added basic logic for argument copying in `Advice`.
+- Fix performance degradation for cached fields.
+- Add support for Java 10 and preliminary support for Java 11.
+
 ### 2. March 2018: version 1.7.11
 
 - Fix Maven and Gradle plugins to resolve correct class file version.
