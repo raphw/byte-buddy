@@ -7414,6 +7414,16 @@ public interface TypePool {
                 private Label firstLabel;
 
                 /**
+                 * A shift index for visible parameters that indicates a deviation of the actual parameter index.
+                 */
+                private int visibleParameterShift;
+
+                /**
+                 * A shift index for invisible parameters that indicates a deviation of the actual parameter index.
+                 */
+                private int invisibleParameterShift;
+
+                /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
                 private AnnotationValue<?, ?> defaultValue;
@@ -7503,8 +7513,20 @@ public interface TypePool {
                 }
 
                 @Override
+                public void visitAnnotableParameterCount(int count, boolean visible) {
+                    if (visible) {
+                        visibleParameterShift = Type.getMethodType(descriptor).getArgumentTypes().length - count;
+                    } else {
+                        invisibleParameterShift = Type.getMethodType(descriptor).getArgumentTypes().length - count;
+                    }
+                }
+
+                @Override
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                    return new AnnotationExtractor(descriptor, index, parameterAnnotationTokens, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(descriptor,
+                            index + (visible ? visibleParameterShift : invisibleParameterShift),
+                            parameterAnnotationTokens,
+                            new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
