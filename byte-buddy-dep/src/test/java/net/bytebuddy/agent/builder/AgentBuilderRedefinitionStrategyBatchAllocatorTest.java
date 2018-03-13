@@ -273,6 +273,7 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSlicingUnderflow() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(1,
                 1,
@@ -288,6 +289,7 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSlicingOverflow() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(3,
                 3,
@@ -299,6 +301,7 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSlicingDynamicMatch() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(1,
                 3,
@@ -312,6 +315,7 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSlicingMatch() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing(2,
                 2,
