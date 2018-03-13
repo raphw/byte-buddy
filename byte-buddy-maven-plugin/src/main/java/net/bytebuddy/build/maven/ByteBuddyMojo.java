@@ -55,6 +55,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected String version;
 
     /**
+     * The built project's packaging.
+     */
+    @Parameter(defaultValue = "${project.packaging}", required = true, readonly = true)
+    protected String packaging;
+
+    /**
      * The Maven project.
      */
     @Parameter(defaultValue = "${project}", readonly = true)
@@ -217,7 +223,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             for (Transformation transformation : transformations) {
                 String plugin = transformation.getPlugin();
                 try {
-                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version)))
+                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version, packaging)))
                             .getDeclaredConstructor()
                             .newInstance());
                     getLog().info("Created plugin: " + plugin);
@@ -227,7 +233,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
             EntryPoint entryPoint = (initialization == null
                     ? Initialization.makeDefault()
-                    : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version);
+                    : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
             getLog().info("Resolved entry point: " + entryPoint);
             ExecutionStatus transformStatus = transform(root, entryPoint, classPath, plugins);
             if (transformStatus.failed()) {

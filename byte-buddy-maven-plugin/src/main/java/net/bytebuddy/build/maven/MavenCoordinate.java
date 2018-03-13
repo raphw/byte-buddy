@@ -24,16 +24,23 @@ public class MavenCoordinate {
     private final String version;
 
     /**
+     * The projects packaging.
+     */
+    private String packaging;
+
+    /**
      * Creates a new Maven coordinate.
      *
      * @param groupId    The project's group id.
      * @param artifactId The project's artifact id.
      * @param version    The project's version.
+     * @param packaging    The project's packaging
      */
-    protected MavenCoordinate(String groupId, String artifactId, String version) {
+    protected MavenCoordinate(String groupId, String artifactId, String version, String packaging) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
+        this.packaging = packaging;
     }
 
     /**
@@ -42,17 +49,22 @@ public class MavenCoordinate {
      * @return An artifact representation of this coordinate.
      */
     public Artifact asArtifact() {
-        return new DefaultArtifact(groupId, artifactId, "jar", version);
+        return new DefaultArtifact(groupId, artifactId, packaging, version);
     }
 
     @Override
     public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof MavenCoordinate)) return false;
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof MavenCoordinate)) {
+            return false;
+        }
         MavenCoordinate that = (MavenCoordinate) object;
         return groupId.equals(that.groupId)
                 && artifactId.equals(that.artifactId)
-                && version.equals(that.version);
+                && version.equals(that.version)
+                && packaging.equals(that.packaging);
     }
 
     @Override
@@ -60,6 +72,7 @@ public class MavenCoordinate {
         int result = groupId.hashCode();
         result = 31 * result + artifactId.hashCode();
         result = 31 * result + version.hashCode();
+        result = 31 * result + packaging.hashCode();
         return result;
     }
 
@@ -69,6 +82,7 @@ public class MavenCoordinate {
                 "groupId='" + groupId + '\'' +
                 ", artifactId='" + artifactId + '\'' +
                 ", version='" + version + '\'' +
+                ", packaging='" + packaging + '\'' +
                 '}';
     }
 }

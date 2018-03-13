@@ -33,11 +33,12 @@ public class Initialization extends AbstractUserConfiguration {
      * @param groupId             This project's group id.
      * @param artifactId          This project's artifact id.
      * @param version             This project's version id.
+     * @param packaging             This project's packaging
      * @return The resolved entry point.
      * @throws MojoExecutionException If the entry point cannot be created.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
-    public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, String groupId, String artifactId, String version) throws MojoExecutionException {
+    public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, String groupId, String artifactId, String version, String packaging) throws MojoExecutionException {
         if (entryPoint == null || entryPoint.isEmpty()) {
             throw new MojoExecutionException("Entry point name is not defined");
         }
@@ -47,7 +48,7 @@ public class Initialization extends AbstractUserConfiguration {
             }
         }
         try {
-            return (EntryPoint) Class.forName(entryPoint, false, classLoaderResolver.resolve(asCoordinate(groupId, artifactId, version)))
+            return (EntryPoint) Class.forName(entryPoint, false, classLoaderResolver.resolve(asCoordinate(groupId, artifactId, version, packaging)))
                     .getDeclaredConstructor()
                     .newInstance();
         } catch (Exception exception) {
