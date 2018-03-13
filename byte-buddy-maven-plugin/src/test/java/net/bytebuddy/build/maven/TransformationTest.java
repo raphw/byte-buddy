@@ -17,13 +17,13 @@ public class TransformationTest {
         transformation.groupId = BAR;
         transformation.artifactId = QUX;
         transformation.version = BAZ;
-        transformation.packing = JAR;
+        transformation.packaging = JAR;
         assertThat(transformation.getPlugin(), is(FOO));
         assertThat(transformation.getRawPlugin(), is(FOO));
         assertThat(transformation.getGroupId(FOO), is(BAR));
         assertThat(transformation.getArtifactId(FOO), is(QUX));
         assertThat(transformation.getVersion(FOO), is(BAZ));
-        assertThat(transformation.getPacking(JAR), is(JAR));
+        assertThat(transformation.getPackaging(JAR), is(JAR));
     }
 
     @Test
@@ -32,7 +32,7 @@ public class TransformationTest {
         assertThat(transformation.getGroupId(BAR), is(BAR));
         assertThat(transformation.getArtifactId(QUX), is(QUX));
         assertThat(transformation.getVersion(BAZ), is(BAZ));
-        assertThat(transformation.getPacking(JAR), is(JAR));
+        assertThat(transformation.getPackaging(JAR), is(JAR));
     }
 
     @Test
@@ -41,11 +41,11 @@ public class TransformationTest {
         transformation.groupId = "";
         transformation.artifactId = "";
         transformation.version = "";
-        transformation.packing= "";
+        transformation.packaging = "";
         assertThat(transformation.getGroupId(BAR), is(BAR));
         assertThat(transformation.getArtifactId(QUX), is(QUX));
         assertThat(transformation.getVersion(BAZ), is(BAZ));
-        assertThat(transformation.getPacking(JAR), is(JAR));
+        assertThat(transformation.getPackaging(JAR), is(JAR));
     }
 
     @Test(expected = MojoExecutionException.class)

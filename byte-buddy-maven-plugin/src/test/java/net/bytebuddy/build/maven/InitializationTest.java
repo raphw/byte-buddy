@@ -34,11 +34,11 @@ public class InitializationTest {
         initalization.groupId = BAR;
         initalization.artifactId = QUX;
         initalization.version = BAZ;
-        initalization.packing = JAR;
+        initalization.packaging = JAR;
         assertThat(initalization.getGroupId(FOO), is(BAR));
         assertThat(initalization.getArtifactId(FOO), is(QUX));
         assertThat(initalization.getVersion(FOO), is(BAZ));
-        assertThat(initalization.getPacking(JAR), is(JAR));
+        assertThat(initalization.getPackaging(JAR), is(JAR));
     }
 
     @Test

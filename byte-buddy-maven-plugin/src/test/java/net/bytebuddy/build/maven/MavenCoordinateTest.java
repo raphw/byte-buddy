@@ -14,14 +14,14 @@ public class MavenCoordinateTest {
 
     @Test
     public void testAsArtifact() throws Exception {
-        Artifact artifact = new MavenCoordinate(FOO, BAR, QUX,JAR).asArtifact();
+        Artifact artifact = new MavenCoordinate(FOO, BAR, QUX, JAR).asArtifact();
         assertThat(artifact.getGroupId(), is(FOO));
         assertThat(artifact.getArtifactId(), is(BAR));
         assertThat(artifact.getVersion(), is(QUX));
         assertThat(artifact.getExtension(), is(JAR));
     }
 
-    @Test @Ignore
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MavenCoordinate.class).apply();
     }

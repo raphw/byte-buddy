@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 
 public class ByteBuddyMojoTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", TEMP = "tmp";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", TEMP = "tmp", JAR = "jar";
 
     @Rule
     public MojoRule mojoRule = new MojoRule();
@@ -285,6 +285,7 @@ public class ByteBuddyMojoTest {
             mojoRule.setVariableValueToObject(mojo, "groupId", FOO);
             mojoRule.setVariableValueToObject(mojo, "artifactId", BAR);
             mojoRule.setVariableValueToObject(mojo, "version", QUX);
+            mojoRule.setVariableValueToObject(mojo, "packaging", JAR);
             mojo.setLog(new SilentLog());
             mojo.execute();
         } finally {
