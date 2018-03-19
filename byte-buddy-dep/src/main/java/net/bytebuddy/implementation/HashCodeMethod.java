@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -43,9 +42,9 @@ public class HashCodeMethod implements Implementation {
     }
 
     private HashCodeMethod(HashCodeInitializer hashCodeInitializer,
-                             int multiplier,
-                             ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored,
-                             ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable) {
+                           int multiplier,
+                           ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored,
+                           ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable) {
         this.hashCodeInitializer = hashCodeInitializer;
         this.multiplier = multiplier;
         this.ignored = ignored;
@@ -72,6 +71,10 @@ public class HashCodeMethod implements Implementation {
         return new HashCodeMethod(hashCodeInitializer, multiplier, ignored, this.nonNullable.or(nonNullable));
     }
 
+    public Implementation withMultiplier(int multiplier) {
+        return new HashCodeMethod(hashCodeInitializer, multiplier, ignored, nonNullable);
+    }
+
     @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
@@ -80,48 +83,10 @@ public class HashCodeMethod implements Implementation {
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
         if (implementationTarget.getInstrumentedType().isInterface()) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Cannot implement meaningful hash code method for " + implementationTarget.getInstrumentedType());
         }
         return new Appender(hashCodeInitializer.resolve(implementationTarget.getInstrumentedType()),
                 implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
-    }
-
-    protected class Appender implements ByteCodeAppender {
-
-        private final StackManipulation initialValue;
-
-        private final List<FieldDescription.InDefinedShape> fieldDescriptions;
-
-        protected Appender(StackManipulation initialValue, List<FieldDescription.InDefinedShape> fieldDescriptions) {
-            this.initialValue = initialValue;
-            this.fieldDescriptions = fieldDescriptions;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.getReturnType().represents(int.class)) {
-                throw new IllegalStateException();
-            }
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(2 + fieldDescriptions.size() * 8);
-            stackManipulations.add(initialValue);
-            StackSize padding = StackSize.ZERO;
-            for (FieldDescription.InDefinedShape fieldDescription : fieldDescriptions) {
-                stackManipulations.add(IntegerConstant.forValue(multiplier));
-                stackManipulations.add(Multiplication.INTEGER);
-                stackManipulations.add(MethodVariableAccess.loadThis());
-                stackManipulations.add(FieldAccess.forField(fieldDescription).read());
-                NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || nonNullable.matches(fieldDescription)
-                        ? NullValueGuard.NoOp.INSTANCE
-                        : new NullValueGuard.UsingJump(instrumentedMethod);
-                stackManipulations.add(nullValueGuard.before());
-                stackManipulations.add(ValueTransformer.of(fieldDescription.getType()));
-                stackManipulations.add(Addition.INTEGER);
-                stackManipulations.add(nullValueGuard.after());
-                padding = padding.maximum(nullValueGuard.getRequiredVariablePadding());
-            }
-            stackManipulations.add(MethodReturn.INTEGER);
-            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding.getSize());
-        }
     }
 
     protected interface HashCodeInitializer {
@@ -148,7 +113,11 @@ public class HashCodeMethod implements Implementation {
 
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType) {
-                return MethodInvocation.invoke(HASH_CODE).special(instrumentedType.getSuperClass().asErasure());
+                TypeDefinition superClass = instrumentedType.getSuperClass();
+                if (superClass == null) {
+                    throw new IllegalStateException();
+                }
+                return MethodInvocation.invoke(HASH_CODE).special(superClass.asErasure());
             }
         }
     }
@@ -303,6 +272,46 @@ public class HashCodeMethod implements Implementation {
         @Override
         public boolean isValid() {
             return true;
+        }
+    }
+
+    protected class Appender implements ByteCodeAppender {
+
+        private final StackManipulation initialValue;
+
+        private final List<FieldDescription.InDefinedShape> fieldDescriptions;
+
+        protected Appender(StackManipulation initialValue, List<FieldDescription.InDefinedShape> fieldDescriptions) {
+            this.initialValue = initialValue;
+            this.fieldDescriptions = fieldDescriptions;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            if (instrumentedMethod.isStatic()) {
+                throw new IllegalStateException("Hash code method must not be static: " + instrumentedMethod);
+            } else if (!instrumentedMethod.getReturnType().represents(int.class)) {
+                throw new IllegalStateException("Hash code method does not return primitive integer: " + instrumentedMethod);
+            }
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(2 + fieldDescriptions.size() * 8);
+            stackManipulations.add(initialValue);
+            StackSize padding = StackSize.ZERO;
+            for (FieldDescription.InDefinedShape fieldDescription : fieldDescriptions) {
+                stackManipulations.add(IntegerConstant.forValue(multiplier));
+                stackManipulations.add(Multiplication.INTEGER);
+                stackManipulations.add(MethodVariableAccess.loadThis());
+                stackManipulations.add(FieldAccess.forField(fieldDescription).read());
+                NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || nonNullable.matches(fieldDescription)
+                        ? NullValueGuard.NoOp.INSTANCE
+                        : new NullValueGuard.UsingJump(instrumentedMethod);
+                stackManipulations.add(nullValueGuard.before());
+                stackManipulations.add(ValueTransformer.of(fieldDescription.getType()));
+                stackManipulations.add(Addition.INTEGER);
+                stackManipulations.add(nullValueGuard.after());
+                padding = padding.maximum(nullValueGuard.getRequiredVariablePadding());
+            }
+            stackManipulations.add(MethodReturn.INTEGER);
+            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding.getSize());
         }
     }
 }
