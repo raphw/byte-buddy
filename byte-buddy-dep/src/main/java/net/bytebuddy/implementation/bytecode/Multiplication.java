@@ -5,29 +5,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that adds to numbers on the operand stack.
+ * A stack manipulation that multiplies to numbers on the operand stack.
  */
-public enum Addition implements StackManipulation {
+public enum Multiplication implements StackManipulation { // TODO: Test!
 
     /**
-     * Adds two integers or integer-compatible values.
+     * Multiplies two integers or integer-compatible values.
      */
-    INTEGER(Opcodes.IADD, StackSize.SINGLE),
+    INTEGER(Opcodes.IMUL, StackSize.SINGLE),
 
     /**
-     * Adds two longs.
+     * Multiplies two longs.
      */
-    LONG(Opcodes.LADD, StackSize.DOUBLE),
+    LONG(Opcodes.LMUL, StackSize.DOUBLE),
 
     /**
-     * Adds two floats.
+     * Multiplies two floats.
      */
-    FLOAT(Opcodes.FADD, StackSize.SINGLE),
+    FLOAT(Opcodes.FMUL, StackSize.SINGLE),
 
     /**
-     * Adds two doubles.
+     * Multiplies two doubles.
      */
-    DOUBLE(Opcodes.DADD, StackSize.DOUBLE);
+    DOUBLE(Opcodes.DMUL, StackSize.DOUBLE);
 
     /**
      * The opcode to apply.
@@ -35,17 +35,17 @@ public enum Addition implements StackManipulation {
     private final int opcode;
 
     /**
-     * The stack size of the added primitive.
+     * The stack size of the multiplied primitive.
      */
     private final StackSize stackSize;
 
     /**
-     * Creates a new addition.
+     * Creates a new multiplication type.
      *
      * @param opcode    The opcode to apply.
-     * @param stackSize The stack size of the added primitive.
+     * @param stackSize The stack size of the multiplied primitive.
      */
-    Addition(int opcode, StackSize stackSize) {
+    Multiplication(int opcode, StackSize stackSize) {
         this.opcode = opcode;
         this.stackSize = stackSize;
     }
