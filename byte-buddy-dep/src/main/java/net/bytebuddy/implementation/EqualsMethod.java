@@ -29,54 +29,120 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+/**
+ * An implementation of {@link Object#equals(Object)} that takes a class's declared fields into consideration. Equality is resolved by comparing two
+ * instances of the same or a compatible class field by field where reference fields must either both be {@code null} or where the field value of
+ * the instance upon which the method is invoked returns {@code true} upon calling the value's {@code equals} method. For arrays, the corresponding
+ * utilities of {@link java.util.Arrays} are used.
+ */
 @EqualsAndHashCode
 public class EqualsMethod implements Implementation {
 
+    /**
+     * The {@link Object#equals(Object)} method.
+     */
     private static final MethodDescription.InDefinedShape EQUALS = new TypeDescription.ForLoadedType(Object.class)
             .getDeclaredMethods()
             .filter(isEquals())
             .getOnly();
 
-    private final BaselineEquality baselineEquality;
+    /**
+     * The baseline equality to check.
+     */
+    private final SuperClassCheck superClassCheck;
 
-    private final CompatibilityCheck compatibilityCheck;
+    /**
+     * The instance type compatibility check.
+     */
+    private final TypeCompatibilityCheck typeCompatibilityCheck;
 
+    /**
+     * A matcher to filter fields that should not be used for a equality resoltion.
+     */
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored;
 
+    /**
+     * A matcher to determine fields of a reference type that cannot be {@code null}.
+     */
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable;
 
-    protected EqualsMethod(BaselineEquality offsetProvider) {
-        this(offsetProvider, CompatibilityCheck.EXACT, none(), none());
+    /**
+     * Creates a new equals method implementation.
+     *
+     * @param superClassCheck The baseline equality to check.
+     */
+    protected EqualsMethod(SuperClassCheck superClassCheck) {
+        this(superClassCheck, TypeCompatibilityCheck.EXACT, none(), none());
     }
 
-    private EqualsMethod(BaselineEquality baselineEquality,
-                         CompatibilityCheck compatibilityCheck,
+    /**
+     * Creates a new equals method implementation.
+     *
+     * @param superClassCheck        The baseline equality to check.
+     * @param typeCompatibilityCheck The instance type compatibility check.
+     * @param ignored                A matcher to filter fields that should not be used for a equality resoltion.
+     * @param nonNullable            A matcher to determine fields of a reference type that cannot be {@code null}.
+     */
+    private EqualsMethod(SuperClassCheck superClassCheck,
+                         TypeCompatibilityCheck typeCompatibilityCheck,
                          ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored,
                          ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable) {
-        this.baselineEquality = baselineEquality;
-        this.compatibilityCheck = compatibilityCheck;
+        this.superClassCheck = superClassCheck;
+        this.typeCompatibilityCheck = typeCompatibilityCheck;
         this.ignored = ignored;
         this.nonNullable = nonNullable;
     }
 
+    /**
+     * Creates an equals implementation that invokes the super class's {@link Object#equals(Object)} method first.
+     *
+     * @return An equals implementation that invokes the super class's {@link Object#equals(Object)} method first.
+     */
     public static EqualsMethod requiringSuperClassEquality() {
-        return new EqualsMethod(BaselineEquality.FOR_SUPER_METHOD_CALL);
+        return new EqualsMethod(SuperClassCheck.ENABLED);
     }
 
+    /**
+     * Creates an equals method implementation that does not invoke the super class's {@link Object#equals(Object)} method.
+     *
+     * @return An equals method implementation that does not invoke the super class's {@link Object#equals(Object)} method.
+     */
     public static EqualsMethod isolated() {
-        return new EqualsMethod(BaselineEquality.NONE);
+        return new EqualsMethod(SuperClassCheck.DISABLED);
     }
 
+    /**
+     * Returns a new version of this equals method implementation that ignores the specified fields additionally to any
+     * previously specified fields.
+     *
+     * @param ignored A matcher to specify any fields that should be ignored.
+     * @return A new version of this equals method implementation that also ignores any fields matched by the provided matcher.
+     */
     public EqualsMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new EqualsMethod(baselineEquality, compatibilityCheck, this.ignored.or(ignored), nonNullable);
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.or(ignored), nonNullable);
     }
 
+    /**
+     * Returns a new version of this equals method implementation that does not apply a {@code null} value check for the specified fields
+     * if they have a reference type additionally to any previously specified fields.
+     *
+     * @param nonNullable A matcher to specify any fields that should not be guarded against {@code null} values.
+     * @return A new version of this equals method implementation that also does not apply {@code null} value checks to any fields matched by
+     * the provided matcher.
+     */
     public EqualsMethod withNonNullableFields(ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
-        return new EqualsMethod(baselineEquality, compatibilityCheck, ignored, this.nonNullable.or(nonNullable));
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.or(nonNullable));
     }
 
+    /**
+     * Returns a new version of this equals method implementation that permits subclasses of the instrumented type to be equal to instances
+     * of the instrumented type instead of requiring an exact match.
+     *
+     * @return A new version of this equals method implementation that permits subclasses of the instrumented type to be equal to instances
+     * of the instrumented type instead of requiring an exact match.
+     */
     public Implementation withSubclassEquality() {
-        return new EqualsMethod(baselineEquality, CompatibilityCheck.SUBCLASS, ignored, nonNullable);
+        return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable);
     }
 
     @Override
@@ -90,21 +156,33 @@ public class EqualsMethod implements Implementation {
             throw new IllegalStateException("Cannot implement meaningful equals method for " + implementationTarget.getInstrumentedType());
         }
         return new Appender(implementationTarget.getInstrumentedType(), new StackManipulation.Compound(
-                baselineEquality.resolve(implementationTarget.getInstrumentedType()),
-                compatibilityCheck.resolve(implementationTarget.getInstrumentedType())
+                superClassCheck.resolve(implementationTarget.getInstrumentedType()),
+                MethodVariableAccess.loadThis(),
+                MethodVariableAccess.REFERENCE.loadFrom(1),
+                ConditionalReturn.onIdentity().returningTrue(),
+                typeCompatibilityCheck.resolve(implementationTarget.getInstrumentedType())
         ), implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
     }
 
-    protected enum BaselineEquality {
+    /**
+     * Checks the equality contract against the super class.
+     */
+    protected enum SuperClassCheck {
 
-        NONE {
+        /**
+         * Does not perform any super class check.
+         */
+        DISABLED {
             @Override
             protected StackManipulation resolve(TypeDescription instrumentedType) {
                 return StackManipulation.Trivial.INSTANCE;
             }
         },
 
-        FOR_SUPER_METHOD_CALL {
+        /**
+         * Invokes the super class's {@link Object#equals(Object)} method.
+         */
+        ENABLED {
             @Override
             protected StackManipulation resolve(TypeDescription instrumentedType) {
                 TypeDefinition superClass = instrumentedType.getSuperClass();
@@ -118,13 +196,27 @@ public class EqualsMethod implements Implementation {
             }
         };
 
+        /**
+         * Resolves a stack manipulation for the required super class check.
+         *
+         * @param instrumentedType The instrumented type.
+         * @return A stack manipulation that implements the specified check.
+         */
         protected abstract StackManipulation resolve(TypeDescription instrumentedType);
     }
 
-    protected enum CompatibilityCheck {
+    /**
+     * Checks the overall type of the provided argument.
+     */
+    protected enum TypeCompatibilityCheck {
 
+        /**
+         * Requires an exact type match.
+         */
         EXACT {
-
+            /**
+             * The {@link Object#getClass()} method.
+             */
             private final MethodDescription.InDefinedShape getClass = new TypeDescription.ForLoadedType(Object.class)
                     .getDeclaredMethods()
                     .filter(named("getClass"))
@@ -143,6 +235,9 @@ public class EqualsMethod implements Implementation {
             }
         },
 
+        /**
+         * Requires a subtype relationship.
+         */
         SUBCLASS {
             @Override
             protected StackManipulation resolve(TypeDescription instrumentedType) {
@@ -154,22 +249,31 @@ public class EqualsMethod implements Implementation {
             }
         };
 
+        /**
+         * Resolves a stack manipulation for the required type compatibility check.
+         *
+         * @param instrumentedType The instrumented type.
+         * @return A stack manipulation that implements the specified check.
+         */
         protected abstract StackManipulation resolve(TypeDescription instrumentedType);
     }
 
+    /**
+     * Guards a field value against a potential {@code null} value.
+     */
     protected interface NullValueGuard {
 
         /**
-         * Returns a stack manipulation to apply before computing a hash value.
+         * Returns a stack manipulation to apply before computing equality.
          *
-         * @return A stack manipulation to apply before computing a hash value.
+         * @return A stack manipulation to apply before computing equality.
          */
         StackManipulation before();
 
         /**
-         * Returns a stack manipulation to apply after computing a hash value.
+         * Returns a stack manipulation to apply after computing equality.
          *
-         * @return A stack manipulation to apply after computing a hash value.
+         * @return A stack manipulation to apply after computing equality.
          */
         StackManipulation after();
 
@@ -178,7 +282,7 @@ public class EqualsMethod implements Implementation {
          *
          * @return The required padding for the local variable array to apply this guard.
          */
-        StackSize getRequiredVariablePadding();
+        int getRequiredVariablePadding();
 
         /**
          * A non-operational null value guard.
@@ -201,15 +305,15 @@ public class EqualsMethod implements Implementation {
             }
 
             @Override
-            public StackSize getRequiredVariablePadding() {
-                return StackSize.ZERO;
+            public int getRequiredVariablePadding() {
+                return StackSize.ZERO.getSize();
             }
         }
 
         /**
-         * A null value guard that expects a reference type and that uses a jump if a field value is {@code null}.
+         * A null value guard that expects a reference type and that skips the comparison if both values are {@code null} but returns if
+         * the invoked instance's field value is {@code null} but not the compared instance's value.
          */
-        @EqualsAndHashCode
         class UsingJump implements NullValueGuard {
 
             /**
@@ -217,6 +321,9 @@ public class EqualsMethod implements Implementation {
              */
             private static final Object[] EMPTY = new Object[0];
 
+            /**
+             * An array containing a single reference value.
+             */
             private static final Object[] REFERENCE = new Object[]{Type.getInternalName(Object.class)};
 
             /**
@@ -224,7 +331,20 @@ public class EqualsMethod implements Implementation {
              */
             private final MethodDescription instrumentedMethod;
 
-            private final Label nullValue;
+            /**
+             * The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
+             */
+            private final Label firstValueNull;
+
+            /**
+             * The label to jump to if the second value is {@code null}.
+             */
+            private final Label secondValueNull;
+
+            /**
+             * A label indicating the end of the null-guarding block.
+             */
+            private final Label endOfBlock;
 
             /**
              * Creates a new null value guard using a jump instruction for {@code null} values.
@@ -233,7 +353,9 @@ public class EqualsMethod implements Implementation {
              */
             protected UsingJump(MethodDescription instrumentedMethod) {
                 this.instrumentedMethod = instrumentedMethod;
-                nullValue = new Label();
+                firstValueNull = new Label();
+                secondValueNull = new Label();
+                endOfBlock = new Label();
             }
 
             @Override
@@ -247,12 +369,12 @@ public class EqualsMethod implements Implementation {
             }
 
             @Override
-            public StackSize getRequiredVariablePadding() {
-                return StackSize.SINGLE;
+            public int getRequiredVariablePadding() {
+                return 2;
             }
 
             /**
-             * The stack manipulation to apply before the hash value computation.
+             * The stack manipulation to apply before the equality computation.
              */
             protected class BeforeInstruction implements StackManipulation {
 
@@ -264,15 +386,19 @@ public class EqualsMethod implements Implementation {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + 1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize() + 1);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
-                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, nullValue);
+                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, secondValueNull);
+                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, firstValueNull);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize() + 1);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
                     return new Size(0, 0);
                 }
             }
 
             /**
-             * The stack manipulation to apply after the hash value computation.
+             * The stack manipulation to apply after the equality computation.
              */
             protected class AfterInstruction implements StackManipulation {
 
@@ -283,16 +409,19 @@ public class EqualsMethod implements Implementation {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-                    Label equal = new Label();
-                    methodVisitor.visitJumpInsn(Opcodes.GOTO, equal);
-                    methodVisitor.visitLabel(nullValue);
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfBlock);
+                    methodVisitor.visitLabel(secondValueNull);
                     if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, REFERENCE.length, REFERENCE);
                     }
-                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, equal);
+                    methodVisitor.visitJumpInsn(Opcodes.IFNULL, endOfBlock);
+                    methodVisitor.visitLabel(firstValueNull);
+                    if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
+                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                    }
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
-                    methodVisitor.visitLabel(equal);
+                    methodVisitor.visitLabel(endOfBlock);
                     if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     }
@@ -303,12 +432,12 @@ public class EqualsMethod implements Implementation {
     }
 
     /**
-     * A value transformer that is responsible for resolving a field value to an {@code int} value.
+     * A value comparator is responsible to compare to values of a given type.
      */
     protected enum ValueComparator implements StackManipulation {
 
         /**
-         * A transformer for a {@code long} value.
+         * A comparator for a {@code long} value.
          */
         LONG {
             @Override
@@ -319,7 +448,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code float} value.
+         * A comparator for a {@code float} value.
          */
         FLOAT {
             @Override
@@ -330,7 +459,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code double} value.
+         * A comparator for a {@code double} value.
          */
         DOUBLE {
             @Override
@@ -341,7 +470,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code boolean[]} value.
+         * A comparator for a {@code boolean[]} value.
          */
         BOOLEAN_ARRAY {
             @Override
@@ -352,7 +481,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code byte[]} value.
+         * A comparator for a {@code byte[]} value.
          */
         BYTE_ARRAY {
             @Override
@@ -363,7 +492,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code short[]} value.
+         * A comparator for a {@code short[]} value.
          */
         SHORT_ARRAY {
             @Override
@@ -374,7 +503,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code char[]} value.
+         * A comparator for a {@code char[]} value.
          */
         CHARACTER_ARRAY {
             @Override
@@ -385,7 +514,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for an {@code int[]} value.
+         * A comparator for an {@code int[]} value.
          */
         INTEGER_ARRAY {
             @Override
@@ -396,7 +525,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code long[]} value.
+         * A comparator for a {@code long[]} value.
          */
         LONG_ARRAY {
             @Override
@@ -407,7 +536,7 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * A transformer for a {@code float[]} value.
+         * A comparator for a {@code float[]} value.
          */
         FLOAT_ARRAY {
             @Override
@@ -451,7 +580,7 @@ public class EqualsMethod implements Implementation {
         };
 
         /**
-         * Resolves a type definition to a hash code.
+         * Resolves a type definition to a equality comparison.
          *
          * @param typeDefinition The type definition to resolve.
          * @return The stack manipulation to apply.
@@ -500,15 +629,34 @@ public class EqualsMethod implements Implementation {
         }
     }
 
+    /**
+     * A byte code appender to implement the {@link EqualsMethod}.
+     */
     @EqualsAndHashCode
     protected class Appender implements ByteCodeAppender {
 
+        /**
+         * The instrumented type.
+         */
         private final TypeDescription instrumentedType;
 
+        /**
+         * The baseline stack manipulation.
+         */
         private final StackManipulation baseline;
 
+        /**
+         * A list of fields to use for the comparison.
+         */
         private final List<FieldDescription.InDefinedShape> fieldDescriptions;
 
+        /**
+         * Creates a new appender.
+         *
+         * @param instrumentedType  The instrumented type.
+         * @param baseline          The baseline stack manipulation.
+         * @param fieldDescriptions A list of fields to use for the comparison.
+         */
         protected Appender(TypeDescription instrumentedType, StackManipulation baseline, List<FieldDescription.InDefinedShape> fieldDescriptions) {
             this.instrumentedType = instrumentedType;
             this.baseline = baseline;
@@ -526,7 +674,7 @@ public class EqualsMethod implements Implementation {
             }
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(3 + fieldDescriptions.size() * 8);
             stackManipulations.add(baseline);
-            StackSize padding = StackSize.ZERO;
+            int padding = 0;
             for (FieldDescription.InDefinedShape fieldDescription : fieldDescriptions) {
                 stackManipulations.add(MethodVariableAccess.loadThis());
                 stackManipulations.add(FieldAccess.forField(fieldDescription).read());
@@ -539,42 +687,116 @@ public class EqualsMethod implements Implementation {
                 stackManipulations.add(nullValueGuard.before());
                 stackManipulations.add(ValueComparator.of(fieldDescription.getType()));
                 stackManipulations.add(nullValueGuard.after());
-                padding = padding.maximum(nullValueGuard.getRequiredVariablePadding());
+                padding = Math.max(padding, nullValueGuard.getRequiredVariablePadding());
             }
             stackManipulations.add(IntegerConstant.forValue(true));
             stackManipulations.add(MethodReturn.INTEGER);
-            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding.getSize());
+            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding);
         }
     }
 
+    /**
+     * A conditional return aborts the equality computation if a given condition was reached.
+     */
+    @EqualsAndHashCode
     protected static class ConditionalReturn implements StackManipulation {
 
+        /**
+         * An empty array.
+         */
         private static final Object[] EMPTY = new Object[0];
 
-        private final int opcode;
+        /**
+         * The conditional jump instruction upon which the return is not triggered.
+         */
+        private final int jumpCondition;
 
-        protected ConditionalReturn(int opcode) {
-            this.opcode = opcode;
+        /**
+         * The opcode for the value being returned.
+         */
+        private final int value;
+
+        /**
+         * Creates a conditional return for a value of {@code false}.
+         *
+         * @param jumpCondition The opcode upon which the return is not triggered.
+         */
+        protected ConditionalReturn(int jumpCondition) {
+            this(jumpCondition, Opcodes.ICONST_0);
         }
 
-        protected static StackManipulation onZeroInteger() {
+        /**
+         * Creates a conditional return.
+         *
+         * @param jumpCondition The opcode upon which the return is not triggered.
+         * @param value         The opcode for the value being returned.
+         */
+        private ConditionalReturn(int jumpCondition, int value) {
+            this.jumpCondition = jumpCondition;
+            this.value = value;
+        }
+
+        /**
+         * Returns a conditional return that returns on an {@code int} value of {@code 0}.
+         *
+         * @return A conditional return that returns on an {@code int} value of {@code 0}.
+         */
+        protected static ConditionalReturn onZeroInteger() {
             return new ConditionalReturn(Opcodes.IFNE);
         }
 
-        protected static StackManipulation onNonZeroInteger() {
+        /**
+         * Returns a conditional return that returns on an {@code int} value of not {@code 0}.
+         *
+         * @return A conditional return that returns on an {@code int} value of not {@code 0}.
+         */
+        protected static ConditionalReturn onNonZeroInteger() {
             return new ConditionalReturn(Opcodes.IFEQ);
         }
 
-        protected static StackManipulation onNullValue() {
+        /**
+         * Returns a conditional return that returns on a reference value of {@code null}.
+         *
+         * @return A conditional return that returns on a reference value of {@code null}.
+         */
+        protected static ConditionalReturn onNullValue() {
             return new ConditionalReturn(Opcodes.IFNONNULL);
         }
 
-        protected static StackManipulation onNonIdentity() {
+        /**
+         * Returns a conditional return that returns if two reference values are not identical.
+         *
+         * @return A conditional return that returns if two reference values are not identical.
+         */
+        protected static ConditionalReturn onNonIdentity() {
             return new ConditionalReturn(Opcodes.IF_ACMPEQ);
         }
 
-        protected static StackManipulation onNonEqualInteger() {
+        /**
+         * Returns a conditional return that returns if two reference values are identical.
+         *
+         * @return A conditional return that returns if two reference values are identical.
+         */
+        protected static ConditionalReturn onIdentity() {
+            return new ConditionalReturn(Opcodes.IF_ACMPNE);
+        }
+
+        /**
+         * Returns a conditional return that returns if two {@code int} values are not equal.
+         *
+         * @return A conditional return that returns if two {@code int} values are not equal.
+         */
+        protected static ConditionalReturn onNonEqualInteger() {
             return new ConditionalReturn(Opcodes.IF_ICMPEQ);
+        }
+
+        /**
+         * Returns a new stack manipulation that returns {@code true} for the given condition.
+         *
+         * @return A new stack manipulation that returns {@code true} for the given condition.
+         */
+        protected StackManipulation returningTrue() {
+            return new ConditionalReturn(jumpCondition, Opcodes.ICONST_1);
         }
 
         @Override
@@ -585,8 +807,8 @@ public class EqualsMethod implements Implementation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
             Label label = new Label();
-            methodVisitor.visitJumpInsn(opcode, label);
-            methodVisitor.visitInsn(Opcodes.ICONST_0);
+            methodVisitor.visitJumpInsn(jumpCondition, label);
+            methodVisitor.visitInsn(value);
             methodVisitor.visitInsn(Opcodes.IRETURN);
             methodVisitor.visitLabel(label);
             if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6)) {

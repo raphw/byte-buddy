@@ -5,6 +5,7 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.isHashCode;
@@ -65,7 +66,27 @@ public class HashCodeMethodOtherTest {
         assertThat(instance.hashCode(), is(42 * 31 + FOO.hashCode()));
     }
 
-    // TODO: Add multiplier check
+    @Test
+    public void testMultiplier() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isHashCode())
+                .intercept(HashCodeMethod.usingOffset(0).withMultiplier(1))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, FOO);
+        assertThat(instance.hashCode(), is(101574));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testZeroMultiplier() {
+        HashCodeMethod.usingDefaultOffset().withMultiplier(0);
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testInterface() throws Exception {
@@ -92,6 +113,11 @@ public class HashCodeMethodOtherTest {
                 .defineMethod(FOO, int.class, Ownership.STATIC)
                 .intercept(HashCodeMethod.usingDefaultOffset())
                 .make();
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(HashCodeMethod.class).apply();
     }
 
     public static class HashCodeBase {

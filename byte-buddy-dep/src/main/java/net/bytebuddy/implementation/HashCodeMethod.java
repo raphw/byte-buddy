@@ -156,6 +156,9 @@ public class HashCodeMethod implements Implementation {
      * field's hash code.
      */
     public Implementation withMultiplier(int multiplier) {
+        if (multiplier == 0) {
+            throw new IllegalArgumentException("Hash code multiplier must not be zero");
+        }
         return new HashCodeMethod(offsetProvider, multiplier, ignored, nonNullable);
     }
 
@@ -257,7 +260,7 @@ public class HashCodeMethod implements Implementation {
          *
          * @return The required padding for the local variable array to apply this guard.
          */
-        StackSize getRequiredVariablePadding();
+        int getRequiredVariablePadding();
 
         /**
          * A non-operational null value guard.
@@ -280,8 +283,8 @@ public class HashCodeMethod implements Implementation {
             }
 
             @Override
-            public StackSize getRequiredVariablePadding() {
-                return StackSize.ZERO;
+            public int getRequiredVariablePadding() {
+                return StackSize.ZERO.getSize();
             }
         }
 
@@ -332,8 +335,8 @@ public class HashCodeMethod implements Implementation {
             }
 
             @Override
-            public StackSize getRequiredVariablePadding() {
-                return StackSize.SINGLE;
+            public int getRequiredVariablePadding() {
+                return 1;
             }
 
             /**
@@ -622,7 +625,7 @@ public class HashCodeMethod implements Implementation {
             }
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(2 + fieldDescriptions.size() * 8);
             stackManipulations.add(initialValue);
-            StackSize padding = StackSize.ZERO;
+            int padding = 0;
             for (FieldDescription.InDefinedShape fieldDescription : fieldDescriptions) {
                 stackManipulations.add(IntegerConstant.forValue(multiplier));
                 stackManipulations.add(Multiplication.INTEGER);
@@ -635,10 +638,10 @@ public class HashCodeMethod implements Implementation {
                 stackManipulations.add(ValueTransformer.of(fieldDescription.getType()));
                 stackManipulations.add(Addition.INTEGER);
                 stackManipulations.add(nullValueGuard.after());
-                padding = padding.maximum(nullValueGuard.getRequiredVariablePadding());
+                padding = Math.max(padding, nullValueGuard.getRequiredVariablePadding());
             }
             stackManipulations.add(MethodReturn.INTEGER);
-            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding.getSize());
+            return new Size(new StackManipulation.Compound(stackManipulations).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize() + padding);
         }
     }
 }

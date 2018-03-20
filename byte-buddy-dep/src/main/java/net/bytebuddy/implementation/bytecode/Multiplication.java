@@ -7,7 +7,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A stack manipulation that multiplies to numbers on the operand stack.
  */
-public enum Multiplication implements StackManipulation { // TODO: Test!
+public enum Multiplication implements StackManipulation {
 
     /**
      * Multiplies two integers or integer-compatible values.
