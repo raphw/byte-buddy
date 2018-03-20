@@ -37,7 +37,7 @@ public class HashCodeMethodOtherTest {
                 .subclass(Object.class)
                 .defineField(FOO, Object.class, Visibility.PUBLIC)
                 .method(isHashCode())
-                .intercept(HashCodeMethod.usingInitialOffset(0).withIgnoredFields(named(FOO)))
+                .intercept(HashCodeMethod.usingOffset(0).withIgnoredFields(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -46,6 +46,23 @@ public class HashCodeMethodOtherTest {
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.getClass().getDeclaredField(FOO).set(instance, FOO);
         assertThat(instance.hashCode(), is(0));
+    }
+
+    @Test
+    public void testSuperMethod() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(HashCodeBase.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isHashCode())
+                .intercept(HashCodeMethod.usingSuperClassOffset())
+                .make()
+                .load(HashCodeBase.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, FOO);
+        assertThat(instance.hashCode(), is(42 * 31 + FOO.hashCode()));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -73,5 +90,13 @@ public class HashCodeMethodOtherTest {
                 .defineMethod(FOO, int.class, Ownership.STATIC)
                 .intercept(HashCodeMethod.usingDefaultOffset())
                 .make();
+    }
+
+    public static class HashCodeBase {
+
+        @Override
+        public int hashCode() {
+            return 42;
+        }
     }
 }

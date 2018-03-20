@@ -63,7 +63,7 @@ public class HashCodeMethodTest {
                 .subclass(Object.class)
                 .defineField(FOO, type, Visibility.PUBLIC)
                 .method(isHashCode())
-                .intercept(HashCodeMethod.usingInitialOffset(0))
+                .intercept(HashCodeMethod.usingOffset(0))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
