@@ -214,21 +214,13 @@ public class EqualsMethod implements Implementation {
          * Requires an exact type match.
          */
         EXACT {
-            /**
-             * The {@link Object#getClass()} method.
-             */
-            private final MethodDescription.InDefinedShape getClass = new TypeDescription.ForLoadedType(Object.class)
-                    .getDeclaredMethods()
-                    .filter(named("getClass"))
-                    .getOnly();
-
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadFrom(1),
                         ConditionalReturn.onNullValue(),
                         MethodVariableAccess.REFERENCE.loadFrom(1),
-                        MethodInvocation.invoke(getClass),
+                        MethodInvocation.invoke(GET_CLASS),
                         ClassConstant.of(instrumentedType),
                         ConditionalReturn.onNonIdentity()
                 );
@@ -248,6 +240,14 @@ public class EqualsMethod implements Implementation {
                 );
             }
         };
+
+        /**
+         * The {@link Object#getClass()} method.
+         */
+        protected static final MethodDescription.InDefinedShape GET_CLASS = new TypeDescription.ForLoadedType(Object.class)
+                .getDeclaredMethods()
+                .filter(named("getClass"))
+                .getOnly();
 
         /**
          * Resolves a stack manipulation for the required type compatibility check.
