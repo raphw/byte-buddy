@@ -348,10 +348,10 @@ public class HashCodeMethod implements Implementation {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-                    methodVisitor.visitIntInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
-                    methodVisitor.visitIntInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
                     methodVisitor.visitJumpInsn(Opcodes.IFNULL, label);
-                    methodVisitor.visitIntInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
                     return new Size(0, 0);
                 }
             }
@@ -424,6 +424,86 @@ public class HashCodeMethod implements Implementation {
                 methodVisitor.visitInsn(Opcodes.L2I);
                 return new Size(-1, 3);
             }
+        },
+
+        BOOLEAN_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([Z)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        BYTE_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([B)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        SHORT_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([S)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        CHARACTER_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([C)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        INTEGER_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([I)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        LONG_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([J)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        FLOAT_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([F)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        DOUBLE_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([D)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        REFERENCE_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "hashCode", "([Ljava/lang/Object;)I", false);
+                return new Size(0, 0);
+            }
+        },
+
+        NESTED_ARRAY {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "deepHashCode", "([Ljava/lang/Object;)I", false);
+                return new Size(0, 0);
+            }
         };
 
         /**
@@ -432,7 +512,7 @@ public class HashCodeMethod implements Implementation {
          * @param typeDefinition The type definition to resolve.
          * @return The stack manipulation to apply.
          */
-        public static StackManipulation of(TypeDefinition typeDefinition) { // TODO: Arrays.hashCode / Arrays.deepHashCode
+        public static StackManipulation of(TypeDefinition typeDefinition) {
             if (typeDefinition.represents(boolean.class)
                     || typeDefinition.represents(byte.class)
                     || typeDefinition.represents(short.class)
@@ -445,6 +525,26 @@ public class HashCodeMethod implements Implementation {
                 return FLOAT;
             } else if (typeDefinition.represents(double.class)) {
                 return DOUBLE;
+            } else if (typeDefinition.represents(boolean[].class)) {
+                return BOOLEAN_ARRAY;
+            } else if (typeDefinition.represents(byte[].class)) {
+                return BYTE_ARRAY;
+            } else if (typeDefinition.represents(short[].class)) {
+                return SHORT_ARRAY;
+            } else if (typeDefinition.represents(char[].class)) {
+                return CHARACTER_ARRAY;
+            } else if (typeDefinition.represents(int[].class)) {
+                return INTEGER_ARRAY;
+            } else if (typeDefinition.represents(long[].class)) {
+                return LONG_ARRAY;
+            } else if (typeDefinition.represents(float[].class)) {
+                return FLOAT_ARRAY;
+            } else if (typeDefinition.represents(double[].class)) {
+                return DOUBLE_ARRAY;
+            } else if (typeDefinition.isArray()) {
+                return typeDefinition.getComponentType().isArray()
+                        ? NESTED_ARRAY
+                        : REFERENCE_ARRAY;
             } else {
                 return MethodInvocation.invoke(HASH_CODE).virtual(typeDefinition.asErasure());
             }
@@ -498,7 +598,7 @@ public class HashCodeMethod implements Implementation {
                 stackManipulations.add(Multiplication.INTEGER);
                 stackManipulations.add(MethodVariableAccess.loadThis());
                 stackManipulations.add(FieldAccess.forField(fieldDescription).read());
-                NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || nonNullable.matches(fieldDescription)
+                NullValueGuard nullValueGuard = fieldDescription.getType().isPrimitive() || fieldDescription.getType().isArray() || nonNullable.matches(fieldDescription)
                         ? NullValueGuard.NoOp.INSTANCE
                         : new NullValueGuard.UsingJump(instrumentedMethod);
                 stackManipulations.add(nullValueGuard.before());
