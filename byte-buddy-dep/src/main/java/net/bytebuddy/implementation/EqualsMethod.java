@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation;
 
-import jdk.nashorn.internal.codegen.types.Type;
 import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
@@ -23,6 +22,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.List;
