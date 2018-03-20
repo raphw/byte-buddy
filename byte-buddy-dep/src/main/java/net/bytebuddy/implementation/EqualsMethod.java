@@ -111,7 +111,10 @@ public class EqualsMethod implements Implementation {
                 if (superClass == null) {
                     throw new IllegalStateException(instrumentedType + " does not declare a super class");
                 }
-                return new StackManipulation.Compound(MethodVariableAccess.loadThis(), MethodInvocation.invoke(EQUALS).special(superClass.asErasure()));
+                return new StackManipulation.Compound(MethodVariableAccess.loadThis(),
+                        MethodVariableAccess.REFERENCE.loadFrom(1),
+                        MethodInvocation.invoke(EQUALS).special(superClass.asErasure()),
+                        ConditionalReturn.onZeroInteger());
             }
         };
 

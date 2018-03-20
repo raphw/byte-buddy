@@ -65,6 +65,8 @@ public class HashCodeMethodOtherTest {
         assertThat(instance.hashCode(), is(42 * 31 + FOO.hashCode()));
     }
 
+    // TODO: Add multiplier check
+
     @Test(expected = IllegalStateException.class)
     public void testInterface() throws Exception {
         new ByteBuddy()
