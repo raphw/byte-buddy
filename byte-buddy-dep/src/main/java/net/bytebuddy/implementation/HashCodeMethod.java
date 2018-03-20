@@ -426,6 +426,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code boolean[]} value.
+         */
         BOOLEAN_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -434,6 +437,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code byte[]} value.
+         */
         BYTE_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -442,6 +448,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code short[]} value.
+         */
         SHORT_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -450,6 +459,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code char[]} value.
+         */
         CHARACTER_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -458,6 +470,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for an {@code int[]} value.
+         */
         INTEGER_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -466,6 +481,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code long[]} value.
+         */
         LONG_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -474,6 +492,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code float[]} value.
+         */
         FLOAT_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -482,6 +503,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a {@code double[]} value.
+         */
         DOUBLE_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -490,6 +514,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a reference array value.
+         */
         REFERENCE_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
@@ -498,6 +525,9 @@ public class HashCodeMethod implements Implementation {
             }
         },
 
+        /**
+         * A transformer for a nested reference array value.
+         */
         NESTED_ARRAY {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
