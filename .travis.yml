@@ -15,7 +15,7 @@ matrix:
       install: echo "The default Travis install script is being skipped!"
 # Java 10
     - env: JDK='JDK 10' TARGET='-Pjava10'
-      install: . ./install-jdk.sh -F 10 -L BCL
+      install: . ./install-jdk.sh -F 10 -L GPL
 # Java 11
     - env: JDK='JDK 11' TARGET='-Pjava11'
       install: . ./install-jdk.sh -F 11 -L BCL
