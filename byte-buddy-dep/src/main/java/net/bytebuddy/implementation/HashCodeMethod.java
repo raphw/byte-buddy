@@ -226,7 +226,7 @@ public class HashCodeMethod implements Implementation {
             public StackManipulation resolve(TypeDescription instrumentedType) {
                 TypeDefinition superClass = instrumentedType.getSuperClass();
                 if (superClass == null) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException(instrumentedType + " does not declare a super class");
                 }
                 return new StackManipulation.Compound(MethodVariableAccess.loadThis(), MethodInvocation.invoke(HASH_CODE).special(superClass.asErasure()));
             }
