@@ -488,6 +488,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     public enum ToStringAssigner implements Assigner {
+
         INSTANCE;
 
         @Override

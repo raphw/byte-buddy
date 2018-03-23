@@ -655,6 +655,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(Object.class).asUnboxed(), is(describe(Object.class)));
     }
 
+    @Test
+    public void testTypeNames() {
+        assertThat(describe(Type$With$Dollar.class).getSimpleName(), is(Type$With$Dollar.class.getSimpleName()));
+        assertThat(describe(Type$With$Dollar.class).getCanonicalName(), is(Type$With$Dollar.class.getCanonicalName()));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */
@@ -804,5 +810,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         interface NestedInterface {
             /* empty */
         }
+    }
+
+    private static class Type$With$Dollar {
+        /* */
     }
 }

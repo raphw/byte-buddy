@@ -7016,18 +7016,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public String getCanonicalName() {
-                return isAnonymousClass() || isLocalClass()
-                        ? NO_NAME
-                        : getName().replace('$', '.');
+                if (isAnonymousClass() || isLocalClass()) {
+                    return NO_NAME;
+                }
+                String internalName = getInternalName();
+                TypeDescription enclosingType = getEnclosingType();
+                if (enclosingType != null && internalName.startsWith(enclosingType.getInternalName() + "$")) {
+                    return enclosingType.getCanonicalName() + "." + internalName.substring(enclosingType.getInternalName().length() + 1);
+                } else {
+                    return getName();
+                }
             }
 
             @Override
             public String getSimpleName() {
                 String internalName = getInternalName();
-                int simpleNameIndex = internalName.lastIndexOf('$');
-                simpleNameIndex = simpleNameIndex == -1
-                        ? internalName.lastIndexOf('/')
-                        : simpleNameIndex;
+                TypeDescription enclosingType = getEnclosingType();
+                if (enclosingType != null && internalName.startsWith(enclosingType.getInternalName() + "$")) {
+                    int simpleNameIndex = enclosingType.getInternalName().length() + 1;
+                    while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
+                        simpleNameIndex += 1;
+                    }
+                    return internalName.substring(simpleNameIndex);
+                }
+                int simpleNameIndex = internalName.lastIndexOf('/');
                 if (simpleNameIndex == -1) {
                     return internalName;
                 } else {
