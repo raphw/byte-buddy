@@ -482,6 +482,34 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testHashCodeMethod() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(FOO, String.class, Visibility.PUBLIC)
+                .withHashCodeEquals()
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
+        left.getClass().getDeclaredField(FOO).set(left, FOO);
+        right.getClass().getDeclaredField(FOO).set(right, FOO);
+        assertThat(left.hashCode(), is(right.hashCode()));
+        assertThat(left, is(right));
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(FOO, String.class, Visibility.PUBLIC)
+                .withToString()
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getDeclaredConstructor().newInstance();
+        instance.getClass().getDeclaredField(FOO).set(instance, BAR);
+        assertThat(instance.toString(), CoreMatchers.endsWith("{foo=bar}"));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(8)
     public void testGenericMethodDefinitionMetaDataParameter() throws Exception {
         Class<?> type = createPlain()

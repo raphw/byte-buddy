@@ -19,9 +19,7 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.scaffold.*;
-import net.bytebuddy.implementation.FieldAccessor;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.*;
 import net.bytebuddy.implementation.attribute.*;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -886,6 +884,24 @@ public interface DynamicType {
          * @return A builder that allows for changing a method's or constructor's definition.
          */
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
+
+        /**
+         * Implements {@link Object#hashCode()} and {@link Object#equals(Object)} methods for the instrumented type if those
+         * methods are not declared as {@code final} by a super class. The implementations do not consider any implementations
+         * of a super class and compare a class field by field without considering synthetic fields.
+         *
+         * @return A new type builder that defines {@link Object#hashCode()} and {@link Object#equals(Object)} methods accordingly.
+         */
+        Builder<T> withHashCodeEquals();
+
+        /**
+         * Implements a {@link Object#toString()} method for the instrumented type if such a method is not declared as {@code final}
+         * by a super class. The implementation prefixes the string with the simple class name and prints each non-synthetic field's
+         * value after the field's name.
+         *
+         * @return A new type builder that defines {@link Object#toString()} method accordingly.
+         */
+        Builder<T> withToString();
 
         /**
          * <p>
@@ -2627,6 +2643,19 @@ public interface DynamicType {
             @Override
             public MethodDefinition.ImplementationDefinition<S> invokable(ElementMatcher<? super MethodDescription> matcher) {
                 return invokable(new LatentMatcher.Resolved<MethodDescription>(matcher));
+            }
+
+            @Override
+            public Builder<S> withHashCodeEquals() {
+                return method(isHashCode())
+                        .intercept(HashCodeMethod.usingDefaultOffset().withIgnoredFields(isSynthetic()))
+                        .method(isEquals())
+                        .intercept(EqualsMethod.isolated().withIgnoredFields(isSynthetic()));
+            }
+
+            @Override
+            public Builder<S> withToString() {
+                return method(isToString()).intercept(ToStringMethod.prefixedBySimpleClassName());
             }
 
             @Override
