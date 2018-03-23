@@ -4363,7 +4363,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A default implementation of a stack map frame handler for an instrumented method.
          */
-        class Default implements ForInstrumentedMethod {
+        abstract class Default implements ForInstrumentedMethod {
 
             /**
              * An empty array indicating an empty frame.
@@ -4373,7 +4373,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * The instrumented type.
              */
-            private final TypeDescription instrumentedType;
+            protected final TypeDescription instrumentedType;
 
             /**
              * The instrumented method.
@@ -4398,15 +4398,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@code true} if the meta data handler is expected to expand its frames.
              */
-            private final boolean expandFrames;
+            protected final boolean expandFrames;
 
             /**
              * The current frame's size divergence from the original local variable array.
              */
-            private int currentFrameDivergence;
+            protected int currentFrameDivergence;
 
             /**
-             * Creates a new default meta data handler.
+             * Creates a new default stack map frame handler.
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
@@ -4437,6 +4437,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
              * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
+             * @param exitAdvice         {@code true} if the current advice implies exit advice.
              * @param classFileVersion   The instrumented type's class file version.
              * @param writerFlags        The flags supplied to the ASM writer.
              * @param readerFlags        The reader flags supplied to the ASM reader.
@@ -4447,12 +4448,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       List<? extends TypeDescription> enterTypes,
                                                       List<? extends TypeDescription> intermediateTypes,
                                                       List<? extends TypeDescription> exitTypes,
+                                                      boolean exitAdvice,
                                                       ClassFileVersion classFileVersion,
                                                       int writerFlags,
                                                       int readerFlags) {
-                return (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)
-                        ? NoOp.INSTANCE
-                        : new Default(instrumentedType, instrumentedMethod, enterTypes, intermediateTypes, exitTypes, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                if ((writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
+                    return NoOp.INSTANCE;
+                } else if (!exitAdvice && enterTypes.isEmpty() && intermediateTypes.isEmpty() && exitTypes.isEmpty()) {
+                    return new Default.Trivial(instrumentedType, instrumentedMethod, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                } else {
+                    return new Default.WithPreservedArguments(instrumentedType, instrumentedMethod, enterTypes, intermediateTypes, exitTypes, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                }
             }
 
             /**
@@ -4485,33 +4491,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList(), TranslationMode.EXIT);
-            }
-
-            @Override
             public int getReaderHint() {
                 return expandFrames
                         ? ClassReader.EXPAND_FRAMES
                         : AsmVisitorWrapper.NO_FLAGS;
-            }
-
-            @Override
-            public void translateFrame(MethodVisitor methodVisitor,
-                                       int type,
-                                       int localVariableLength,
-                                       Object[] localVariable,
-                                       int stackSize,
-                                       Object[] stack) {
-                translateFrame(methodVisitor,
-                        TranslationMode.COPY,
-                        instrumentedMethod,
-                        enterTypes,
-                        type,
-                        localVariableLength,
-                        localVariable,
-                        stackSize,
-                        stack);
             }
 
             /**
@@ -4591,64 +4574,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalArgumentException("Unexpected frame type: " + type);
                 }
                 methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
-            }
-
-            @Override
-            public void injectReturnFrame(MethodVisitor methodVisitor) {
-                if (!expandFrames && currentFrameDivergence == 0 && !instrumentedMethod.isConstructor()) {
-                    if (instrumentedMethod.getReturnType().represents(void.class)) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    } else {
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
-                    }
-                } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), instrumentedMethod.getReturnType().represents(void.class)
-                            ? Collections.<TypeDescription>emptyList()
-                            : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
-                }
-            }
-
-            @Override
-            public void injectExceptionFrame(MethodVisitor methodVisitor) {
-                if (!expandFrames && currentFrameDivergence == 0) {
-                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
-                } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), Collections.singletonList(TypeDescription.THROWABLE));
-                }
-            }
-
-            @Override
-            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
-                if (!expandFrames && currentFrameDivergence == 0 && (secondary || !instrumentedMethod.isConstructor())) {
-                    if (secondary) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                    } else {
-                        Object[] local = new Object[exitTypes.size()];
-                        int index = 0;
-                        for (TypeDescription typeDescription : exitTypes) {
-                            local[index++] = toFrame(typeDescription);
-                        }
-                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
-                    }
-                } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList());
-                }
-            }
-
-            @Override
-            public void injectStartFrame(MethodVisitor methodVisitor) {
-                if (!intermediateTypes.isEmpty()) {
-                    if (!expandFrames && intermediateTypes.size() < 4) {
-                        Object[] local = new Object[intermediateTypes.size()];
-                        int index = 0;
-                        for (TypeDescription typeDescription : intermediateTypes) {
-                            local[index++] = toFrame(typeDescription);
-                        }
-                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
-                    } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), Collections.<TypeDescription>emptyList());
-                    }
-                }
             }
 
             /**
@@ -4790,6 +4715,164 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if the value is a legal representation of the {@code this} reference.
                  */
                 protected abstract boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame);
+            }
+
+            /**
+             * A trivial stack map frame handler that applies a trivial translation for the instrumented method's stack map frames.
+             */
+            protected static class Trivial extends Default {
+
+                /**
+                 * Creates a new stack map frame handler that applies a trivial translation for the instrumented method's stack map frames.
+                 *
+                 * @param instrumentedType   The instrumented type.
+                 * @param instrumentedMethod The instrumented method.
+                 * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
+                 */
+                protected Trivial(TypeDescription instrumentedType, MethodDescription instrumentedMethod, boolean expandFrames) {
+                    super(instrumentedType, instrumentedMethod, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), expandFrames);
+                }
+
+                @Override
+                public void translateFrame(MethodVisitor methodVisitor,
+                                           int type,
+                                           int localVariableLength,
+                                           Object[] localVariable,
+                                           int stackSize,
+                                           Object[] stack) {
+                    methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+                }
+
+                @Override
+                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+                    throw new IllegalStateException("Did not expect exit advice " + adviceMethod + " for " + instrumentedMethod);
+                }
+
+                @Override
+                public void injectReturnFrame(MethodVisitor methodVisitor) {
+                    throw new IllegalStateException("Did not expect return frame for " + instrumentedMethod);
+                }
+
+                @Override
+                public void injectExceptionFrame(MethodVisitor methodVisitor) {
+                    throw new IllegalStateException("Did not expect expection frame for " + instrumentedMethod);
+                }
+
+                @Override
+                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                    throw new IllegalStateException("Did not expect completion frame for " + instrumentedMethod);
+                }
+
+                @Override
+                public void injectStartFrame(MethodVisitor methodVisitor) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A stack map frame handler that requires the original arguments of the instrumented method to be preserved in their original form.
+             */
+            protected static class WithPreservedArguments extends Default {
+
+                /**
+                 * Creates a new stack map frame handler that requires the stack map frames of the original arguments to be preserved.
+                 *
+                 * @param instrumentedType   The instrumented type.
+                 * @param instrumentedMethod The instrumented method.
+                 * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
+                 * @param intermediateTypes  A list of virtual method arguments that are available are synthetically added the instrumented method is executed.
+                 * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
+                 * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
+                 */
+                protected WithPreservedArguments(TypeDescription instrumentedType,
+                                                 MethodDescription instrumentedMethod,
+                                                 List<? extends TypeDescription> enterTypes,
+                                                 List<? extends TypeDescription> intermediateTypes,
+                                                 List<? extends TypeDescription> exitTypes,
+                                                 boolean expandFrames) {
+                    super(instrumentedType, instrumentedMethod, enterTypes, intermediateTypes, exitTypes, expandFrames);
+                }
+
+                @Override
+                public void translateFrame(MethodVisitor methodVisitor,
+                                           int type,
+                                           int localVariableLength,
+                                           Object[] localVariable,
+                                           int stackSize,
+                                           Object[] stack) {
+                    translateFrame(methodVisitor,
+                            TranslationMode.COPY,
+                            instrumentedMethod,
+                            enterTypes,
+                            type,
+                            localVariableLength,
+                            localVariable,
+                            stackSize,
+                            stack);
+                }
+
+                @Override
+                public StackMapFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+                    return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList(), TranslationMode.EXIT);
+                }
+
+                @Override
+                public void injectReturnFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0 && !instrumentedMethod.isConstructor()) {
+                        if (instrumentedMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                        } else {
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
+                        }
+                    } else {
+                        injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), instrumentedMethod.getReturnType().represents(void.class)
+                                ? Collections.<TypeDescription>emptyList()
+                                : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
+                    }
+                }
+
+                @Override
+                public void injectExceptionFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0) {
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+                    } else {
+                        injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), Collections.singletonList(TypeDescription.THROWABLE));
+                    }
+                }
+
+                @Override
+                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                    if (!expandFrames && currentFrameDivergence == 0 && (secondary || !instrumentedMethod.isConstructor())) {
+                        if (secondary) {
+                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                        } else {
+                            Object[] local = new Object[exitTypes.size()];
+                            int index = 0;
+                            for (TypeDescription typeDescription : exitTypes) {
+                                local[index++] = toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
+                        }
+                    } else {
+                        injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes, exitTypes), Collections.<TypeDescription>emptyList());
+                    }
+                }
+
+                @Override
+                public void injectStartFrame(MethodVisitor methodVisitor) {
+                    if (!intermediateTypes.isEmpty()) {
+                        if (!expandFrames && intermediateTypes.size() < 4) {
+                            Object[] local = new Object[intermediateTypes.size()];
+                            int index = 0;
+                            for (TypeDescription typeDescription : intermediateTypes) {
+                                local[index++] = toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+                        } else {
+                            injectFullFrame(methodVisitor, CompoundList.of(enterTypes, intermediateTypes), Collections.<TypeDescription>emptyList());
+                        }
+                    }
+                }
             }
 
             /**
@@ -7808,6 +7891,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     enterTypes,
                     argumentHandler.getIntermediateTypes(),
                     exitTypes,
+                    methodExit.isAlive(),
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);

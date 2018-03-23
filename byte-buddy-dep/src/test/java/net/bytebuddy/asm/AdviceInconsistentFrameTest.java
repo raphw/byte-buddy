@@ -22,10 +22,79 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AdviceInconsistentFrameTest {
 
-    private static final String FOO = "foo", BAR  = "bar";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFrameTooShortTrivial() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(new TooShortMethod())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFrameDropImplicitTrivial() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(new DropImplicitMethod())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFrameInconsistentThisParameterTrivial() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(new InconsistentThisReferenceMethod())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testFrameInconsistentParameterTrivial() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
+                .withParameters(Void.class)
+                .intercept(new InconsistentParameterReferenceMethod())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
+        new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
@@ -40,7 +109,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -57,7 +126,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -74,7 +143,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -92,7 +161,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -100,8 +169,17 @@ public class AdviceInconsistentFrameTest {
     private static class TrivialAdvice {
 
         @Advice.OnMethodEnter
-        private static void exit() {
+        private static void enter() {
             /* empty */
+        }
+    }
+
+    @SuppressWarnings("all")
+    private static class RetainingAdvice {
+
+        @Advice.OnMethodEnter
+        private static boolean enter() {
+            return false;
         }
     }
 
@@ -161,7 +239,7 @@ public class AdviceInconsistentFrameTest {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[] {TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
+            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);
@@ -182,7 +260,7 @@ public class AdviceInconsistentFrameTest {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[] {TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
+            methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
             methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, 2);
