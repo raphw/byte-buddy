@@ -3529,7 +3529,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, enterType);
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod);
                 }
 
                 @Override
@@ -3616,7 +3616,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, enterType);
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod);
                 }
 
                 @Override
@@ -3661,21 +3661,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final MethodDescription adviceMethod;
 
                 /**
-                 * The enter type or {@code void} if no enter type is defined.
-                 */
-                private final TypeDefinition enterType;
-
-                /**
                  * Creates a new argument handler for an enter advice.
                  *
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
-                 * @param enterType          The enter type or {@code void} if no enter type is defined.
                  */
-                protected ForMethodEnter(MethodDescription instrumentedMethod, MethodDescription adviceMethod, TypeDefinition enterType) {
+                protected ForMethodEnter(MethodDescription instrumentedMethod, MethodDescription adviceMethod) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
-                    this.enterType = enterType;
                 }
 
                 @Override
