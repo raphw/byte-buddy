@@ -4529,7 +4529,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * Injects a full stack map frame.
+             * Injects a full stack map frame after the instrumented method has completed.
              *
              * @param methodVisitor The method visitor onto which to write the stack map frame.
              * @param typesInArray  The types that were added to the local variable array additionally to the values of the instrumented method.
@@ -4860,24 +4860,43 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void injectStartFrame(MethodVisitor methodVisitor) {
-                        if (!expandFrames && instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1) < 4) {
-                            Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1)];
+                        if (!expandFrames && (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size() < 4) {
+                            Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()];
                             int index = 0;
-                            if (!instrumentedMethod.isStatic()) {
-                                localVariable[index++] = instrumentedMethod.isConstructor()
-                                        ? Opcodes.UNINITIALIZED_THIS
-                                        : toFrame(instrumentedType);
+                            if (instrumentedMethod.isConstructor()) {
+                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                            } else if (!instrumentedMethod.isStatic()) {
+                                localVariable[index++] = toFrame(instrumentedType);
                             }
                             for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
                                 localVariable[index++] = toFrame(typeDescription);
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
-                        } else if (!instrumentedMethod.getParameters().isEmpty() && instrumentedMethod.isStatic()) { // TODO: Constructor handling
-                            injectFullFrame(methodVisitor, CompoundList.of(enterTypes, instrumentedMethod.isStatic()
-                                    ? instrumentedMethod.getParameters().asTypeList().asErasures()
-                                    : CompoundList.of(instrumentedType, instrumentedMethod.getParameters().asTypeList().asErasures())), Collections.<TypeDescription>emptyList());
+                        } else if (!instrumentedMethod.isStatic() || !instrumentedMethod.getParameters().isEmpty()) {
+                            Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 2) + instrumentedMethod.getParameters().size() * 2 + enterTypes.size()];
+                            int index = 0;
+                            if (instrumentedMethod.isConstructor()) {
+                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                            } else if (!instrumentedMethod.isStatic()) {
+                                localVariable[index++] = toFrame(instrumentedType);
+                            }
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            for (TypeDescription typeDescription : enterTypes) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            if (instrumentedMethod.isConstructor()) {
+                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                            } else if (!instrumentedMethod.isStatic()) {
+                                localVariable[index++] = toFrame(instrumentedType);
+                            }
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
                         }
-                        currentFrameDivergence = instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1);
+                        currentFrameDivergence = (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size();
                     }
 
                     @Override
