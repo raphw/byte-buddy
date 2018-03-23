@@ -65,13 +65,4 @@ public class CompoundListTest {
         assertThat(list.get(2), is(third));
         assertThat(list.get(3), is(forth));
     }
-
-    @Test
-    public void testListOfLists() throws Exception {
-        List<Object> list = CompoundList.of(Collections.singletonList(first), Collections.singletonList(second), Collections.singletonList(third));
-        assertThat(list.size(), is(3));
-        assertThat(list.get(0), is(first));
-        assertThat(list.get(1), is(second));
-        assertThat(list.get(2), is(third));
-    }
 }

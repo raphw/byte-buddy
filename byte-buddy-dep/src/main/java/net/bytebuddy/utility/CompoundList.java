@@ -54,23 +54,4 @@ public class CompoundList {
         list.addAll(right);
         return list;
     }
-
-    /**
-     * Creates a list of an array of lists.
-     *
-     * @param lists The lists to combine.
-     * @param <S>   The type of the list's elements.
-     * @return A compound list representing the element and the list.
-     */
-    public static <S> List<S> of(List<? extends S>... lists) {
-        int size = 0;
-        for (List<? extends S> aList : lists) {
-            size += aList.size();
-        }
-        List<S> list = new ArrayList<S>(size);
-        for (List<? extends S> aList : lists) {
-            list.addAll(aList);
-        }
-        return list;
-    }
 }
