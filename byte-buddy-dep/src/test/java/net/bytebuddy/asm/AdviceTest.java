@@ -9,10 +9,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
-import net.bytebuddy.implementation.bytecode.constant.TextConstant;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -489,7 +486,7 @@ public class AdviceTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, int.class).invoke(type.getDeclaredConstructor().newInstance(), 0), is((Object) 2));
+        assertThat(type.getDeclaredMethod(FOO, int.class).invoke(type.getDeclaredConstructor().newInstance(), 0), is((Object) 3));
     }
 
     @Test
@@ -2530,7 +2527,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Unused int ignored) {
+        private static int exit(@Advice.Return(readOnly = false) int argument, @Advice.Unused int ignored) {
             if (++argument != 3) {
                 throw new AssertionError();
             }

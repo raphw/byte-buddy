@@ -31,7 +31,14 @@ public class AdviceFrameTest {
                 {FrameAdviceExitOnly.class, 1},
                 {FrameAdviceExitOnlyWithSuppression.class, 1},
                 {FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandling.class, 1},
-                {FrameReturnAdvice.class, 2}
+                {FrameReturnAdvice.class, 2},
+                {FrameAdviceRetainedArguments.class, 2},
+                {FrameAdviceWithoutThrowableRetainedArguments.class, 2},
+                {FrameAdviceWithSuppressionRetainedArguments.class, 2},
+                {FrameAdviceExitOnlyRetainedArguments.class, 1},
+                {FrameAdviceExitOnlyWithSuppressionRetainedArguments.class, 1},
+                {FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandlingRetainedArguments.class, 1},
+                {FrameReturnAdviceRetainedArguments.class, 2}
         });
     }
 
@@ -482,6 +489,235 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
         @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static String advice() {
+            try {
+                int ignored = 0;
+                if (ignored != 0) {
+                    return BAR;
+                }
+            } catch (Exception e) {
+                int ignored = 0;
+                if (ignored != 0) {
+                    return QUX;
+                }
+            }
+            FrameSample.count++;
+            return FOO;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceRetainedArguments {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(onThrowable = Exception.class, backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceWithoutThrowableRetainedArguments {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceWithSuppressionRetainedArguments {
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class, backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceExitOnlyRetainedArguments {
+
+        @Advice.OnMethodExit(onThrowable = Exception.class, backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceExitOnlyWithSuppressionRetainedArguments {
+
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class, backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandlingRetainedArguments {
+
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class, backupArguments = false)
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
+            int v0 = 0;
+            {
+                long v1 = 1L, v2 = 2L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 == 0L) {
+                        throw new AssertionError();
+                    }
+                }
+            }
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v3 + v4 + v5 + v6 == 0L) {
+                    throw new AssertionError();
+                }
+            }
+            try {
+                long v7 = 7L;
+            } catch (Exception exception) {
+                long v8 = 8L;
+            }
+            FrameSample.count++;
+            return value;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class FrameReturnAdviceRetainedArguments {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        @Advice.OnMethodExit(suppress = RuntimeException.class, backupArguments = false)
         private static String advice() {
             try {
                 int ignored = 0;

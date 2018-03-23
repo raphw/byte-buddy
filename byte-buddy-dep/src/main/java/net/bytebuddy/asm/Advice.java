@@ -3798,9 +3798,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             COPYING {
                 @Override
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType) {
-                    if (instrumentedMethod.isConstructor()) {
-                        throw new IllegalStateException("Cannot apply argument copying on constructor " + instrumentedMethod);
-                    }
                     return new ForInstrumentedMethod.Copying(instrumentedMethod, enterType);
                 }
             };
@@ -4106,7 +4103,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return Math.max(this.localVariableLength, localVariableLength
                             + StackSize.of(enterTypes)
                             + StackSize.of(exitTypes)
-                            + instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1));
+                            + instrumentedMethod.getStackSize());
                 }
             }
 
@@ -4860,41 +4857,43 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void injectStartFrame(MethodVisitor methodVisitor) {
-                        if (!expandFrames && (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size() < 4) {
-                            Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()];
-                            int index = 0;
-                            if (instrumentedMethod.isConstructor()) {
-                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
-                            } else if (!instrumentedMethod.isStatic()) {
-                                localVariable[index++] = toFrame(instrumentedType);
+                        if (!instrumentedMethod.isStatic() || !instrumentedMethod.getParameters().isEmpty()) {
+                            if (!expandFrames && (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size() < 4) {
+                                Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()];
+                                int index = 0;
+                                if (instrumentedMethod.isConstructor()) {
+                                    localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                                } else if (!instrumentedMethod.isStatic()) {
+                                    localVariable[index++] = toFrame(instrumentedType);
+                                }
+                                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                    localVariable[index++] = toFrame(typeDescription);
+                                }
+                                methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
+                            } else {
+                                Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 2) + instrumentedMethod.getParameters().size() * 2 + enterTypes.size()];
+                                int index = 0;
+                                if (instrumentedMethod.isConstructor()) {
+                                    localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                                } else if (!instrumentedMethod.isStatic()) {
+                                    localVariable[index++] = toFrame(instrumentedType);
+                                }
+                                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                    localVariable[index++] = toFrame(typeDescription);
+                                }
+                                for (TypeDescription typeDescription : enterTypes) {
+                                    localVariable[index++] = toFrame(typeDescription);
+                                }
+                                if (instrumentedMethod.isConstructor()) {
+                                    localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                                } else if (!instrumentedMethod.isStatic()) {
+                                    localVariable[index++] = toFrame(instrumentedType);
+                                }
+                                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                    localVariable[index++] = toFrame(typeDescription);
+                                }
+                                methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
                             }
-                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                localVariable[index++] = toFrame(typeDescription);
-                            }
-                            methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
-                        } else if (!instrumentedMethod.isStatic() || !instrumentedMethod.getParameters().isEmpty()) {
-                            Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 2) + instrumentedMethod.getParameters().size() * 2 + enterTypes.size()];
-                            int index = 0;
-                            if (instrumentedMethod.isConstructor()) {
-                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
-                            } else if (!instrumentedMethod.isStatic()) {
-                                localVariable[index++] = toFrame(instrumentedType);
-                            }
-                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                localVariable[index++] = toFrame(typeDescription);
-                            }
-                            for (TypeDescription typeDescription : enterTypes) {
-                                localVariable[index++] = toFrame(typeDescription);
-                            }
-                            if (instrumentedMethod.isConstructor()) {
-                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
-                            } else if (!instrumentedMethod.isStatic()) {
-                                localVariable[index++] = toFrame(instrumentedType);
-                            }
-                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                localVariable[index++] = toFrame(typeDescription);
-                            }
-                            methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
                         }
                         currentFrameDivergence = (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size();
                     }
@@ -4943,7 +4942,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 for (TypeDescription typeDescription : enterTypes) {
                                     translated[index++] = toFrame(typeDescription);
                                 }
-                                System.arraycopy(localVariable, 0, translated, index, localVariable.length);
+                                System.arraycopy(localVariable, 0, translated, index, localVariableLength);
                                 localVariableLength = translated.length;
                                 localVariable = translated;
                                 currentFrameDivergence = localVariableLength;
@@ -8694,16 +8693,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * <p>
-         * When set, all arguments of the instrumented method are copied before execution. Doing so, parameter reassignments applied
+         * If {@code true}, all arguments of the instrumented method are copied before execution. Doing so, parameter reassignments applied
          * by the instrumented are not effective during the execution of the annotated exit advice.
          * </p>
          * <p>
-         * <b>Important</b>: Currently, it is not possible to use argument backups on constructors.
+         * Disabling this option can cause problems with the translation of stack map frames (meta data that is embedded in a Java class) if these
+         * frames become inconsistent with the original arguments of the instrumented method. In this case, the original arguments are no longer
+         * available to the exit advice such that Byte Buddy must abort the instrumentation with an error. If the instrumented method does not issue
+         * a stack map frame due to a lack of branching instructions, Byte Buddy might not be able to discover such an inconsistency what can cause
+         * a {@link VerifyError} instead of a Byte Buddy-issued exception as those inconsistencies are not discovered.
          * </p>
          *
          * @return {@code true} if a backup of all method arguments should be made.
          */
-        boolean backupArguments() default false;
+        boolean backupArguments() default true;
 
         /**
          * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method

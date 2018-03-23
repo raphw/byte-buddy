@@ -12,7 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class AdviceArgumentHandlerTest {
+public class AdviceArgumentHandlerCopyingTest { // TODO: Retaining argument handler test!
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -141,7 +141,7 @@ public class AdviceArgumentHandlerTest {
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(backupArguments = true)
+        @Advice.OnMethodExit
         private static void advice() {
             /* empty */
         }
@@ -151,7 +151,7 @@ public class AdviceArgumentHandlerTest {
     public static class UsingAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(backupArguments = true)
+        @Advice.OnMethodExit
         private static void advice(@Advice.Argument(0) String arg) {
             if (!BAR.equals(arg)) {
                 throw new AssertionError();
@@ -162,7 +162,7 @@ public class AdviceArgumentHandlerTest {
     @SuppressWarnings("unused")
     public static class EmptyExitOnlyAdvice {
 
-        @Advice.OnMethodExit(backupArguments = true)
+        @Advice.OnMethodExit
         private static void advice() {
             /* empty */
         }
@@ -171,7 +171,7 @@ public class AdviceArgumentHandlerTest {
     @SuppressWarnings("unused")
     public static class UsingExitOnlyAdvice {
 
-        @Advice.OnMethodExit(backupArguments = true)
+        @Advice.OnMethodExit
         private static void advice(@Advice.Argument(0) String arg) {
             if (!BAR.equals(arg)) {
                 throw new AssertionError();
