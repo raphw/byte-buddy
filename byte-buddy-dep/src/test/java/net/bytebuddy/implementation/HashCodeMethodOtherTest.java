@@ -118,6 +118,10 @@ public class HashCodeMethodOtherTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(HashCodeMethod.class).apply();
+        ObjectPropertyAssertion.of(HashCodeMethod.Appender.class).apply();
+//        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.class).apply();
+        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.BeforeInstruction.class).apply();
+        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.AfterInstruction.class).apply();
     }
 
     public static class HashCodeBase {

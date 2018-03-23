@@ -169,7 +169,11 @@ public class EqualsMethodOtherTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(EqualsMethod.class).apply();
+        ObjectPropertyAssertion.of(EqualsMethod.Appender.class).apply();
         ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.NoOp.class).apply();
+//        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.class).apply();
+        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.BeforeInstruction.class).apply();
+        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.AfterInstruction.class).apply();
         ObjectPropertyAssertion.of(EqualsMethod.ConditionalReturn.class).apply();
     }
 

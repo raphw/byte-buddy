@@ -161,7 +161,7 @@ public class EqualsMethod implements Implementation {
                 MethodVariableAccess.REFERENCE.loadFrom(1),
                 ConditionalReturn.onIdentity().returningTrue(),
                 typeCompatibilityCheck.resolve(implementationTarget.getInstrumentedType())
-        ), implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
+        ), implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))), nonNullable);
     }
 
     /**
@@ -314,6 +314,7 @@ public class EqualsMethod implements Implementation {
          * A null value guard that expects a reference type and that skips the comparison if both values are {@code null} but returns if
          * the invoked instance's field value is {@code null} but not the compared instance's value.
          */
+        @EqualsAndHashCode
         class UsingJump implements NullValueGuard {
 
             /**
@@ -360,12 +361,12 @@ public class EqualsMethod implements Implementation {
 
             @Override
             public StackManipulation before() {
-                return new UsingJump.BeforeInstruction();
+                return new UsingJump.BeforeInstruction(instrumentedMethod, firstValueNull, secondValueNull);
             }
 
             @Override
             public StackManipulation after() {
-                return new UsingJump.AfterInstruction();
+                return new UsingJump.AfterInstruction(instrumentedMethod, firstValueNull, secondValueNull, endOfBlock);
             }
 
             @Override
@@ -376,7 +377,36 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply before the equality computation.
              */
-            protected class BeforeInstruction implements StackManipulation {
+            @EqualsAndHashCode
+            protected static class BeforeInstruction implements StackManipulation {
+
+                /**
+                 * The instrumented method.
+                 */
+                private final MethodDescription instrumentedMethod;
+
+                /**
+                 * The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
+                 */
+                private final Label firstValueNull;
+
+                /**
+                 * The label to jump to if the second value is {@code null}.
+                 */
+                private final Label secondValueNull;
+
+                /**
+                 * Creates an instruction to execute before an equality check.
+                 *
+                 * @param instrumentedMethod The instrumented method.
+                 * @param firstValueNull     The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
+                 * @param secondValueNull    The label to jump to if the second value is {@code null}.
+                 */
+                protected BeforeInstruction(MethodDescription instrumentedMethod, Label firstValueNull, Label secondValueNull) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.firstValueNull = firstValueNull;
+                    this.secondValueNull = secondValueNull;
+                }
 
                 @Override
                 public boolean isValid() {
@@ -400,7 +430,43 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply after the equality computation.
              */
-            protected class AfterInstruction implements StackManipulation {
+            @EqualsAndHashCode
+            protected static class AfterInstruction implements StackManipulation {
+
+                /**
+                 * The instrumented method.
+                 */
+                private final MethodDescription instrumentedMethod;
+
+                /**
+                 * The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
+                 */
+                private final Label firstValueNull;
+
+                /**
+                 * The label to jump to if the second value is {@code null}.
+                 */
+                private final Label secondValueNull;
+
+                /**
+                 * A label indicating the end of the null-guarding block.
+                 */
+                private final Label endOfBlock;
+
+                /**
+                 * Creates an instruction to execute after an equality check.
+                 *
+                 * @param instrumentedMethod The instrumented method.
+                 * @param firstValueNull     The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
+                 * @param secondValueNull    The label to jump to if the second value is {@code null}.
+                 * @param endOfBlock         A label indicating the end of the null-guarding block.
+                 */
+                protected AfterInstruction(MethodDescription instrumentedMethod, Label firstValueNull, Label secondValueNull, Label endOfBlock) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.firstValueNull = firstValueNull;
+                    this.secondValueNull = secondValueNull;
+                    this.endOfBlock = endOfBlock;
+                }
 
                 @Override
                 public boolean isValid() {
@@ -633,7 +699,7 @@ public class EqualsMethod implements Implementation {
      * A byte code appender to implement the {@link EqualsMethod}.
      */
     @EqualsAndHashCode
-    protected class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The instrumented type.
@@ -651,16 +717,26 @@ public class EqualsMethod implements Implementation {
         private final List<FieldDescription.InDefinedShape> fieldDescriptions;
 
         /**
+         * A matcher to determine fields of a reference type that cannot be {@code null}.
+         */
+        private final ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable;
+
+        /**
          * Creates a new appender.
          *
          * @param instrumentedType  The instrumented type.
          * @param baseline          The baseline stack manipulation.
          * @param fieldDescriptions A list of fields to use for the comparison.
+         * @param nonNullable       A matcher to determine fields of a reference type that cannot be {@code null}.
          */
-        protected Appender(TypeDescription instrumentedType, StackManipulation baseline, List<FieldDescription.InDefinedShape> fieldDescriptions) {
+        protected Appender(TypeDescription instrumentedType,
+                           StackManipulation baseline,
+                           List<FieldDescription.InDefinedShape> fieldDescriptions,
+                           ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
             this.instrumentedType = instrumentedType;
             this.baseline = baseline;
             this.fieldDescriptions = fieldDescriptions;
+            this.nonNullable = nonNullable;
         }
 
         @Override

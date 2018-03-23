@@ -53,7 +53,7 @@ public class ToStringMethodOtherTest {
         assertThat(instance.toString(), startsWith(instance.getClass().getCanonicalName()));
     }
 
-    @Test // TODO: Fix simple class name implementation.
+    @Test
     public void testSimplePrefix() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(Object.class)
@@ -94,7 +94,7 @@ public class ToStringMethodOtherTest {
                 .defineField(FOO, Object.class, Visibility.PUBLIC)
                 .defineField(BAR, Object.class, Visibility.PUBLIC)
                 .method(isToString())
-                .intercept(ToStringMethod.prefixedBy(FOO).withTokens("a", "b", "c"))
+                .intercept(ToStringMethod.prefixedBy(FOO).withTokens("a", "b", "c", "d"))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -103,12 +103,32 @@ public class ToStringMethodOtherTest {
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.getClass().getDeclaredField(FOO).set(instance, FOO);
         instance.getClass().getDeclaredField(BAR).set(instance, BAR);
-        assertThat(instance.toString(), is(FOO + "a" + FOO + "=" + FOO + "c" + BAR + "=" + BAR + "b"));
+        assertThat(instance.toString(), is(FOO + "a" + FOO + "d" + FOO + "c" + BAR + "d" + BAR + "b"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullPrefix() {
         ToStringMethod.prefixedBy((String) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTokenStartNull() {
+        ToStringMethod.prefixedBy(FOO).withTokens(null, "", "", "");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTokenEndNull() {
+        ToStringMethod.prefixedBy(FOO).withTokens("", null, "", "");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTokenSeparatorNull() {
+        ToStringMethod.prefixedBy(FOO).withTokens("", "", null, "");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testTokenDefinerNull() {
+        ToStringMethod.prefixedBy(FOO).withTokens("", "", "", null);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -150,5 +170,7 @@ public class ToStringMethodOtherTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ToStringMethod.class).apply();
+        ObjectPropertyAssertion.of(ToStringMethod.Appender.class).apply();
+        ObjectPropertyAssertion.of(ToStringMethod.PrefixResolver.ForFixedValue.class).apply();
     }
 }

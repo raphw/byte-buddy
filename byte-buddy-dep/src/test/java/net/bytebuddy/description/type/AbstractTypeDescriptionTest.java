@@ -101,7 +101,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 EnclosingType.FINAL_INNER,
                 Array.newInstance(EnclosingType.FINAL_INNER, 1).getClass(),
                 EnclosingType.DEPRECATED,
-                Array.newInstance(EnclosingType.DEPRECATED, 1).getClass());
+                Array.newInstance(EnclosingType.DEPRECATED, 1).getClass(),
+                Type$With$Dollar.class);
     }
 
     @Test
@@ -653,12 +654,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(Double.class).asUnboxed(), is(describe(double.class)));
         assertThat(describe(Void.class).asUnboxed(), is(describe(Void.class)));
         assertThat(describe(Object.class).asUnboxed(), is(describe(Object.class)));
-    }
-
-    @Test
-    public void testTypeNames() {
-        assertThat(describe(Type$With$Dollar.class).getSimpleName(), is(Type$With$Dollar.class.getSimpleName()));
-        assertThat(describe(Type$With$Dollar.class).getCanonicalName(), is(Type$With$Dollar.class.getCanonicalName()));
     }
 
     private Class<?> inMethodClass() {

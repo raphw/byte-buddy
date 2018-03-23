@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -26,6 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * An implementation of {@link Object#toString()} that concatenates the {@link String} representation of all fields that are declared by a class.
  */
+@EqualsAndHashCode
 public class ToStringMethod implements Implementation {
 
     /**
@@ -65,6 +67,11 @@ public class ToStringMethod implements Implementation {
     private final String separator;
 
     /**
+     * A token that is added between a field's name and its value.
+     */
+    private final String definer;
+
+    /**
      * A filter that determines what fields to ignore.
      */
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored;
@@ -75,7 +82,7 @@ public class ToStringMethod implements Implementation {
      * @param prefixResolver A resolver for the prefix of a {@link String} representation.
      */
     protected ToStringMethod(PrefixResolver prefixResolver) {
-        this(prefixResolver, "{", "}", ", ", none());
+        this(prefixResolver, "{", "}", ", ", "=", none());
     }
 
     /**
@@ -84,18 +91,21 @@ public class ToStringMethod implements Implementation {
      * @param prefixResolver A resolver for the prefix of a {@link String} representation.
      * @param start          A token that is added between the prefix and the first field value.
      * @param end            A token that is added after the last field value.
-     * @param separator      TA token that is added between two field values.
+     * @param separator      A token that is added between two field values.
+     * @param definer        A token that is added between a field's name and its value.
      * @param ignored        A filter that determines what fields to ignore.
      */
     private ToStringMethod(PrefixResolver prefixResolver,
                            String start,
                            String end,
                            String separator,
+                           String definer,
                            ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored) {
         this.prefixResolver = prefixResolver;
         this.start = start;
         this.end = end;
         this.separator = separator;
+        this.definer = definer;
         this.ignored = ignored;
     }
 
@@ -157,7 +167,7 @@ public class ToStringMethod implements Implementation {
      * @return A new version of this toString method implementation that also ignores any fields matched by the provided matcher.
      */
     public ToStringMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new ToStringMethod(prefixResolver, start, end, separator, this.ignored.or(ignored));
+        return new ToStringMethod(prefixResolver, start, end, separator, definer, this.ignored.or(ignored));
     }
 
     /**
@@ -166,10 +176,14 @@ public class ToStringMethod implements Implementation {
      * @param start     A token that is added between the prefix and the first field value.
      * @param end       A token that is added after the last field value.
      * @param separator A token that is added between two field values.
+     * @param definer   A token that is added between two field values.
      * @return A new instance of this implementation that uses the supplied tokens.
      */
-    public Implementation withTokens(String start, String end, String separator) {
-        return new ToStringMethod(prefixResolver, start, end, separator, ignored);
+    public Implementation withTokens(String start, String end, String separator, String definer) {
+        if (start == null || end == null || separator == null || definer == null) {
+            throw new IllegalArgumentException("Token values cannot be null");
+        }
+        return new ToStringMethod(prefixResolver, start, end, separator, definer, ignored);
     }
 
     @Override
@@ -186,18 +200,44 @@ public class ToStringMethod implements Implementation {
         if (prefix == null) {
             throw new IllegalStateException("Prefix for toString method cannot be null");
         }
-        return new Appender(prefix, implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
+        return new Appender(prefix,
+                start,
+                end,
+                separator,
+                definer,
+                implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
     }
 
     /**
      * An appender to implement {@link ToStringMethod}.
      */
-    protected class Appender implements ByteCodeAppender {
+    @EqualsAndHashCode
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * The prefix to use.
          */
         private final String prefix;
+
+        /**
+         * A token that is added between the prefix and the first field value.
+         */
+        private final String start;
+
+        /**
+         * A token that is added after the last field value.
+         */
+        private final String end;
+
+        /**
+         * A token that is added between two field values.
+         */
+        private final String separator;
+
+        /**
+         * A token that is added between a field's name and its value.
+         */
+        private final String definer;
 
         /**
          * The list of fields to include in the {@link Object#toString()} implementation.
@@ -208,10 +248,23 @@ public class ToStringMethod implements Implementation {
          * Creates a new appender.
          *
          * @param prefix            The prefix to use.
+         * @param start             A token that is added between the prefix and the first field value.
+         * @param end               A token that is added after the last field value.
+         * @param separator         A token that is added between two field values.
+         * @param definer           A token that is added between a field's name and its value.
          * @param fieldDescriptions The list of fields to include in the {@link Object#toString()} implementation.
          */
-        protected Appender(String prefix, List<? extends FieldDescription.InDefinedShape> fieldDescriptions) {
+        protected Appender(String prefix,
+                           String start,
+                           String end,
+                           String separator,
+                           String definer,
+                           List<? extends FieldDescription.InDefinedShape> fieldDescriptions) {
             this.prefix = prefix;
+            this.start = start;
+            this.end = end;
+            this.separator = separator;
+            this.definer = definer;
             this.fieldDescriptions = fieldDescriptions;
         }
 
@@ -237,7 +290,7 @@ public class ToStringMethod implements Implementation {
                     stackManipulations.add(new TextConstant(separator));
                     stackManipulations.add(ValueConsumer.STRING);
                 }
-                stackManipulations.add(new TextConstant(fieldDescription.getName() + "="));
+                stackManipulations.add(new TextConstant(fieldDescription.getName() + definer));
                 stackManipulations.add(ValueConsumer.STRING);
                 stackManipulations.add(MethodVariableAccess.loadThis());
                 stackManipulations.add(FieldAccess.forField(fieldDescription).read());
@@ -303,6 +356,7 @@ public class ToStringMethod implements Implementation {
         /**
          * A prefix resolver that returns a fixed value.
          */
+        @EqualsAndHashCode
         class ForFixedValue implements PrefixResolver {
 
             /**

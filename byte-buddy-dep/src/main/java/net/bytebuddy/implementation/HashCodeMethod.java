@@ -173,7 +173,9 @@ public class HashCodeMethod implements Implementation {
             throw new IllegalStateException("Cannot implement meaningful hash code method for " + implementationTarget.getInstrumentedType());
         }
         return new Appender(offsetProvider.resolve(implementationTarget.getInstrumentedType()),
-                implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))));
+                multiplier,
+                implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))),
+                nonNullable);
     }
 
     /**
@@ -326,12 +328,12 @@ public class HashCodeMethod implements Implementation {
 
             @Override
             public StackManipulation before() {
-                return new BeforeInstruction();
+                return new BeforeInstruction(instrumentedMethod, label);
             }
 
             @Override
             public StackManipulation after() {
-                return new AfterInstruction();
+                return new AfterInstruction(label);
             }
 
             @Override
@@ -342,7 +344,29 @@ public class HashCodeMethod implements Implementation {
             /**
              * The stack manipulation to apply before the hash value computation.
              */
-            protected class BeforeInstruction implements StackManipulation {
+            @EqualsAndHashCode
+            protected static class BeforeInstruction implements StackManipulation {
+
+                /**
+                 * The instrumented method.
+                 */
+                private final MethodDescription instrumentedMethod;
+
+                /**
+                 * A label to indicate the target of a jump.
+                 */
+                private final Label label;
+
+                /**
+                 * Creates a new instruction to run before a {@code null} check.
+                 *
+                 * @param instrumentedMethod The instrumented method.
+                 * @param label              A label to indicate the target of a jump.
+                 */
+                protected BeforeInstruction(MethodDescription instrumentedMethod, Label label) {
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.label = label;
+                }
 
                 @Override
                 public boolean isValid() {
@@ -359,11 +383,25 @@ public class HashCodeMethod implements Implementation {
                 }
             }
 
-
             /**
              * The stack manipulation to apply after the hash value computation.
              */
-            protected class AfterInstruction implements StackManipulation {
+            @EqualsAndHashCode
+            protected static class AfterInstruction implements StackManipulation {
+
+                /**
+                 * A label to indicate the target of a jump.
+                 */
+                private final Label label;
+
+                /**
+                 * Creates a new instruction to run after a {@code null} check.
+                 *
+                 * @param label A label to indicate the target of a jump.
+                 */
+                protected AfterInstruction(Label label) {
+                    this.label = label;
+                }
 
                 @Override
                 public boolean isValid() {
@@ -593,7 +631,7 @@ public class HashCodeMethod implements Implementation {
      * A byte code appender to implement a hash code method.
      */
     @EqualsAndHashCode
-    protected class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
          * Loads the initial hash code onto the operand stack.
@@ -601,19 +639,36 @@ public class HashCodeMethod implements Implementation {
         private final StackManipulation initialValue;
 
         /**
+         * A multiplier for each value before adding a field's hash code value.
+         */
+        private final int multiplier;
+
+        /**
          * A list of fields to include in the hash code computation.
          */
         private final List<FieldDescription.InDefinedShape> fieldDescriptions;
 
         /**
+         * A matcher to determine fields of a reference type that cannot be {@code null}.
+         */
+        private final ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable;
+
+        /**
          * Creates a new appender for implementing a hash code method.
          *
          * @param initialValue      Loads the initial hash code onto the operand stack.
+         * @param multiplier        A multiplier for each value before adding a field's hash code value.
          * @param fieldDescriptions A list of fields to include in the hash code computation.
+         * @param nonNullable       A matcher to determine fields of a reference type that cannot be {@code null}.
          */
-        protected Appender(StackManipulation initialValue, List<FieldDescription.InDefinedShape> fieldDescriptions) {
+        protected Appender(StackManipulation initialValue,
+                           int multiplier,
+                           List<FieldDescription.InDefinedShape> fieldDescriptions,
+                           ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
             this.initialValue = initialValue;
+            this.multiplier = multiplier;
             this.fieldDescriptions = fieldDescriptions;
+            this.nonNullable = nonNullable;
         }
 
         @Override
