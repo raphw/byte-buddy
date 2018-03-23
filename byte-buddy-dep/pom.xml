@@ -76,17 +76,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <!--<build>-->
-        <!--<plugins>-->
-            <!--<plugin>-->
-                <!--<groupId>net.bytebuddy</groupId>-->
-                <!--<artifactId>byte-buddy-maven-plugin</artifactId>-->
-                <!--<version>[1.8.1, ${project.version})</version>-->
-                <!--<configuration>-->
-                    <!--<transformations>net.bytebuddy.build.HashCodeEqualsPlugin$WithNonNullableFields</transformations>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
-        <!--</plugins>-->
-    <!--</build>-->
 </project>

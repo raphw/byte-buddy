@@ -1445,6 +1445,9 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
+                if (instrumentedMethod.isStatic() && !invokedMethod.isStatic() && !invokedMethod.isConstructor()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod);
+                }
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
@@ -2008,10 +2011,10 @@ public class MethodCall implements Implementation.Composable {
                 argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod, invokedMethod));
             }
             ParameterList<?> parameters = invokedMethod.getParameters();
-            Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
             if (parameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }
+            Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
             List<StackManipulation> argumentInstructions = new ArrayList<StackManipulation>(argumentLoaders.size());
             for (ArgumentLoader argumentLoader : argumentLoaders) {
                 argumentInstructions.add(argumentLoader.resolve(parameterIterator.next(), assigner, typing));

@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -27,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Method;
+import java.security.acl.Owner;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
@@ -981,6 +983,17 @@ public class MethodCallTest {
                 .defineField(FOO, Object.class)
                 .method(isDeclaredBy(Object.class))
                 .intercept(MethodCall.invokeSelf().onField(FOO).withAllArguments())
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInstanceCallFromStaticMethod() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, void.class)
+                .intercept(StubMethod.INSTANCE)
+                .defineMethod(BAR, void.class, Ownership.STATIC)
+                .intercept(MethodCall.invoke(named(FOO)))
                 .make();
     }
 
