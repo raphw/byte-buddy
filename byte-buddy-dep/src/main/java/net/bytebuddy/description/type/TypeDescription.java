@@ -7032,22 +7032,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public String getSimpleName() {
                 String internalName = getInternalName();
                 TypeDescription enclosingType = getEnclosingType();
+                int simpleNameIndex;
                 if (enclosingType != null && internalName.startsWith(enclosingType.getInternalName() + "$")) {
-                    int simpleNameIndex = enclosingType.getInternalName().length() + 1;
-                    while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
-                        simpleNameIndex += 1;
-                    }
-                    return internalName.substring(simpleNameIndex);
-                }
-                int simpleNameIndex = internalName.lastIndexOf('/');
-                if (simpleNameIndex == -1) {
-                    return internalName;
+                    simpleNameIndex = enclosingType.getInternalName().length() + 1;
                 } else {
-                    while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
-                        simpleNameIndex += 1;
+                    simpleNameIndex = internalName.lastIndexOf('/');
+                    if (simpleNameIndex == -1) {
+                        return internalName;
                     }
-                    return internalName.substring(simpleNameIndex);
                 }
+                while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
+                    simpleNameIndex += 1;
+                }
+                return internalName.substring(simpleNameIndex);
             }
 
             @Override
