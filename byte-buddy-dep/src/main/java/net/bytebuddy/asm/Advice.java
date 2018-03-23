@@ -4730,7 +4730,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
                  */
                 protected Trivial(TypeDescription instrumentedType, MethodDescription instrumentedMethod, boolean expandFrames) {
-                    super(instrumentedType, instrumentedMethod, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), expandFrames);
+                    super(instrumentedType,
+                            instrumentedMethod,
+                            Collections.<TypeDescription>emptyList(),
+                            Collections.<TypeDescription>emptyList(),
+                            Collections.<TypeDescription>emptyList(),
+                            expandFrames);
                 }
 
                 @Override
