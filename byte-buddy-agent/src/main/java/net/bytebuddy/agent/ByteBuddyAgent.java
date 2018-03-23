@@ -364,7 +364,7 @@ public class ByteBuddyAgent {
     private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider) {
         AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
-            throw new IllegalStateException("No compatible attachment provider is not available");
+            throw new IllegalStateException("No compatible attachment provider is available");
         }
         try {
             if (ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
