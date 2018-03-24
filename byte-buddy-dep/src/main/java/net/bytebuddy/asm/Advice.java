@@ -6878,6 +6878,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                public void visitAnnotableParameterCount(int count, boolean visible) {
+                    /* do nothing */
+                }
+
+                @Override
                 public AnnotationVisitor visitAnnotationDefault() {
                     return IGNORE_ANNOTATION;
                 }
