@@ -318,8 +318,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
                     ? new ClassReader(classFileLocator.locate(advice.getName()).resolve())
                     : UNDEFINED;
-            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, classReader);
-            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, classReader, resolved));
+            return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit), methodExit.asMethodExit(userFactories, classReader, methodEnter));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + advice, exception);
         }
@@ -404,12 +403,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             throw new IllegalArgumentException("No enter advice defined by " + exitAdvice);
         }
         try {
-            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
+            return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
                     ? new ClassReader(classFileLocator.locate(enterAdvice.getName()).resolve())
-                    : UNDEFINED);
-            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, methodExit.isBinary()
+                    : UNDEFINED, methodExit), methodExit.asMethodExit(userFactories, methodExit.isBinary()
                     ? new ClassReader(classFileLocator.locate(exitAdvice.getName()).resolve())
-                    : UNDEFINED, resolved));
+                    : UNDEFINED, methodEnter));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);
         }
@@ -5090,26 +5088,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             boolean isBinary();
 
             /**
+             * The type that is produced as a result of executing this advice method.
+             *
+             * @return A description of the type that is produced by this advice method.
+             */
+            TypeDescription getAdviceType();
+
+            /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
              * @param userFactories A list of custom factories for binding parameters of an advice method.
              * @param classReader   A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
+             * @param methodExit    The unresolved dispatcher for the method exit advice.
              * @return This dispatcher as a dispatcher for entering a method.
              */
-            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                  ClassReader classReader);
+            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit);
 
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
              *
              * @param userFactories A list of custom factories for binding parameters of an advice method.
              * @param classReader   A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
-             * @param dispatcher    The dispatcher for entering a method.
+             * @param methodEnter   The unresolved dispatcher for the method enter advice.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
-            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                  ClassReader classReader,
-                                                  Resolved.ForMethodEnter dispatcher);
+            Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter);
         }
 
         /**
@@ -5842,6 +5845,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public TypeDescription getAdviceType() {
+                return TypeDescription.VOID;
+            }
+
+            @Override
             public TypeDescription getThrowable() {
                 return NoExceptionHandler.DESCRIPTION;
             }
@@ -5862,15 +5870,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         ClassReader classReader) {
+            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
                 return this;
             }
 
             @Override
-            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         ClassReader classReader,
-                                                         Resolved.ForMethodEnter dispatcher) {
+            public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
                 return this;
             }
 
@@ -5934,16 +5939,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader) {
+            public TypeDescription getAdviceType() {
+                return adviceMethod.getReturnType().asErasure();
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
                 return new Resolved.ForMethodEnter(adviceMethod, userFactories, classReader);
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader,
-                                                                    Dispatcher.Resolved.ForMethodEnter dispatcher) {
-                return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, dispatcher.getEnterType());
+            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
+                return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, methodEnter.getAdviceType());
             }
 
             /**
@@ -7178,16 +7185,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader) {
+            public TypeDescription getAdviceType() {
+                return adviceMethod.getReturnType().asErasure();
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
                 return new Resolved.ForMethodEnter(adviceMethod, userFactories);
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                                    ClassReader classReader,
-                                                                    Dispatcher.Resolved.ForMethodEnter dispatcher) {
-                return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
+            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
+                return Resolved.ForMethodExit.of(adviceMethod, userFactories, methodEnter.getAdviceType());
             }
 
             /**
