@@ -5349,6 +5349,350 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * A relocation handler is responsible for chaning the usual control flow of an instrumented method.
+         */
+        interface RelocationHandler {
+
+            /**
+             * Binds this relocation handler to a relocator.
+             *
+             * @param relocator The relocator to use.
+             * @return A bound relocation handler.
+             */
+            Bound bind(Relocator relocator);
+
+            /**
+             * A relocator is responsible for triggering a relocation if a relocation handler triggers a relocating condition.
+             */
+            interface Relocator {
+
+                /**
+                 * Applies this relocator.
+                 *
+                 * @param methodVisitor The method visitor to use.
+                 */
+                void apply(MethodVisitor methodVisitor);
+            }
+
+            /**
+             * A bound {@link RelocationHandler}.
+             */
+            interface Bound {
+
+                /**
+                 * Applies this relocation handler.
+                 *
+                 * @param methodVisitor        The method visitor to use.
+                 * @param instrumentedMethod   The instrumented method.
+                 * @param argumentHandler      The argument handler to use.
+                 * @param methodSizeHandler    The method size handler to use.
+                 * @param stackMapFrameHandler The stack map frame handler to use.
+                 */
+                void apply(MethodVisitor methodVisitor,
+                           MethodDescription instrumentedMethod,
+                           ArgumentHandler.ForAdvice argumentHandler,
+                           MethodSizeHandler.ForAdvice methodSizeHandler,
+                           StackMapFrameHandler.ForAdvice stackMapFrameHandler);
+            }
+
+            /**
+             * A disabled relocation handler that does never trigger a relocation.
+             */
+            enum Disabled implements RelocationHandler, Bound {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Bound bind(Relocator relocator) {
+                    return this;
+                }
+
+                @Override
+                public void apply(MethodVisitor methodVisitor,
+                                  MethodDescription instrumentedMethod,
+                                  ArgumentHandler.ForAdvice argumentHandler,
+                                  MethodSizeHandler.ForAdvice methodSizeHandler,
+                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A relocation handler that triggers a relocation for a default or non-default value.
+             */
+            enum ForValue implements RelocationHandler {
+
+                /**
+                 * A relocation handler for an {@code int} type or any compatible type.
+                 */
+                INTEGER(Opcodes.ILOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                    @Override
+                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                        /* do nothing */
+                    }
+                },
+
+                /**
+                 * A relocation handler for a {@code long} type.
+                 */
+                LONG(Opcodes.LLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                    @Override
+                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                        methodVisitor.visitInsn(Opcodes.L2I);
+                    }
+                },
+
+                /**
+                 * A relocation handler for a {@code float} type.
+                 */
+                FLOAT(Opcodes.FLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                    @Override
+                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                        methodVisitor.visitInsn(Opcodes.FCONST_0);
+                        methodVisitor.visitInsn(Opcodes.FCMPL);
+                        methodSizeHandler.requireStackSize(2);
+                    }
+                },
+
+                /**
+                 * A relocation handler for a {@code double} type.
+                 */
+                DOUBLE(Opcodes.DLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                    @Override
+                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                        methodVisitor.visitInsn(Opcodes.DCONST_0);
+                        methodVisitor.visitInsn(Opcodes.DCMPL);
+                        methodSizeHandler.requireStackSize(4);
+                    }
+                },
+
+                /**
+                 * A relocation handler for a reference type.
+                 */
+                REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL, Opcodes.IFNULL) {
+                    @Override
+                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                        /* do nothing */
+                    }
+                };
+
+                /**
+                 * An opcode for loading a value of the represented type from the local variable array.
+                 */
+                private final int load;
+
+                /**
+                 * The opcode to check for a non-default value.
+                 */
+                private final int defaultJump;
+
+                /**
+                 * The opcode to check for a default value.
+                 */
+                private final int nonDefaultJump;
+
+                /**
+                 * Creates a new relocation handler for a type's default or non-default value.
+                 *
+                 * @param load           An opcode for loading a value of the represented type from the local variable array.
+                 * @param defaultJump    The opcode to check for a non-default value.
+                 * @param nonDefaultJump The opcode to check for a default value.
+                 */
+                ForValue(int load, int defaultJump, int nonDefaultJump) {
+                    this.load = load;
+                    this.defaultJump = defaultJump;
+                    this.nonDefaultJump = nonDefaultJump;
+                }
+
+                /**
+                 * Resolves a relocation handler for a given type.
+                 *
+                 * @param typeDefinition The type to be resolved for a relocation attempt.
+                 * @param inverted       {@code true} if the relocation should be applied for any non-default value of a type.
+                 * @return An appropriate relocation handler.
+                 */
+                protected static RelocationHandler of(TypeDefinition typeDefinition, boolean inverted) {
+                    ForValue skipDispatcher;
+                    if (typeDefinition.represents(long.class)) {
+                        skipDispatcher = LONG;
+                    } else if (typeDefinition.represents(float.class)) {
+                        skipDispatcher = FLOAT;
+                    } else if (typeDefinition.represents(double.class)) {
+                        skipDispatcher = DOUBLE;
+                    } else if (typeDefinition.represents(void.class)) {
+                        throw new IllegalStateException("Cannot skip on default value for void return type");
+                    } else if (typeDefinition.isPrimitive()) { // anyOf(byte, short, char, int)
+                        skipDispatcher = INTEGER;
+                    } else {
+                        skipDispatcher = REFERENCE;
+                    }
+                    return inverted
+                            ? skipDispatcher.new Inverted()
+                            : skipDispatcher;
+                }
+
+                /**
+                 * Applies a value conversion prior to a applying a conditional jump.
+                 *
+                 * @param methodVisitor     The method visitor to use.
+                 * @param methodSizeHandler The method size handler to use.
+                 */
+                protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
+
+                @Override
+                public RelocationHandler.Bound bind(Relocator relocator) {
+                    return new Bound(relocator, false);
+                }
+
+                /**
+                 * An inverted version of the outer relocation handler.
+                 */
+                protected class Inverted implements RelocationHandler {
+
+                    @Override
+                    public Bound bind(Relocator relocator) {
+                        return new ForValue.Bound(relocator, true);
+                    }
+                }
+
+                /**
+                 * A bound relocation handler for {@link ForValue}.
+                 */
+                protected class Bound implements RelocationHandler.Bound {
+
+                    /**
+                     * The relocator to use.
+                     */
+                    private final Relocator relocator;
+
+                    /**
+                     * {@code true} if the relocation should be applied for any non-default value of a type.
+                     */
+                    private final boolean inverted;
+
+                    /**
+                     * Creates a new bound relocation handler.
+                     *
+                     * @param relocator The relocator to use.
+                     * @param inverted  {@code true} if the relocation should be applied for any non-default value of a type.
+                     */
+                    protected Bound(Relocator relocator, boolean inverted) {
+                        this.relocator = relocator;
+                        this.inverted = inverted;
+                    }
+
+                    @Override
+                    public void apply(MethodVisitor methodVisitor,
+                                      MethodDescription instrumentedMethod,
+                                      ArgumentHandler.ForAdvice argumentHandler,
+                                      MethodSizeHandler.ForAdvice methodSizeHandler,
+                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
+                        if (instrumentedMethod.isConstructor()) {
+                            throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
+                        }
+                        methodVisitor.visitVarInsn(load, argumentHandler.enter());
+                        convertValue(methodVisitor, methodSizeHandler);
+                        Label noSkip = new Label();
+                        methodVisitor.visitJumpInsn(inverted
+                                ? nonDefaultJump
+                                : defaultJump, noSkip);
+                        relocator.apply(methodVisitor);
+                        methodVisitor.visitLabel(noSkip);
+                        stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
+                    }
+                }
+            }
+
+            /**
+             * A relocation handler that is triggered if the checked value is an instance of a given type.
+             */
+            @EqualsAndHashCode
+            class ForType implements RelocationHandler {
+
+                /**
+                 * The type that triggers a relocation.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a new relocation handler that triggers a relocation if a value is an instance of a given type.
+                 *
+                 * @param typeDescription The type that triggers a relocation.
+                 */
+                protected ForType(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                /**
+                 * Resolves a relocation handler that is triggered if the checked instance is of a given type.
+                 *
+                 * @param typeDescription The type that triggers a relocation.
+                 * @param checkedType     The type that is carrying the checked value.
+                 * @return An appropriate relocation handler.
+                 */
+                protected static RelocationHandler of(TypeDescription typeDescription, TypeDefinition checkedType) {
+                    if (typeDescription.represents(void.class)) {
+                        return Disabled.INSTANCE;
+                    } else if (typeDescription.represents(OnDefaultValue.class)) {
+                        return ForValue.of(checkedType, false);
+                    } else if (typeDescription.represents(OnNonDefaultValue.class)) {
+                        return ForValue.of(checkedType, true);
+                    } else if (typeDescription.isPrimitive() || checkedType.isPrimitive()) {
+                        throw new IllegalStateException("Cannot skip method by instance type for primitive return type " + checkedType);
+                    } else {
+                        return new ForType(typeDescription);
+                    }
+                }
+
+                @Override
+                public RelocationHandler.Bound bind(Relocator relocator) {
+                    return new Bound(relocator);
+                }
+
+                /**
+                 * A bound relocation handler for {@link ForType}.
+                 */
+                protected class Bound implements RelocationHandler.Bound {
+
+                    /**
+                     * The relocator to use.
+                     */
+                    private final Relocator relocator;
+
+                    /**
+                     * Creates a new bound relocation handler.
+                     *
+                     * @param relocator The relocator to use.
+                     */
+                    protected Bound(Relocator relocator) {
+                        this.relocator = relocator;
+                    }
+
+                    @Override
+                    public void apply(MethodVisitor methodVisitor,
+                                      MethodDescription instrumentedMethod,
+                                      ArgumentHandler.ForAdvice argumentHandler,
+                                      MethodSizeHandler.ForAdvice methodSizeHandler,
+                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
+                        if (instrumentedMethod.isConstructor()) {
+                            throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
+                        }
+                        methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.enter());
+                        methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
+                        Label noSkip = new Label();
+                        methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
+                        relocator.apply(methodVisitor);
+                        methodVisitor.visitLabel(noSkip);
+                        stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
+                    }
+                }
+            }
+        }
+
+        /**
          * Represents a resolved dispatcher.
          */
         interface Resolved extends Dispatcher {
@@ -5407,339 +5751,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                           StackManipulation exceptionHandler);
-
-                /**
-                 * A skip dispatcher is responsible for skipping the instrumented method depending on the
-                 * return value of the enter advice method.
-                 */
-                interface SkipDispatcher {
-
-                    /**
-                     * Applies this skip dispatcher.
-                     *
-                     * @param methodVisitor        The method visitor to write to.
-                     * @param instrumentedMethod   The instrumented method.
-                     * @param argumentHandler      A handler for accessing values on the local variable array.
-                     * @param methodSizeHandler    The method size handler of the advice method to use.
-                     * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
-                     * @param skipHandler          The skip handler to use.
-                     */
-                    void apply(MethodVisitor methodVisitor,
-                               MethodDescription instrumentedMethod,
-                               ArgumentHandler.ForAdvice argumentHandler,
-                               MethodSizeHandler.ForAdvice methodSizeHandler,
-                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                               Bound.SkipHandler skipHandler);
-
-                    /**
-                     * A disabled skip dispatcher where the instrumented method is always executed.
-                     */
-                    enum Disabled implements SkipDispatcher {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        @Override
-                        public void apply(MethodVisitor methodVisitor,
-                                          MethodDescription instrumentedMethod,
-                                          ArgumentHandler.ForAdvice argumentHandler,
-                                          MethodSizeHandler.ForAdvice methodSizeHandler,
-                                          StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          Bound.SkipHandler skipHandler) {
-                            /* do nothing */
-                        }
-                    }
-
-                    /**
-                     * A skip dispatcher where the instrumented method is skipped for any default value of the advice method's return type.
-                     * If the return type is {@code boolean}, the relationship is inversed, where the instrumented is skipped for a {@code true}
-                     * return value.
-                     */
-                    enum ForValue implements SkipDispatcher {
-
-                        /**
-                         * A skip dispatcher for a {@code boolean}, {@code  byte}, {@code short}, {@code char} or {@code int} value.
-                         */
-                        FOR_INTEGER(Opcodes.ILOAD, Opcodes.IFNE, Opcodes.IFEQ) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                /* do nothing */
-                            }
-                        },
-
-                        /**
-                         * A skip dispatcher for a {@code long} value.
-                         */
-                        FOR_LONG(Opcodes.LLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                methodVisitor.visitInsn(Opcodes.L2I);
-                            }
-                        },
-
-                        /**
-                         * A skip dispatcher for a {@code float} value.
-                         */
-                        FOR_FLOAT(Opcodes.FLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                methodVisitor.visitInsn(Opcodes.FCMPL);
-                                methodSizeHandler.requireStackSize(2);
-                            }
-                        },
-
-                        /**
-                         * A skip dispatcher for a {@code double} value.
-                         */
-                        FOR_DOUBLE(Opcodes.DLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                methodVisitor.visitInsn(Opcodes.DCMPL);
-                                methodSizeHandler.requireStackSize(4);
-                            }
-                        },
-
-                        /**
-                         * A skip dispatcher for a reference value.
-                         */
-                        FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL, Opcodes.IFNULL) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                /* do nothing */
-                            }
-                        };
-
-                        /**
-                         * The load opcode for this skip dispatcher.
-                         */
-                        private final int load;
-
-                        /**
-                         * The jump instruction that triggers skipping upon observing a value's default value.
-                         */
-                        private final int defaultJump;
-
-                        /**
-                         * The jump instruction that triggers skipping upon observing a value's non-default value.
-                         */
-                        private final int nonDefaultJump;
-
-                        /**
-                         * Creates a new skip dispatcher.
-                         *
-                         * @param load           The load opcode for this skip dispatcher.
-                         * @param defaultJump    The jump instruction that triggers skipping upon observing a value's default value.
-                         * @param nonDefaultJump The jump instruction that triggers skipping upon observing a value's non-default value.
-                         */
-                        ForValue(int load, int defaultJump, int nonDefaultJump) {
-                            this.load = load;
-                            this.defaultJump = defaultJump;
-                            this.nonDefaultJump = nonDefaultJump;
-                        }
-
-                        /**
-                         * Creates an appropriate skip dispatcher.
-                         *
-                         * @param typeDefinition The type for which to skip a value.
-                         * @param inverted       {@code true} if the skip condition should be inverted to trigger upon non-default values.
-                         * @return An appropriate skip dispatcher.
-                         */
-                        protected static SkipDispatcher of(TypeDefinition typeDefinition, boolean inverted) {
-                            ForValue skipDispatcher;
-                            if (typeDefinition.represents(long.class)) {
-                                skipDispatcher = FOR_LONG;
-                            } else if (typeDefinition.represents(float.class)) {
-                                skipDispatcher = FOR_FLOAT;
-                            } else if (typeDefinition.represents(double.class)) {
-                                skipDispatcher = FOR_DOUBLE;
-                            } else if (typeDefinition.represents(void.class)) {
-                                throw new IllegalStateException("Cannot skip on default value for void return type");
-                            } else if (typeDefinition.isPrimitive()) { // anyOf(byte, short, char, int)
-                                skipDispatcher = FOR_INTEGER;
-                            } else {
-                                skipDispatcher = FOR_REFERENCE;
-                            }
-                            return inverted
-                                    ? skipDispatcher.inverted()
-                                    : skipDispatcher;
-                        }
-
-                        @Override
-                        public void apply(MethodVisitor methodVisitor,
-                                          MethodDescription instrumentedMethod,
-                                          ArgumentHandler.ForAdvice argumentHandler,
-                                          MethodSizeHandler.ForAdvice methodSizeHandler,
-                                          StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          Bound.SkipHandler skipHandler) {
-                            doApply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler, false);
-                        }
-
-                        /**
-                         * Applies this skip dispatcher.
-                         *
-                         * @param methodVisitor        The method visitor to write to.
-                         * @param instrumentedMethod   The instrumented method.
-                         * @param argumentHandler      A handler for accessing values on the local variable array.
-                         * @param methodSizeHandler    The method size handler of the advice method to use.
-                         * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
-                         * @param skipHandler          The skip handler to use.
-                         * @param inverted             {@code true} if the skip condition should be inverted.
-                         */
-                        protected void doApply(MethodVisitor methodVisitor,
-                                               MethodDescription instrumentedMethod,
-                                               ArgumentHandler.ForAdvice argumentHandler,
-                                               MethodSizeHandler.ForAdvice methodSizeHandler,
-                                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                               Bound.SkipHandler skipHandler,
-                                               boolean inverted) {
-                            if (instrumentedMethod.isConstructor()) {
-                                throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
-                            }
-                            methodVisitor.visitVarInsn(load, argumentHandler.enter());
-                            convertValue(methodVisitor, methodSizeHandler);
-                            Label noSkip = new Label();
-                            methodVisitor.visitJumpInsn(inverted
-                                    ? nonDefaultJump
-                                    : defaultJump, noSkip);
-                            skipHandler.apply(methodVisitor);
-                            methodVisitor.visitLabel(noSkip);
-                            stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
-                        }
-
-                        /**
-                         * Converts the return value to an {@code int} value.
-                         *
-                         * @param methodVisitor     The method visitor to use.
-                         * @param methodSizeHandler The method size handler of the advice method to use.
-                         */
-                        protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
-
-                        /**
-                         * Returns an inverted version of this skip dispatcher.
-                         *
-                         * @return An inverted version of this skip dispatcher.
-                         */
-                        private SkipDispatcher inverted() {
-                            return new Inverted();
-                        }
-
-                        /**
-                         * An inverted version of a value-based skipped dispatcher that triggers upon observing a non-default value.
-                         */
-                        protected class Inverted implements SkipDispatcher {
-
-                            @Override
-                            public void apply(MethodVisitor methodVisitor,
-                                              MethodDescription instrumentedMethod,
-                                              ArgumentHandler.ForAdvice argumentHandler,
-                                              MethodSizeHandler.ForAdvice methodSizeHandler,
-                                              StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                              Bound.SkipHandler skipHandler) {
-                                doApply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler, true);
-                            }
-
-                            /**
-                             * Returns the outer instance.
-                             *
-                             * @return The outer instance.
-                             */
-                            private SkipDispatcher getOuter() {
-                                return ForValue.this;
-                            }
-
-                            @Override // HE: Remove when Lombok support for getOuter is added.
-                            public int hashCode() {
-                                return ForValue.this.hashCode();
-                            }
-
-                            @Override // HE: Remove when Lombok support for getOuter is added.
-                            public boolean equals(Object other) {
-                                if (other == this) return true;
-                                if (other == null || other.getClass() != getClass()) return false;
-                                Inverted inverted = (Inverted) other;
-                                return inverted.getOuter().equals(ForValue.this);
-                            }
-                        }
-                    }
-
-                    /**
-                     * A skip dispatcher that skips a value if it is of a given instance.
-                     */
-                    @EqualsAndHashCode
-                    class ForType implements SkipDispatcher {
-
-                        /**
-                         * The type for which to skip instances.
-                         */
-                        private final TypeDescription typeDescription;
-
-                        /**
-                         * Creates a new skip dispatcher for a given type.
-                         *
-                         * @param typeDescription The type for which to skip instances.
-                         */
-                        protected ForType(TypeDescription typeDescription) {
-                            this.typeDescription = typeDescription;
-                        }
-
-                        /**
-                         * Creates a skip dispatcher for an advice method.
-                         *
-                         * @param adviceMethod The advice method for which to resolve a skip dispatcher.
-                         * @return An appropriate skip dispatcher.
-                         */
-                        public static SkipDispatcher of(MethodDescription adviceMethod) {
-                            return of(adviceMethod.getDeclaredAnnotations()
-                                    .ofType(OnMethodEnter.class)
-                                    .getValue(SKIP_ON)
-                                    .resolve(TypeDescription.class), adviceMethod);
-                        }
-
-                        /**
-                         * Creates a skip dispatcher for a given annotation type and advice method.
-                         *
-                         * @param typeDescription The type that was specified as an annotation value.
-                         * @param adviceMethod    The advice method.
-                         * @return An appropriate skip dispatcher.
-                         */
-                        protected static SkipDispatcher of(TypeDescription typeDescription, MethodDescription adviceMethod) {
-                            if (typeDescription.represents(void.class)) {
-                                return Disabled.INSTANCE;
-                            } else if (typeDescription.represents(OnDefaultValue.class)) {
-                                return ForValue.of(adviceMethod.getReturnType(), false);
-                            } else if (typeDescription.represents(OnNonDefaultValue.class)) {
-                                return ForValue.of(adviceMethod.getReturnType(), true);
-                            } else if (typeDescription.isPrimitive() || adviceMethod.getReturnType().isPrimitive()) {
-                                throw new IllegalStateException("Cannot skip method by instance type for primitive return value on " + adviceMethod);
-                            } else {
-                                return new ForType(typeDescription);
-                            }
-                        }
-
-                        @Override
-                        public void apply(MethodVisitor methodVisitor,
-                                          MethodDescription instrumentedMethod,
-                                          ArgumentHandler.ForAdvice argumentHandler,
-                                          MethodSizeHandler.ForAdvice methodSizeHandler,
-                                          StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                          Bound.SkipHandler skipHandler) {
-                            if (instrumentedMethod.isConstructor()) {
-                                throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
-                            }
-                            methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.enter());
-                            methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
-                            Label noSkip = new Label();
-                            methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
-                            skipHandler.apply(methodVisitor);
-                            methodVisitor.visitLabel(noSkip);
-                            stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
-                        }
-                    }
-                }
             }
 
             /**
@@ -5786,20 +5797,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             void prepare();
 
             /**
-             * A skip handler is responsible for writing code that skips the invocation of the original code
-             * within the instrumented method.
-             */
-            interface SkipHandler {
-
-                /**
-                 * Applies this skip handler.
-                 *
-                 * @param methodVisitor The method visitor to write the code to.
-                 */
-                void apply(MethodVisitor methodVisitor);
-            }
-
-            /**
              * A bound dispatcher for a method enter.
              */
             interface ForMethodEnter extends Bound {
@@ -5807,9 +5804,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Applies this dispatcher.
                  *
-                 * @param skipHandler The skip handler to use.
+                 * @param relocator The relocator to use.
                  */
-                void apply(SkipHandler skipHandler);
+                void apply(RelocationHandler.Relocator relocator);
             }
 
             /**
@@ -5890,7 +5887,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void apply(SkipHandler skipHandler) {
+            public void apply(RelocationHandler.Relocator relocator) {
                 /* do nothing */
             }
 
@@ -6344,9 +6341,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * The skip dispatcher to use.
+                     * A relocation handler that determines if the instrumented method should be skipped.
                      */
-                    private final SkipDispatcher skipDispatcher;
+                    private final RelocationHandler relocationHandler;
 
                     /**
                      * {@code true} if the first discovered line number information should be prepended to the advice code.
@@ -6378,7 +6375,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
-                        skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
+                        relocationHandler = RelocationHandler.ForType.of(adviceMethod.getDeclaredAnnotations()
+                                .ofType(OnMethodEnter.class)
+                                .getValue(SKIP_ON)
+                                .resolve(TypeDescription.class), adviceMethod.getReturnType());
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -6402,7 +6402,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
                                 classReader,
-                                skipDispatcher);
+                                relocationHandler);
                     }
 
                     @Override
@@ -6450,13 +6450,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
                         Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) object;
-                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
+                        return prependLineNumber == that.prependLineNumber && relocationHandler.equals(that.relocationHandler);
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
-                        result = 31 * result + skipDispatcher.hashCode();
+                        result = 31 * result + relocationHandler.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
                     }
@@ -6467,9 +6467,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected class AdviceMethodInliner extends Inlining.Resolved.AdviceMethodInliner implements Bound.ForMethodEnter {
 
                         /**
-                         * The skip dispatcher to use.
+                         * A relocation handler that determines if the instrumented method should be skipped.
                          */
-                        private final SkipDispatcher skipDispatcher;
+                        private final RelocationHandler relocationHandler;
 
                         /**
                          * Creates a new advice method inliner for a method enter.
@@ -6484,7 +6484,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                          * @param classReader           A class reader for parsing the class file containing the represented advice method.
-                         * @param skipDispatcher        The skip dispatcher to use.
+                         * @param relocationHandler     A relocation handler that determines if the instrumented method should be skipped.
                          */
                         protected AdviceMethodInliner(TypeDescription instrumentedType,
                                                       MethodDescription instrumentedMethod,
@@ -6496,7 +6496,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                       SuppressionHandler.Bound suppressionHandler,
                                                       ClassReader classReader,
-                                                      SkipDispatcher skipDispatcher) {
+                                                      RelocationHandler relocationHandler) {
                             super(instrumentedType,
                                     instrumentedMethod,
                                     methodVisitor,
@@ -6507,18 +6507,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     stackMapFrameHandler,
                                     suppressionHandler,
                                     classReader);
-                            this.skipDispatcher = skipDispatcher;
+                            this.relocationHandler = relocationHandler;
                         }
 
                         @Override
-                        public void apply(SkipHandler skipHandler) {
+                        public void apply(RelocationHandler.Relocator relocator) {
                             doApply();
-                            skipDispatcher.apply(methodVisitor,
+                            relocationHandler.bind(relocator).apply(methodVisitor,
                                     instrumentedMethod,
                                     argumentHandler.bindEnter(adviceMethod),
                                     methodSizeHandler.bindEnter(adviceMethod),
-                                    stackMapFrameHandler.bindEnter(adviceMethod),
-                                    skipHandler);
+                                    stackMapFrameHandler.bindEnter(adviceMethod));
                         }
                     }
                 }
@@ -7464,9 +7463,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static class ForMethodEnter extends AdviceMethodWriter implements Bound.ForMethodEnter {
 
                         /**
-                         * The skip dispatcher to use.
+                         * A relocation handler that determines if the instrumented method should be skipped.
                          */
-                        private final Resolved.ForMethodEnter.SkipDispatcher skipDispatcher;
+                        private final RelocationHandler relocationHandler;
 
                         /**
                          * Creates a new advice method writer.
@@ -7480,7 +7479,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
-                         * @param skipDispatcher        The skip dispatcher to use.
+                         * @param relocationHandler     A relocation handler that determines if the instrumented method should be skipped.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription instrumentedMethod,
@@ -7491,7 +7490,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
-                                                 Resolved.ForMethodEnter.SkipDispatcher skipDispatcher) {
+                                                 RelocationHandler relocationHandler) {
                             super(adviceMethod,
                                     instrumentedMethod,
                                     offsetMappings,
@@ -7501,7 +7500,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodSizeHandler,
                                     stackMapFrameHandler,
                                     suppressionHandler);
-                            this.skipDispatcher = skipDispatcher;
+                            this.relocationHandler = relocationHandler;
                         }
 
                         @Override
@@ -7524,9 +7523,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void apply(SkipHandler skipHandler) {
+                        public void apply(RelocationHandler.Relocator relocator) {
                             doApply();
-                            skipDispatcher.apply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler, skipHandler);
+                            relocationHandler.bind(relocator).apply(methodVisitor, instrumentedMethod, argumentHandler, methodSizeHandler, stackMapFrameHandler);
                         }
 
                         @Override
@@ -7626,9 +7625,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends Delegating.Resolved<Bound.ForMethodEnter> implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * The skip dispatcher to use.
+                     * A relocation handler that determines if the instrumented method should be skipped.
                      */
-                    private final SkipDispatcher skipDispatcher;
+                    private final RelocationHandler relocationHandler;
 
                     /**
                      * {@code true} if the first discovered line number information should be prepended to the advice code.
@@ -7655,7 +7654,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
-                        skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
+                        relocationHandler = RelocationHandler.ForType.of(adviceMethod.getDeclaredAnnotations()
+                                .ofType(OnMethodEnter.class)
+                                .getValue(SKIP_ON)
+                                .resolve(TypeDescription.class), adviceMethod.getReturnType());
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -7696,7 +7698,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler.bindEnter(adviceMethod),
                                 stackMapFrameHandler.bindEnter(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler),
-                                skipDispatcher);
+                                relocationHandler);
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
@@ -7705,13 +7707,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
                         Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
-                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
+                        return prependLineNumber == that.prependLineNumber && relocationHandler.equals(that.relocationHandler);
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
-                        result = 31 * result + skipDispatcher.hashCode();
+                        result = 31 * result + relocationHandler.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
                     }
@@ -7900,7 +7902,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A method visitor that weaves the advice methods' byte codes.
      */
-    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.Bound.SkipHandler {
+    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocator {
 
         /**
          * The actual method visitor that is underlying this method visitor to which all instructions are written.
