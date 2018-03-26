@@ -3969,6 +3969,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void visitAnnotableParameterCount(int count, boolean visible) {
+                        if (annotationRetention.isEnabled()) {
+                            super.visitAnnotableParameterCount(count, visible);
+                        }
+                    }
+
+                    @Override
                     public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? super.visitParameterAnnotation(index, descriptor, visible)
@@ -4041,6 +4048,13 @@ public interface TypeWriter<T> {
                         return annotationRetention.isEnabled()
                                 ? super.visitAnnotation(descriptor, visible)
                                 : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public void visitAnnotableParameterCount(int count, boolean visible) {
+                        if (annotationRetention.isEnabled()) {
+                            super.visitAnnotableParameterCount(count, visible);
+                        }
                     }
 
                     @Override
