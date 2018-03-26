@@ -4137,6 +4137,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.startTypes = startTypes;
                     this.endTypes = endTypes;
                     stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
+                    localVariableLength = Math.max(localVariableLength, instrumentedMethod.getStackSize() + adviceMethod.getReturnType().getStackSize().getSize());
                 }
 
                 @Override
