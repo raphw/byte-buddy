@@ -5011,7 +5011,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        if (endTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)) {
+                        if (adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
@@ -5945,7 +5945,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
-                return new Resolved.ForMethodEnter(adviceMethod, userFactories, classReader);
+                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, classReader, methodExit.isAlive());
             }
 
             @Override
@@ -6347,7 +6347,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method enter advice.
                  */
-                protected static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
+                protected abstract static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
                      * A relocation handler that determines if the instrumented method should be skipped.
@@ -6391,6 +6391,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
+                    protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
+                                                               List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                               ClassReader classReader,
+                                                               boolean methodExit) {
+                        return methodExit
+                                ? new WithRetainedEnterType(adviceMethod, userFactories, classReader)
+                                : new WithDiscardedEnterType(adviceMethod, userFactories, classReader);
+                    }
+
                     @Override
                     public Bound.ForMethodEnter bind(TypeDescription instrumentedType,
                                                      MethodDescription instrumentedMethod,
@@ -6413,11 +6422,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocator),
                                 classReader);
-                    }
-
-                    @Override
-                    public TypeDefinition getEnterType() {
-                        return adviceMethod.getReturnType();
                     }
 
                     @Override
@@ -6471,6 +6475,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         result = 31 * result + relocationHandler.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
+                    }
+
+                    protected static class WithRetainedEnterType extends Inlining.Resolved.ForMethodEnter {
+
+                        protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
+                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                 ClassReader classReader) {
+                            super(adviceMethod, userFactories, classReader);
+                        }
+
+                        @Override
+                        public TypeDefinition getEnterType() {
+                            return adviceMethod.getReturnType();
+                        }
+                    }
+
+                    protected static class WithDiscardedEnterType extends Inlining.Resolved.ForMethodEnter {
+
+                        protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
+                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                        ClassReader classReader) {
+                            super(adviceMethod, userFactories, classReader);
+                        }
+
+                        @Override
+                        public TypeDefinition getEnterType() {
+                            return TypeDescription.VOID;
+                        }
                     }
 
                     /**
@@ -6655,55 +6687,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader);
                     }
 
-                    /**
-                     * An advice method inliner for a method exit.
-                     */
-                    protected class AdviceMethodInliner extends Inlining.Resolved.AdviceMethodInliner implements Bound.ForMethodExit {
-
-                        /**
-                         * Creates a new advice method inliner for a method exit.
-                         *
-                         * @param instrumentedType      A description of the instrumented type.
-                         * @param instrumentedMethod    A description of the instrumented method.
-                         * @param methodVisitor         The method visitor for writing the instrumented method.
-                         * @param implementationContext The implementation context to use.
-                         * @param assigner              The assigner to use.
-                         * @param argumentHandler       A handler for accessing values on the local variable array.
-                         * @param methodSizeHandler     A handler for computing the method size requirements.
-                         * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
-                         * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
-                         * @param classReader           A class reader for parsing the class file containing the represented advice method.
-                         */
-                        public AdviceMethodInliner(TypeDescription instrumentedType,
-                                                   MethodDescription instrumentedMethod,
-                                                   MethodVisitor methodVisitor,
-                                                   Implementation.Context implementationContext,
-                                                   Assigner assigner,
-                                                   ArgumentHandler.ForInstrumentedMethod argumentHandler,
-                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
-                                                   SuppressionHandler.Bound suppressionHandler,
-                                                   RelocationHandler.Bound relocationHandler,
-                                                   ClassReader classReader) {
-                            super(instrumentedType,
-                                    instrumentedMethod,
-                                    methodVisitor,
-                                    implementationContext,
-                                    assigner,
-                                    argumentHandler,
-                                    methodSizeHandler,
-                                    stackMapFrameHandler,
-                                    suppressionHandler,
-                                    relocationHandler,
-                                    classReader);
-                        }
-
-                        @Override
-                        public void apply() {
-                            doApply();
-                        }
-                    }
-
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public boolean equals(Object object) {
                         if (this == object) return true;
@@ -6780,6 +6763,55 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
+                        }
+                    }
+
+                    /**
+                     * An advice method inliner for a method exit.
+                     */
+                    protected class AdviceMethodInliner extends Inlining.Resolved.AdviceMethodInliner implements Bound.ForMethodExit {
+
+                        /**
+                         * Creates a new advice method inliner for a method exit.
+                         *
+                         * @param instrumentedType      A description of the instrumented type.
+                         * @param instrumentedMethod    A description of the instrumented method.
+                         * @param methodVisitor         The method visitor for writing the instrumented method.
+                         * @param implementationContext The implementation context to use.
+                         * @param assigner              The assigner to use.
+                         * @param argumentHandler       A handler for accessing values on the local variable array.
+                         * @param methodSizeHandler     A handler for computing the method size requirements.
+                         * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                         * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param classReader           A class reader for parsing the class file containing the represented advice method.
+                         */
+                        public AdviceMethodInliner(TypeDescription instrumentedType,
+                                                   MethodDescription instrumentedMethod,
+                                                   MethodVisitor methodVisitor,
+                                                   Implementation.Context implementationContext,
+                                                   Assigner assigner,
+                                                   ArgumentHandler.ForInstrumentedMethod argumentHandler,
+                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
+                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                   SuppressionHandler.Bound suppressionHandler,
+                                                   RelocationHandler.Bound relocationHandler,
+                                                   ClassReader classReader) {
+                            super(instrumentedType,
+                                    instrumentedMethod,
+                                    methodVisitor,
+                                    implementationContext,
+                                    assigner,
+                                    argumentHandler,
+                                    methodSizeHandler,
+                                    stackMapFrameHandler,
+                                    suppressionHandler,
+                                    relocationHandler,
+                                    classReader);
+                        }
+
+                        @Override
+                        public void apply() {
+                            doApply();
                         }
                     }
                 }

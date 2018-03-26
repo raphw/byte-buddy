@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -46,6 +47,7 @@ public class AdviceNoRegularReturnTest {
     public void testNoRegularReturnWithSkip() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
+                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(EnterAdviceSkip.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
