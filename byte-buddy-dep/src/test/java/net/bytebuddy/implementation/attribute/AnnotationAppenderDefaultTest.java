@@ -47,9 +47,6 @@ public class AnnotationAppenderDefaultTest {
     @Mock
     private AnnotationValueFilter valueFilter;
 
-    @Mock
-    private Retention retention;
-
     private AnnotationAppender annotationAppender;
 
     @Before
