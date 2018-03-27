@@ -7052,10 +7052,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected void onMethodReturn() {
-                        Type returnType = Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor());
-                        if (doesReturn && !returnType.equals(Type.VOID_TYPE)) {
+                        if (doesReturn) {
                             stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                            methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), argumentHandler.enter());
+                            if (!adviceMethod.getReturnType().represents(void.class)) {
+                                methodVisitor.visitVarInsn(Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor()).getOpcode(Opcodes.ISTORE), argumentHandler.enter());
+                            }
                         }
                     }
                 }
