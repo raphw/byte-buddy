@@ -5018,7 +5018,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, startTypes, endTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, startTypes, adviceMethod.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
