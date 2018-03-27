@@ -5357,18 +5357,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface RelocationHandler {
 
             /**
-             * Binds this relocation handler to a relocator.
+             * Binds this relocation handler to a relocation dispatcher.
              *
              * @param instrumentedMethod The instrumented method.
-             * @param relocator          The relocator to use.
+             * @param relocation         The relocation to apply.
              * @return A bound relocation handler.
              */
-            Bound bind(MethodDescription instrumentedMethod, Relocator relocator);
+            Bound bind(MethodDescription instrumentedMethod, Relocation relocation);
 
             /**
              * A relocator is responsible for triggering a relocation if a relocation handler triggers a relocating condition.
              */
-            interface Relocator {
+            interface Relocation {
 
                 /**
                  * Applies this relocator.
@@ -5380,7 +5380,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A relocator that does not allow for relocation.
                  */
-                enum Illegal implements Relocator {
+                enum Illegal implements Relocation {
 
                     /**
                      * The singleton instance.
@@ -5424,7 +5424,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 @Override
-                public Bound bind(MethodDescription instrumentedMethod, Relocator relocator) {
+                public Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
                     return this;
                 }
 
@@ -5560,8 +5560,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
 
                 @Override
-                public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocator relocator) {
-                    return new Bound(instrumentedMethod, relocator, false);
+                public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
+                    return new Bound(instrumentedMethod, relocation, false);
                 }
 
                 /**
@@ -5570,8 +5570,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected class Inverted implements RelocationHandler {
 
                     @Override
-                    public Bound bind(MethodDescription instrumentedMethod, Relocator relocator) {
-                        return new ForValue.Bound(instrumentedMethod, relocator, true);
+                    public Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
+                        return new ForValue.Bound(instrumentedMethod, relocation, true);
                     }
                 }
 
@@ -5586,9 +5586,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     private final MethodDescription instrumentedMethod;
 
                     /**
-                     * The relocator to use.
+                     * The relocation to apply.
                      */
-                    private final Relocator relocator;
+                    private final Relocation relocation;
 
                     /**
                      * {@code true} if the relocation should be applied for any non-default value of a type.
@@ -5599,12 +5599,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new bound relocation handler.
                      *
                      * @param instrumentedMethod The instrumented method.
-                     * @param relocator          The relocator to use.
+                     * @param relocation         The relocation to apply.
                      * @param inverted           {@code true} if the relocation should be applied for any non-default value of a type.
                      */
-                    protected Bound(MethodDescription instrumentedMethod, Relocator relocator, boolean inverted) {
+                    protected Bound(MethodDescription instrumentedMethod, Relocation relocation, boolean inverted) {
                         this.instrumentedMethod = instrumentedMethod;
-                        this.relocator = relocator;
+                        this.relocation = relocation;
                         this.inverted = inverted;
                     }
 
@@ -5622,7 +5622,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitJumpInsn(inverted
                                 ? nonDefaultJump
                                 : defaultJump, noSkip);
-                        relocator.apply(methodVisitor);
+                        relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
                     }
                 }
@@ -5670,8 +5670,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocator relocator) {
-                    return new Bound(typeDescription, instrumentedMethod, relocator);
+                public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
+                    return new Bound(typeDescription, instrumentedMethod, relocation);
                 }
 
                 /**
@@ -5691,21 +5691,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     private final MethodDescription instrumentedMethod;
 
                     /**
-                     * The relocator to use.
+                     * The relocation to use.
                      */
-                    private final Relocator relocator;
+                    private final Relocation relocation;
 
                     /**
                      * Creates a new bound relocation handler.
                      *
                      * @param typeDescription    The type that triggers a relocation.
                      * @param instrumentedMethod The instrumented method.
-                     * @param relocator          The relocator to use.
+                     * @param relocation         The relocation to apply.
                      */
-                    protected Bound(TypeDescription typeDescription, MethodDescription instrumentedMethod, Relocator relocator) {
+                    protected Bound(TypeDescription typeDescription, MethodDescription instrumentedMethod, Relocation relocation) {
                         this.typeDescription = typeDescription;
                         this.instrumentedMethod = instrumentedMethod;
-                        this.relocator = relocator;
+                        this.relocation = relocation;
                     }
 
                     @Override
@@ -5720,7 +5720,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
                         Label noSkip = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
-                        relocator.apply(methodVisitor);
+                        relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
                     }
                 }
@@ -5744,7 +5744,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodSizeHandler     A handler for computing the method size requirements.
              * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
              * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
-             * @param relocator             A relocator to use with a relocation handler.
+             * @param relocation            A relocation to use with a relocation handler.
              * @return A dispatcher that is bound to the instrumented method.
              */
             Bound bind(TypeDescription instrumentedType,
@@ -5756,7 +5756,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                        StackManipulation exceptionHandler,
-                       RelocationHandler.Relocator relocator);
+                       RelocationHandler.Relocation relocation);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -5892,7 +5892,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                               StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                               StackManipulation exceptionHandler,
-                              RelocationHandler.Relocator relocator) {
+                              RelocationHandler.Relocation relocation) {
                 return this;
             }
         }
@@ -6411,7 +6411,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                       StackManipulation exceptionHandler,
-                                      RelocationHandler.Relocator relocator) {
+                                      RelocationHandler.Relocation relocation) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
@@ -6421,7 +6421,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocator),
+                                relocationHandler.bind(instrumentedMethod, relocation),
                                 classReader);
                     }
 
@@ -6645,7 +6645,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                       MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                       StackManipulation exceptionHandler,
-                                      RelocationHandler.Relocator relocator) {
+                                      RelocationHandler.Relocation relocation) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
@@ -7255,7 +7255,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                   StackManipulation exceptionHandler,
-                                  RelocationHandler.Relocator relocator) {
+                                  RelocationHandler.Relocation relocation) {
                     if (!adviceMethod.isVisibleTo(instrumentedType)) {
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }
@@ -7268,7 +7268,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodSizeHandler,
                             stackMapFrameHandler,
                             exceptionHandler,
-                            relocator);
+                            relocation);
                 }
 
                 /**
@@ -7283,7 +7283,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param methodSizeHandler     A handler for computing the method size requirements.
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                  * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
-                 * @param relocator             A relocator to use with a relocation handler.
+                 * @param relocation            A relocation to use with a relocation handler.
                  * @return An appropriate bound advice dispatcher.
                  */
                 protected abstract Bound resolve(TypeDescription instrumentedType,
@@ -7295,7 +7295,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                  StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                  StackManipulation exceptionHandler,
-                                                 RelocationHandler.Relocator relocator);
+                                                 RelocationHandler.Relocation relocation);
 
                 @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                 public boolean equals(Object object) {
@@ -7445,7 +7445,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new advice method writer.
                          *
                          * @param adviceMethod          The advice method.
-                         * @param instrumentedMethod    The instrumented method.
                          * @param offsetMappings        The offset mappings available to this advice.
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
@@ -7642,7 +7641,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
-                                            RelocationHandler.Relocator relocator) {
+                                            RelocationHandler.Relocation relocation) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
@@ -7659,7 +7658,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler.bindEnter(adviceMethod),
                                 stackMapFrameHandler.bindEnter(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler),
-                                relocationHandler.bind(instrumentedMethod, relocator));
+                                relocationHandler.bind(instrumentedMethod, relocation));
                     }
 
                     @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
@@ -7755,7 +7754,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                             StackManipulation exceptionHandler,
-                                            RelocationHandler.Relocator relocator) {
+                                            RelocationHandler.Relocation relocation) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
@@ -7864,7 +7863,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A method visitor that weaves the advice methods' byte codes.
      */
-    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocator {
+    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor implements Dispatcher.RelocationHandler.Relocation {
 
         /**
          * The actual method visitor that is underlying this method visitor to which all instructions are written.
@@ -8038,7 +8037,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An advice visitor that does not apply exit advice.
          */
-        protected static class WithoutExitAdvice extends AdviceVisitor {
+        protected static class WithoutExitAdvice extends AdviceVisitor implements Dispatcher.RelocationHandler.Relocation {
 
             /**
              * Creates an advice visitor that does not apply exit advice.
