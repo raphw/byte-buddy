@@ -4393,7 +4393,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                       int readerFlags) {
                 if ((writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
                     return NoOp.INSTANCE;
-                } else if (!exitAdvice && enterTypes.isEmpty()) { // Enter types are a blocker for trivial remapping for now.
+                } else if (!exitAdvice) {
                     return new Trivial(instrumentedType, instrumentedMethod, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else if (copyArguments) {
                     return new WithPreservedArguments.UsingArgumentCopy(instrumentedType, instrumentedMethod, enterTypes, exitTypes, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
