@@ -4012,6 +4012,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public MethodSizeHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
+                localVariableLength = Math.max(localVariableLength, instrumentedMethod.getStackSize() + adviceMethod.getReturnType().getStackSize().getSize());
                 return new ForAdvice(adviceMethod, Collections.<TypeDescription>emptyList(), enterTypes);
             }
 
@@ -4020,6 +4021,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().maximum(skipThrowable
                         ? StackSize.ZERO
                         : StackSize.SINGLE).getSize());
+                stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
                 return new ForAdvice(adviceMethod, CompoundList.of(enterTypes, exitTypes), Collections.<TypeDescription>emptyList());
             }
 
@@ -4136,8 +4138,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.adviceMethod = adviceMethod;
                     this.startTypes = startTypes;
                     this.endTypes = endTypes;
-                    stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
-                    localVariableLength = Math.max(localVariableLength, instrumentedMethod.getStackSize() + adviceMethod.getReturnType().getStackSize().getSize());
                 }
 
                 @Override
@@ -4696,7 +4696,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void injectExceptionFrame(MethodVisitor methodVisitor) {
-                    throw new IllegalStateException("Did not expect expection frame for " + instrumentedMethod);
+                    throw new IllegalStateException("Did not expect exception frame for " + instrumentedMethod);
                 }
 
                 @Override
