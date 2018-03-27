@@ -5357,7 +5357,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Binds this relocation handler to a relocator.
              *
-             * @param relocator The relocator to use.
+             * @param instrumentedMethod The instrumented method.
+             * @param relocator          The relocator to use.
              * @return A bound relocation handler.
              */
             Bound bind(MethodDescription instrumentedMethod, Relocator relocator);
@@ -5561,6 +5562,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected class Bound implements RelocationHandler.Bound {
 
+                    /**
+                     * The instrumented method.
+                     */
                     private final MethodDescription instrumentedMethod;
 
                     /**
@@ -5576,8 +5580,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new bound relocation handler.
                      *
-                     * @param relocator The relocator to use.
-                     * @param inverted  {@code true} if the relocation should be applied for any non-default value of a type.
+                     * @param instrumentedMethod The instrumented method.
+                     * @param relocator          The relocator to use.
+                     * @param inverted           {@code true} if the relocation should be applied for any non-default value of a type.
                      */
                     protected Bound(MethodDescription instrumentedMethod, Relocator relocator, boolean inverted) {
                         this.instrumentedMethod = instrumentedMethod;
@@ -5656,6 +5661,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected class Bound implements RelocationHandler.Bound {
 
+                    /**
+                     * The instrumented method.
+                     */
                     private final MethodDescription instrumentedMethod;
 
                     /**
@@ -5666,7 +5674,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new bound relocation handler.
                      *
-                     * @param relocator The relocator to use.
+                     * @param instrumentedMethod The instrumented method.
+                     * @param relocator          The relocator to use.
                      */
                     protected Bound(MethodDescription instrumentedMethod, Relocator relocator) {
                         this.instrumentedMethod = instrumentedMethod;
@@ -5709,6 +5718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodSizeHandler     A handler for computing the method size requirements.
              * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
              * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
+             * @param relocator             A relocator to use with a relocation handler.
              * @return A dispatcher that is bound to the instrumented method.
              */
             Bound bind(TypeDescription instrumentedType,
@@ -6037,7 +6047,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                  * @param instrumentedType      A description of the instrumented type.
                  * @param instrumentedMethod    A description of the instrumented method.
-                 * @param suppressionHandler    The bound suppression handler that is used for suppressing exceptions of this advice method.
+                 * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                 * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                  * @return A method visitor for visiting the advice method's byte code.
                  */
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
@@ -6120,6 +6131,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final SuppressionHandler.Bound suppressionHandler;
 
+                    /**
+                     * A bound relocation handler that is responsible for considering a non-standard control flow.
+                     */
                     protected final RelocationHandler.Bound relocationHandler;
 
                     /**
@@ -6144,6 +6158,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      * @param classReader           A class reader for parsing the class file containing the represented advice method.
                      */
                     protected AdviceMethodInliner(TypeDescription instrumentedType,
@@ -6392,10 +6407,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
+                    /**
+                     * Resolves enter advice that only exposes the enter type if this is necessary.
+                     *
+                     * @param adviceMethod  The advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param classReader   The class reader for parsing the advice method's class file.
+                     * @param methodExit    {@code true} if exit advice is applied.
+                     * @return An appropriate enter handler.
+                     */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
-                                                               List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                               ClassReader classReader,
-                                                               boolean methodExit) {
+                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                ClassReader classReader,
+                                                                boolean methodExit) {
                         return methodExit
                                 ? new WithRetainedEnterType(adviceMethod, userFactories, classReader)
                                 : new WithDiscardedEnterType(adviceMethod, userFactories, classReader);
@@ -6478,11 +6502,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return result;
                     }
 
+                    /**
+                     * Implementation of an advice that does expose an enter type.
+                     */
                     protected static class WithRetainedEnterType extends Inlining.Resolved.ForMethodEnter {
 
+
+                        /**
+                         * Creates a new resolved dispatcher for implementing method enter advice that does expose the enter type.
+                         *
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param classReader   A class reader to query for the class file of the advice method.
+                         */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                 ClassReader classReader) {
+                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                        ClassReader classReader) {
                             super(adviceMethod, userFactories, classReader);
                         }
 
@@ -6492,11 +6527,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    /**
+                     * Implementation of an advice that does not expose an enter type.
+                     */
                     protected static class WithDiscardedEnterType extends Inlining.Resolved.ForMethodEnter {
 
+                        /**
+                         * Creates a new resolved dispatcher for implementing method enter advice that does not expose the enter type.
+                         *
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param classReader   A class reader to query for the class file of the advice method.
+                         */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                        ClassReader classReader) {
+                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                         ClassReader classReader) {
                             super(adviceMethod, userFactories, classReader);
                         }
 
@@ -6523,8 +6568,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          * @param classReader           A class reader for parsing the class file containing the represented advice method.
-                         * @param relocationHandler     A relocation handler that determines if the instrumented method should be skipped.
                          */
                         protected AdviceMethodInliner(TypeDescription instrumentedType,
                                                       MethodDescription instrumentedMethod,
@@ -6784,19 +6829,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          * @param classReader           A class reader for parsing the class file containing the represented advice method.
                          */
-                        public AdviceMethodInliner(TypeDescription instrumentedType,
-                                                   MethodDescription instrumentedMethod,
-                                                   MethodVisitor methodVisitor,
-                                                   Implementation.Context implementationContext,
-                                                   Assigner assigner,
-                                                   ArgumentHandler.ForInstrumentedMethod argumentHandler,
-                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
-                                                   SuppressionHandler.Bound suppressionHandler,
-                                                   RelocationHandler.Bound relocationHandler,
-                                                   ClassReader classReader) {
+                        protected AdviceMethodInliner(TypeDescription instrumentedType,
+                                                      MethodDescription instrumentedMethod,
+                                                      MethodVisitor methodVisitor,
+                                                      Implementation.Context implementationContext,
+                                                      Assigner assigner,
+                                                      ArgumentHandler.ForInstrumentedMethod argumentHandler,
+                                                      MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
+                                                      StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                      SuppressionHandler.Bound suppressionHandler,
+                                                      RelocationHandler.Bound relocationHandler,
+                                                      ClassReader classReader) {
                             super(instrumentedType,
                                     instrumentedMethod,
                                     methodVisitor,
@@ -6859,10 +6905,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final Map<Integer, OffsetMapping.Target> offsetMappings;
 
                 /**
-                 * A handler for optionally suppressing exceptions.
+                 * A bound suppression handler that is used for suppressing exceptions of this advice method.
                  */
                 private final SuppressionHandler.Bound suppressionHandler;
 
+                /**
+                 * A bound relocation handler that is responsible for considering a non-standard control flow.
+                 */
                 private final RelocationHandler.Bound relocationHandler;
 
                 /**
@@ -6881,7 +6930,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod    The instrumented method.
                  * @param adviceMethod          The advice method.
                  * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
-                 * @param suppressionHandler    The suppression handler to use.
+                 * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                 * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -7049,7 +7099,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod    The instrumented method.
                      * @param adviceMethod          The advice method.
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler    The suppression handler to use.
+                     * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
                                              Context implementationContext,
@@ -7149,7 +7200,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod    The instrumented method.
                      * @param adviceMethod          The advice method.
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler    The suppression handler to use.
+                     * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
                                             Implementation.Context implementationContext,
@@ -7357,6 +7409,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param methodSizeHandler     A handler for computing the method size requirements.
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                  * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
+                 * @param relocator             A relocator to use with a relocation handler.
                  * @return An appropriate bound advice dispatcher.
                  */
                 protected abstract T resolve(TypeDescription instrumentedType,
@@ -7444,6 +7497,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SuppressionHandler.Bound suppressionHandler;
 
+                    /**
+                     * A bound relocation handler that is responsible for considering a non-standard control flow.
+                     */
                     private final RelocationHandler.Bound relocationHandler;
 
                     /**
@@ -7458,6 +7514,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription instrumentedMethod,
@@ -7532,7 +7589,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
-                         * @param relocationHandler     A relocation handler that determines if the instrumented method should be skipped.
+                         * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription instrumentedMethod,
@@ -7622,6 +7679,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler     A handler for computing the method size requirements.
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                                 MethodDescription instrumentedMethod,
