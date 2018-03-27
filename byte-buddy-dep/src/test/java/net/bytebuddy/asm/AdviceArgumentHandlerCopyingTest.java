@@ -12,7 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class AdviceArgumentHandlerCopyingTest { // TODO: Retaining argument handler test!
+public class AdviceArgumentHandlerCopyingTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 

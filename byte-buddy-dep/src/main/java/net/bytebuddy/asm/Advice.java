@@ -5669,13 +5669,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocator relocator) {
-                    return new Bound(instrumentedMethod, relocator);
+                    return new Bound(typeDescription, instrumentedMethod, relocator);
                 }
 
                 /**
                  * A bound relocation handler for {@link ForType}.
                  */
-                protected class Bound implements RelocationHandler.Bound {
+                @EqualsAndHashCode
+                protected static class Bound implements RelocationHandler.Bound {
+
+                    /**
+                     * The type that triggers a relocation.
+                     */
+                    private final TypeDescription typeDescription;
 
                     /**
                      * The instrumented method.
@@ -5690,10 +5696,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new bound relocation handler.
                      *
+                     * @param typeDescription    The type that triggers a relocation.
                      * @param instrumentedMethod The instrumented method.
                      * @param relocator          The relocator to use.
                      */
-                    protected Bound(MethodDescription instrumentedMethod, Relocator relocator) {
+                    protected Bound(TypeDescription typeDescription, MethodDescription instrumentedMethod, Relocator relocator) {
+                        this.typeDescription = typeDescription;
                         this.instrumentedMethod = instrumentedMethod;
                         this.relocator = relocator;
                     }
