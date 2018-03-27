@@ -1417,6 +1417,20 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testParameterAnnotations() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ParameterAnnotationSample.class)
+                .visit(Advice.to(ParameterAnnotationSample.class).on(named(FOO)))
+                .make()
+                .load(ParameterAnnotationSample.SampleParameter.class.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations().length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations()[0].length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations()[0][0], instanceOf(ParameterAnnotationSample.SampleParameter.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testInstanceOfPrimitiveSkip() throws Exception {
         Advice.to(InstanceOfIllegalPrimitiveSkip.class);
@@ -3180,6 +3194,25 @@ public class AdviceTest {
             if (value != null) {
                 throw new AssertionError();
             }
+        }
+    }
+
+    public static class ParameterAnnotationSample {
+
+        public String foo(@SampleParameter String value) {
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Unused Void ignored1, @Advice.Unused Void ignored2) {
+            if (ignored1 != null || ignored2 != null) {
+                throw new AssertionError();
+            }
+        }
+
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface SampleParameter {
+            /* empty */
         }
     }
 
