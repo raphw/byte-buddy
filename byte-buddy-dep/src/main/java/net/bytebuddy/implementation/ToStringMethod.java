@@ -167,7 +167,7 @@ public class ToStringMethod implements Implementation {
      * @return A new version of this toString method implementation that also ignores any fields matched by the provided matcher.
      */
     public ToStringMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new ToStringMethod(prefixResolver, start, end, separator, definer, this.ignored.or(ignored));
+        return new ToStringMethod(prefixResolver, start, end, separator, definer, this.ignored.<FieldDescription.InDefinedShape>or(ignored));
     }
 
     /**

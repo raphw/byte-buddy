@@ -132,7 +132,7 @@ public class HashCodeMethod implements Implementation {
      * @return A new version of this hash code method implementation that also ignores any fields matched by the provided matcher.
      */
     public HashCodeMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new HashCodeMethod(offsetProvider, multiplier, this.ignored.or(ignored), nonNullable);
+        return new HashCodeMethod(offsetProvider, multiplier, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable);
     }
 
     /**
@@ -144,7 +144,7 @@ public class HashCodeMethod implements Implementation {
      * the provided matcher.
      */
     public HashCodeMethod withNonNullableFields(ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
-        return new HashCodeMethod(offsetProvider, multiplier, ignored, this.nonNullable.or(nonNullable));
+        return new HashCodeMethod(offsetProvider, multiplier, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable));
     }
 
     /**

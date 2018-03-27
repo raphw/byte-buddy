@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -4891,6 +4892,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    @SuppressFBWarnings(value = "RC_REF_COMPARISON_BAD_PRACTICE", justification = "Reference equality is required by ASM")
                     public void translateFrame(MethodVisitor methodVisitor,
                                                int type,
                                                int localVariableLength,
@@ -7330,11 +7332,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected final MethodDescription.InDefinedShape adviceMethod;
 
                     /**
-                     * The instrumented method.
-                     */
-                    protected final MethodDescription instrumentedMethod;
-
-                    /**
                      * The offset mappings available to this advice.
                      */
                     private final List<OffsetMapping.Target> offsetMappings;
@@ -7378,7 +7375,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new advice method writer.
                      *
                      * @param adviceMethod          The advice method.
-                     * @param instrumentedMethod    The instrumented method.
                      * @param offsetMappings        The offset mappings available to this advice.
                      * @param methodVisitor         The method visitor for writing the instrumented method.
                      * @param implementationContext The implementation context to use.
@@ -7389,7 +7385,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
-                                                 MethodDescription instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -7399,7 +7394,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler) {
                         this.adviceMethod = adviceMethod;
-                        this.instrumentedMethod = instrumentedMethod;
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.implementationContext = implementationContext;
@@ -7445,7 +7439,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * An advice method writer for a method enter.
                      */
-                    protected static class ForMethodEnter extends AdviceMethodWriter implements Bound {
+                    protected static class ForMethodEnter extends AdviceMethodWriter {
 
                         /**
                          * Creates a new advice method writer.
@@ -7462,7 +7456,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
-                                                 MethodDescription instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Implementation.Context implementationContext,
@@ -7472,7 +7465,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler) {
                             super(adviceMethod,
-                                    instrumentedMethod,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -7530,13 +7522,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * An advice method writer for a method exit.
                      */
-                    protected static class ForMethodExit extends AdviceMethodWriter implements Bound {
+                    protected static class ForMethodExit extends AdviceMethodWriter {
 
                         /**
                          * Creates a new advice method writer.
                          *
                          * @param adviceMethod          The advice method.
-                         * @param instrumentedMethod    The instrumented method.
                          * @param offsetMappings        The offset mappings available to this advice.
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
@@ -7547,7 +7538,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                                MethodDescription instrumentedMethod,
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -7557,7 +7547,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 SuppressionHandler.Bound suppressionHandler,
                                                 RelocationHandler.Bound relocationHandler) {
                             super(adviceMethod,
-                                    instrumentedMethod,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -7663,7 +7652,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.ENTER));
                         }
                         return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
-                                instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
@@ -7777,7 +7765,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.EXIT));
                         }
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
-                                instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,

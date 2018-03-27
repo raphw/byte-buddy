@@ -119,7 +119,7 @@ public class EqualsMethod implements Implementation {
      * @return A new version of this equals method implementation that also ignores any fields matched by the provided matcher.
      */
     public EqualsMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.or(ignored), nonNullable);
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable);
     }
 
     /**
@@ -131,7 +131,7 @@ public class EqualsMethod implements Implementation {
      * the provided matcher.
      */
     public EqualsMethod withNonNullableFields(ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.or(nonNullable));
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable));
     }
 
     /**
