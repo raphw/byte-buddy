@@ -6,6 +6,7 @@ Byte Buddy release notes
 - Add implementations for `HashCodeMethod`, `EqualsMethod` and `ToStringMethod` including build tool plugins.
 - Refactor handling of stack map frame translation within `Advice` to allow for handling of methods with inconsistent stack map frames if the method arguments are copied.
 - Make argument copying the default choice if exit advice is enabled. 
+- Update to ASM 6.1.1.
 
 ### 13. March 2018: version 1.8.0
 
