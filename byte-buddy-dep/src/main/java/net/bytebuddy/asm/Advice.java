@@ -5882,7 +5882,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod    The represented advice method.
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param relocatableType The type to trigger a relocation of the method's control flow.
+                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
                  * @param adviceType      The applied advice type.
                  */
                 protected AbstractBase(MethodDescription.InDefinedShape adviceMethod,
@@ -7249,7 +7249,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod    The represented advice method.
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param relocatableType The type to trigger a relocation of the method's control flow.
+                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
