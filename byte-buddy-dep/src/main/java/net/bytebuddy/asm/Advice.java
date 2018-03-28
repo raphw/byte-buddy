@@ -7310,24 +7310,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  StackManipulation exceptionHandler,
                                                  RelocationHandler.Relocation relocation);
 
-                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Delegating.Resolved resolved = (Delegating.Resolved) object;
-                    return adviceMethod.equals(resolved.adviceMethod)
-                            && offsetMappings.equals(resolved.offsetMappings)
-                            && suppressionHandler.equals(resolved.suppressionHandler);
-                }
-
-                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                public int hashCode() {
-                    int result = adviceMethod.hashCode();
-                    result = 31 * result + offsetMappings.hashCode();
-                    result = 31 * result + suppressionHandler.hashCode();
-                    return result;
-                }
-
                 /**
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
