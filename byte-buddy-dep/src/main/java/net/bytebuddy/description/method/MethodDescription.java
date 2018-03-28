@@ -726,11 +726,16 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean equals(Object other) {
-            return other == this || (other instanceof MethodDescription
-                    && getInternalName().equals(((MethodDescription) other).getInternalName())
-                    && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
-                    && getReturnType().asErasure().equals(((MethodDescription) other).getReturnType().asErasure())
-                    && getParameters().asTypeList().asErasures().equals(((MethodDescription) other).getParameters().asTypeList().asErasures()));
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof MethodDescription)) {
+                return false;
+            }
+            MethodDescription methodDescription = (MethodDescription) other;
+            return getInternalName().equals(methodDescription.getInternalName())
+                    && getDeclaringType().equals(methodDescription.getDeclaringType())
+                    && getReturnType().asErasure().equals(methodDescription.getReturnType().asErasure())
+                    && getParameters().asTypeList().asErasures().equals(methodDescription.getParameters().asTypeList().asErasures());
         }
 
         @Override
@@ -1624,8 +1629,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
             Token token = (Token) other;
             return modifiers == token.modifiers
                     && name.equals(token.name)
@@ -1739,8 +1747,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof SignatureToken)) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof SignatureToken)) {
+                return false;
+            }
             SignatureToken signatureToken = (SignatureToken) other;
             return name.equals(signatureToken.name)
                     && returnType.equals(signatureToken.returnType)
@@ -1817,8 +1828,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof TypeToken)) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof TypeToken)) {
+                return false;
+            }
             TypeToken typeToken = (TypeToken) other;
             return returnType.equals(typeToken.returnType) && parameterTypes.equals(typeToken.parameterTypes);
         }

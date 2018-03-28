@@ -1,8 +1,8 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -61,8 +61,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof PackageDescription
-                    && getName().equals(((PackageDescription) other).getName());
+            return this == other || other instanceof PackageDescription && getName().equals(((PackageDescription) other).getName());
         }
 
         @Override

@@ -1,9 +1,9 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -50,7 +50,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * <li>All arguments for the called method in the order in which they are required.</li>
  * </ol>
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class MethodCallProxy implements AuxiliaryType {
 
     /**
@@ -243,7 +243,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.ConstructorCall}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -287,7 +287,7 @@ public class MethodCallProxy implements AuxiliaryType {
     /**
      * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class MethodCall implements Implementation {
 
         /**
@@ -324,6 +324,7 @@ public class MethodCallProxy implements AuxiliaryType {
         /**
          * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.MethodCall}.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -357,27 +358,6 @@ public class MethodCallProxy implements AuxiliaryType {
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private MethodCall getMethodCall() {
-                return MethodCall.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && MethodCall.this.equals(((Appender) other).getMethodCall());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
-            }
         }
     }
 
@@ -387,7 +367,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
      * as the target method itself.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class AssignableSignatureCall implements StackManipulation {
 
         /**

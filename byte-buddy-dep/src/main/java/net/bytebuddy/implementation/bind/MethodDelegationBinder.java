@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -112,7 +112,7 @@ public interface MethodDelegationBinder {
         /**
          * A method invocation that enforces a virtual invocation that is dispatched on a given type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Virtual implements MethodInvoker {
 
             /**
@@ -184,12 +184,13 @@ public interface MethodDelegationBinder {
         /**
          * An anonymous binding of a target method parameter.
          */
-        @EqualsAndHashCode(of = "delegate")
+        @HashCodeAndEqualsPlugin.Enhance
         class Anonymous implements ParameterBinding<Object> {
 
             /**
              * A pseudo-token that is not exposed and therefore anonymous.
              */
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
             private final Object anonymousToken;
 
             /**
@@ -232,7 +233,7 @@ public interface MethodDelegationBinder {
          * @param <T> The type of the identification token.
          * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Unique<T> implements ParameterBinding<T> {
 
             /**
@@ -427,7 +428,7 @@ public interface MethodDelegationBinder {
              * A method binding that was created by a
              * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder}.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Build implements MethodBinding {
 
                 /**
@@ -641,7 +642,7 @@ public interface MethodDelegationBinder {
         /**
          * Binds a method using another resolver and prints the selected binding to a {@link PrintStream}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class StreamWriting implements BindingResolver {
 
             /**
@@ -872,7 +873,7 @@ public interface MethodDelegationBinder {
          * A chain of {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Compound implements AmbiguityResolver {
 
             /**
@@ -978,7 +979,7 @@ public interface MethodDelegationBinder {
      * <li>Find a best method among the successful bindings using the {@code AmbiguityResolver}.</li>
      * </ol>
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Processor implements MethodDelegationBinder.Record {
 
         /**

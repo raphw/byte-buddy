@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -35,7 +35,7 @@ import java.lang.reflect.Field;
  * value can be specified explicitly when {@code void} is not returned.
  * </p>
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public abstract class FieldAccessor implements Implementation {
 
     /**
@@ -209,7 +209,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * An absolute field description representing a previously resolved field.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Absolute implements FieldLocation, Prepared {
 
             /**
@@ -250,7 +250,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A relative field location where a field is located dynamically.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Relative implements FieldLocation {
 
             /**
@@ -296,7 +296,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * A prepared version of a field location.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Prepared implements FieldLocation.Prepared {
 
                 /**
@@ -379,7 +379,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A field name extractor that returns a fixed value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForFixedValue implements FieldNameExtractor {
 
             /**
@@ -527,6 +527,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * An byte code appender for an field accessor implementation.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -559,35 +560,13 @@ public abstract class FieldAccessor implements Implementation {
                 }
                 return new Size(implementation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private ForImplicitProperty getOuter() {
-                return ForImplicitProperty.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Appender appender = (Appender) object;
-                return fieldLocation.equals(appender.fieldLocation) && ForImplicitProperty.this.equals(appender.getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return fieldLocation.hashCode() + 31 * ForImplicitProperty.this.hashCode();
-            }
         }
     }
 
     /**
      * A field accessor that sets a parameters value of a given index.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForParameterSetter extends FieldAccessor implements Implementation.Composable {
 
         /**
@@ -680,6 +659,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * An appender for a field accessor that sets a parameter of a given index.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -706,28 +686,6 @@ public abstract class FieldAccessor implements Implementation {
                             terminationHandler.resolve(instrumentedMethod)
                     ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                 }
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private ForParameterSetter getOuter() {
-                return ForParameterSetter.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForParameterSetter.Appender appender = (ForParameterSetter.Appender) object;
-                return fieldLocation.equals(appender.fieldLocation) && ForParameterSetter.this.equals(appender.getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return fieldLocation.hashCode() + 31 * ForParameterSetter.this.hashCode();
             }
         }
     }

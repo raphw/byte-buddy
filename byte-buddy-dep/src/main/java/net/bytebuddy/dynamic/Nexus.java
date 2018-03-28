@@ -165,10 +165,13 @@ public class Nexus extends WeakReference<ClassLoader> {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        Nexus nexus = (Nexus) object;
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        } else if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        Nexus nexus = (Nexus) other;
         return classLoaderHashCode == nexus.classLoaderHashCode
                 && identification == nexus.identification
                 && name.equals(nexus.name)

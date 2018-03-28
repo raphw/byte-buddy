@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -79,7 +79,7 @@ public interface TypeAttributeAppender {
          * A type attribute appender that writes all annotations of the instrumented but excludes annotations up to
          * a given index.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         public static class Differentiating implements TypeAttributeAppender {
 
             /**
@@ -146,7 +146,7 @@ public interface TypeAttributeAppender {
      * An attribute appender that appends a single annotation to a given type. The visibility for the annotation
      * will be inferred from the annotation's {@link java.lang.annotation.RetentionPolicy}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Explicit implements TypeAttributeAppender {
 
         /**
@@ -175,7 +175,7 @@ public interface TypeAttributeAppender {
     /**
      * A compound type attribute appender that concatenates a number of other attribute appenders.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound implements TypeAttributeAppender {
 
         /**

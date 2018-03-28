@@ -1,7 +1,7 @@
 package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -76,7 +76,7 @@ public interface TypePool {
         /**
          * A simple resolution that represents a given {@link TypeDescription}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Resolution {
 
             /**
@@ -107,7 +107,7 @@ public interface TypePool {
         /**
          * A canonical representation of a non-successful resolution of a {@link net.bytebuddy.pool.TypePool}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Illegal implements Resolution {
 
             /**
@@ -269,7 +269,7 @@ public interface TypePool {
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     abstract class AbstractBase implements TypePool {
 
         /**
@@ -379,7 +379,7 @@ public interface TypePool {
          * is asked first if it can resolve a type. Only if the parent (and potentially its parents) are unable to resolve a type,
          * this instance is queried for a type description.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @HashCodeAndEqualsPlugin.Enhance
         public abstract static class Hierarchical extends AbstractBase {
 
             /**
@@ -419,7 +419,7 @@ public interface TypePool {
         /**
          * A resolution for a type that, if resolved, represents an array type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class ArrayTypeResolution implements Resolution {
 
             /**
@@ -516,7 +516,7 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
+                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
             }
 
             @Override
@@ -583,7 +583,7 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
+                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
             }
 
             @Override
@@ -663,7 +663,7 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
+                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
             }
 
             @Override
@@ -712,10 +712,13 @@ public interface TypePool {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                    AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                    return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
+                    if (this == other) {
+                        return true;
+                    } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                        return false;
+                    }
+                    AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                    return annotationValue.getState().isResolved() && type.equals(annotationValue.resolve());
                 }
 
                 @Override
@@ -799,8 +802,11 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue<?, ?>)) return false;
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue<?, ?>)) {
+                    return false;
+                }
                 Object value = ((AnnotationValue<?, ?>) other).resolve();
                 return value instanceof Object[] && Arrays.equals(resolve(), (Object[]) value);
             }
@@ -893,18 +899,27 @@ public interface TypePool {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                    AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                    if (!loadedOther.getState().isResolved()) return false;
-                    Object otherValue = loadedOther.resolve();
-                    if (!(otherValue instanceof Object[])) return false;
-                    Object[] otherArrayValue = (Object[]) otherValue;
-                    if (values.size() != otherArrayValue.length) return false;
+                    if (this == other) {
+                        return true;
+                    } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                        return false;
+                    }
+                    AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                    if (!annotationValue.getState().isResolved()) {
+                        return false;
+                    }
+                    Object value = annotationValue.resolve();
+                    if (!(value instanceof Object[])) {
+                        return false;
+                    }
+                    Object[] arrayValue = (Object[]) value;
+                    if (values.size() != arrayValue.length) {
+                        return false;
+                    }
                     Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                    for (Object value : otherArrayValue) {
+                    for (Object aValue : arrayValue) {
                         AnnotationValue.Loaded<?> self = iterator.next();
-                        if (!self.resolve().equals(value)) {
+                        if (!self.resolve().equals(aValue)) {
                             return false;
                         }
                     }
@@ -937,7 +952,7 @@ public interface TypePool {
      * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all.
      * </p>
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     class Default extends AbstractBase.Hierarchical {
 
         /**
@@ -1179,6 +1194,7 @@ public interface TypePool {
             /**
              * A lazy resolution of a type that the enclosing type pool attempts to resolve.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class LazyResolution implements Resolution {
 
                 /**
@@ -1203,28 +1219,6 @@ public interface TypePool {
                 @Override
                 public TypeDescription resolve() {
                     return new LazyTypeDescription(name);
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private WithLazyResolution getOuter() {
-                    return WithLazyResolution.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    LazyResolution that = (LazyResolution) object;
-                    return name.equals(that.name) && getOuter().equals(that.getOuter());
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    return name.hashCode() + 31 * getOuter().hashCode();
                 }
             }
 
@@ -1640,7 +1634,7 @@ public interface TypePool {
              * A component type locator that lazily analyses an annotation for resolving an annotation property's
              * array value's component type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForAnnotationProperty implements ComponentTypeLocator {
 
                 /**
@@ -1673,6 +1667,7 @@ public interface TypePool {
                  * A bound representation of a
                  * {@link net.bytebuddy.pool.TypePool.Default.ComponentTypeLocator.ForAnnotationProperty}.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class Bound implements RawDescriptionArray.ComponentTypeReference {
 
                     /**
@@ -1701,34 +1696,13 @@ public interface TypePool {
                                 .getComponentType()
                                 .getName();
                     }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && name.equals(((Bound) other).name)
-                                && ForAnnotationProperty.this.equals(((Bound) other).getOuter());
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return name.hashCode() + 31 * ForAnnotationProperty.this.hashCode();
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private ForAnnotationProperty getOuter() {
-                        return ForAnnotationProperty.this;
-                    }
                 }
             }
 
             /**
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForArrayType implements ComponentTypeLocator, RawDescriptionArray.ComponentTypeReference {
 
                 /**
@@ -2132,7 +2106,7 @@ public interface TypePool {
                 /**
                  * An incomplete token representing a generic type without an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForTopLevelType extends AbstractBase {
 
                     /**
@@ -2170,7 +2144,7 @@ public interface TypePool {
                 /**
                  * An incomplete generic type token representing a type with an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForInnerClass extends AbstractBase {
 
                     /**
@@ -2361,64 +2335,24 @@ public interface TypePool {
                     /**
                      * A registrant for the super type.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class SuperClassRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             superClassToken = token;
                         }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return OfType.this.hashCode();
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public boolean equals(Object other) {
-                            return other != null
-                                    && getClass() == other.getClass()
-                                    && OfType.this.equals(((SuperClassRegistrant) other).getOuter());
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private OfType getOuter() {
-                            return OfType.this;
-                        }
                     }
 
                     /**
                      * A registrant for the interface types.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class InterfaceTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             interfaceTypeTokens.add(token);
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return OfType.this.hashCode();
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public boolean equals(Object other) {
-                            return other != null
-                                    && getClass() == other.getClass()
-                                    && OfType.this.equals(((InterfaceTypeRegistrant) other).getOuter());
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private OfType getOuter() {
-                            return OfType.this;
                         }
                     }
                 }
@@ -2494,96 +2428,36 @@ public interface TypePool {
                     /**
                      * A registrant for a parameter type.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class ParameterTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameterTypeTokens.add(token);
                         }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return OfMethod.this.hashCode();
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public boolean equals(Object other) {
-                            return other != null
-                                    && getClass() == other.getClass()
-                                    && OfMethod.this.equals(((ParameterTypeRegistrant) other).getOuter());
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private OfMethod getOuter() {
-                            return OfMethod.this;
-                        }
                     }
 
                     /**
                      * A registrant for a return type.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class ReturnTypeTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             returnTypeToken = token;
                         }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return OfMethod.this.hashCode();
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public boolean equals(Object other) {
-                            return other != null
-                                    && getClass() == other.getClass()
-                                    && OfMethod.this.equals(((ReturnTypeTypeRegistrant) other).getOuter());
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private OfMethod getOuter() {
-                            return OfMethod.this;
-                        }
                     }
 
                     /**
                      * A registrant for an exception type.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class ExceptionTypeRegistrant implements GenericTypeRegistrant {
 
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             exceptionTypeTokens.add(token);
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return OfMethod.this.hashCode();
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public boolean equals(Object other) {
-                            return other != null
-                                    && getClass() == other.getClass()
-                                    && OfMethod.this.equals(((ExceptionTypeRegistrant) other).getOuter());
-                        }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private OfMethod getOuter() {
-                            return OfMethod.this;
                         }
                     }
                 }
@@ -3026,7 +2900,7 @@ public interface TypePool {
                 /**
                  * Describes a type that is contained within another type.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class WithinType implements TypeContainment {
 
                     /**
@@ -3079,7 +2953,7 @@ public interface TypePool {
                 /**
                  * Describes a type that is contained within a method or constructor.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class WithinMethod implements TypeContainment {
 
                     /**
@@ -3846,7 +3720,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of generic types of a {@link TypeDescription}.
                          */
-                        @EqualsAndHashCode
+                        @HashCodeAndEqualsPlugin.Enhance
                         class Tokenized implements ForType {
 
                             /**
@@ -3955,7 +3829,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of generic types of a {@link MethodDescription}.
                          */
-                        @EqualsAndHashCode
+                        @HashCodeAndEqualsPlugin.Enhance
                         class Tokenized implements ForMethod {
 
                             /**
@@ -4055,7 +3929,7 @@ public interface TypePool {
                         /**
                          * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
                          */
-                        @EqualsAndHashCode
+                        @HashCodeAndEqualsPlugin.Enhance
                         class Tokenized implements ForField {
 
                             /**
@@ -4086,7 +3960,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a non-generic type.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForRawType implements GenericTypeToken {
 
                     /**
@@ -4130,7 +4004,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a type variable.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForTypeVariable implements GenericTypeToken {
 
                     /**
@@ -4287,7 +4161,7 @@ public interface TypePool {
                     /**
                      * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class Formal implements GenericTypeToken.OfFormalTypeVariable {
 
                         /**
@@ -4476,7 +4350,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a generic array.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForGenericArray implements GenericTypeToken {
 
                     /**
@@ -4574,7 +4448,7 @@ public interface TypePool {
                 /**
                  * A generic type token for a wildcard that is bound below.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForLowerBoundWildcard implements GenericTypeToken {
 
                     /**
@@ -4677,7 +4551,7 @@ public interface TypePool {
                 /**
                  * A generic type token for a wildcard that is bound above.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForUpperBoundWildcard implements GenericTypeToken {
 
                     /**
@@ -4783,7 +4657,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represents a parameterized type.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForParameterizedType implements GenericTypeToken {
 
                     /**
@@ -4825,7 +4699,7 @@ public interface TypePool {
                     /**
                      * A generic type token to describe a parameterized type description with a generic owner type.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     public static class Nested implements GenericTypeToken {
 
                         /**
@@ -5177,7 +5051,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on an annotation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class AnnotationToken {
 
                 /**
@@ -5255,7 +5129,7 @@ public interface TypePool {
                     /**
                      * A simple resolved annotation.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     class Simple implements Resolution {
 
                         /**
@@ -5286,7 +5160,7 @@ public interface TypePool {
                     /**
                      * An illegal resolution.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     class Illegal implements Resolution {
 
                         /**
@@ -5319,7 +5193,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on a field.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldToken {
 
                 /**
@@ -5404,7 +5278,7 @@ public interface TypePool {
             /**
              * A token for representing collected data on a method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class MethodToken {
 
                 /**
@@ -5572,7 +5446,7 @@ public interface TypePool {
                 /**
                  * A token representing a method's parameter.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ParameterToken {
 
                     /**
@@ -5588,11 +5462,13 @@ public interface TypePool {
                     /**
                      * The name of the parameter or {@code null} if no explicit name for this parameter is known.
                      */
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final String name;
 
                     /**
                      * The modifiers of the parameter or {@code null} if no modifiers are known for this parameter.
                      */
+                    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                     private final Integer modifiers;
 
                     /**
@@ -7590,7 +7466,7 @@ public interface TypePool {
     /**
      * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @HashCodeAndEqualsPlugin.Enhance
     class LazyFacade extends AbstractBase {
 
         /**
@@ -7621,7 +7497,7 @@ public interface TypePool {
         /**
          * The lazy resolution for a lazy facade for a type pool.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class LazyResolution implements Resolution {
 
             /**
@@ -7697,7 +7573,7 @@ public interface TypePool {
     /**
      * A type pool that attempts to load a class.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     class ClassLoading extends AbstractBase.Hierarchical {
 
         /**
@@ -7774,7 +7650,7 @@ public interface TypePool {
     /**
      * A type pool that supplies explicitly known type descriptions.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     class Explicit extends AbstractBase.Hierarchical {
 
         /**

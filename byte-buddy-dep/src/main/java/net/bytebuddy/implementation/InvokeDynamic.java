@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -40,7 +40,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An implementation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class InvokeDynamic implements Implementation.Composable {
 
     /**
@@ -884,7 +884,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * A simple implementation of
                  * {@link net.bytebuddy.implementation.InvokeDynamic.InvocationProvider.Target.Resolved}.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Simple implements Resolved {
 
                     /**
@@ -950,7 +950,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A target that requests to dynamically invoke a method to substitute for a given method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForMethodDescription implements Target, Target.Resolved {
 
                 /**
@@ -1227,6 +1227,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * An argument provider that loads a primitive value from the constant pool and wraps it.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class WrappingArgumentProvider implements ArgumentProvider {
 
                     /**
@@ -1254,27 +1255,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     public InstrumentedType prepare(InstrumentedType instrumentedType) {
                         return instrumentedType;
                     }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
-                                && stackManipulation.equals(((WrappingArgumentProvider) other).stackManipulation);
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private ConstantPoolWrapper getOuter() {
-                        return ConstantPoolWrapper.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
-                    }
                 }
             }
 
@@ -1300,7 +1280,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * A simple implementation of a resolved argument provider.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Simple implements Resolved {
 
                     /**
@@ -1350,7 +1330,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider that loads the intercepted instance.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForThisInstance implements ArgumentProvider {
 
                 /**
@@ -1386,7 +1366,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a value that is stored in a randomly named static field.
              */
-            @EqualsAndHashCode(exclude = "name")
+            @HashCodeAndEqualsPlugin.Enhance
             class ForInstance implements ArgumentProvider {
 
                 /**
@@ -1407,6 +1387,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The name of the field.
                  */
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
                 private final String name;
 
                 /**
@@ -1455,7 +1436,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * Provides an argument from an existing field.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForField implements ArgumentProvider {
 
                 /**
@@ -1516,7 +1497,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * An argument provider for a field value with an explicit type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class WithExplicitType extends ForField {
 
                     /**
@@ -1550,7 +1531,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider that loads an argument of the intercepted method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForMethodParameter implements ArgumentProvider {
 
                 /**
@@ -1597,7 +1578,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * An argument provider for a method parameter with an explicit type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class WithExplicitType extends ForMethodParameter {
 
                     /**
@@ -1630,7 +1611,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code boolean} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForBooleanConstant implements ArgumentProvider {
 
                 /**
@@ -1661,7 +1642,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code byte} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForByteConstant implements ArgumentProvider {
 
                 /**
@@ -1692,7 +1673,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code short} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForShortConstant implements ArgumentProvider {
 
                 /**
@@ -1723,7 +1704,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code char} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForCharacterConstant implements ArgumentProvider {
 
                 /**
@@ -1754,7 +1735,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code int} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForIntegerConstant implements ArgumentProvider {
 
                 /**
@@ -1785,7 +1766,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code long} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForLongConstant implements ArgumentProvider {
 
                 /**
@@ -1816,7 +1797,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code float} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForFloatConstant implements ArgumentProvider {
 
                 /**
@@ -1847,7 +1828,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@code double} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForDoubleConstant implements ArgumentProvider {
 
                 /**
@@ -1878,7 +1859,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@link java.lang.String} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForStringConstant implements ArgumentProvider {
 
                 /**
@@ -1909,7 +1890,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a {@link java.lang.Class} constant.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForClassConstant implements ArgumentProvider {
 
                 /**
@@ -1940,7 +1921,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for an {@link java.lang.Enum} constant.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForEnumerationValue implements ArgumentProvider {
 
                 /**
@@ -1971,7 +1952,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for the {@code null} value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForNullValue implements ArgumentProvider {
 
                 /**
@@ -2002,7 +1983,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a Java instance.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJavaConstant implements ArgumentProvider {
 
                 /**
@@ -2063,7 +2044,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A name provider that provides an explicit name.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForExplicitName implements NameProvider {
 
                 /**
@@ -2119,7 +2100,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * Requests an explicit return type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForExplicitType implements ReturnTypeProvider {
 
                 /**
@@ -2147,7 +2128,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * An invocation provider that requests a synthetic dynamic invocation where all arguments are explicitly
          * provided by the user.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Default implements InvocationProvider {
 
             /**
@@ -2244,7 +2225,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * A target for a synthetically bound method call.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Target implements InvocationProvider.Target {
 
                 /**
@@ -2929,6 +2910,7 @@ public class InvokeDynamic implements Implementation.Composable {
     /**
      * The byte code appender to be used by the {@link net.bytebuddy.implementation.InvokeDynamic} implementation.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Appender implements ByteCodeAppender {
 
         /**
@@ -2958,29 +2940,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, typing)
             ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Appender appender = (Appender) other;
-            return instrumentedType.equals(appender.instrumentedType)
-                    && InvokeDynamic.this.equals(appender.getOuter());
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private InvokeDynamic getOuter() {
-            return InvokeDynamic.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            return instrumentedType.hashCode() + 31 * InvokeDynamic.this.hashCode();
         }
     }
 }

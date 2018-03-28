@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.File;
@@ -139,12 +139,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
-             * The protection domain to apply.
+             * The protection domain to apply or {@code null} if no protection domain is set.
              */
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final ProtectionDomain protectionDomain;
 
             /**
@@ -167,7 +168,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * Creates a new injection dispatcher.
              *
-             * @param protectionDomain          The protection domain to apply.
+             * @param protectionDomain          The protection domain to apply or {@code null} if no protection domain is set.
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
              */
@@ -207,7 +208,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
@@ -221,8 +222,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             private static final boolean PARENT_FIRST = false;
 
             /**
-             * The protection domain to apply.
+             * The protection domain to apply or {@code null} if no protection domain is set.
              */
+            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
             private final ProtectionDomain protectionDomain;
 
             /**
@@ -262,7 +264,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             /**
              * Creates a new protection domain specific class loading wrapper.
              *
-             * @param protectionDomain          The protection domain to apply.
+             * @param protectionDomain          The protection domain to apply or {@code null} if no protection domain is set.
              * @param packageDefinitionStrategy The package definer to be used for querying information on package information.
              * @param persistenceHandler        The persistence handler to apply.
              * @param childFirst                {@code true} if the created class loader should apply child-first semantics.
@@ -318,7 +320,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * Overrides the implicitly set default {@link java.security.ProtectionDomain} with an explicit one.
          *
-         * @param protectionDomain The protection domain to apply.
+         * @param protectionDomain The protection domain to apply or {@code null} if no protection domain is set.
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
         Configurable<S> with(ProtectionDomain protectionDomain);
@@ -345,7 +347,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * A lookup instance can define types only in the same class loader and in the same package as the type within which
      * it was created. The supplied lookup must have package privileges, i.e. it must not be a public lookup.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class UsingLookup implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -393,7 +395,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForBootstrapInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -429,12 +431,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
-         * The protection domain to use.
+         * The protection domain to use or {@code null} if no protection domain is set.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
         /**
@@ -447,7 +450,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         /**
          * Creates a new class loading strategy for unsafe injection.
          *
-         * @param protectionDomain The protection domain to use.
+         * @param protectionDomain The protection domain to use or {@code null} if no protection domain is set.
          */
         public ForUnsafeInjection(ProtectionDomain protectionDomain) {
             this.protectionDomain = protectionDomain;

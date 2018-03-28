@@ -1,15 +1,15 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
-import net.bytebuddy.description.annotation.AnnotationSource;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 
 /**
  * An element matcher that matches the list of annotations that are provided by an annotated element.
  *
  * @param <T> The actual matched type of this matcher.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

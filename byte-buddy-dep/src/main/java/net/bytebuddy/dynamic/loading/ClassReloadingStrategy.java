@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 
@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * recommended to use this {@link ClassLoadingStrategy} with arbitrary classes.
  * </p>
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader> {
 
     /**
@@ -521,7 +521,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         /**
          * An enabled bootstrap class loader injection strategy.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Enabled implements BootstrapInjection {
 
             /**

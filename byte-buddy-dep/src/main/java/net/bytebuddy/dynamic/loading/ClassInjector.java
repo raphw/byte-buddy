@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -61,7 +61,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses reflective method calls.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class UsingReflection implements ClassInjector {
 
         /**
@@ -77,6 +77,7 @@ public interface ClassInjector {
         /**
          * The protection domain that is used when loading classes.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
         /**
@@ -310,7 +311,7 @@ public interface ClassInjector {
             /**
              * A class injection dispatcher that is using reflection on the {@link ClassLoader} methods.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class Direct implements Dispatcher, Initializable {
 
                 /**
@@ -481,7 +482,7 @@ public interface ClassInjector {
                 /**
                  * A resolved class dispatcher for a class injector on a VM running at least Java 7.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForJava7CapableVm extends Direct {
 
                     /**
@@ -560,7 +561,7 @@ public interface ClassInjector {
             /**
              * An indirect dispatcher that uses a redirection accessor class that was injected into the bootstrap class loader.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Indirect implements Dispatcher, Initializable {
 
                 /**
@@ -775,7 +776,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Unavailable implements Dispatcher, Initializable {
 
                 /**
@@ -850,7 +851,7 @@ public interface ClassInjector {
      * <b>Important</b>: This functionality is only available starting from Java 9.
      * </p>
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class UsingLookup implements ClassInjector {
 
         /**
@@ -1034,7 +1035,7 @@ public interface ClassInjector {
             /**
              * A dispatcher for a Java 9 capable VM that supports class definition via method handles.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava9CapableVm implements Dispatcher {
 
                 /**
@@ -1127,7 +1128,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses {@code sun.misc.Unsafe} to inject classes.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class UsingUnsafe implements ClassInjector {
 
         /**
@@ -1143,11 +1144,13 @@ public interface ClassInjector {
         /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ClassLoader classLoader;
 
         /**
          * The protection domain to use or {@code null} for no protection domain.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         private final ProtectionDomain protectionDomain;
 
         /**
@@ -1282,7 +1285,7 @@ public interface ClassInjector {
             /**
              * An enabled dispatcher.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Enabled implements Dispatcher, Initializable {
 
                 /**
@@ -1339,7 +1342,7 @@ public interface ClassInjector {
             /**
              * A disabled dispatcher.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Disabled implements Initializable {
 
                 /**
@@ -1373,7 +1376,7 @@ public interface ClassInjector {
      * A class injector using a {@link java.lang.instrument.Instrumentation} to append to either the boot classpath
      * or the system class path.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class UsingInstrumentation implements ClassInjector {
 
         /**

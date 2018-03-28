@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -377,8 +377,11 @@ public interface PackageDefinitionStrategy {
             @Override
             @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (this == other) {
+                    return true;
+                } else if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
                 Simple simple = (Simple) other;
                 return !(specificationTitle != null ? !specificationTitle.equals(simple.specificationTitle) : simple.specificationTitle != null)
                         && !(specificationVersion != null ? !specificationVersion.equals(simple.specificationVersion) : simple.specificationVersion != null)
@@ -407,7 +410,7 @@ public interface PackageDefinitionStrategy {
     /**
      * A package definer that reads a class loader's manifest file.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ManifestReading implements PackageDefinitionStrategy {
 
         /**
@@ -554,8 +557,13 @@ public interface PackageDefinitionStrategy {
                 @Override
                 @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
                 public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && sealBase.equals(((ForFixedValue) other).sealBase);
+                    if (this == other) {
+                        return true;
+                    } else if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
+                    ForFixedValue forFixedValue = (ForFixedValue) other;
+                    return sealBase.equals(forFixedValue.sealBase);
                 }
 
                 @Override
@@ -569,7 +577,7 @@ public interface PackageDefinitionStrategy {
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**

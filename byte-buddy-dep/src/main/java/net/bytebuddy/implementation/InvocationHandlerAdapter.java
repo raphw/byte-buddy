@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -31,7 +31,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
  * to also intercept method calls to non-interface methods.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public abstract class InvocationHandlerAdapter implements Implementation {
 
     /**
@@ -210,7 +210,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in a static field.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForInstance extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
@@ -265,6 +265,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         /**
          * An appender for implementing the {@link ForInstance}.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -289,27 +290,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         StackManipulation.Trivial.INSTANCE,
                         instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(INVOCATION_HANDLER_TYPE))).getOnly());
             }
-
-            /**
-             * Returns the outer class.
-             *
-             * @return The outer class of this instance.
-             */
-            private InvocationHandlerAdapter getInvocationHandlerAdapter() {
-                return ForInstance.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && ForInstance.this.equals(((Appender) other).getInvocationHandlerAdapter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return 31 * ForInstance.this.hashCode() + instrumentedType.hashCode();
-            }
         }
     }
 
@@ -317,7 +297,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in an instance field.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForField extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
@@ -368,6 +348,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         /**
          * An appender for implementing the {@link ForField}.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -400,28 +381,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.loadThis(),
                         fieldDescription);
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType)
-                        && fieldDescription.equals(((Appender) other).fieldDescription)
-                        && ForField.this.equals(((Appender) other).getInvocationHandlerAdapter());
-            }
-
-            /**
-             * Returns the outer class.
-             *
-             * @return The outer class.
-             */
-            private InvocationHandlerAdapter getInvocationHandlerAdapter() {
-                return ForField.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return 31 * (31 * ForField.this.hashCode() + instrumentedType.hashCode()) + fieldDescription.hashCode();
             }
         }
     }

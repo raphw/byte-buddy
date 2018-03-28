@@ -1,8 +1,8 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -77,7 +77,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @HashCodeAndEqualsPlugin.Enhance
     class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**
@@ -339,7 +339,7 @@ public @interface FieldProxy {
                 /**
                  * A duplex factory for a type that both sets and gets a field value.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Duplex implements Factory {
 
                     /**
@@ -385,7 +385,7 @@ public @interface FieldProxy {
                 /**
                  * A simplex factory where field getters and setters both have their own type.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Simplex implements Factory {
 
                     /**
@@ -456,7 +456,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a getter accessor.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForGetter implements FieldResolver {
 
                 /**
@@ -495,7 +495,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a setter accessor.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForSetter implements FieldResolver {
 
                 /**
@@ -534,7 +534,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for an accessor that both gets and sets a field value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForGetterSetterPair implements FieldResolver {
 
                 /**
@@ -627,7 +627,7 @@ public @interface FieldProxy {
         /**
          * Represents an implementation for implementing a proxy type constructor when a non-static field is accessed.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class InstanceFieldConstructor implements Implementation {
 
             /**
@@ -661,7 +661,7 @@ public @interface FieldProxy {
              * An appender for implementing an
              * {@link FieldProxy.Binder.InstanceFieldConstructor}.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Appender implements ByteCodeAppender {
 
                 /**
@@ -700,7 +700,7 @@ public @interface FieldProxy {
         /**
          * Implementation for a getter method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class FieldGetter implements Implementation {
 
             /**
@@ -746,6 +746,7 @@ public @interface FieldProxy {
             /**
              * A byte code appender for a getter method.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class Appender implements ByteCodeAppender {
 
                 /**
@@ -779,35 +780,13 @@ public @interface FieldProxy {
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private FieldGetter getOuter() {
-                    return FieldGetter.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Appender appender = (Appender) object;
-                    return typeDescription.equals(appender.typeDescription) && FieldGetter.this.equals(appender.getOuter());
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    return typeDescription.hashCode() + 31 * FieldGetter.this.hashCode();
-                }
             }
         }
 
         /**
          * Implementation for a setter method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class FieldSetter implements Implementation {
 
             /**
@@ -853,6 +832,7 @@ public @interface FieldProxy {
             /**
              * A byte code appender for a setter method.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class Appender implements ByteCodeAppender {
 
                 /**
@@ -889,34 +869,13 @@ public @interface FieldProxy {
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private FieldSetter getOuter() {
-                    return FieldSetter.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Appender appender = (Appender) object;
-                    return typeDescription.equals(appender.typeDescription) && FieldSetter.this.equals(appender.getOuter());
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    return typeDescription.hashCode() + 31 * FieldSetter.this.hashCode();
-                }
             }
         }
 
         /**
          * A proxy type for accessing a field either by a getter or a setter.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class AccessorProxy implements AuxiliaryType, StackManipulation {
 
             /**
@@ -1001,39 +960,6 @@ public @interface FieldProxy {
                                 : MethodVariableAccess.loadThis(),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Binder getOuter() {
-                return Binder.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                AccessorProxy that = (AccessorProxy) object;
-                return serializableProxy == that.serializableProxy
-                        && fieldDescription.equals(that.fieldDescription)
-                        && instrumentedType.equals(that.instrumentedType)
-                        && fieldResolver.equals(that.fieldResolver)
-                        && assigner.equals(that.assigner)
-                        && Binder.this.equals(that.getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                int result = fieldDescription.hashCode();
-                result = 31 * result + Binder.this.hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + fieldResolver.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + (serializableProxy ? 1 : 0);
-                return result;
             }
         }
     }

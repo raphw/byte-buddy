@@ -1,9 +1,9 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -74,7 +74,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         /**
@@ -179,7 +179,7 @@ public @interface Pipe {
          * An auxiliary type for performing the redirection of a method invocation as requested by the
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class Redirection implements AuxiliaryType, StackManipulation {
 
             /**
@@ -327,7 +327,7 @@ public @interface Pipe {
                  * The appender for implementing the
                  * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 private static class Appender implements ByteCodeAppender {
 
                     /**
@@ -373,7 +373,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class MethodCall implements Implementation {
 
                 /**
@@ -414,6 +414,7 @@ public @interface Pipe {
                  * The appender for implementing the
                  * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.MethodCall}.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 private class Appender implements ByteCodeAppender {
 
                     /**
@@ -450,27 +451,6 @@ public @interface Pipe {
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private MethodCall getMethodCall() {
-                        return MethodCall.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && instrumentedType.equals(((Appender) other).instrumentedType)
-                                && MethodCall.this.equals(((Appender) other).getMethodCall());
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
                     }
                 }
             }

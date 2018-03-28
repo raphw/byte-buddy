@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -147,11 +147,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof SpecialMethodInvocation)) return false;
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof SpecialMethodInvocation)) {
+                    return false;
+                }
                 SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
                 return getMethodDescription().asSignatureToken().equals(specialMethodInvocation.getMethodDescription().asSignatureToken())
-                        && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
+                        && getTypeDescription().equals(specialMethodInvocation.getTypeDescription());
             }
         }
 
@@ -303,7 +306,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * An abstract base implementation for an {@link Implementation.Target}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class AbstractBase implements Target {
 
             /**
@@ -500,7 +503,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract base implementation of an extractable view of an implementation context.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class AbstractBase implements ExtractableView {
 
                 /**
@@ -901,7 +904,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
@@ -1221,7 +1224,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 /**
@@ -1300,7 +1303,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
              * an accessor method.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class AccessorMethodDelegation extends DelegationRecord {
 
                 /**
@@ -1358,7 +1361,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field getter.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldGetterDelegation extends DelegationRecord {
 
                 /**
@@ -1411,7 +1414,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field setter.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldSetterDelegation extends DelegationRecord {
 
                 /**
@@ -1490,7 +1493,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      *
      * @see Implementation
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound implements Implementation {
 
         /**
@@ -1545,7 +1548,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     /**
      * A simple implementation that does not register any members with the instrumented type.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Simple implements Implementation {
 
         /**

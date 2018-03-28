@@ -1,6 +1,5 @@
 package net.bytebuddy.build;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -20,7 +19,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * A build tool plugin that adds {@link Object#hashCode()} and {@link Object#equals(Object)} methods to a class if the
  * {@link Enhance} annotation is present and no explicit method declaration was added.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class HashCodeAndEqualsPlugin implements Plugin {
 
     @Override
@@ -66,7 +65,7 @@ public class HashCodeAndEqualsPlugin implements Plugin {
     /**
      * A version of the {@link HashCodeAndEqualsPlugin} that assumes that all fields are non-nullable unless they are explicitly marked.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     public static class WithNonNullableFields extends HashCodeAndEqualsPlugin {
 
         @Override
@@ -255,7 +254,7 @@ public class HashCodeAndEqualsPlugin implements Plugin {
     /**
      * An element matcher for a {@link ValueHandling} annotation.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ValueMatcher implements ElementMatcher<FieldDescription> {
 
         /**

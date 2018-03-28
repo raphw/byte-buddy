@@ -47,9 +47,13 @@ public interface EnumerationDescription extends NamedElement {
 
         @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof EnumerationDescription
-                    && (((EnumerationDescription) other)).getEnumerationType().equals(getEnumerationType())
-                    && (((EnumerationDescription) other)).getValue().equals(getValue());
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof EnumerationDescription)) {
+                return false;
+            }
+            EnumerationDescription enumerationDescription = (EnumerationDescription) other;
+            return getEnumerationType().equals(enumerationDescription.getEnumerationType()) && getValue().equals(enumerationDescription.getValue());
         }
 
         @Override

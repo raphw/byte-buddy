@@ -1,7 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -154,11 +154,13 @@ public interface ParameterDescription extends AnnotationSource,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof ParameterDescription)) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof ParameterDescription)) {
+                return false;
+            }
             ParameterDescription parameterDescription = (ParameterDescription) other;
-            return getDeclaringMethod().equals(parameterDescription.getDeclaringMethod())
-                    && getIndex() == parameterDescription.getIndex();
+            return getDeclaringMethod().equals(parameterDescription.getDeclaringMethod()) && getIndex() == parameterDescription.getIndex();
         }
 
         @Override
@@ -300,7 +302,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
@@ -1034,8 +1036,11 @@ public interface ParameterDescription extends AnnotationSource,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof Token)) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof Token)) {
+                return false;
+            }
             Token token = (Token) other;
             return type.equals(token.type)
                     && annotations.equals(token.annotations)

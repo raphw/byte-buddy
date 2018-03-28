@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.io.Serializable;
@@ -59,7 +59,7 @@ public interface LoadedTypeInitializer {
     /**
      * A type initializer for setting a value for a static field.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForStaticField implements LoadedTypeInitializer, Serializable {
 
         /**
@@ -118,7 +118,7 @@ public interface LoadedTypeInitializer {
      * A compound loaded type initializer that combines several type initializers.
      */
     @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Serialization is considered opt-in for a rare use case")
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound implements LoadedTypeInitializer, Serializable {
 
         /**

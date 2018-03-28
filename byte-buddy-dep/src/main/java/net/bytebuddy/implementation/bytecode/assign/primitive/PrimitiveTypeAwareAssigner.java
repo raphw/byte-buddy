@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -20,7 +20,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
  * assigner.</li>
  * </ol>
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class PrimitiveTypeAwareAssigner implements Assigner {
 
     /**

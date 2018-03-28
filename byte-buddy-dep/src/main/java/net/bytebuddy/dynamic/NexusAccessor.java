@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassInjector;
@@ -32,7 +32,7 @@ import java.util.Collections;
  * The Nexus accessor is creating a VM-global singleton {@link Nexus} such that it can be seen by all class loaders of
  * a virtual machine. Furthermore, it provides an API to access this global instance.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class NexusAccessor {
 
     /**
@@ -43,6 +43,7 @@ public class NexusAccessor {
     /**
      * The reference queue that is notified upon a GC eligible {@link Nexus} entry or {@code null} if no such queue should be notified.
      */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
     private final ReferenceQueue<? super ClassLoader> referenceQueue;
 
     /**
@@ -101,7 +102,7 @@ public class NexusAccessor {
     /**
      * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class InitializationAppender implements ByteCodeAppender {
 
         /**
@@ -219,7 +220,7 @@ public class NexusAccessor {
         /**
          * An enabled dispatcher for registering a type initializer in a {@link Nexus}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Available implements Dispatcher {
 
             /**
@@ -283,7 +284,7 @@ public class NexusAccessor {
         /**
          * A disabled dispatcher where a {@link Nexus} is not available.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Unavailable implements Dispatcher {
 
             /**

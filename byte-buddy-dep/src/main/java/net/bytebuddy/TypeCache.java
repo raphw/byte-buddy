@@ -1,7 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;
@@ -247,7 +247,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
         public boolean equals(Object other) {
-            if (other == this) {
+            if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
                 return classLoader == ((LookupKey) other).classLoader;
@@ -289,7 +289,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
         public boolean equals(Object other) {
-            if (other == this) {
+            if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
                 LookupKey lookupKey = (LookupKey) other;
@@ -362,7 +362,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class SimpleKey {
 
         /**

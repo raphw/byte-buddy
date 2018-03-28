@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -195,7 +195,7 @@ public enum MethodInvocation {
     /**
      * A method invocation of a generically resolved method.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
 
         /**
@@ -264,6 +264,7 @@ public enum MethodInvocation {
     /**
      * An implementation of a method invoking stack manipulation.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Invocation implements WithImplicitInvocationTargetType {
 
         /**
@@ -345,38 +346,12 @@ public enum MethodInvocation {
         public StackManipulation onHandle(HandleType type) {
             return new HandleInvocation(methodDescription, type);
         }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodInvocation getOuterInstance() {
-            return MethodInvocation.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Invocation that = (Invocation) other;
-            return MethodInvocation.this.equals(((Invocation) other).getOuterInstance())
-                    && methodDescription.asSignatureToken().equals(that.methodDescription.asSignatureToken())
-                    && typeDescription.equals(that.typeDescription);
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            int result = typeDescription.hashCode();
-            result = 31 * result + MethodInvocation.this.hashCode();
-            result = 31 * result + methodDescription.asSignatureToken().hashCode();
-            return result;
-        }
     }
 
     /**
      * Performs a dynamic method invocation of the given method.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class DynamicInvocation implements StackManipulation {
 
         /**
@@ -448,45 +423,12 @@ public enum MethodInvocation {
             int stackSize = returnType.getStackSize().getSize() - StackSize.of(parameterTypes);
             return new Size(stackSize, Math.max(stackSize, 0));
         }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            DynamicInvocation that = (DynamicInvocation) other;
-            return MethodInvocation.this == that.getOuter()
-                    && arguments.equals(that.arguments)
-                    && bootstrapMethod.equals(that.bootstrapMethod)
-                    && returnType.equals(that.returnType)
-                    && parameterTypes.equals(that.parameterTypes)
-                    && methodName.equals(that.methodName);
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodInvocation getOuter() {
-            return MethodInvocation.this;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = methodName.hashCode();
-            result = 31 * result + MethodInvocation.this.hashCode();
-            result = 31 * result + returnType.hashCode();
-            result = 31 * result + parameterTypes.hashCode();
-            result = 31 * result + bootstrapMethod.hashCode();
-            result = 31 * result + arguments.hashCode();
-            return result;
-        }
     }
 
     /**
      * Performs a method invocation on a method handle with a polymorphic type signature.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class HandleInvocation implements StackManipulation {
 
         /**

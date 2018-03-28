@@ -78,7 +78,7 @@ public class CachingMatcherTest extends AbstractElementMatcherTest<CachingMatche
         assertThat(cachingMatcher.equals(new CachingMatcher<Object>(matcher, new ConcurrentHashMap<Object, Boolean>())), is(true));
         assertThat(cachingMatcher.equals(null), is(false));
         assertThat(cachingMatcher.equals(new Object()), is(false));
-        assertThat(cachingMatcher.hashCode(), is(matcher.hashCode()));
+        assertThat(cachingMatcher.hashCode(), is(new CachingMatcher<Object>(matcher, new ConcurrentHashMap<Object, Boolean>()).hashCode()));
         assertThat(cachingMatcher.toString().startsWith(startsWith), is(true));
     }
 }

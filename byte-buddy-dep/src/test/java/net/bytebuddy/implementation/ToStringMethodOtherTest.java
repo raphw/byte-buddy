@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -14,6 +15,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ToStringMethodOtherTest {
 
@@ -136,7 +140,7 @@ public class ToStringMethodOtherTest {
         new ByteBuddy()
                 .makeInterface()
                 .method(isToString())
-                .intercept(ToStringMethod.prefixedBy(new ToStringMethod.PrefixResolver.ForFixedValue(null)))
+                .intercept(ToStringMethod.prefixedBy(mock(ToStringMethod.PrefixResolver.class)))
                 .make();
     }
 

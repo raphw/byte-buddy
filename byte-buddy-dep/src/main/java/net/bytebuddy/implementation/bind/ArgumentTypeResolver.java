@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -233,12 +233,13 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
      *
      * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class ParameterIndexToken {
 
         /**
          * The parameter index that is represented by this token.
          */
+        @SuppressWarnings("unused")
         private final int parameterIndex;
 
         /**

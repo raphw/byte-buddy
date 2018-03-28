@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
@@ -373,7 +373,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A synchronization engine for a VM that is aware of parallel-capable class loaders.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForJava7CapableVm implements SynchronizationStrategy, Initializable {
 
             /**
@@ -417,6 +417,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * An action for defining a located class that is not yet loaded.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class ClassDefinitionAction implements PrivilegedAction<Class<?>> {
 
         /**
@@ -463,33 +464,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 }
             }
             return defineClass(name, binaryRepresentation, FROM_BEGINNING, binaryRepresentation.length, protectionDomain);
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private ByteArrayClassLoader getOuter() {
-            return ByteArrayClassLoader.this;
-        }
-
-        @Override //
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            ClassDefinitionAction that = (ClassDefinitionAction) object;
-            return name.equals(that.name)
-                    && ByteArrayClassLoader.this.equals(that.getOuter())
-                    && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name.hashCode();
-            result = 31 * result + ByteArrayClassLoader.this.hashCode();
-            result = 31 * result + Arrays.hashCode(binaryRepresentation);
-            return result;
         }
     }
 
@@ -547,7 +521,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A package lookup strategy for Java 9 or newer.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForJava9CapableVm implements PackageLookupStrategy {
 
             /**
@@ -690,7 +664,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * An action to define a URL that represents a class file.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class UrlDefinitionAction implements PrivilegedAction<URL> {
 
             /**
@@ -747,7 +721,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * A stream handler that returns the given binary representation.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class ByteArrayUrlStreamHandler extends URLStreamHandler {
 
                 /**
@@ -765,7 +739,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 }
 
                 @Override
-                protected URLConnection openConnection(URL url) throws IOException {
+                protected URLConnection openConnection(URL url) {
                     return new ByteArrayUrlConnection(url, new ByteArrayInputStream(binaryRepresentation));
                 }
 

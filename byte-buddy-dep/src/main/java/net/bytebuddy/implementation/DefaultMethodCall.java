@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -30,7 +30,7 @@ import java.util.*;
  * implemented by the instrumented type. The Java runtime only requires the second condition to be fulfilled which
  * is why this implementation only checks the later condition, as well.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class DefaultMethodCall implements Implementation {
 
     /**
@@ -157,7 +157,7 @@ public class DefaultMethodCall implements Implementation {
     /**
      * The appender for implementing a {@link net.bytebuddy.implementation.DefaultMethodCall}.
      */
-    @EqualsAndHashCode(exclude = "nonPrioritizedInterfaces")
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -173,6 +173,7 @@ public class DefaultMethodCall implements Implementation {
         /**
          * The relevant non-prioritized interfaces to be considered by this appender.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final Set<TypeDescription> nonPrioritizedInterfaces;
 
         /**

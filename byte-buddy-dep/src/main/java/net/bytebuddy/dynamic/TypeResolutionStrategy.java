@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
@@ -88,7 +88,7 @@ public interface TypeResolutionStrategy {
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
      * are executed <b>before</b> (as a first action of) a type initializer is executed.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Active implements TypeResolutionStrategy {
 
         /**
@@ -121,7 +121,7 @@ public interface TypeResolutionStrategy {
         /**
          * A resolved version of an active type resolution strategy.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class Resolved implements TypeResolutionStrategy.Resolved {
 
             /**

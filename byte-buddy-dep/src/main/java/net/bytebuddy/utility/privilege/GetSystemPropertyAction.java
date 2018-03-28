@@ -1,13 +1,13 @@
 package net.bytebuddy.utility.privilege;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.security.PrivilegedAction;
 
 /**
  * An action for reading a system property as a privileged action.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class GetSystemPropertyAction implements PrivilegedAction<String> {
 
     /**

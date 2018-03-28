@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.bytecode.assign;
 
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -13,7 +13,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A stack manipulation for a type down casting. Such castings are not implicit but must be performed explicitly.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class TypeCasting implements StackManipulation {
 
     /**

@@ -1,8 +1,8 @@
 package net.bytebuddy.asm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
@@ -133,7 +133,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * @see OnMethodEnter
  * @see OnMethodExit
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper, Implementation {
 
     /**
@@ -654,7 +654,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * A target for an offset mapping that represents a non-operational value. All writes are discarded and a value's
              * default value is returned upon every read.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class ForDefaultValue implements Target {
 
                 /**
@@ -757,7 +757,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that represents a local variable.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class ForVariable implements Target {
 
                 /**
@@ -833,7 +833,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target for a writable mapping of a local variable.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class ReadWrite extends ForVariable {
 
                     /**
@@ -881,7 +881,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target mapping for an array of all local variables.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class ForArray implements Target {
 
                 /**
@@ -939,7 +939,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target mapping for a writable target mapping for an array of local variables.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class ReadWrite extends ForArray {
 
                     /**
@@ -971,7 +971,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that loads a field value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class ForField implements Target {
 
                 /**
@@ -1040,7 +1040,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping for a writable field.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class ReadWrite extends ForField {
 
                     /**
@@ -1099,7 +1099,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A target for an offset mapping that represents a read-only stack manipulation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForStackManipulation implements Target {
 
                 /**
@@ -1253,7 +1253,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T>
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Simple<T extends Annotation> implements Factory<T> {
 
                 /**
@@ -1293,7 +1293,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Illegal<T extends Annotation> implements Factory<T> {
 
                 /**
@@ -1360,7 +1360,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a given parameter of the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class ForArgument implements OffsetMapping {
 
             /**
@@ -1423,7 +1423,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a parameter of the instrumented method with a specific index.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Unresolved extends ForArgument {
 
                 /**
@@ -1537,7 +1537,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a specific parameter of the instrumented method.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Resolved extends ForArgument {
 
                 /**
@@ -1571,7 +1571,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param <T> The type of the bound annotation.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                     /**
@@ -1637,7 +1637,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the {@code this} reference of the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForThisReference implements OffsetMapping {
 
             /**
@@ -1745,7 +1745,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that maps an array containing all arguments of the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForAllArguments implements OffsetMapping {
 
             /**
@@ -1928,7 +1928,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a field.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class ForField implements OffsetMapping {
 
             /**
@@ -2027,7 +2027,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a field that is resolved from the instrumented type by its name.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             public abstract static class Unresolved extends ForField {
 
                 /**
@@ -2105,7 +2105,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field with an explicit declaring type.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class WithExplicitType extends Unresolved {
 
                     /**
@@ -2191,7 +2191,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A binding for an offset mapping that represents a specific field.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Resolved extends ForField {
 
                 /**
@@ -2227,7 +2227,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param <T> The annotation type this factory binds.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                     /**
@@ -2293,7 +2293,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for the {@link Advice.Origin} annotation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForOrigin implements OffsetMapping {
 
             /**
@@ -2528,7 +2528,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A renderer for a constant value.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForConstantValue implements Renderer {
 
                     /**
@@ -2591,7 +2591,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForUnusedValue implements OffsetMapping {
 
             /**
@@ -2683,7 +2683,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the value that is returned by the enter advice.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForEnterValue implements OffsetMapping {
 
             /**
@@ -2755,7 +2755,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A factory for creating a {@link ForEnterValue} offset mapping.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements OffsetMapping.Factory<Enter> {
 
                 /**
@@ -2793,7 +2793,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that provides access to the value that is returned by the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForReturnValue implements OffsetMapping {
 
             /**
@@ -2889,7 +2889,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for accessing a {@link Throwable} of the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForThrowable implements OffsetMapping {
 
             /**
@@ -2996,7 +2996,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for binding a stack manipulation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForStackManipulation implements OffsetMapping {
 
             /**
@@ -3055,7 +3055,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3170,7 +3170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             public static class OfDefaultValue<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3203,7 +3203,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             public static class OfAnnotationProperty<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3272,7 +3272,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping that loads a serialized value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForSerializedValue implements OffsetMapping {
 
             /**
@@ -3321,7 +3321,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The annotation type this factory binds.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 /**
@@ -3468,7 +3468,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A simple argument handler for an instrumented method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Simple implements ForInstrumentedMethod {
 
                 /**
@@ -3545,7 +3545,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Copying implements ForInstrumentedMethod {
 
                 /**
@@ -3646,7 +3646,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An argument handler for an enter advice method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForMethodEnter implements ForAdvice {
 
                 /**
@@ -3699,7 +3699,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An argument handler for an exit advice method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForMethodExit implements ForAdvice {
 
                 /**
@@ -5242,7 +5242,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A suppression handler that suppresses a given throwable type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Suppressing implements SuppressionHandler {
 
                 /**
@@ -5567,38 +5567,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An inverted version of the outer relocation handler.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class Inverted implements RelocationHandler {
 
                     @Override
                     public Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
                         return new ForValue.Bound(instrumentedMethod, relocation, true);
                     }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        return ForValue.this.hashCode();
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object other) {
-                        if (other == this) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        return ForValue.this.equals(((Inverted) other).getOuter());
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private ForValue getOuter() {
-                        return ForValue.this;
-                    }
                 }
 
                 /**
                  * A bound relocation handler for {@link ForValue}.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class Bound implements RelocationHandler.Bound {
 
                     /**
@@ -5646,42 +5627,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
                     }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        int result = ForValue.this.hashCode();
-                        result = 31 * result + (inverted ? 1 : 0);
-                        result = 31 * result + instrumentedMethod.hashCode();
-                        result = 31 * result + relocation.hashCode();
-                        return result;
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object other) {
-                        if (other == this) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Bound bound = (Bound) other;
-                        return ForValue.this.equals(bound.getOuter())
-                                && inverted == bound.inverted
-                                && instrumentedMethod.equals(bound.instrumentedMethod)
-                                && relocation.equals(bound.relocation);
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private ForValue getOuter() {
-                        return ForValue.this;
-                    }
                 }
             }
 
             /**
              * A relocation handler that is triggered if the checked value is an instance of a given type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForType implements RelocationHandler {
 
                 /**
@@ -5721,19 +5673,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
-                    return new Bound(typeDescription, instrumentedMethod, relocation);
+                    return new Bound(instrumentedMethod, relocation);
                 }
 
                 /**
                  * A bound relocation handler for {@link ForType}.
                  */
-                @EqualsAndHashCode
-                protected static class Bound implements RelocationHandler.Bound {
-
-                    /**
-                     * The type that triggers a relocation.
-                     */
-                    private final TypeDescription typeDescription;
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                protected class Bound implements RelocationHandler.Bound {
 
                     /**
                      * The instrumented method.
@@ -5748,12 +5695,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new bound relocation handler.
                      *
-                     * @param typeDescription    The type that triggers a relocation.
                      * @param instrumentedMethod The instrumented method.
                      * @param relocation         The relocation to apply.
                      */
-                    protected Bound(TypeDescription typeDescription, MethodDescription instrumentedMethod, Relocation relocation) {
-                        this.typeDescription = typeDescription;
+                    protected Bound(MethodDescription instrumentedMethod, Relocation relocation) {
                         this.instrumentedMethod = instrumentedMethod;
                         this.relocation = relocation;
                     }
@@ -5853,7 +5798,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An abstract base implementation of a {@link Resolved} dispatcher.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class AbstractBase implements Resolved {
 
                 /**
@@ -6026,7 +5971,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for an advice method that is being inlined into the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Inlining implements Unresolved {
 
             /**
@@ -6403,6 +6348,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method enter advice.
                  */
+                @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
@@ -6517,23 +6463,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler);
                     }
 
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) object;
-                        return prependLineNumber == that.prependLineNumber && relocationHandler.equals(that.relocationHandler);
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + relocationHandler.hashCode();
-                        result = 31 * result + (prependLineNumber ? 1 : 0);
-                        return result;
-                    }
-
                     /**
                      * Implementation of an advice that does expose an enter type.
                      */
@@ -6587,6 +6516,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method exit advice.
                  */
+                @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
@@ -6714,26 +6644,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader);
                     }
 
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        Inlining.Resolved.ForMethodExit that = (Inlining.Resolved.ForMethodExit) object;
-                        return enterType.equals(that.enterType);
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + enterType.hashCode();
-                        return result;
-                    }
-
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
-                    @EqualsAndHashCode(callSuper = true)
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
@@ -7195,7 +7109,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for an advice method that is being invoked from the instrumented method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Delegating implements Unresolved {
 
             /**
@@ -7576,6 +7490,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method enter advice.
                  */
+                @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodEnter extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
@@ -7658,23 +7573,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler.bind(instrumentedMethod, relocation));
                     }
 
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
-                        return prependLineNumber == that.prependLineNumber && relocationHandler.equals(that.relocationHandler);
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + relocationHandler.hashCode();
-                        result = 31 * result + (prependLineNumber ? 1 : 0);
-                        return result;
-                    }
-
                     /**
                      * Implementation of an advice that does expose an enter type.
                      */
@@ -7724,12 +7622,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method exit advice.
                  */
+                @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodExit extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodExit {
-
-                    /**
-                     * The type of the value supplied by the enter advice method or {@code void} if no such value exists.
-                     */
-                    private final TypeDefinition enterType;
 
                     /**
                      * {@code true} if the arguments of the instrumented method should be copied prior to execution.
@@ -7761,7 +7655,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
                                 TypeDescription.VOID);
-                        this.enterType = enterType;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -7822,26 +7715,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : ArgumentHandler.Factory.SIMPLE;
                     }
 
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        Delegating.Resolved.ForMethodExit that = (Delegating.Resolved.ForMethodExit) object;
-                        return enterType.equals(that.enterType);
-                    }
-
-                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + enterType.hashCode();
-                        return result;
-                    }
-
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
-                    @EqualsAndHashCode(callSuper = true)
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class WithExceptionHandler extends Delegating.Resolved.ForMethodExit {
 
                         /**
@@ -8498,7 +8375,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A byte code appender for implementing {@link Advice}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -9103,7 +8980,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A builder step for creating an {@link Advice} that uses custom mappings of annotations to constant pool values.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class WithCustomMapping {
 
         /**

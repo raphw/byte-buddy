@@ -1,9 +1,9 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -1268,8 +1268,8 @@ public interface DynamicType {
                          *
                          * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                          */
-                        @EqualsAndHashCode(callSuper = false)
-                        protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
+                        @HashCodeAndEqualsPlugin.Enhance
+                        private abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
 
                             /**
                              * The field attribute appender factory to apply.
@@ -1284,6 +1284,7 @@ public interface DynamicType {
                             /**
                              * The field's default value or {@code null} if no value is to be defined.
                              */
+                            @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                             protected final Object defaultValue;
 
                             /**
@@ -2340,7 +2341,7 @@ public interface DynamicType {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
@@ -2798,7 +2799,7 @@ public interface DynamicType {
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             public abstract static class Adapter<U> extends AbstractBase<U> {
 
                 /**
@@ -3152,6 +3153,7 @@ public interface DynamicType {
                 /**
                  * An adapter for defining a new type variable for the instrumented type.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class TypeVariableDefinitionAdapter extends TypeVariableDefinition.AbstractBase<U> {
 
                     /**
@@ -3191,35 +3193,12 @@ public interface DynamicType {
                                 typeValidation,
                                 ignoredMethods);
                     }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Builder.AbstractBase.Adapter<?> getOuter() {
-                        return Builder.AbstractBase.Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && getOuter().equals(((TypeVariableDefinitionAdapter) other).getOuter())
-                                && token.equals(((TypeVariableDefinitionAdapter) other).token);
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        int result = getOuter().hashCode();
-                        result = 31 * result + token.hashCode();
-                        return result;
-                    }
                 }
 
                 /**
                  * An adapter for defining a new field.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
                     /**
@@ -3286,37 +3265,12 @@ public interface DynamicType {
                                                       Object defaultValue) {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                     }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Builder.AbstractBase.Adapter<?> getOuter() {
-                        return Builder.AbstractBase.Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && getOuter().equals(((FieldDefinitionAdapter) other).getOuter())
-                                && token.equals(((FieldDefinitionAdapter) other).token);
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + getOuter().hashCode();
-                        result = 31 * result + token.hashCode();
-                        return result;
-                    }
                 }
 
                 /**
                  * An adapter for matching an existing field.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class FieldMatchAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
                     /**
@@ -3380,37 +3334,12 @@ public interface DynamicType {
                                                       Object defaultValue) {
                         return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                     }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Builder.AbstractBase.Adapter<?> getOuter() {
-                        return Builder.AbstractBase.Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && getOuter().equals(((FieldMatchAdapter) other).getOuter())
-                                && matcher.equals(((FieldMatchAdapter) other).matcher);
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + getOuter().hashCode();
-                        result = 31 * result + matcher.hashCode();
-                        return result;
-                    }
                 }
 
                 /**
                  * An adapter for defining a new method.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class MethodDefinitionAdapter extends MethodDefinition.ParameterDefinition.Initial.AbstractBase<U> {
 
                     /**
@@ -3497,30 +3426,9 @@ public interface DynamicType {
                     }
 
                     /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Adapter<?> getOuter() {
-                        return Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && token.equals(((MethodDefinitionAdapter) other).token)
-                                && getOuter().equals(((MethodDefinitionAdapter) other).getOuter());
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return 31 * getOuter().hashCode() + token.hashCode();
-                    }
-
-                    /**
                      * An adapter for defining a new type variable for the currently defined method.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class TypeVariableAnnotationAdapter extends MethodDefinition.TypeVariableDefinition.Annotatable.AbstractBase.Adapter<U> {
 
                         /**
@@ -3556,33 +3464,12 @@ public interface DynamicType {
                                     token.getBounds(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
                         }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private MethodDefinitionAdapter getOuter() {
-                            return MethodDefinitionAdapter.this;
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        @SuppressWarnings("unchecked")
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && token.equals(((TypeVariableAnnotationAdapter) other).token)
-                                    && getOuter().equals(((TypeVariableAnnotationAdapter) other).getOuter());
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return 31 * getOuter().hashCode() + token.hashCode();
-                        }
                     }
 
                     /**
                      * An annotation adapter for a parameter definition.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class ParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
 
                         /**
@@ -3619,33 +3506,12 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getDefaultValue(),
                                     MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private MethodDefinitionAdapter getOuter() {
-                            return MethodDefinitionAdapter.this;
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        @SuppressWarnings("unchecked")
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && token.equals(((ParameterAnnotationAdapter) other).token)
-                                    && getOuter().equals(((ParameterAnnotationAdapter) other).getOuter());
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return 31 * getOuter().hashCode() + token.hashCode();
-                        }
                     }
 
                     /**
                      * An annotation adapter for a simple parameter definition.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class SimpleParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Simple.Annotatable.AbstractBase.Adapter<U> {
 
                         /**
@@ -3682,33 +3548,12 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getDefaultValue(),
                                     MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private MethodDefinitionAdapter getOuter() {
-                            return MethodDefinitionAdapter.this;
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        @SuppressWarnings("unchecked")
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && token.equals(((SimpleParameterAnnotationAdapter) other).token)
-                                    && getOuter().equals(((SimpleParameterAnnotationAdapter) other).getOuter());
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return 31 * getOuter().hashCode() + token.hashCode();
-                        }
                     }
 
                     /**
                      * An annotation adapter for a method definition.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
                         /**
@@ -3805,34 +3650,13 @@ public interface DynamicType {
                                     typeValidation,
                                     ignoredMethods);
                         }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private MethodDefinitionAdapter getOuter() {
-                            return MethodDefinitionAdapter.this;
-                        }
-
-                        @Override
-                        @SuppressWarnings("unchecked")
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && super.equals(other)
-                                    && getOuter().equals(((AnnotationAdapter) other).getOuter());
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return super.hashCode() + getOuter().hashCode();
-                        }
                     }
                 }
 
                 /**
                  * An adapter for matching an existing method.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
 
                     /**
@@ -3875,30 +3699,9 @@ public interface DynamicType {
                     }
 
                     /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Adapter<?> getOuter() {
-                        return Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && matcher.equals(((MethodMatchAdapter) other).matcher)
-                                && getOuter().equals(((MethodMatchAdapter) other).getOuter());
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return 31 * getOuter().hashCode() + matcher.hashCode();
-                    }
-
-                    /**
                      * An annotation adapter for implementing annotations during a method definition.
                      */
+                    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
                         /**
@@ -3967,34 +3770,13 @@ public interface DynamicType {
                                     typeValidation,
                                     ignoredMethods);
                         }
-
-                        /**
-                         * Returns the outer instance.
-                         *
-                         * @return The outer instance.
-                         */
-                        private MethodMatchAdapter getOuter() {
-                            return MethodMatchAdapter.this;
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        @SuppressWarnings("unchecked")
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && super.equals(other)
-                                    && getOuter().equals(((AnnotationAdapter) other).getOuter());
-                        }
-
-                        @Override // HE: Remove when Lombok support for getOuter is added.
-                        public int hashCode() {
-                            return super.hashCode() + getOuter().hashCode();
-                        }
                     }
                 }
 
                 /**
                  * An adapter for optionally matching methods defined by declared interfaces.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class OptionalMethodMatchAdapter extends Builder.AbstractBase.Delegator<U> implements MethodDefinition.ImplementationDefinition.Optional<U> {
 
                     /**
@@ -4059,30 +3841,6 @@ public interface DynamicType {
                             elementMatcher = elementMatcher.or(isSuperTypeOf(typeDescription));
                         }
                         return materialize().invokable(isDeclaredBy(isInterface().and(elementMatcher)));
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private Builder.AbstractBase.Adapter<U> getOuter() {
-                        return Builder.AbstractBase.Adapter.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    @SuppressWarnings("unchecked")
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        OptionalMethodMatchAdapter that = (OptionalMethodMatchAdapter) other;
-                        return interfaces.equals(that.interfaces)
-                                && getOuter().equals(that.getOuter());
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return 31 * getOuter().hashCode() + interfaces.hashCode();
                     }
                 }
             }
@@ -4168,6 +3926,7 @@ public interface DynamicType {
     /**
      * A default implementation of a dynamic type.
      */
+    @HashCodeAndEqualsPlugin.Enhance
     class Default implements DynamicType {
 
         /**
@@ -4414,33 +4173,13 @@ public interface DynamicType {
             return file;
         }
 
-        @Override // HE: Remove when Lombok support for shadowed types is added.
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default aDefault = (Default) other;
-            return auxiliaryTypes.equals(aDefault.auxiliaryTypes)
-                    && Arrays.equals(binaryRepresentation, aDefault.binaryRepresentation)
-                    && typeDescription.equals(aDefault.typeDescription)
-                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer);
-
-        }
-
-        @Override // HE: Remove when Lombok support for shadowed types is added.
-        public int hashCode() {
-            int result = typeDescription.hashCode();
-            result = 31 * result + Arrays.hashCode(binaryRepresentation);
-            result = 31 * result + loadedTypeInitializer.hashCode();
-            result = 31 * result + auxiliaryTypes.hashCode();
-            return result;
-        }
-
         /**
          * A default implementation of an unloaded dynamic type.
          *
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
+        @HashCodeAndEqualsPlugin.Enhance
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
             /**
@@ -4499,22 +4238,6 @@ public interface DynamicType {
                         CompoundList.of(auxiliaryTypes, dynamicType),
                         typeResolutionStrategy);
             }
-
-            @Override // HE: Remove when Lombok support for shadowed types is added.
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                if (!super.equals(object)) return false;
-                Default.Unloaded<?> unloaded = (Default.Unloaded<?>) object;
-                return typeResolutionStrategy.equals(unloaded.typeResolutionStrategy);
-            }
-
-            @Override // HE: Remove when Lombok support for shadowed types is added.
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + typeResolutionStrategy.hashCode();
-                return result;
-            }
         }
 
         /**
@@ -4523,6 +4246,7 @@ public interface DynamicType {
          * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
          *            type itself, an interface or the direct super class.
          */
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class Loaded<T> extends Default implements DynamicType.Loaded<T> {
 
             /**
@@ -4560,17 +4284,6 @@ public interface DynamicType {
                         loadedTypes);
                 loadedAuxiliaryTypes.remove(typeDescription);
                 return loadedAuxiliaryTypes;
-            }
-
-            @Override // HE: Remove when Lombok support for shadowed types is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && super.equals(other) && loadedTypes.equals(((Default.Loaded) other).loadedTypes);
-            }
-
-            @Override // HE: Remove when Lombok support for shadowed types is added.
-            public int hashCode() {
-                return 31 * super.hashCode() + loadedTypes.hashCode();
             }
         }
     }

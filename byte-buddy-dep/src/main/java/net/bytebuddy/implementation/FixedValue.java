@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -28,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  *
  * @see FieldAccessor
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public abstract class FixedValue implements Implementation {
 
     /**
@@ -308,6 +308,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * An appender for writing the origin type.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Appender implements ByteCodeAppender {
 
             /**
@@ -331,29 +332,6 @@ public abstract class FixedValue implements Implementation {
                         instrumentedMethod,
                         TypeDescription.CLASS.asGenericType(),
                         ClassConstant.of(originType));
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private ForOriginType getOuter() {
-                return ForOriginType.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-                Appender appender = (Appender) o;
-                return originType.equals(appender.originType)
-                        && getOuter().equals(appender.getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                return 31 * getOuter().hashCode() + originType.hashCode();
             }
         }
     }
@@ -398,7 +376,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning {@code this}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -431,7 +409,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that returns a method's argument.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForArgument extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -498,7 +476,7 @@ public abstract class FixedValue implements Implementation {
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
-    @EqualsAndHashCode(callSuper = true)
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -573,7 +551,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
-    @EqualsAndHashCode(callSuper = true, exclude = "fieldType")
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ForValue extends FixedValue implements AssignerConfigurable {
 
         /**
@@ -594,6 +572,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * The type if the field for storing the fixed value.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final TypeDescription.Generic fieldType;
 
         /**
@@ -654,7 +633,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning the fixed value that was stored in a static field.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         private class StaticFieldByteCodeAppender implements ByteCodeAppender {
 
             /**

@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 
 import java.io.InputStream;
@@ -136,10 +136,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (!(other instanceof JavaModule)) return false;
-        JavaModule that = (JavaModule) other;
-        return module.equals(that.module);
+        if (this == other) {
+            return true;
+        } else if (!(other instanceof JavaModule)) {
+            return false;
+        }
+        JavaModule javaModule = (JavaModule) other;
+        return module.equals(javaModule.module);
     }
 
     @Override
@@ -255,7 +258,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * A dispatcher for a VM that does support the {@code java.lang.Module} API.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Enabled implements Dispatcher {
 
             /**

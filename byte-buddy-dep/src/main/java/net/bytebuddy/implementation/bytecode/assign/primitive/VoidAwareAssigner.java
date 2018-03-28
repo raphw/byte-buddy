@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -18,7 +18,7 @@ import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
  * assigner.</li>
  * </ol>
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class VoidAwareAssigner implements Assigner {
 
     /**
