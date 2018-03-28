@@ -5800,14 +5800,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 ArgumentHandler.Factory getArgumentHandlerFactory();
             }
 
+            /**
+             * An abstract base implementation of a {@link Resolved} dispatcher.
+             */
             abstract class AbstractBase implements Resolved {
 
+                /**
+                 * The represented advice method.
+                 */
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
+                /**
+                 * A mapping from offset to a mapping for this offset with retained iteration order of the method's parameters.
+                 */
                 protected final Map<Integer, OffsetMapping> offsetMappings;
 
+                /**
+                 * The suppression handler to use.
+                 */
                 protected final SuppressionHandler suppressionHandler;
 
+                /**
+                 * Creates a new resolved version of a dispatcher.
+                 *
+                 * @param adviceMethod  The represented advice method.
+                 * @param factories     A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param adviceType    The applied advice type.
+                 */
                 protected AbstractBase(MethodDescription.InDefinedShape adviceMethod,
                                        List<? extends OffsetMapping.Factory<?>> factories,
                                        TypeDescription throwableType,
@@ -7577,6 +7597,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
+                    /**
+                     * Resolves enter advice that only exposes the enter type if this is necessary.
+                     *
+                     * @param adviceMethod  The advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param methodExit    {@code true} if exit advice is applied.
+                     * @return An appropriate enter handler.
+                     */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 boolean methodExit) {
@@ -8041,7 +8069,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An advice visitor that does not apply exit advice.
          */
-        protected static class WithoutExitAdvice extends AdviceVisitor implements Dispatcher.RelocationHandler.Relocation {
+        protected static class WithoutExitAdvice extends AdviceVisitor {
 
             /**
              * Creates an advice visitor that does not apply exit advice.

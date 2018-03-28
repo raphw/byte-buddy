@@ -13,19 +13,42 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@RunWith(Parameterized.class)
 public class AdviceInconsistentFrameTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {TrivialAdvice.class, DiscardingAdvice.class, CopyingAdvice.class, RetainingAdvice.class},
+                {DelegatingTrivialAdvice.class, DelegatingDiscardingAdvice.class, DelegatingCopyingAdvice.class, DelegatingRetainingAdvice.class}
+        });
+    }
+
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
+
+    private final Class<?> trivial, discarding, copying, retaining;
+
+    public AdviceInconsistentFrameTest(Class<?> trivial, Class<?> discarding, Class<?> copying, Class<?> retaining) {
+        this.trivial = trivial;
+        this.discarding = discarding;
+        this.copying = copying;
+        this.retaining = retaining;
+    }
 
     @Test
     @JavaVersionRule.Enforce(7)
@@ -40,7 +63,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(trivial).on(named(FOO)))
                 .make();
     }
 
@@ -57,7 +80,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(trivial).on(named(FOO)))
                 .make();
     }
 
@@ -74,7 +97,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(trivial).on(named(FOO)))
                 .make();
     }
 
@@ -92,7 +115,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(trivial).on(named(FOO)))
                 .make();
     }
 
@@ -109,7 +132,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialDiscardingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(discarding).on(named(FOO)))
                 .make();
     }
 
@@ -126,7 +149,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialDiscardingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(discarding).on(named(FOO)))
                 .make();
     }
 
@@ -143,7 +166,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialDiscardingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(discarding).on(named(FOO)))
                 .make();
     }
 
@@ -161,7 +184,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(TrivialDiscardingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(discarding).on(named(FOO)))
                 .make();
     }
 
@@ -178,7 +201,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(CopyingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(copying).on(named(FOO)))
                 .make();
     }
 
@@ -195,7 +218,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(CopyingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(copying).on(named(FOO)))
                 .make();
     }
 
@@ -212,7 +235,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(CopyingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(copying).on(named(FOO)))
                 .make();
     }
 
@@ -230,7 +253,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(CopyingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(copying).on(named(FOO)))
                 .make();
     }
 
@@ -247,7 +270,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(retaining).on(named(FOO)))
                 .make();
     }
 
@@ -264,7 +287,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(retaining).on(named(FOO)))
                 .make();
     }
 
@@ -281,7 +304,7 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(retaining).on(named(FOO)))
                 .make();
     }
 
@@ -299,57 +322,103 @@ public class AdviceInconsistentFrameTest {
         assertThat(type.getDeclaredMethod(FOO, Void.class).invoke(null, (Object) null), is((Object) BAR));
         new ByteBuddy()
                 .redefine(type)
-                .visit(Advice.to(RetainingAdvice.class).on(named(FOO)))
+                .visit(Advice.to(retaining).on(named(FOO)))
                 .make();
     }
 
     @SuppressWarnings("all")
-    private static class TrivialAdvice {
+    public static class TrivialAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter() {
+        public static void enter() {
             /* empty */
         }
     }
 
     @SuppressWarnings("all")
-    private static class TrivialDiscardingAdvice {
+    public static class DiscardingAdvice {
 
         @Advice.OnMethodEnter
-        private static boolean enter() {
+        public static boolean enter() {
             return false;
         }
     }
 
     @SuppressWarnings("all")
-    private static class CopyingAdvice {
+    public static class CopyingAdvice {
 
         @Advice.OnMethodEnter
-        private static boolean enter() {
+        public static boolean enter() {
             return false;
         }
 
         @Advice.OnMethodExit
-        private static void exit() {
+        public static void exit() {
             /* do nothing */
         }
     }
 
     @SuppressWarnings("all")
-    private static class RetainingAdvice {
+    public static class RetainingAdvice {
 
         @Advice.OnMethodEnter
-        private static boolean enter() {
+        public static boolean enter() {
             return false;
         }
 
         @Advice.OnMethodExit(backupArguments = false)
-        private static void exit() {
+        public static void exit() {
             /* do nothing */
         }
     }
 
-    private static class TooShortMethod implements Implementation, ByteCodeAppender {
+    @SuppressWarnings("all")
+    public static class DelegatingTrivialAdvice {
+
+        @Advice.OnMethodEnter(inline = false)
+        public static void enter() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class DelegatingDiscardingAdvice {
+
+        @Advice.OnMethodEnter(inline = false)
+        public static boolean enter() {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class DelegatingCopyingAdvice {
+
+        @Advice.OnMethodEnter(inline = false)
+        public static boolean enter() {
+            return false;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        public static void exit() {
+            /* do nothing */
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class DelegatingRetainingAdvice {
+
+        @Advice.OnMethodEnter(inline = false)
+        public static boolean enter() {
+            return false;
+        }
+
+        @Advice.OnMethodExit(backupArguments = false, inline = false)
+        public static void exit() {
+            /* do nothing */
+        }
+    }
+
+    public static class TooShortMethod implements Implementation, ByteCodeAppender {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
@@ -370,7 +439,7 @@ public class AdviceInconsistentFrameTest {
         }
     }
 
-    private static class DropImplicitMethod implements Implementation, ByteCodeAppender {
+    public static class DropImplicitMethod implements Implementation, ByteCodeAppender {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
@@ -391,7 +460,7 @@ public class AdviceInconsistentFrameTest {
         }
     }
 
-    private static class InconsistentThisReferenceMethod implements Implementation, ByteCodeAppender {
+    public static class InconsistentThisReferenceMethod implements Implementation, ByteCodeAppender {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
@@ -412,7 +481,7 @@ public class AdviceInconsistentFrameTest {
         }
     }
 
-    private static class InconsistentParameterReferenceMethod implements Implementation, ByteCodeAppender {
+    public static class InconsistentParameterReferenceMethod implements Implementation, ByteCodeAppender {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
