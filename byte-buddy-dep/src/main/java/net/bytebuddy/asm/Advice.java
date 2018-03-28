@@ -5573,6 +5573,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
                         return new ForValue.Bound(instrumentedMethod, relocation, true);
                     }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public int hashCode() {
+                        return ForValue.this.hashCode();
+                    }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object other) {
+                        if (other == this) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        return ForValue.this.equals(((Inverted) other).getOuter());
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private ForValue getOuter() {
+                        return ForValue.this;
+                    }
                 }
 
                 /**
@@ -5624,6 +5645,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : defaultJump, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
+                    }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public int hashCode() {
+                        int result = ForValue.this.hashCode();
+                        result = 31 * result + (inverted ? 1 : 0);
+                        result = 31 * result + instrumentedMethod.hashCode();
+                        result = 31 * result + relocation.hashCode();
+                        return result;
+                    }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object other) {
+                        if (other == this) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Bound bound = (Bound) other;
+                        return ForValue.this.equals(bound.getOuter())
+                                && inverted == bound.inverted
+                                && instrumentedMethod.equals(bound.instrumentedMethod)
+                                && relocation.equals(bound.relocation);
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private ForValue getOuter() {
+                        return ForValue.this;
                     }
                 }
             }
@@ -5803,6 +5853,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An abstract base implementation of a {@link Resolved} dispatcher.
              */
+            @EqualsAndHashCode
             abstract class AbstractBase implements Resolved {
 
                 /**
@@ -5821,16 +5872,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final SuppressionHandler suppressionHandler;
 
                 /**
+                 * The relocation handler to use.
+                 */
+                protected final RelocationHandler relocationHandler;
+
+                /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod  The represented advice method.
-                 * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
-                 * @param adviceType    The applied advice type.
+                 * @param adviceMethod    The represented advice method.
+                 * @param factories       A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType The type to trigger a relocation of the method's control flow.
+                 * @param adviceType      The applied advice type.
                  */
                 protected AbstractBase(MethodDescription.InDefinedShape adviceMethod,
                                        List<? extends OffsetMapping.Factory<?>> factories,
                                        TypeDescription throwableType,
+                                       TypeDescription relocatableType,
                                        OffsetMapping.Factory.AdviceType adviceType) {
                     this.adviceMethod = adviceMethod;
                     Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
@@ -5859,6 +5917,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : offsetMapping);
                     }
                     suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
+                    relocationHandler = RelocationHandler.ForType.of(relocatableType, adviceMethod.getReturnType());
                 }
 
                 @Override
@@ -6030,8 +6089,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
                                    TypeDescription throwableType,
+                                   TypeDescription relocatableType,
                                    ClassReader classReader) {
-                    super(adviceMethod, factories, throwableType, OffsetMapping.Factory.AdviceType.INLINING);
+                    super(adviceMethod, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.INLINING);
                     this.classReader = classReader;
                 }
 
@@ -6060,24 +6120,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                        MethodDescription instrumentedMethod,
                                                        SuppressionHandler.Bound suppressionHandler,
                                                        RelocationHandler.Bound relocationHandler);
-
-                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Inlining.Resolved resolved = (Inlining.Resolved) object;
-                    return adviceMethod.equals(resolved.adviceMethod)
-                            && offsetMappings.equals(resolved.offsetMappings)
-                            && suppressionHandler.equals(resolved.suppressionHandler);
-                }
-
-                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
-                public int hashCode() {
-                    int result = adviceMethod.hashCode();
-                    result = 31 * result + offsetMappings.hashCode();
-                    result = 31 * result + suppressionHandler.hashCode();
-                    return result;
-                }
 
                 /**
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
@@ -6363,11 +6405,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * A relocation handler that determines if the instrumented method should be skipped.
-                     */
-                    private final RelocationHandler relocationHandler;
-
-                    /**
                      * {@code true} if the first discovered line number information should be prepended to the advice code.
                      */
                     private final boolean prependLineNumber;
@@ -6396,11 +6433,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
                                 classReader);
-                        relocationHandler = RelocationHandler.ForType.of(adviceMethod.getDeclaredAnnotations()
-                                .ofType(OnMethodEnter.class)
-                                .getValue(SKIP_ON)
-                                .resolve(TypeDescription.class), adviceMethod.getReturnType());
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -6591,6 +6625,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
+                                TypeDescription.VOID,
                                 classReader);
                         this.enterType = enterType;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
@@ -6676,7 +6711,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(exceptionHandler),
-                                RelocationHandler.Disabled.INSTANCE,
+                                relocationHandler.bind(instrumentedMethod, relocation),
                                 classReader);
                     }
 
@@ -7211,14 +7246,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod  The represented advice method.
-                 * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param adviceMethod    The represented advice method.
+                 * @param factories       A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType The type to trigger a relocation of the method's control flow.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
-                                   TypeDescription throwableType) {
-                    super(adviceMethod, factories, throwableType, OffsetMapping.Factory.AdviceType.DELEGATION);
+                                   TypeDescription throwableType,
+                                   TypeDescription relocatableType) {
+                    super(adviceMethod, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.DELEGATION);
                 }
 
                 @Override
@@ -7561,11 +7598,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodEnter extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * A relocation handler that determines if the instrumented method should be skipped.
-                     */
-                    private final RelocationHandler relocationHandler;
-
-                    /**
                      * {@code true} if the first discovered line number information should be prepended to the advice code.
                      */
                     private final boolean prependLineNumber;
@@ -7589,11 +7621,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
-                        relocationHandler = RelocationHandler.ForType.of(adviceMethod.getDeclaredAnnotations()
-                                .ofType(OnMethodEnter.class)
-                                .getValue(SKIP_ON)
-                                .resolve(TypeDescription.class), adviceMethod.getReturnType());
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class));
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -7750,7 +7779,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
+                                TypeDescription.VOID);
                         this.enterType = enterType;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
@@ -7803,7 +7833,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler),
-                                RelocationHandler.Disabled.INSTANCE);
+                                relocationHandler.bind(instrumentedMethod, relocation));
                     }
 
                     @Override

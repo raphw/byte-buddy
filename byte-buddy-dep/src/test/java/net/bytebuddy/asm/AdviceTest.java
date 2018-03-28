@@ -1964,12 +1964,12 @@ public class AdviceTest {
                 when(mock.getType()).thenReturn(mock(TypeDescription.Generic.class));
             }
         }).apply();
-//        ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForVariable.ReadWrite.class).refine(new ObjectPropertyAssertion.Refinement<ParameterDescription>() {
-//            @Override
-//            public void apply(ParameterDescription mock) {
-//                when(mock.getType()).thenReturn(mock(TypeDescription.Generic.class));
-//            }
-//        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForVariable.ReadWrite.class).refine(new ObjectPropertyAssertion.Refinement<ParameterDescription>() {
+            @Override
+            public void apply(ParameterDescription mock) {
+                when(mock.getType()).thenReturn(mock(TypeDescription.Generic.class));
+            }
+        }).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForArray.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForArray.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForField.ReadOnly.class).apply();
@@ -2106,8 +2106,8 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.Disabled.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForValue.class).apply();
-//        ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForValue.Inverted.class).apply();
-//        ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForValue.Bound.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForValue.Inverted.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForValue.Bound.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.RelocationHandler.ForType.Bound.class).apply();
         ObjectPropertyAssertion.of(Advice.Appender.class).apply();
