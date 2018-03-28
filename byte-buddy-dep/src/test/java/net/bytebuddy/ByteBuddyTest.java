@@ -108,13 +108,6 @@ public class ByteBuddyTest {
         assertThat(type.getClassLoader(), is(classLoader));
     }
 
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteBuddy.class).apply();
-        ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.class).apply();
-    }
-
     public static class Recorder {
 
         public int counter;

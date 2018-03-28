@@ -1,12 +1,12 @@
 package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -1034,7 +1034,7 @@ public interface AgentBuilder {
         /**
          * A conjunction of two raw matchers.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Conjunction implements RawMatcher {
 
             /**
@@ -1072,7 +1072,7 @@ public interface AgentBuilder {
         /**
          * A disjunction of two raw matchers.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Disjunction implements RawMatcher {
 
             /**
@@ -1110,7 +1110,7 @@ public interface AgentBuilder {
         /**
          * A raw matcher that inverts a raw matcher's result.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Inversion implements RawMatcher {
 
             /**
@@ -1142,7 +1142,7 @@ public interface AgentBuilder {
          * and its {@link java.lang.ClassLoader} against two suitable matchers in order to determine if the matched
          * type should be instrumented.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForElementMatchers implements RawMatcher {
 
             /**
@@ -1345,7 +1345,7 @@ public interface AgentBuilder {
          * A listener that writes events to a {@link PrintStream}. This listener prints a line per event, including the event type and
          * the name of the type in question.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class StreamWriting implements Listener {
 
             /**
@@ -1417,7 +1417,7 @@ public interface AgentBuilder {
         /**
          * A listener that filters types with a given name from being logged.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Filtering implements Listener {
 
             /**
@@ -1480,7 +1480,7 @@ public interface AgentBuilder {
         /**
          * A listener that adds read-edges to any module of an instrumented class upon its transformation.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class ModuleReadEdgeCompleting extends Listener.Adapter {
 
             /**
@@ -1552,7 +1552,7 @@ public interface AgentBuilder {
         /**
          * A compound listener that allows to group several listeners in one instance.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Compound implements Listener {
 
             /**
@@ -1693,7 +1693,7 @@ public interface AgentBuilder {
         /**
          * A circularity lock that holds a global monitor and does not permit concurrent access.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Global implements CircularityLock {
 
             /**
@@ -1838,7 +1838,7 @@ public interface AgentBuilder {
         /**
          * A type strategy that applies a build {@link EntryPoint}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForBuildEntryPoint implements TypeStrategy {
 
             /**
@@ -1908,7 +1908,7 @@ public interface AgentBuilder {
         /**
          * A transformer that applies a build {@link Plugin}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForBuildPlugin implements Transformer {
 
             /**
@@ -1941,7 +1941,7 @@ public interface AgentBuilder {
          * the advice class's class loader manually via the {@code include} methods and to reference the advice class by its fully-qualified
          * name. The advice class is then never loaded by rather described by a {@link TypePool}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForAdvice implements Transformer {
 
             /**
@@ -2188,7 +2188,7 @@ public interface AgentBuilder {
             /**
              * An entry for an advice to apply.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class Entry {
 
                 /**
@@ -2227,7 +2227,7 @@ public interface AgentBuilder {
                 /**
                  * An entry for an advice class where both the (optional) entry and exit advice methods are declared by the same class.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForUnifiedAdvice extends Entry {
 
                     /**
@@ -2255,7 +2255,7 @@ public interface AgentBuilder {
                 /**
                  * An entry for an advice class where both entry and exit advice methods are declared by the different classes.
                  */
-                @EqualsAndHashCode(callSuper = true)
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForSplitAdvice extends Entry {
 
                     /**
@@ -2293,7 +2293,7 @@ public interface AgentBuilder {
          * A compound transformer that allows to group several
          * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s as a single transformer.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Compound implements Transformer {
 
             /**
@@ -2506,7 +2506,7 @@ public interface AgentBuilder {
          * All types that are returned by the locator's type pool are resolved lazily.
          * </p>
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class WithTypePoolCache implements PoolStrategy {
 
             /**
@@ -2540,7 +2540,7 @@ public interface AgentBuilder {
              * An implementation of a type locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
              * {@link ConcurrentMap}. It is the responsibility of the type locator's user to avoid the type locator from leaking memory.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Simple extends WithTypePoolCache {
 
                 /**
@@ -2725,7 +2725,7 @@ public interface AgentBuilder {
          * An initialization strategy that adds a code block to an instrumented type's type initializer which
          * then calls a specific class that is responsible for the explicit initialization.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class SelfInjection implements InitializationStrategy {
 
             /**
@@ -2759,7 +2759,7 @@ public interface AgentBuilder {
             /**
              * A dispatcher for a self-initialization strategy.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected abstract static class Dispatcher implements InitializationStrategy.Dispatcher {
 
                 /**
@@ -2791,7 +2791,7 @@ public interface AgentBuilder {
                 /**
                  * A type initializer that injects all auxiliary types of the instrumented type.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class InjectingInitializer implements LoadedTypeInitializer {
 
                     /**
@@ -3199,7 +3199,7 @@ public interface AgentBuilder {
          * The instrumentation API does not submit such types to a class file transformer on most VM implementations.
          * </p>
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class SuperTypeLoading implements DescriptionStrategy {
 
             /**
@@ -3237,7 +3237,7 @@ public interface AgentBuilder {
             /**
              * A class loading delegate that unlocks the circularity lock during class loading.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class UnlockingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
 
                 /**
@@ -3295,7 +3295,7 @@ public interface AgentBuilder {
              * might contain corrupt class files.
              * </p>
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             public static class Asynchronous implements DescriptionStrategy {
 
                 /**
@@ -3340,7 +3340,7 @@ public interface AgentBuilder {
                 /**
                  * A class loading delegate that delegates loading of the super type to another thread.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ThreadSwitchingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
 
                     /**
@@ -3379,7 +3379,7 @@ public interface AgentBuilder {
                     /**
                      * A class loading action that simply loads a type.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
 
                         /**
@@ -3568,7 +3568,7 @@ public interface AgentBuilder {
         /**
          * A simple location strategy that queries a given class file locator.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Simple implements LocationStrategy {
 
             /**
@@ -3594,7 +3594,7 @@ public interface AgentBuilder {
         /**
          * A compound location strategy that applies a list of location strategies.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Compound implements LocationStrategy {
 
             /**
@@ -3694,7 +3694,7 @@ public interface AgentBuilder {
         /**
          * A fallback strategy that discriminates by the type of the {@link Throwable} that triggered a request.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ByThrowableType implements FallbackStrategy {
 
             /**
@@ -3880,7 +3880,7 @@ public interface AgentBuilder {
         /**
          * This installation listener prints the status of any installation to a {@link PrintStream}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class StreamWriting implements InstallationListener {
 
             /**
@@ -3948,7 +3948,7 @@ public interface AgentBuilder {
         /**
          * A compound installation listener.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Compound implements InstallationListener {
 
             /**
@@ -4295,7 +4295,7 @@ public interface AgentBuilder {
             /**
              * A batch allocator that creates chunks with a fixed size as batch jobs.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForFixedSize implements BatchAllocator {
 
                 /**
@@ -4341,7 +4341,7 @@ public interface AgentBuilder {
             /**
              * A batch allocator that groups all batches by discriminating types using a type matcher.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForMatchedGrouping implements BatchAllocator {
 
                 /**
@@ -4437,7 +4437,7 @@ public interface AgentBuilder {
             /**
              * A slicing batch allocator that assures that any batch is within a certain size range.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Slicing implements BatchAllocator {
 
                 /**
@@ -4628,7 +4628,7 @@ public interface AgentBuilder {
             /**
              * A partitioning batch allocator that splits types for redefinition into a fixed amount of parts.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Partitioning implements BatchAllocator {
 
                 /**
@@ -4814,7 +4814,7 @@ public interface AgentBuilder {
             /**
              * A listener adapter that offers non-operational implementations of all listener methods.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class Adapter implements Listener {
 
                 @Override
@@ -4844,7 +4844,7 @@ public interface AgentBuilder {
              * allocator must not resubmit batches that previously failed as an identical outcome is likely.
              * </p>
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             class BatchReallocator extends Adapter {
 
                 /**
@@ -4881,7 +4881,7 @@ public interface AgentBuilder {
             /**
              * A listener that invokes {@link Thread#sleep(long)} prior to every batch but the first batch.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             class Pausing extends Adapter {
 
                 /**
@@ -4931,7 +4931,7 @@ public interface AgentBuilder {
             /**
              * A listener that writes events to a {@link PrintStream}.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class StreamWriting implements Listener {
 
                 /**
@@ -4989,7 +4989,7 @@ public interface AgentBuilder {
             /**
              * A compound listener that delegates events to several listeners.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Compound implements Listener {
 
                 /**
@@ -5048,7 +5048,7 @@ public interface AgentBuilder {
                 /**
                  * A compound iterable.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class CompoundIterable implements Iterable<List<Class<?>>> {
 
                     /**
@@ -5181,7 +5181,7 @@ public interface AgentBuilder {
                 /**
                  * An iterable that returns any loaded types and checks if any additional types were loaded during the last instrumentation.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class ReiteratingIterable implements Iterable<Iterable<Class<?>>> {
 
                     /**
@@ -5270,7 +5270,7 @@ public interface AgentBuilder {
             /**
              * An explicit discovery strategy that only attempts the redefinition of specific types.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Explicit implements DiscoveryStrategy {
 
                 /**
@@ -5352,7 +5352,7 @@ public interface AgentBuilder {
                 /**
                  * A cancelable for a {@link Future}.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForFuture implements Cancelable {
 
                     /**
@@ -5400,7 +5400,7 @@ public interface AgentBuilder {
             /**
              * A resubmission scheduler that schedules jobs at a fixed rate.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class AtFixedRate implements ResubmissionScheduler {
 
                 /**
@@ -5445,7 +5445,7 @@ public interface AgentBuilder {
             /**
              * A resubmission scheduler that schedules jobs with a fixed delay.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class WithFixedDelay implements ResubmissionScheduler {
 
                 /**
@@ -5544,7 +5544,7 @@ public interface AgentBuilder {
             /**
              * An enabled resubmission strategy.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Enabled implements ResubmissionStrategy {
 
                 /**
@@ -5913,7 +5913,7 @@ public interface AgentBuilder {
             /**
              * Represents an installation of a resubmission strategy.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Installation {
 
                 /**
@@ -6356,7 +6356,7 @@ public interface AgentBuilder {
         /**
          * A factory that creates instances that represent lambda expressions.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class LambdaInstanceFactory {
 
             /**
@@ -6533,7 +6533,7 @@ public interface AgentBuilder {
                 /**
                  * An appender to implement the executing transformer.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -6591,7 +6591,7 @@ public interface AgentBuilder {
                 /**
                  * An appender for a lambda expression factory.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -6624,7 +6624,7 @@ public interface AgentBuilder {
             /**
              * Implements a lambda expression's functional method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class LambdaMethodImplementation implements Implementation {
 
                 /**
@@ -6668,7 +6668,7 @@ public interface AgentBuilder {
                 /**
                  * An appender for a lambda expression's functional method.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -6737,7 +6737,7 @@ public interface AgentBuilder {
             /**
              * Implements the {@code writeReplace} method for serializable lambda expressions.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class SerializationImplementation implements Implementation {
 
                 /**
@@ -6835,7 +6835,7 @@ public interface AgentBuilder {
             /**
              * Implements an explicit bridge method for a lambda expression.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class BridgeMethodImplementation implements Implementation {
 
                 /**
@@ -6874,7 +6874,7 @@ public interface AgentBuilder {
                 /**
                  * An appender for implementing a bridge method for a lambda expression.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -7405,7 +7405,7 @@ public interface AgentBuilder {
      * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link PoolStrategy.Default#FAST}).
      * </p>
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Default implements AgentBuilder {
 
         /**
@@ -8399,7 +8399,7 @@ public interface AgentBuilder {
             /**
              * An enabled bootstrap injection strategy.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Enabled implements BootstrapInjectionStrategy {
 
                 /**
@@ -8488,7 +8488,7 @@ public interface AgentBuilder {
             /**
              * A native method strategy that prefixes method names with a fixed value for supporting rebasing of native methods.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForPrefix implements NativeMethodStrategy {
 
                 /**
@@ -8675,7 +8675,7 @@ public interface AgentBuilder {
                 /**
                  * A canonical implementation of a non-resolved resolution.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Unresolved implements Resolution {
 
                     /**
@@ -8777,7 +8777,7 @@ public interface AgentBuilder {
             /**
              * A simple, active transformation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Simple implements Transformation {
 
                 /**
@@ -8833,7 +8833,7 @@ public interface AgentBuilder {
                 /**
                  * A resolution that performs a type transformation.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Resolution implements Transformation.Resolution.Decoratable {
 
                     /**
@@ -8959,7 +8959,7 @@ public interface AgentBuilder {
                     /**
                      * An injector factory that resolves to a bootstrap class loader injection if this is necessary and enabled.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class BootstrapClassLoaderCapableInjectorFactory implements InitializationStrategy.Dispatcher.InjectorFactory {
 
                         /**
@@ -9005,7 +9005,7 @@ public interface AgentBuilder {
             /**
              * A compound transformation that applied several transformation in the given order and applies the first active transformation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Compound implements Transformation {
 
                 /**
@@ -9509,7 +9509,7 @@ public interface AgentBuilder {
                  * A factory for a class file transformer on a JVM that supports the {@code java.lang.Module} API to override
                  * the newly added method of the {@link ClassFileTransformer} to capture an instrumented class's module.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForJava9CapableVm implements Factory {
 
                     /**
@@ -9618,6 +9618,7 @@ public interface AgentBuilder {
             /**
              * A privileged action for transforming a class on a JVM prior to Java 9.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class LegacyVmDispatcher implements PrivilegedAction<byte[]> {
 
                 /**
@@ -9675,44 +9676,12 @@ public interface AgentBuilder {
                             protectionDomain,
                             binaryRepresentation);
                 }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private ExecutingTransformer getOuter() {
-                    return ExecutingTransformer.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    LegacyVmDispatcher that = (LegacyVmDispatcher) object;
-                    return (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
-                            && (internalTypeName != null ? internalTypeName.equals(that.internalTypeName) : that.internalTypeName == null)
-                            && (classBeingRedefined != null ? classBeingRedefined.equals(that.classBeingRedefined) : that.classBeingRedefined == null)
-                            && protectionDomain.equals(that.protectionDomain)
-                            && ExecutingTransformer.this.equals(that.getOuter())
-                            && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    int result = classLoader != null ? classLoader.hashCode() : 0;
-                    result = 31 * result + (internalTypeName != null ? internalTypeName.hashCode() : 0);
-                    result = 31 * result + (classBeingRedefined != null ? classBeingRedefined.hashCode() : 0);
-                    result = 31 * result + protectionDomain.hashCode();
-                    result = 31 * result + ExecutingTransformer.this.hashCode();
-                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    return result;
-                }
             }
 
             /**
              * A privileged action for transforming a class on a JVM that supports modules.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class Java9CapableVmDispatcher implements PrivilegedAction<byte[]> {
 
                 /**
@@ -9778,41 +9747,6 @@ public interface AgentBuilder {
                             classBeingRedefined,
                             protectionDomain,
                             binaryRepresentation);
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private ExecutingTransformer getOuter() {
-                    return ExecutingTransformer.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Java9CapableVmDispatcher that = (Java9CapableVmDispatcher) object;
-                    return rawModule.equals(that.rawModule)
-                            && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
-                            && (internalTypeName != null ? internalTypeName.equals(that.internalTypeName) : that.internalTypeName == null)
-                            && (classBeingRedefined != null ? classBeingRedefined.equals(that.classBeingRedefined) : that.classBeingRedefined == null)
-                            && protectionDomain.equals(that.protectionDomain)
-                            && ExecutingTransformer.this.equals(that.getOuter())
-                            && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    int result = rawModule.hashCode();
-                    result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                    result = 31 * result + (internalTypeName != null ? internalTypeName.hashCode() : 0);
-                    result = 31 * result + (classBeingRedefined != null ? classBeingRedefined.hashCode() : 0);
-                    result = 31 * result + protectionDomain.hashCode();
-                    result = 31 * result + ExecutingTransformer.this.hashCode();
-                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    return result;
                 }
             }
         }
@@ -10015,6 +9949,7 @@ public interface AgentBuilder {
         /**
          * A delegator transformer for further precising what types to ignore.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Ignoring extends Delegator<Ignored> implements Ignored {
 
             /**
@@ -10063,29 +9998,6 @@ public interface AgentBuilder {
             @Override
             public Ignored or(RawMatcher rawMatcher) {
                 return new Ignoring(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher));
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Default getOuter() {
-                return Default.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && rawMatcher.equals(((Ignoring) other).rawMatcher)
-                        && Default.this.equals(((Ignoring) other).getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                int result = rawMatcher.hashCode();
-                result = 31 * result + Default.this.hashCode();
-                return result;
             }
         }
 
@@ -10286,6 +10198,7 @@ public interface AgentBuilder {
          * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
          * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class Transforming extends Delegator<Identified.Narrowable> implements Identified.Extendable, Identified.Narrowable {
 
             /**
@@ -10358,33 +10271,6 @@ public interface AgentBuilder {
             @Override
             public Narrowable or(RawMatcher rawMatcher) {
                 return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer, decorator);
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Default getOuter() {
-                return Default.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && decorator == ((Transforming) other).decorator
-                        && rawMatcher.equals(((Transforming) other).rawMatcher)
-                        && transformer.equals(((Transforming) other).transformer)
-                        && Default.this.equals(((Transforming) other).getOuter());
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                int result = rawMatcher.hashCode();
-                result = 31 * result + (decorator ? 1 : 0);
-                result = 31 * result + transformer.hashCode();
-                result = 31 * result + Default.this.hashCode();
-                return result;
             }
         }
     }
