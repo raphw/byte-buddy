@@ -2,7 +2,6 @@ package net.bytebuddy.android;
 
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
-import com.android.dx.dex.file.DexFile;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
@@ -10,7 +9,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
@@ -22,8 +20,6 @@ import org.mockito.Mock;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -110,17 +106,6 @@ public class AndroidClassLoadingStrategyTest {
                 any(File.class));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
-            @Override
-            public DexFile create() {
-                return new DexFile(new DexOptions());
-            }
-        }).apply();
     }
 
     private static class StubbedClassLoadingStrategy extends AndroidClassLoadingStrategy {

@@ -1,6 +1,5 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.io.File;
@@ -26,11 +25,5 @@ public class ByteBuddyAgentAgentProviderTest {
     public void testKnownAccessor() throws Exception {
         ByteBuddyAgent.AgentProvider provider = ByteBuddyAgent.AgentProvider.ForByteBuddyAgent.INSTANCE;
         assertThat(provider.resolve().isFile(), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteBuddyAgent.AgentProvider.ForExistingAgent.class).apply();
-        ObjectPropertyAssertion.of(ByteBuddyAgent.AgentProvider.ForByteBuddyAgent.class).apply();
     }
 }
