@@ -101,6 +101,25 @@ public class EqualsMethodOtherTest {
     }
 
     @Test
+    public void testSuperClass() throws Exception {
+        DynamicType.Loaded<?> superClass = new ByteBuddy()
+                .subclass(EqualsBase.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated())
+                .make()
+                .load(EqualsBase.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        DynamicType.Loaded<?> subClass = new ByteBuddy()
+                .subclass(superClass.getLoaded())
+                .make()
+                .load(superClass.getLoaded().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object left = subClass.getLoaded().getDeclaredConstructor().newInstance(), right = subClass.getLoaded().getDeclaredConstructor().newInstance();
+        superClass.getLoaded().getDeclaredField(FOO).set(left, FOO);
+        superClass.getLoaded().getDeclaredField(FOO).set(right, FOO);
+        assertThat(left, is(right));
+    }
+
+    @Test
     public void testSuperMethodNoMatch() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(NonEqualsBase.class)

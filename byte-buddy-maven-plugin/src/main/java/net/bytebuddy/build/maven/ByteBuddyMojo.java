@@ -24,7 +24,9 @@ import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Maven plugin for applying Byte Buddy transformations during a build.
@@ -235,9 +237,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     ? Initialization.makeDefault()
                     : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
             getLog().info("Resolved entry point: " + entryPoint);
-            ExecutionStatus transformStatus = transform(root, entryPoint, classPath, plugins);
-            if (transformStatus.failed()) {
-                throw new MojoExecutionException("At least one plugin failed its execution");
+            ResultBag resultBag = transform(root, entryPoint, classPath, plugins);
+            if (resultBag.hasFailures()) {
+                throw new MojoExecutionException(resultBag.getFailure() + " type transformations have failed");
+            } else if (resultBag.isEmpty()) {
+                getLog().warn("No types were transformed during plugin execution");
+            } else {
+                getLog().info("Transformed " + resultBag.getSuccess() + " types");
             }
         } finally {
             classLoaderResolver.close();
@@ -251,15 +257,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param entryPoint The transformation's entry point.
      * @param classPath  A list of class path elements expected by the processed classes.
      * @param plugins    The plugins to apply.
-     * @return The transformation execution status.
+     * @return A collection of all transformations.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      * @throws IOException            If an I/O exception occurs.
      */
-    private ExecutionStatus transform(File root,
-                                      EntryPoint entryPoint,
-                                      List<? extends String> classPath,
-                                      List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
+    private ResultBag transform(File root,
+                                EntryPoint entryPoint,
+                                List<? extends String> classPath,
+                                List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size() + 1);
         classFileLocators.add(new ClassFileLocator.ForFolder(root));
         for (String target : classPath) {
@@ -289,7 +295,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             } catch (Throwable throwable) {
                 throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
             }
-            return processDirectory(root,
+            ResultBag resultBag = new ResultBag();
+            processDirectory(root,
                     root,
                     byteBuddy,
                     entryPoint,
@@ -298,7 +305,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             : new MethodNameTransformer.Suffixing(suffix),
                     classFileLocator,
                     typePool,
-                    plugins);
+                    plugins,
+                    resultBag);
+            return resultBag;
         } finally {
             classFileLocator.close();
         }
@@ -315,41 +324,47 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
-     * @return execution status of directory processing
+     * @param resultBag             A collection of all transformations.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      */
-    private ExecutionStatus processDirectory(File root,
-                                             File folder,
-                                             ByteBuddy byteBuddy,
-                                             EntryPoint entryPoint,
-                                             MethodNameTransformer methodNameTransformer,
-                                             ClassFileLocator classFileLocator,
-                                             TypePool typePool,
-                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+    private void processDirectory(File root,
+                                  File folder,
+                                  ByteBuddy byteBuddy,
+                                  EntryPoint entryPoint,
+                                  MethodNameTransformer methodNameTransformer,
+                                  ClassFileLocator classFileLocator,
+                                  TypePool typePool,
+                                  List<Plugin> plugins,
+                                  ResultBag resultBag) throws MojoExecutionException, MojoFailureException {
         File[] file = folder.listFiles();
-        Set<ExecutionStatus> overallStatus = new HashSet<ExecutionStatus>();
         if (file != null) {
             for (File aFile : file) {
                 if (aFile.isDirectory()) {
-                    ExecutionStatus dirProcessStatus = processDirectory(root, aFile, byteBuddy, entryPoint, methodNameTransformer, classFileLocator, typePool, plugins);
-                    overallStatus.add(dirProcessStatus);
+                    processDirectory(root,
+                            aFile,
+                            byteBuddy,
+                            entryPoint,
+                            methodNameTransformer,
+                            classFileLocator,
+                            typePool,
+                            plugins,
+                            resultBag);
                 } else if (aFile.isFile() && aFile.getName().endsWith(CLASS_FILE_EXTENSION)) {
-                    ExecutionStatus fileProcessStatus = processClassFile(root,
+                    processClassFile(root,
                             root.toURI().relativize(aFile.toURI()).toString(),
                             byteBuddy,
                             entryPoint,
                             methodNameTransformer,
                             classFileLocator,
                             typePool,
-                            plugins);
-                    overallStatus.add(fileProcessStatus);
+                            plugins,
+                            resultBag);
                 } else {
                     getLog().debug("Skipping ignored file: " + aFile);
                 }
             }
         }
-        return new ExecutionStatus.Combined(overallStatus);
     }
 
     /**
@@ -363,18 +378,19 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
-     * @return execution status of class processing
+     * @param resultBag             A collection of all transformations.
      * @throws MojoExecutionException If the user configuration results in an error.
      * @throws MojoFailureException   If the plugin application raises an error.
      */
-    private ExecutionStatus processClassFile(File root,
-                                             String file,
-                                             ByteBuddy byteBuddy,
-                                             EntryPoint entryPoint,
-                                             MethodNameTransformer methodNameTransformer,
-                                             ClassFileLocator classFileLocator,
-                                             TypePool typePool,
-                                             List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
+    private void processClassFile(File root,
+                                  String file,
+                                  ByteBuddy byteBuddy,
+                                  EntryPoint entryPoint,
+                                  MethodNameTransformer methodNameTransformer,
+                                  ClassFileLocator classFileLocator,
+                                  TypePool typePool,
+                                  List<Plugin> plugins,
+                                  ResultBag resultBag) throws MojoExecutionException, MojoFailureException {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         getLog().debug("Processing class file: " + typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
@@ -405,9 +421,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
         }
         if (failed) {
-            return new ExecutionStatus.Failed();
+            resultBag.failure();
         } else if (transformed) {
-            getLog().info("Transformed type: " + typeName);
+            getLog().debug("Transformed type: " + typeName);
             DynamicType dynamicType = builder.make();
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
                 if (failOnLiveInitializer && entry.getValue().isAlive()) {
@@ -419,10 +435,10 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             } catch (IOException exception) {
                 throw new MojoFailureException("Cannot save " + typeName + " in " + root, exception);
             }
+            resultBag.success();
         } else {
             getLog().debug("Skipping non-transformed type: " + typeName);
         }
-        return new ExecutionStatus.Successful();
     }
 
     /**
@@ -513,6 +529,72 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         @Override
         protected List<String> getClassPathElements() {
             return testClasspathElements;
+        }
+    }
+
+    /**
+     * A result bag records transformation results during the mojo application.
+     */
+    private static class ResultBag {
+
+        /**
+         * The count of successful transformations.
+         */
+        private int success;
+
+        /**
+         * The count of failed transformations.
+         */
+        private int failure;
+
+        /**
+         * Increases the count of successful transformations.
+         */
+        private void success() {
+            success += 1;
+        }
+
+        /**
+         * Increases the count of failed transformations.
+         */
+        private void failure() {
+            failure += 1;
+        }
+
+        /**
+         * Returns the current count of successful transformations.
+         *
+         * @return The current count of successful transformations.
+         */
+        private int getSuccess() {
+            return success;
+        }
+
+        /**
+         * Returns the current count of failed transformations.
+         *
+         * @return The current count of failed transformations.
+         */
+        private int getFailure() {
+            return failure;
+        }
+
+        /**
+         * Returns {@code true} if at least one transformation failed.
+         *
+         * @return {@code true} if at least one transformation failed.
+         */
+        private boolean hasFailures() {
+            return failure > 0;
+        }
+
+        /**
+         * Returns {@code true} if no transformations were applied.
+         *
+         * @return {@code true} if no transformations were applied.
+         */
+        private boolean isEmpty() {
+            return success == 0 && failure == 0;
         }
     }
 }

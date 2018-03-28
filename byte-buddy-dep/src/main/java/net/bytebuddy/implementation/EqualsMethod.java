@@ -12,7 +12,6 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.InstanceCheck;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
-import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -219,9 +218,10 @@ public class EqualsMethod implements Implementation {
                 return new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadFrom(1),
                         ConditionalReturn.onNullValue(),
+                        MethodVariableAccess.REFERENCE.loadFrom(0),
+                        MethodInvocation.invoke(GET_CLASS),
                         MethodVariableAccess.REFERENCE.loadFrom(1),
                         MethodInvocation.invoke(GET_CLASS),
-                        ClassConstant.of(instrumentedType),
                         ConditionalReturn.onNonIdentity()
                 );
             }

@@ -100,7 +100,14 @@ public class TransformationAction implements Action<Task> {
             }
             EntryPoint entryPoint = byteBuddyExtension.getInitialization().getEntryPoint(classLoaderResolver, root, classPath);
             project.getLogger().info("Resolved entry point: {}", entryPoint);
-            transform(root, classPath, entryPoint, plugins);
+            ResultBag resultBag = transform(root, classPath, entryPoint, plugins);
+            if (resultBag.hasFailures()) {
+                throw new GradleException(resultBag.getFailure() + " type transformations have failed");
+            } else if (resultBag.isEmpty()) {
+                project.getLogger().warn("No types were transformed during plugin execution");
+            } else {
+                project.getLogger().info("Transformed {} types", resultBag.getSuccess());
+            }
         } finally {
             classLoaderResolver.close();
         }
@@ -113,9 +120,10 @@ public class TransformationAction implements Action<Task> {
      * @param entryPoint The transformation's entry point.
      * @param classPath  A list of class path elements expected by the processed classes.
      * @param plugins    The plugins to apply.
+     * @return A collection of all transformations.
      * @throws IOException If an I/O exception occurs.
      */
-    private void transform(File root, Iterable<? extends File> classPath, EntryPoint entryPoint, List<Plugin> plugins) throws IOException {
+    private ResultBag transform(File root, Iterable<? extends File> classPath, EntryPoint entryPoint, List<Plugin> plugins) throws IOException {
         List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
         classFileLocators.add(new ClassFileLocator.ForFolder(root));
         for (File artifact : classPath) {
@@ -144,6 +152,7 @@ public class TransformationAction implements Action<Task> {
             } catch (Throwable throwable) {
                 throw new GradleException("Cannot create Byte Buddy instance", throwable);
             }
+            ResultBag resultBag = new ResultBag();
             processDirectory(root,
                     root,
                     byteBuddy,
@@ -151,7 +160,9 @@ public class TransformationAction implements Action<Task> {
                     byteBuddyExtension.getMethodNameTransformer(),
                     classFileLocator,
                     typePool,
-                    plugins);
+                    plugins,
+                    resultBag);
+            return resultBag;
         } finally {
             classFileLocator.close();
         }
@@ -168,6 +179,7 @@ public class TransformationAction implements Action<Task> {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
+     * @param resultBag             A collection of all transformations.
      */
     private void processDirectory(File root,
                                   File folder,
@@ -176,12 +188,13 @@ public class TransformationAction implements Action<Task> {
                                   MethodNameTransformer methodNameTransformer,
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
-                                  List<Plugin> plugins) {
+                                  List<Plugin> plugins,
+                                  ResultBag resultBag) {
         File[] file = folder.listFiles();
         if (file != null) {
             for (File aFile : file) {
                 if (aFile.isDirectory()) {
-                    processDirectory(root, aFile, byteBuddy, entryPoint, methodNameTransformer, classFileLocator, typePool, plugins);
+                    processDirectory(root, aFile, byteBuddy, entryPoint, methodNameTransformer, classFileLocator, typePool, plugins, resultBag);
                 } else if (aFile.isFile() && aFile.getName().endsWith(CLASS_FILE_EXTENSION)) {
                     processClassFile(root,
                             root.toURI().relativize(aFile.toURI()).toString(),
@@ -190,7 +203,8 @@ public class TransformationAction implements Action<Task> {
                             methodNameTransformer,
                             classFileLocator,
                             typePool,
-                            plugins);
+                            plugins,
+                            resultBag);
                 } else {
                     project.getLogger().debug("Skipping ignored file: {}", aFile);
                 }
@@ -209,6 +223,7 @@ public class TransformationAction implements Action<Task> {
      * @param classFileLocator      The class file locator to use.
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
+     * @param resultBag             A collection of all transformations.
      */
     private void processClassFile(File root,
                                   String file,
@@ -217,7 +232,8 @@ public class TransformationAction implements Action<Task> {
                                   MethodNameTransformer methodNameTransformer,
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
-                                  List<Plugin> plugins) {
+                                  List<Plugin> plugins,
+                                  ResultBag resultBag) {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         project.getLogger().debug("Processing class file: {}", typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
@@ -248,9 +264,9 @@ public class TransformationAction implements Action<Task> {
             }
         }
         if (failed) {
-            throw new GradleException("At least one plugin failed its execution");
+            resultBag.failure();
         } else if (transformed) {
-            project.getLogger().info("Transformed type: {}", typeName);
+            project.getLogger().debug("Transformed type: {}", typeName);
             DynamicType dynamicType = builder.make();
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
                 if (byteBuddyExtension.isFailOnLiveInitializer() && entry.getValue().isAlive()) {
@@ -262,8 +278,75 @@ public class TransformationAction implements Action<Task> {
             } catch (IOException exception) {
                 throw new GradleException("Cannot save " + typeName + " in " + root, exception);
             }
+            resultBag.success();
         } else {
             project.getLogger().debug("Skipping non-transformed type: {}", typeName);
+        }
+    }
+
+    /**
+     * A result bag records transformation results during the mojo application.
+     */
+    private static class ResultBag {
+
+        /**
+         * The count of successful transformations.
+         */
+        private int success;
+
+        /**
+         * The count of failed transformations.
+         */
+        private int failure;
+
+        /**
+         * Increases the count of successful transformations.
+         */
+        private void success() {
+            success += 1;
+        }
+
+        /**
+         * Increases the count of failed transformations.
+         */
+        private void failure() {
+            failure += 1;
+        }
+
+        /**
+         * Returns the current count of successful transformations.
+         *
+         * @return The current count of successful transformations.
+         */
+        private int getSuccess() {
+            return success;
+        }
+
+        /**
+         * Returns the current count of failed transformations.
+         *
+         * @return The current count of failed transformations.
+         */
+        private int getFailure() {
+            return failure;
+        }
+
+        /**
+         * Returns {@code true} if at least one transformation failed.
+         *
+         * @return {@code true} if at least one transformation failed.
+         */
+        private boolean hasFailures() {
+            return failure > 0;
+        }
+
+        /**
+         * Returns {@code true} if no transformations were applied.
+         *
+         * @return {@code true} if no transformations were applied.
+         */
+        private boolean isEmpty() {
+            return success == 0 && failure == 0;
         }
     }
 }
