@@ -32,7 +32,7 @@ public class EqualsMethodOtherTest {
     }
 
     @Test
-    public void testSelf() throws Exception {
+    public void testEqualToSelf() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .defineField(FOO, Object.class, Visibility.PUBLIC)
@@ -44,6 +44,23 @@ public class EqualsMethodOtherTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance, is(instance));
+    }
+
+    @Test
+    public void testEqualToSelfIdentity() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        loaded.getLoaded().getDeclaredField(FOO).set(instance, new NonEqualsBase());
         assertThat(instance, is(instance));
     }
 
