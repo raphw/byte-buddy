@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. March 2018: version 1.8.1
+
+- Add implementations for `HashCodeMethod`, `EqualsMethod` and `ToStringMethod` including build tool plugins.
+- Refactor handling of stack map frame translation within `Advice` to allow for handling of methods with inconsistent stack map frames if the method arguments are copied.
+- Make argument copying the default choice if exit advice is enabled. 
+
 ### 13. March 2018: version 1.8.0
 
 - Refactored `Advice` argument handling to be controlled by a decicated structure.
