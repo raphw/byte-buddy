@@ -6081,10 +6081,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod  The represented advice method.
-                 * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param classReader   A class reader to query for the class file of the advice method.
-                 * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param adviceMethod    The represented advice method.
+                 * @param factories       A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
+                 * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
+                 * @param classReader     A class reader to query for the class file of the advice method.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
@@ -6589,7 +6590,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
-                     * The additional stack size to consider when accessing the local variable array.
+                     * The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     private final TypeDefinition enterType;
 
@@ -6604,8 +6605,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
@@ -6637,8 +6637,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param adviceMethod  The advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
@@ -7728,7 +7727,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
-                     * The additional stack size to consider when accessing the local variable array.
+                     * The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     private final TypeDefinition enterType;
 
@@ -7742,8 +7741,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
@@ -7772,8 +7770,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
