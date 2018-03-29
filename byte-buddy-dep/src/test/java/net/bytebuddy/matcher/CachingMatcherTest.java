@@ -69,16 +69,4 @@ public class CachingMatcherTest extends AbstractElementMatcherTest<CachingMatche
         verifyNoMoreInteractions(this.matcher);
         verifyZeroInteractions(target);
     }
-
-    @Test
-    @Override
-    public void testStringRepresentation() throws Exception {
-        CachingMatcher<?> cachingMatcher = new CachingMatcher<Object>(matcher, map);
-        assertThat(cachingMatcher.equals(cachingMatcher), is(true));
-        assertThat(cachingMatcher.equals(new CachingMatcher<Object>(matcher, new ConcurrentHashMap<Object, Boolean>())), is(true));
-        assertThat(cachingMatcher.equals(null), is(false));
-        assertThat(cachingMatcher.equals(new Object()), is(false));
-        assertThat(cachingMatcher.hashCode(), is(new CachingMatcher<Object>(matcher, new ConcurrentHashMap<Object, Boolean>()).hashCode()));
-        assertThat(cachingMatcher.toString().startsWith(startsWith), is(true));
-    }
 }

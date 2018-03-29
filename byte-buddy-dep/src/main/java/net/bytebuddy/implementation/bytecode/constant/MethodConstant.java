@@ -19,7 +19,6 @@ import java.util.List;
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
-@HashCodeAndEqualsPlugin.Enhance
 public abstract class MethodConstant implements StackManipulation {
 
     /**
@@ -106,6 +105,22 @@ public abstract class MethodConstant implements StackManipulation {
         return methodDescription.isConstructor()
                 ? new CachedConstructor(this)
                 : new CachedMethod(this);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        } else if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        MethodConstant methodConstant = (MethodConstant) other;
+        return methodDescription.equals(methodConstant.methodDescription);
+    }
+
+    @Override
+    public int hashCode() {
+        return methodDescription.hashCode();
     }
 
     /**
@@ -216,7 +231,6 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a cached method for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
-    @HashCodeAndEqualsPlugin.Enhance
     protected static class CachedMethod implements StackManipulation {
 
         /**
@@ -248,6 +262,22 @@ public abstract class MethodConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE))
                     .read()
                     .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            CachedMethod cachedMethod = (CachedMethod) other;
+            return methodConstant.equals(cachedMethod.methodConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodConstant.hashCode();
         }
     }
 
@@ -286,6 +316,22 @@ public abstract class MethodConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
                     .read()
                     .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            CachedConstructor cachedConstructor = (CachedConstructor) other;
+            return constructorConstant.equals(cachedConstructor.constructorConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return constructorConstant.hashCode();
         }
     }
 }

@@ -250,14 +250,14 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            } else if (object == null || getClass() != object.getClass()) {
+            } else if (other == null || getClass() != other.getClass()) {
                 return false;
             }
-            ParameterIndexToken that = (ParameterIndexToken) object;
-            return parameterIndex == that.parameterIndex;
+            ParameterIndexToken parameterIndexToken = (ParameterIndexToken) other;
+            return parameterIndex == parameterIndexToken.parameterIndex;
         }
 
         @Override

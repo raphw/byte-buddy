@@ -957,13 +957,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) {
+                public boolean equals(Object other) {
+                    if (this == other) {
                         return true;
-                    } else if (object == null || getClass() != object.getClass()) {
+                    } else if (other == null || getClass() != other.getClass()) {
                         return false;
                     }
-                    FieldCacheEntry fieldCacheEntry = (FieldCacheEntry) object;
+                    FieldCacheEntry fieldCacheEntry = (FieldCacheEntry) other;
                     return fieldValue.equals(fieldCacheEntry.fieldValue) && fieldType.equals(fieldCacheEntry.fieldType);
                 }
 

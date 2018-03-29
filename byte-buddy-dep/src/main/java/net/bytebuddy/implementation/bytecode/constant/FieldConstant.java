@@ -59,13 +59,13 @@ public class FieldConstant implements StackManipulation {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (object == null || getClass() != object.getClass()) {
+        } else if (other == null || getClass() != other.getClass()) {
             return false;
         }
-        FieldConstant fieldConstant = (FieldConstant) object;
+        FieldConstant fieldConstant = (FieldConstant) other;
         return fieldDescription.equals(fieldConstant.fieldDescription);
     }
 
@@ -106,13 +106,13 @@ public class FieldConstant implements StackManipulation {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            } else if (object == null || getClass() != object.getClass()) {
+            } else if (other == null || getClass() != other.getClass()) {
                 return false;
             }
-            Cached cached = (Cached) object;
+            Cached cached = (Cached) other;
             return fieldConstant.equals(cached.fieldConstant);
         }
 

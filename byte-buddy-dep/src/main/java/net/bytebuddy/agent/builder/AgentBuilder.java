@@ -5839,13 +5839,13 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                    public boolean equals(Object object) {
-                        if (this == object) {
+                    public boolean equals(Object other) {
+                        if (this == other) {
                             return true;
-                        } else if (object instanceof LookupKey) {
-                            return classLoader == ((LookupKey) object).classLoader;
-                        } else if (object instanceof StorageKey) {
-                            StorageKey storageKey = (StorageKey) object;
+                        } else if (other instanceof LookupKey) {
+                            return classLoader == ((LookupKey) other).classLoader;
+                        } else if (other instanceof StorageKey) {
+                            StorageKey storageKey = (StorageKey) other;
                             return hashCode == storageKey.hashCode && classLoader == storageKey.get();
                         } else {
                             return false;
@@ -5889,14 +5889,14 @@ public interface AgentBuilder {
 
                     @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                    public boolean equals(Object object) {
-                        if (this == object) {
+                    public boolean equals(Object other) {
+                        if (this == other) {
                             return true;
-                        } else if (object instanceof LookupKey) {
-                            LookupKey lookupKey = (LookupKey) object;
+                        } else if (other instanceof LookupKey) {
+                            LookupKey lookupKey = (LookupKey) other;
                             return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
-                        } else if (object instanceof StorageKey) {
-                            StorageKey storageKey = (StorageKey) object;
+                        } else if (other instanceof StorageKey) {
+                            StorageKey storageKey = (StorageKey) other;
                             return hashCode == storageKey.hashCode && get() == storageKey.get();
                         } else {
                             return false;
