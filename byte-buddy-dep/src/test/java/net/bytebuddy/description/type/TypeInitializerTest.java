@@ -6,7 +6,6 @@ import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -80,11 +79,5 @@ public class TypeInitializerTest {
     public void testSimpleWrap() throws Exception {
         when(record.prepend(byteCodeAppender)).thenReturn(expanded);
         assertThat(new TypeInitializer.Simple(byteCodeAppender).wrap(record), is(expanded));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeInitializer.None.class).apply();
-        ObjectPropertyAssertion.of(TypeInitializer.Simple.class).apply();
     }
 }

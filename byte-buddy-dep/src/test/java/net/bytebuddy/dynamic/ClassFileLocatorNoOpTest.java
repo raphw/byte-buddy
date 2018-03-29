@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -18,10 +17,5 @@ public class ClassFileLocatorNoOpTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.NoOp.INSTANCE.close();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.NoOp.class).apply();
     }
 }

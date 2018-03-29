@@ -11,7 +11,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -174,11 +173,5 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Test
     public void testOriginType() throws Exception {
         assertThat(makeImplementationTarget().getOriginType(), is((TypeDefinition) instrumentedType));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseImplementationTarget.class).apply();
     }
 }

@@ -5,7 +5,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -138,15 +137,5 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
         verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "0;"));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.ForTypeAnnotations.class).refine(new ObjectPropertyAssertion.Refinement<TypeReference>() {
-            @Override
-            public void apply(TypeReference mock) {
-                when(mock.getValue()).thenReturn(new Random().nextInt());
-            }
-        }).apply();
     }
 }

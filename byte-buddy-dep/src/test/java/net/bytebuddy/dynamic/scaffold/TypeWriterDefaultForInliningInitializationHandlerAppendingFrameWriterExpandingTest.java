@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -16,10 +15,5 @@ public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWrit
         TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Expanding.INSTANCE.emitFrame(methodVisitor);
         verify(methodVisitor).visitFrame(Opcodes.F_NEW, 0, new Object[0], 0, new Object[0]);
         verifyNoMoreInteractions(methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Expanding.class).apply();
     }
 }

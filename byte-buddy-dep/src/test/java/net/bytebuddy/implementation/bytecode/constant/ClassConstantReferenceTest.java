@@ -5,7 +5,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -105,11 +104,5 @@ public class ClassConstantReferenceTest {
                 Type.getMethodDescriptor(Type.getType(Class.class), Type.getType(String.class)),
                 false);
         verifyNoMoreInteractions(methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassConstant.class).apply();
-        ObjectPropertyAssertion.of(ClassConstant.ForReferenceType.class).apply();
     }
 }

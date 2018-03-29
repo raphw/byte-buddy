@@ -4,7 +4,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -28,12 +27,5 @@ public class ArrayAccessOtherTest {
                         IntegerConstant.forValue(0),
                         ArrayAccess.REFERENCE.new Loader(),
                         stackManipulation))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ArrayAccess.class).apply();
-        ObjectPropertyAssertion.of(ArrayAccess.Loader.class).apply();
-        ObjectPropertyAssertion.of(ArrayAccess.Putter.class).apply();
     }
 }

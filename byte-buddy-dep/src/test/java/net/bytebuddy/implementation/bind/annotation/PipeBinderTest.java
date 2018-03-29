@@ -4,7 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -82,13 +81,5 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
                 implementationTarget,
                 assigner,
                 Assigner.Typing.STATIC);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Pipe.Binder.class).apply();
-        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.class).apply();
-        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.MethodCall.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(Pipe.Binder.Redirection.ConstructorCall.class).apply();
     }
 }

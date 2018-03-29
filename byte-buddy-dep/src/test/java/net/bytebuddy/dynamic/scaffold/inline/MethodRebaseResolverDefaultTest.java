@@ -10,7 +10,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -127,10 +126,5 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod(), not(methodDescription));
         assertThat(resolution.getResolvedMethod().isConstructor(), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Default.class).apply();
     }
 }

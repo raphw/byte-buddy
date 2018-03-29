@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -95,18 +94,6 @@ public class MethodGraphCompilerDefaultKeyTest {
     public void testInitialEntryCannotExposeKey() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
                 .getKey();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Graph.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Initial.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.class).apply();
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node.class).apply();
     }
 
     protected static class PseudoKey extends MethodGraph.Compiler.Default.Key<SampleKey> {

@@ -6,7 +6,6 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -86,15 +85,5 @@ public class MethodRegistryHandlerTest {
     @Test(expected = IllegalStateException.class)
     public void testVisibilityBridgeHandlerPreparationThrowsException() throws Exception {
         MethodRegistry.Handler.ForVisibilityBridge.INSTANCE.prepare(mock(InstrumentedType.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAbstractMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForImplementation.Compiled.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForAnnotationValue.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForVisibilityBridge.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Handler.ForVisibilityBridge.Compiled.class).apply();
     }
 }

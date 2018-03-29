@@ -1,28 +1,19 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class DefaultMethodCallTest {
 
@@ -164,41 +155,5 @@ public class DefaultMethodCallTest {
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(method.invoke(instance), is((Object) FOO));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DefaultMethodCall.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.isInterface()).thenReturn(true);
-                when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-                return Collections.singletonList(typeDescription);
-            }
-        }).apply();
-        final TypeDescription removalType = mock(TypeDescription.class);
-        final TypeDescription.Generic genericRemovalType = mock(TypeDescription.Generic.class);
-        when(genericRemovalType.asGenericType()).thenReturn(genericRemovalType);
-        when(genericRemovalType.asErasure()).thenReturn(removalType);
-        ObjectPropertyAssertion.of(DefaultMethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            public void apply(Implementation.Target mock) {
-                TypeDescription typeDescription = mock(TypeDescription.class), otherType = mock(TypeDescription.class);
-                TypeDescription.Generic otherGenericType = mock(TypeDescription.Generic.class);
-                when(otherGenericType.asErasure()).thenReturn(otherType);
-                when(otherGenericType.asGenericType()).thenReturn(otherGenericType);
-                when(typeDescription.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericRemovalType, otherGenericType));
-                when(mock.getInstrumentedType()).thenReturn(typeDescription);
-            }
-        }).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asErasure()).thenReturn(typeDescription);
-                return Arrays.asList(removalType, typeDescription);
-            }
-        }).apply();
     }
 }

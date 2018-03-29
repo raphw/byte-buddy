@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -37,11 +36,5 @@ public class FieldLocatorResolutionTest {
     @Test(expected = IllegalStateException.class)
     public void testIllegalResolutionFieldDescription() throws Exception {
         FieldLocator.Resolution.Illegal.INSTANCE.getField();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldLocator.Resolution.Simple.class).apply();
-        ObjectPropertyAssertion.of(FieldLocator.Resolution.Illegal.class).apply();
     }
 }

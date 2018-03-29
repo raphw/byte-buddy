@@ -1,8 +1,6 @@
 package net.bytebuddy.build.maven;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.eclipse.aether.artifact.Artifact;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -19,10 +17,5 @@ public class MavenCoordinateTest {
         assertThat(artifact.getArtifactId(), is(BAR));
         assertThat(artifact.getVersion(), is(QUX));
         assertThat(artifact.getExtension(), is(JAR));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MavenCoordinate.class).apply();
     }
 }

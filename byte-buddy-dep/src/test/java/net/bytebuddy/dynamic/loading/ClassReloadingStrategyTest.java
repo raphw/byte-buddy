@@ -8,7 +8,6 @@ import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Rule;
 import org.junit.Test;
@@ -257,22 +256,6 @@ public class ClassReloadingStrategyTest {
                 Object.class,
                 mock(ProtectionDomain.class),
                 new byte[0]), nullValue(byte[].class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
-            @Override
-            public void apply(Instrumentation mock) {
-                when(mock.isRedefineClassesSupported()).thenReturn(true);
-                when(mock.isRetransformClassesSupported()).thenReturn(true);
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.ClassResettingTransformer.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Disabled.class).apply();
     }
 
     @SuppressWarnings("unused")

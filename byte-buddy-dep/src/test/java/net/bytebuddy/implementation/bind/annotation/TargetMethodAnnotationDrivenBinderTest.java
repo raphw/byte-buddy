@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,7 +24,6 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -349,33 +347,6 @@ public class TargetMethodAnnotationDrivenBinderTest {
         assertThat(argument, is(argument));
         assertThat(argument, not(equalTo(null)));
         assertThat(argument, not(new Object()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.class).refine(new ObjectPropertyAssertion.Refinement<TargetMethodAnnotationDrivenBinder.ParameterBinder>() {
-            @Override
-            public void apply(TargetMethodAnnotationDrivenBinder.ParameterBinder mock) {
-                when(mock.getHandledType()).thenReturn(Annotation.class);
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(StackSize.ZERO);
-            }
-        }).create(new ObjectPropertyAssertion.Creator<List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>>() {
-            @Override
-            public List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> create() {
-                TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder = mock(TargetMethodAnnotationDrivenBinder.ParameterBinder.class);
-                doReturn(Annotation.class).when(parameterBinder).getHandledType();
-                return Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(parameterBinder);
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.Record.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound.class).apply();
     }
 
     private interface Sample {

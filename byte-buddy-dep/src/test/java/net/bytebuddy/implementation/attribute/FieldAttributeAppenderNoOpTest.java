@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
@@ -20,10 +19,5 @@ public class FieldAttributeAppenderNoOpTest extends AbstractFieldAttributeAppend
     public void testFactory() throws Exception {
         assertThat(FieldAttributeAppender.NoOp.INSTANCE.make(instrumentedType), sameInstance((FieldAttributeAppender) FieldAttributeAppender.NoOp.INSTANCE));
         verifyZeroInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAttributeAppender.NoOp.class).apply();
     }
 }

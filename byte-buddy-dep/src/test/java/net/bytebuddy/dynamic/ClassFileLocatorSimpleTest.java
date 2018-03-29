@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -45,10 +44,5 @@ public class ClassFileLocatorSimpleTest {
         assertThat(classFileLocator.locate(FOO).isResolved(), is(true));
         assertThat(classFileLocator.locate(FOO).resolve(), is(QUX));
         assertThat(classFileLocator.locate(BAR).isResolved(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.Simple.class).apply();
     }
 }

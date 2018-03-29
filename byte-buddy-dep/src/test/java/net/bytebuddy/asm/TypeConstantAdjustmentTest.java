@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -145,10 +144,5 @@ public class TypeConstantAdjustmentTest {
         verifyNoMoreInteractions(this.classVisitor);
         verify(this.methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(this.methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeConstantAdjustment.class).apply();
     }
 }

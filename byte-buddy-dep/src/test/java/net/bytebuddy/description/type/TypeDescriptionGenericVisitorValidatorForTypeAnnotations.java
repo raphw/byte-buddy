@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -212,10 +211,5 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
         when(legal.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(TypeDescription.Generic.OBJECT));
         when(legal.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(otherLegal));
         assertThat(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE.onWildcard(legal), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations.class).apply();
     }
 }

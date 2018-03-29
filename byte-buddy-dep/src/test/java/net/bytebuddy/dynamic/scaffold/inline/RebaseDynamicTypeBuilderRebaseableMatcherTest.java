@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -29,10 +28,5 @@ public class RebaseDynamicTypeBuilderRebaseableMatcherTest {
     @Test
     public void testNoMatchToken() throws Exception {
         assertThat(new RebaseDynamicTypeBuilder.RebaseableMatcher(Collections.singleton(otherToken)).matches(targetToken), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseDynamicTypeBuilder.RebaseableMatcher.class).apply();
     }
 }

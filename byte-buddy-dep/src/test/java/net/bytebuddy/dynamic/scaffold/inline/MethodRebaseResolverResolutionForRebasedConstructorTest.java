@@ -4,12 +4,10 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -89,30 +87,5 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-            @Override
-            public void apply(MethodDescription mock) {
-                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-                when(mock.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
-                when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
-                TypeDescription rawReturnType = mock(TypeDescription.class);
-                when(returnType.asErasure()).thenReturn(rawReturnType);
-                when(mock.getReturnType()).thenReturn(returnType);
-                when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getDescriptor()).thenReturn(FOO + System.identityHashCode(mock));
-                when(mock.asErasure()).thenReturn(mock);
-                when(mock.getStackSize()).thenReturn(StackSize.ZERO);
-            }
-        }).apply();
     }
 }

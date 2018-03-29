@@ -3,8 +3,6 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -53,10 +51,5 @@ public class TypePoolDefaultTypeDescriptionSuperClassLoadingTest extends Abstrac
     @Override
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
         return describe(type).getInterfaces().get(index);
-    }
-
-    @Test
-    public void testDelegateProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.SuperTypeLoading.ClassLoadingDelegate.Simple.class).apply();
     }
 }

@@ -4,7 +4,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -87,15 +86,5 @@ public class AgentBuilderDescriptionStrategyTest {
                 is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST, executorService)));
         assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(executorService),
                 is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY, executorService)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.UnlockingClassLoadingDelegate.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.ThreadSwitchingClassLoadingDelegate.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.ThreadSwitchingClassLoadingDelegate.SimpleClassLoadingAction.class).apply();
     }
 }

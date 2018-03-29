@@ -15,7 +15,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
@@ -28,9 +27,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Method;
-import java.security.acl.Owner;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -995,51 +991,6 @@ public class MethodCallTest {
                 .defineMethod(BAR, void.class, Ownership.STATIC)
                 .intercept(MethodCall.invoke(named(FOO)))
                 .make();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodCall.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.WithoutSpecifiedTarget.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.Appender.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInstrumentedMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForElementMatcher.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForContextualInvocation.class).apply();
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(String.class, Object.class).iterator();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return iterator.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForValue.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForMethodParameter.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForNullConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.Factory.class).apply();
-//        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStackManipulation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.OfParameter.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArrayElement.OfInvokedMethod.class).apply();
     }
 
     public static class SimpleMethod {

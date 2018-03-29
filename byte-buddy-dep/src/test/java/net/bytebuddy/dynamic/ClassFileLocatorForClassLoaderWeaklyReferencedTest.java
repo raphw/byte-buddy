@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -78,11 +77,6 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testBootLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.WeaklyReferenced.class).apply();
     }
 
     private abstract static class ClosableClassLoader extends ClassLoader implements Closeable {

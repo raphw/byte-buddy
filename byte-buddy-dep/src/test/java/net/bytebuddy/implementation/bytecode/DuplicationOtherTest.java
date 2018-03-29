@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
 import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
@@ -26,11 +25,5 @@ public class DuplicationOtherTest {
         TypeDefinition typeDefinition = mock(TypeDefinition.class);
         when(typeDefinition.getStackSize()).thenReturn(StackSize.ZERO);
         Duplication.DOUBLE.flipOver(typeDefinition);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Duplication.class).apply();
-        ObjectPropertyAssertion.of(Duplication.WithFlip.class).apply();
     }
 }

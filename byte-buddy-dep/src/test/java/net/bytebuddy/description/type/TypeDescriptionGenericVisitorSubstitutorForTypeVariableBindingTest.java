@@ -3,7 +3,6 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -79,11 +78,5 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
         TypeDescription rawTypeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
         when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.TypeVariableSubstitutor.class).apply();
     }
 }

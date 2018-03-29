@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -139,11 +138,5 @@ public class TypeWriterFieldPoolRecordTest {
     @Test(expected = IllegalStateException.class)
     public void testImplicitFieldEntryAppliedToField() throws Exception {
         new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription).apply(fieldVisitor, annotationValueFilterFactory);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForImplicitField.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForExplicitField.class).apply();
     }
 }

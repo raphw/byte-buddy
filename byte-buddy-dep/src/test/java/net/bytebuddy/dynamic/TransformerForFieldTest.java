@@ -7,7 +7,6 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -111,12 +110,6 @@ public class TransformerForFieldTest {
         assertThat(transformed.getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(transformed.getType().getTypeArguments().size(), is(1));
         assertThat(transformed.getType().getTypeArguments().getOnly(), is(typeDescription.getSuperClass().getDeclaredFields().filter(named(FOO)).getOnly().getType()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Transformer.ForField.class).apply();
-        ObjectPropertyAssertion.of(Transformer.ForField.FieldModifierTransformer.class).apply();
     }
 
     private static class Foo<T> {

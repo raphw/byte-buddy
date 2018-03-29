@@ -3,7 +3,6 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -42,10 +41,5 @@ public class AgentBuilderTypeLocatorWithTypePoolCacheSimpleTest {
         AgentBuilder.PoolStrategy poolStrategy = new AgentBuilder.PoolStrategy.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
         assertThat(poolStrategy.typePool(classFileLocator, null), is(poolStrategy.typePool(classFileLocator, null)));
         assertThat(poolStrategy.typePool(classFileLocator, null), not(poolStrategy.typePool(classFileLocator, second)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.WithTypePoolCache.Simple.class).apply();
     }
 }

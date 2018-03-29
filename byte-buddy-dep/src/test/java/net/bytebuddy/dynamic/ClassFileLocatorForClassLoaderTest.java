@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Rule;
@@ -115,11 +114,6 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testBootLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.class).apply();
     }
 
     private static class Foo {

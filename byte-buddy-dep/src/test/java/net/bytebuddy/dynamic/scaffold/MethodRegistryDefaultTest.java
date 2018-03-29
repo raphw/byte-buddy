@@ -17,7 +17,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -356,15 +355,5 @@ public class MethodRegistryDefaultTest {
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRegistry.Default.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Entry.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Prepared.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Prepared.Entry.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.class).apply();
-        ObjectPropertyAssertion.of(MethodRegistry.Default.Compiled.Entry.class).apply();
     }
 }

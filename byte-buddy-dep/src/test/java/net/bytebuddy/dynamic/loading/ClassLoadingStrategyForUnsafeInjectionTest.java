@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,11 +60,6 @@ public class ClassLoadingStrategyForUnsafeInjectionTest {
                 .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
         assertThat(types.size(), is(1));
         assertEquals(String.class, types.get(TypeDescription.STRING));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.ForUnsafeInjection.class).apply();
     }
 
     private static class Foo {

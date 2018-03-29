@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,10 +50,5 @@ public class RebaseImplementationTargetFactoryTest {
     @Test
     public void testReturnsRebaseImplementationTarget() throws Exception {
         assertThat(factory.make(instrumentedType, methodGraph, classFileVersion) instanceof RebaseImplementationTarget, is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseImplementationTarget.Factory.class).apply();
     }
 }

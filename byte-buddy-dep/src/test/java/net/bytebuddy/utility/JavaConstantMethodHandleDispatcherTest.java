@@ -1,6 +1,5 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -25,31 +24,6 @@ public class JavaConstantMethodHandleDispatcherTest {
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmLookupType() throws Exception {
         JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.lookupType(mock(Object.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        final Iterator<Method> methods1 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods1.next();
-            }
-        }).apply();
-        final Iterator<Method> methods2 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
-        final Iterator<Constructor<?>> constructors2 = Arrays.<Constructor<?>>asList(Foo.class.getDeclaredConstructors()).iterator();
-        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods2.next();
-            }
-        }).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
-            @Override
-            public Constructor<?> create() {
-                return constructors2.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.class).apply();
     }
 
     @SuppressWarnings("unused")

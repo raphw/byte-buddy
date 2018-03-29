@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -211,21 +210,5 @@ public class NexusTest {
         assertThat(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode(),
                 is(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode()));
 
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(NexusAccessor.class).apply();
-        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.CreationAction.class).apply();
-        final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Available.class)
-                .create(new ObjectPropertyAssertion.Creator<Method>() {
-                    @Override
-                    public Method create() {
-                        return methods.next();
-                    }
-                }).apply();
-        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Unavailable.class).apply();
-        ObjectPropertyAssertion.of(NexusAccessor.InitializationAppender.class).apply();
     }
 }

@@ -17,7 +17,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +33,6 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.lang.reflect.Constructor;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -2172,51 +2170,6 @@ public class AgentBuilderDefaultTest {
         new AgentBuilder.Default()
                 .with(AgentBuilder.RedefinitionStrategy.DISABLED)
                 .withResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Ignoring.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transforming.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Ignored.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.Default.Transformation.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Unresolved.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Sort.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction.class);
-        final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return java9Dispatcher.next();
-            }
-        }).apply();
-        final Iterator<Class<?>> legacyDispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return legacyDispatcher.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class).apply();
-        final Iterator<Constructor<?>> iterator = Arrays.<Constructor<?>>asList(String.class.getDeclaredConstructors()).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
-            @Override
-            public Constructor<?> create() {
-                return iterator.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm.class).apply();
     }
 
     public static class Foo {

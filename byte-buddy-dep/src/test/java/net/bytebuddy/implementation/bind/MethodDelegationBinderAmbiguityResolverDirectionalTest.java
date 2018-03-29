@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,10 +40,5 @@ public class MethodDelegationBinderAmbiguityResolverDirectionalTest {
     public void testRight() throws Exception {
         assertThat(MethodDelegationBinder.AmbiguityResolver.Directional.RIGHT.resolve(source, left, right),
                 is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Directional.class).apply();
     }
 }

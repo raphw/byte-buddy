@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1117,11 +1116,6 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(method.asDefined().asTypeToken()), is(true));
         assertThat(node.getVisibility(), is(method.getVisibility()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.class).apply();
     }
 
     public interface SimpleInterface {

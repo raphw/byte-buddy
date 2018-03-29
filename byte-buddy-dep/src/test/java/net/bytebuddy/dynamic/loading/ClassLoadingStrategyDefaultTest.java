@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -240,23 +238,6 @@ public class ClassLoadingStrategyDefaultTest {
                 .load(ClassLoader.getSystemClassLoader(), Collections.singletonMap(TypeDescription.STRING, new byte[0]));
         assertThat(types.size(), is(1));
         assertEquals(String.class, types.get(TypeDescription.STRING));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.class).apply();
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.WrappingDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.Default.InjectionDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).skipSynthetic().apply();
     }
 
     private static class Foo {

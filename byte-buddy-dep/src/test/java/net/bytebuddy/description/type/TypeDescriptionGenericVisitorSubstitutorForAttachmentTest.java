@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -50,17 +49,6 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(TypeDescription.Generic.OBJECT, TypeDescription.OBJECT));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.class)
-                .refine(new ObjectPropertyAssertion.Refinement<TypeDefinition>() {
-                    @Override
-                    public void apply(TypeDefinition mock) {
-                        when(mock.asErasure()).thenReturn(Mockito.mock(TypeDescription.class));
-                    }
-                }).apply();
     }
 
     @SuppressWarnings("unused")

@@ -1,12 +1,9 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
@@ -85,16 +82,5 @@ public class MethodVariableAccessOtherTest {
     @Test(expected = IllegalStateException.class)
     public void testDoubleCannotIncrement() throws Exception {
         MethodVariableAccess.DOUBLE.increment(0, 1);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodVariableAccess.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.OffsetLoading.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.OffsetWriting.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.OffsetIncrementing.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.NoOp.class).apply();
     }
 }

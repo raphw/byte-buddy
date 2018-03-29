@@ -3,7 +3,6 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -147,12 +146,6 @@ public class ModifierAdjustmentTest {
         assertThat(type.getDeclaredMethod(BAR).getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(type.getDeclaredConstructor(Void.class).getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(type.getDeclaredConstructor().getModifiers(), is(Opcodes.ACC_PUBLIC));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ModifierAdjustment.class).apply();
-        ObjectPropertyAssertion.of(ModifierAdjustment.Adjustment.class).apply();
     }
 
     private static class Sample {

@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,10 +57,5 @@ public class MethodDelegationBinderBindingResolverStreamWritingTest {
     public void testSystemError() throws Exception {
         assertThat(MethodDelegationBinder.BindingResolver.StreamWriting.toSystemError(), is((MethodDelegationBinder.BindingResolver)
                 new MethodDelegationBinder.BindingResolver.StreamWriting(MethodDelegationBinder.BindingResolver.Default.INSTANCE, System.err)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.BindingResolver.StreamWriting.class).apply();
     }
 }

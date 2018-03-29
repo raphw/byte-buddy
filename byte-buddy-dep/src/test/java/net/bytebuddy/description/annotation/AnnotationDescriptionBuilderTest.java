@@ -1,6 +1,5 @@
 package net.bytebuddy.description.annotation;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -55,11 +54,6 @@ public class AnnotationDescriptionBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testDuplicateProperty() throws Exception {
         AnnotationDescription.Builder.ofType(Foo.class).define(BAZ, FOO).define(BAZ, FOO);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationDescription.Builder.class).apply();
     }
 
     public enum Bar {

@@ -2,7 +2,6 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -72,11 +71,5 @@ public class AgentBuilderDefaultNativeMethodStrategyTest {
     @Test
     public void testEnabledStrategySuffixesNames() throws Exception {
         assertThat(new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).resolve().transform(methodDescription), is(FOO + BAR));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Default.NativeMethodStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.NativeMethodStrategy.ForPrefix.class).apply();
     }
 }

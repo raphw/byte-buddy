@@ -15,7 +15,6 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,9 +26,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -627,26 +623,6 @@ public class TypeWriterDefaultTest {
     @Test(expected = IllegalArgumentException.class)
     public void testPropertyDefinitionEmptyName() throws Exception {
         new ByteBuddy().subclass(Object.class).defineProperty("", Object.class);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.Default.UnresolvedType.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ClassDumpAction.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Creating.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForPackageType.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClassFileVersion.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(TypeWriter.Default.ValidatingClassVisitor.Constraint.class));
-            }
-        }).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

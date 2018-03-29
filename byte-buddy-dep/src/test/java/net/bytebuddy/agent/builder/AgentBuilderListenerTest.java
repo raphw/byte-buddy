@@ -4,7 +4,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,7 +14,6 @@ import org.mockito.Mock;
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
@@ -305,20 +303,6 @@ public class AgentBuilderListenerTest {
         verify(target).canRead(source);
         verify(target).addReads(instrumentation, source);
         verifyNoMoreInteractions(target);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.Filtering.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.Listener.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.ModuleReadEdgeCompleting.class).apply();
     }
 
     private static class PseudoAdapter extends AgentBuilder.Listener.Adapter {

@@ -1,12 +1,8 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -66,22 +62,5 @@ public class JavaModuleTest {
     @Test
     public void testDisabledModuleIsNull() throws Exception {
         assertThat(JavaModule.Dispatcher.Disabled.INSTANCE.moduleOf(Object.class), nullValue(JavaModule.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaModule.class).apply();
-        Object object = new Object();
-        assertThat(new JavaModule(object).hashCode(), is(object.hashCode()));
-        assertThat(new JavaModule(object).toString(), is(object.toString()));
-        final Iterator<Method> iterator = Arrays.asList(String.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaModule.Dispatcher.Enabled.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return iterator.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(JavaModule.Dispatcher.Disabled.class).apply();
-        ObjectPropertyAssertion.of(JavaModule.Dispatcher.CreationAction.class).apply();
     }
 }

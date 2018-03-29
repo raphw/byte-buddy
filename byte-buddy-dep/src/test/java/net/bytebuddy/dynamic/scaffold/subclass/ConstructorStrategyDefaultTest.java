@@ -18,7 +18,6 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -308,11 +307,5 @@ public class ConstructorStrategyDefaultTest {
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ConstructorStrategy.Default.class).apply();
-        ObjectPropertyAssertion.of(ConstructorStrategy.Default.WithMethodAttributeAppenderFactory.class).apply();
     }
 }

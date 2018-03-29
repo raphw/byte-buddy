@@ -5,7 +5,6 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.isHashCode;
@@ -113,15 +112,6 @@ public class HashCodeMethodOtherTest {
                 .defineMethod(FOO, int.class, Ownership.STATIC)
                 .intercept(HashCodeMethod.usingDefaultOffset())
                 .make();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(HashCodeMethod.class).apply();
-        ObjectPropertyAssertion.of(HashCodeMethod.Appender.class).apply();
-//        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.class).apply();
-        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.BeforeInstruction.class).apply();
-        ObjectPropertyAssertion.of(HashCodeMethod.NullValueGuard.UsingJump.AfterInstruction.class).apply();
     }
 
     public static class HashCodeBase {

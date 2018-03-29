@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -30,10 +29,5 @@ public class LatentMatcherAccessorTest {
         assertThat(matcher.resolve(typeDescription), is((ElementMatcher) this.matcher));
         verifyZeroInteractions(this.matcher);
         verifyZeroInteractions(typeDescription);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMatcher.Resolved.class).apply();
     }
 }

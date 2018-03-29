@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -133,12 +132,6 @@ public class HashCodeAndEqualsPluginTest {
                 is(EqualsMethod.isolated()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
                 is(EqualsMethod.isolated()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(HashCodeAndEqualsPlugin.class).apply();
-        ObjectPropertyAssertion.of(HashCodeAndEqualsPlugin.ValueMatcher.class).apply();
     }
 
     @HashCodeAndEqualsPlugin.Enhance

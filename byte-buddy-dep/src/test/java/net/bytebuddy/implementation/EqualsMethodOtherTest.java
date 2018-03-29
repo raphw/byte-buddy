@@ -5,7 +5,6 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.isEquals;
@@ -164,17 +163,6 @@ public class EqualsMethodOtherTest {
                 .withParameters(Object.class)
                 .intercept(EqualsMethod.isolated())
                 .make();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(EqualsMethod.class).apply();
-        ObjectPropertyAssertion.of(EqualsMethod.Appender.class).apply();
-        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.NoOp.class).apply();
-//        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.class).apply();
-        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.BeforeInstruction.class).apply();
-        ObjectPropertyAssertion.of(EqualsMethod.NullValueGuard.UsingJump.AfterInstruction.class).apply();
-        ObjectPropertyAssertion.of(EqualsMethod.ConditionalReturn.class).apply();
     }
 
     public static class EqualsBase {

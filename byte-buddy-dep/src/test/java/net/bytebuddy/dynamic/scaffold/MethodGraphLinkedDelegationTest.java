@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,10 +68,5 @@ public class MethodGraphLinkedDelegationTest {
     @Test
     public void testUnknownInterfaceGraph() throws Exception {
         assertThat(linkedMethodGraph.getInterfaceGraph(mock(TypeDescription.class)), is((MethodGraph) MethodGraph.Empty.INSTANCE));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Linked.Delegation.class).apply();
     }
 }

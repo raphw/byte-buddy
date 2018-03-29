@@ -3,7 +3,6 @@ package net.bytebuddy.build;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,11 +51,6 @@ public class ToStringPluginTest {
         Object instance = type.getDeclaredConstructor().newInstance();
         type.getDeclaredField(FOO).set(instance, FOO);
         assertThat(instance.toString(), is("IgnoredFieldSample{}"));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ToStringPlugin.class).apply();
     }
 
     @ToStringPlugin.Enhance

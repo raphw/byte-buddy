@@ -12,7 +12,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,7 +24,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public class TransformerForMethodTest {
 
@@ -162,13 +162,6 @@ public class TransformerForMethodTest {
         assertThat(transformed.getReturnType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(transformed.getReturnType().getTypeArguments().size(), is(1));
         assertThat(transformed.getReturnType().getTypeArguments().getOnly(), is(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
-        ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
-        ObjectPropertyAssertion.of(Transformer.ForMethod.TransformedMethod.AttachmentVisitor.class).apply();
     }
 
     private static class Foo<T> {

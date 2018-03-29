@@ -4,7 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -12,9 +11,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 public class MethodDelegationBinderProcessorTest {
 
@@ -54,10 +51,5 @@ public class MethodDelegationBinderProcessorTest {
         when(record.bind(implementationTarget, source, terminationHandler, methodInvoker, assigner)).thenReturn(methodBinding);
         new MethodDelegationBinder.Processor(Collections.singletonList(record), ambiguityResolver, bindingResolver)
                 .bind(implementationTarget, source, terminationHandler, methodInvoker, assigner);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.Processor.class).apply();
     }
 }

@@ -1,7 +1,6 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -331,14 +330,5 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     @Test(expected = IllegalArgumentException.class)
     public void testPartitioningIllegalArgument() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning.of(0);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.Partitioning.class).apply();
     }
 }

@@ -1,16 +1,16 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -101,18 +101,6 @@ public class LambdaFactoryTest {
                 boolean.class,
                 List.class,
                 List.class).getModifiers()), is(true));
-
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(LambdaFactory.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods.next();
-            }
-        }).apply();
     }
 
     public static class PseudoFactory {

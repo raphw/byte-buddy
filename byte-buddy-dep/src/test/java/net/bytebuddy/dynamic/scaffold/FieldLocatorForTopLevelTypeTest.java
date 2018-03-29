@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -54,12 +53,6 @@ public class FieldLocatorForTopLevelTypeTest {
     @Test
     public void testFactory() throws Exception {
         assertThat(FieldLocator.ForTopLevelType.Factory.INSTANCE.make(typeDescription), is((FieldLocator) new FieldLocator.ForTopLevelType(typeDescription)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldLocator.ForTopLevelType.class).apply();
-        ObjectPropertyAssertion.of(FieldLocator.ForTopLevelType.Factory.class).apply();
     }
 
     @SuppressWarnings("unused")

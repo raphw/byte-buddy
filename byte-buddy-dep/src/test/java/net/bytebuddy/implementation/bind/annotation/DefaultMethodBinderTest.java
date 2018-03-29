@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -172,13 +171,5 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
                 assigner,
                 Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DefaultMethod.Binder.class).apply();
-        ObjectPropertyAssertion.of(DefaultMethod.Binder.MethodLocator.ForExplicitType.class).apply();
-        ObjectPropertyAssertion.of(DefaultMethod.Binder.MethodLocator.ForImplicitType.class).apply();
-        ObjectPropertyAssertion.of(DefaultMethod.Binder.DelegationMethod.class).apply();
     }
 }

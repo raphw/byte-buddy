@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
@@ -87,10 +86,5 @@ public class AgentBuilderRedefinitionStrategyTest {
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(String.class)));
         assertThat(iterator.hasNext(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.class).apply();
     }
 }

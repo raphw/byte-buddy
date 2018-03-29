@@ -2,7 +2,6 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,10 +57,5 @@ public class TypeVariableTokenTest {
     @Test
     public void testVisitor() throws Exception {
         assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).accept(visitor), is(new TypeVariableToken(FOO, Collections.singletonList(visitedBound))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeVariableToken.class).apply();
     }
 }

@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -20,10 +19,5 @@ public class MethodAttributeAppenderNoOpTest extends AbstractMethodAttributeAppe
     public void testFactory() throws Exception {
         assertThat(MethodAttributeAppender.NoOp.INSTANCE.make(instrumentedType), is((MethodAttributeAppender) MethodAttributeAppender.NoOp.INSTANCE));
         verifyZeroInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.NoOp.class).apply();
     }
 }

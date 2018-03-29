@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -43,10 +42,5 @@ public class InjectionClassLoaderTest {
         when(typeDescription.getName()).thenReturn(FOO);
         when(classLoader.defineClasses(Collections.singletonMap(FOO, binaryRepresentation))).thenThrow(new ClassNotFoundException(FOO));
         InjectionClassLoader.Strategy.INSTANCE.load(classLoader, Collections.singletonMap(typeDescription, binaryRepresentation));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InjectionClassLoader.Strategy.class).apply();
     }
 }

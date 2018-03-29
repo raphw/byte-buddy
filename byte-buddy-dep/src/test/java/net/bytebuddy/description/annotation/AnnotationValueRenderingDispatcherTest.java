@@ -1,7 +1,6 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -87,10 +86,5 @@ public class AnnotationValueRenderingDispatcherTest {
     public void testArray() throws Exception {
         assertThat(AnnotationValue.RenderingDispatcher.LEGACY_VM.toSourceString(Arrays.asList("foo", "bar")), is("[foo, bar]"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Arrays.asList("foo", "bar")), is("{foo, bar}"));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationValue.RenderingDispatcher.class).apply();
     }
 }

@@ -1,6 +1,5 @@
 package net.bytebuddy.utility.privilege;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -18,10 +17,5 @@ public class GetSystemPropertyActionTest {
         } finally {
             System.clearProperty(FOO);
         }
-    }
-
-    @Test
-    public void testObjectProperty() throws Exception {
-        ObjectPropertyAssertion.of(GetSystemPropertyAction.class).apply();
     }
 }

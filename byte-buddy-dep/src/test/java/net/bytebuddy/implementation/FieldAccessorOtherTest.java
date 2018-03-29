@@ -7,7 +7,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -172,18 +171,6 @@ public class FieldAccessorOtherTest {
                 .method(isDeclaredBy(Bar.class))
                 .intercept(FieldAccessor.of(Bar.class.getDeclaredField(BAR)))
                 .make();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAccessor.ForImplicitProperty.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.ForImplicitProperty.Appender.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.TerminationHandler.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.Appender.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Absolute.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Relative.class).apply();
-        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Relative.Prepared.class).apply();
     }
 
     @SuppressWarnings("unused")

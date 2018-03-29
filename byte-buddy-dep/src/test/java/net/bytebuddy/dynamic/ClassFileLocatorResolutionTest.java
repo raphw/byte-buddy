@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
@@ -31,11 +30,5 @@ public class ClassFileLocatorResolutionTest {
     @Test
     public void testExplicitGetData() throws Exception {
         assertThat(new ClassFileLocator.Resolution.Explicit(DATA).resolve(), is(DATA));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.Resolution.Explicit.class).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.Resolution.Illegal.class).apply();
     }
 }

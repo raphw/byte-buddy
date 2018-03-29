@@ -6,7 +6,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -83,10 +82,5 @@ public class AnnotationValueFilterDefaultTest {
                 is((AnnotationValueFilter) AnnotationValueFilter.Default.APPEND_DEFAULTS));
         assertThat(AnnotationValueFilter.Default.APPEND_DEFAULTS.on(mock(TypeDescription.class)),
                 is((AnnotationValueFilter) AnnotationValueFilter.Default.APPEND_DEFAULTS));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
     }
 }

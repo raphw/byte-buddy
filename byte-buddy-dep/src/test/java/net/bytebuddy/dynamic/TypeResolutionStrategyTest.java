@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -116,15 +115,6 @@ public class TypeResolutionStrategyTest {
     @Test(expected = IllegalStateException.class)
     public void testDisabledCannotBeApplied() throws Exception {
         TypeResolutionStrategy.Disabled.INSTANCE.resolve().initialize(dynamicType, classLoader, classLoadingStrategy);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.class).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.Resolved.class).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Passive.class).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Lazy.class).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Disabled.class).apply();
     }
 
     private static class Foo {

@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -42,10 +41,5 @@ public class ParameterLengthResolverTest extends AbstractAmbiguityResolverTest {
         when(rightList.size()).thenReturn(1);
         assertThat(ParameterLengthResolver.INSTANCE.resolve(source, left, right),
                 is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ParameterLengthResolver.class).apply();
     }
 }

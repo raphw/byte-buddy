@@ -2,7 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -32,10 +31,5 @@ public class StubMethodOtherTest {
     @Test
     public void testComposition() throws Exception {
         assertThat(StubMethod.INSTANCE.andThen(implementation), is(implementation));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StubMethod.class).apply();
     }
 }

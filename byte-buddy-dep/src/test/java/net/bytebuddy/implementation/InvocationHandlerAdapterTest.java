@@ -6,7 +6,6 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -164,15 +163,6 @@ public class InvocationHandlerAdapterTest {
                 .defineMethod(FOO, void.class)
                 .intercept(InvocationHandlerAdapter.toField(QUX))
                 .make();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.class).apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForField.class).apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForField.Appender.class).skipSynthetic().apply();
     }
 
     private static class Foo implements InvocationHandler {

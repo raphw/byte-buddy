@@ -7,7 +7,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -148,11 +147,5 @@ public class FieldConstantTest {
         verifyNoMoreInteractions(implementationContext);
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO + BAR, QUX + BAZ);
         verifyNoMoreInteractions(methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldConstant.class).apply();
-        ObjectPropertyAssertion.of(FieldConstant.Cached.class).apply();
     }
 }

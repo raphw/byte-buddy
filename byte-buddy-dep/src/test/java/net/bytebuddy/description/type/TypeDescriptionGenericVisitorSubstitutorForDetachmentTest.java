@@ -2,7 +2,6 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.List;
@@ -44,11 +43,6 @@ public class TypeDescriptionGenericVisitorSubstitutorForDetachmentTest {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         detached.getTypeArguments().get(0).getTypeVariableSource();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.class).apply();
     }
 
     @SuppressWarnings("unused")

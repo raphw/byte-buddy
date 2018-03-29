@@ -3,12 +3,9 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -233,12 +230,5 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(0)));
         verify(right, atLeast(1)).getTargetParameterIndex(argThat(describesArgument(1)));
         verify(right, never()).getTargetParameterIndex(not(argThat(describesArgument(0, 1))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ArgumentTypeResolver.class).apply();
-        ObjectPropertyAssertion.of(ArgumentTypeResolver.PrimitiveTypePrecedence.class).apply();
-        ObjectPropertyAssertion.of(ArgumentTypeResolver.ParameterIndexToken.class).apply();
     }
 }

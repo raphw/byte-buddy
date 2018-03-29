@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,10 +62,5 @@ public class ClassFileLocatorPackageDiscriminatingTest {
         verifyNoMoreInteractions(foo);
         verify(bar).close();
         verifyNoMoreInteractions(bar);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.PackageDiscriminating.class).apply();
     }
 }

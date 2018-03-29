@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -28,10 +27,5 @@ public class MethodDescriptionTypeTokenTest {
         MethodDescription.TypeToken token = new MethodDescription.TypeToken(returnType, Collections.singletonList(parameterType));
         assertThat(token.getReturnType(), is(returnType));
         assertThat(token.getParameterTypes(), is(Collections.singletonList(parameterType)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDescription.TypeToken.class).apply();
     }
 }

@@ -4,7 +4,6 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,15 +13,10 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorAgentBasedTest {
 
@@ -96,37 +90,6 @@ public class ClassFileLocatorAgentBasedTest {
                 mock(ProtectionDomain.class),
                 new byte[0]), nullValue(byte[].class));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
-            @Override
-            public void apply(Instrumentation mock) {
-                when(mock.isRetransformClassesSupported()).thenReturn(true);
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Default.class).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class).apply();
-        final Iterator<Field> iterator = Arrays.asList(Foo.class.getDeclaredFields()).iterator();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved.class)
-                .create(new ObjectPropertyAssertion.Creator<Field>() {
-                    @Override
-                    public Field create() {
-                        return iterator.next();
-                    }
-                })
-                .apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Unresolved.class).apply();
-        final Iterator<Class<?>> otherIterator = Arrays.<Class<?>>asList(Integer.class, String.class, Object.class, Byte.class).iterator();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.class).create(new ObjectPropertyAssertion.Creator<Collection<Class<?>>>() {
-            @Override
-            public Collection<Class<?>> create() {
-                return Collections.<Class<?>>singletonList(otherIterator.next());
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.CreationAction.class).apply();
-    }
-
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {

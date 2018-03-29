@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -19,10 +18,5 @@ public class ByteCodeAppenderSizeTest {
         assertThat(mergedLeft, is(mergedRight));
         assertThat(mergedLeft.getOperandStackSize(), is(BIGGER));
         assertThat(mergedLeft.getLocalVariableSize(), is(BIGGER));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteCodeAppender.Size.class).apply();
     }
 }

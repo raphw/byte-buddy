@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -41,10 +40,5 @@ public class TypeDescriptionGenericVisitorNoOpTest {
     @Test
     public void testVisitNonGenericType() throws Exception {
         assertThat(TypeDescription.Generic.Visitor.NoOp.INSTANCE.onNonGenericType(typeDescription), is(typeDescription));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.NoOp.class).apply();
     }
 }

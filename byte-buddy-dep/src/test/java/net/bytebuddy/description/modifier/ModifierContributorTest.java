@@ -1,6 +1,5 @@
 package net.bytebuddy.description.modifier;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,10 +47,5 @@ public class ModifierContributorTest {
         for (ModifierContributor contributor : modifierContributor) {
             assertThat(mask, is(contributor.getRange()));
         }
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(type).apply();
     }
 }

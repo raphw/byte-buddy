@@ -2,7 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,11 +65,5 @@ public class TypePoolLazyFacadeTest {
         verifyNoMoreInteractions(resolution);
         verify(typeDescription).getModifiers();
         verifyNoMoreInteractions(typeDescription);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.LazyFacade.class).apply();
-        ObjectPropertyAssertion.of(TypePool.LazyFacade.LazyResolution.class).apply();
     }
 }

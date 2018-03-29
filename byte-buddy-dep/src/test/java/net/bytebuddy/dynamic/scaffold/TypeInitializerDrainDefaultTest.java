@@ -5,7 +5,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -47,10 +46,5 @@ public class TypeInitializerDrainDefaultTest {
         new TypeInitializer.Drain.Default(instrumentedType, methodPool, annotationValueFilterFactory).apply(classVisitor, typeInitializer, implementationContext);
         verify(transformed).apply(classVisitor, implementationContext, annotationValueFilterFactory);
         verifyNoMoreInteractions(transformed);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeInitializer.Drain.Default.class).apply();
     }
 }

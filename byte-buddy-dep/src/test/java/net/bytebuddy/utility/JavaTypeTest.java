@@ -3,7 +3,6 @@ package net.bytebuddy.utility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -98,10 +97,5 @@ public class JavaTypeTest {
     public void testJava8Types() throws Exception {
         assertThat(JavaType.PARAMETER.load(), notNullValue(Class.class));
         assertThat(JavaType.EXECUTABLE.load(), notNullValue(Class.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaType.class).apply();
     }
 }

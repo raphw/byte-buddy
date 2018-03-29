@@ -1,18 +1,13 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
-
-import java.util.Arrays;
-import java.util.Random;
 
 import static org.mockito.Mockito.*;
 
@@ -172,18 +167,5 @@ public class TypeAttributeAppenderForInstrumentedTypeDifferentiatingTest extends
         verify(instrumentedType).getInterfaces();
         verify(instrumentedType).getTypeVariables();
         verifyNoMoreInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeAttributeAppender.ForInstrumentedType.Differentiating.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                AnnotationDescription[] annotationDescription = new AnnotationDescription[new Random().nextInt(10000)];
-                when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(Arrays.asList(annotationDescription)));
-                when(mock.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
-                when(mock.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
-            }
-        }).apply();
     }
 }

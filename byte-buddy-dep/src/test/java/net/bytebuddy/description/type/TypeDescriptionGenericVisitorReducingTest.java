@@ -2,7 +2,6 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -105,10 +104,5 @@ public class TypeDescriptionGenericVisitorReducingTest {
         when(typeDescription.getSymbol()).thenReturn(BAR);
         when(declaringType.findVariable(BAR)).thenReturn(TargetType.DESCRIPTION.asGenericType());
         assertThat(visitor.onTypeVariable(typeDescription), is(declaringType));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Reducing.class).apply();
     }
 }

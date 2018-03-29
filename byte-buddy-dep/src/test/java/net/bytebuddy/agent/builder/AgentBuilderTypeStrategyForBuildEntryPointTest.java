@@ -7,7 +7,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -48,10 +47,5 @@ public class AgentBuilderTypeStrategyForBuildEntryPointTest {
                 is((DynamicType.Builder) builder));
         verify(entryPoint).transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
         verifyNoMoreInteractions(entryPoint);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.TypeStrategy.ForBuildEntryPoint.class).apply();
     }
 }

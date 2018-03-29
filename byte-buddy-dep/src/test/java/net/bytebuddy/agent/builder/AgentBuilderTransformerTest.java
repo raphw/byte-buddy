@@ -3,15 +3,11 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -53,19 +49,5 @@ public class AgentBuilderTransformerTest {
         verifyNoMoreInteractions(first);
         verify(second).transform(builder, typeDescription, classLoader, module);
         verifyNoMoreInteractions(second);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForAdvice.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForAdvice.Entry.ForUnifiedAdvice.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForAdvice.Entry.ForSplitAdvice.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.Transformer.class));
-            }
-        }).apply();
     }
 }

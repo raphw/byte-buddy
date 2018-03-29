@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
@@ -214,10 +213,5 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
         verify(instrumentedType).getInterfaces();
         verify(instrumentedType).getTypeVariables();
         verifyNoMoreInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeAttributeAppender.ForInstrumentedType.class).apply();
     }
 }

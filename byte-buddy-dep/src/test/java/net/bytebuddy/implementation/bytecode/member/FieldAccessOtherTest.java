@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -140,14 +139,5 @@ public class FieldAccessOtherTest {
         StackManipulation stackManipulation = FieldAccess.forField(genericField).write();
         assertThat(stackManipulation.isValid(), is(true));
         assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).write()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAccess.class).apply();
-        ObjectPropertyAssertion.of(FieldAccess.OfGenericField.class).apply();
-        ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.class).apply();
-        ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.FieldGetInstruction.class).apply();
-        ObjectPropertyAssertion.of(FieldAccess.AccessDispatcher.FieldPutInstruction.class).apply();
     }
 }

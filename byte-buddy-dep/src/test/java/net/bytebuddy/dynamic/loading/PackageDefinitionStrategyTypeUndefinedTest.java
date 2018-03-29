@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -51,10 +50,5 @@ public class PackageDefinitionStrategyTypeUndefinedTest {
     @Test(expected = IllegalStateException.class)
     public void testIsCompatibleToThrowsException() throws Exception {
         PackageDefinitionStrategy.Definition.Undefined.INSTANCE.isCompatibleTo(getClass().getPackage());
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(PackageDefinitionStrategy.Definition.Undefined.class).apply();
     }
 }

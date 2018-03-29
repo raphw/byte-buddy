@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,10 +40,5 @@ public class MethodGraphSimpleTest {
     public void testNodeLocation() throws Exception {
         assertThat(MethodGraph.Simple.of(Collections.singletonList(methodDescription)).locate(token),
                 is((MethodGraph.Node) new MethodGraph.Node.Simple(methodDescription)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Simple.class).apply();
     }
 }

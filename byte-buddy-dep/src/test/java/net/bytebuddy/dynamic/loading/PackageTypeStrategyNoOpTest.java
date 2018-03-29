@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -13,10 +12,5 @@ public class PackageTypeStrategyNoOpTest {
     @Test
     public void testPackageNotDefined() throws Exception {
         assertThat(PackageDefinitionStrategy.NoOp.INSTANCE.define(getClass().getClassLoader(), FOO, BAR).isDefined(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(PackageDefinitionStrategy.NoOp.class).apply();
     }
 }

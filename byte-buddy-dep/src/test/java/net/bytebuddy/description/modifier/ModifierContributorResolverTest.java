@@ -1,6 +1,5 @@
 package net.bytebuddy.description.modifier;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -47,10 +46,5 @@ public class ModifierContributorResolverTest {
                 is(Opcodes.ACC_MANDATED | Opcodes.ACC_FINAL));
         assertThat(ModifierContributor.Resolver.of(ProvisioningState.MANDATED, ParameterManifestation.FINAL).resolve(1),
                 is(Opcodes.ACC_MANDATED | Opcodes.ACC_FINAL | 1));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ModifierContributor.Resolver.class).apply();
     }
 }

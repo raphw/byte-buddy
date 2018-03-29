@@ -8,7 +8,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -63,10 +62,5 @@ public class EntryPointDefaultTest {
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) builder);
         when(builder.ignoreAlso(not(isDeclaredBy(typeDescription)))).thenReturn((DynamicType.Builder) otherBuilder);
         assertThat(EntryPoint.Default.REDEFINE_LOCAL.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) otherBuilder));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(EntryPoint.Default.class).apply();
     }
 }

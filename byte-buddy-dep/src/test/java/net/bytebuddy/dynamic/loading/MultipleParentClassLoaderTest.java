@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,7 +10,6 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
@@ -164,7 +162,8 @@ public class MultipleParentClassLoaderTest {
 
     @Test
     public void testMultipleParentClassLoaderExplicitParentPreIncludedWithOther() throws Exception {
-        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second).build(first);;
+        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second).build(first);
+        ;
         assertThat(classLoader, CoreMatchers.not(first));
         assertThat(classLoader, CoreMatchers.not(second));
         assertThat(classLoader.getParent(), is(first));
@@ -172,14 +171,9 @@ public class MultipleParentClassLoaderTest {
 
     @Test
     public void testMultipleParentClassLoaderExplicitParentNotPreIncludedWithOther() throws Exception {
-        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(second).build(first);;
+        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(second).build(first);
         assertThat(classLoader, CoreMatchers.not(second));
         assertThat(classLoader.getParent(), is(first));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.class).apply();
     }
 
     public static class Foo {

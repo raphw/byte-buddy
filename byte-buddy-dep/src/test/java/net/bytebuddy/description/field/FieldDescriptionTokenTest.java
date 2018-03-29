@@ -3,7 +3,6 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,10 +64,5 @@ public class FieldDescriptionTokenTest {
         when(type.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription))).thenReturn(rawType);
         assertThat(new FieldDescription.Token(FOO, MODIFIERS, type, Collections.singletonList(annotation)).asSignatureToken(typeDescription),
                 is(new FieldDescription.SignatureToken(FOO, rawType)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldDescription.Token.class).apply();
     }
 }

@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,10 +47,5 @@ public class TypeDescriptionGenericVisitorTypeErasingTest {
     @Test
     public void testNonGeneric() throws Exception {
         assertThat(TypeDescription.Generic.Visitor.TypeErasing.INSTANCE.onNonGenericType(typeDescription), is(rawType));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.TypeErasing.class).apply();
     }
 }

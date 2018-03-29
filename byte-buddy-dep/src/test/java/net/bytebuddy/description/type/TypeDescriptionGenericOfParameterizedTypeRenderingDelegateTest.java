@@ -2,7 +2,6 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,10 +59,5 @@ public class TypeDescriptionGenericOfParameterizedTypeRenderingDelegateTest {
         assertThat(TypeDescription.Generic.OfParameterizedType.RenderingDelegate.CURRENT, is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9)
                 ? TypeDescription.Generic.OfParameterizedType.RenderingDelegate.JAVA_9_CAPABLE_VM
                 : TypeDescription.Generic.OfParameterizedType.RenderingDelegate.LEGACY_VM));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.OfParameterizedType.RenderingDelegate.class).apply();
     }
 }

@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -31,10 +30,5 @@ public class LatentMatcherForSelfDeclaredMethodTest {
     @SuppressWarnings("unchecked")
     public void testNotDeclared() throws Exception {
         assertThat(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED.resolve(typeDescription), is((ElementMatcher) not(isDeclaredBy(typeDescription))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMatcher.ForSelfDeclaredMethod.class).apply();
     }
 }

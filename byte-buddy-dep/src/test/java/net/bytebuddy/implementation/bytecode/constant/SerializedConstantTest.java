@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode.constant;
 
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
@@ -26,10 +25,5 @@ public class SerializedConstantTest {
         SerializedConstant.of(FOO).apply(methodVisitor, implementationContext);
         verify(methodVisitor).visitLdcInsn(contains(FOO));
         verifyZeroInteractions(implementationContext);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SerializedConstant.class).apply();
     }
 }

@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -27,16 +26,5 @@ public class AgentBuilderFallbackStrategyByThrowableTypeTest {
     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
     public void testIsNoFallback() throws Exception {
         assertThat(new AgentBuilder.FallbackStrategy.ByThrowableType(RuntimeException.class).isFallback(Object.class, new Exception()), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.FallbackStrategy.ByThrowableType.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return iterator.next();
-            }
-        }).apply();
     }
 }
