@@ -126,4 +126,12 @@ public class TypeCacheTest {
         when(callable.call()).thenThrow(RuntimeException.class);
         typeCache.findOrInsert(ClassLoader.getSystemClassLoader(), new Object(), callable, new Object());
     }
+
+    @Test
+    public void testSimpleKeyProperties() {
+        assertThat(new TypeCache.SimpleKey(Object.class).hashCode(), is(new TypeCache.SimpleKey(Object.class).hashCode()));
+        assertThat(new TypeCache.SimpleKey(Object.class), is(new TypeCache.SimpleKey(Object.class)));
+        assertThat(new TypeCache.SimpleKey(Object.class).hashCode(), not(new TypeCache.SimpleKey(Void.class).hashCode()));
+        assertThat(new TypeCache.SimpleKey(Object.class), not(new TypeCache.SimpleKey(Void.class)));
+    }
 }

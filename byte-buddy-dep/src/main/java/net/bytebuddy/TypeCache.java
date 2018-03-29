@@ -362,7 +362,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
-    @HashCodeAndEqualsPlugin.Enhance
     public static class SimpleKey {
 
         /**
@@ -400,6 +399,22 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             for (Class<?> type : types) {
                 this.types.add(type.getName());
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            SimpleKey simpleKey = (SimpleKey) other;
+            return types.equals(simpleKey.types);
+        }
+
+        @Override
+        public int hashCode() {
+            return types.hashCode();
         }
     }
 }
