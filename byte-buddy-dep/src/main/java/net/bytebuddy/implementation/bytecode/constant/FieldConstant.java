@@ -15,7 +15,6 @@ import java.lang.reflect.Field;
 /**
  * Represents a {@link Field} constant for a given type.
  */
-@HashCodeAndEqualsPlugin.Enhance
 public class FieldConstant implements StackManipulation {
 
     /**
@@ -59,10 +58,25 @@ public class FieldConstant implements StackManipulation {
         }
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        } else if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        FieldConstant fieldConstant = (FieldConstant) object;
+        return fieldDescription.equals(fieldConstant.fieldDescription);
+    }
+
+    @Override
+    public int hashCode() {
+        return fieldDescription.hashCode();
+    }
+
     /**
      * A cached version of a {@link FieldConstant}.
      */
-    @HashCodeAndEqualsPlugin.Enhance
     protected static class Cached implements StackManipulation {
 
         /**
@@ -89,6 +103,22 @@ public class FieldConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(fieldConstant, new TypeDescription.ForLoadedType(Field.class)))
                     .read()
                     .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            } else if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            Cached cached = (Cached) object;
+            return fieldConstant.equals(cached.fieldConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return fieldConstant.hashCode();
         }
     }
 }

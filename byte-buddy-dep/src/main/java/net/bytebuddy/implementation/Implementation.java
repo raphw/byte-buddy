@@ -904,7 +904,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
-            @HashCodeAndEqualsPlugin.Enhance
             protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
@@ -955,6 +954,24 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     return fieldValue.apply(methodVisitor, implementationContext);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) {
+                        return true;
+                    } else if (object == null || getClass() != object.getClass()) {
+                        return false;
+                    }
+                    FieldCacheEntry fieldCacheEntry = (FieldCacheEntry) object;
+                    return fieldValue.equals(fieldCacheEntry.fieldValue) && fieldType.equals(fieldCacheEntry.fieldType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = fieldValue.hashCode();
+                    result = 31 * result + fieldType.hashCode();
+                    return result;
                 }
             }
 

@@ -53,8 +53,7 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         TypeDescription rightParameterType = right.getTarget().getParameters().get(rightParameterIndex).getType().asErasure();
         if (!leftParameterType.equals(rightParameterType)) {
             if (leftParameterType.isPrimitive() && rightParameterType.isPrimitive()) {
-                return PrimitiveTypePrecedence.forPrimitive(leftParameterType)
-                        .resolve(PrimitiveTypePrecedence.forPrimitive(rightParameterType));
+                return PrimitiveTypePrecedence.forPrimitive(leftParameterType).resolve(PrimitiveTypePrecedence.forPrimitive(rightParameterType));
             } else if (leftParameterType.isPrimitive() /* && !rightParameterType.isPrimitive() */) {
                 return sourceParameterType.isPrimitive() ? Resolution.LEFT : Resolution.RIGHT;
             } else if (/* !leftParameterType.isPrimitive() && */ rightParameterType.isPrimitive()) {
@@ -233,7 +232,6 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
      *
      * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding#getTargetParameterIndex(Object)
      */
-    @HashCodeAndEqualsPlugin.Enhance
     public static class ParameterIndexToken {
 
         /**
@@ -249,6 +247,22 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
          */
         public ParameterIndexToken(int parameterIndex) {
             this.parameterIndex = parameterIndex;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            } else if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+            ParameterIndexToken that = (ParameterIndexToken) object;
+            return parameterIndex == that.parameterIndex;
+        }
+
+        @Override
+        public int hashCode() {
+            return parameterIndex;
         }
     }
 }
