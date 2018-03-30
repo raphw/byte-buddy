@@ -1372,7 +1372,7 @@ public interface AgentBuilder {
              *
              * @return A listener writing events to the standard output stream.
              */
-            public static Listener toSystemOut() {
+            public static StreamWriting toSystemOut() {
                 return new StreamWriting(System.out);
             }
 
@@ -1381,8 +1381,26 @@ public interface AgentBuilder {
              *
              * @return A listener writing events to the standard error stream.
              */
-            public static Listener toSystemError() {
+            public static StreamWriting toSystemError() {
                 return new StreamWriting(System.err);
+            }
+
+            /**
+             * Returns a version of this listener that only reports successfully transformed classes and failed transformations.
+             *
+             * @return A version of this listener that only reports successfully transformed classes and failed transformations.
+             */
+            public Listener withTransformationsOnly() {
+                return new WithTransformationsOnly(this);
+            }
+
+            /**
+             * Returns a version of this listener that only reports failed transformations.
+             *
+             * @return A version of this listener that only reports failed transformations.
+             */
+            public Listener withErrorsOnly() {
+                return new WithErrorsOnly(this);
             }
 
             @Override
@@ -1474,6 +1492,60 @@ public interface AgentBuilder {
                 if (matcher.matches(typeName)) {
                     delegate.onComplete(typeName, classLoader, module, loaded);
                 }
+            }
+        }
+
+        /**
+         * A listener that only delegates events if they are successful or failed transformations.
+         */
+        @EqualsAndHashCode(callSuper = false)
+        class WithTransformationsOnly extends Listener.Adapter {
+
+            /**
+             * The delegate listener.
+             */
+            private final Listener delegate;
+
+            /**
+             * Creates a new listener that only delegates events if they are succesful or failed transformations.
+             *
+             * @param delegate The delegate listener.
+             */
+            public WithTransformationsOnly(Listener delegate) {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
+                delegate.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                delegate.onError(typeName, classLoader, module, loaded, throwable);
+            }
+        }
+
+        /**
+         * A listener that only delegates events if they are failed transformations.
+         */
+        @EqualsAndHashCode(callSuper = false)
+        class WithErrorsOnly extends Listener.Adapter {
+
+            private final Listener delegate;
+
+            /**
+             * Creates a new listener that only delegates events if they are failed transformations.
+             *
+             * @param delegate The delegate listener.
+             */
+            public WithErrorsOnly(Listener delegate) {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                delegate.onError(typeName, classLoader, module, loaded, throwable);
             }
         }
 
