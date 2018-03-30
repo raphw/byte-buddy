@@ -1532,6 +1532,9 @@ public interface AgentBuilder {
         @EqualsAndHashCode(callSuper = false)
         class WithErrorsOnly extends Listener.Adapter {
 
+            /**
+             * The delegate listener.
+             */
             private final Listener delegate;
 
             /**
