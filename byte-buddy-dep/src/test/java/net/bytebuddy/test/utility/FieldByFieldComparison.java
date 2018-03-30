@@ -50,6 +50,8 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
     private static boolean matches(Class<?> type, Object left, Object right, Set<Pair> visited) throws Exception {
         if (!visited.add(new Pair(left, right))) {
             return true;
+        } else if (mockingDetails(left).isMock() || mockingDetails(left).isSpy() || mockingDetails(right).isMock() || mockingDetails(right).isSpy()) {
+            return left == right;
         }
         while (type != Object.class) {
             for (Field field : type.getDeclaredFields()) {
