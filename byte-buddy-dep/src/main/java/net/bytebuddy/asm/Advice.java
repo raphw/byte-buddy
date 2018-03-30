@@ -317,7 +317,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         try {
             ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
-                    ? new ClassReader(classFileLocator.locate(advice.getName()).resolve())
+                    ? new OpenedClassReader(classFileLocator.locate(advice.getName()).resolve())
                     : UNDEFINED;
             return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit), methodExit.asMethodExit(userFactories, classReader, methodEnter));
         } catch (IOException exception) {
@@ -405,9 +405,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         try {
             return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
-                    ? new ClassReader(classFileLocator.locate(enterAdvice.getName()).resolve())
+                    ? new OpenedClassReader(classFileLocator.locate(enterAdvice.getName()).resolve())
                     : UNDEFINED, methodExit), methodExit.asMethodExit(userFactories, methodExit.isBinary()
-                    ? new ClassReader(classFileLocator.locate(exitAdvice.getName()).resolve())
+                    ? new OpenedClassReader(classFileLocator.locate(exitAdvice.getName()).resolve())
                     : UNDEFINED, methodEnter));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);

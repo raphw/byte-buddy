@@ -1045,7 +1045,7 @@ public interface TypePool {
          * @return A type description of the binary data.
          */
         private TypeDescription parse(byte[] binaryRepresentation) {
-            ClassReader classReader = new ClassReader(binaryRepresentation);
+            ClassReader classReader = new OpenedClassReader(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
             classReader.accept(typeExtractor, readerMode.getFlags());
             return typeExtractor.toTypeDescription();

@@ -2908,7 +2908,7 @@ public interface TypeWriter<T> {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
-                    ClassReader classReader = new ClassReader(classFileLocator.locate(originalType.getName()).resolve());
+                    ClassReader classReader = new OpenedClassReader(classFileLocator.locate(originalType.getName()).resolve());
                     ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter, typeValidation),
