@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -71,7 +72,7 @@ public class FieldLocatorForClassHierarchyTest {
 
     @Test
     public void testFactory() throws Exception {
-        assertThat(FieldLocator.ForClassHierarchy.Factory.INSTANCE.make(typeDescription), is((FieldLocator) new FieldLocator.ForClassHierarchy(typeDescription)));
+        assertThat(FieldLocator.ForClassHierarchy.Factory.INSTANCE.make(typeDescription), hasPrototype((FieldLocator) new FieldLocator.ForClassHierarchy(typeDescription)));
     }
 
     @SuppressWarnings("unused")

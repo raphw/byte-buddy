@@ -12,6 +12,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -38,7 +39,7 @@ public class TypeInitializerTest {
 
     @Test
     public void testNoneExpansion() throws Exception {
-        assertThat(TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender), is((TypeInitializer) new TypeInitializer.Simple(byteCodeAppender)));
+        assertThat(TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender), hasPrototype((TypeInitializer) new TypeInitializer.Simple(byteCodeAppender)));
     }
 
     @Test
@@ -62,7 +63,7 @@ public class TypeInitializerTest {
     @Test
     public void testSimpleExpansion() throws Exception {
         assertThat(new TypeInitializer.Simple(byteCodeAppender).expandWith(byteCodeAppender),
-                is((TypeInitializer) new TypeInitializer.Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
+                hasPrototype((TypeInitializer) new TypeInitializer.Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
     }
 
     @Test

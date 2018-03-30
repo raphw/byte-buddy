@@ -22,6 +22,7 @@ import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
@@ -76,14 +77,14 @@ public class TransformerForMethodTest {
         when(typeVariableBound.getSymbol()).thenReturn(QUX);
         when(typeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeVariableBound.asGenericType()).thenReturn(typeVariableBound);
-        when(methodDescription.asToken(none())).thenReturn(methodToken);
+        when(methodDescription.asToken(matchesPrototype(none()))).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariableTokens()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX,
-                new TypeList.Generic.Explicit(typeVariableBound))));
+        when(methodToken.getTypeVariableTokens())
+                .thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX, new TypeList.Generic.Explicit(typeVariableBound))));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(parameterToken));

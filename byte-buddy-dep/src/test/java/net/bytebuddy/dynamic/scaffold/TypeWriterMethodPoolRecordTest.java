@@ -25,6 +25,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -124,7 +125,7 @@ public class TypeWriterMethodPoolRecordTest {
     @Test
     public void testSkippedMethodCannotBePrepended() throws Exception {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
-        assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
+        assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), hasPrototype((TypeWriter.MethodPool.Record)
                 new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                         new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(DefaultValue.REFERENCE, MethodReturn.REFERENCE)))));
     }

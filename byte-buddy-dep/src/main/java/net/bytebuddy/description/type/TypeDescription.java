@@ -1975,10 +1975,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * Creates a new reducing type visitor.
                  *
-                 * @param declaringType The generic type's declaring type.
+                 * @param declaringType     The generic type's declaring type.
+                 * @param typeVariableToken Any type variables that are directly declared by the member that declares the type being reduced.
                  */
-                public Reducing(TypeDescription declaringType) {
-                    this(declaringType, Collections.<TypeVariableToken>emptyList());
+                public Reducing(TypeDescription declaringType, TypeVariableToken... typeVariableToken) {
+                    this(declaringType, Arrays.asList(typeVariableToken));
                 }
 
                 /**

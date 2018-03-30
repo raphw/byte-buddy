@@ -19,6 +19,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,10 +65,10 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(methodDescription.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(token);
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
         when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
-        when(otherMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
+        when(otherMethod.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
         when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -43,9 +44,9 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     @Test
     public void testForFixedFactory() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1),
-                is((AgentBuilder.RedefinitionStrategy.BatchAllocator) new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(1)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.BatchAllocator) new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(1)));
         assertThat(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(0),
-                is((AgentBuilder.RedefinitionStrategy.BatchAllocator) AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.BatchAllocator) AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE));
     }
 
     @Test(expected = IllegalArgumentException.class)

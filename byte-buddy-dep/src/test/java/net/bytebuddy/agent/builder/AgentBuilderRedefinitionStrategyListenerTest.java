@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.io.PrintStream;
 import java.util.*;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -52,9 +53,9 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     @Test
     public void testStreamWritingFactories() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.toSystemOut(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.out)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.out)));
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.toSystemError(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.err)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.err)));
     }
 
     @Test
@@ -144,7 +145,7 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     @Test
     public void testSplittingBatchReallocator() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.splitting(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(
                         new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2))));
     }
 }

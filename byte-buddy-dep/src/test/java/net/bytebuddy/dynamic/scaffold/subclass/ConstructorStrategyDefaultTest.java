@@ -27,6 +27,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -71,7 +72,7 @@ public class ConstructorStrategyDefaultTest {
         when(superClass.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(methodDescription));
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.isVisibleTo(instrumentedType)).thenReturn(true);
-        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(methodDescription.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(token);
         when(token.getName()).thenReturn(FOO);
         when(token.getModifiers()).thenReturn(MODIFIERS);
         when(token.getTypeVariableTokens()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>());

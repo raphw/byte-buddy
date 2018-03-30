@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -48,7 +49,7 @@ public class ImplementationContextDisabledTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 classFileVersion,
-                mock(ClassFileVersion.class)), is((Implementation.Context.ExtractableView) new Implementation.Context.Disabled(instrumentedType, classFileVersion)));
+                mock(ClassFileVersion.class)), hasPrototype((Implementation.Context.ExtractableView) new Implementation.Context.Disabled(instrumentedType, classFileVersion)));
     }
 
     @Test(expected = IllegalStateException.class)

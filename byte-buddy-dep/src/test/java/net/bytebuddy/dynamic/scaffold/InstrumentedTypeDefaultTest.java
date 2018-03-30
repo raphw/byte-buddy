@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -323,7 +325,7 @@ public class InstrumentedTypeDefaultTest {
         LoadedTypeInitializer loadedTypeInitializer = mock(LoadedTypeInitializer.class);
         instrumentedType = instrumentedType.withInitializer(loadedTypeInitializer);
         assertThat(instrumentedType.getLoadedTypeInitializer(),
-                is((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(LoadedTypeInitializer.NoOp.INSTANCE, loadedTypeInitializer)));
+                hasPrototype((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(LoadedTypeInitializer.NoOp.INSTANCE, loadedTypeInitializer)));
     }
 
     @Test
@@ -333,7 +335,7 @@ public class InstrumentedTypeDefaultTest {
         LoadedTypeInitializer first = mock(LoadedTypeInitializer.class), second = mock(LoadedTypeInitializer.class);
         instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
         assertThat(instrumentedType.getLoadedTypeInitializer(),
-                is((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(new LoadedTypeInitializer
+                hasPrototype((LoadedTypeInitializer) new LoadedTypeInitializer.Compound(new LoadedTypeInitializer
                         .Compound(LoadedTypeInitializer.NoOp.INSTANCE, first), second)));
     }
 
@@ -485,7 +487,7 @@ public class InstrumentedTypeDefaultTest {
         FieldDescription.Token token = mock(FieldDescription.Token.class);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.withField(token), is(instrumentedType));
-        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verify(token).accept(matchesPrototype(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType)));
         verifyNoMoreInteractions(token);
     }
 
@@ -494,7 +496,7 @@ public class InstrumentedTypeDefaultTest {
         MethodDescription.Token token = mock(MethodDescription.Token.class);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.withMethod(token), is(instrumentedType));
-        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verify(token).accept(matchesPrototype(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType)));
         verifyNoMoreInteractions(token);
     }
 
@@ -503,7 +505,7 @@ public class InstrumentedTypeDefaultTest {
         TypeVariableToken token = mock(TypeVariableToken.class);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.withTypeVariable(token), is(instrumentedType));
-        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verify(token).accept(matchesPrototype(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType)));
         verifyNoMoreInteractions(token);
     }
 
@@ -515,7 +517,7 @@ public class InstrumentedTypeDefaultTest {
         when(typeDescription.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(typeDescription);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.withInterfaces(new TypeList.Generic.Explicit(typeDescription)), is(instrumentedType));
-        verify(typeDescription).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verify(typeDescription).accept(matchesPrototype(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType)));
         verify(typeDescription, times(2)).asGenericType();
         verifyNoMoreInteractions(typeDescription);
     }

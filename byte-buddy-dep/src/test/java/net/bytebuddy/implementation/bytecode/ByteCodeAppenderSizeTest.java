@@ -15,8 +15,9 @@ public class ByteCodeAppenderSizeTest {
         ByteCodeAppender.Size right = new ByteCodeAppender.Size(BIGGER, LOWER);
         ByteCodeAppender.Size mergedLeft = left.merge(right);
         ByteCodeAppender.Size mergedRight = right.merge(left);
-        assertThat(mergedLeft, is(mergedRight));
         assertThat(mergedLeft.getOperandStackSize(), is(BIGGER));
         assertThat(mergedLeft.getLocalVariableSize(), is(BIGGER));
+        assertThat(mergedRight.getOperandStackSize(), is(BIGGER));
+        assertThat(mergedRight.getLocalVariableSize(), is(BIGGER));
     }
 }

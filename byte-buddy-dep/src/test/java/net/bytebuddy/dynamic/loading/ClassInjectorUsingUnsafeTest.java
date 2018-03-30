@@ -5,14 +5,11 @@ import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
@@ -47,8 +44,8 @@ public class ClassInjectorUsingUnsafeTest {
 
     @Test
     public void testHelperMethods() throws Exception {
-        assertThat(ClassInjector.UsingUnsafe.ofBootstrapLoader(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
-        assertThat(ClassInjector.UsingUnsafe.ofClassPath(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassInjector.UsingUnsafe.ofBootstrapLoader(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
+        assertThat(ClassInjector.UsingUnsafe.ofClassPath(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));
     }
 
     private static class Foo {

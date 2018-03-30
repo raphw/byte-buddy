@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Map;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -76,7 +77,7 @@ public class TypeResolutionStrategyTest {
         Field field = TypeResolutionStrategy.Active.Resolved.class.getDeclaredField("identification");
         field.setAccessible(true);
         int identification = (Integer) field.get(resolved);
-        when(typeInitializer.expandWith(new NexusAccessor.InitializationAppender(identification))).thenReturn(otherTypeInitializer);
+        when(typeInitializer.expandWith(matchesPrototype(new NexusAccessor.InitializationAppender(identification)))).thenReturn(otherTypeInitializer);
         assertThat(resolved.injectedInto(typeInitializer), is(otherTypeInitializer));
         assertThat(resolved.initialize(dynamicType, classLoader, classLoadingStrategy),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Foo.class)));

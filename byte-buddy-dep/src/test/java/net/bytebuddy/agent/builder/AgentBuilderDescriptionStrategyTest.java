@@ -12,6 +12,7 @@ import org.mockito.Mock;
 
 import java.util.concurrent.ExecutorService;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,19 +73,22 @@ public class AgentBuilderDescriptionStrategyTest {
 
     @Test
     public void testSuperTypeLoading() throws Exception {
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.HYBRID)));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.withSuperTypeLoading(),
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.HYBRID)));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST.withSuperTypeLoading(),
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(),
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)));
     }
 
     @Test
     public void testAsynchronousSuperTypeLoading() throws Exception {
         ExecutorService executorService = mock(ExecutorService.class);
         assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.withSuperTypeLoading(executorService),
-                is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.HYBRID, executorService)));
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.HYBRID, executorService)));
         assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST.withSuperTypeLoading(executorService),
-                is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST, executorService)));
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST, executorService)));
         assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(executorService),
-                is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY, executorService)));
+                hasPrototype((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY, executorService)));
     }
 }

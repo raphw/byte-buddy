@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -155,9 +156,9 @@ public class AgentBuilderInstallationListenerTest {
     @Test
     public void testStreamWritingToSystem() throws Exception {
         assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemOut(),
-                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
+                hasPrototype((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
         assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemError(),
-                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
+                hasPrototype((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
     }
 
     private static class PseudoAdapter extends AgentBuilder.InstallationListener.Adapter {

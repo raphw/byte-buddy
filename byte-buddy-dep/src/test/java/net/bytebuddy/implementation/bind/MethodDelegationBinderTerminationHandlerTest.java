@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -58,7 +59,7 @@ public class MethodDelegationBinderTerminationHandlerTest {
                 Assigner.Typing.STATIC,
                 source,
                 target);
-        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
+        assertThat(stackManipulation, hasPrototype((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
         verify(assigner).assign(genericTargetType, genericSourceType, Assigner.Typing.STATIC);
     }
 }

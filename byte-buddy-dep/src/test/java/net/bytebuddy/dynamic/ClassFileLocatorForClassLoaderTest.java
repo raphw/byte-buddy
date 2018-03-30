@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.InputStream;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -31,8 +32,8 @@ public class ClassFileLocatorForClassLoaderTest {
 
     @Test
     public void testCreation() throws Exception {
-        assertThat(ClassFileLocator.ForClassLoader.of(classLoader), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
-        assertThat(ClassFileLocator.ForClassLoader.of(null), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForClassLoader.of(classLoader), hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
+        assertThat(ClassFileLocator.ForClassLoader.of(null), hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
     }
 
     @Test
@@ -102,18 +103,20 @@ public class ClassFileLocatorForClassLoaderTest {
 
     @Test
     public void testSystemClassLoader() throws Exception {
-        assertThat(ClassFileLocator.ForClassLoader.ofClassPath(), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForClassLoader.ofClassPath(),
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
     }
 
     @Test
     public void testPlatformLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent()),
-                is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
     }
 
     @Test
     public void testBootLoader() throws Exception {
-        assertThat(ClassFileLocator.ForClassLoader.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForClassLoader.of(null),
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
     }
 
     private static class Foo {

@@ -11,10 +11,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.objectweb.asm.TypeReference;
 
-import java.util.Random;
-
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -71,7 +69,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onGenericArray(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "["));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "[")));
     }
 
     @Test
@@ -81,7 +79,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onWildcard(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "*"));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "*")));
     }
 
     @Test
@@ -91,7 +89,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onWildcard(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "*"));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "*")));
     }
 
     @Test
@@ -108,7 +106,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onNonGenericType(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "["));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "[")));
     }
 
     @Test
@@ -126,8 +124,8 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onParameterizedType(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO + ".");
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + ".0;"));
-        verify(third).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + ""));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + ".0;")));
+        verify(third).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "")));
     }
 
     @Test
@@ -136,6 +134,6 @@ public class AnnotationAppenderForTypeAnnotationsTest {
         assertThat(visitor.onParameterizedType(typeDescription), is(result));
         verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "0;"));
+        verify(second).accept(matchesPrototype(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "0;")));
     }
 }

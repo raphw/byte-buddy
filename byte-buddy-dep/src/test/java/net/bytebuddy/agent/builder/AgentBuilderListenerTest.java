@@ -16,6 +16,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -169,12 +170,12 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testStreamWritingStandardOutput() throws Exception {
-        assertThat(AgentBuilder.Listener.StreamWriting.toSystemOut(), is((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.out)));
+        assertThat(AgentBuilder.Listener.StreamWriting.toSystemOut(), hasPrototype((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.out)));
     }
 
     @Test
     public void testStreamWritingStandardError() throws Exception {
-        assertThat(AgentBuilder.Listener.StreamWriting.toSystemError(), is((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.err)));
+        assertThat(AgentBuilder.Listener.StreamWriting.toSystemError(), hasPrototype((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.err)));
     }
 
     @Test

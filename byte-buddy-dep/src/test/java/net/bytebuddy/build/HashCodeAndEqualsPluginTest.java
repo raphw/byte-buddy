@@ -6,6 +6,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
 import org.junit.Test;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -115,23 +116,23 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testInvokeSuper() {
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
-                is(EqualsMethod.isolated()));
+                hasPrototype(EqualsMethod.isolated()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
-                is(EqualsMethod.requiringSuperClassEquality()));
+                hasPrototype(EqualsMethod.requiringSuperClassEquality()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
-                is(EqualsMethod.isolated()));
+                hasPrototype(EqualsMethod.isolated()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
-                is(EqualsMethod.requiringSuperClassEquality()));
+                hasPrototype(EqualsMethod.requiringSuperClassEquality()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(DeclaredSubclass.class)),
-                is(EqualsMethod.requiringSuperClassEquality()));
+                hasPrototype(EqualsMethod.requiringSuperClassEquality()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
-                is(EqualsMethod.requiringSuperClassEquality()));
+                hasPrototype(EqualsMethod.requiringSuperClassEquality()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
-                is(EqualsMethod.requiringSuperClassEquality()));
+                hasPrototype(EqualsMethod.requiringSuperClassEquality()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
-                is(EqualsMethod.isolated()));
+                hasPrototype(EqualsMethod.isolated()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
-                is(EqualsMethod.isolated()));
+                hasPrototype(EqualsMethod.isolated()));
     }
 
     @HashCodeAndEqualsPlugin.Enhance

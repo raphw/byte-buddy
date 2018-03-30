@@ -24,11 +24,11 @@ public abstract class AbstractFilterableListTest<T, S extends FilterableList<T, 
 
     protected S asList(U element) {
         return asList(Collections.singletonList(element));
-    };
+    }
 
     protected S emptyList() {
         return asList(Collections.<U>emptyList());
-    };
+    }
 
     protected abstract T asElement(U element);
 

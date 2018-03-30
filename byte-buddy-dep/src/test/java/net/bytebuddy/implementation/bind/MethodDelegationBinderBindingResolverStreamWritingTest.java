@@ -11,11 +11,10 @@ import org.mockito.Mock;
 import java.io.PrintStream;
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class MethodDelegationBinderBindingResolverStreamWritingTest {
 
@@ -49,13 +48,13 @@ public class MethodDelegationBinderBindingResolverStreamWritingTest {
 
     @Test
     public void testSystemOut() throws Exception {
-        assertThat(MethodDelegationBinder.BindingResolver.StreamWriting.toSystemOut(), is((MethodDelegationBinder.BindingResolver)
+        assertThat(MethodDelegationBinder.BindingResolver.StreamWriting.toSystemOut(), hasPrototype((MethodDelegationBinder.BindingResolver)
                 new MethodDelegationBinder.BindingResolver.StreamWriting(MethodDelegationBinder.BindingResolver.Default.INSTANCE, System.out)));
     }
 
     @Test
     public void testSystemError() throws Exception {
-        assertThat(MethodDelegationBinder.BindingResolver.StreamWriting.toSystemError(), is((MethodDelegationBinder.BindingResolver)
+        assertThat(MethodDelegationBinder.BindingResolver.StreamWriting.toSystemError(), hasPrototype((MethodDelegationBinder.BindingResolver)
                 new MethodDelegationBinder.BindingResolver.StreamWriting(MethodDelegationBinder.BindingResolver.Default.INSTANCE, System.err)));
     }
 }

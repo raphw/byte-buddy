@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -34,7 +35,7 @@ public class AgentBuilderLocationStrategyCompoundTest {
         AgentBuilder.LocationStrategy locationStrategy = new AgentBuilder.LocationStrategy.Compound(first, second);
         when(first.classFileLocator(classLoader, module)).thenReturn(firstLocator);
         when(second.classFileLocator(classLoader, module)).thenReturn(secondLocator);
-        assertThat(locationStrategy.classFileLocator(classLoader, module), is((ClassFileLocator) new ClassFileLocator.Compound(firstLocator, secondLocator)));
+        assertThat(locationStrategy.classFileLocator(classLoader, module), hasPrototype((ClassFileLocator) new ClassFileLocator.Compound(firstLocator, secondLocator)));
         verify(first).classFileLocator(classLoader, module);
         verifyNoMoreInteractions(first);
         verify(second).classFileLocator(classLoader, module);

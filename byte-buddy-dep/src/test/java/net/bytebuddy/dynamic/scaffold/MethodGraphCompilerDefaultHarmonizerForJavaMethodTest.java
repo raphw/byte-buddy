@@ -11,6 +11,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,7 +73,7 @@ public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
 
     @Test
     public void testFactory() throws Exception {
-        assertThat(MethodGraph.Compiler.Default.forJavaHierarchy(), is((MethodGraph.Compiler) new MethodGraph.Compiler
+        assertThat(MethodGraph.Compiler.Default.forJavaHierarchy(), hasPrototype((MethodGraph.Compiler) new MethodGraph.Compiler
                 .Default<MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token>(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.INSTANCE,
                 MethodGraph.Compiler.Default.Merger.Directional.LEFT, TypeDescription.Generic.Visitor.Reifying.INITIATING)));
     }

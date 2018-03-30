@@ -13,6 +13,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -108,10 +109,10 @@ public class MethodDescriptionTokenTest {
 
     @Test
     public void testSignatureTokenTransformation() throws Exception {
-        when(returnType.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription, Collections.singletonList(typeVariableToken))))
+        when(returnType.accept(matchesPrototype(new TypeDescription.Generic.Visitor.Reducing(typeDescription, typeVariableToken))))
                 .thenReturn(rawReturnType);
         when(parameterToken.getType()).thenReturn(parameterType);
-        when(parameterType.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription, Collections.singletonList(typeVariableToken))))
+        when(parameterType.accept(matchesPrototype(new TypeDescription.Generic.Visitor.Reducing(typeDescription, typeVariableToken))))
                 .thenReturn(rawParameterType);
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,

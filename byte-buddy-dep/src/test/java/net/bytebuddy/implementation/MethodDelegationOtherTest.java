@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isToString;
-import static org.hamcrest.CoreMatchers.is;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationOtherTest {
@@ -62,7 +62,7 @@ public class MethodDelegationOtherTest {
     public void testEmptyConfiguration() throws Exception {
         assertThat(MethodDelegation.withEmptyConfiguration()
                 .withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS)
-                .withResolvers(MethodDelegationBinder.AmbiguityResolver.DEFAULT), is(MethodDelegation.withDefaultConfiguration()));
+                .withResolvers(MethodDelegationBinder.AmbiguityResolver.DEFAULT), hasPrototype(MethodDelegation.withDefaultConfiguration()));
     }
 
     static class Foo {

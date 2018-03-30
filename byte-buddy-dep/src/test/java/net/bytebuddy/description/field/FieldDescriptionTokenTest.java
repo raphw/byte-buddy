@@ -11,6 +11,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -61,7 +62,7 @@ public class FieldDescriptionTokenTest {
 
     @Test
     public void testSignatureTokenTransformation() throws Exception {
-        when(type.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription))).thenReturn(rawType);
+        when(type.accept(matchesPrototype(new TypeDescription.Generic.Visitor.Reducing(typeDescription)))).thenReturn(rawType);
         assertThat(new FieldDescription.Token(FOO, MODIFIERS, type, Collections.singletonList(annotation)).asSignatureToken(typeDescription),
                 is(new FieldDescription.SignatureToken(FOO, rawType)));
     }

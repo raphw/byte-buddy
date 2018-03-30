@@ -9,6 +9,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -38,6 +39,6 @@ public class LatentMatcherConjunctionTest {
     @SuppressWarnings("unchecked")
     public void testManifestation() throws Exception {
         assertThat(new LatentMatcher.Conjunction(left, right).resolve(typeDescription),
-                is((ElementMatcher) any().and((ElementMatcher) leftMatcher).and((ElementMatcher) rightMatcher)));
+                hasPrototype((ElementMatcher) any().and((ElementMatcher) leftMatcher).and((ElementMatcher) rightMatcher)));
     }
 }
