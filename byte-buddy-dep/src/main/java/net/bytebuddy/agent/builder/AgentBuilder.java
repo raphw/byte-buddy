@@ -2171,7 +2171,7 @@ public interface AgentBuilder {
              * Applies the given advice class onto all methods that satisfy the supplied matcher.
              *
              * @param matcher The matcher to determine what methods the advice should be applied to.
-             *                * @param enter    The fully-qualified, binary name of the enter advice class.
+             * @param enter   The fully-qualified, binary name of the enter advice class.
              * @param exit    The fully-qualified, binary name of the exit advice class.
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */

@@ -1188,7 +1188,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Represents a factory for creating a {@link OffsetMapping} for a given parameter for a given annotation.
          *
-         * @param <T> the annotation type that triggers this factory.
+         * @param <T> The annotation type that triggers this factory.
          */
         interface Factory<T extends Annotation> {
 
@@ -1251,7 +1251,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A simple factory that binds a constant offset mapping.
              *
-             * @param <T>
+             * @param <T> The annotation type that represents this offset mapping.
              */
             @HashCodeAndEqualsPlugin.Enhance
             class Simple<T extends Annotation> implements Factory<T> {
