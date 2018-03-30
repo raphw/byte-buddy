@@ -1,7 +1,6 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;

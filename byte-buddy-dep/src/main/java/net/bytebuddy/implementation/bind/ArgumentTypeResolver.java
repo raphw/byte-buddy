@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bind;
 
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
