@@ -328,12 +328,12 @@ public class HashCodeMethod implements Implementation {
 
             @Override
             public StackManipulation before() {
-                return new BeforeInstruction(instrumentedMethod, label);
+                return new BeforeInstruction();
             }
 
             @Override
             public StackManipulation after() {
-                return new AfterInstruction(label);
+                return new AfterInstruction();
             }
 
             @Override
@@ -344,29 +344,8 @@ public class HashCodeMethod implements Implementation {
             /**
              * The stack manipulation to apply before the hash value computation.
              */
-            @HashCodeAndEqualsPlugin.Enhance
-            protected static class BeforeInstruction implements StackManipulation {
-
-                /**
-                 * The instrumented method.
-                 */
-                private final MethodDescription instrumentedMethod;
-
-                /**
-                 * A label to indicate the target of a jump.
-                 */
-                private final Label label;
-
-                /**
-                 * Creates a new instruction to run before a {@code null} check.
-                 *
-                 * @param instrumentedMethod The instrumented method.
-                 * @param label              A label to indicate the target of a jump.
-                 */
-                protected BeforeInstruction(MethodDescription instrumentedMethod, Label label) {
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.label = label;
-                }
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+            protected class BeforeInstruction implements StackManipulation {
 
                 @Override
                 public boolean isValid() {
@@ -386,22 +365,8 @@ public class HashCodeMethod implements Implementation {
             /**
              * The stack manipulation to apply after the hash value computation.
              */
-            @HashCodeAndEqualsPlugin.Enhance
-            protected static class AfterInstruction implements StackManipulation {
-
-                /**
-                 * A label to indicate the target of a jump.
-                 */
-                private final Label label;
-
-                /**
-                 * Creates a new instruction to run after a {@code null} check.
-                 *
-                 * @param label A label to indicate the target of a jump.
-                 */
-                protected AfterInstruction(Label label) {
-                    this.label = label;
-                }
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+            protected class AfterInstruction implements StackManipulation {
 
                 @Override
                 public boolean isValid() {

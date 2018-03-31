@@ -361,12 +361,12 @@ public class EqualsMethod implements Implementation {
 
             @Override
             public StackManipulation before() {
-                return new UsingJump.BeforeInstruction(instrumentedMethod, firstValueNull, secondValueNull);
+                return new UsingJump.BeforeInstruction();
             }
 
             @Override
             public StackManipulation after() {
-                return new UsingJump.AfterInstruction(instrumentedMethod, firstValueNull, secondValueNull, endOfBlock);
+                return new UsingJump.AfterInstruction();
             }
 
             @Override
@@ -377,36 +377,8 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply before the equality computation.
              */
-            @HashCodeAndEqualsPlugin.Enhance
-            protected static class BeforeInstruction implements StackManipulation {
-
-                /**
-                 * The instrumented method.
-                 */
-                private final MethodDescription instrumentedMethod;
-
-                /**
-                 * The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
-                 */
-                private final Label firstValueNull;
-
-                /**
-                 * The label to jump to if the second value is {@code null}.
-                 */
-                private final Label secondValueNull;
-
-                /**
-                 * Creates an instruction to execute before an equality check.
-                 *
-                 * @param instrumentedMethod The instrumented method.
-                 * @param firstValueNull     The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
-                 * @param secondValueNull    The label to jump to if the second value is {@code null}.
-                 */
-                protected BeforeInstruction(MethodDescription instrumentedMethod, Label firstValueNull, Label secondValueNull) {
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.firstValueNull = firstValueNull;
-                    this.secondValueNull = secondValueNull;
-                }
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+            protected class BeforeInstruction implements StackManipulation {
 
                 @Override
                 public boolean isValid() {
@@ -430,43 +402,8 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply after the equality computation.
              */
-            @HashCodeAndEqualsPlugin.Enhance
-            protected static class AfterInstruction implements StackManipulation {
-
-                /**
-                 * The instrumented method.
-                 */
-                private final MethodDescription instrumentedMethod;
-
-                /**
-                 * The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
-                 */
-                private final Label firstValueNull;
-
-                /**
-                 * The label to jump to if the second value is {@code null}.
-                 */
-                private final Label secondValueNull;
-
-                /**
-                 * A label indicating the end of the null-guarding block.
-                 */
-                private final Label endOfBlock;
-
-                /**
-                 * Creates an instruction to execute after an equality check.
-                 *
-                 * @param instrumentedMethod The instrumented method.
-                 * @param firstValueNull     The label to jump to if the first value is {@code null} whereas the second value is not {@code null}.
-                 * @param secondValueNull    The label to jump to if the second value is {@code null}.
-                 * @param endOfBlock         A label indicating the end of the null-guarding block.
-                 */
-                protected AfterInstruction(MethodDescription instrumentedMethod, Label firstValueNull, Label secondValueNull, Label endOfBlock) {
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.firstValueNull = firstValueNull;
-                    this.secondValueNull = secondValueNull;
-                    this.endOfBlock = endOfBlock;
-                }
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+            protected class AfterInstruction implements StackManipulation {
 
                 @Override
                 public boolean isValid() {

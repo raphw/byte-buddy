@@ -179,6 +179,47 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    public void testStreamWritingTransformationsOnly() throws Exception {
+        PrintStream target = mock(PrintStream.class);
+        assertThat(new AgentBuilder.Listener.StreamWriting(target).withTransformationsOnly(),
+                hasPrototype((AgentBuilder.Listener) new AgentBuilder.Listener.WithTransformationsOnly(new AgentBuilder.Listener.StreamWriting(target))));
+    }
+
+    @Test
+    public void testStreamWritingErrorOnly() throws Exception {
+        PrintStream target = mock(PrintStream.class);
+        assertThat(new AgentBuilder.Listener.StreamWriting(target).withErrorsOnly(),
+                hasPrototype((AgentBuilder.Listener) new AgentBuilder.Listener.WithErrorsOnly(new AgentBuilder.Listener.StreamWriting(target))));
+    }
+
+    @Test
+    public void testTransformationsOnly() {
+        AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.WithTransformationsOnly(delegate);
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
+        listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
+        listener.onError(FOO, classLoader, module, LOADED, throwable);
+        listener.onIgnored(typeDescription, classLoader, module, LOADED);
+        listener.onComplete(FOO, classLoader, module, LOADED);
+        verify(delegate).onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
+        verify(delegate).onError(FOO, classLoader, module, LOADED, throwable);
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
+    public void testErrorsOnly() {
+        AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.WithErrorsOnly(delegate);
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
+        listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
+        listener.onError(FOO, classLoader, module, LOADED, throwable);
+        listener.onIgnored(typeDescription, classLoader, module, LOADED);
+        listener.onComplete(FOO, classLoader, module, LOADED);
+        verify(delegate).onError(FOO, classLoader, module, LOADED, throwable);
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
     public void testFilteringDoesNotMatch() throws Exception {
         AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.Filtering(none(), delegate);

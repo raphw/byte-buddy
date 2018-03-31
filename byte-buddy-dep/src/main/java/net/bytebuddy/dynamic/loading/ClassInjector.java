@@ -1221,7 +1221,7 @@ public interface ClassInjector {
         /**
          * A dispatcher for using {@code sun.misc.Unsafe}.
          */
-        interface Dispatcher {
+        protected interface Dispatcher {
 
             /**
              * Defines a class.
