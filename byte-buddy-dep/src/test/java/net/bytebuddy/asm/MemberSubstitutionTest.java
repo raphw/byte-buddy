@@ -532,7 +532,7 @@ public class MemberSubstitutionTest {
                 .visit(MemberSubstitution.strict().method(named(FOO)).onVirtualCall().stub().on(named(RUN)))
                 .make()
                 .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
-                        ClassLoadingStrategy.Default.INJECTION)
+                        ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 1));
@@ -545,7 +545,7 @@ public class MemberSubstitutionTest {
                 .visit(MemberSubstitution.strict().method(named(FOO)).onSuperCall().stub().on(named(RUN)))
                 .make()
                 .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
-                        ClassLoadingStrategy.Default.INJECTION)
+                        ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredMethod(RUN).invoke(instance), is((Object) 2));

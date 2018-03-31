@@ -1126,7 +1126,12 @@ public interface ClassInjector {
     }
 
     /**
+     * <p>
      * A class injector that uses {@code sun.misc.Unsafe} to inject classes.
+     * </p>
+     * <p>
+     * <b>Important</b>: This strategy is no longer available after Java 11.
+     * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
     class UsingUnsafe implements ClassInjector {

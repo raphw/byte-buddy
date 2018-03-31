@@ -90,8 +90,14 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * a better runtime performance.
          * </p>
          * <p>
-         * <b>Important</b>: This class loader does not define packages for injected classes by default. Therefore, calls to
-         * {@link Class#getPackage()} might return {@code null}. Packages are only defined
+         * <b>Important</b>: Class injection requires access to JVM internal methods that are sealed by security managers and the
+         * Java Platform module system. Since Java 11, access to these methods is no longer feasible unless those packages
+         * are explicitly opened.
+         * </p>
+         * <p>
+         * <b>Note</b>: This class loader does not define packages for injected classes by default. Therefore, calls to
+         * {@link Class#getPackage()} might return {@code null}. Packages are only defined manually by a class loader prior to
+         * Java 9.
          * </p>
          */
         INJECTION(new InjectionDispatcher());
@@ -136,8 +142,13 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         }
 
         /**
-         * A class loading strategy which applies a class loader injection while applying a given
-         * {@link java.security.ProtectionDomain} on class injection.
+         * <p></p>
+         * A class loading strategy which applies a class loader injection while applying a given {@link java.security.ProtectionDomain} on class injection.
+         * <p>
+         * <b>Important</b>: Class injection requires access to JVM internal methods that are sealed by security managers and the
+         * Java Platform module system. Since Java 11, access to these methods is no longer feasible unless those packages
+         * are explicitly opened.
+         * </p>
          */
         @HashCodeAndEqualsPlugin.Enhance
         protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
@@ -418,7 +429,12 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     }
 
     /**
+     * <p>
      * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
+     * </p>
+     * <p>
+     * <b>Important</b>: This strategy is no longer available after Java 11.
+     * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {

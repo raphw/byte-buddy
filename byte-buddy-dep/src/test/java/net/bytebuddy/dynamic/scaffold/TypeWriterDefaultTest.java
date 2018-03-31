@@ -9,6 +9,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
@@ -518,7 +519,7 @@ public class TypeWriterDefaultTest {
                 .modifiers(Visibility.PUBLIC)
                 .method(named("bar")).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(base.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load((InjectionClassLoader) base.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
         assertThat(subclass.getDeclaredMethods().length, is(3));
         assertThat(subclass.getDeclaredMethod("foo").isBridge(), is(true));
@@ -543,7 +544,7 @@ public class TypeWriterDefaultTest {
                 .modifiers(Visibility.PUBLIC)
                 .method(named(BAR)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(base.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load((InjectionClassLoader) base.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
         assertThat(subclass.getDeclaredMethods().length, is(1));
         assertThat(subclass.getDeclaredMethod(BAR).isBridge(), is(false));
@@ -563,7 +564,7 @@ public class TypeWriterDefaultTest {
                 .subclass(base)
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(base.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load((InjectionClassLoader) base.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
         assertThat(subclass.getDeclaredMethods().length, is(1));
         assertThat(subclass.getDeclaredMethod(FOO).isBridge(), is(false));
