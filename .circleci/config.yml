@@ -18,6 +18,12 @@ jobs:
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  jdk8:
+    docker:
+      - image: openjdk:9.0.4-jdk
+    steps:
+      - checkout
+      - run: ./mvnw verify -Pintegration -Pjava9 -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
   coverage:
     docker:
       - image: openjdk:8-jdk
