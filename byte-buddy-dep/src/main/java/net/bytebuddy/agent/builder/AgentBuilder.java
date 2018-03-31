@@ -1498,7 +1498,7 @@ public interface AgentBuilder {
         /**
          * A listener that only delegates events if they are successful or failed transformations.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class WithTransformationsOnly extends Listener.Adapter {
 
             /**
@@ -1529,7 +1529,7 @@ public interface AgentBuilder {
         /**
          * A listener that only delegates events if they are failed transformations.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class WithErrorsOnly extends Listener.Adapter {
 
             /**
