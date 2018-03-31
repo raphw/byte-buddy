@@ -8,12 +8,12 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -59,12 +59,7 @@ public class MethodDelegationBinderTerminationHandlerTest {
                 Assigner.Typing.STATIC,
                 source,
                 target);
-        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
+        assertThat(stackManipulation, hasPrototype((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
         verify(assigner).assign(genericTargetType, genericSourceType, Assigner.Typing.STATIC);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.TerminationHandler.Default.class).apply();
     }
 }

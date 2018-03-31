@@ -8,13 +8,10 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -294,48 +291,6 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 mock(FieldDescription.class),
                 mock(Assigner.class),
                 mock(MethodAccessorFactory.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldProxy.Binder.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.StaticFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.InstanceFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public void apply(Implementation.Target mock) {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(mock.getInstrumentedType()).thenReturn(typeDescription);
-                FieldList fieldList = mock(FieldList.class);
-                FieldList filteredFieldList = mock(FieldList.class);
-                when(typeDescription.getDeclaredFields()).thenReturn(fieldList);
-                when(fieldList.filter(any(ElementMatcher.class))).thenReturn(filteredFieldList);
-                when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
-            }
-        }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.ForGetter.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.ForSetter.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.ForGetterSetterPair.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.Unresolved.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.Factory.Simplex.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldResolver.Factory.Duplex.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessorProxy.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldGetter.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldGetter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            public void apply(Implementation.Target mock) {
-                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
-            }
-        }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldSetter.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldSetter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            public void apply(Implementation.Target mock) {
-                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
-            }
-        }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.AccessorProxy.class).apply();
     }
 
     public static class Foo {

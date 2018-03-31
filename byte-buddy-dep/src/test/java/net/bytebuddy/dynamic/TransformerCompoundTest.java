@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,15 +40,5 @@ public class TransformerCompoundTest {
     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
     public void testTransformation() throws Exception {
         assertThat(new Transformer.Compound<Object>(first, second).transform(typeDescription, firstTarget), is(finalTarget));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Transformer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(Transformer.class));
-            }
-        }).apply();
     }
 }

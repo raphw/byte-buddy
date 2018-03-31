@@ -1,8 +1,8 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -81,7 +81,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> {
 
         /**
@@ -247,7 +247,7 @@ public @interface Morph {
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Explicit implements DefaultMethodLocator {
 
                 /**
@@ -278,7 +278,7 @@ public @interface Morph {
         /**
          * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
             /**
@@ -410,7 +410,7 @@ public @interface Morph {
             /**
              * Creates an instance of the proxy when instrumenting an instance method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class InstanceFieldConstructor implements Implementation {
 
                 /**
@@ -442,7 +442,7 @@ public @interface Morph {
                 /**
                  * The byte code appender that implements the constructor.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -481,7 +481,7 @@ public @interface Morph {
             /**
              * Implements a the method call of the morphing method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class MethodCall implements Implementation {
 
                 /**
@@ -518,6 +518,7 @@ public @interface Morph {
                 /**
                  * The byte code appender to implement the method.
                  */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
                 protected class Appender implements ByteCodeAppender {
 
                     /**
@@ -562,27 +563,6 @@ public @interface Morph {
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                    }
-
-                    /**
-                     * Returns the outer instance.
-                     *
-                     * @return The outer instance.
-                     */
-                    private MethodCall getMethodCall() {
-                        return MethodCall.this;
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && MethodCall.this.equals(((Appender) other).getMethodCall())
-                                && typeDescription.equals(((Appender) other).typeDescription);
-                    }
-
-                    @Override // HE: Remove when Lombok support for getOuter is added.
-                    public int hashCode() {
-                        return typeDescription.hashCode() + 31 * MethodCall.this.hashCode();
                     }
                 }
             }

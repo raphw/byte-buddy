@@ -2,7 +2,6 @@ package net.bytebuddy;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -97,14 +96,6 @@ public class NamingStrategyTest {
     }
 
     @Test
-    public void testSuffixingRandomObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.class).apply();
-        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType.class).apply();
-        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.class).apply();
-        ObjectPropertyAssertion.of(NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue.class).apply();
-    }
-
-    @Test
     public void testPrefixingRandom() throws Exception {
         when(rawTypeDescription.getName()).thenReturn(BAR);
         NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(FOO);
@@ -131,10 +122,5 @@ public class NamingStrategyTest {
         assertThat(namingStrategy.redefine(rawTypeDescription), is(FOO));
         verify(rawTypeDescription).getName();
         verifyNoMoreInteractions(rawTypeDescription);
-    }
-
-    @Test
-    public void testPrefixingRandomEqualsHashCode() throws Exception {
-        ObjectPropertyAssertion.of(NamingStrategy.PrefixingRandom.class).apply();
     }
 }

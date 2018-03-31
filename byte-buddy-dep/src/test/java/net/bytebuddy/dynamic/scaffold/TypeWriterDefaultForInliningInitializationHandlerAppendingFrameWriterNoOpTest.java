@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
@@ -15,10 +14,5 @@ public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWrit
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.NoOp.INSTANCE.emitFrame(methodVisitor);
         verifyZeroInteractions(methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.NoOp.class).apply();
     }
 }

@@ -1,12 +1,13 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.OpenedClassReader;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -18,7 +19,7 @@ import java.security.PrivilegedAction;
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
@@ -245,7 +246,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @throws IOException If an error occurs while reading the class file.
      */
     public static ClassFileVersion of(TypeDescription typeDescription, ClassFileLocator classFileLocator) throws IOException {
-        ClassReader classReader = new ClassReader(classFileLocator.locate(typeDescription.getName()).resolve());
+        ClassReader classReader = new OpenedClassReader(classFileLocator.locate(typeDescription.getName()).resolve());
         VersionExtractor versionExtractor = new VersionExtractor();
         classReader.accept(versionExtractor, ClassReader.SKIP_CODE);
         return ClassFileVersion.ofMinorMajor(versionExtractor.getClassFileVersionNumber());
@@ -371,7 +372,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         /**
          * A version locator for a JVM of at least version 9.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForJava9CapableVm implements VersionLocator {
 
             /**

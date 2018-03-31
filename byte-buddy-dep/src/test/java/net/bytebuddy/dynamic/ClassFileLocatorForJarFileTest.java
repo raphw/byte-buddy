@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -123,10 +122,5 @@ public class ClassFileLocatorForJarFileTest {
         new ClassFileLocator.ForJarFile(jarFile).close();
         verify(jarFile).close();
         verifyNoMoreInteractions(jarFile);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForJarFile.class).apply();
     }
 }

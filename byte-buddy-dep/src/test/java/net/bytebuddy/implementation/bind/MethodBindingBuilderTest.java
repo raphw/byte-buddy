@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -151,19 +150,6 @@ public class MethodBindingBuilderTest {
     public void testParameterNumberInequality() throws Exception {
         when(methodParameterList.size()).thenReturn(1);
         new MethodDelegationBinder.MethodBinding.Builder(methodInvoker, methodDescription).build(legalStackManipulation);
-    }
-
-    @Test
-    public void testBuildHashCodeEquals() throws Exception {
-        when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(legalStackManipulation);
-        MethodDelegationBinder.MethodBinding.Builder builder = new MethodDelegationBinder.MethodBinding.Builder(methodInvoker, methodDescription);
-        MethodDelegationBinder.MethodBinding methodBinding = builder.build(legalStackManipulation);
-        MethodDelegationBinder.MethodBinding equalMethodBinding = builder.build(legalStackManipulation);
-        assertThat(methodBinding.hashCode(), is(equalMethodBinding.hashCode()));
-        assertThat(methodBinding, is(equalMethodBinding));
-        MethodDelegationBinder.MethodBinding unequalMethodBinding = builder.build(mock(StackManipulation.class));
-        assertThat(methodBinding.hashCode(), not(unequalMethodBinding.hashCode()));
-        assertThat(methodBinding, not(unequalMethodBinding));
     }
 
     private static class Key {

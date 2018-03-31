@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -21,10 +20,5 @@ public class MethodGraphNodeUnresolvedTest {
     @Test(expected = IllegalStateException.class)
     public void testRepresentativeThrowsException() throws Exception {
         MethodGraph.Node.Unresolved.INSTANCE.getRepresentative();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Node.Unresolved.class).apply();
     }
 }

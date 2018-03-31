@@ -1,6 +1,6 @@
 package net.bytebuddy.utility.privilege;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.lang.reflect.AccessibleObject;
 import java.security.PrivilegedAction;
@@ -10,7 +10,7 @@ import java.security.PrivilegedAction;
  *
  * @param <T> The type of the accessible object.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class SetAccessibleAction<T extends AccessibleObject> implements PrivilegedAction<T> {
 
     /**

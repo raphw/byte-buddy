@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -15,7 +14,6 @@ import java.lang.reflect.Field;
 /**
  * Represents a {@link Field} constant for a given type.
  */
-@EqualsAndHashCode
 public class FieldConstant implements StackManipulation {
 
     /**
@@ -59,10 +57,25 @@ public class FieldConstant implements StackManipulation {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        } else if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        FieldConstant fieldConstant = (FieldConstant) other;
+        return fieldDescription.equals(fieldConstant.fieldDescription);
+    }
+
+    @Override
+    public int hashCode() {
+        return fieldDescription.hashCode();
+    }
+
     /**
      * A cached version of a {@link FieldConstant}.
      */
-    @EqualsAndHashCode
     protected static class Cached implements StackManipulation {
 
         /**
@@ -89,6 +102,22 @@ public class FieldConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(fieldConstant, new TypeDescription.ForLoadedType(Field.class)))
                     .read()
                     .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            Cached cached = (Cached) other;
+            return fieldConstant.equals(cached.fieldConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return fieldConstant.hashCode();
         }
     }
 }

@@ -1,13 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.annotation.AnnotationList;
-import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -19,22 +13,17 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
@@ -133,33 +122,6 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.getDeclaredConstructor().newInstance()), is((Object) BAR));
         assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(1));
         assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RedefinitionDynamicTypeBuilder.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asErasure()).thenReturn(typeDescription);
-                return Collections.singletonList(typeDescription);
-            }
-        }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
-            @Override
-            public TypeDescription create() {
-                TypeDescription rawTypeDescription = mock(TypeDescription.class);
-                when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-                when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
-                TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
-                when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
-                when(typeDescription.asGenericType()).thenReturn(typeDescription);
-                when(rawTypeDescription.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(typeDescription));
-                when(rawTypeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
-                when(rawTypeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
-                return rawTypeDescription;
-            }
-        }).apply();
     }
 
     public static class Bar {

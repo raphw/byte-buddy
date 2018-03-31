@@ -12,7 +12,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,9 +22,11 @@ import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public class TransformerForMethodTest {
 
@@ -76,14 +77,14 @@ public class TransformerForMethodTest {
         when(typeVariableBound.getSymbol()).thenReturn(QUX);
         when(typeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeVariableBound.asGenericType()).thenReturn(typeVariableBound);
-        when(methodDescription.asToken(none())).thenReturn(methodToken);
+        when(methodDescription.asToken(matchesPrototype(none()))).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariableTokens()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX,
-                new TypeList.Generic.Explicit(typeVariableBound))));
+        when(methodToken.getTypeVariableTokens())
+                .thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX, new TypeList.Generic.Explicit(typeVariableBound))));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(parameterToken));
@@ -162,13 +163,6 @@ public class TransformerForMethodTest {
         assertThat(transformed.getReturnType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(transformed.getReturnType().getTypeArguments().size(), is(1));
         assertThat(transformed.getReturnType().getTypeArguments().getOnly(), is(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
-        ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
-        ObjectPropertyAssertion.of(Transformer.ForMethod.TransformedMethod.AttachmentVisitor.class).apply();
     }
 
     private static class Foo<T> {

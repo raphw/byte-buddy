@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -87,13 +86,5 @@ public class AnnotationAppenderTargetTest {
         new AnnotationAppender.Target.OnMethodParameter(methodVisitor, 0).visit(FOO, true, BAR, TYPE_PATH);
         verify(methodVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
         verifyNoMoreInteractions(methodVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.Target.OnField.class).apply();
-        ObjectPropertyAssertion.of(AnnotationAppender.Target.OnMethod.class).apply();
-        ObjectPropertyAssertion.of(AnnotationAppender.Target.OnMethodParameter.class).apply();
-        ObjectPropertyAssertion.of(AnnotationAppender.Target.OnType.class).apply();
     }
 }

@@ -1,7 +1,6 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Test;
 
@@ -15,10 +14,5 @@ public class AgentBuilderLocationStrategySimpleTest {
     public void testLocation() throws Exception {
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         assertThat(new AgentBuilder.LocationStrategy.Simple(classFileLocator).classFileLocator(mock(ClassLoader.class), mock(JavaModule.class)), is(classFileLocator));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.LocationStrategy.Simple.class).apply();
     }
 }

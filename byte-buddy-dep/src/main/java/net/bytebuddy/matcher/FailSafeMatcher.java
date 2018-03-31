@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 /**
  * A fail-safe matcher catches exceptions that are thrown by a delegate matcher and returns an alternative value.
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

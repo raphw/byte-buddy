@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**
@@ -26,7 +26,7 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
      * Creates a new matcher that compares a matched iterable collection against a list of element matchers.
      *
      * @param matchers The list of element matchers to match any elements of the matched iterable collection
-     *                        against.
+     *                 against.
      */
     public CollectionOneToOneMatcher(List<? extends ElementMatcher<? super T>> matchers) {
         this.matchers = matchers;

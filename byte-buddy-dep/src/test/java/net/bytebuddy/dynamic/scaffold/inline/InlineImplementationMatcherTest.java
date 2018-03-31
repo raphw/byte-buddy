@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -113,10 +112,5 @@ public class InlineImplementationMatcherTest {
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
         assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InliningImplementationMatcher.class).apply();
     }
 }

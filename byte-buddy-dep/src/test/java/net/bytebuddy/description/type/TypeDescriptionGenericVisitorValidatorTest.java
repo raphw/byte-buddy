@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -106,10 +105,5 @@ public class TypeDescriptionGenericVisitorValidatorTest {
         assertThat(TypeDescription.Generic.Visitor.Validator.METHOD_RETURN.onGenericArray(mock(TypeDescription.Generic.class)), is(true));
         assertThat(TypeDescription.Generic.Visitor.Validator.METHOD_RETURN.onParameterizedType(mock(TypeDescription.Generic.class)), is(true));
         assertThat(TypeDescription.Generic.Visitor.Validator.METHOD_RETURN.onTypeVariable(mock(TypeDescription.Generic.class)), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Validator.class).apply();
     }
 }

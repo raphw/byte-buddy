@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.Duplication;
@@ -154,6 +155,7 @@ public enum ArrayAccess {
     /**
      * A stack manipulation for loading an array's value.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Loader implements StackManipulation {
 
         @Override
@@ -166,31 +168,12 @@ public enum ArrayAccess {
             methodVisitor.visitInsn(loadOpcode);
             return stackSize.toIncreasingSize().aggregate(new Size(-2, 0));
         }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private ArrayAccess getArrayAccess() {
-            return ArrayAccess.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            return ArrayAccess.this.hashCode();
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            return this == other || (other != null && other.getClass() == getClass()
-                    && getArrayAccess() == ((Loader) other).getArrayAccess());
-        }
     }
 
     /**
      * A stack manipulation for storing an array's value.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Putter implements StackManipulation {
 
         @Override
@@ -202,26 +185,6 @@ public enum ArrayAccess {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(storeOpcode);
             return stackSize.toDecreasingSize().aggregate(new Size(-2, 0));
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private ArrayAccess getArrayAccess() {
-            return ArrayAccess.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            return ArrayAccess.this.hashCode();
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            return this == other || (other != null && other.getClass() == getClass()
-                    && getArrayAccess() == ((Putter) other).getArrayAccess());
         }
     }
 }

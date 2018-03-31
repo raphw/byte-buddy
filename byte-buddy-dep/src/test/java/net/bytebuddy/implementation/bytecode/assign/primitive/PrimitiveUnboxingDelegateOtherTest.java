@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 public class PrimitiveUnboxingDelegateOtherTest {
@@ -14,12 +13,5 @@ public class PrimitiveUnboxingDelegateOtherTest {
     @Test(expected = IllegalArgumentException.class)
     public void testVoidIllegal() throws Exception {
         PrimitiveUnboxingDelegate.forPrimitive(TypeDescription.Generic.VOID);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.class).apply();
-        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible.class).apply();
-        ObjectPropertyAssertion.of(PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible.class).apply();
     }
 }

@@ -7,7 +7,6 @@ import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,14 +92,5 @@ public class FieldRegistryDefaultTest {
         assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
         assertThat(fieldPool.target(unknownField).isImplicit(), is(true));
         assertThat(fieldPool.target(unknownField).getField(), is(unknownField));
-
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
-        ObjectPropertyAssertion.of(FieldRegistry.Default.Entry.class).apply();
-        ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.class).apply();
-        ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.Entry.class).apply();
     }
 }

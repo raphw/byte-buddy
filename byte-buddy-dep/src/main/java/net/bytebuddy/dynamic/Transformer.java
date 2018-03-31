@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -65,7 +65,7 @@ public interface Transformer<T> {
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.field.FieldDescription.Token}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForField implements Transformer<FieldDescription> {
 
         /**
@@ -113,7 +113,7 @@ public interface Transformer<T> {
         /**
          * A transformer for a field's modifiers.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class FieldModifierTransformer implements Transformer<FieldDescription.Token> {
 
             /**
@@ -217,7 +217,7 @@ public interface Transformer<T> {
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.method.MethodDescription.Token}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForMethod implements Transformer<MethodDescription> {
 
         /**
@@ -267,7 +267,7 @@ public interface Transformer<T> {
         /**
          * A transformer for a method's modifiers.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class MethodModifierTransformer implements Transformer<MethodDescription.Token> {
 
             /**
@@ -496,6 +496,7 @@ public interface Transformer<T> {
              * variables directly for this method is not possible as type variables are already resolved for the instrumented type such
              * that it is required to bind variables for the instrumented type directly.
              */
+            @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class AttachmentVisitor extends TypeDescription.Generic.Visitor.Substitutor.WithoutTypeSubstitution {
 
                 @Override
@@ -510,25 +511,6 @@ public interface Transformer<T> {
                         return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable);
                     }
                 }
-
-                @Override
-                public int hashCode() {
-                    return TransformedMethod.this.hashCode();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || (other instanceof AttachmentVisitor && ((AttachmentVisitor) other).getOuter().equals(TransformedMethod.this));
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private TransformedMethod getOuter() {
-                    return TransformedMethod.this;
-                }
             }
         }
     }
@@ -538,7 +520,7 @@ public interface Transformer<T> {
      *
      * @param <S> The type of the transformed instance.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound<S> implements Transformer<S> {
 
         /**

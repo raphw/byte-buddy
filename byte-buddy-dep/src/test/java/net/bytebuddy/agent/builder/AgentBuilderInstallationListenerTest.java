@@ -1,7 +1,6 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -9,9 +8,8 @@ import org.mockito.Mock;
 
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
-import java.util.Collections;
-import java.util.List;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -158,23 +156,9 @@ public class AgentBuilderInstallationListenerTest {
     @Test
     public void testStreamWritingToSystem() throws Exception {
         assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemOut(),
-                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
+                hasPrototype((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
         assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemError(),
-                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.StreamWriting.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.Compound.class)
-                .create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.InstallationListener.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.ErrorSuppressing.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.NoOp.class).apply();
+                hasPrototype((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
     }
 
     private static class PseudoAdapter extends AgentBuilder.InstallationListener.Adapter {

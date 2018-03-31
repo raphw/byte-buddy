@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -65,10 +64,5 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
         verifyNoMoreInteractions(leftType);
         verify(rightType).asErasure();
         verifyNoMoreInteractions(rightType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DeclaringTypeResolver.class).apply();
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -51,8 +52,8 @@ public class ElementMatcherJunctionConjunctionTest extends AbstractElementMatche
         verifyNoMoreInteractions(second);
     }
 
-    @Override
-    protected String makeRegex(String startsWith) {
-        return "^(.* and .*)$";
+    @Test
+    public void testToString() {
+        assertThat(new ElementMatcher.Junction.Conjunction<Object>(first, second).toString(), CoreMatchers.containsString(" and "));
     }
 }

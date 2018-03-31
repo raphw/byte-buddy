@@ -3,9 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;

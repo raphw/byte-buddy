@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -34,10 +33,5 @@ public class MethodRebaseResolverDisabledTest {
     @Test
     public void testNoRebaseableMethods() throws Exception {
         assertThat(MethodRebaseResolver.Disabled.INSTANCE.asTokenMap().size(), is(0));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Disabled.class).apply();
     }
 }

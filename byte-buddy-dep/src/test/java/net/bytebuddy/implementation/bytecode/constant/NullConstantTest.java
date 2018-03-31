@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bytecode.constant;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -34,10 +33,5 @@ public class NullConstantTest {
         verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(NullConstant.class).apply();
     }
 }

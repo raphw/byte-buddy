@@ -1,11 +1,11 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.io.PrintStream;
 import java.util.*;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -53,9 +53,9 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     @Test
     public void testStreamWritingFactories() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.toSystemOut(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.out)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.out)));
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.toSystemError(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.err)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.StreamWriting(System.err)));
     }
 
     @Test
@@ -145,24 +145,7 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     @Test
     public void testSplittingBatchReallocator() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.splitting(),
-                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(
+                hasPrototype((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(
                         new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.RedefinitionStrategy.Listener.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Pausing.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Yielding.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.class).apply();
     }
 }

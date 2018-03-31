@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 /**
  * An element matcher that returns a fixed result.
  *
  * @param <T> The actual matched type of this matcher.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

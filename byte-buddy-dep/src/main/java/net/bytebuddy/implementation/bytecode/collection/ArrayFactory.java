@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -16,7 +16,7 @@ import java.util.List;
  * A {@link net.bytebuddy.implementation.bytecode.collection.CollectionFactory} that is capable of
  * creating an array of a given type with any number of given values.
  */
-@EqualsAndHashCode(of = {"componentType", "arrayCreator"})
+@HashCodeAndEqualsPlugin.Enhance
 public class ArrayFactory implements CollectionFactory {
 
     /**
@@ -33,6 +33,7 @@ public class ArrayFactory implements CollectionFactory {
     /**
      * The decrease of stack size after each value storage operation.
      */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
     private final StackManipulation.Size sizeDecrease;
 
     /**
@@ -209,7 +210,7 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * An array creator implementation for reference types.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForReferenceType implements ArrayCreator {
 
             /**
@@ -247,6 +248,7 @@ public class ArrayFactory implements CollectionFactory {
     /**
      * A stack manipulation for creating an array as defined by the enclosing array factory.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class ArrayStackManipulation implements StackManipulation {
 
         /**
@@ -288,27 +290,6 @@ public class ArrayFactory implements CollectionFactory {
                 size = size.aggregate(sizeDecrease);
             }
             return size;
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private ArrayFactory getArrayFactory() {
-            return ArrayFactory.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ArrayFactory.this.equals(((ArrayStackManipulation) other).getArrayFactory())
-                    && stackManipulations.equals(((ArrayStackManipulation) other).stackManipulations);
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            return stackManipulations.hashCode();
         }
     }
 }

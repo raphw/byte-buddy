@@ -1,13 +1,11 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,14 +74,10 @@ public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<Co
         verifyZeroInteractions(secondMatcher);
     }
 
+    @Test
     @Override
-    protected <S> ObjectPropertyAssertion<S> modify(ObjectPropertyAssertion<S> propertyAssertion) {
-        return propertyAssertion.create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public List<?> create() {
-                return Arrays.asList(mock(ElementMatcher.class), mock(ElementMatcher.class));
-            }
-        });
+    @SuppressWarnings("unchecked")
+    public void testStringRepresentation() throws Exception {
+        assertThat(new CollectionOneToOneMatcher<Object>(Arrays.asList(firstMatcher, secondMatcher)).toString(), is(startsWith + "(" + firstMatcher + ", " + secondMatcher + ")"));
     }
 }

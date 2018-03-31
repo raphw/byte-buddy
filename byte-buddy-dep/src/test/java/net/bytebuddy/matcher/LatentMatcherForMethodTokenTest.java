@@ -4,7 +4,6 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -43,11 +42,5 @@ public class LatentMatcherForMethodTokenTest {
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
         when(token.asSignatureToken(typeDescription)).thenReturn(otherToken);
         assertThat(new LatentMatcher.ForMethodToken(token).resolve(typeDescription).matches(methodDescription), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMatcher.ForMethodToken.class).apply();
-        ObjectPropertyAssertion.of(LatentMatcher.ForMethodToken.ResolvedMatcher.class).apply();
     }
 }

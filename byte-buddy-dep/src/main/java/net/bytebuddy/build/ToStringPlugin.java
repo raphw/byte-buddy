@@ -1,6 +1,5 @@
 package net.bytebuddy.build;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -16,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isToString;
  * A build tool plugin that adds a {@link Object#toString()} and method to a class if the {@link Enhance} annotation is present and no
  * explicit method declaration was added.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ToStringPlugin implements Plugin {
 
     @Override
@@ -52,7 +51,6 @@ public class ToStringPlugin implements Plugin {
          * @return The prefix to use.
          */
         Prefix prefix() default Prefix.SIMPLE;
-
 
         /**
          * Determines if synthetic fields should be included in the string representation.

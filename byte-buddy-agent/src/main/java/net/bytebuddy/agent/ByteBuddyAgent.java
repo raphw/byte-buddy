@@ -1,7 +1,6 @@
 package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -559,7 +558,6 @@ public class ByteBuddyAgent {
             /**
              * Describes an external attachment to a Java virtual machine.
              */
-            @EqualsAndHashCode
             class ExternalAttachment {
 
                 /**
@@ -605,7 +603,6 @@ public class ByteBuddyAgent {
             /**
              * A simple implementation of an accessible accessor.
              */
-            @EqualsAndHashCode
             abstract class Simple implements Accessor {
 
                 /**
@@ -677,7 +674,6 @@ public class ByteBuddyAgent {
                 /**
                  * A simple implementation of an accessible accessor that allows for external attachment.
                  */
-                @EqualsAndHashCode(callSuper = true)
                 protected static class WithExternalAttachment extends Simple {
 
                     /**
@@ -705,7 +701,6 @@ public class ByteBuddyAgent {
                 /**
                  * A simple implementation of an accessible accessor that does not allow for external attachment.
                  */
-                @EqualsAndHashCode(callSuper = true)
                 protected static class WithoutExternalAttachment extends Simple {
 
                     /**
@@ -840,7 +835,6 @@ public class ByteBuddyAgent {
          * none of the providers of this compound provider is capable of providing a valid accessor, an
          * non-available accessor is returned.
          */
-        @EqualsAndHashCode
         class Compound implements AttachmentProvider {
 
             /**
@@ -950,7 +944,6 @@ public class ByteBuddyAgent {
             /**
              * A process provider for a Java 9 capable VM with access to the introduced process API.
              */
-            @EqualsAndHashCode
             protected static class ForJava9CapableVm implements ProcessProvider {
 
                 /**
@@ -1075,7 +1068,6 @@ public class ByteBuddyAgent {
         /**
          * An agent provider that supplies an existing agent that is not deleted after attachment.
          */
-        @EqualsAndHashCode
         class ForExistingAgent implements AgentProvider {
 
             /**
@@ -1162,7 +1154,6 @@ public class ByteBuddyAgent {
         /**
          * An attachment type evaluator that checks a process id against the current process id.
          */
-        @EqualsAndHashCode
         class ForJava9CapableVm implements AttachmentTypeEvaluator {
 
             /**

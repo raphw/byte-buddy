@@ -1,6 +1,5 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.utility.UnixSocketRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -94,16 +93,17 @@ public class VirtualMachineForHotSpotTest {
         }
 
         @Override
-        public void detach() throws IOException {
+        public void detach() {
+            /* empty */
         }
 
         @Override
-        protected void connect() throws IOException {
-
+        protected void connect() {
+            /* empty */
         }
 
         @Override
-        protected int read(byte[] buffer) throws IOException {
+        protected int read(byte[] buffer) {
             if (index == read.length) {
                 return -1;
             }
@@ -113,8 +113,8 @@ public class VirtualMachineForHotSpotTest {
         }
 
         @Override
-        protected void write(byte[] buffer) throws IOException {
-
+        protected void write(byte[] buffer) {
+            /* empty */
         }
     }
 }

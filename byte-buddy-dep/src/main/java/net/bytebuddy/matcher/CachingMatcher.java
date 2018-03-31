@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @param <T> The actual matched type of this matcher.
  */
+@HashCodeAndEqualsPlugin.Enhance
 public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -20,6 +21,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     /**
      * A map that serves as a cache for previous matches.
      */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
     protected final ConcurrentMap<? super T, Boolean> map;
 
     /**
@@ -56,19 +58,6 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (!(object instanceof CachingMatcher)) return false;
-        CachingMatcher<?> that = (CachingMatcher<?>) object;
-        return matcher.equals(that.matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
-    }
-
-    @Override
     public String toString() {
         return "cached(" + matcher + ")";
     }
@@ -78,7 +67,6 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      *
      * @param <S> The actual matched type of this matcher.
      */
-    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Caching mechanism is not supposed to decide on equality")
     public static class WithInlineEviction<S> extends CachingMatcher<S> {
 
         /**

@@ -17,7 +17,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,11 +33,12 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.lang.reflect.Constructor;
 import java.security.ProtectionDomain;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
@@ -154,12 +154,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
@@ -196,12 +196,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -234,12 +234,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -271,12 +271,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -312,12 +312,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1785,12 +1785,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1938,12 +1938,12 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+        verify(dispatcher).register(eq(dynamicType),
+                eq(REDEFINED.getClassLoader()),
+                matchesPrototype(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain()));
+                        REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
@@ -1961,7 +1961,7 @@ public class AgentBuilderDefaultTest {
         ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                 classLoader,
-                protectionDomain).resolve(), is((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain)));
+                protectionDomain).resolve(), hasPrototype((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain)));
         verifyZeroInteractions(bootstrapInjectionStrategy);
     }
 
@@ -2126,7 +2126,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testDisableClassFormatChanges() throws Exception {
-        assertThat(new AgentBuilder.Default().disableClassFormatChanges(), is(new AgentBuilder.Default(new ByteBuddy()
+        assertThat(new AgentBuilder.Default().disableClassFormatChanges(), hasPrototype(new AgentBuilder.Default(new ByteBuddy()
                 .with(Implementation.Context.Disabled.Factory.INSTANCE))
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE_FROZEN)));
@@ -2135,7 +2135,7 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testBuildPlugin() throws Exception {
         Plugin plugin = mock(Plugin.class);
-        assertThat(AgentBuilder.Default.of(plugin), is((AgentBuilder) new AgentBuilder.Default()
+        assertThat(AgentBuilder.Default.of(plugin), hasPrototype((AgentBuilder) new AgentBuilder.Default()
                 .with(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(EntryPoint.Default.REBASE))
                 .type(plugin)
                 .transform(new AgentBuilder.Transformer.ForBuildPlugin(plugin))));
@@ -2147,7 +2147,7 @@ public class AgentBuilderDefaultTest {
         EntryPoint entryPoint = mock(EntryPoint.class);
         ByteBuddy byteBuddy = mock(ByteBuddy.class);
         when(entryPoint.byteBuddy(ClassFileVersion.ofThisVm())).thenReturn(byteBuddy);
-        assertThat(AgentBuilder.Default.of(entryPoint, plugin), is((AgentBuilder) new AgentBuilder.Default(byteBuddy)
+        assertThat(AgentBuilder.Default.of(entryPoint, plugin), hasPrototype((AgentBuilder) new AgentBuilder.Default(byteBuddy)
                 .with(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(entryPoint))
                 .type(plugin)
                 .transform(new AgentBuilder.Transformer.ForBuildPlugin(plugin))));
@@ -2172,51 +2172,6 @@ public class AgentBuilderDefaultTest {
         new AgentBuilder.Default()
                 .with(AgentBuilder.RedefinitionStrategy.DISABLED)
                 .withResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Ignoring.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transforming.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Ignored.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(AgentBuilder.Default.Transformation.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Unresolved.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Sort.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction.class);
-        final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return java9Dispatcher.next();
-            }
-        }).apply();
-        final Iterator<Class<?>> legacyDispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return legacyDispatcher.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class).apply();
-        final Iterator<Constructor<?>> iterator = Arrays.<Constructor<?>>asList(String.class.getDeclaredConstructors()).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
-            @Override
-            public Constructor<?> create() {
-                return iterator.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm.class).apply();
     }
 
     public static class Foo {

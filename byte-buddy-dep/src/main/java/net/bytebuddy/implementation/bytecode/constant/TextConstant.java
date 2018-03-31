@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -9,7 +9,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * Represents a {@link java.lang.String} value that is stored in a type's constant pool.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class TextConstant implements StackManipulation {
 
     /**

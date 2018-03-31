@@ -8,7 +8,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
@@ -156,10 +155,5 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Origin.Binder.class).apply();
     }
 }

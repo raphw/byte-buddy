@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -10,7 +10,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * Implements an {@code instanceof} check.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class InstanceCheck implements StackManipulation {
 
     /**

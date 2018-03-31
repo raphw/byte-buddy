@@ -1,14 +1,13 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Test;
 
 import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class AgentBuilderRawMatcherForLoadStateTest {
@@ -47,10 +46,5 @@ public class AgentBuilderRawMatcherForLoadStateTest {
                 mock(JavaModule.class),
                 null,
                 mock(ProtectionDomain.class)), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RawMatcher.ForLoadState.class).apply();
     }
 }

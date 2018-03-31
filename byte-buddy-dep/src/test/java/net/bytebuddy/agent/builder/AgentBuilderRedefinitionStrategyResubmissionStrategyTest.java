@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -876,15 +875,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
         assertThat(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay(scheduledExecutorService, 42L, TimeUnit.SECONDS).isAlive(), is(true));
         verify(scheduledExecutorService).isShutdown();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.AtFixedRate.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay.class).apply();
     }
 
     private static class Foo {

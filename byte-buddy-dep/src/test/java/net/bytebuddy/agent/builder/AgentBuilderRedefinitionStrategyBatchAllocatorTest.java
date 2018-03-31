@@ -1,7 +1,6 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -9,6 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -44,9 +44,9 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     @Test
     public void testForFixedFactory() throws Exception {
         assertThat(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1),
-                is((AgentBuilder.RedefinitionStrategy.BatchAllocator) new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(1)));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.BatchAllocator) new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize(1)));
         assertThat(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(0),
-                is((AgentBuilder.RedefinitionStrategy.BatchAllocator) AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE));
+                hasPrototype((AgentBuilder.RedefinitionStrategy.BatchAllocator) AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -331,14 +331,5 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     @Test(expected = IllegalArgumentException.class)
     public void testPartitioningIllegalArgument() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning.of(0);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.Partitioning.class).apply();
     }
 }

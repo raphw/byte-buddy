@@ -3,7 +3,6 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -136,10 +135,5 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
         verifyNoMoreInteractions(classLoaderMatcher);
         verify(typeMatcher).matches(typeDescription);
         verifyNoMoreInteractions(typeMatcher);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RawMatcher.ForElementMatchers.class).apply();
     }
 }

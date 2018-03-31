@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -184,7 +184,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation that loads all parameters of a given method onto the operand stack.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class MethodLoading implements StackManipulation {
 
         /**
@@ -281,7 +281,7 @@ public enum MethodVariableAccess {
              * A type casting handler that casts all parameters of a method to the parameter types of a compatible method
              * with covariant parameter types. This allows a convenient implementation of bridge methods.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForBridgeTarget implements TypeCastingHandler {
 
                 /**
@@ -312,6 +312,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation for loading a variable of a method's local variable array onto the operand stack.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class OffsetLoading implements StackManipulation {
 
         /**
@@ -338,32 +339,12 @@ public enum MethodVariableAccess {
             methodVisitor.visitVarInsn(loadOpcode, offset);
             return size.toIncreasingSize();
         }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodVariableAccess getMethodVariableAccess() {
-            return MethodVariableAccess.this;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && MethodVariableAccess.this == ((OffsetLoading) other).getMethodVariableAccess()
-                    && offset == ((OffsetLoading) other).offset;
-        }
-
-        @Override // HE: Remove when Lombok support for getOuter is added.
-        public int hashCode() {
-            return MethodVariableAccess.this.hashCode() + 31 * offset;
-        }
     }
 
     /**
      * A stack manipulation for storing a variable into a method's local variable array.
      */
+    @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class OffsetWriting implements StackManipulation {
 
         /**
@@ -390,33 +371,12 @@ public enum MethodVariableAccess {
             methodVisitor.visitVarInsn(storeOpcode, offset);
             return size.toDecreasingSize();
         }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private MethodVariableAccess getMethodVariableAccess() {
-            return MethodVariableAccess.this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && MethodVariableAccess.this == ((OffsetWriting) other).getMethodVariableAccess()
-                    && offset == ((OffsetWriting) other).offset;
-        }
-
-        @Override
-        public int hashCode() {
-            return MethodVariableAccess.this.hashCode() + 31 * offset;
-        }
     }
 
     /**
      * A stack manipulation that increments an integer variable.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class OffsetIncrementing implements StackManipulation {
 
         /**

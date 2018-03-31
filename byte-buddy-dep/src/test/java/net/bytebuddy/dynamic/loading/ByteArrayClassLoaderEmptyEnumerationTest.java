@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.NoSuchElementException;
@@ -18,10 +17,5 @@ public class ByteArrayClassLoaderEmptyEnumerationTest {
     @Test(expected = NoSuchElementException.class)
     public void testNextElementThrowsException() throws Exception {
         ByteArrayClassLoader.EmptyEnumeration.INSTANCE.nextElement();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.EmptyEnumeration.class).apply();
     }
 }

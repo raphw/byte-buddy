@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode;
 
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,11 +50,5 @@ public class StackManipulationTest {
     @Test(expected = IllegalStateException.class)
     public void testIllegalIsNotApplicable() throws Exception {
         StackManipulation.Illegal.INSTANCE.apply(methodVisitor, implementationContext);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StackManipulation.Trivial.class).apply();
-        ObjectPropertyAssertion.of(StackManipulation.Illegal.class).apply();
     }
 }

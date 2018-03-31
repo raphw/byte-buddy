@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bytecode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,10 +64,5 @@ public class TypeCreationTest {
     public void testTypeCreationAbstract() throws Exception {
         when(typeDescription.isAbstract()).thenReturn(true);
         TypeCreation.of(typeDescription);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeCreation.class).apply();
     }
 }

@@ -5,7 +5,6 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,16 +65,5 @@ public class ClassInjectorUsingInstrumentationTest {
         assertThat(types.size(), is(1));
         assertThat(types.get(dynamicType.getTypeDescription()).getName(), is(name));
         assertThat(types.get(dynamicType.getTypeDescription()).getClassLoader(), is(ClassLoader.getSystemClassLoader()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.Target.class).apply();
     }
 }

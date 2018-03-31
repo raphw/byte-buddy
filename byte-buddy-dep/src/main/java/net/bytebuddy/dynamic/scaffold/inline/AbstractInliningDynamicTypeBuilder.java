@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -22,7 +22,7 @@ import net.bytebuddy.pool.TypePool;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-@EqualsAndHashCode(callSuper = true)
+@HashCodeAndEqualsPlugin.Enhance
 public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**

@@ -1,6 +1,5 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
@@ -19,10 +18,5 @@ public class TypePoolDefaultReaderModeTest {
     public void testFlags() throws Exception {
         assertThat(TypePool.Default.ReaderMode.EXTENDED.getFlags(), is(ClassReader.SKIP_FRAMES));
         assertThat(TypePool.Default.ReaderMode.FAST.getFlags(), is(ClassReader.SKIP_CODE));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.ReaderMode.class).apply();
     }
 }

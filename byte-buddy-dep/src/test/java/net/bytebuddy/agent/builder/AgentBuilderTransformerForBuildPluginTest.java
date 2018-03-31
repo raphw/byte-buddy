@@ -4,7 +4,6 @@ import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,10 +41,5 @@ public class AgentBuilderTransformerForBuildPluginTest {
         assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader, module), is((DynamicType.Builder) result));
         verify(plugin).apply(builder, typeDescription);
         verifyNoMoreInteractions(plugin);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForBuildPlugin.class).apply();
     }
 }

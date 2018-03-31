@@ -10,7 +10,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -147,14 +146,5 @@ public class MethodConstantTest {
         assertThat(methodConstant.isValid(), is(false));
         assertThat(methodConstant.cached().isValid(), is(false));
         methodConstant.apply(methodVisitor, implementationContext);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodConstant.ForMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.ForConstructor.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.CachedMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.CachedConstructor.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.CanCacheIllegal.class).apply();
     }
 }

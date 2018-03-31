@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.utility.JavaConstant;
@@ -10,7 +10,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * An exact invocation of a method handle with a polymorphic signature.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class HandleInvocation implements StackManipulation {
 
     /**

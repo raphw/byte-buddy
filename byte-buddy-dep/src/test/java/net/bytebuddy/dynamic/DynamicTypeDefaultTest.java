@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
@@ -287,10 +286,5 @@ public class DynamicTypeDefaultTest {
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DynamicType.Default.class).apply();
     }
 }

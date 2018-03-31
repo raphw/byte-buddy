@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -115,11 +114,5 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         verifyZeroInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SubclassImplementationTarget.class).apply();
-        ObjectPropertyAssertion.of(SubclassImplementationTarget.OriginTypeResolver.class).apply();
     }
 }

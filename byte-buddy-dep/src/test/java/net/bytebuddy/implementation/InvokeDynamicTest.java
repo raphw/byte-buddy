@@ -7,7 +7,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
@@ -483,46 +482,6 @@ public class InvokeDynamicTest {
     private Enum<?> makeEnum() throws Exception {
         Class type = Class.forName(SAMPLE_ENUM);
         return Enum.valueOf(type, INSTANCE);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InvokeDynamic.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.Appender.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.WithImplicitTarget.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.WithImplicitArguments.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.Default.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.Default.Target.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.Target.Resolved.Simple.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.Target.ForMethodDescription.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.NameProvider.ForExplicitName.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.NameProvider.ForInterceptedMethod.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForInterceptedMethod.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForExplicitType.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.WithExplicitType.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstance.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.class).apply();
     }
 
     public static class Simple {

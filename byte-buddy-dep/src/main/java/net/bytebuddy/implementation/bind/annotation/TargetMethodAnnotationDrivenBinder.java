@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -26,7 +26,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isSetter;
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds
  * method by analyzing annotations found on the <i>target</i> method that is subject to a method binding.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinder {
 
     /**
@@ -70,7 +70,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     /**
      * A compiled record of a target method annotation-driven binder.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Record implements MethodDelegationBinder.Record {
 
         /**
@@ -292,7 +292,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <U> The bound annotation's type.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @HashCodeAndEqualsPlugin.Enhance
             public static class OfConstant<U extends Annotation> extends ForFixedValue<U> {
 
                 /**
@@ -303,6 +303,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 /**
                  * The value that is assigned to any annotated parameter.
                  */
+                @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
                 private final Object value;
 
                 /**
@@ -439,7 +440,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * for performing its actual logic. By outsourcing this logic to this helper class, a cleaner implementation
      * can be provided.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class DelegationProcessor {
 
         /**
@@ -522,7 +523,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              * An unbound handler is a fallback for returning an illegal binding for parameters for which no parameter
              * binder could be located.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Unbound implements Handler {
 
                 /**
@@ -631,7 +632,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <T> The annotation type of a given handler.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Bound<T extends Annotation> implements Handler {
 
                 /**

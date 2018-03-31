@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -15,7 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 /**
  * An implementation target for creating a subclass of a given type.
  */
-@EqualsAndHashCode(callSuper = true)
+@HashCodeAndEqualsPlugin.Enhance
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**

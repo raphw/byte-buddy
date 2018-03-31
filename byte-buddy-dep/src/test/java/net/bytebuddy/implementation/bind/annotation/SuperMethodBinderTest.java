@@ -5,7 +5,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -141,11 +140,5 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
                 assigner,
                 Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SuperMethod.Binder.class).apply();
-        ObjectPropertyAssertion.of(SuperMethod.Binder.DelegationMethod.class).apply();
     }
 }

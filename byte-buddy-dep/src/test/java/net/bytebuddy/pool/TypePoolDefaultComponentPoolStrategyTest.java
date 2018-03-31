@@ -3,8 +3,6 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -42,18 +40,5 @@ public class TypePoolDefaultComponentPoolStrategyTest {
     @Test
     public void testForArrayType() throws Exception {
         assertThat(new TypePool.Default.ComponentTypeLocator.ForArrayType("()[" + BAR_DESCRIPTOR).bind(FOO).lookup(), is(BAR));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.ForAnnotationProperty.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.ForAnnotationProperty.Bound.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.ForArrayType.class).create(new ObjectPropertyAssertion.Creator<String>() {
-            @Override
-            public String create() {
-                return "()L" + RandomString.make() + ";";
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.Illegal.class).apply();
     }
 }

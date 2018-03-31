@@ -14,6 +14,8 @@ import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
 
+    private static final int UNDEFINED = -1;
+
     private final ClassFileVersion currentVersion;
 
     private final boolean hotSpot;
@@ -27,9 +29,9 @@ public class JavaVersionRule implements MethodRule {
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
-            if (!currentVersion.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
+            if (enforce.value() != UNDEFINED && !currentVersion.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value(), "at least");
-            } else if (!currentVersion.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
+            } else if (enforce.atMost() != UNDEFINED && !currentVersion.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
                 return new NoOpStatement(enforce.atMost(), "at most");
             } else if (!hotSpot) {
                 for (int javaVersion : enforce.hotSpot()) {
@@ -46,9 +48,9 @@ public class JavaVersionRule implements MethodRule {
     @Target(ElementType.METHOD)
     public @interface Enforce {
 
-        int value() default 6;
+        int value() default UNDEFINED;
 
-        int atMost() default 9;
+        int atMost() default UNDEFINED;
 
         int[] hotSpot() default {};
     }

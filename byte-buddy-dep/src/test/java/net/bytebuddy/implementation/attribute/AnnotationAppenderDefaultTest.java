@@ -6,10 +6,8 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,7 +20,6 @@ import org.objectweb.asm.*;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.security.ProtectionDomain;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -221,11 +218,6 @@ public class AnnotationAppenderDefaultTest {
         annotationAppender.append(annotationDescription, valueFilter, 0, null);
         verifyZeroInteractions(valueFilter);
         verifyZeroInteractions(annotationVisitor);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.net.URL;
@@ -25,10 +24,5 @@ public class PackageDefinitionTrivialTest {
         assertThat(definition.getSpecificationVendor(), nullValue(String.class));
         assertThat(definition.getSealBase(), nullValue(URL.class));
         assertThat(definition.isCompatibleTo(getClass().getPackage()), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(PackageDefinitionStrategy.Trivial.class).apply();
     }
 }

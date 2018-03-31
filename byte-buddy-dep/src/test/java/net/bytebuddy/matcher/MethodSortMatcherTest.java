@@ -54,13 +54,9 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
         assertThat(new MethodSortMatcher<MethodDescription>(sort).matches(methodDescription), is(false));
     }
 
-    @Override
-    protected String makeRegex(String startsWith) {
-        return null;
-    }
-
     @Test
-    public void testToString() throws Exception {
+    @Override
+    public void testStringRepresentation() throws Exception {
         assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
     }
 

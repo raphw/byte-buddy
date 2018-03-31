@@ -4,7 +4,6 @@ import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Modifier;
@@ -106,13 +105,6 @@ public class ByteBuddyTest {
                 .load(classLoader)
                 .getLoaded();
         assertThat(type.getClassLoader(), is(classLoader));
-    }
-
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteBuddy.class).apply();
-        ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.class).apply();
     }
 
     public static class Recorder {

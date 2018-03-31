@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -98,7 +98,7 @@ public @interface SuperMethod {
         /**
          * Loads the delegation method constant onto the stack.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class DelegationMethod implements StackManipulation {
 
             /**

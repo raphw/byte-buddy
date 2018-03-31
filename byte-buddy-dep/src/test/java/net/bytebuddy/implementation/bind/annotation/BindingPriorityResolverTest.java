@@ -5,7 +5,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,10 +68,5 @@ public class BindingPriorityResolverTest extends AbstractAnnotationTest<BindingP
         AnnotationDescription.Loadable<BindingPriority> highPriority = AnnotationDescription.ForLoadedAnnotation.of(this.highPriority);
         when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(highPriority);
         assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(BindingPriority.Resolver.class).apply();
     }
 }

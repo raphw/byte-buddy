@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -32,10 +31,5 @@ public class MethodGraphNodeSimpleTest {
     @Test
     public void testSort() throws Exception {
         assertThat(new MethodGraph.Node.Simple(methodDescription).getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Node.Simple.class).apply();
     }
 }

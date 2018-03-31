@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.util.Iterator;
 
@@ -10,7 +10,7 @@ import java.util.Iterator;
  *
  * @param <T> The type of the elements contained by the collection.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class CollectionElementMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**
@@ -26,7 +26,7 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
     /**
      * Creates a new matcher for an element in a collection.
      *
-     * @param index          The index of the matched element.
+     * @param index   The index of the matched element.
      * @param matcher The matcher for the given element, if it exists.
      */
     public CollectionElementMatcher(int index, ElementMatcher<? super T> matcher) {

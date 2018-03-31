@@ -1,6 +1,5 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;

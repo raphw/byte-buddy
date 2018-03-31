@@ -8,7 +8,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -16,6 +15,8 @@ import org.mockito.Mock;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -43,30 +44,26 @@ public class EntryPointDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testRebase() throws Exception {
-        assertThat(EntryPoint.Default.REBASE.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy()));
+        assertThat(EntryPoint.Default.REBASE.byteBuddy(ClassFileVersion.ofThisVm()), hasPrototype(new ByteBuddy()));
         when(byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer)).thenReturn((DynamicType.Builder) builder);
-        assertThat(EntryPoint.Default.REBASE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) builder));
+        assertThat(EntryPoint.Default.REBASE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), hasPrototype((DynamicType.Builder) builder));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testRedefine() throws Exception {
-        assertThat(EntryPoint.Default.REDEFINE.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy()));
+        assertThat(EntryPoint.Default.REDEFINE.byteBuddy(ClassFileVersion.ofThisVm()), hasPrototype(new ByteBuddy()));
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) builder);
-        assertThat(EntryPoint.Default.REDEFINE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) builder));
+        assertThat(EntryPoint.Default.REDEFINE.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), hasPrototype((DynamicType.Builder) builder));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testRedefineLocal() throws Exception {
-        assertThat(EntryPoint.Default.REDEFINE_LOCAL.byteBuddy(ClassFileVersion.ofThisVm()), is(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE)));
+        assertThat(EntryPoint.Default.REDEFINE_LOCAL.byteBuddy(ClassFileVersion.ofThisVm()),
+                hasPrototype(new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE)));
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) builder);
-        when(builder.ignoreAlso(not(isDeclaredBy(typeDescription)))).thenReturn((DynamicType.Builder) otherBuilder);
-        assertThat(EntryPoint.Default.REDEFINE_LOCAL.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), is((DynamicType.Builder) otherBuilder));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(EntryPoint.Default.class).apply();
+        when(builder.ignoreAlso(matchesPrototype(not(isDeclaredBy(typeDescription))))).thenReturn((DynamicType.Builder) otherBuilder);
+        assertThat(EntryPoint.Default.REDEFINE_LOCAL.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer), hasPrototype((DynamicType.Builder) otherBuilder));
     }
 }

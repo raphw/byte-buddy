@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,6 +12,7 @@ import org.mockito.Mock;
 
 import java.io.ByteArrayInputStream;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -43,13 +43,13 @@ public class ClassFileLocatorForModuleTest {
     @Test
     public void testCreationNamed() throws Exception {
         when(module.isNamed()).thenReturn(true);
-        assertThat(ClassFileLocator.ForModule.of(module), is((ClassFileLocator) new ClassFileLocator.ForModule(module)));
+        assertThat(ClassFileLocator.ForModule.of(module), hasPrototype((ClassFileLocator) new ClassFileLocator.ForModule(module)));
     }
 
     @Test
     public void testCreationUnnamed() throws Exception {
         when(module.isNamed()).thenReturn(false);
-        assertThat(ClassFileLocator.ForModule.of(module), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
+        assertThat(ClassFileLocator.ForModule.of(module), hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
     }
 
     @Test
@@ -87,10 +87,5 @@ public class ClassFileLocatorForModuleTest {
     public void testClose() throws Exception {
         new ClassFileLocator.ForModule(module).close();
         verifyZeroInteractions(module);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForModule.class).apply();
     }
 }

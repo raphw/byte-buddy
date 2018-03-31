@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,8 +10,6 @@ import org.junit.rules.MethodRule;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -120,17 +117,5 @@ public class PackageDefinitionStrategyTypeSimpleTest {
         } finally {
             file.deleteOnExit();
         }
-    }
-
-    @Test
-    @IntegrationRule.Enforce
-    public void testObjectProperties() throws Exception {
-        final Iterator<URL> urls = Arrays.asList(new URL("file:/foo"), new URL("file:/bar")).iterator();
-        ObjectPropertyAssertion.of(PackageDefinitionStrategy.Definition.Simple.class).create(new ObjectPropertyAssertion.Creator<URL>() {
-            @Override
-            public URL create() {
-                return urls.next();
-            }
-        }).apply();
     }
 }

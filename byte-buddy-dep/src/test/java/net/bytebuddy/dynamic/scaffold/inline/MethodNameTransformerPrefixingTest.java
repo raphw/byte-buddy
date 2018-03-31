@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -29,10 +28,5 @@ public class MethodNameTransformerPrefixingTest {
         String transformed = new MethodNameTransformer.Prefixing().transform(methodDescription);
         assertThat(transformed, not(FOO));
         assertThat(transformed, endsWith(FOO));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodNameTransformer.Prefixing.class).apply();
     }
 }

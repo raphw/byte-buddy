@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 /**
  * An element matcher that matches all {@link java.lang.ClassLoader}s in the matched class loaders hierarchy
@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The exact type of the class loader that is matched.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

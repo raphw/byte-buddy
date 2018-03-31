@@ -1,6 +1,6 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 /**
  * An element matcher is used as a predicate for identifying code elements such as types, methods, fields or
@@ -76,7 +76,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class Conjunction<W> extends AbstractBase<W> {
 
             /**
@@ -112,7 +112,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class Disjunction<W> extends AbstractBase<W> {
 
             /**

@@ -2,7 +2,6 @@ package net.bytebuddy.description;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
@@ -22,10 +21,5 @@ public class TypeVariableSourceVisitorNoOpTest {
     public void testVisitMethod() throws Exception {
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         assertThat(TypeVariableSource.Visitor.NoOp.INSTANCE.onMethod(methodDescription), is((TypeVariableSource) methodDescription));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeVariableSource.Visitor.NoOp.class).apply();
     }
 }

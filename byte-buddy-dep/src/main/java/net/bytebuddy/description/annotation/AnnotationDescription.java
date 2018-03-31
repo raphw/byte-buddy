@@ -1,7 +1,7 @@
 package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -334,8 +334,11 @@ public interface AnnotationDescription {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof AnnotationInvocationHandler)) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof AnnotationInvocationHandler)) {
+                return false;
+            }
             AnnotationInvocationHandler that = (AnnotationInvocationHandler) other;
             if (!annotationType.equals(that.annotationType)) {
                 return false;
@@ -386,6 +389,7 @@ public interface AnnotationDescription {
 
             /**
              * Creates a missing value for the supplied annotation property.
+             *
              * @param method A method representing an annotation property.
              * @return An annotation value for a missing property.
              */
@@ -464,10 +468,9 @@ public interface AnnotationDescription {
 
         @Override
         public boolean equals(Object other) {
-            if (other == this) {
+            if (this == other) {
                 return true;
-            }
-            if (!(other instanceof AnnotationDescription)) {
+            } else if (!(other instanceof AnnotationDescription)) {
                 return false;
             }
             AnnotationDescription annotationDescription = ((AnnotationDescription) other);
@@ -790,7 +793,7 @@ public interface AnnotationDescription {
     /**
      * A builder for pragmatically creating {@link net.bytebuddy.description.annotation.AnnotationDescription}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Builder {
 
         /**

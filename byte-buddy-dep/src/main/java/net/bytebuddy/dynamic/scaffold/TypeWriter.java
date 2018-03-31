@@ -1,9 +1,9 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -145,7 +145,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForImplicitField implements Record {
 
                 /**
@@ -206,7 +206,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a rich field with attributes and a potential default value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForExplicitField implements Record {
 
                 /**
@@ -439,7 +439,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForNonImplementedMethod implements Record {
 
                 /**
@@ -531,7 +531,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
@@ -632,7 +632,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class WithoutBody extends ForDefinedMethod {
 
                     /**
@@ -707,7 +707,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
                     /**
@@ -792,7 +792,7 @@ public interface TypeWriter<T> {
                 /**
                  * A record for a visibility bridge.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @HashCodeAndEqualsPlugin.Enhance
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
@@ -996,7 +996,7 @@ public interface TypeWriter<T> {
              * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationValueFilter.Factory)}
              * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class AccessBridgeWrapper implements Record {
 
                 /**
@@ -1302,7 +1302,7 @@ public interface TypeWriter<T> {
      *
      * @param <S> The best known loaded type for the dynamically created type.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
@@ -1652,6 +1652,7 @@ public interface TypeWriter<T> {
         /**
          * An unresolved type.
          */
+        @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
         protected class UnresolvedType {
 
             /**
@@ -1696,34 +1697,6 @@ public interface TypeWriter<T> {
              */
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Default getOuter() {
-                return Default.this;
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            @SuppressWarnings("unchecked")
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                UnresolvedType that = (UnresolvedType) object; // Java 6 compilers cannot cast to a nested wildcard.
-                return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
-                        && Default.this.equals(that.getOuter())
-                        && auxiliaryTypes.equals(that.auxiliaryTypes);
-            }
-
-            @Override // HE: Remove when Lombok support for getOuter is added.
-            public int hashCode() {
-                int result = Arrays.hashCode(binaryRepresentation);
-                result = 31 * result + auxiliaryTypes.hashCode();
-                result = 31 * result + Default.this.hashCode();
-                return result;
             }
         }
 
@@ -2413,7 +2386,7 @@ public interface TypeWriter<T> {
                 /**
                  * Represents the constraint implied by a class file version.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForClassFileVersion implements Constraint {
 
                     /**
@@ -2528,7 +2501,7 @@ public interface TypeWriter<T> {
                 /**
                  * A constraint implementation that summarizes several constraints.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 class Compound implements Constraint {
 
                     /**
@@ -2810,7 +2783,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @HashCodeAndEqualsPlugin.Enhance
         public static class ForInlining<U> extends Default<U> {
 
             /**
@@ -2935,7 +2908,7 @@ public interface TypeWriter<T> {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
-                    ClassReader classReader = new ClassReader(classFileLocator.locate(originalType.getName()).resolve());
+                    ClassReader classReader = new OpenedClassReader(classFileLocator.locate(originalType.getName()).resolve());
                     ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter, typeValidation),
@@ -4083,7 +4056,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
-        @EqualsAndHashCode(callSuper = true)
+        @HashCodeAndEqualsPlugin.Enhance
         public static class ForCreation<U> extends Default<U> {
 
             /**
@@ -4194,7 +4167,7 @@ public interface TypeWriter<T> {
         /**
          * An action to write a class file to the dumping location.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class ClassDumpAction implements PrivilegedExceptionAction<Void> {
 
             /**

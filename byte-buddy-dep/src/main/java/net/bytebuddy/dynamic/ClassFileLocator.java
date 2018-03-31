@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -67,7 +67,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A canonical representation of an illegal binary representation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Illegal implements Resolution {
 
             /**
@@ -98,7 +98,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Represents a byte array as binary data.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Explicit implements Resolution {
 
             /**
@@ -145,7 +145,7 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             /* do nothing */
         }
     }
@@ -153,7 +153,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A simple class file locator that returns class files from a selection of given types.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Simple implements ClassFileLocator {
 
         /**
@@ -240,7 +240,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForClassLoader implements ClassFileLocator {
 
         /**
@@ -391,11 +391,14 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                WeaklyReferenced that = (WeaklyReferenced) object;
-                ClassLoader classLoader = that.get();
+            public boolean equals(Object other) {
+                if (this == other) {
+                    return true;
+                } else if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
+                WeaklyReferenced weaklyReferenced = (WeaklyReferenced) other;
+                ClassLoader classLoader = weaklyReferenced.get();
                 return classLoader != null && get() == classLoader;
             }
         }
@@ -410,7 +413,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForModule implements ClassFileLocator {
 
         /**
@@ -491,7 +494,7 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             /* do nothing */
         }
 
@@ -548,7 +551,7 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() {
                 /* do nothing */
             }
 
@@ -558,11 +561,14 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                WeaklyReferenced that = (WeaklyReferenced) object;
-                Object module = that.get();
+            public boolean equals(Object other) {
+                if (this == other) {
+                    return true;
+                } else if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
+                WeaklyReferenced weaklyReferenced = (WeaklyReferenced) other;
+                Object module = weaklyReferenced.get();
                 return module != null && get() == module;
             }
         }
@@ -571,7 +577,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that locates classes within a Java <i>jar</i> file.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForJarFile implements ClassFileLocator {
 
         /**
@@ -687,7 +693,7 @@ public interface ClassFileLocator extends Closeable {
      * A class file locator that locates classes within a Java <i>jmod</i> file. This class file locator should not be used
      * for reading modular jar files for which {@link ForJarFile} is appropriate.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForModuleFile implements ClassFileLocator {
 
         /**
@@ -868,7 +874,7 @@ public interface ClassFileLocator extends Closeable {
      * folders donating packages and class files being saved as {@code <classname>.class} files
      * within their package folder.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForFolder implements ClassFileLocator {
 
         /**
@@ -911,7 +917,7 @@ public interface ClassFileLocator extends Closeable {
      * locator causes a class to be loaded in order to look up its class file. Also, this locator does deliberately not
      * support the look-up of classes that represent lambda expressions.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class AgentBased implements ClassFileLocator {
 
         /**
@@ -1044,7 +1050,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * A default implementation of a class loading delegate.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Default implements ClassLoadingDelegate {
 
                 /**
@@ -1191,7 +1197,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could be located.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
 
                         /**
@@ -1233,7 +1239,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could not be located.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     class Unresolved implements Initializable {
 
                         /**
@@ -1263,7 +1269,7 @@ public interface ClassFileLocator extends Closeable {
              * be located by a class loader directly. This allows for locating classes that are loaded by
              * an anonymous class loader which does not register its classes in a system dictionary.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class Explicit implements ClassLoadingDelegate {
 
                 /**
@@ -1394,7 +1400,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that discriminates by a type's package.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class PackageDiscriminating implements ClassFileLocator {
 
         /**
@@ -1435,7 +1441,7 @@ public interface ClassFileLocator extends Closeable {
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound implements ClassFileLocator, Closeable {
 
         /**

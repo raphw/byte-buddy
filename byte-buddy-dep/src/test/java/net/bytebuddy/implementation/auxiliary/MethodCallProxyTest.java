@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -74,15 +73,6 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredMethod("call").getGenericReturnType(), is((Type) Object.class));
         assertThat(auxiliaryType.getDeclaredFields()[1].getGenericType(), is((Type) Object.class));
         assertThat(auxiliaryType.getDeclaredFields()[2].getGenericType(), is((Type) Number.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodCallProxy.class).apply();
-        ObjectPropertyAssertion.of(MethodCallProxy.AssignableSignatureCall.class).apply();
-        ObjectPropertyAssertion.of(MethodCallProxy.ConstructorCall.class).apply();
-        ObjectPropertyAssertion.of(MethodCallProxy.MethodCall.class).apply();
-        ObjectPropertyAssertion.of(MethodCallProxy.MethodCall.Appender.class).skipSynthetic().apply();
     }
 
     @SuppressWarnings("unused")

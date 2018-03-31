@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -69,7 +69,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class OnType implements Target {
 
             /**
@@ -100,7 +100,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class OnMethod implements Target {
 
             /**
@@ -131,7 +131,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor parameter.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class OnMethodParameter implements Target {
 
             /**
@@ -169,7 +169,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java field.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class OnField implements Target {
 
             /**
@@ -202,7 +202,7 @@ public interface AnnotationAppender {
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
      * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Default implements AnnotationAppender {
 
         /**
@@ -330,7 +330,7 @@ public interface AnnotationAppender {
      * A type visitor that visits all type annotations of a generic type and writes any discovered annotation to a
      * supplied {@link AnnotationAppender}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
 
         /**

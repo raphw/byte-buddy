@@ -1,6 +1,6 @@
 package net.bytebuddy.asm;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -32,7 +32,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @see net.bytebuddy.dynamic.Transformer.ForField#withModifiers(ModifierContributor.ForField...)
  * @see net.bytebuddy.dynamic.Transformer.ForMethod#withModifiers(ModifierContributor.ForMethod...)
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
 
     /**
@@ -328,7 +328,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
      *
      * @param <T> The type of the adjusted element's description.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Adjustment<T> implements ElementMatcher<T> {
 
         /**

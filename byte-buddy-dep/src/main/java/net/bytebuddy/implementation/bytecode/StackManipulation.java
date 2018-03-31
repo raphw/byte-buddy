@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
@@ -75,7 +75,7 @@ public interface StackManipulation {
      * A description of the size change that is imposed by some
      * {@link StackManipulation}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Size {
 
         /**
@@ -148,7 +148,7 @@ public interface StackManipulation {
     /**
      * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Compound implements StackManipulation {
 
         /**

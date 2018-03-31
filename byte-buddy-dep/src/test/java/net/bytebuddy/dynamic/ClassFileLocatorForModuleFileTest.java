@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,16 +10,13 @@ import org.junit.rules.MethodRule;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 public class ClassFileLocatorForModuleFileTest {
 
@@ -112,10 +108,5 @@ public class ClassFileLocatorForModuleFileTest {
         new ClassFileLocator.ForModuleFile(zipFile).close();
         verify(zipFile).close();
         verifyNoMoreInteractions(zipFile);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForModuleFile.class).apply();
     }
 }

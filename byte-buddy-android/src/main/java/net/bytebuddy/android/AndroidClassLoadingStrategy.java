@@ -10,7 +10,6 @@ import com.android.dx.dex.cf.CfTranslator;
 import com.android.dx.dex.file.DexFile;
 import dalvik.system.DexClassLoader;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
@@ -180,7 +179,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
          * An implementation of a dex processor based on the Android SDK's <i>dx.jar</i> with an API that is
          * compatible to version 1.7.
          */
-        @EqualsAndHashCode
         class ForSdkCompiler implements DexProcessor {
 
             /**

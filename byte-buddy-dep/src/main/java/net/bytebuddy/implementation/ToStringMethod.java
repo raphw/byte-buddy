@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -27,7 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * An implementation of {@link Object#toString()} that concatenates the {@link String} representation of all fields that are declared by a class.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ToStringMethod implements Implementation {
 
     /**
@@ -211,7 +211,7 @@ public class ToStringMethod implements Implementation {
     /**
      * An appender to implement {@link ToStringMethod}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -356,7 +356,7 @@ public class ToStringMethod implements Implementation {
         /**
          * A prefix resolver that returns a fixed value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForFixedValue implements PrefixResolver {
 
             /**
@@ -369,7 +369,7 @@ public class ToStringMethod implements Implementation {
              *
              * @param prefix The prefix to prepend.
              */
-            public ForFixedValue(String prefix) {
+            protected ForFixedValue(String prefix) {
                 this.prefix = prefix;
             }
 

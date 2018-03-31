@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -45,10 +44,5 @@ public class AgentBuilderCircularityLockTest {
         assertThat(circularityLock.acquire(), is(true));
         assertThat(circularityLock.acquire(), is(true));
         circularityLock.release();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.CircularityLock.Inactive.class).apply();
     }
 }

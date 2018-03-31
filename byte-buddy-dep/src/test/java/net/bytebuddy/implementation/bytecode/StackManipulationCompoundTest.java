@@ -2,15 +2,11 @@ package net.bytebuddy.implementation.bytecode;
 
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -61,15 +57,5 @@ public class StackManipulationCompoundTest {
         verifyNoMoreInteractions(second);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StackManipulation.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.singletonList(mock(StackManipulation.class));
-            }
-        }).apply();
     }
 }

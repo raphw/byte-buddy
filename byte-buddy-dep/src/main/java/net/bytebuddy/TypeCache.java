@@ -1,7 +1,6 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;
@@ -247,7 +246,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
         public boolean equals(Object other) {
-            if (other == this) {
+            if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
                 return classLoader == ((LookupKey) other).classLoader;
@@ -289,7 +288,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         @Override
         @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
         public boolean equals(Object other) {
-            if (other == this) {
+            if (this == other) {
                 return true;
             } else if (other instanceof LookupKey) {
                 LookupKey lookupKey = (LookupKey) other;
@@ -362,7 +361,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
-    @EqualsAndHashCode
     public static class SimpleKey {
 
         /**
@@ -400,6 +398,22 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             for (Class<?> type : types) {
                 this.types.add(type.getName());
             }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            SimpleKey simpleKey = (SimpleKey) other;
+            return types.equals(simpleKey.types);
+        }
+
+        @Override
+        public int hashCode() {
+            return types.hashCode();
         }
     }
 }

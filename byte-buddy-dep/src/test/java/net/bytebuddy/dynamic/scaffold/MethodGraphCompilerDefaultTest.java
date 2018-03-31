@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -18,6 +17,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -573,7 +573,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(node, is(methodGraph.getSuperClassGraph().locate(methodDescription.asSignatureToken())));
+        assertThat(node, hasPrototype(methodGraph.getSuperClassGraph().locate(methodDescription.asSignatureToken())));
         assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
@@ -589,7 +589,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
+        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
         assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
@@ -606,7 +606,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
+        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
         assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
@@ -1117,11 +1117,6 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(method.asDefined().asTypeToken()), is(true));
         assertThat(node.getVisibility(), is(method.getVisibility()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.class).apply();
     }
 
     public interface SimpleInterface {

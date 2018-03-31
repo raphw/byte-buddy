@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -29,7 +29,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-@EqualsAndHashCode(callSuper = true)
+@HashCodeAndEqualsPlugin.Enhance
 public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuilder<T> {
 
     /**
@@ -203,7 +203,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
     /**
      * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class RebaseableMatcher implements ElementMatcher<MethodDescription.Token> {
 
         /**

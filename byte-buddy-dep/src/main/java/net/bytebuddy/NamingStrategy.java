@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -80,7 +80,7 @@ public interface NamingStrategy {
      * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
      * when subclassing a signed type which is equally illegal.
      */
-    @EqualsAndHashCode(callSuper = false, exclude = "randomString")
+    @HashCodeAndEqualsPlugin.Enhance
     class SuffixingRandom extends AbstractBase {
 
         /**
@@ -113,6 +113,7 @@ public interface NamingStrategy {
         /**
          * An instance for creating random seed values.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final RandomString randomString;
 
         /**
@@ -213,7 +214,7 @@ public interface NamingStrategy {
             /**
              * Uses a specific type's name as the resolved name.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForGivenType implements BaseNameResolver {
 
                 /**
@@ -239,7 +240,7 @@ public interface NamingStrategy {
             /**
              * A base name resolver that simply returns a fixed value.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForFixedValue implements BaseNameResolver {
 
                 /**
@@ -268,7 +269,7 @@ public interface NamingStrategy {
      * A naming strategy that creates a name by prefixing a given class and its package with another package and
      * by appending a random number to the class's simple name.
      */
-    @EqualsAndHashCode(callSuper = false, of = "prefix")
+    @HashCodeAndEqualsPlugin.Enhance
     class PrefixingRandom extends AbstractBase {
 
         /**
@@ -279,6 +280,7 @@ public interface NamingStrategy {
         /**
          * A seed generator.
          */
+        @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
         private final RandomString randomString;
 
         /**

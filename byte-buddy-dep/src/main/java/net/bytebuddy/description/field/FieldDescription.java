@@ -151,9 +151,13 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof FieldDescription
-                    && getName().equals(((FieldDescription) other).getName())
-                    && getDeclaringType().equals(((FieldDescription) other).getDeclaringType());
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof FieldDescription)) {
+                return false;
+            }
+            FieldDescription fieldDescription = (FieldDescription) other;
+            return getName().equals(fieldDescription.getName()) && getDeclaringType().equals(fieldDescription.getDeclaringType());
         }
 
         @Override
@@ -502,8 +506,11 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
             Token token = (Token) other;
             return modifiers == token.modifiers
                     && name.equals(token.name)
@@ -567,10 +574,13 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof SignatureToken)) return false;
-            SignatureToken that = (SignatureToken) other;
-            return name.equals(that.name) && type.equals(that.type);
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof SignatureToken)) {
+                return false;
+            }
+            SignatureToken signatureToken = (SignatureToken) other;
+            return name.equals(signatureToken.name) && type.equals(signatureToken.type);
         }
 
         @Override

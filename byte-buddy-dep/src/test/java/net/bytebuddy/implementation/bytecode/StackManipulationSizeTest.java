@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -33,10 +32,5 @@ public class StackManipulationSizeTest {
         StackManipulation.Size merged = first.aggregate(second);
         assertThat(merged.getSizeImpact(), is(-2));
         assertThat(merged.getMaximalSize(), is(4));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StackManipulation.Size.class).apply();
     }
 }

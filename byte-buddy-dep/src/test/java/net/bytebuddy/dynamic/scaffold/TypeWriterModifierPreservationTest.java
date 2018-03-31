@@ -16,6 +16,7 @@ import org.junit.runners.Parameterized;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.OpenedClassReader;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,7 +61,7 @@ public class TypeWriterModifierPreservationTest {
     @Test
     public void testModifiers() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        new ClassReader(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
+        new OpenedClassReader(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
         new ByteBuddy()
                 .redefine(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))

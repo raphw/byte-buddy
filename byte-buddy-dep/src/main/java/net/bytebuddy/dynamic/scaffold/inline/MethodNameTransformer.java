@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -23,7 +23,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Suffixing implements MethodNameTransformer {
 
         /**
@@ -63,7 +63,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed prefix to an original method name.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Prefixing implements MethodNameTransformer {
 
         /**

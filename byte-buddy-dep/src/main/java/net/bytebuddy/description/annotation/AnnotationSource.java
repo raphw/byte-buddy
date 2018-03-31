@@ -1,6 +1,6 @@
 package net.bytebuddy.description.annotation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +36,7 @@ public interface AnnotationSource {
     /**
      * An annotation source that declares a given list of annotations.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Explicit implements AnnotationSource {
 
         /**

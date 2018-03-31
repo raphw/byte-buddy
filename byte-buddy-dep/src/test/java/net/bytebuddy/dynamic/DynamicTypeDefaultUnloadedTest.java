@@ -4,7 +4,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -98,10 +97,5 @@ public class DynamicTypeDefaultUnloadedTest {
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(2));
         assertThat(dynamicType.getAuxiliaryTypes().containsKey(additionalTypeDescription), is(true));
         assertThat(dynamicType.getAuxiliaryTypes().containsKey(auxiliaryTypeDescription), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DynamicType.Default.Unloaded.class).apply();
     }
 }

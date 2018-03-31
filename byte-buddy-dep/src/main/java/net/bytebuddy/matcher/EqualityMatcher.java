@@ -1,13 +1,13 @@
 package net.bytebuddy.matcher;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 /**
  * An element matcher that checks an object's equality to another object.
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@HashCodeAndEqualsPlugin.Enhance
 public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

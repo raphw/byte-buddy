@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -245,7 +245,7 @@ public interface ConstructorStrategy {
         /**
          * A wrapper for a default constructor strategy which additionally applies a method attribute appender factory.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class WithMethodAttributeAppenderFactory implements ConstructorStrategy {
 
             /**
@@ -284,7 +284,7 @@ public interface ConstructorStrategy {
     /**
      * A constructor strategy that creates a default constructor that invokes a super constructor with default arguments.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class ForDefaultConstructor implements ConstructorStrategy {
 
         /**

@@ -1,7 +1,5 @@
 package net.bytebuddy.build.gradle;
 
-import lombok.EqualsAndHashCode;
-
 import java.io.File;
 import java.util.Iterator;
 
@@ -40,7 +38,6 @@ public class AbstractUserConfiguration {
     /**
      * An iterable with a single {@link File} element prepended.
      */
-    @EqualsAndHashCode
     protected static class PrefixIterable implements Iterable<File> {
 
         /**
@@ -65,14 +62,6 @@ public class AbstractUserConfiguration {
         @Override
         public Iterator<File> iterator() {
             return new PrefixIterator(file, files.iterator());
-        }
-
-        @Override
-        public String toString() {
-            return "AbstractUserConfiguration.PrefixIterable{" +
-                    "file=" + file +
-                    ", files=" + files +
-                    '}';
         }
 
         /**
@@ -125,15 +114,6 @@ public class AbstractUserConfiguration {
             @Override
             public void remove() {
                 throw new UnsupportedOperationException("Cannot remove file from iterator");
-            }
-
-            @Override
-            public String toString() {
-                return "AbstractUserConfiguration.PrefixIterable.PrefixIterator{" +
-                        "file=" + file +
-                        ", files=" + files +
-                        ", first=" + first +
-                        '}';
             }
         }
     }

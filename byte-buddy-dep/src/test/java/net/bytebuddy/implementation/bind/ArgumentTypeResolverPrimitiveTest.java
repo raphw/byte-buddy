@@ -44,32 +44,26 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
                 {boolean.class, long.class},
                 {boolean.class, float.class},
                 {boolean.class, double.class},
-
                 {byte.class, short.class},
                 {byte.class, char.class},
                 {byte.class, int.class},
                 {byte.class, long.class},
                 {byte.class, float.class},
                 {byte.class, double.class},
-
                 {short.class, char.class},
                 {short.class, int.class},
                 {short.class, long.class},
                 {short.class, float.class},
                 {short.class, double.class},
-
                 {char.class, long.class},
                 {char.class, float.class},
                 {char.class, double.class},
-
                 {int.class, char.class},
                 {int.class, long.class},
                 {int.class, float.class},
                 {int.class, double.class},
-
                 {long.class, float.class},
                 {long.class, double.class},
-
                 {float.class, double.class},
         });
     }

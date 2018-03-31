@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -17,13 +17,8 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * Be aware that the Java Virtual machine does not care about exception declarations and will throw any
  * {@link java.lang.Throwable} from any method even if the method does not declared a checked exception.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ExceptionMethod implements Implementation, ByteCodeAppender {
-
-    /**
-     * The type of the exception that is thrown.
-     */
-    private final TypeDescription throwableType;
 
     /**
      * The construction delegation which is responsible for creating the exception to be thrown.
@@ -33,11 +28,9 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     /**
      * Creates a new instance of an implementation for throwing throwables.
      *
-     * @param throwableType        The type of the exception to be thrown.
      * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
      */
-    public ExceptionMethod(TypeDescription throwableType, ConstructionDelegate constructionDelegate) {
-        this.throwableType = throwableType;
+    public ExceptionMethod(ConstructionDelegate constructionDelegate) {
         this.constructionDelegate = constructionDelegate;
     }
 
@@ -67,7 +60,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         if (!exceptionType.isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException(exceptionType + " does not extend throwable");
         }
-        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+        return new ExceptionMethod(new ConstructionDelegate.ForDefaultConstructor(exceptionType));
     }
 
     /**
@@ -98,7 +91,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         if (!exceptionType.isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException(exceptionType + " does not extend throwable");
         }
-        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
+        return new ExceptionMethod(new ConstructionDelegate.ForStringConstructor(exceptionType, message));
     }
 
     @Override
@@ -136,7 +129,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         /**
          * A construction delegate that calls the default constructor.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForDefaultConstructor implements ConstructionDelegate {
 
             /**
@@ -172,7 +165,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         /**
          * A construction delegate that calls a constructor that takes a single string as its argument.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForStringConstructor implements ConstructionDelegate {
 
             /**

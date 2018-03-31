@@ -3,7 +3,6 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -51,12 +50,5 @@ public class AgentBuilderPoolStrategyTest {
     @Test
     public void testExtendedLoadingTypePool() throws Exception {
         assertThat(AgentBuilder.PoolStrategy.ClassLoading.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.Eager.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.ClassLoading.class).apply();
     }
 }

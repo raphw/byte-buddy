@@ -10,7 +10,6 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -102,7 +102,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testSplitInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -112,7 +112,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testLazyInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -122,7 +122,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testEagerInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(matchesPrototype(new NexusAccessor.InitializationAppender(IDENTIFIER)));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -193,17 +193,6 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
                 instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher.class));
         assertThat(new AgentBuilder.InitializationStrategy.SelfInjection.Lazy().dispatcher(),
                 instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher.class));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Eager.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Split.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer.class).apply();
     }
 
     private static class Foo {

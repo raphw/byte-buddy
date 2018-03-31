@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -34,7 +34,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * the instance upon which the method is invoked returns {@code true} upon calling the value's {@code equals} method. For arrays, the corresponding
  * utilities of {@link java.util.Arrays} are used.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class EqualsMethod implements Implementation {
 
     /**
@@ -314,7 +314,7 @@ public class EqualsMethod implements Implementation {
          * A null value guard that expects a reference type and that skips the comparison if both values are {@code null} but returns if
          * the invoked instance's field value is {@code null} but not the compared instance's value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class UsingJump implements NullValueGuard {
 
             /**
@@ -377,7 +377,7 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply before the equality computation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class BeforeInstruction implements StackManipulation {
 
                 /**
@@ -430,7 +430,7 @@ public class EqualsMethod implements Implementation {
             /**
              * The stack manipulation to apply after the equality computation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class AfterInstruction implements StackManipulation {
 
                 /**
@@ -698,7 +698,7 @@ public class EqualsMethod implements Implementation {
     /**
      * A byte code appender to implement the {@link EqualsMethod}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -774,7 +774,7 @@ public class EqualsMethod implements Implementation {
     /**
      * A conditional return aborts the equality computation if a given condition was reached.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class ConditionalReturn implements StackManipulation {
 
         /**

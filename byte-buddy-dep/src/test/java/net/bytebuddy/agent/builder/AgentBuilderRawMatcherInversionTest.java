@@ -2,7 +2,6 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,7 +11,7 @@ import org.mockito.Mock;
 import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 public class AgentBuilderRawMatcherInversionTest {
@@ -45,10 +44,5 @@ public class AgentBuilderRawMatcherInversionTest {
     public void testInversionFalse() throws Exception {
         when(rawMatcher.matches(typeDescription, classLoader, module, Object.class, protectionDomain)).thenReturn(false);
         assertThat(new AgentBuilder.RawMatcher.Inversion(rawMatcher).matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RawMatcher.Inversion.class).apply();
     }
 }

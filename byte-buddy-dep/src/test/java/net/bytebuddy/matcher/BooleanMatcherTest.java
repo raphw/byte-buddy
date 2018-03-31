@@ -33,9 +33,4 @@ public class BooleanMatcherTest extends AbstractElementMatcherTest<BooleanMatche
         assertThat(new BooleanMatcher<Object>(true).toString(), is("true"));
         assertThat(new BooleanMatcher<Object>(false).toString(), is("false"));
     }
-
-    @Override
-    protected String makeRegex(String startsWith) {
-        return "(true)|(false)";
-    }
 }

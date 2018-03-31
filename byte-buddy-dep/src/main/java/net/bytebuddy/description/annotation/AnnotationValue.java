@@ -694,7 +694,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            return other == this || (other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve()));
+            return this == other || other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1171,10 +1171,13 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                return loadedOther.getState().isResolved() && propertyDelegate.equals(value, loadedOther.resolve());
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                    return false;
+                }
+                AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                return annotationValue.getState().isResolved() && propertyDelegate.equals(value, annotationValue.resolve());
             }
 
             @Override
@@ -1232,7 +1235,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || (other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
+            return this == other || other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1283,10 +1286,13 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                return loadedOther.getState().isResolved() && annotation.equals(loadedOther.resolve());
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                    return false;
+                }
+                AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                return annotationValue.getState().isResolved() && annotation.equals(annotationValue.resolve());
             }
 
             @Override
@@ -1392,7 +1398,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || (other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
+            return this == other || other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1443,10 +1449,13 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                return loadedOther.getState().isResolved() && enumeration.equals(loadedOther.resolve());
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                    return false;
+                }
+                AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                return annotationValue.getState().isResolved() && enumeration.equals(annotationValue.resolve());
             }
 
             @Override
@@ -1607,7 +1616,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || (other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
+            return this == other || other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1658,10 +1667,13 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                    return false;
+                }
+                AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                return annotationValue.getState().isResolved() && type.equals(annotationValue.resolve());
             }
 
             @Override
@@ -1794,17 +1806,24 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof AnnotationValue<?, ?>)) return false;
-            AnnotationValue<?, ?> loadedOther = (AnnotationValue<?, ?>) other;
-            Object otherValue = loadedOther.resolve();
-            if (!(otherValue instanceof Object[])) return false;
-            Object[] otherArrayValue = (Object[]) otherValue;
-            if (values.size() != otherArrayValue.length) return false;
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof AnnotationValue<?, ?>)) {
+                return false;
+            }
+            AnnotationValue<?, ?> annotationValue = (AnnotationValue<?, ?>) other;
+            Object value = annotationValue.resolve();
+            if (!(value instanceof Object[])) {
+                return false;
+            }
+            Object[] arrayValue = (Object[]) value;
+            if (values.size() != arrayValue.length) {
+                return false;
+            }
             Iterator<? extends AnnotationValue<?, ?>> iterator = values.iterator();
-            for (Object value : otherArrayValue) {
+            for (Object aValue : arrayValue) {
                 AnnotationValue<?, ?> self = iterator.next();
-                if (!self.resolve().equals(value)) {
+                if (!self.resolve().equals(aValue)) {
                     return false;
                 }
             }
@@ -1892,18 +1911,27 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                if (!loadedOther.getState().isResolved()) return false;
-                Object otherValue = loadedOther.resolve();
-                if (!(otherValue instanceof Object[])) return false;
-                Object[] otherArrayValue = (Object[]) otherValue;
-                if (values.size() != otherArrayValue.length) return false;
+                if (this == other) {
+                    return true;
+                } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
+                    return false;
+                }
+                AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
+                if (!annotationValue.getState().isResolved()) {
+                    return false;
+                }
+                Object value = annotationValue.resolve();
+                if (!(value instanceof Object[])) {
+                    return false;
+                }
+                Object[] arrayValue = (Object[]) value;
+                if (values.size() != arrayValue.length) {
+                    return false;
+                }
                 Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                for (Object value : otherArrayValue) {
+                for (Object aValue : arrayValue) {
                     AnnotationValue.Loaded<?> self = iterator.next();
-                    if (!self.getState().isResolved() || !self.resolve().equals(value)) {
+                    if (!self.getState().isResolved() || !self.resolve().equals(aValue)) {
                         return false;
                     }
                 }

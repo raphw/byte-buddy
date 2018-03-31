@@ -3,8 +3,6 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -64,10 +62,5 @@ public class MethodGraphCompilerForDeclaredMethodsTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.ForDeclaredMethods.INSTANCE.compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         assertThat(methodGraph.listNodes().getOnly().getRepresentative(), is((MethodDescription) methodDescription));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.ForDeclaredMethods.class).apply();
     }
 }

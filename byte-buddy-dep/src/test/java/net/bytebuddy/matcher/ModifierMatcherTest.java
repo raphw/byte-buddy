@@ -69,13 +69,9 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
         verifyNoMoreInteractions(modifierReviewable);
     }
 
-    @Override
-    protected String makeRegex(String startsWith) {
-        return null;
-    }
-
     @Test
-    public void testToString() throws Exception {
+    @Override
+    public void testStringRepresentation() throws Exception {
         assertThat(new ModifierMatcher<ModifierReviewable>(mode).toString(), is(mode.getDescription()));
     }
 }

@@ -1,6 +1,5 @@
 package net.bytebuddy.description.annotation;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -20,10 +19,5 @@ public class AnnotationDescriptionAnnotationValueLoadedStateTest {
         assertThat(AnnotationValue.Loaded.State.RESOLVED.isDefined(), is(true));
         assertThat(AnnotationValue.Loaded.State.UNRESOLVED.isDefined(), is(true));
         assertThat(AnnotationValue.Loaded.State.UNDEFINED.isDefined(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationValue.Loaded.State.class).apply();
     }
 }

@@ -9,7 +9,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -131,11 +130,5 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     @Test
     public void testReaderFlags() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods().readerFlags(FLAGS).mergeReader(0), is(FLAGS));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.class).apply();
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.Entry.class).apply();
     }
 }

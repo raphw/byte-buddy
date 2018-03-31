@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -55,7 +55,7 @@ public interface TypeInitializer extends ByteCodeAppender {
         /**
          * A default implementation of a type initializer drain that creates a initializer method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Default implements Drain {
 
             /**
@@ -131,7 +131,7 @@ public interface TypeInitializer extends ByteCodeAppender {
     /**
      * A simple, defined type initializer that executes a given {@link ByteCodeAppender}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Simple implements TypeInitializer {
 
         /**

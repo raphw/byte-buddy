@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,10 +63,5 @@ public class ClassFileLocatorForFolderTest {
     @Test
     public void testClose() throws Exception {
         new ClassFileLocator.ForFolder(folder).close();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForFolder.class).apply();
     }
 }

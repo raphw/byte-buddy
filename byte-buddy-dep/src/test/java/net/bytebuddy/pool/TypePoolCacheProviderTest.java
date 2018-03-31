@@ -1,7 +1,6 @@
 package net.bytebuddy.pool;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -43,10 +42,5 @@ public class TypePoolCacheProviderTest {
         assertThat(simple.find(FOO), nullValue(TypePool.Resolution.class));
         assertThat(simple.register(FOO, resolution), sameInstance(resolution));
         assertThat(simple.find(FOO), sameInstance(resolution));
-    }
-
-    @Test
-    public void testSimpleObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.CacheProvider.NoOp.class).apply();
     }
 }

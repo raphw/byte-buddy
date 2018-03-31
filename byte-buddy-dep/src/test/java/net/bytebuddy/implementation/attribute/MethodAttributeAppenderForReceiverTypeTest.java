@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
@@ -44,10 +43,5 @@ public class MethodAttributeAppenderForReceiverTypeTest extends AbstractMethodAt
                 false);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.ForReceiverType.class).apply();
     }
 }

@@ -1,19 +1,15 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -150,37 +146,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         verify(specialMethodInvocation).isValid();
     }
 
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Morph.Binder.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.MethodCall.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            public void apply(Implementation.Target mock) {
-                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.StaticFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.InstanceFieldConstructor.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.InstanceFieldConstructor.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
-            @Override
-            public void apply(Implementation.Target mock) {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                FieldList<?> fieldList = mock(FieldList.class);
-                FieldList<?> filteredFieldList = mock(FieldList.class);
-                when(fieldList.filter(named(Morph.Binder.RedirectionProxy.FIELD_NAME))).thenReturn((FieldList) filteredFieldList);
-                when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
-                when(typeDescription.getDeclaredFields()).thenReturn((FieldList) fieldList);
-                when(mock.getInstrumentedType()).thenReturn(typeDescription);
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Implicit.class).apply();
-        ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Explicit.class).apply();
-    }
-
     private interface Foo {
-
+        /* empty */
     }
 }

@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -35,10 +34,5 @@ public class MethodDescriptionSignatureTokenTest {
     public void testTypeToken() throws Exception {
         assertThat(new MethodDescription.SignatureToken(FOO, returnType, Collections.singletonList(parameterType)).asTypeToken(),
                 is(new MethodDescription.TypeToken(returnType, Collections.singletonList(parameterType))));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDescription.SignatureToken.class).apply();
     }
 }

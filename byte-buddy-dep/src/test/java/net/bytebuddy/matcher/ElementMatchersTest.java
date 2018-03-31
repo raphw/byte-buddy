@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isToString;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -428,10 +429,12 @@ public class ElementMatchersTest {
 
     @Test
     public void testMethodName() throws Exception {
-        assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME), is(ElementMatchers.isTypeInitializer()));
-        assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME), is(ElementMatchers.isConstructor()));
-        ElementMatcher<MethodDescription> nameMatcher = named(FOO);
-        assertThat(ElementMatchers.hasMethodName(FOO), is(nameMatcher));
+        assertThat(ElementMatchers.hasMethodName(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
+                .matches(new MethodDescription.Latent.TypeInitializer(TypeDescription.OBJECT)), is(true));
+        assertThat(ElementMatchers.hasMethodName(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                .matches(TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly()), is(true));
+        assertThat(ElementMatchers.hasMethodName("toString")
+                .matches(TypeDescription.OBJECT.getDeclaredMethods().filter(isToString()).getOnly()), is(true));
     }
 
     @Test
@@ -967,11 +970,11 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsToString() throws Exception {
-        assertThat(ElementMatchers.isToString()
+        assertThat(isToString()
                 .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isToString()
+        assertThat(isToString()
                 .matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("toString"))), is(true));
-        assertThat(ElementMatchers.isToString()
+        assertThat(isToString()
                 .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
@@ -1333,7 +1336,7 @@ public class ElementMatchersTest {
 
             @Override
             public void foo(Void t) {
-            /* empty */
+                /* empty */
             }
         }
     }

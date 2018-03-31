@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
@@ -81,7 +81,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  *
  * @see net.bytebuddy.agent.builder.AgentBuilder
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class ByteBuddy {
 
     /**
@@ -1081,7 +1081,7 @@ public class ByteBuddy {
     /**
      * An implementation fo the {@code values} method of an enumeration type.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class EnumerationImplementation implements Implementation {
 
         /**
@@ -1145,7 +1145,7 @@ public class ByteBuddy {
         /**
          * A byte code appender for the {@code values} method of any enumeration type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class ValuesMethodAppender implements ByteCodeAppender {
 
             /**
@@ -1178,7 +1178,7 @@ public class ByteBuddy {
         /**
          * A byte code appender for the type initializer of any enumeration type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         protected static class InitializationAppender implements ByteCodeAppender {
 
             /**

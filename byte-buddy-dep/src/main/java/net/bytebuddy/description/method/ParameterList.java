@@ -1,7 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -236,7 +236,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * A dispatcher for a legacy VM that does support the {@code java.lang.reflect.Parameter} type.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava8CapableVm implements Dispatcher {
 
                 /**

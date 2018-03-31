@@ -1,6 +1,6 @@
 package net.bytebuddy.description.modifier;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
@@ -100,7 +100,7 @@ public interface ModifierContributor {
      *
      * @param <T> The type of the {@link ModifierContributor}s being resolved.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Resolver<T extends ModifierContributor> {
 
         /**

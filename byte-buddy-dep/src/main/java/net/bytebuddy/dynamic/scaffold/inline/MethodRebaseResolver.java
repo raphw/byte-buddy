@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
@@ -112,7 +112,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Preserved implements Resolution {
 
             /**
@@ -149,7 +149,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased method.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForRebasedMethod implements Resolution {
 
             /**
@@ -281,7 +281,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased constructor.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForRebasedConstructor implements Resolution {
 
             /**
@@ -401,7 +401,7 @@ public interface MethodRebaseResolver {
     /**
      * A default implementation of a method rebase resolver.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Default implements MethodRebaseResolver {
 
         /**

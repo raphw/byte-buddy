@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -40,11 +39,6 @@ public class LoadedTypeInitializerForStaticFieldTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNonAssignableField() throws Exception {
         new LoadedTypeInitializer.ForStaticField(FOO, new Object()).onLoad(FooBar.class);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.class).apply();
     }
 
     @SuppressWarnings("unused")

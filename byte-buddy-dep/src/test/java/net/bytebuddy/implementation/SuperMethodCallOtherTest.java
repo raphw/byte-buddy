@@ -16,7 +16,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -182,14 +181,6 @@ public class SuperMethodCallOtherTest {
                 .intercept(SuperMethodCall.INSTANCE)
                 .make()
                 .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(SuperMethodCall.class).apply();
-        ObjectPropertyAssertion.of(SuperMethodCall.WithoutReturn.class).apply();
-        ObjectPropertyAssertion.of(SuperMethodCall.Appender.class).apply();
-        ObjectPropertyAssertion.of(SuperMethodCall.Appender.TerminationHandler.class).apply();
     }
 
     public static class Foo extends CallTraceable {

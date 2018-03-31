@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -28,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * primitive field types to an {@code int} value and by summing those values up starting from a given offset after multiplying any previous value
  * with a multiplier. Reference values are checked against {@code null} values unless specified otherwise.
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class HashCodeMethod implements Implementation {
 
     /**
@@ -194,7 +194,7 @@ public class HashCodeMethod implements Implementation {
         /**
          * An offset provider that supplies a fixed value.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForFixedValue implements OffsetProvider {
 
             /**
@@ -293,7 +293,7 @@ public class HashCodeMethod implements Implementation {
         /**
          * A null value guard that expects a reference type and that uses a jump if a field value is {@code null}.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class UsingJump implements NullValueGuard {
 
             /**
@@ -344,7 +344,7 @@ public class HashCodeMethod implements Implementation {
             /**
              * The stack manipulation to apply before the hash value computation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class BeforeInstruction implements StackManipulation {
 
                 /**
@@ -386,7 +386,7 @@ public class HashCodeMethod implements Implementation {
             /**
              * The stack manipulation to apply after the hash value computation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class AfterInstruction implements StackManipulation {
 
                 /**
@@ -630,7 +630,7 @@ public class HashCodeMethod implements Implementation {
     /**
      * A byte code appender to implement a hash code method.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**

@@ -2,7 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -62,10 +61,5 @@ public class FieldAccessorFieldNameExtractorForBeanPropertyTest {
     public void testIllegalName() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAccessor.FieldNameExtractor.ForBeanProperty.class).apply();
     }
 }

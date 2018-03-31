@@ -5,12 +5,11 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isToString;
-import static org.hamcrest.CoreMatchers.is;
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationOtherTest {
@@ -63,18 +62,7 @@ public class MethodDelegationOtherTest {
     public void testEmptyConfiguration() throws Exception {
         assertThat(MethodDelegation.withEmptyConfiguration()
                 .withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS)
-                .withResolvers(MethodDelegationBinder.AmbiguityResolver.DEFAULT), is(MethodDelegation.withDefaultConfiguration()));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegation.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.WithCustomProperties.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.Appender.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.WithInstance.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.WithLookup.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForConstruction.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForStaticMethod.class).apply();
+                .withResolvers(MethodDelegationBinder.AmbiguityResolver.DEFAULT), hasPrototype(MethodDelegation.withDefaultConfiguration()));
     }
 
     static class Foo {

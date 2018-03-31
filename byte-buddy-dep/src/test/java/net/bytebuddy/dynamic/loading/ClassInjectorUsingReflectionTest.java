@@ -9,16 +9,13 @@ import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
@@ -153,33 +150,6 @@ public class ClassInjectorUsingReflectionTest {
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
         assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(null).isAvailable(), is(false));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
-        final Iterator<Method> methods = Arrays.asList(String.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Direct.ForLegacyVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Direct.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Indirect.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return methods.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Unavailable.class).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Unavailable.class).apply();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.CreationAction.class).apply();
     }
 
     private static class Foo {

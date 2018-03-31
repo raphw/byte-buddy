@@ -18,7 +18,6 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -131,10 +130,5 @@ public class ConstructorStrategyForDefaultConstructorTest {
         when(noConstuctorSuper.getDeclaredMethods()).thenReturn(new MethodList.Explicit(methodDescription, methodDescription));
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
         new ConstructorStrategy.ForDefaultConstructor().inject(noConstuctor, methodRegistry);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ConstructorStrategy.ForDefaultConstructor.class).apply();
     }
 }

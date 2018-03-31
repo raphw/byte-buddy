@@ -81,7 +81,6 @@
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
-        <version.utility.lombok>1.16.20</version.utility.lombok>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
     </properties>
@@ -126,13 +125,6 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>findbugs-annotations</artifactId>
             <version>${version.utility.findbugs}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Allow usage of Lombok annotations. -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${version.utility.lombok}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

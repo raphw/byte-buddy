@@ -3,10 +3,8 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGenericTest {
 
@@ -142,19 +139,6 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.represents(Bar.Inner.class), is(true));
         assertThat(typeDescription.getOwnerType(), sameInstance(ownerType));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfGenericArrayType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfNonGenericType.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.asGenericType()).thenReturn(Mockito.mock(TypeDescription.Generic.class));
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfParameterizedType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfTypeVariable.class).apply();
     }
 
     @Override

@@ -10,7 +10,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,6 +19,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -65,10 +65,10 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(methodDescription.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(token);
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
         when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
-        when(otherMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
+        when(otherMethod.asToken(matchesPrototype(ElementMatchers.is(instrumentedType)))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
         when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);
@@ -127,10 +127,5 @@ public class MethodRebaseResolverDefaultTest {
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod(), not(methodDescription));
         assertThat(resolution.getResolvedMethod().isConstructor(), is(true));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.Default.class).apply();
     }
 }

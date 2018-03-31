@@ -2,7 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,10 +61,5 @@ public class TypePoolExplicitTest {
         assertThat(typePool.describe(BAR), sameInstance(resolution));
         verify(parent).describe(BAR);
         verifyNoMoreInteractions(parent);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Explicit.class).apply();
     }
 }

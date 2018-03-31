@@ -1,7 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -267,10 +267,14 @@ public interface JavaConstant {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof MethodType)) return false;
-            MethodType that = (MethodType) other;
-            return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof MethodType)) {
+                return false;
+            }
+            MethodType methodType = (MethodType) other;
+            return parameterTypes.equals(methodType.parameterTypes) && returnType.equals(methodType.returnType);
 
         }
 
@@ -327,7 +331,7 @@ public interface JavaConstant {
             /**
              * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava7CapableVm implements Dispatcher {
 
                 /**
@@ -683,14 +687,17 @@ public interface JavaConstant {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (!(other instanceof MethodHandle)) return false;
-            MethodHandle aDefault = (MethodHandle) other;
-            return handleType == aDefault.handleType
-                    && name.equals(aDefault.name)
-                    && ownerType.equals(aDefault.ownerType)
-                    && parameterTypes.equals(aDefault.parameterTypes)
-                    && returnType.equals(aDefault.returnType);
+            if (this == other) {
+                return true;
+            } else if (!(other instanceof MethodHandle)) {
+                return false;
+            }
+            MethodHandle methodHandle = (MethodHandle) other;
+            return handleType == methodHandle.handleType
+                    && name.equals(methodHandle.name)
+                    && ownerType.equals(methodHandle.ownerType)
+                    && parameterTypes.equals(methodHandle.parameterTypes)
+                    && returnType.equals(methodHandle.returnType);
         }
 
         @Override
@@ -847,7 +854,7 @@ public interface JavaConstant {
             /**
              * An abstract base implementation of a dispatcher.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             abstract class AbstractBase implements Dispatcher, Initializable {
 
                 /**
@@ -1013,7 +1020,7 @@ public interface JavaConstant {
              * A dispatcher for introspecting a {@code java.lang.invoke.MethodHandle} instance on a virtual machine that officially supports this
              * introspection, i.e. Java versions 8+.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava8CapableVm extends AbstractBase {
 
                 /**
@@ -1067,7 +1074,7 @@ public interface JavaConstant {
             /**
              * A dispatcher that extracts the information of a method handle by using private APIs that are available in Java 7+.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava7CapableVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
 
                 /**

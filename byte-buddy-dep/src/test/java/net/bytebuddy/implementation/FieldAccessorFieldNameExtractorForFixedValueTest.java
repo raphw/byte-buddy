@@ -2,7 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -24,10 +23,5 @@ public class FieldAccessorFieldNameExtractorForFixedValueTest {
     @Test
     public void testGetterMethod() throws Exception {
         assertThat(new FieldAccessor.FieldNameExtractor.ForFixedValue(FOO).resolve(methodDescription), is(FOO));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAccessor.FieldNameExtractor.ForFixedValue.class).apply();
     }
 }

@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Visibility;
@@ -101,7 +101,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a linked method graph that exposes views by delegation to given method graphs.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Delegation implements Linked {
 
             /**
@@ -306,7 +306,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a resolved node of a method without bridges.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class Simple implements Node {
 
             /**
@@ -414,7 +414,7 @@ public interface MethodGraph {
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @HashCodeAndEqualsPlugin.Enhance
         class Default<T> extends AbstractBase {
 
             /**
@@ -631,7 +631,7 @@ public interface MethodGraph {
 
                         @Override
                         public boolean equals(Object other) {
-                            return this == other || (other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes()));
+                            return this == other || other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
                         }
 
                         @Override
@@ -682,9 +682,14 @@ public interface MethodGraph {
 
                         @Override
                         public boolean equals(Object other) {
-                            return this == other || other instanceof Token
-                                    && typeToken.getReturnType().equals(((Token) other).typeToken.getReturnType())
-                                    && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
+                            if (this == other) {
+                                return true;
+                            } else if (!(other instanceof Token)) {
+                                return false;
+                            }
+                            Token token = (Token) other;
+                            return typeToken.getReturnType().equals(token.typeToken.getReturnType())
+                                    && typeToken.getParameterTypes().equals(token.typeToken.getParameterTypes());
                         }
 
                         @Override
@@ -784,9 +789,13 @@ public interface MethodGraph {
 
                 @Override
                 public boolean equals(Object other) {
-                    return other == this || (other instanceof Key
-                            && internalName.equals(((Key) other).internalName)
-                            && !Collections.disjoint(getIdentifiers(), ((Key) other).getIdentifiers()));
+                    if (this == other) {
+                        return true;
+                    } else if (!(other instanceof Key)) {
+                        return false;
+                    }
+                    Key key = (Key) other;
+                    return internalName.equals(key.internalName) && !Collections.disjoint(getIdentifiers(), key.getIdentifiers());
                 }
 
                 @Override
@@ -938,7 +947,7 @@ public interface MethodGraph {
                  *
                  * @param <V> The type of the token used for deciding on method equality.
                  */
-                @EqualsAndHashCode
+                @HashCodeAndEqualsPlugin.Enhance
                 protected static class Store<V> {
 
                     /**
@@ -1200,8 +1209,13 @@ public interface MethodGraph {
 
                             @Override
                             public boolean equals(Object other) {
-                                return this == other || !(other == null || getClass() != other.getClass())
-                                        && key.equals(((Initial<?>) other).key);
+                                if (this == other) {
+                                    return true;
+                                } else if (other == null || getClass() != other.getClass()) {
+                                    return false;
+                                }
+                                Initial<?> initial = (Initial<?>) other;
+                                return key.equals(initial.key);
                             }
 
                             @Override
@@ -1215,7 +1229,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
-                        @EqualsAndHashCode
+                        @HashCodeAndEqualsPlugin.Enhance
                         class Resolved<U> implements Entry<U> {
 
                             /**
@@ -1318,7 +1332,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing a non-ambiguous method.
                              */
-                            @EqualsAndHashCode
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1385,7 +1399,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
-                        @EqualsAndHashCode
+                        @HashCodeAndEqualsPlugin.Enhance
                         class Ambiguous<U> implements Entry<U> {
 
                             /**
@@ -1493,7 +1507,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing an ambiguous method resolution.
                              */
-                            @EqualsAndHashCode
+                            @HashCodeAndEqualsPlugin.Enhance
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1548,7 +1562,7 @@ public interface MethodGraph {
                     /**
                      * A graph implementation based on a key store.
                      */
-                    @EqualsAndHashCode
+                    @HashCodeAndEqualsPlugin.Enhance
                     protected static class Graph implements MethodGraph {
 
                         /**
@@ -1634,7 +1648,7 @@ public interface MethodGraph {
     /**
      * A simple implementation of a method graph.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     class Simple implements MethodGraph {
 
         /**

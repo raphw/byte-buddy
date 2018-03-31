@@ -7,7 +7,6 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -106,12 +105,6 @@ public class AgentBuilderInitializationStrategyTest {
         when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.singletonMap(dependent, BAZ));
         AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory);
         verifyZeroInteractions(injectorFactory);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Minimal.class).apply();
     }
 
     private static class Foo {

@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation;
 
-import lombok.EqualsAndHashCode;
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -162,7 +162,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @see MethodCall
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue
  */
-@EqualsAndHashCode
+@HashCodeAndEqualsPlugin.Enhance
 public class MethodDelegation implements Implementation.Composable {
 
     /**
@@ -591,7 +591,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * A compiled implementation delegate for invoking a static method.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForStaticCall implements Compiled {
 
                 /**
@@ -627,7 +627,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * A compiled implementation delegate that invokes methods on a field.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForField implements Compiled {
 
                 /**
@@ -675,7 +675,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * A compiled implementation delegate for a constructor delegation.
              */
-            @EqualsAndHashCode
+            @HashCodeAndEqualsPlugin.Enhance
             class ForConstruction implements Compiled {
 
                 /**
@@ -719,7 +719,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * An implementation delegate for a static method delegation.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForStaticMethod implements ImplementationDelegate {
 
             /**
@@ -765,7 +765,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         abstract class ForField implements ImplementationDelegate {
 
             /**
@@ -836,7 +836,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * An implementation target for a static field that is declared by the instrumented type and that is assigned an instance.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class WithInstance extends ForField {
 
                 /**
@@ -894,7 +894,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * An implementation target for a field that is declared by the instrumented type or a super type.
              */
-            @EqualsAndHashCode(callSuper = true)
+            @HashCodeAndEqualsPlugin.Enhance
             protected static class WithLookup extends ForField {
 
                 /**
@@ -940,7 +940,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * An implementation delegate for constructing an instance.
          */
-        @EqualsAndHashCode
+        @HashCodeAndEqualsPlugin.Enhance
         class ForConstruction implements ImplementationDelegate {
 
             /**
@@ -997,7 +997,7 @@ public class MethodDelegation implements Implementation.Composable {
     /**
      * The appender for implementing a {@link net.bytebuddy.implementation.MethodDelegation}.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -1059,7 +1059,7 @@ public class MethodDelegation implements Implementation.Composable {
     /**
      * A {@link MethodDelegation} with custom configuration.
      */
-    @EqualsAndHashCode
+    @HashCodeAndEqualsPlugin.Enhance
     public static class WithCustomProperties {
 
         /**

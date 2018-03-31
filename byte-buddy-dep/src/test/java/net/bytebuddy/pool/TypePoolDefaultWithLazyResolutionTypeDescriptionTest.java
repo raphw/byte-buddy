@@ -7,9 +7,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -181,7 +179,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     public void testNonGenericSuperInterfaceNavigatedHierarchyResolutionIsLazy() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         assertThat(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()).getInterfaces().getOnly()
-                        .getInterfaces().getOnly().asErasure(), CoreMatchers.is((TypeDescription) new TypeDescription.ForLoadedType(SuperInterface.class)));
+                .getInterfaces().getOnly().asErasure(), CoreMatchers.is((TypeDescription) new TypeDescription.ForLoadedType(SuperInterface.class)));
         verify(classFileLocator).locate(NonGenericType.class.getName());
         verify(classFileLocator).locate(SampleInterface.class.getName());
         verifyNoMoreInteractions(classFileLocator);
@@ -223,11 +221,6 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
         verify(classFileLocator).locate(GenericType.class.getName());
         verify(classFileLocator).locate(SampleGenericInterface.class.getName());
         verifyNoMoreInteractions(classFileLocator);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.WithLazyResolution.LazyResolution.class).apply();
     }
 
     private static class SuperClass {

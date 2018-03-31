@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
@@ -119,10 +118,5 @@ public class MethodAttributeAppenderForInstrumentedMethodOtherTest extends Abstr
         TypeDescription typeDescription = mock(TypeDescription.class);
         assertThat(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER.make(typeDescription),
                 is((MethodAttributeAppender) MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.ForInstrumentedMethod.class).apply();
     }
 }

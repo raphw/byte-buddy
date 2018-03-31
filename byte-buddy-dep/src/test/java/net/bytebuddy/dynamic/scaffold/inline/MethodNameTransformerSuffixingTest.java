@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -27,10 +26,5 @@ public class MethodNameTransformerSuffixingTest {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         String transformed = new MethodNameTransformer.Suffixing(BAR).transform(methodDescription);
         assertThat(transformed, is(FOO + "$" + BAR));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodNameTransformer.Suffixing.class).apply();
     }
 }

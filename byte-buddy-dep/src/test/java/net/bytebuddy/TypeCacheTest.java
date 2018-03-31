@@ -1,22 +1,15 @@
 package net.bytebuddy;
 
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.Mockito.*;
 
 public class TypeCacheTest {
@@ -135,30 +128,10 @@ public class TypeCacheTest {
     }
 
     @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeCache.Sort.class).apply();
-        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class,
-                String.class,
-                Void.class,
-                Integer.class,
-                Long.class,
-                Byte.class,
-                Boolean.class,
-                Character.class,
-                Short.class,
-                Float.class,
-                Long.class).iterator();
-        ObjectPropertyAssertion.of(TypeCache.SimpleKey.class).create(new ObjectPropertyAssertion.Creator<Collection<Class<?>>>() {
-            @Override
-            public Collection<Class<?>> create() {
-                return Collections.<Class<?>>singleton(iterator.next());
-            }
-        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return iterator.next();
-            }
-        }).apply();
-
+    public void testSimpleKeyProperties() {
+        assertThat(new TypeCache.SimpleKey(Object.class).hashCode(), is(new TypeCache.SimpleKey(Object.class).hashCode()));
+        assertThat(new TypeCache.SimpleKey(Object.class), is(new TypeCache.SimpleKey(Object.class)));
+        assertThat(new TypeCache.SimpleKey(Object.class).hashCode(), not(new TypeCache.SimpleKey(Void.class).hashCode()));
+        assertThat(new TypeCache.SimpleKey(Object.class), not(new TypeCache.SimpleKey(Void.class)));
     }
 }

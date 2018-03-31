@@ -5,7 +5,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,18 +119,6 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         verify(parameterDescription).getDeclaredAnnotations();
         verifyNoMoreInteractions(parameterDescription);
         verifyZeroInteractions(instrumentedType);
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodAttributeAppender.Explicit.class).create(new ObjectPropertyAssertion.Creator<Annotation>() {
-            @Override
-            public Annotation create() {
-                return new SimpleAnnotation.Instance(RandomString.make());
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(MethodAttributeAppender.Explicit.Target.OnMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodAttributeAppender.Explicit.Target.OnMethodParameter.class).apply();
     }
 
     public @interface SimpleAnnotation {

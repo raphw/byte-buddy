@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -10,6 +9,7 @@ import org.mockito.Mock;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -28,11 +28,11 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testCreation() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader),
-                is((ClassFileLocator) new ClassFileLocator.ForClassLoader.WeaklyReferenced(classLoader)));
+                hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader.WeaklyReferenced(classLoader)));
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null),
-                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+                hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader()),
-                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+                hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
     }
 
     @Test
@@ -66,23 +66,20 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
 
     @Test
     public void testSystemClassLoader() throws Exception {
-        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader()), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader()),
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
     }
 
     @Test
     public void testPlatformLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader().getParent()),
-                is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
     }
 
     @Test
     public void testBootLoader() throws Exception {
-        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.WeaklyReferenced.class).apply();
+        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null),
+                hasPrototype(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
     }
 
     private abstract static class ClosableClassLoader extends ClassLoader implements Closeable {

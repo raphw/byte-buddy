@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import net.bytebuddy.test.utility.MockitoRule;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -23,14 +24,22 @@ public class MethodGraphNodeListTest extends AbstractFilterableListTest<MethodGr
     @Mock
     private MethodDescription first, second;
 
+    private MethodGraph.Node firstNode, secondNode;
+
+    @Before
+    public void setUp() throws Exception {
+        firstNode = new MethodGraph.Node.Simple(first);
+        secondNode = new MethodGraph.Node.Simple(second);
+    }
+
     @Override
     protected MethodGraph.Node getFirst() throws Exception {
-        return new MethodGraph.Node.Simple(first);
+        return firstNode;
     }
 
     @Override
     protected MethodGraph.Node getSecond() throws Exception {
-        return new MethodGraph.Node.Simple(second);
+        return secondNode;
     }
 
     @Override
