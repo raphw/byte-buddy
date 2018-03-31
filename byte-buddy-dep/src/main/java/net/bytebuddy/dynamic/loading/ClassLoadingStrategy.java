@@ -356,19 +356,12 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         private final ClassInjector classInjector;
 
         /**
-         * The class loader in the supplied class injector defines classes.
-         */
-        private final ClassLoader classLoader;
-
-        /**
          * Creates a new class loading strategy that uses a lookup type.
          *
          * @param classInjector The class injector to use.
-         * @param classLoader   The class loader in the supplied class injector defines classes.
          */
-        protected UsingLookup(ClassInjector classInjector, ClassLoader classLoader) {
+        protected UsingLookup(ClassInjector classInjector) {
             this.classInjector = classInjector;
-            this.classLoader = classLoader;
         }
 
         /**
@@ -378,15 +371,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return A suitable class loading strategy.
          */
         public static ClassLoadingStrategy<ClassLoader> of(Object lookup) {
-            ClassInjector.UsingLookup classInjector = ClassInjector.UsingLookup.of(lookup);
-            return new UsingLookup(classInjector, classInjector.lookupType().getClassLoader());
+            return new UsingLookup(ClassInjector.UsingLookup.of(lookup));
         }
 
         @Override
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-            if (classLoader != this.classLoader) {
-                throw new IllegalStateException("Cannot define a type in " + classLoader + " with lookup based on " + this.classLoader);
-            }
             return classInjector.inject(types);
         }
     }
