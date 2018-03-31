@@ -19,10 +19,6 @@
         You should never depend on this module without repackaging Byte Buddy and ASM into your own namespace.
     </description>
 
-    <properties>
-        <bytebuddy.build.version>1.8.2</bytebuddy.build.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.ow2.asm</groupId>
@@ -87,7 +83,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>${bytebuddy.build.version}</version>
+                <version>1.8.2</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -102,7 +98,7 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>${bytebuddy.build.version}</version>
+                                    <version>1.8.2</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
                                 </transformation>
                             </transformations>
