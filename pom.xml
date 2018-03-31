@@ -282,9 +282,9 @@
     </distributionManagement>
 
     <profiles>
-        <!-- Fallback for Java 6 build to use older, compatible versions of plugins. -->
+        <!-- Fallback for Java 6 JDK to use older, compatible versions of plugins. -->
         <profile>
-            <id>java6</id>
+            <id>java6-versions</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>1.6</jdk>
@@ -292,6 +292,19 @@
             <properties>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
+                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Fallback for Java 7 JDK to use older, compatible versions of plugins. -->
+        <profile>
+            <id>java7-versions</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.7</jdk>
+            </activation>
+            <properties>
+                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
