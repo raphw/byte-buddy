@@ -30,6 +30,13 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getInterfaces().size(), is(0));
     }
+    @Test
+    public void testMethodHandles() throws Exception {
+        assertThat(JavaType.METHOD_HANDLES.getTypeStub().getName(), is("java.lang.invoke.MethodHandles"));
+        assertThat(JavaType.METHOD_HANDLES.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC));
+        assertThat(JavaType.METHOD_HANDLES.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(JavaType.METHOD_HANDLES.getTypeStub().getInterfaces().size(), is(0));
+    }
 
     @Test
     public void testMethodType() throws Exception {

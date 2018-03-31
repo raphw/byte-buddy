@@ -32,20 +32,16 @@ public class ClassInjectorUsingLookupTest {
 
     private Class<?> type;
 
-    private ClassInjector.UsingLookup injector;
-
     @Before
     public void setUp() throws Exception {
-        Method lookup = Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup");
         type = new ByteBuddy()
                 .subclass(Object.class)
                 .name("net.bytebuddy.test.Foo")
                 .defineMethod("lookup", Object.class, Ownership.STATIC, Visibility.PUBLIC)
-                .intercept(MethodCall.invoke(lookup))
+                .intercept(MethodCall.invoke(Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup")))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        injector = ClassInjector.UsingLookup.of(type.getDeclaredMethod("lookup").invoke(null));
     }
 
     @Test
@@ -57,12 +53,25 @@ public class ClassInjectorUsingLookupTest {
     @Test
     @JavaVersionRule.Enforce(9)
     public void testLookupType() throws Exception {
-        assertThat(injector.lookupType(), is((Object) type));
+        assertThat(ClassInjector.UsingLookup.of(type.getDeclaredMethod("lookup").invoke(null)).lookupType(), is((Object) type));
     }
 
     @Test
     @JavaVersionRule.Enforce(9)
     public void testLookupInjection() throws Exception {
+        ClassInjector injector = ClassInjector.UsingLookup.of(type.getDeclaredMethod("lookup").invoke(null));
+        DynamicType dynamicType = new ByteBuddy()
+                .subclass(Object.class)
+                .name("net.bytebuddy.test.Bar")
+                .make();
+        assertThat(injector.inject(Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()))
+                .get(dynamicType.getTypeDescription()).getName(), is("net.bytebuddy.test.Bar"));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testLookupInjectionPropagate() throws Exception {
+        ClassInjector injector = ClassInjector.UsingLookup.of(Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup").invoke(null)).in(type);
         DynamicType dynamicType = new ByteBuddy()
                 .subclass(Object.class)
                 .name("net.bytebuddy.test.Bar")

@@ -913,6 +913,16 @@ public interface ClassInjector {
             return DISPATCHER.lookupType(lookup);
         }
 
+        /**
+         * Resolves this injector to use the supplied type's scope.
+         *
+         * @param type The type to resolve the access scope for.
+         * @return An new injector with the specified scope.
+         */
+        public UsingLookup in(Class<?> type) {
+            return new UsingLookup(DISPATCHER.resolve(lookup, type));
+        }
+
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
@@ -963,6 +973,15 @@ public interface ClassInjector {
             Object dropLookupMode(Object lookup, int mode);
 
             /**
+             * Resolves the supplied lookup instance's access scope for the supplied type.
+             *
+             * @param lookup The lookup to use.
+             * @param type   The type to resolve the scope for.
+             * @return An appropriate lookup instance.
+             */
+            Object resolve(Object lookup, Class<?> type);
+
+            /**
              * Defines a class.
              *
              * @param lookup               The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
@@ -986,7 +1005,8 @@ public interface ClassInjector {
                 public Dispatcher run() {
                     try {
                         Class<?> lookup = JavaType.METHOD_HANDLES_LOOKUP.load();
-                        return new Dispatcher.ForJava9CapableVm(lookup.getMethod("lookupClass"),
+                        return new Dispatcher.ForJava9CapableVm(JavaType.METHOD_HANDLES.load().getMethod("privateLookupIn", Class.class, lookup),
+                                lookup.getMethod("lookupClass"),
                                 lookup.getMethod("lookupModes"),
                                 lookup.getMethod("dropLookupMode", int.class),
                                 lookup.getMethod("defineClass", byte[].class));
@@ -1027,6 +1047,11 @@ public interface ClassInjector {
                 }
 
                 @Override
+                public Object resolve(Object lookup, Class<?> type) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles");
+                }
+
+                @Override
                 public Class<?> defineClass(Object lookup, byte[] binaryRepresentation) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
@@ -1037,6 +1062,11 @@ public interface ClassInjector {
              */
             @HashCodeAndEqualsPlugin.Enhance
             class ForJava9CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code java.lang.invoke.MethodHandles$#privateLookupIn} method.
+                 */
+                private final Method privateLookupIn;
 
                 /**
                  * The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
@@ -1061,12 +1091,14 @@ public interface ClassInjector {
                 /**
                  * Creates a new dispatcher for a Java 9 capable VM.
                  *
-                 * @param lookupClass    The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
-                 * @param lookupModes    The {@code java.lang.invoke.MethodHandles$Lookup#lookupModes} method.
-                 * @param dropLookupMode The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
-                 * @param defineClass    The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
+                 * @param privateLookupIn The {@code java.lang.invoke.MethodHandles$#privateLookupIn} method.
+                 * @param lookupClass     The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
+                 * @param lookupModes     The {@code java.lang.invoke.MethodHandles$Lookup#lookupModes} method.
+                 * @param dropLookupMode  The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
+                 * @param defineClass     The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
                  */
-                protected ForJava9CapableVm(Method lookupClass, Method lookupModes, Method dropLookupMode, Method defineClass) {
+                protected ForJava9CapableVm(Method privateLookupIn, Method lookupClass, Method lookupModes, Method dropLookupMode, Method defineClass) {
+                    this.privateLookupIn = privateLookupIn;
                     this.lookupClass = lookupClass;
                     this.lookupModes = lookupModes;
                     this.defineClass = defineClass;
@@ -1108,6 +1140,17 @@ public interface ClassInjector {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#lookupModes", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Object resolve(Object lookup, Class<?> type) {
+                    try {
+                        return privateLookupIn.invoke(null, type, lookup);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles#privateLookupIn", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles#privateLookupIn", exception.getCause());
                     }
                 }
 

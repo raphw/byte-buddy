@@ -21,6 +21,11 @@ public enum JavaType {
     METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
 
     /**
+     * The Java 7 {@code java.lang.invoke.MethodHandles} type.
+     */
+    METHOD_HANDLES("java.lang.invoke.MethodHandles", Opcodes.ACC_PUBLIC, Object.class),
+
+    /**
      * The Java 7 {@code java.lang.invoke.MethodType} type.
      */
     METHOD_TYPE("java.lang.invoke.MethodType", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, Serializable.class),
