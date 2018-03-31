@@ -79,7 +79,7 @@
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
-        <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+        <version.plugin.spotbugs>3.1.3</version.plugin.spotbugs>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
@@ -333,7 +333,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>9</code.level>
+                <code.level>10</code.level>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
@@ -344,7 +344,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>9</code.level>
+                <code.level>11</code.level>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
