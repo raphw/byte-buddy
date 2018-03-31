@@ -95,6 +95,9 @@
                             <goal>transform</goal>
                         </goals>
                         <configuration>
+                            <initialization>
+                                <entryPoint>REDEFINE</entryPoint>
+                            </initialization>
                             <transformations>
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
