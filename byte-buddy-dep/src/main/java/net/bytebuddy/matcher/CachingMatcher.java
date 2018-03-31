@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
 import java.util.Iterator;
@@ -10,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @param <T> The actual matched type of this matcher.
  */
-@HashCodeAndEqualsPlugin.Enhance
+@HashCodeAndEqualsPlugin.Enhance(permitSubclassEquality = true)
 public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -67,6 +68,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      *
      * @param <S> The actual matched type of this matcher.
      */
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Equality does not consider eviction size")
     public static class WithInlineEviction<S> extends CachingMatcher<S> {
 
         /**
