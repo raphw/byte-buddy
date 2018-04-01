@@ -21,7 +21,6 @@ matrix:
       install: . ./install-jdk.sh -F 11 -L BCL
 # The following environments are known to fail
   allow_failures:
-    - env: JDK='JDK 10' TARGET='-Pjava10'
     - env: JDK='JDK 11' TARGET='-Pjava11'
 
 script:
