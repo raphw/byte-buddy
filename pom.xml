@@ -67,7 +67,7 @@
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.jar>3.0.2</version.plugin.jar>
-        <version.plugin.plugin>3.5</version.plugin.plugin>
+        <version.plugin.plugin>3.5.1</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.0.2</version.plugin.resources>
         <version.plugin.surefire>2.21.0</version.plugin.surefire>
