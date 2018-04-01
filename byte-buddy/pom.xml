@@ -78,6 +78,18 @@
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                        <version>${version.asm}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm-commons</artifactId>
+                        <version>${version.asm}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <!-- Disable pitest as it fails for empty modules -->
             <plugin>
