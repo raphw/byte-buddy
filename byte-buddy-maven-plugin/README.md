@@ -6,11 +6,10 @@ The **Byte Buddy Maven Plugin** enables you to apply bytecode enhancements durin
 ```xml
   <build>
     <plugins>
-      ...
       <plugin>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-maven-plugin</artifactId>
-        <version>1.7.5</version>
+        <version>LATEST</version>
         <executions>
           <execution>
             <goals>
@@ -26,13 +25,11 @@ The **Byte Buddy Maven Plugin** enables you to apply bytecode enhancements durin
           </transformations>
         </configuration>
       </plugin>
-      ...
     </plugins>
   </build>
-
 ```
 
-This `byte-buddy-maven-plugin` element informs Maven to execute the `transform-test` goal using the transformation specified by **HookInstallingPlugin**.
+This `byte-buddy-maven-plugin` element informs Maven to transform all test classes by the `transform-test` goal using the transformation specified by **HookInstallingPlugin**. Alternatively, the plugin can instrument production classes using the `transform` goal.
 
 ###### HookInstallingPlugin.java
 ```java
@@ -55,18 +52,17 @@ public class HookInstallingPlugin implements Plugin {
 
     @Override
     public boolean matches(TypeDescription target) {
-        return true;
+        return target.getName().endsWith("Test");
     }
 
     @Override
     public Builder<?> apply(Builder<?> builder, TypeDescription typeDescription) {
         return builder.method(isAnnotatedWith(anyOf(Test.class, Before.class, After.class))
                 .or(isStatic().and(isAnnotatedWith(anyOf(BeforeClass.class, AfterClass.class)))))
-                .intercept(MethodDelegation.to(MethodInterceptor.class))
+                .intercept(MethodDelegation.to(SampleInterceptor.class))
                 .implement(Hooked.class);
     }
-
 }
 ```
 
-This example transformation specifies that Byte Buddy should install method interceptors (defined in **MethodInterceptor**) on all JUnit test or configuration methods. These methods are identified by their attached annotations: **`@Test`**, **`@Before`**, **`@After`**, **`@BeforeClass`**, or **`@AfterClass`**. This transformation also adds a marker interface(**Hooked**) so that we can identify enhanced classes at runtime.
+This example transformation specifies that Byte Buddy should install a method interceptor (defined by **SampleInterceptor**) on all test classes with a name ending with `Test`. The intercetor is added to all methods with the annotations **`@Test`**, **`@Before`**, **`@After`**, **`@BeforeClass`**, or **`@AfterClass`**. This transformation also adds a marker interface **Hooked** so that we can identify enhanced classes at runtime.
