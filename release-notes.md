@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. March 2018: version 1.8.3
+
+- Allow Java 11 classes  by opening ASM.
+- Remove Lombok and add methods using Byte Buddy plugin.
+
+### 28. March 2018: version 1.8.2
+
+- Reduce log output for Gradle and Maven plugin.
+- Fix class check in `EqualsMethod`.
+
 ### 28. March 2018: version 1.8.1
 
 - Add implementations for `HashCodeMethod`, `EqualsMethod` and `ToStringMethod` including build tool plugins.
