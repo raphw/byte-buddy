@@ -25,4 +25,4 @@ matrix:
 
 script:
   - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dfindbugs.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
