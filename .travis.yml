@@ -17,12 +17,12 @@ matrix:
     - env: JDK='JDK 10' TARGET='-Pjava10'
       install: . ./install-jdk.sh -F 10 -L GPL
 # Java 11
-    - env: JDK='JDK 11' TARGET='-Pjava11'
+    - env: JDK='JDK 11' TARGET='-Pjava11' EXPERIMENTAL='-Dnet.bytebuddy.experimental=true'
       install: . ./install-jdk.sh -F 11 -L BCL
 # The following environments are known to fail
   allow_failures:
     - env: JDK='JDK 11' TARGET='-Pjava11'
 
 script:
-  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true ${EXPERIMENTAL} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} ${EXPERIMENTAL} -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
