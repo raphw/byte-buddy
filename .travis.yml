@@ -21,7 +21,7 @@ matrix:
       install: . ./install-jdk.sh -F 11 -L BCL
 # The following environments are known to fail
   allow_failures:
-    - env: JDK='JDK 11' TARGET='-Pjava11'
+    - env: JDK='JDK 11' TARGET='-Pjava11' EXPERIMENTAL='-Dnet.bytebuddy.experimental=true'
 
 script:
   - ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true ${EXPERIMENTAL} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
