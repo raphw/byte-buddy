@@ -64,7 +64,13 @@ case "`uname`" in
     ;;
 esac
 
-CLASSPATH=$APP_HOME/gradle/4.5/gradle-wrapper.jar
+if case `$JAVA_HOME/bin/java -version 2>&1 >/dev/null | grep 'java version' | awk '{print $3}'` in "\"1.6."*) ;; *) false;; esac; then
+  GRADLE_VERSION="2.14.1"
+else
+  GRADLE_VERSION="4.5"
+fi
+
+CLASSPATH=$APP_HOME/gradle/${GRADLE_VERSION}/gradle-wrapper.jar
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
