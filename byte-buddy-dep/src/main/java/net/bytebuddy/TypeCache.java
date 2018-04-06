@@ -141,7 +141,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
     }
 
-
     /**
      * Finds an existing type or inserts a new one if the previous type was not found.
      *
