@@ -81,7 +81,7 @@ public class JavaVersionRule implements MethodRule {
         }
 
         @Override
-        public void evaluate() throws Throwable {
+        public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
         }
     }

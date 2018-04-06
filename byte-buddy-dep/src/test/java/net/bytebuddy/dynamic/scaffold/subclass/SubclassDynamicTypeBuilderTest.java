@@ -20,6 +20,7 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.InjectionStrategyResolver;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -199,7 +200,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .makePackage(FOO)
                 .annotateType(AnnotationDescription.Builder.ofType(Foo.class).build())
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(packageType.getSimpleName(), is(PackageDescription.PACKAGE_CLASS_NAME));
         assertThat(packageType.getName(), is(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME));
@@ -335,7 +336,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(GenericType.Inner.class)
                 .method(named(FOO).or(named("call"))).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), InjectionStrategyResolver.resolve(GenericType.Inner.class))
                 .getLoaded();
         assertThat(dynamicType.getTypeParameters().length, is(0));
         assertThat(dynamicType.getGenericSuperclass(), instanceOf(Class.class));
@@ -411,7 +412,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(VisibilityBridge.class)
                 .modifiers(Visibility.PUBLIC)
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), InjectionStrategyResolver.resolve(VisibilityBridge.class))
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(2));
@@ -445,7 +446,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(defaultInterface)
                 .modifiers(Visibility.PUBLIC)
                 .make()
-                .load(defaultInterface.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(defaultInterface.getClassLoader())
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(1));
@@ -460,7 +461,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(VisibilityBridge.class)
                 .modifiers(0)
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), InjectionStrategyResolver.resolve(VisibilityBridge.class))
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
@@ -472,7 +473,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(VisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
@@ -484,7 +485,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .subclass(VisibilityBridgeAbstractMethod.class)
                 .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .load(getClass().getClassLoader(), InjectionStrategyResolver.resolve(VisibilityBridgeAbstractMethod.class))
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));

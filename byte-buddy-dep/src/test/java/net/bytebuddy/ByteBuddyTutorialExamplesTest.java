@@ -156,12 +156,12 @@ public class ByteBuddyTutorialExamplesTest {
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
         ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability.
-        new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(),
-                ClassFileLocator.ForClassLoader.ofClassPath())
+        Class<?> type = new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(), ClassFileLocator.ForClassLoader.ofClassPath())
                 .defineField("qux", String.class)
                 .make()
-                .load(classLoader, ClassLoadingStrategy.Default.INJECTION);
-        assertThat(classLoader.loadClass(UnloadedBar.class.getName()).getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
+                .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField("qux"), notNullValue(java.lang.reflect.Field.class));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     public void testFieldsAndMethodsToString() throws Exception {
-        String toString = new ByteBuddy()
+        assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .name("example.Type")
                 .make()
@@ -184,8 +184,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()
-                .toString();
-        assertThat(toString, startsWith("example.Type"));
+                .toString(), startsWith("example.Type"));
     }
 
     @Test
@@ -776,8 +775,8 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    private static class UnloadedBar {
-
+    public static class UnloadedBar {
+        /* empty */
     }
 
     public class ForwardingLoggerInterceptor {

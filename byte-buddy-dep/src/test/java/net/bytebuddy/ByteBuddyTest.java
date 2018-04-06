@@ -93,7 +93,7 @@ public class ByteBuddyTest {
                 .make()
                 .load(classLoader)
                 .getLoaded();
-        assertThat(type.getClassLoader(), is(classLoader));
+        assertThat(type.getClassLoader(), not(classLoader));
     }
 
     @Test

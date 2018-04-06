@@ -4207,12 +4207,10 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
-                if (classLoader == null) {
-                    return load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
-                } else if (classLoader instanceof InjectionClassLoader) {
+                if (classLoader instanceof InjectionClassLoader) {
                     return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);
                 } else {
-                    return load(classLoader, ClassLoadingStrategy.Default.INJECTION);
+                    return load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
                 }
             }
 

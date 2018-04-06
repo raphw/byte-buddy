@@ -2,10 +2,12 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ClassInjectionAvailableRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -25,6 +27,9 @@ public class ClassLoadingStrategyDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule classInjectionAvailableRule = new ClassInjectionAvailableRule();
 
     private ClassLoader classLoader;
 
@@ -85,6 +90,7 @@ public class ClassLoadingStrategyDefaultTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testInjection() throws Exception {
         Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.load(classLoader, binaryRepresentations);
         assertThat(loaded.size(), is(1));
@@ -134,6 +140,7 @@ public class ClassLoadingStrategyDefaultTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testInjectionWithProtectionDomain() throws Exception {
         Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.with(protectionDomain)
                 .load(classLoader, binaryRepresentations);
@@ -188,6 +195,7 @@ public class ClassLoadingStrategyDefaultTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testInjectionWithPackageDefinitionStrategy() throws Exception {
         Map<TypeDescription, Class<?>> loaded = ClassLoadingStrategy.Default.INJECTION.with(packageDefinitionStrategy)
                 .load(classLoader, binaryRepresentations);

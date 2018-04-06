@@ -1,5 +1,6 @@
 package net.bytebuddy.test.utility;
 
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -8,19 +9,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.logging.Logger;
 
-public class IntegrationRule implements MethodRule {
-
-    private static final String PROPERTY_KEY = "net.bytebuddy.test.integration";
-
-    private final boolean integration;
-
-    public IntegrationRule() {
-        integration = Boolean.getBoolean(PROPERTY_KEY);
-    }
+public class ClassUnsafeInjectionAvailableRule implements MethodRule {
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return !integration && method.getAnnotation(Enforce.class) != null
+        return !ClassInjector.UsingUnsafe.isAvailable() && method.getAnnotation(Enforce.class) != null
                 ? new NoOpStatement()
                 : base;
     }
@@ -34,7 +27,7 @@ public class IntegrationRule implements MethodRule {
 
         @Override
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignored test case that is only to be run on the CI server due to long runtime");
+            Logger.getLogger("net.bytebuddy").info("Ignored test case that can only be executed if class file injection via sun.misc.Unsafe is available");
         }
     }
 }

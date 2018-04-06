@@ -30,6 +30,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
@@ -317,7 +318,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         try {
             ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
-                    ? new OpenedClassReader(classFileLocator.locate(advice.getName()).resolve())
+                    ? OpenedClassReader.of(classFileLocator.locate(advice.getName()).resolve())
                     : UNDEFINED;
             return new Advice(methodEnter.asMethodEnter(userFactories, classReader, methodExit), methodExit.asMethodExit(userFactories, classReader, methodEnter));
         } catch (IOException exception) {
@@ -405,9 +406,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
         try {
             return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
-                    ? new OpenedClassReader(classFileLocator.locate(enterAdvice.getName()).resolve())
+                    ? OpenedClassReader.of(classFileLocator.locate(enterAdvice.getName()).resolve())
                     : UNDEFINED, methodExit), methodExit.asMethodExit(userFactories, methodExit.isBinary()
-                    ? new OpenedClassReader(classFileLocator.locate(exitAdvice.getName()).resolve())
+                    ? OpenedClassReader.of(classFileLocator.locate(exitAdvice.getName()).resolve())
                     : UNDEFINED, methodEnter));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);

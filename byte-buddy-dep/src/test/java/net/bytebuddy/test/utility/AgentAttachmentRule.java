@@ -58,12 +58,12 @@ public class AgentAttachmentRule implements MethodRule {
 
         private final String reason;
 
-        public NoOpStatement(String reason) {
+        private NoOpStatement(String reason) {
             this.reason = reason;
         }
 
         @Override
-        public void evaluate() throws Throwable {
+        public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: " + reason);
         }
     }

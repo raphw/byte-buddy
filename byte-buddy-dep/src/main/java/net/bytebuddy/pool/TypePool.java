@@ -18,6 +18,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -1045,7 +1046,7 @@ public interface TypePool {
          * @return A type description of the binary data.
          */
         private TypeDescription parse(byte[] binaryRepresentation) {
-            ClassReader classReader = new OpenedClassReader(binaryRepresentation);
+            ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
             TypeExtractor typeExtractor = new TypeExtractor();
             classReader.accept(typeExtractor, readerMode.getFlags());
             return typeExtractor.toTypeDescription();

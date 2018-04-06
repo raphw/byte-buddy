@@ -2,8 +2,12 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
+import org.junit.rules.TestRule;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -16,6 +20,9 @@ import static org.hamcrest.CoreMatchers.is;
 
 public class ClassInjectorUsingUnsafeTest {
 
+    @Rule
+    public MethodRule classUnsafeInjectionAvailableRule = new ClassUnsafeInjectionAvailableRule();
+
     private ClassLoader classLoader;
 
     @Before
@@ -24,6 +31,7 @@ public class ClassInjectorUsingUnsafeTest {
     }
 
     @Test
+    @ClassUnsafeInjectionAvailableRule.Enforce
     public void testUnsafeInjection() throws Exception {
         assertThat(new ClassInjector.UsingUnsafe(classLoader)
                 .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Foo.class), ClassFileExtraction.extract(Foo.class)))
@@ -32,6 +40,7 @@ public class ClassInjectorUsingUnsafeTest {
     }
 
     @Test
+    @ClassUnsafeInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingUnsafe.isAvailable(), is(true));
         assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Disabled(null).isAvailable(), is(false));

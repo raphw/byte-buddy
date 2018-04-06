@@ -35,53 +35,53 @@ public class TypeWriterInitializerRemapperTest {
 
     @Test
     public void testNoInitializerWithEnabledContext() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
-        Class.forName(new ByteBuddy()
-                .redefine(type)
+        Class<?> type = new ByteBuddy()
+                .redefine(this.type)
                 .make()
-                .load(classLoader)
-                .getLoaded().getName(), true, classLoader);
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class.forName(type.getName(), true, type.getClassLoader());
     }
 
     @Test
     public void testNoInitializerWithDisabledContext() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
-        Class.forName(new ByteBuddy()
+        Class<?> type = new ByteBuddy()
                 .with(Implementation.Context.Disabled.Factory.INSTANCE)
-                .redefine(type)
+                .redefine(this.type)
                 .make()
-                .load(classLoader)
-                .getLoaded().getName(), true, classLoader);
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class.forName(type.getName(), true, type.getClassLoader());
     }
 
     @Test
     public void testInitializerWithEnabledContext() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
-        Class.forName(new ByteBuddy()
-                .redefine(type)
+        Class<?> type = new ByteBuddy()
+                .redefine(this.type)
                 .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(classLoader)
-                .getLoaded().getName(), true, classLoader);
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class.forName(type.getName(), true, type.getClassLoader());
     }
 
     @Test
     public void testInitializerWithDisabledContext() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
-        Class.forName(new ByteBuddy()
+        Class<?> type = new ByteBuddy()
                 .with(Implementation.Context.Disabled.Factory.INSTANCE)
-                .redefine(type)
+                .redefine(this.type)
                 .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(classLoader)
-                .getLoaded().getName(), true, classLoader);
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class.forName(type.getName(), true, type.getClassLoader());
     }
 
-    private static class NoInitializer {
+    public static class NoInitializer {
         /* empty */
     }
 
-    private static class BranchingInitializer {
+    public static class BranchingInitializer {
 
         static {
             int ignored = 0;

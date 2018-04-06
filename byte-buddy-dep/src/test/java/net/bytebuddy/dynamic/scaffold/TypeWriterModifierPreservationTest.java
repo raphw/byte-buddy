@@ -13,10 +13,9 @@ import net.bytebuddy.test.scope.EnclosingType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.OpenedClassReader;
+import net.bytebuddy.utility.OpenedClassReader;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,28 +26,28 @@ public class TypeWriterModifierPreservationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-//                {Object.class},
-//                {String.class},
-//                {EnclosingType.class},
-//                {new EnclosingType().localMethod},
-//                {new EnclosingType().anonymousMethod},
-//                {new EnclosingType().localConstructor},
-//                {new EnclosingType().anonymousConstructor},
-//                {EnclosingType.LOCAL_INITIALIZER},
+                {Object.class},
+                {String.class},
+                {EnclosingType.class},
+                {new EnclosingType().localMethod},
+                {new EnclosingType().anonymousMethod},
+                {new EnclosingType().localConstructor},
+                {new EnclosingType().anonymousConstructor},
+                {EnclosingType.LOCAL_INITIALIZER},
                 {EnclosingType.ANONYMOUS_INITIALIZER},
-//                {EnclosingType.LOCAL_METHOD},
+                {EnclosingType.LOCAL_METHOD},
                 {EnclosingType.ANONYMOUS_METHOD},
-//                {EnclosingType.INNER},
-//                {EnclosingType.NESTED},
-//                {EnclosingType.PRIVATE_INNER},
-//                {EnclosingType.PRIVATE_NESTED},
-//                {EnclosingType.PROTECTED_INNER},
-//                {EnclosingType.PROTECTED_NESTED},
-//                {EnclosingType.PACKAGE_INNER},
-//                {EnclosingType.PACKAGE_NESTED},
-//                {EnclosingType.FINAL_NESTED},
-//                {EnclosingType.FINAL_INNER},
-//                {EnclosingType.DEPRECATED}
+                {EnclosingType.INNER},
+                {EnclosingType.NESTED},
+                {EnclosingType.PRIVATE_INNER},
+                {EnclosingType.PRIVATE_NESTED},
+                {EnclosingType.PROTECTED_INNER},
+                {EnclosingType.PROTECTED_NESTED},
+                {EnclosingType.PACKAGE_INNER},
+                {EnclosingType.PACKAGE_NESTED},
+                {EnclosingType.FINAL_NESTED},
+                {EnclosingType.FINAL_INNER},
+                {EnclosingType.DEPRECATED}
         });
     }
 
@@ -61,7 +60,7 @@ public class TypeWriterModifierPreservationTest {
     @Test
     public void testModifiers() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        new OpenedClassReader(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
+        OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
         new ByteBuddy()
                 .redefine(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))

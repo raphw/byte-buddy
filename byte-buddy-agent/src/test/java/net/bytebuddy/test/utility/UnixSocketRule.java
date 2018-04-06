@@ -42,7 +42,7 @@ public class UnixSocketRule implements MethodRule {
     private static class NoOpStatement extends Statement {
 
         @Override
-        public void evaluate() throws Throwable {
+        public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring use Unix sockets on this VM");
         }
     }

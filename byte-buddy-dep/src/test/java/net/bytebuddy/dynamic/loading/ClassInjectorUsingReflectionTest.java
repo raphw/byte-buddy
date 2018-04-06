@@ -9,8 +9,11 @@ import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.ClassInjectionAvailableRule;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -26,6 +29,9 @@ public class ClassInjectorUsingReflectionTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
+    @Rule
+    public MethodRule classInjectionAvailableRule = new ClassInjectionAvailableRule();
+
     private ClassLoader classLoader;
 
     @Before
@@ -39,6 +45,7 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testInjection() throws Exception {
         new ClassInjector.UsingReflection(classLoader)
                 .inject(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(Foo.class), ClassFileExtraction.extract(Foo.class)));
@@ -46,6 +53,7 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testDirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Direct.make().initialize();
         assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
@@ -64,6 +72,7 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testIndirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Indirect.make().initialize();
         assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));
@@ -135,6 +144,7 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Bar.class, Interceptor.class));
@@ -147,6 +157,7 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    @ClassInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
         assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(null).isAvailable(), is(false));

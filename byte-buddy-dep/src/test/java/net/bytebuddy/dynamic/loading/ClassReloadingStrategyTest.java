@@ -68,6 +68,7 @@ public class ClassReloadingStrategyTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @JavaVersionRule.Enforce(atMost = 10) // Wait for mechanism in sun.misc.Unsafe to define class.
     public void testFromAgentClassWithAuxiliaryReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
