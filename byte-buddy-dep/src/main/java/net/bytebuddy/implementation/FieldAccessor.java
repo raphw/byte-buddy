@@ -511,7 +511,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
+            return in(TypeDescription.ForLoadedType.of(type));
         }
 
         @Override

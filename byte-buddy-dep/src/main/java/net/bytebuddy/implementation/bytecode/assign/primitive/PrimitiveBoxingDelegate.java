@@ -86,7 +86,7 @@ public enum PrimitiveBoxingDelegate {
                             StackSize sizeDifference,
                             String boxingMethodName,
                             String boxingMethodDescriptor) {
-        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+        this.wrapperType = TypeDescription.ForLoadedType.of(wrapperType);
         this.size = sizeDifference.toDecreasingSize();
         this.boxingMethodName = boxingMethodName;
         this.boxingMethodDescriptor = boxingMethodDescriptor;

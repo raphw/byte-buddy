@@ -3122,28 +3122,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new OfDefaultValue<S>(annotationType);
                     } else if (value instanceof Boolean) {
                         stackManipulation = IntegerConstant.forValue((Boolean) value);
-                        typeDescription = new TypeDescription.ForLoadedType(boolean.class);
+                        typeDescription = TypeDescription.BOOLEAN_PRIMITIVE;
                     } else if (value instanceof Byte) {
                         stackManipulation = IntegerConstant.forValue((Byte) value);
-                        typeDescription = new TypeDescription.ForLoadedType(byte.class);
+                        typeDescription = TypeDescription.BYTE_PRIMITIVE;
                     } else if (value instanceof Short) {
                         stackManipulation = IntegerConstant.forValue((Short) value);
-                        typeDescription = new TypeDescription.ForLoadedType(short.class);
+                        typeDescription = TypeDescription.SHORT_PRIMITIVE;
                     } else if (value instanceof Character) {
                         stackManipulation = IntegerConstant.forValue((Character) value);
-                        typeDescription = new TypeDescription.ForLoadedType(char.class);
+                        typeDescription = TypeDescription.CHARACTER_PRIMITIVE;
                     } else if (value instanceof Integer) {
                         stackManipulation = IntegerConstant.forValue((Integer) value);
-                        typeDescription = new TypeDescription.ForLoadedType(int.class);
+                        typeDescription = TypeDescription.INTEGER_PRIMITIVE;
                     } else if (value instanceof Long) {
                         stackManipulation = LongConstant.forValue((Long) value);
-                        typeDescription = new TypeDescription.ForLoadedType(long.class);
+                        typeDescription = TypeDescription.LONG_PRIMITIVE;
                     } else if (value instanceof Float) {
                         stackManipulation = FloatConstant.forValue((Float) value);
-                        typeDescription = new TypeDescription.ForLoadedType(float.class);
+                        typeDescription = TypeDescription.FLOAT_PRIMITIVE;
                     } else if (value instanceof Double) {
                         stackManipulation = DoubleConstant.forValue((Double) value);
-                        typeDescription = new TypeDescription.ForLoadedType(double.class);
+                        typeDescription = TypeDescription.DOUBLE_PRIMITIVE;
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
                         typeDescription = TypeDescription.STRING;
