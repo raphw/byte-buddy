@@ -25,7 +25,14 @@ public class CompoundList {
      * @return A compound list representing the element and the list.
      */
     public static <S> List<S> of(S left, List<? extends S> right) {
-        return of(Collections.singletonList(left), right);
+        if (right.isEmpty()) {
+            return Collections.singletonList(left);
+        } else {
+            List<S> list = new ArrayList<S>(1 + right.size());
+            list.add(left);
+            list.addAll(right);
+            return list;
+        }
     }
 
     /**
@@ -37,7 +44,14 @@ public class CompoundList {
      * @return A compound list representing the element and the list.
      */
     public static <S> List<S> of(List<? extends S> left, S right) {
-        return of(left, Collections.singletonList(right));
+        if (left.isEmpty()) {
+            return Collections.singletonList(right);
+        } else {
+            List<S> list = new ArrayList<S>(left.size() + 1);
+            list.addAll(left);
+            list.add(right);
+            return list;
+        }
     }
 
     /**
