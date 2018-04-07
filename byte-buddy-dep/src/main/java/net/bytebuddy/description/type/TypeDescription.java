@@ -7463,11 +7463,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public String getName() {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < arity; i++) {
+            String descriptor = componentType.getDescriptor();
+            StringBuilder stringBuilder = new StringBuilder(descriptor.length() + arity);
+            for (int index = 0; index < arity; index++) {
                 stringBuilder.append('[');
             }
-            return stringBuilder.append(componentType.getDescriptor().replace('/', '.')).toString();
+            for (int index = 0; index < descriptor.length(); index++) {
+                char character = descriptor.charAt(index);
+                stringBuilder.append(character == '/' ? '.' : character);
+            }
+            return stringBuilder.toString();
         }
 
         @Override
