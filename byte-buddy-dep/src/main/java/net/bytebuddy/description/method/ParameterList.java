@@ -483,7 +483,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
-                for (TypeDefinition typeDefinition : typeDefinitions.subList(0, index)) {
+                for (int i = 0; i < index; i++) {
+                    TypeDefinition typeDefinition = typeDefinitions.get(i);
                     offset += typeDefinition.getStackSize().getSize();
                 }
                 return new ParameterDescription.Latent(methodDescription, typeDefinitions.get(index).asGenericType(), index, offset);
