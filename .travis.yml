@@ -9,22 +9,19 @@ before_install:
 
 matrix:
   include:
-# Java 9
+    # Java 9
     - jdk: oraclejdk9
       env: JDK='JDK 9' TARGET='-Pjava9'
       install: echo "The default Travis install script is being skipped!"
-# Java 10
+    # Java 10
     - env: JDK='JDK 10' TARGET='-Pjava10'
       install: . ./install-jdk.sh -F 10 -L GPL
-# Java 11
-    - env: JDK='JDK 11' TARGET='-Pjava11'
+    # Java 11
+    - env: JDK='JDK 11' TARGET='-Pjava10'
       install: . ./install-jdk.sh -F 11 -L BCL
       script:
-        - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
+        - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
         - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
-# The following environments are known to fail
-  allow_failures:
-    - env: JDK='JDK 11' TARGET='-Pjava11'
 
 script:
   - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'

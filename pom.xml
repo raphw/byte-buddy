@@ -55,7 +55,7 @@
         <asm.javadoc>http://asm.ow2.org/asm60/javadoc/user/</asm.javadoc>
         <version.asm>6.1.1</version.asm>
         <version.junit>4.12</version.junit>
-        <version.mockito>2.17.0</version.mockito>
+        <version.mockito>2.18.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.3.0</version.plugin.bundle>
         <version.plugin.compiler>3.7.0</version.plugin.compiler>
