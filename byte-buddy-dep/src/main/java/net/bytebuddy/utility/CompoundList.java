@@ -1,7 +1,6 @@
 package net.bytebuddy.utility;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +24,12 @@ public class CompoundList {
      * @return A compound list representing the element and the list.
      */
     public static <S> List<S> of(S left, List<? extends S> right) {
-        return of(Collections.singletonList(left), right);
+        List<S> list = new ArrayList<S>(right.size() + 1);
+        list.add(left);
+        if (!right.isEmpty()) {
+            list.addAll(right);
+        }
+        return list;
     }
 
     /**
@@ -37,7 +41,12 @@ public class CompoundList {
      * @return A compound list representing the element and the list.
      */
     public static <S> List<S> of(List<? extends S> left, S right) {
-        return of(left, Collections.singletonList(right));
+        List<S> list = new ArrayList<S>(left.size() + 1);
+        if (!left.isEmpty()) {
+            list.addAll(left);
+        }
+        list.add(right);
+        return list;
     }
 
     /**
@@ -50,8 +59,12 @@ public class CompoundList {
      */
     public static <S> List<S> of(List<? extends S> left, List<? extends S> right) {
         List<S> list = new ArrayList<S>(left.size() + right.size());
-        list.addAll(left);
-        list.addAll(right);
+        if (!left.isEmpty()) {
+            list.addAll(left);
+        }
+        if (!right.isEmpty()) {
+            list.addAll(right);
+        }
         return list;
     }
 }
