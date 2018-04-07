@@ -2393,7 +2393,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public Generic resolveReceiverType(AccessibleObject executable) {
                         try {
-                            return resolve((AnnotatedElement) getAnnotatedReceiverType.invoke(executable));
+                            return resolve((AnnotatedElement) getAnnotatedReceiverType.invoke(executable, (Object[]) null));
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedReceiverType", exception);
                         } catch (InvocationTargetException exception) {
@@ -2406,7 +2406,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         try {
                             return annotatedType == null
                                     ? UNDEFINED
-                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedType), new Resolved(annotatedType));
+                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedType, (Object[]) null), new Resolved(annotatedType));
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedType#getType", exception);
                         } catch (InvocationTargetException exception) {
@@ -2494,7 +2494,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             try {
-                                return (AnnotatedElement) getAnnotatedSuperclass.invoke(type);
+                                return (AnnotatedElement) getAnnotatedSuperclass.invoke(type, (Object[]) null);
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedSuperclass", exception);
                             } catch (InvocationTargetException exception) {
@@ -2565,7 +2565,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             try {
-                                return (AnnotatedElement) getAnnotatedType.invoke(field);
+                                return (AnnotatedElement) getAnnotatedType.invoke(field, (Object[]) null);
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access java.lang.reflect.Field#getAnnotatedType", exception);
                             } catch (InvocationTargetException exception) {
@@ -2597,7 +2597,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             try {
-                                return (AnnotatedElement) getAnnotatedReturnType.invoke(method);
+                                return (AnnotatedElement) getAnnotatedReturnType.invoke(method, (Object[]) null);
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access java.lang.reflect.Method#getAnnotatedReturnType", exception);
                             } catch (InvocationTargetException exception) {
@@ -2636,7 +2636,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             try {
-                                return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable), index);
+                                return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable, (Object[]) null), index);
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedParameterTypes", exception);
                             } catch (InvocationTargetException exception) {
@@ -2675,7 +2675,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             try {
-                                return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable), index);
+                                return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable, (Object[]) null), index);
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception);
                             } catch (InvocationTargetException exception) {
@@ -2893,7 +2893,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement);
+                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement, (Object[]) null);
                         return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
                                 ? NoOp.INSTANCE
                                 : (AnnotatedElement) Array.get(annotatedUpperBounds, index);
@@ -2937,7 +2937,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement, (Object[]) null), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -2978,7 +2978,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement, (Object[]) null), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3023,7 +3023,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public AnnotatedElement resolve() {
                         try {
-                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable), index);
+                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable, (Object[]) null), index);
                         } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                             return NoOp.INSTANCE;
                         } catch (IllegalAccessException exception) {
@@ -3065,7 +3065,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement, (Object[]) null), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3098,7 +3098,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
+                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement, (Object[]) null);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
                         return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
@@ -3145,7 +3145,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement);
+                        AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement, (Object[]) null);
                         return annotatedOwnerType == null
                                 ? NoOp.INSTANCE
                                 : annotatedOwnerType;

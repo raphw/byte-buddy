@@ -358,7 +358,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> returnType(Object methodType) {
                     try {
-                        return (Class<?>) returnType.invoke(methodType);
+                        return (Class<?>) returnType.invoke(methodType, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
                     } catch (InvocationTargetException exception) {
@@ -369,7 +369,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?>[] parameterArray(Object methodType) {
                     try {
-                        return (Class<?>[]) parameterArray.invoke(methodType);
+                        return (Class<?>[]) parameterArray.invoke(methodType, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#parameterArray", exception);
                     } catch (InvocationTargetException exception) {
@@ -930,7 +930,7 @@ public interface JavaConstant {
                 @Override
                 public Object publicLookup() {
                     try {
-                        return publicLookup.invoke(null);
+                        return publicLookup.invoke(null, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles#publicLookup", exception);
                     } catch (InvocationTargetException exception) {
@@ -941,7 +941,7 @@ public interface JavaConstant {
                 @Override
                 public Object getMethodType(Object methodHandleInfo) {
                     try {
-                        return getMethodType.invoke(methodHandleInfo);
+                        return getMethodType.invoke(methodHandleInfo, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getMethodType", exception);
                     } catch (InvocationTargetException exception) {
@@ -952,7 +952,7 @@ public interface JavaConstant {
                 @Override
                 public int getReferenceKind(Object methodHandleInfo) {
                     try {
-                        return (Integer) getReferenceKind.invoke(methodHandleInfo);
+                        return (Integer) getReferenceKind.invoke(methodHandleInfo, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getReferenceKind", exception);
                     } catch (InvocationTargetException exception) {
@@ -963,7 +963,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> getDeclaringClass(Object methodHandleInfo) {
                     try {
-                        return (Class<?>) getDeclaringClass.invoke(methodHandleInfo);
+                        return (Class<?>) getDeclaringClass.invoke(methodHandleInfo, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getDeclaringClass", exception);
                     } catch (InvocationTargetException exception) {
@@ -974,7 +974,7 @@ public interface JavaConstant {
                 @Override
                 public String getName(Object methodHandleInfo) {
                     try {
-                        return (String) getName.invoke(methodHandleInfo);
+                        return (String) getName.invoke(methodHandleInfo, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getName", exception);
                     } catch (InvocationTargetException exception) {
@@ -985,7 +985,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> returnType(Object methodType) {
                     try {
-                        return (Class<?>) returnType.invoke(methodType);
+                        return (Class<?>) returnType.invoke(methodType, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
                     } catch (InvocationTargetException exception) {
@@ -996,7 +996,7 @@ public interface JavaConstant {
                 @Override
                 public List<? extends Class<?>> parameterArray(Object methodType) {
                     try {
-                        return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType));
+                        return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType, (Object[]) null));
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.MethodType#parameterArray", exception);
                     } catch (InvocationTargetException exception) {
@@ -1007,7 +1007,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     try {
-                        return (Class<?>) lookupClass.invoke(lookup);
+                        return (Class<?>) lookupClass.invoke(lookup, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.MethodHandles.Lookup#lookupClass", exception);
                     } catch (InvocationTargetException exception) {

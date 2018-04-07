@@ -343,7 +343,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public int getModifiers(AccessibleObject executable, int index) {
                     try {
-                        return (Integer) getModifiers.invoke(getParameter(executable, index));
+                        return (Integer) getModifiers.invoke(getParameter(executable, index), (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
                     } catch (InvocationTargetException exception) {
@@ -354,7 +354,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public boolean isNamePresent(AccessibleObject executable, int index) {
                     try {
-                        return (Boolean) isNamePresent.invoke(getParameter(executable, index));
+                        return (Boolean) isNamePresent.invoke(getParameter(executable, index), (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#isNamePresent", exception);
                     } catch (InvocationTargetException exception) {
@@ -365,7 +365,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public String getName(AccessibleObject executable, int index) {
                     try {
-                        return (String) getName.invoke(getParameter(executable, index));
+                        return (String) getName.invoke(getParameter(executable, index), (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getName", exception);
                     } catch (InvocationTargetException exception) {
@@ -382,7 +382,7 @@ public interface ParameterDescription extends AnnotationSource,
                  */
                 private Object getParameter(AccessibleObject executable, int index) {
                     try {
-                        return Array.get(getParameters.invoke(executable), index);
+                        return Array.get(getParameters.invoke(executable, (Object[]) null), index);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getParameters", exception);
                     } catch (InvocationTargetException exception) {

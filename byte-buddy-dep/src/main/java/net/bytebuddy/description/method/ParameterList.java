@@ -256,7 +256,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public int getParameterCount(Object executable) {
                     try {
-                        return (Integer) getParameterCount.invoke(executable);
+                        return (Integer) getParameterCount.invoke(executable, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
                     } catch (InvocationTargetException exception) {

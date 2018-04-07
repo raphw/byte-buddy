@@ -339,7 +339,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public JavaModule moduleOf(Class<?> type) {
                 try {
-                    return new JavaModule(getModule.invoke(type));
+                    return new JavaModule(getModule.invoke(type, (Object[]) null));
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getModule, exception);
                 } catch (InvocationTargetException exception) {
@@ -361,7 +361,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public ClassLoader getClassLoader(Object module) {
                 try {
-                    return (ClassLoader) getClassLoader.invoke(module);
+                    return (ClassLoader) getClassLoader.invoke(module, (Object[]) null);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getClassLoader, exception);
                 } catch (InvocationTargetException exception) {
@@ -372,7 +372,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public boolean isNamed(Object module) {
                 try {
-                    return (Boolean) isNamed.invoke(module);
+                    return (Boolean) isNamed.invoke(module, (Object[]) null);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + isNamed, exception);
                 } catch (InvocationTargetException exception) {
@@ -383,7 +383,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public String getName(Object module) {
                 try {
-                    return (String) getName.invoke(module);
+                    return (String) getName.invoke(module, (Object[]) null);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getName, exception);
                 } catch (InvocationTargetException exception) {
