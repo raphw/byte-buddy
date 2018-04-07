@@ -6743,7 +6743,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isPackageType() {
-            return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
+            String name = getName();
+
+            int nameLength = name.length();
+            int packageClassNameLength = PackageDescription.PACKAGE_CLASS_NAME.length();
+
+            if (nameLength < packageClassNameLength) {
+                return false;
+            }
+            if (nameLength > packageClassNameLength && name.charAt(nameLength - packageClassNameLength - 1) != '.') {
+                return false;
+            }
+            return name.endsWith(PackageDescription.PACKAGE_CLASS_NAME);
         }
 
         @Override
