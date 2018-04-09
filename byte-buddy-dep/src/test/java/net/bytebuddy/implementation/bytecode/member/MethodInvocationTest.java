@@ -182,6 +182,14 @@ public class MethodInvocationTest {
     }
 
     @Test
+    public void testExplicitlyVirtualMethodInvocationOfInterfaceOfObjectMethod() throws Exception {
+        when(declaringType.isAssignableFrom(rawOtherType)).thenReturn(true);
+        when(rawOtherType.isInterface()).thenReturn(true);
+        when(declaringType.represents(Object.class)).thenReturn(true);
+        assertInvocation(MethodInvocation.invoke(methodDescription).virtual(rawOtherType), Opcodes.INVOKEVIRTUAL, FOO, false);
+    }
+
+    @Test
     public void testStaticVirtualInvocation() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
         assertThat(MethodInvocation.invoke(methodDescription).virtual(rawOtherType).isValid(), is(false));

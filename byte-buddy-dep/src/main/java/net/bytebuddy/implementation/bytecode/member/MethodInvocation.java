@@ -317,9 +317,10 @@ public enum MethodInvocation {
         public StackManipulation virtual(TypeDescription invocationTarget) {
             if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isStatic()) {
                 return Illegal.INSTANCE;
-            }
-            if (invocationTarget.isInterface()) {
-                return INTERFACE.new Invocation(methodDescription, invocationTarget);
+            } else if (invocationTarget.isInterface()) {
+                return methodDescription.getDeclaringType().represents(Object.class)
+                        ? this
+                        : INTERFACE.new Invocation(methodDescription, invocationTarget);
             } else {
                 return VIRTUAL.new Invocation(methodDescription, invocationTarget);
             }
