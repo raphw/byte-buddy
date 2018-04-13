@@ -981,7 +981,7 @@ public interface MethodGraph {
                      */
                     private static <W> Entry<W> combine(Entry<W> left, Entry<W> right) {
                         Set<MethodDescription> leftMethods = left.getCandidates(), rightMethods = right.getCandidates();
-                        LinkedHashSet<MethodDescription> combined = new LinkedHashSet<MethodDescription>(leftMethods.size() + rightMethods.size());
+                        LinkedHashSet<MethodDescription> combined = new LinkedHashSet<MethodDescription>();
                         combined.addAll(leftMethods);
                         combined.addAll(rightMethods);
                         for (MethodDescription leftMethod : leftMethods) {
@@ -1465,7 +1465,7 @@ public interface MethodGraph {
                             @Override
                             public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
-                                LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>(this.methodDescriptions.size() + 1);
+                                LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>();
                                 TypeDescription declaringType = methodDescription.getDeclaringType().asErasure();
                                 boolean bridge = methodDescription.isBridge();
                                 Visibility visibility = this.visibility;
