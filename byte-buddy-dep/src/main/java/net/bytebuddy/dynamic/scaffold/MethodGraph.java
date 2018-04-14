@@ -772,12 +772,19 @@ public interface MethodGraph {
                 protected final String internalName;
 
                 /**
+                 * The number of method parameters of the method this key identifies.
+                 */
+                protected final int parameterCount;
+
+                /**
                  * Creates a new key.
                  *
-                 * @param internalName The internal name of the method this key identifies.
+                 * @param internalName   The internal name of the method this key identifies.
+                 * @param parameterCount The number of method parameters of the method this key identifies.
                  */
-                protected Key(String internalName) {
+                protected Key(String internalName, int parameterCount) {
                     this.internalName = internalName;
+                    this.parameterCount = parameterCount;
                 }
 
                 /**
@@ -795,12 +802,14 @@ public interface MethodGraph {
                         return false;
                     }
                     Key key = (Key) other;
-                    return internalName.equals(key.internalName) && !Collections.disjoint(getIdentifiers(), key.getIdentifiers());
+                    return internalName.equals(key.internalName)
+                            && parameterCount == key.parameterCount
+                            && !Collections.disjoint(getIdentifiers(), key.getIdentifiers());
                 }
 
                 @Override
                 public int hashCode() {
-                    return internalName.hashCode();
+                    return internalName.hashCode() + 31 * parameterCount;
                 }
 
                 /**
@@ -819,11 +828,12 @@ public interface MethodGraph {
                     /**
                      * Creates a new harmonized key.
                      *
-                     * @param internalName The internal name of the method this key identifies.
-                     * @param identifiers  A mapping of identifiers to the type tokens they represent.
+                     * @param internalName   The internal name of the method this key identifies.
+                     * @param parameterCount The number of method parameters of the method this key identifies.
+                     * @param identifiers    A mapping of identifiers to the type tokens they represent.
                      */
-                    protected Harmonized(String internalName, Map<V, Set<MethodDescription.TypeToken>> identifiers) {
-                        super(internalName);
+                    protected Harmonized(String internalName, int parameterCount, Map<V, Set<MethodDescription.TypeToken>> identifiers) {
+                        super(internalName, parameterCount);
                         this.identifiers = identifiers;
                     }
 
@@ -838,6 +848,7 @@ public interface MethodGraph {
                     protected static <Q> Harmonized<Q> of(MethodDescription methodDescription, Harmonizer<Q> harmonizer) {
                         MethodDescription.TypeToken typeToken = methodDescription.asTypeToken();
                         return new Harmonized<Q>(methodDescription.getInternalName(),
+                                methodDescription.getParameters().size(),
                                 Collections.singletonMap(harmonizer.harmonize(typeToken), Collections.<MethodDescription.TypeToken>emptySet()));
                     }
 
@@ -853,7 +864,7 @@ public interface MethodGraph {
                             identifiers.addAll(typeTokens);
                         }
                         identifiers.add(typeToken);
-                        return new Detached(internalName, identifiers);
+                        return new Detached(internalName, parameterCount, identifiers);
                     }
 
                     /**
@@ -874,7 +885,7 @@ public interface MethodGraph {
                                 identifiers.put(entry.getKey(), typeTokens);
                             }
                         }
-                        return new Harmonized<V>(internalName, identifiers);
+                        return new Harmonized<V>(internalName, parameterCount, identifiers);
                     }
 
                     /**
@@ -896,7 +907,7 @@ public interface MethodGraph {
                             typeTokens.add(typeToken);
                             identifiers.put(identifier, typeTokens);
                         }
-                        return new Harmonized<V>(internalName, identifiers);
+                        return new Harmonized<V>(internalName, parameterCount, identifiers);
                     }
 
                     @Override
@@ -918,11 +929,12 @@ public interface MethodGraph {
                     /**
                      * Creates a new detached key.
                      *
-                     * @param internalName The internal name of the method this key identifies.
-                     * @param identifiers  The type tokens represented by this key.
+                     * @param internalName   The internal name of the method this key identifies.
+                     * @param parameterCount The number of method parameters.
+                     * @param identifiers    The type tokens represented by this key.
                      */
-                    protected Detached(String internalName, Set<MethodDescription.TypeToken> identifiers) {
-                        super(internalName);
+                    protected Detached(String internalName, int parameterCount, Set<MethodDescription.TypeToken> identifiers) {
+                        super(internalName, parameterCount);
                         this.identifiers = identifiers;
                     }
 
@@ -933,7 +945,7 @@ public interface MethodGraph {
                      * @return A detached key representing the given method token..
                      */
                     protected static Detached of(MethodDescription.SignatureToken token) {
-                        return new Detached(token.getName(), Collections.singleton(token.asTypeToken()));
+                        return new Detached(token.getName(), token.getParameterTypes().size(), Collections.singleton(token.asTypeToken()));
                     }
 
                     @Override
