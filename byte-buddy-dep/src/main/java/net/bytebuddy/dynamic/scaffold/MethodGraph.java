@@ -1028,8 +1028,7 @@ public interface MethodGraph {
                     protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> harmonizer) {
                         Harmonized<V> key = Harmonized.of(methodDescription, harmonizer);
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> currentEntry = entries.remove(key);
-                        Entry<V> extendedEntry = (currentEntry == null
+                        Entry<V> currentEntry = entries.remove(key), extendedEntry = (currentEntry == null
                                 ? new Entry.Initial<V>(key)
                                 : currentEntry).extendBy(methodDescription, harmonizer);
                         entries.put(extendedEntry.getKey(), extendedEntry);
@@ -1043,26 +1042,13 @@ public interface MethodGraph {
                      * @return A store representing a combination of this store and the given store.
                      */
                     protected Store<V> combineWith(Store<V> store) {
-                        Store<V> combinedStore = this;
-                        for (Entry<V> entry : store.entries.values()) {
-                            combinedStore = combinedStore.combineWith(entry);
-                        }
-                        return combinedStore;
-                    }
-
-                    /**
-                     * Combines this store with the given entry.
-                     *
-                     * @param entry The entry to combine with this store.
-                     * @return A store representing a combination of this store and the given entry.
-                     */
-                    protected Store<V> combineWith(Entry<V> entry) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> previousEntry = entries.remove(entry.getKey());
-                        Entry<V> injectedEntry = previousEntry == null
-                                ? entry
-                                : combine(previousEntry, entry);
-                        entries.put(injectedEntry.getKey(), injectedEntry);
+                        for (Entry<V> entry : store.entries.values()) {
+                            Entry<V> previousEntry = entries.remove(entry.getKey()), injectedEntry = previousEntry == null
+                                    ? entry
+                                    : combine(previousEntry, entry);
+                            entries.put(injectedEntry.getKey(), injectedEntry);
+                        }
                         return new Store<V>(entries);
                     }
 
@@ -1073,26 +1059,13 @@ public interface MethodGraph {
                      * @return A store that represents this store with the given store injected.
                      */
                     protected Store<V> inject(Store<V> store) {
-                        Store<V> injectedStore = this;
-                        for (Entry<V> entry : store.entries.values()) {
-                            injectedStore = injectedStore.inject(entry);
-                        }
-                        return injectedStore;
-                    }
-
-                    /**
-                     * Injects the given entry into this store.
-                     *
-                     * @param entry The entry to be injected into this store.
-                     * @return A store that represents this store with the given entry injected.
-                     */
-                    protected Store<V> inject(Entry<V> entry) {
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> dominantEntry = entries.remove(entry.getKey());
-                        Entry<V> injectedEntry = dominantEntry == null
-                                ? entry
-                                : dominantEntry.inject(entry.getKey(), entry.getVisibility());
-                        entries.put(injectedEntry.getKey(), injectedEntry);
+                        for (Entry<V> entry : store.entries.values()) {
+                            Entry<V> dominantEntry = entries.remove(entry.getKey()), injectedEntry = dominantEntry == null
+                                    ? entry
+                                    : dominantEntry.inject(entry.getKey(), entry.getVisibility());
+                            entries.put(injectedEntry.getKey(), injectedEntry);
+                        }
                         return new Store<V>(entries);
                     }
 
