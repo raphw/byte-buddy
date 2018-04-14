@@ -142,8 +142,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         }
 
         /**
-         * <p></p>
+         * <p>
          * A class loading strategy which applies a class loader injection while applying a given {@link java.security.ProtectionDomain} on class injection.
+         * </p>
          * <p>
          * <b>Important</b>: Class injection requires access to JVM internal methods that are sealed by security managers and the
          * Java Platform module system. Since Java 11, access to these methods is no longer feasible unless those packages
