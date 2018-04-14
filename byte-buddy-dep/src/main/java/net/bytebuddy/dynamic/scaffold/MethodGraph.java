@@ -572,11 +572,7 @@ public interface MethodGraph {
                 for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType.accept(visitor), interfaceType, snapshots, relevanceMatcher));
                 }
-                store = store.inject(interfaceStore);
-                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(relevanceMatcher)) {
-                    store = store.registerTopLevel(methodDescription, harmonizer);
-                }
-                return store;
+                return store.inject(interfaceStore).registerTopLevel(typeDefinition.getDeclaredMethods().filter(relevanceMatcher), harmonizer);
             }
 
             /**
@@ -1033,17 +1029,22 @@ public interface MethodGraph {
                     /**
                      * Registers a new top level method within this store.
                      *
-                     * @param methodDescription The method to register.
-                     * @param harmonizer        The harmonizer to use for determining method equality.
+                     * @param methodDescriptions The methods to register.
+                     * @param harmonizer         The harmonizer to use for determining method equality.
                      * @return A store with the given method registered as a top-level method.
                      */
-                    protected Store<V> registerTopLevel(MethodDescription methodDescription, Harmonizer<V> harmonizer) {
-                        Harmonized<V> key = Harmonized.of(methodDescription, harmonizer);
+                    protected Store<V> registerTopLevel(List<? extends MethodDescription> methodDescriptions, Harmonizer<V> harmonizer) {
+                        if (methodDescriptions.isEmpty()) {
+                            return this;
+                        }
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
-                        Entry<V> currentEntry = entries.remove(key), extendedEntry = (currentEntry == null
-                                ? new Entry.Initial<V>(key)
-                                : currentEntry).extendBy(methodDescription, harmonizer);
-                        entries.put(extendedEntry.getKey(), extendedEntry);
+                        for (MethodDescription methodDescription : methodDescriptions) {
+                            Harmonized<V> key = Harmonized.of(methodDescription, harmonizer);
+                            Entry<V> currentEntry = entries.remove(key), extendedEntry = (currentEntry == null
+                                    ? new Entry.Initial<V>(key)
+                                    : currentEntry).extendBy(methodDescription, harmonizer);
+                            entries.put(extendedEntry.getKey(), extendedEntry);
+                        }
                         return new Store<V>(entries);
                     }
 
