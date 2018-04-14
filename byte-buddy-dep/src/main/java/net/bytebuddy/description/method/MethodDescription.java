@@ -1732,8 +1732,9 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return This token's parameter types.
          */
+        @SuppressWarnings("unchecked")
         public List<TypeDescription> getParameterTypes() {
-            return new ArrayList<TypeDescription>(parameterTypes);
+            return (List<TypeDescription>) parameterTypes;
         }
 
         /**
@@ -1743,6 +1744,14 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public TypeToken asTypeToken() {
             return new TypeToken(returnType, parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
         }
 
         @Override
@@ -1756,14 +1765,6 @@ public interface MethodDescription extends TypeVariableSource,
             return name.equals(signatureToken.name)
                     && returnType.equals(signatureToken.returnType)
                     && parameterTypes.equals(signatureToken.parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name.hashCode();
-            result = 31 * result + returnType.hashCode();
-            result = 31 * result + parameterTypes.hashCode();
-            return result;
         }
 
         @Override
@@ -1822,8 +1823,16 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return This token's parameter types.
          */
+        @SuppressWarnings("unchecked")
         public List<TypeDescription> getParameterTypes() {
-            return new ArrayList<TypeDescription>(parameterTypes);
+            return (List<TypeDescription>) parameterTypes;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
         }
 
         @Override
@@ -1835,13 +1844,6 @@ public interface MethodDescription extends TypeVariableSource,
             }
             TypeToken typeToken = (TypeToken) other;
             return returnType.equals(typeToken.returnType) && parameterTypes.equals(typeToken.parameterTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = returnType.hashCode();
-            result = 31 * result + parameterTypes.hashCode();
-            return result;
         }
 
         @Override

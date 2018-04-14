@@ -621,12 +621,18 @@ public interface MethodGraph {
                         private final MethodDescription.TypeToken typeToken;
 
                         /**
+                         * The hash code of this token which is precomputed for to improve performance.
+                         */
+                        private final int hashCode;
+
+                        /**
                          * Creates a new type token for a Java method.
                          *
                          * @param typeToken The represented type token.
                          */
                         protected Token(MethodDescription.TypeToken typeToken) {
                             this.typeToken = typeToken;
+                            hashCode = typeToken.getParameterTypes().hashCode();
                         }
 
                         @Override
@@ -636,7 +642,7 @@ public interface MethodGraph {
 
                         @Override
                         public int hashCode() {
-                            return typeToken.getParameterTypes().hashCode();
+                            return hashCode;
                         }
 
                         @Override
@@ -672,12 +678,18 @@ public interface MethodGraph {
                         private final MethodDescription.TypeToken typeToken;
 
                         /**
+                         * The hash code of this token which is precomputed for to improve performance.
+                         */
+                        private final int hashCode;
+
+                        /**
                          * Creates a new type token for a JVM method.
                          *
                          * @param typeToken The represented type token.
                          */
                         public Token(MethodDescription.TypeToken typeToken) {
                             this.typeToken = typeToken;
+                            hashCode = typeToken.getReturnType().hashCode() + 31 * typeToken.getParameterTypes().hashCode();
                         }
 
                         @Override
@@ -694,7 +706,7 @@ public interface MethodGraph {
 
                         @Override
                         public int hashCode() {
-                            return typeToken.getReturnType().hashCode() + 31 * typeToken.getParameterTypes().hashCode();
+                            return hashCode;
                         }
 
                         @Override
