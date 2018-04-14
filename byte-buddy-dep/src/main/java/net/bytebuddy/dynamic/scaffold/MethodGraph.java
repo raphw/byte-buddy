@@ -930,7 +930,7 @@ public interface MethodGraph {
                      * Creates a new detached key.
                      *
                      * @param internalName   The internal name of the method this key identifies.
-                     * @param parameterCount The number of method parameters.
+                     * @param parameterCount The number of method parameters of the method this key identifies.
                      * @param identifiers    The type tokens represented by this key.
                      */
                     protected Detached(String internalName, int parameterCount, Set<MethodDescription.TypeToken> identifiers) {
