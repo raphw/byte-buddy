@@ -1,9 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. March 2018: version 1.8.4
+
+- Only open ASM if this is specified via the boolean property `net.bytebuddy.experimental`.
+- Fix resolution of invoking methods of `Object` on interfaces to not specialize on the interface type. The latter is also failing verification on Android.
+- Several performance improvements.
+
 ### 28. March 2018: version 1.8.3
 
-- Allow Java 11 classes  by opening ASM.
+- Allow Java 11 classes by opening ASM.
 - Remove Lombok and add methods using Byte Buddy plugin.
 
 ### 28. March 2018: version 1.8.2
