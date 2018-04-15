@@ -1,18 +1,22 @@
 Byte Buddy release notes
 ------------------------
 
-### 28. March 2018: version 1.8.4
+### 15. April 2018: version 1.8.5
+
+- Release with `equals` and `hashCode` methods being generated based on the fixes in the previous version.
+
+### 15. April 2018: version 1.8.4
 
 - Only open ASM if this is specified via the boolean property `net.bytebuddy.experimental`.
 - Fix resolution of invoking methods of `Object` on interfaces to not specialize on the interface type. The latter is also failing verification on Android.
 - Several performance improvements.
 
-### 28. March 2018: version 1.8.3
+### 31. March 2018: version 1.8.3
 
 - Allow Java 11 classes by opening ASM.
 - Remove Lombok and add methods using Byte Buddy plugin.
 
-### 28. March 2018: version 1.8.2
+### 31. March 2018: version 1.8.2
 
 - Reduce log output for Gradle and Maven plugin.
 - Fix class check in `EqualsMethod`.
