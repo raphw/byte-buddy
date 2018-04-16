@@ -187,18 +187,18 @@ public class NexusTest {
 
     @Test
     public void testUnavailableState() throws Exception {
-        assertThat(new NexusAccessor.Dispatcher.Unavailable(new Exception()).isAlive(), is(false));
+        assertThat(new NexusAccessor.Dispatcher.Unavailable("unavailable").isAlive(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnavailableDispatcherRegisterThrowsException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, Nexus.NO_QUEUE, BAR, loadedTypeInitializer);
+        new NexusAccessor.Dispatcher.Unavailable("unavailable").register(FOO, classLoader, Nexus.NO_QUEUE, BAR, loadedTypeInitializer);
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testUnavailableDispatcherCleanThrowsException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable(new Exception()).clean(mock(Reference.class));
+        new NexusAccessor.Dispatcher.Unavailable("unavailable").clean(mock(Reference.class));
     }
 
     @Test
