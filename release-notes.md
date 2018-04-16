@@ -10,6 +10,7 @@ Byte Buddy release notes
 - Only open ASM if this is specified via the boolean property `net.bytebuddy.experimental`.
 - Fix resolution of invoking methods of `Object` on interfaces to not specialize on the interface type. The latter is also failing verification on Android.
 - Several performance improvements.
+- Do no longer use unsafe injection as a default class loading strategy.
 
 ### 31. March 2018: version 1.8.3
 
