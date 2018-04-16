@@ -290,15 +290,15 @@ public class NexusAccessor {
             /**
              * The reason for the dispatcher being unavailable.
              */
-            private final String reason;
+            private final String message;
 
             /**
              * Creates a new unavailable dispatcher.
              *
-             * @param reason The reason for the dispatcher being unavailable.
+             * @param message The reason for the dispatcher being unavailable.
              */
-            protected Unavailable(String reason) {
-                this.reason = reason;
+            protected Unavailable(String message) {
+                this.message = message;
             }
 
             @Override
@@ -308,7 +308,7 @@ public class NexusAccessor {
 
             @Override
             public void clean(Reference<? extends ClassLoader> reference) {
-                throw new IllegalStateException("Could not initialize Nexus accessor: " + reason);
+                throw new IllegalStateException("Could not initialize Nexus accessor: " + message);
             }
 
             @Override
@@ -317,7 +317,7 @@ public class NexusAccessor {
                                  ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
-                throw new IllegalStateException("Could not initialize Nexus accessor: " + reason);
+                throw new IllegalStateException("Could not initialize Nexus accessor: " + message);
             }
         }
     }

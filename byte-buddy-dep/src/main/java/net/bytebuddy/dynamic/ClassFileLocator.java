@@ -1189,7 +1189,7 @@ public interface ClassFileLocator extends Closeable {
                             try {
                                 return new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
                             } catch (Exception exception) {
-                                return new Dispatcher.Unresolved(exception);
+                                return new Dispatcher.Unresolved(exception.getMessage());
                             }
                         }
                     }
@@ -1243,22 +1243,22 @@ public interface ClassFileLocator extends Closeable {
                     class Unresolved implements Initializable {
 
                         /**
-                         * The exception that occurred when attempting to locate the field.
+                         * The reason why this dispatcher is unavailable.
                          */
-                        private final Exception exception;
+                        private final String message;
 
                         /**
                          * Creates a representation of a non-resolved field.
                          *
-                         * @param exception The exception that occurred when attempting to locate the field.
+                         * @param message The reason why this dispatcher is unavailable.
                          */
-                        public Unresolved(Exception exception) {
-                            this.exception = exception;
+                        public Unresolved(String message) {
+                            this.message = message;
                         }
 
                         @Override
                         public Dispatcher initialize() {
-                            throw new IllegalStateException("Could not locate classes vector", exception);
+                            throw new IllegalStateException("Could not locate classes vector: " + message);
                         }
                     }
                 }

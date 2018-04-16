@@ -92,19 +92,19 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     public void testDispatcherFaultyInitializationGetClass() throws Exception {
-        assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).initialize().findClass(getClass().getClassLoader(),
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().findClass(getClass().getClassLoader(),
                 Object.class.getName()), is((Object) Object.class));
     }
 
     @Test
-    public void testDispatcherFaultyInitializationGetClassInexistant() throws Exception {
-        assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).initialize().findClass(getClass().getClassLoader(),
+    public void testDispatcherFaultyInitializationGetClassInexistent() throws Exception {
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().findClass(getClass().getClassLoader(),
                 FOO), nullValue(Class.class));
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyInitializationDefineClass() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).initialize().defineClass(null,
+        new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().defineClass(null,
                 null,
                 null,
                 null);
@@ -112,12 +112,38 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyInitializationGetPackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).initialize().getPackage(null, null);
+        new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().getPackage(null, null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyInitializationDefinePackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).initialize().definePackage(null,
+        new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable("foo").initialize().definePackage(null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyDispatcherDefineClass() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).defineClass(null,
+                null,
+                null,
+                null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyDispatcherGetPackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).getPackage(null, null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyDispatcherDefinePackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).definePackage(null,
                 null,
                 null,
                 null,
@@ -160,7 +186,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
-        assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(null).isAvailable(), is(false));
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable(null).isAvailable(), is(false));
     }
 
     private static class Foo {

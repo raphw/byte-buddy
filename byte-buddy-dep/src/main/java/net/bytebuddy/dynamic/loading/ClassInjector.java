@@ -283,6 +283,74 @@ public interface ClassInjector {
                  * @return The initialized dispatcher.
                  */
                 Dispatcher initialize();
+
+                /**
+                 * Represents an unsuccessfully loaded method lookup.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Unavailable implements Dispatcher, Initializable {
+
+                    /**
+                     * The reason why this dispatcher is not available.
+                     */
+                    private final String message;
+
+                    /**
+                     * Creates a new faulty reflection store.
+                     *
+                     * @param message The reason why this dispatcher is not available.
+                     */
+                    protected Unavailable(String message) {
+                        this.message = message;
+                    }
+
+                    @Override
+                    public boolean isAvailable() {
+                        return false;
+                    }
+
+                    @Override
+                    public Dispatcher initialize() {
+                        return this;
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        return classLoader;
+                    }
+
+                    @Override
+                    public Class<?> findClass(ClassLoader classLoader, String name) {
+                        try {
+                            return classLoader.loadClass(name);
+                        } catch (ClassNotFoundException ignored) {
+                            return UNDEFINED;
+                        }
+                    }
+
+                    @Override
+                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                        throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
+                    }
+
+                    @Override
+                    public Package getPackage(ClassLoader classLoader, String name) {
+                        throw new UnsupportedOperationException("Cannot get package using reflection: " + message);
+                    }
+
+                    @Override
+                    public Package definePackage(ClassLoader classLoader,
+                                                 String name,
+                                                 String specificationTitle,
+                                                 String specificationVersion,
+                                                 String specificationVendor,
+                                                 String implementationTitle,
+                                                 String implementationVersion,
+                                                 String implementationVendor,
+                                                 URL sealBase) {
+                        throw new UnsupportedOperationException("Cannot define package using injection: " + message);
+                    }
+                }
             }
 
             /**
@@ -302,8 +370,10 @@ public interface ClassInjector {
                         return JavaModule.isSupported()
                                 ? Dispatcher.Indirect.make()
                                 : Dispatcher.Direct.make();
+                    } catch (InvocationTargetException exception) {
+                        return new Initializable.Unavailable(exception.getCause().getMessage());
                     } catch (Exception exception) {
-                        return new Unavailable(exception);
+                        return new Initializable.Unavailable(exception.getMessage());
                     }
                 }
             }
@@ -470,7 +540,7 @@ public interface ClassInjector {
                         onInitialization();
                         return this;
                     } catch (Exception exception) {
-                        return new Unavailable(exception);
+                        return new Dispatcher.Unavailable(exception);
                     }
                 }
 
@@ -777,30 +847,20 @@ public interface ClassInjector {
              * Represents an unsuccessfully loaded method lookup.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class Unavailable implements Dispatcher, Initializable {
+            class Unavailable implements Dispatcher {
 
                 /**
-                 * The exception that occurred when looking up the reflection methods.
+                 * The exception that was thrown when initializing this dispatcher.
                  */
                 private final Exception exception;
 
                 /**
                  * Creates a new faulty reflection store.
                  *
-                 * @param exception The exception that was thrown when attempting to lookup the method.
+                 * @param exception The exception that was thrown when initializing this dispatcher.
                  */
                 protected Unavailable(Exception exception) {
                     this.exception = exception;
-                }
-
-                @Override
-                public boolean isAvailable() {
-                    return false;
-                }
-
-                @Override
-                public Dispatcher initialize() {
-                    return this;
                 }
 
                 @Override
@@ -1325,7 +1385,7 @@ public interface ClassInjector {
                                 ClassLoader.class,
                                 ProtectionDomain.class));
                     } catch (Exception exception) {
-                        return new Disabled(exception);
+                        return new Disabled(exception.getMessage());
                     }
                 }
             }
@@ -1394,17 +1454,17 @@ public interface ClassInjector {
             class Disabled implements Initializable {
 
                 /**
-                 * The exception causing this dispatcher's creation.
+                 * The reason why this dispatcher is not available.
                  */
-                private final Exception exception;
+                private final String message;
 
                 /**
                  * Creates a disabled dispatcher.
                  *
-                 * @param exception The exception causing this dispatcher's creation.
+                 * @param message The reason why this dispatcher is not available.
                  */
-                protected Disabled(Exception exception) {
-                    this.exception = exception;
+                protected Disabled(String message) {
+                    this.message = message;
                 }
 
                 @Override
@@ -1414,7 +1474,7 @@ public interface ClassInjector {
 
                 @Override
                 public Dispatcher initialize() {
-                    throw new IllegalStateException("Could not find sun.misc.Unsafe", exception);
+                    throw new IllegalStateException("Could not find sun.misc.Unsafe");
                 }
             }
         }

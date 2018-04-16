@@ -48,7 +48,7 @@ public class ClassInjectorUsingUnsafeTest {
 
     @Test(expected = RuntimeException.class)
     public void testUnavailableThrowsException() throws Exception {
-        new ClassInjector.UsingUnsafe.Dispatcher.Disabled(new RuntimeException()).initialize();
+        new ClassInjector.UsingUnsafe.Dispatcher.Disabled("foo").initialize();
     }
 
     @Test
