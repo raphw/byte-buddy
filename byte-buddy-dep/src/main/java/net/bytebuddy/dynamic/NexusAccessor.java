@@ -196,7 +196,7 @@ public class NexusAccessor {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
                 if (Boolean.getBoolean(Nexus.PROPERTY)) {
-                    return new Unavailable(new IllegalStateException("Nexus injection was explicitly disabled"));
+                    return new Unavailable("Nexus injection was explicitly disabled");
                 } else {
                     try {
                         Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
@@ -210,7 +210,7 @@ public class NexusAccessor {
                             return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
                                     nexusType.getMethod("clean", Reference.class));
                         } catch (Exception ignored) {
-                            return new Dispatcher.Unavailable(exception);
+                            return new Dispatcher.Unavailable(exception.toString());
                         }
                     }
                 }
@@ -288,17 +288,17 @@ public class NexusAccessor {
         class Unavailable implements Dispatcher {
 
             /**
-             * The exception that was raised during the dispatcher initialization.
+             * The reason for the dispatcher being unavailable.
              */
-            private final Exception exception;
+            private final String reason;
 
             /**
-             * Creates a new disabled dispatcher.
+             * Creates a new unavailable dispatcher.
              *
-             * @param exception The exception that was raised during the dispatcher initialization.
+             * @param reason The reason for the dispatcher being unavailable.
              */
-            protected Unavailable(Exception exception) {
-                this.exception = exception;
+            protected Unavailable(String reason) {
+                this.reason = reason;
             }
 
             @Override
@@ -308,7 +308,7 @@ public class NexusAccessor {
 
             @Override
             public void clean(Reference<? extends ClassLoader> reference) {
-                throw new IllegalStateException("Could not initialize Nexus accessor", exception);
+                throw new IllegalStateException("Could not initialize Nexus accessor: " + reason);
             }
 
             @Override
@@ -317,7 +317,7 @@ public class NexusAccessor {
                                  ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
-                throw new IllegalStateException("Could not initialize Nexus accessor", exception);
+                throw new IllegalStateException("Could not initialize Nexus accessor: " + reason);
             }
         }
     }
