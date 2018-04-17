@@ -3666,7 +3666,6 @@ public interface TypeWriter<T> {
                                   String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
                     ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
-                    retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
                     methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
                     initializationHandler = new InitializationHandler.Creating(instrumentedType, methodPool, annotationValueFilterFactory);
                     implementationContext = implementationContextFactory.make(instrumentedType,
@@ -3674,6 +3673,7 @@ public interface TypeWriter<T> {
                             typeInitializer,
                             classFileVersion,
                             ForInlining.this.classFileVersion);
+                    retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
                     contextRegistry.setImplementationContext(implementationContext);
                     cv = asmVisitorWrapper.wrap(instrumentedType,
                             cv,
