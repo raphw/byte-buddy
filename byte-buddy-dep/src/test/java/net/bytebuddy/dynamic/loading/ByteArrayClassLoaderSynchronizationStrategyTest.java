@@ -17,7 +17,7 @@ public class ByteArrayClassLoaderSynchronizationStrategyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassLoader classLoader;
+    private ByteArrayClassLoader classLoader;
 
     @Test
     public void testInitialize() throws Exception {

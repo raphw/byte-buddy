@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.JavaModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -226,6 +225,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
+     * Resolves a method handle in the scope of the {@link ByteArrayClassLoader} class.
+     *
+     * @return A method handle for this class.
+     * @throws Exception If the method handle facitily is not supported by the current virtual machine.
+     */
+    private static Object methodHandle() throws Exception {
+        return Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup").invoke(null);
+    }
+
+    /**
      * Loads a given set of class descriptions and their binary representations.
      *
      * @param classLoader The parent class loader.
@@ -367,7 +376,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @param classLoader The class loader loading the class.
          * @return The corresponding class loading lock.
          */
-        Object getClassLoadingLock(ClassLoader classLoader, String name);
+        Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name);
 
         /**
          * An uninitialized synchronization strategy.
@@ -396,9 +405,18 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Initializable run() {
                 try {
-                    return JavaModule.isSupported()
-                            ? SynchronizationStrategy.ForLegacyVm.INSTANCE // Avoid illegal reflective access
-                            : new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                    try {
+                        Class<?> methodType = Class.forName("java.lang.invoke.MethodType"), methodHandle = Class.forName("java.lang.invoke.MethodHandle");
+                        return new ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles$Lookup")
+                                .getMethod("findVirtual", Class.class, String.class, methodType)
+                                .invoke(ByteArrayClassLoader.methodHandle(), ClassLoader.class, "getClassLoadingLock", methodType.getMethod("methodType",
+                                        Class.class,
+                                        Class[].class).invoke(null, Object.class, new Class<?>[]{String.class})),
+                                methodHandle.getMethod("bindTo", Object.class),
+                                methodHandle.getMethod("invokeWithArguments", Object[].class));
+                    } catch (Exception ignored) {
+                        return new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                    }
                 } catch (Exception ignored) {
                     return SynchronizationStrategy.ForLegacyVm.INSTANCE;
                 }
@@ -416,7 +434,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             INSTANCE;
 
             @Override
-            public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+            public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
                 return classLoader;
             }
 
@@ -438,7 +456,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             private final Method method;
 
             /**
-             * Creates a new synchronization engine.
+             * Creates a new synchronization strategy.
              *
              * @param method The {@code ClassLoader#getClassLoadingLock(String)} method.
              */
@@ -447,7 +465,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             @Override
-            public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+            public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
                 try {
                     return method.invoke(classLoader, name);
                 } catch (IllegalAccessException exception) {
@@ -465,6 +483,57 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     return this;
                 } catch (Exception ignored) {
                     return ForLegacyVm.INSTANCE;
+                }
+            }
+        }
+
+        /**
+         * A synchronization engine for a VM that is aware of parallel-capable class loaders using method handles to respect module boundaries.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForJava8CapableVm implements SynchronizationStrategy, Initializable {
+
+            /**
+             * The {@code java.lang.invoke.MethodHandle} to use.
+             */
+            private final Object methodHandle;
+
+            /**
+             * The {@code java.lang.invoke.MethodHandle#bindTo(Object)} method.
+             */
+            private final Method bindTo;
+
+            /**
+             * The {@code java.lang.invoke.MethodHandle#invokeWithArguments(Object[])} method.
+             */
+            private final Method invokeWithArguments;
+
+            /**
+             * Creates a new synchronization strategy.
+             *
+             * @param methodHandle        The {@code java.lang.invoke.MethodHandle} to use.
+             * @param bindTo              The {@code java.lang.invoke.MethodHandle#bindTo(Object)} method.
+             * @param invokeWithArguments The {@code java.lang.invoke.MethodHandle#invokeWithArguments(Object[])} method.
+             */
+            protected ForJava8CapableVm(Object methodHandle, Method bindTo, Method invokeWithArguments) {
+                this.methodHandle = methodHandle;
+                this.bindTo = bindTo;
+                this.invokeWithArguments = invokeWithArguments;
+            }
+
+            @Override
+            public SynchronizationStrategy initialize() {
+                return this;
+            }
+
+            @Override
+            public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
+                try {
+                    return invokeWithArguments.invoke(bindTo.invoke(methodHandle, classLoader), (Object) new Object[]{name});
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
                 }
             }
         }
@@ -551,7 +620,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public PackageLookupStrategy run() {
                 try {
-                    return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
+                    return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getMethod("getDefinedPackage", String.class));
                 } catch (Exception ignored) {
                     return PackageLookupStrategy.ForLegacyVm.INSTANCE;
                 }

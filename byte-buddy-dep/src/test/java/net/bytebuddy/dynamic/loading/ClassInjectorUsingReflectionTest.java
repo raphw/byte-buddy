@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.ClassInjectionAvailableRule;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,6 +32,9 @@ public class ClassInjectorUsingReflectionTest {
 
     @Rule
     public MethodRule classInjectionAvailableRule = new ClassInjectionAvailableRule();
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -54,6 +58,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     @ClassInjectionAvailableRule.Enforce
+    @JavaVersionRule.Enforce(atMost = 8)
     public void testDirectInjection() throws Exception {
         ClassInjector.UsingReflection.Dispatcher dispatcher = ClassInjector.UsingReflection.Dispatcher.Direct.make().initialize();
         assertThat(dispatcher.getPackage(classLoader, Foo.class.getPackage().getName()), nullValue(Package.class));

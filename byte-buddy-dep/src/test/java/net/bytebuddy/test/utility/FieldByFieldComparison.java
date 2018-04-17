@@ -53,7 +53,7 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
         } else if (mockingDetails(left).isMock() || mockingDetails(left).isSpy() || mockingDetails(right).isMock() || mockingDetails(right).isSpy()) {
             return left == right;
         }
-        while (type != Object.class) {
+        while (type.getName().startsWith("net.bytebuddy.")) {
             for (Field field : type.getDeclaredFields()) {
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;

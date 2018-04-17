@@ -431,7 +431,7 @@ public interface ClassInjector {
                 protected static Initializable make() throws Exception {
                     Method getPackage;
                     try {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
+                        getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
                     } catch (NoSuchMethodException ignored) {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
