@@ -5,9 +5,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -17,11 +15,10 @@ import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
@@ -31,6 +28,7 @@ import org.objectweb.asm.*;
 
 import java.io.File;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
@@ -650,45 +648,39 @@ public class TypeWriterDefaultTest {
                 false,
                 true).get(typeDescription);
 
-        new ByteBuddy()
+        byte[] binaryRepresentation = new ByteBuddy()
                 .redefine(type)
-                .visit(new AsmVisitorWrapper.AbstractBase() {
-                    @Override
-                    public ClassVisitor wrap(TypeDescription instrumentedType,
-                                             ClassVisitor classVisitor,
-                                             Implementation.Context implementationContext,
-                                             TypePool typePool,
-                                             FieldList<FieldDescription.InDefinedShape> fields,
-                                             MethodList<?> methods,
-                                             int writerFlags,
-                                             int readerFlags) {
-                        return new ClassVisitor(Opcodes.ASM6, classVisitor) {
-                            @Override
-                            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
-                                    throw new AssertionError();
-                                }
-                                super.visit(version, access, name, signature, superName, interfaces);
-                            }
+                .field(isDeclaredBy(type)).annotateField(new Annotation[0])
+                .method(isDeclaredBy(type)).withoutCode()
+                .make()
+                .getBytes();
 
-                            @Override
-                            public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
-                                    throw new AssertionError();
-                                }
-                                return super.visitField(access, name, descriptor, signature, value);
-                            }
+        ClassReader classReader = new ClassReader(binaryRepresentation);
+        classReader.accept(new ClassVisitor(Opcodes.ASM6) {
+            @Override
+            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                    throw new AssertionError();
+                }
+                super.visit(version, access, name, signature, superName, interfaces);
+            }
 
-                            @Override
-                            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
-                                    throw new AssertionError();
-                                }
-                                return super.visitMethod(access, name, descriptor, signature, exceptions);
-                            }
-                        };
-                    }
-                }).make();
+            @Override
+            public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                    throw new AssertionError();
+                }
+                return super.visitField(access, name, descriptor, signature, value);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                    throw new AssertionError();
+                }
+                return super.visitMethod(access, name, descriptor, signature, exceptions);
+            }
+        }, 0);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
