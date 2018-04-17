@@ -141,6 +141,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             return dispatcher.allowExistingTypes();
         }
 
+        @Override
+        public Configurable<ClassLoader> opened() {
+            return dispatcher.opened();
+        }
+
         /**
          * <p>
          * A class loading strategy which applies a class loader injection while applying a given {@link java.security.ProtectionDomain} on class injection.
@@ -214,6 +219,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
+
+            @Override
+            public Configurable<ClassLoader> opened() {
+                return this;
+            }
         }
 
         /**
@@ -260,6 +270,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             private final boolean forbidExisting;
 
             /**
+             * {@code true} if the class loader should be sealed.
+             */
+            private final boolean sealed;
+
+            /**
              * Creates a new wrapping dispatcher with a default protection domain and a default access control context.
              *
              * @param persistenceHandler The persistence handler to apply.
@@ -270,7 +285,8 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                         PackageDefinitionStrategy.Trivial.INSTANCE,
                         persistenceHandler,
                         childFirst,
-                        DEFAULT_FORBID_EXISTING);
+                        DEFAULT_FORBID_EXISTING,
+                        true);
             }
 
             /**
@@ -281,43 +297,47 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * @param persistenceHandler        The persistence handler to apply.
              * @param childFirst                {@code true} if the created class loader should apply child-first semantics.
              * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
+             * @param sealed                    {@code true} if the class loader should be sealed.
              */
             private WrappingDispatcher(ProtectionDomain protectionDomain,
                                        PackageDefinitionStrategy packageDefinitionStrategy,
                                        ByteArrayClassLoader.PersistenceHandler persistenceHandler,
                                        boolean childFirst,
-                                       boolean forbidExisting) {
+                                       boolean forbidExisting,
+                                       boolean sealed) {
                 this.protectionDomain = protectionDomain;
                 this.packageDefinitionStrategy = packageDefinitionStrategy;
                 this.persistenceHandler = persistenceHandler;
                 this.childFirst = childFirst;
                 this.forbidExisting = forbidExisting;
+                this.sealed = sealed;
             }
 
             @Override
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
-                return ByteArrayClassLoader.load(classLoader,
-                        types,
-                        protectionDomain,
-                        persistenceHandler,
-                        packageDefinitionStrategy,
-                        childFirst,
-                        forbidExisting);
+                return childFirst
+                        ? ByteArrayClassLoader.ChildFirst.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed)
+                        : ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed);
             }
 
             @Override
             public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
             @Override
             public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
-                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
             @Override
             public Configurable<ClassLoader> allowExistingTypes() {
-                return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, false, sealed);
+            }
+
+            @Override
+            public Configurable<ClassLoader> opened() {
+                return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, false);
             }
         }
     }
@@ -352,6 +372,14 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * @return A version of this class loading strategy that does not throw an exception when a class is already loaded.
          */
         Configurable<S> allowExistingTypes();
+
+        /**
+         * With an opened class loading strategy, it is assured that types can be added to the class loader, either by
+         * indirect injection using this strategy or by creating a class loader that explicitly supports injection.
+         *
+         * @return A version of this class loading strategy that opens for future injections into a class loader.
+         */
+        Configurable<S> opened();
     }
 
     /**

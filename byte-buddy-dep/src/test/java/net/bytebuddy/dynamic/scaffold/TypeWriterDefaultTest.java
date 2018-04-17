@@ -512,7 +512,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod("bar", Object.class).intercept(StubMethod.INSTANCE)
                 .defineMethod("bar", String.class).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
                 .getLoaded();
         Class<?> subclass = new ByteBuddy(ClassFileVersion.JAVA_V5)
                 .subclass(base)
@@ -537,7 +537,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(BAR, Object.class).intercept(StubMethod.INSTANCE)
                 .defineMethod(BAR, String.class).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
                 .getLoaded();
         Class<?> subclass = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(base)
@@ -558,7 +558,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
                 .defineMethod(FOO, void.class, Visibility.PUBLIC, MethodManifestation.BRIDGE).intercept(StubMethod.INSTANCE)
                 .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
                 .getLoaded();
         Class<?> subclass = new ByteBuddy()
                 .subclass(base)

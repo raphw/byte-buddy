@@ -4207,11 +4207,9 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
-                if (classLoader instanceof InjectionClassLoader) {
-                    return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);
-                } else {
-                    return load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
-                }
+                return classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()
+                        ? load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE)
+                        : load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
             }
 
             @Override

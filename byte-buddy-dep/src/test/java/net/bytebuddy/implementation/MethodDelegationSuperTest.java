@@ -121,7 +121,7 @@ public class MethodDelegationSuperTest {
 
     @Test
     public void testFinalType() throws Exception {
-        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SimpleInterceptor.class));
+        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, false, ClassFileExtraction.of(SimpleInterceptor.class));
         Class<?> type = new ByteBuddy()
                 .rebase(FinalType.class)
                 .modifiers(TypeManifestation.PLAIN, Visibility.PUBLIC)

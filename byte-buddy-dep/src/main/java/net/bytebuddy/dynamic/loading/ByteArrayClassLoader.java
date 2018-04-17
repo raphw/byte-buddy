@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -105,7 +106,18 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
      */
     public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
-        this(parent, typeDefinitions, PersistenceHandler.LATENT);
+        this(parent, true, typeDefinitions);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param sealed          {@code true} if this class loader is sealed.
+     * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
+     */
+    public ByteArrayClassLoader(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
+        this(parent, sealed, typeDefinitions, PersistenceHandler.LATENT);
     }
 
     /**
@@ -116,7 +128,19 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param persistenceHandler The persistence handler of this class loader.
      */
     public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
-        this(parent, typeDefinitions, ClassLoadingStrategy.NO_PROTECTION_DOMAIN, persistenceHandler, PackageDefinitionStrategy.Trivial.INSTANCE);
+        this(parent, true, typeDefinitions, persistenceHandler);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param sealed             {@code true} if this class loader is sealed.
+     * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
+     * @param persistenceHandler The persistence handler of this class loader.
+     */
+    public ByteArrayClassLoader(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+        this(parent, sealed, typeDefinitions, ClassLoadingStrategy.NO_PROTECTION_DOMAIN, persistenceHandler, PackageDefinitionStrategy.Trivial.INSTANCE);
     }
 
     /**
@@ -133,7 +157,26 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
-        this(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, NoOpClassFileTransformer.INSTANCE);
+        this(parent, true, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param sealed                    {@code true} if this class loader is sealed.
+     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param persistenceHandler        The persistence handler of this class loader.
+     */
+    public ByteArrayClassLoader(ClassLoader parent,
+                                boolean sealed,
+                                Map<String, byte[]> typeDefinitions,
+                                ProtectionDomain protectionDomain,
+                                PersistenceHandler persistenceHandler,
+                                PackageDefinitionStrategy packageDefinitionStrategy) {
+        this(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, NoOpClassFileTransformer.INSTANCE);
     }
 
     /**
@@ -152,7 +195,28 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy,
                                 ClassFileTransformer classFileTransformer) {
-        super(parent);
+        this(parent, true, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param sealed                    {@code true} if this class loader is sealed.
+     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param persistenceHandler        The persistence handler of this class loader.
+     * @param classFileTransformer      The class file transformer to apply on loaded classes.
+     */
+    public ByteArrayClassLoader(ClassLoader parent,
+                                boolean sealed,
+                                Map<String, byte[]> typeDefinitions,
+                                ProtectionDomain protectionDomain,
+                                PersistenceHandler persistenceHandler,
+                                PackageDefinitionStrategy packageDefinitionStrategy,
+                                ClassFileTransformer classFileTransformer) {
+        super(parent, sealed);
         this.typeDefinitions = new ConcurrentHashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
@@ -162,31 +226,20 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     }
 
     /**
-     * Creates a new class loader for a given definition of classes.
+     * Loads a given set of class descriptions and their binary representations.
      *
-     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
-     * @param typeDefinitions           A map of type descriptions pointing to their binary representations.
-     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-     * @param persistenceHandler        The persistence handler to be used by the created class loader.
-     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-     * @param childFirst                {@code true} if the class loader should apply child first semantics when loading
-     *                                  the {@code typeDefinitions}.
-     * @return A corresponding class loader.
+     * @param classLoader The parent class loader.
+     * @param types       The unloaded types to be loaded.
+     * @return A map of the given type descriptions pointing to their loaded representations.
      */
-    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
-    public static ClassLoader of(ClassLoader parent,
-                                 Map<TypeDescription, byte[]> typeDefinitions,
-                                 ProtectionDomain protectionDomain,
-                                 PersistenceHandler persistenceHandler,
-                                 PackageDefinitionStrategy packageDefinitionStrategy,
-                                 boolean childFirst) {
-        Map<String, byte[]> namedTypeDefinitions = new HashMap<String, byte[]>();
-        for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
-            namedTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
-        }
-        return childFirst
-                ? new ChildFirst(parent, namedTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy)
-                : new ByteArrayClassLoader(parent, namedTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
+    public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        return load(classLoader,
+                types,
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
+                PersistenceHandler.LATENT,
+                PackageDefinitionStrategy.Trivial.INSTANCE,
+                false,
+                true);
     }
 
     /**
@@ -197,45 +250,46 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
      * @param persistenceHandler        The persistence handler of the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-     * @param childFirst                {@code true} if the created class loader should apply child-first semantics when loading the {@code types}.
      * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
+     * @param sealed                    {@code true} if the class loader should be sealed.
      * @return A map of the given type descriptions pointing to their loaded representations.
      */
+    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
     public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
                                                       ProtectionDomain protectionDomain,
                                                       PersistenceHandler persistenceHandler,
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
-                                                      boolean childFirst,
-                                                      boolean forbidExisting) {
-        Map<TypeDescription, Class<?>> loadedTypes = new LinkedHashMap<TypeDescription, Class<?>>();
-        classLoader = ByteArrayClassLoader.of(classLoader,
-                types,
+                                                      boolean forbidExisting,
+                                                      boolean sealed) {
+        Map<String, byte[]> typesByName = new HashMap<String, byte[]>();
+        for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+            typesByName.put(entry.getKey().getName(), entry.getValue());
+        }
+        classLoader = new ByteArrayClassLoader(classLoader,
+                sealed,
+                typesByName,
                 protectionDomain,
                 persistenceHandler,
                 packageDefinitionStrategy,
-                childFirst);
+                NoOpClassFileTransformer.INSTANCE);
+        Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
                 if (forbidExisting && type.getClassLoader() != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
-                loadedTypes.put(typeDescription, type);
+                result.put(typeDescription, type);
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Cannot load class " + typeDescription, exception);
             }
         }
-        return loadedTypes;
+        return result;
     }
 
     @Override
-    public Class<?> defineClass(String name, byte[] binaryRepresentation) throws ClassNotFoundException {
-        return defineClasses(Collections.singletonMap(name, binaryRepresentation)).get(name);
-    }
-
-    @Override
-    public Map<String, Class<?>> defineClasses(Map<String, byte[]> typeDefinitions) throws ClassNotFoundException {
+    protected Map<String, Class<?>> doDefineClasses(Map<String, byte[]> typeDefinitions) throws ClassNotFoundException {
         Map<String, byte[]> previous = new HashMap<String, byte[]>();
         for (Map.Entry<String, byte[]> entry : typeDefinitions.entrySet()) {
             previous.put(entry.getKey(), this.typeDefinitions.putIfAbsent(entry.getKey(), entry.getValue()));
@@ -342,7 +396,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Initializable run() {
                 try {
-                    return new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                    return JavaModule.isSupported()
+                            ? SynchronizationStrategy.ForLegacyVm.INSTANCE // Avoid illegal reflective access
+                            : new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
                 } catch (Exception ignored) {
                     return SynchronizationStrategy.ForLegacyVm.INSTANCE;
                 }
@@ -809,12 +865,35 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * Creates a new child-first byte array class loader.
          *
+         * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param sealed          {@code true} if this class loader is sealed.
+         * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
+         */
+        public ChildFirst(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions) {
+            super(parent, sealed, typeDefinitions);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
          * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
          * @param persistenceHandler The persistence handler of this class loader.
          */
         public ChildFirst(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
             super(parent, typeDefinitions, persistenceHandler);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param sealed             {@code true} if this class loader is sealed.
+         * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
+         * @param persistenceHandler The persistence handler of this class loader.
+         */
+        public ChildFirst(ClassLoader parent, boolean sealed, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+            super(parent, sealed, typeDefinitions, persistenceHandler);
         }
 
         /**
@@ -838,6 +917,25 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * Creates a new child-first byte array class loader.
          *
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param sealed                    {@code true} if this class loader is sealed.
+         * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+         * @param persistenceHandler        The persistence handler of this class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         */
+        public ChildFirst(ClassLoader parent,
+                          boolean sealed,
+                          Map<String, byte[]> typeDefinitions,
+                          ProtectionDomain protectionDomain,
+                          PersistenceHandler persistenceHandler,
+                          PackageDefinitionStrategy packageDefinitionStrategy) {
+            super(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
          * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
          * @param persistenceHandler        The persistence handler of this class loader.
@@ -851,6 +949,90 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                           PackageDefinitionStrategy packageDefinitionStrategy,
                           ClassFileTransformer classFileTransformer) {
             super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param sealed                    {@code true} if this class loader is sealed.
+         * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+         * @param persistenceHandler        The persistence handler of this class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param classFileTransformer      The class file transformer to apply on loaded classes.
+         */
+        public ChildFirst(ClassLoader parent,
+                          boolean sealed,
+                          Map<String, byte[]> typeDefinitions,
+                          ProtectionDomain protectionDomain,
+                          PersistenceHandler persistenceHandler,
+                          PackageDefinitionStrategy packageDefinitionStrategy,
+                          ClassFileTransformer classFileTransformer) {
+            super(parent, sealed, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
+        }
+
+        /**
+         * Loads a given set of class descriptions and their binary representations using a child-first class loader.
+         *
+         * @param classLoader The parent class loader.
+         * @param types       The unloaded types to be loaded.
+         * @return A map of the given type descriptions pointing to their loaded representations.
+         */
+        public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            return load(classLoader,
+                    types,
+                    ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
+                    PersistenceHandler.LATENT,
+                    PackageDefinitionStrategy.Trivial.INSTANCE,
+                    false,
+                    true);
+        }
+
+        /**
+         * Loads a given set of class descriptions and their binary representations using a child-first class loader.
+         *
+         * @param classLoader               The parent class loader.
+         * @param types                     The unloaded types to be loaded.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+         * @param persistenceHandler        The persistence handler of the created class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param forbidExisting            {@code true} if the class loading should throw an exception if a class was already loaded by a parent class loader.
+         * @param sealed                    {@code true} if the class loader should be sealed.
+         * @return A map of the given type descriptions pointing to their loaded representations.
+         */
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+        public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
+                                                          Map<TypeDescription, byte[]> types,
+                                                          ProtectionDomain protectionDomain,
+                                                          PersistenceHandler persistenceHandler,
+                                                          PackageDefinitionStrategy packageDefinitionStrategy,
+                                                          boolean forbidExisting,
+                                                          boolean sealed) {
+            Map<String, byte[]> typesByName = new HashMap<String, byte[]>();
+            for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+                typesByName.put(entry.getKey().getName(), entry.getValue());
+            }
+            classLoader = new ChildFirst(classLoader,
+                    sealed,
+                    typesByName,
+                    protectionDomain,
+                    persistenceHandler,
+                    packageDefinitionStrategy,
+                    NoOpClassFileTransformer.INSTANCE);
+            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
+            for (TypeDescription typeDescription : types.keySet()) {
+                try {
+                    Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
+                    if (forbidExisting && type.getClassLoader() != classLoader) {
+                        throw new IllegalStateException("Class already loaded: " + type);
+                    }
+                    result.put(typeDescription, type);
+                } catch (ClassNotFoundException exception) {
+                    throw new IllegalStateException("Cannot load class " + typeDescription, exception);
+                }
+            }
+            return result;
         }
 
         @Override

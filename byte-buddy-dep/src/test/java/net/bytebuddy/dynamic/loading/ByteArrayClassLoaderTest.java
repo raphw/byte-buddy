@@ -75,6 +75,7 @@ public class ByteArrayClassLoaderTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                false,
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,

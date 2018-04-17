@@ -440,7 +440,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .defineMethod(FOO, String.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(BAR))
                 .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER.opened())
                 .getLoaded();
         Class<?> type = new ByteBuddy()
                 .subclass(defaultInterface)
