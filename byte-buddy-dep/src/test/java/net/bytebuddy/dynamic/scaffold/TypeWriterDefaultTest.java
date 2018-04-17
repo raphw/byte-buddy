@@ -4,29 +4,36 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.*;
 
 import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -624,6 +631,64 @@ public class TypeWriterDefaultTest {
     @Test(expected = IllegalArgumentException.class)
     public void testPropertyDefinitionEmptyName() throws Exception {
         new ByteBuddy().subclass(Object.class).defineProperty("", Object.class);
+    }
+
+    @Test
+    public void testOldJavaClassFileDeprecation() {
+        ClassWriter classWriter = new ClassWriter(0);
+        classWriter.visit(Opcodes.V1_4, Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "foo/Bar", null, "java/lang/Object", null);
+        classWriter.visitField(Opcodes.ACC_DEPRECATED, "qux", "Ljava/lang/Object;", null, null).visitEnd();
+        classWriter.visitMethod(Opcodes.ACC_DEPRECATED | Opcodes.ACC_ABSTRACT, "baz", "()V", null, null).visitEnd();
+        classWriter.visitEnd();
+
+        TypeDescription typeDescription = new TypeDescription.Latent("foo.Bar", 0, TypeDescription.Generic.OBJECT);
+        Class<?> type = ByteArrayClassLoader.load(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                Collections.singletonMap(typeDescription, classWriter.toByteArray()),
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.Trivial.INSTANCE,
+                false,
+                true).get(typeDescription);
+
+        new ByteBuddy()
+                .redefine(type)
+                .visit(new AsmVisitorWrapper.AbstractBase() {
+                    @Override
+                    public ClassVisitor wrap(TypeDescription instrumentedType,
+                                             ClassVisitor classVisitor,
+                                             Implementation.Context implementationContext,
+                                             TypePool typePool,
+                                             FieldList<FieldDescription.InDefinedShape> fields,
+                                             MethodList<?> methods,
+                                             int writerFlags,
+                                             int readerFlags) {
+                        return new ClassVisitor(Opcodes.ASM6, classVisitor) {
+                            @Override
+                            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                                    throw new AssertionError();
+                                }
+                                super.visit(version, access, name, signature, superName, interfaces);
+                            }
+
+                            @Override
+                            public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                                    throw new AssertionError();
+                                }
+                                return super.visitField(access, name, descriptor, signature, value);
+                            }
+
+                            @Override
+                            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                                if ((access & Opcodes.ACC_DEPRECATED) == 0) {
+                                    throw new AssertionError();
+                                }
+                                return super.visitMethod(access, name, descriptor, signature, exceptions);
+                            }
+                        };
+                    }
+                }).make();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
