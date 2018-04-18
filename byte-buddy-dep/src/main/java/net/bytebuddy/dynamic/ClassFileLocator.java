@@ -182,18 +182,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
-         * Creates a class file locator for a single known type with an additional fallback locator.
-         *
-         * @param typeName             The name of the type.
-         * @param binaryRepresentation The binary representation of the type.
-         * @param fallback             The class file locator to query in case that a lookup triggers any other type.
-         * @return An appropriate class file locator.
-         */
-        public static ClassFileLocator of(String typeName, byte[] binaryRepresentation, ClassFileLocator fallback) {
-            return new Compound(new Simple(Collections.singletonMap(typeName, binaryRepresentation)), fallback);
-        }
-
-        /**
          * Creates a class file locator that represents all types of a dynamic type.
          *
          * @param dynamicType The dynamic type to represent.

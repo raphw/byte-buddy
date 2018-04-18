@@ -219,6 +219,14 @@ public interface AgentBuilder {
     AgentBuilder with(FallbackStrategy fallbackStrategy);
 
     /**
+     * Specifies a class file buffer strategy that determines the use of the buffer supplied to a class file transformer.
+     *
+     * @param classFileBufferStrategy The class file buffer strategy to use.
+     * @return A new agent builder that applies the supplied class file buffer strategy.
+     */
+    AgentBuilder with(ClassFileBufferStrategy classFileBufferStrategy);
+
+    /**
      * Adds an installation listener that is notified during installation events. Installation listeners are only invoked if
      * a class file transformer is installed using this agent builder's installation methods and uninstalled via the created
      * {@link ResettableClassFileTransformer}'s {@code reset} methods.
@@ -4109,6 +4117,64 @@ public interface AgentBuilder {
     }
 
     /**
+     * This strategy determines how the provided class file buffer is used.
+     */
+    interface ClassFileBufferStrategy {
+
+        /**
+         * Resolves a class file locator for the class file buffer that is provided to the class file transformer.
+         *
+         * @param name                 The instrumented type's binary name.
+         * @param binaryRepresentation The instrumented type's binary representation.
+         * @param classLoader          The instrumented type's class loader or {@code null} if the type is loaded by the bootstrap class loader.
+         * @param module               The instrumented type's module or {@code null} if the current VM does not support modules.
+         * @param protectionDomain     The instrumented type's protection domain.
+         * @return An appropriate class file locator.
+         */
+        ClassFileLocator resolve(String name, byte[] binaryRepresentation, ClassLoader classLoader, JavaModule module, ProtectionDomain protectionDomain);
+
+        /**
+         * An implementation of default class file buffer strategy.
+         */
+        enum Default implements ClassFileBufferStrategy {
+
+            /**
+             * A class file buffer strategy that retains the original class file buffer.
+             */
+            RETAINING {
+                @Override
+                public ClassFileLocator resolve(String name,
+                                                byte[] binaryRepresentation,
+                                                ClassLoader classLoader,
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
+                    return ClassFileLocator.Simple.of(name, binaryRepresentation);
+                }
+            },
+
+            /**
+             * <p>
+             * A class file buffer strategy that discards the original class file buffer.
+             * </p>
+             * <p>
+             * <b>Warning</b>: This strategy discards any changes that were applied by previous Java agents.
+             * </p>
+             */
+            DISCARDING {
+                @Override
+                public ClassFileLocator resolve(String name,
+                                                byte[] binaryRepresentation,
+                                                ClassLoader classLoader,
+                                                JavaModule module,
+                                                ProtectionDomain protectionDomain) {
+                    return ClassFileLocator.NoOp.INSTANCE;
+                }
+            }
+        }
+
+    }
+
+    /**
      * <p>
      * A redefinition strategy regulates how already loaded classes are modified by a built agent.
      * </p>
@@ -7620,6 +7686,11 @@ public interface AgentBuilder {
         protected final FallbackStrategy fallbackStrategy;
 
         /**
+         * The class file buffer strategy to use.
+         */
+        protected final ClassFileBufferStrategy classFileBufferStrategy;
+
+        /**
          * The installation listener to notify.
          */
         protected final InstallationListener installationListener;
@@ -7667,6 +7738,7 @@ public interface AgentBuilder {
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
+                    ClassFileBufferStrategy.Default.RETAINING,
                     InstallationListener.NoOp.INSTANCE,
                     new RawMatcher.Disjunction(
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader()),
@@ -7695,6 +7767,7 @@ public interface AgentBuilder {
          *                                         instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
          * @param fallbackStrategy                 The fallback strategy to apply.
+         * @param classFileBufferStrategy          The class file buffer strategy to use.
          * @param installationListener             The installation listener to notify.
          * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
          * @param transformation                   The transformation object for handling type transformations.
@@ -7716,6 +7789,7 @@ public interface AgentBuilder {
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
                           FallbackStrategy fallbackStrategy,
+                          ClassFileBufferStrategy classFileBufferStrategy,
                           InstallationListener installationListener,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
@@ -7736,6 +7810,7 @@ public interface AgentBuilder {
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
             this.fallbackStrategy = fallbackStrategy;
+            this.classFileBufferStrategy = classFileBufferStrategy;
             this.installationListener = installationListener;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
@@ -7852,6 +7927,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7876,6 +7952,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7900,6 +7977,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7924,6 +8002,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7948,6 +8027,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7972,6 +8052,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -7996,6 +8077,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8020,6 +8102,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8044,6 +8127,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8068,6 +8152,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8092,6 +8177,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8116,6 +8202,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8140,6 +8227,32 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
+                    installationListener,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(ClassFileBufferStrategy classFileBufferStrategy) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8164,6 +8277,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     new InstallationListener.Compound(this.installationListener, installationListener),
                     ignoredTypeMatcher,
                     transformation);
@@ -8188,6 +8302,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8212,6 +8327,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8236,6 +8352,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8260,6 +8377,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation);
@@ -8367,6 +8485,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    classFileBufferStrategy,
                     installationListener,
                     ignoredTypeMatcher,
                     transformation,
@@ -9249,6 +9368,11 @@ public interface AgentBuilder {
             private final FallbackStrategy fallbackStrategy;
 
             /**
+             * The class file buffer strategy to use.
+             */
+            private final ClassFileBufferStrategy classFileBufferStrategy;
+
+            /**
              * The installation listener to notify.
              */
             private final InstallationListener installationListener;
@@ -9288,6 +9412,7 @@ public interface AgentBuilder {
              * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
              * @param fallbackStrategy              The fallback strategy to use.
              * @param installationListener          The installation listener to notify.
+             * @param classFileBufferStrategy       The class file buffer strategy to use.
              * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
              * @param transformation                The transformation object for handling type transformations.
              * @param circularityLock               The circularity lock to use.
@@ -9303,6 +9428,7 @@ public interface AgentBuilder {
                                         LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
+                                        ClassFileBufferStrategy classFileBufferStrategy,
                                         InstallationListener installationListener,
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation,
@@ -9318,6 +9444,7 @@ public interface AgentBuilder {
                 this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
                 this.descriptionStrategy = descriptionStrategy;
                 this.fallbackStrategy = fallbackStrategy;
+                this.classFileBufferStrategy = classFileBufferStrategy;
                 this.installationListener = installationListener;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
@@ -9403,9 +9530,11 @@ public interface AgentBuilder {
                 String typeName = internalTypeName.replace('/', '.');
                 try {
                     listener.onDiscovery(typeName, classLoader, module, classBeingRedefined != null);
-                    ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(typeName,
+                    ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileBufferStrategy.resolve(typeName,
                             binaryRepresentation,
-                            locationStrategy.classFileLocator(classLoader, module));
+                            classLoader,
+                            module,
+                            protectionDomain), locationStrategy.classFileLocator(classLoader, module));
                     TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                     try {
                         return doTransform(module, classLoader, typeName, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
@@ -9529,6 +9658,7 @@ public interface AgentBuilder {
                  * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
                  * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
                  * @param fallbackStrategy              The fallback strategy to use.
+                 * @param classFileBufferStrategy       The class file buffer strategy to use.
                  * @param installationListener          The installation listener to notify.
                  * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
                  * @param transformation                The transformation object for handling type transformations.
@@ -9546,6 +9676,7 @@ public interface AgentBuilder {
                                                     LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
+                                                    ClassFileBufferStrategy classFileBufferStrategy,
                                                     InstallationListener installationListener,
                                                     RawMatcher ignoredTypeMatcher,
                                                     Transformation transformation,
@@ -9591,6 +9722,7 @@ public interface AgentBuilder {
                                             LambdaInstrumentationStrategy.class,
                                             DescriptionStrategy.class,
                                             FallbackStrategy.class,
+                                            ClassFileBufferStrategy.class,
                                             InstallationListener.class,
                                             RawMatcher.class,
                                             Transformation.class,
@@ -9636,6 +9768,7 @@ public interface AgentBuilder {
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
+                                                               ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
                                                                RawMatcher ignoredTypeMatcher,
                                                                Transformation transformation,
@@ -9652,6 +9785,7 @@ public interface AgentBuilder {
                                     lambdaInstrumentationStrategy,
                                     descriptionStrategy,
                                     fallbackStrategy,
+                                    classFileBufferStrategy,
                                     installationListener,
                                     ignoredTypeMatcher,
                                     transformation,
@@ -9688,6 +9822,7 @@ public interface AgentBuilder {
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
+                                                               ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
                                                                RawMatcher ignoredTypeMatcher,
                                                                Transformation transformation,
@@ -9703,6 +9838,7 @@ public interface AgentBuilder {
                                 lambdaInstrumentationStrategy,
                                 descriptionStrategy,
                                 fallbackStrategy,
+                                classFileBufferStrategy,
                                 installationListener,
                                 ignoredTypeMatcher,
                                 transformation,
@@ -9917,6 +10053,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(ClassFileBufferStrategy classFileBufferStrategy) {
+                return materialize().with(classFileBufferStrategy);
+            }
+
+            @Override
             public AgentBuilder with(InstallationListener installationListener) {
                 return materialize().with(installationListener);
             }
@@ -10081,6 +10222,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         rawMatcher,
                         transformation);
@@ -10123,6 +10265,7 @@ public interface AgentBuilder {
              *                                         instrumentation of classes that represent lambda expressions.
              * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
              * @param fallbackStrategy                 The fallback strategy to apply.
+             * @param classFileBufferStrategy          The class file buffer strategy to use.
              * @param installationListener             The installation listener to notify.
              * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
              * @param transformation                   The transformation object for handling type transformations.
@@ -10144,6 +10287,7 @@ public interface AgentBuilder {
                                  LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                  DescriptionStrategy descriptionStrategy,
                                  FallbackStrategy fallbackStrategy,
+                                 ClassFileBufferStrategy classFileBufferStrategy,
                                  InstallationListener installationListener,
                                  RawMatcher ignoredTypeMatcher,
                                  Transformation transformation) {
@@ -10164,6 +10308,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         transformation);
@@ -10192,6 +10337,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         transformation);
@@ -10224,6 +10370,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         transformation);
@@ -10251,6 +10398,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         transformation);
@@ -10283,6 +10431,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         transformation);
@@ -10344,6 +10493,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
+                        classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
