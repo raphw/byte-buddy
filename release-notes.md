@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. April 2018: version 1.8.6
+
+- Introduced concept of sealing the `InjectionClassLoader` to avoid abuse.
+- Avoid class loader leak by not storing exceptions thrown in class initializers which can keep references to their first loading class in their backtrace.
+- Add `ClassFileBufferStrategy` to agent builder.
+- Retain deprecation modifier on intercepted methods and fields on class files prior to Java 5.
+
 ### 15. April 2018: version 1.8.5
 
 - Release with `equals` and `hashCode` methods being generated based on the fixes in the previous version.
