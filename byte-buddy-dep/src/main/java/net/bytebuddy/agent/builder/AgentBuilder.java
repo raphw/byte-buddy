@@ -1835,12 +1835,18 @@ public interface AgentBuilder {
          * @param byteBuddy             The Byte Buddy configuration.
          * @param classFileLocator      The class file locator to use.
          * @param methodNameTransformer The method name transformer to use.
+         * @param classLoader           The instrumented type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+         * @param module                The instrumented type's module or {@code null} if it is not declared by a module.
+         * @param protectionDomain      The instrumented type's protection domain or {@code null} if it does not define a protection domain.
          * @return A type builder for the given arguments.
          */
         DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                        ByteBuddy byteBuddy,
                                        ClassFileLocator classFileLocator,
-                                       MethodNameTransformer methodNameTransformer);
+                                       MethodNameTransformer methodNameTransformer,
+                                       ClassLoader classLoader,
+                                       JavaModule module,
+                                       ProtectionDomain protectionDomain);
 
         /**
          * Default implementations of type strategies.
@@ -1855,7 +1861,10 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer,
+                                                      ClassLoader classLoader,
+                                                      JavaModule module,
+                                                      ProtectionDomain protectionDomain) {
                     return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
                 }
             },
@@ -1878,7 +1887,10 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer,
+                                                      ClassLoader classLoader,
+                                                      JavaModule module,
+                                                      ProtectionDomain protectionDomain) {
                     return byteBuddy.redefine(typeDescription, classFileLocator);
                 }
             },
@@ -1902,7 +1914,10 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer,
+                                                      ClassLoader classLoader,
+                                                      JavaModule module,
+                                                      ProtectionDomain protectionDomain) {
                     return byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)
                             .redefine(typeDescription, classFileLocator)
                             .ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
@@ -1934,7 +1949,10 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                   ByteBuddy byteBuddy,
                                                   ClassFileLocator classFileLocator,
-                                                  MethodNameTransformer methodNameTransformer) {
+                                                  MethodNameTransformer methodNameTransformer,
+                                                  ClassLoader classLoader,
+                                                  JavaModule module,
+                                                  ProtectionDomain protectionDomain) {
                 return entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
             }
         }
@@ -9023,7 +9041,10 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy,
                                 classFileLocator,
-                                methodNameTransformer.resolve()), typeDescription, classLoader, module)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
+                                methodNameTransformer.resolve(),
+                                classLoader,
+                                module,
+                                protectionDomain), typeDescription, classLoader, module)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
                         dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                                 classLoader,
                                 protectionDomain));

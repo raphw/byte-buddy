@@ -25,6 +25,7 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -114,7 +115,10 @@ public class AgentBuilderDefaultTest {
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
                 any(ClassFileLocator.class),
-                any(MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
+                any(MethodNameTransformer.class),
+                Mockito.<ClassLoader>any(),
+                Mockito.<JavaModule>any(),
+                Mockito.<ProtectionDomain>any())).thenReturn((DynamicType.Builder) builder);
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);

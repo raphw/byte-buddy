@@ -7,10 +7,13 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+
+import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,14 +40,28 @@ public class AgentBuilderTypeStrategyForBuildEntryPointTest {
     private MethodNameTransformer methodNameTransformer;
 
     @Mock
+    private ClassLoader classLoader;
+
+    @Mock
+    private JavaModule module;
+
+    @Mock
+    private ProtectionDomain protectionDomain;
+
+    @Mock
     private DynamicType.Builder<?> builder;
 
     @Test
     @SuppressWarnings("unchecked")
     public void testApplication() throws Exception {
         when(entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer)).thenReturn((DynamicType.Builder) builder);
-        assertThat(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(entryPoint).builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
-                is((DynamicType.Builder) builder));
+        assertThat(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(entryPoint).builder(typeDescription,
+                byteBuddy,
+                classFileLocator,
+                methodNameTransformer,
+                classLoader,
+                module,
+                protectionDomain), is((DynamicType.Builder) builder));
         verify(entryPoint).transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
         verifyNoMoreInteractions(entryPoint);
     }
