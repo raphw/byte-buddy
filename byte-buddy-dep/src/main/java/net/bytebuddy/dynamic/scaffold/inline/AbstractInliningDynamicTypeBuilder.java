@@ -35,7 +35,6 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
      */
     protected final ClassFileLocator classFileLocator;
 
-
     /**
      * Creates an inlining dynamic type builder.
      *
@@ -51,6 +50,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -67,6 +67,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods,
                                                  TypeDescription originalType,
                                                  ClassFileLocator classFileLocator) {
@@ -82,6 +83,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
         this.originalType = originalType;
         this.classFileLocator = classFileLocator;
@@ -91,5 +93,4 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.Default.of(classFileLocator));
     }
-
 }

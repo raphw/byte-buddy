@@ -43,6 +43,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
@@ -54,6 +55,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       Implementation.Context.Factory implementationContextFactory,
                                       MethodGraph.Compiler methodGraphCompiler,
                                       TypeValidation typeValidation,
+                                      ClassWriterStrategy classWriterStrategy,
                                       LatentMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
         this(instrumentedType,
@@ -68,6 +70,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -87,6 +90,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
@@ -102,6 +106,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          Implementation.Context.Factory implementationContextFactory,
                                          MethodGraph.Compiler methodGraphCompiler,
                                          TypeValidation typeValidation,
+                                         ClassWriterStrategy classWriterStrategy,
                                          LatentMatcher<? super MethodDescription> ignoredMethods,
                                          ConstructorStrategy constructorStrategy) {
         super(instrumentedType,
@@ -116,6 +121,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
         this.constructorStrategy = constructorStrategy;
     }
@@ -133,6 +139,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
@@ -146,6 +153,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -171,6 +179,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
+                classWriterStrategy,
                 typePool).make(typeResolutionStrategy.resolve());
     }
 

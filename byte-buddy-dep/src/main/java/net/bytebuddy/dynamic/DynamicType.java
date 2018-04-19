@@ -2863,6 +2863,11 @@ public interface DynamicType {
                 protected final TypeValidation typeValidation;
 
                 /**
+                 * The class writer strategy to use.
+                 */
+                protected final ClassWriterStrategy classWriterStrategy;
+
+                /**
                  * A matcher for identifying methods that should be excluded from instrumentation.
                  */
                 protected final LatentMatcher<? super MethodDescription> ignoredMethods;
@@ -2882,6 +2887,7 @@ public interface DynamicType {
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               Determines if a type should be explicitly validated.
+                 * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  */
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
@@ -2896,6 +2902,7 @@ public interface DynamicType {
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
                                   TypeValidation typeValidation,
+                                  ClassWriterStrategy classWriterStrategy,
                                   LatentMatcher<? super MethodDescription> ignoredMethods) {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
@@ -2909,6 +2916,7 @@ public interface DynamicType {
                     this.implementationContextFactory = implementationContextFactory;
                     this.methodGraphCompiler = methodGraphCompiler;
                     this.typeValidation = typeValidation;
+                    this.classWriterStrategy = classWriterStrategy;
                     this.ignoredMethods = ignoredMethods;
                 }
 
@@ -2957,6 +2965,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
                 }
 
@@ -2974,6 +2983,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -2991,6 +3001,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3008,6 +3019,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3025,6 +3037,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3042,6 +3055,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3064,6 +3078,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3081,6 +3096,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3098,6 +3114,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3115,6 +3132,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            classWriterStrategy,
                             ignoredMethods);
                 }
 
@@ -3133,6 +3151,7 @@ public interface DynamicType {
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               The type validation state.
+                 * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @return A type builder that represents the supplied arguments.
                  */
@@ -3148,6 +3167,7 @@ public interface DynamicType {
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           TypeValidation typeValidation,
+                                                          ClassWriterStrategy classWriterStrategy,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods);
 
                 /**
@@ -3191,6 +3211,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                classWriterStrategy,
                                 ignoredMethods);
                     }
                 }
@@ -3256,6 +3277,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                classWriterStrategy,
                                 ignoredMethods);
                     }
 
@@ -3325,6 +3347,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                classWriterStrategy,
                                 ignoredMethods);
                     }
 
@@ -3648,6 +3671,7 @@ public interface DynamicType {
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     typeValidation,
+                                    classWriterStrategy,
                                     ignoredMethods);
                         }
                     }
@@ -3768,6 +3792,7 @@ public interface DynamicType {
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     typeValidation,
+                                    classWriterStrategy,
                                     ignoredMethods);
                         }
                     }
@@ -3807,6 +3832,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                classWriterStrategy,
                                 ignoredMethods);
                     }
 

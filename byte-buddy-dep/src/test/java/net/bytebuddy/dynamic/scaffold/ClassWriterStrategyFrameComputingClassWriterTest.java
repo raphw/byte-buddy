@@ -15,7 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TypeWriterDefaultFrameComputingClassWriterTest {
+public class ClassWriterStrategyFrameComputingClassWriterTest {
 
     private static final String FOO = "pkg/foo", BAR = "pkg/bar", QUX = "pkg/qux", BAZ = "pkg/baz", FOOBAR = "pkg/foobar";
 
@@ -31,11 +31,11 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
     @Mock
     private TypeDescription.Generic genericSuperClass;
 
-    private TypeWriter.Default.FrameComputingClassWriter frameComputingClassWriter;
+    private ClassWriterStrategy.FrameComputingClassWriter frameComputingClassWriter;
 
     @Before
     public void setUp() throws Exception {
-        frameComputingClassWriter = new TypeWriter.Default.FrameComputingClassWriter(mock(ClassReader.class), 0, typePool);
+        frameComputingClassWriter = new ClassWriterStrategy.FrameComputingClassWriter(mock(ClassReader.class), 0, typePool);
         when(typePool.describe(FOO.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(leftType));
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);

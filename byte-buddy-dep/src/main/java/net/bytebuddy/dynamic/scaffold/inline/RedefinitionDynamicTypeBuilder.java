@@ -32,8 +32,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
      * @param annotationValueFilterFactory The annotation value filter factory to use.
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
-     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -46,6 +47,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                                           Implementation.Context.Factory implementationContextFactory,
                                           MethodGraph.Compiler methodGraphCompiler,
                                           TypeValidation typeValidation,
+                                          ClassWriterStrategy classWriterStrategy,
                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                           TypeDescription originalType,
                                           ClassFileLocator classFileLocator) {
@@ -63,6 +65,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -83,6 +86,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -99,6 +103,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                                              Implementation.Context.Factory implementationContextFactory,
                                              MethodGraph.Compiler methodGraphCompiler,
                                              TypeValidation typeValidation,
+                                             ClassWriterStrategy classWriterStrategy,
                                              LatentMatcher<? super MethodDescription> ignoredMethods,
                                              TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
@@ -114,6 +119,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -132,6 +138,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
@@ -145,6 +152,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -166,6 +174,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
+                classWriterStrategy,
                 typePool,
                 originalType,
                 classFileLocator).make(typeResolutionStrategy.resolve());

@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
@@ -145,6 +146,11 @@ public class ByteBuddy {
     protected final TypeValidation typeValidation;
 
     /**
+     * The class writer strategy to use.
+     */
+    protected final ClassWriterStrategy classWriterStrategy;
+
+    /**
      * <p>
      * Creates a new Byte Buddy instance with a default configuration that is suitable for most use cases.
      * </p>
@@ -174,6 +180,7 @@ public class ByteBuddy {
                 MethodGraph.Compiler.DEFAULT,
                 InstrumentedType.Factory.Default.MODIFIABLE,
                 TypeValidation.ENABLED,
+                ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
 
@@ -189,6 +196,7 @@ public class ByteBuddy {
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param instrumentedTypeFactory      The instrumented type factory to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
@@ -200,6 +208,7 @@ public class ByteBuddy {
                         MethodGraph.Compiler methodGraphCompiler,
                         InstrumentedType.Factory instrumentedTypeFactory,
                         TypeValidation typeValidation,
+                        ClassWriterStrategy classWriterStrategy,
                         LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
@@ -209,8 +218,9 @@ public class ByteBuddy {
         this.implementationContextFactory = implementationContextFactory;
         this.methodGraphCompiler = methodGraphCompiler;
         this.instrumentedTypeFactory = instrumentedTypeFactory;
-        this.ignoredMethods = ignoredMethods;
         this.typeValidation = typeValidation;
+        this.classWriterStrategy = classWriterStrategy;
+        this.ignoredMethods = ignoredMethods;
     }
 
     /**
@@ -385,6 +395,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -538,6 +549,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -565,6 +577,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -612,6 +625,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PRIVATE).withParameters(String.class, int.class)
@@ -703,6 +717,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 type,
                 classFileLocator);
@@ -804,6 +819,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 type,
                 classFileLocator,
@@ -855,6 +871,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -877,6 +894,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -898,6 +916,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -920,6 +939,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -949,6 +969,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -973,6 +994,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -997,6 +1019,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -1017,6 +1040,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -1039,6 +1063,28 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
+                ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that applies the supplied class writer strategy. By default, the constant pool of redefined and retransformed
+     * classes is retained as most changes are additive and this retention improves performance.
+     *
+     * @param classWriterStrategy The class writer strategy to apply during type creation.
+     * @return A new Byte Buddy instance that applies the supplied class writer strategy.
+     */
+    public ByteBuddy with(ClassWriterStrategy classWriterStrategy) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 
@@ -1075,6 +1121,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods);
     }
 

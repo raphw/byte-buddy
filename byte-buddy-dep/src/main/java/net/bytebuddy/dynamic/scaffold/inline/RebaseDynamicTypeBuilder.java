@@ -48,6 +48,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -61,6 +62,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                                     Implementation.Context.Factory implementationContextFactory,
                                     MethodGraph.Compiler methodGraphCompiler,
                                     TypeValidation typeValidation,
+                                    ClassWriterStrategy classWriterStrategy,
                                     LatentMatcher<? super MethodDescription> ignoredMethods,
                                     TypeDescription originalType,
                                     ClassFileLocator classFileLocator,
@@ -79,6 +81,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator,
@@ -100,6 +103,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -117,6 +121,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                                        Implementation.Context.Factory implementationContextFactory,
                                        MethodGraph.Compiler methodGraphCompiler,
                                        TypeValidation typeValidation,
+                                       ClassWriterStrategy classWriterStrategy,
                                        LatentMatcher<? super MethodDescription> ignoredMethods,
                                        TypeDescription originalType,
                                        ClassFileLocator classFileLocator,
@@ -133,6 +138,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -152,6 +158,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new RebaseDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
@@ -165,6 +172,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                classWriterStrategy,
                 ignoredMethods,
                 originalType,
                 classFileLocator,
@@ -194,6 +202,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
+                classWriterStrategy,
                 typePool,
                 originalType,
                 classFileLocator,

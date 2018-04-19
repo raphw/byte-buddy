@@ -1399,10 +1399,16 @@ public interface TypeWriter<T> {
          */
         protected final Implementation.Context.Factory implementationContextFactory;
 
+
         /**
          * Determines if a type should be explicitly validated.
          */
         protected final TypeValidation typeValidation;
+
+        /**
+         * The class writer strategy to use.
+         */
+        protected final ClassWriterStrategy classWriterStrategy;
 
         /**
          * The type pool to use for computing stack map frames, if required.
@@ -1428,6 +1434,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
+         * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          */
         protected Default(TypeDescription instrumentedType,
@@ -1446,6 +1453,7 @@ public interface TypeWriter<T> {
                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                           Implementation.Context.Factory implementationContextFactory,
                           TypeValidation typeValidation,
+                          ClassWriterStrategy classWriterStrategy,
                           TypePool typePool) {
             this.instrumentedType = instrumentedType;
             this.classFileVersion = classFileVersion;
@@ -1463,6 +1471,7 @@ public interface TypeWriter<T> {
             this.annotationRetention = annotationRetention;
             this.implementationContextFactory = implementationContextFactory;
             this.typeValidation = typeValidation;
+            this.classWriterStrategy = classWriterStrategy;
             this.typePool = typePool;
         }
 
@@ -1479,6 +1488,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
+         * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
          * @return A suitable type writer.
@@ -1493,6 +1503,7 @@ public interface TypeWriter<T> {
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
                                                     TypeValidation typeValidation,
+                                                    ClassWriterStrategy classWriterStrategy,
                                                     TypePool typePool) {
             return new ForCreation<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
@@ -1511,6 +1522,7 @@ public interface TypeWriter<T> {
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
                     typeValidation,
+                    classWriterStrategy,
                     typePool);
         }
 
@@ -1527,6 +1539,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
+         * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          * @param originalType                 The original type that is being redefined or rebased.
          * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -1543,6 +1556,7 @@ public interface TypeWriter<T> {
                                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                         Implementation.Context.Factory implementationContextFactory,
                                                         TypeValidation typeValidation,
+                                                        ClassWriterStrategy classWriterStrategy,
                                                         TypePool typePool,
                                                         TypeDescription originalType,
                                                         ClassFileLocator classFileLocator) {
@@ -1564,6 +1578,7 @@ public interface TypeWriter<T> {
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
                     typeValidation,
+                    classWriterStrategy,
                     typePool,
                     originalType,
                     classFileLocator,
@@ -1583,6 +1598,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
+         * @param classWriterStrategy          The class writer strategy to use.
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          * @param originalType                 The original type that is being redefined or rebased.
          * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -1600,6 +1616,7 @@ public interface TypeWriter<T> {
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
                                                     TypeValidation typeValidation,
+                                                    ClassWriterStrategy classWriterStrategy,
                                                     TypePool typePool,
                                                     TypeDescription originalType,
                                                     ClassFileLocator classFileLocator,
@@ -1622,6 +1639,7 @@ public interface TypeWriter<T> {
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
                     typeValidation,
+                    classWriterStrategy,
                     typePool,
                     originalType,
                     classFileLocator,
@@ -2727,59 +2745,6 @@ public interface TypeWriter<T> {
         }
 
         /**
-         * A class writer that piggy-backs on Byte Buddy's {@link ClassFileLocator} to avoid class loading or look-up errors when redefining a class.
-         * This is not available when creating a new class where automatic frame computation is however not normally a requirement.
-         */
-        protected static class FrameComputingClassWriter extends ClassWriter {
-
-            /**
-             * The type pool to use for computing stack map frames, if required.
-             */
-            private final TypePool typePool;
-
-            /**
-             * Creates a new frame computing class writer.
-             *
-             * @param flags    The flags to be handed to the writer.
-             * @param typePool The type pool to use for computing stack map frames, if required.
-             */
-            protected FrameComputingClassWriter(int flags, TypePool typePool) {
-                super(flags);
-                this.typePool = typePool;
-            }
-
-            /**
-             * Creates a new frame computing class writer.
-             *
-             * @param classReader The class reader from which the original class is read.
-             * @param flags       The flags to be handed to the writer.
-             * @param typePool    The type pool to use for computing stack map frames, if required.
-             */
-            protected FrameComputingClassWriter(ClassReader classReader, int flags, TypePool typePool) {
-                super(classReader, flags);
-                this.typePool = typePool;
-            }
-
-            @Override
-            protected String getCommonSuperClass(String leftTypeName, String rightTypeName) {
-                TypeDescription leftType = typePool.describe(leftTypeName.replace('/', '.')).resolve();
-                TypeDescription rightType = typePool.describe(rightTypeName.replace('/', '.')).resolve();
-                if (leftType.isAssignableFrom(rightType)) {
-                    return leftType.getInternalName();
-                } else if (leftType.isAssignableTo(rightType)) {
-                    return rightType.getInternalName();
-                } else if (leftType.isInterface() || rightType.isInterface()) {
-                    return TypeDescription.OBJECT.getInternalName();
-                } else {
-                    do {
-                        leftType = leftType.getSuperClass().asErasure();
-                    } while (!leftType.isAssignableFrom(rightType));
-                    return leftType.getInternalName();
-                }
-            }
-        }
-
-        /**
          * A type writer that inlines the created type into an existing class file.
          *
          * @param <U> The best known loaded type for the dynamically created type.
@@ -2853,6 +2818,7 @@ public interface TypeWriter<T> {
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
              * @param implementationContextFactory The implementation context factory to apply.
              * @param typeValidation               Determines if a type should be explicitly validated.
+             * @param classWriterStrategy          The class writer strategy to use.
              * @param typePool                     The type pool to use for computing stack map frames, if required.
              * @param originalType                 The original type that is being redefined or rebased.
              * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -2876,6 +2842,7 @@ public interface TypeWriter<T> {
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   Implementation.Context.Factory implementationContextFactory,
                                   TypeValidation typeValidation,
+                                  ClassWriterStrategy classWriterStrategy,
                                   TypePool typePool,
                                   TypeDescription originalType,
                                   ClassFileLocator classFileLocator,
@@ -2896,6 +2863,7 @@ public interface TypeWriter<T> {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeValidation,
+                        classWriterStrategy,
                         typePool);
                 this.methodRegistry = methodRegistry;
                 this.implementationTargetFactory = implementationTargetFactory;
@@ -2910,7 +2878,7 @@ public interface TypeWriter<T> {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                     ClassReader classReader = OpenedClassReader.of(classFileLocator.locate(originalType.getName()).resolve());
-                    ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
+                    ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool, classReader);
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter, typeValidation),
                             typeInitializer,
@@ -4110,6 +4078,7 @@ public interface TypeWriter<T> {
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
              * @param implementationContextFactory The implementation context factory to apply.
              * @param typeValidation               Determines if a type should be explicitly validated.
+             * @param classWriterStrategy          The class writer strategy to use.
              * @param typePool                     The type pool to use for computing stack map frames, if required.
              */
             protected ForCreation(TypeDescription instrumentedType,
@@ -4129,6 +4098,7 @@ public interface TypeWriter<T> {
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   Implementation.Context.Factory implementationContextFactory,
                                   TypeValidation typeValidation,
+                                  ClassWriterStrategy classWriterStrategy,
                                   TypePool typePool) {
                 super(instrumentedType,
                         classFileVersion,
@@ -4146,6 +4116,7 @@ public interface TypeWriter<T> {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeValidation,
+                        classWriterStrategy,
                         typePool);
                 this.methodPool = methodPool;
             }
@@ -4153,7 +4124,7 @@ public interface TypeWriter<T> {
             @Override
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
-                ClassWriter classWriter = new FrameComputingClassWriter(writerFlags, typePool);
+                ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                         auxiliaryTypeNamingStrategy,
                         typeInitializer,
