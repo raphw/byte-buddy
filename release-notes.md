@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. April 2018: version 1.8.7
+
+- Added `ClassWriterStrategy` that allows controlling how the constant pool is copied.
+
 ### 18. April 2018: version 1.8.6
 
 - Introduced concept of sealing the `InjectionClassLoader` to avoid abuse.
