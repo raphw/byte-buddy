@@ -46,7 +46,7 @@ public class ClassLoadingStrategyDefaultTest {
     public void setUp() throws Exception {
         classLoader = new URLClassLoader(new URL[0], null);
         binaryRepresentations = new LinkedHashMap<TypeDescription, byte[]>();
-        typeDescription = new TypeDescription.ForLoadedType(Foo.class);
+        typeDescription = TypeDescription.ForLoadedType.of(Foo.class);
         binaryRepresentations.put(typeDescription, ClassFileExtraction.extract(Foo.class));
         protectionDomain = getClass().getProtectionDomain();
         when(packageDefinitionStrategy.define(any(ClassLoader.class), any(String.class), any(String.class)))

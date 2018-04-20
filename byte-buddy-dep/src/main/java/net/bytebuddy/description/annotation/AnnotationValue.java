@@ -1683,7 +1683,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toString() {
-                return RenderingDispatcher.CURRENT.toSourceString(new TypeDescription.ForLoadedType(type));
+                return RenderingDispatcher.CURRENT.toSourceString(TypeDescription.ForLoadedType.of(type));
             }
         }
     }

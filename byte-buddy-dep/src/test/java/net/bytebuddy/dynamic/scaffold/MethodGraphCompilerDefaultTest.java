@@ -69,7 +69,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testSimpleClass() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(SimpleClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(SimpleClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
         assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size()));
@@ -87,14 +87,14 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testSimpleInterface() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(SimpleInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(SimpleInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(0));
     }
 
     @Test
     public void testClassInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getDeclaredMethods().filter(isMethod()).getOnly();
@@ -113,7 +113,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testInterfaceImplementation() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(InterfaceBase.InnerClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(InterfaceBase.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
@@ -128,7 +128,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testInterfaceExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(InterfaceBase.InnerInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(InterfaceBase.InnerInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription method = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
@@ -143,7 +143,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testInterfaceDuplicateInHierarchyImplementation() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(InterfaceBase.InterfaceDuplicate.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(InterfaceBase.InterfaceDuplicate.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription method = typeDescription.getInterfaces().filter(ElementMatchers.is(InterfaceBase.class)).getOnly().getDeclaredMethods().getOnly();
@@ -158,7 +158,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testClassAndInterfaceDominantInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ClassAndInterfaceInheritance.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ClassAndInterfaceInheritance.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -168,7 +168,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
         assertThat(node.getRepresentative(), is(method));
         assertThat(node.getVisibility(), is(method.getVisibility()));
-        MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asSignatureToken());
+        MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(InterfaceBase.class)).locate(method.asSignatureToken());
         assertThat(node, not(baseNode));
         assertThat(baseNode.getRepresentative(),
                 is((MethodDescription) typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
@@ -176,7 +176,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testMultipleAmbiguousClassInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.ClassTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.ClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription first = typeDescription.getInterfaces().filter(erasure(InterfaceBase.class)).getOnly()
@@ -192,17 +192,17 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getRepresentative(), not(second));
         assertThat(node.getVisibility(), is(first.getVisibility()));
         assertThat(node, is(methodGraph.locate(second.asSignatureToken())));
-        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asSignatureToken());
+        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(InterfaceBase.class)).locate(first.asSignatureToken());
         assertThat(node, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
-        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asSignatureToken());
+        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(InterfaceBase.class)).locate(second.asSignatureToken());
         assertThat(node, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
     @Test
     public void testMultipleAmbiguousInterfaceInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.InterfaceTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.InterfaceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription first = typeDescription.getInterfaces().filter(erasure(InterfaceBase.class)).getOnly()
@@ -218,20 +218,20 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getRepresentative(), not(second));
         assertThat(node.getVisibility(), is(first.getVisibility()));
         assertThat(node, is(methodGraph.locate(second.asSignatureToken())));
-        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asSignatureToken());
+        MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(InterfaceBase.class)).locate(first.asSignatureToken());
         assertThat(node, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
-        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asSignatureToken());
+        MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(InterfaceBase.class)).locate(second.asSignatureToken());
         assertThat(node, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
     @Test
     public void testDominantClassInheritance() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantClassTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+        MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -243,10 +243,10 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDominantInterfaceInheritanceLeft() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetLeft.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantInterfaceTargetLeft.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+        MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -258,10 +258,10 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDominantInterfaceInheritanceRight() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantInterfaceTargetRight.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantInterfaceTargetRight.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+        MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -273,10 +273,10 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testNonDominantInterfaceInheritanceLeft() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.NonDominantTargetLeft.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.NonDominantTargetLeft.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+        MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
@@ -288,10 +288,10 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testNonDominantInterfaceInheritanceRight() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.NonDominantTargetRight.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.NonDominantTargetRight.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
+        MethodDescription methodDescription = TypeDescription.ForLoadedType.of(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
         MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
@@ -303,7 +303,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericClassSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -319,7 +319,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericClassMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericClassBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -340,7 +340,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testReturnTypeClassSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -356,7 +356,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testReturnTypeClassMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeClassBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -377,7 +377,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericReturnTypeClassSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericReturnClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericReturnClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -393,7 +393,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericReturnTypeClassMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericReturnClassBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericReturnClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -414,7 +414,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericInterfaceSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -431,7 +431,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericInterfaceMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
@@ -452,7 +452,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testReturnTypeInterfaceSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
@@ -468,7 +468,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testReturnTypeInterfaceMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(ReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
@@ -488,7 +488,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericWithReturnTypeClassSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -504,7 +504,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericWithReturnTypeClassMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeClassBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeClassBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -525,7 +525,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericWithReturnTypeInterfaceSingleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
@@ -542,7 +542,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericWithReturnTypeInterfaceMultipleEvolution() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Intermediate.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericWithReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
@@ -563,7 +563,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericNonOverriddenClassExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericNonOverriddenClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericNonOverriddenClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -579,7 +579,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericNonOverriddenInterfaceExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.InnerClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericNonOverriddenInterfaceBase.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -589,14 +589,14 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
+        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
         assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
     public void testGenericNonOverriddenInterfaceImplementation() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.InnerInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericNonOverriddenInterfaceBase.InnerInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -606,7 +606,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
+        assertThat(node, hasPrototype(methodGraph.getInterfaceGraph(TypeDescription.ForLoadedType.of(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
         assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
@@ -614,7 +614,7 @@ public class MethodGraphCompilerDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testTypeVariableInterfaceBridge() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(TYPE_VARIABLE_INTERFACE_BRIDGE));
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Class.forName(TYPE_VARIABLE_INTERFACE_BRIDGE));
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
@@ -630,7 +630,7 @@ public class MethodGraphCompilerDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testReturnTypeInterfaceBridge() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(RETURN_TYPE_INTERFACE_BRIDGE));
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Class.forName(RETURN_TYPE_INTERFACE_BRIDGE));
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(returns(String.class)).getOnly();
@@ -645,7 +645,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameClass() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -666,7 +666,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameClassExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameClass.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameClass.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -694,7 +694,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameInterface() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -715,7 +715,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameInterfaceImplementation() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.InnerClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameInterface.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -743,7 +743,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameInterfaceExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameInterface.InnerInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameInterface.InnerInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -771,7 +771,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameGenericClass() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -792,7 +792,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameGenericClassExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericClass.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericClass.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
@@ -820,7 +820,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameGenericInterface() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(2));
         MethodDescription objectMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly();
@@ -841,7 +841,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameGenericInterfaceImplementation() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.InnerClass.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericInterface.InnerClass.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
@@ -871,7 +871,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDuplicateNameGenericInterfaceExtension() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(DuplicateNameGenericInterface.InnerInterface.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(DuplicateNameGenericInterface.InnerInterface.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(3));
         MethodDescription objectMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(String.class)).getOnly();
@@ -901,7 +901,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testVisibilityBridge() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(VisibilityBridgeTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(VisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
@@ -915,7 +915,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testGenericVisibilityBridge() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericVisibilityBridgeTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericVisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass()
@@ -934,7 +934,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testMethodClassConvergence() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodClassConvergence.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(MethodClassConvergence.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();
@@ -964,7 +964,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testMethodInterfaceConvergence() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodInterfaceConvergenceTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(MethodInterfaceConvergenceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription genericMethod = typeDescription.getInterfaces().filter(erasure(MethodInterfaceConvergenceFirstBase.class)).getOnly()
@@ -987,7 +987,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testMethodConvergenceVisibilityTarget() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodConvergenceVisibilityBridgeTarget.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(MethodConvergenceVisibilityBridgeTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription genericMethod = typeDescription.getSuperClass().getSuperClass()
@@ -1007,7 +1007,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDiamondInheritanceClass() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericDiamondClassBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericDiamondClassBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription diamondOverride = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
@@ -1023,7 +1023,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testDiamondInheritanceInterface() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericDiamondInterfaceBase.Inner.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(GenericDiamondInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription diamondOverride = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
@@ -1057,7 +1057,7 @@ public class MethodGraphCompilerDefaultTest {
                 false,
                 false);
         MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("foo",
-                new TypeDescription.ForLoadedType(void.class),
+                TypeDescription.ForLoadedType.of(void.class),
                 Collections.<TypeDescription>emptyList());
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
@@ -1106,7 +1106,7 @@ public class MethodGraphCompilerDefaultTest {
 
     @Test
     public void testRawType() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(RawType.Raw.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(RawType.Raw.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();

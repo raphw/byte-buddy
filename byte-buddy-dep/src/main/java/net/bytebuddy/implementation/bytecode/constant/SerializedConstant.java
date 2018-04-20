@@ -70,9 +70,9 @@ public class SerializedConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         try {
             return new StackManipulation.Compound(
-                    TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
+                    TypeCreation.of(TypeDescription.ForLoadedType.of(ObjectInputStream.class)),
                     Duplication.SINGLE,
-                    TypeCreation.of(new TypeDescription.ForLoadedType(ByteArrayInputStream.class)),
+                    TypeCreation.of(TypeDescription.ForLoadedType.of(ByteArrayInputStream.class)),
                     Duplication.SINGLE,
                     new TextConstant(serialization),
                     new TextConstant(CHARSET),

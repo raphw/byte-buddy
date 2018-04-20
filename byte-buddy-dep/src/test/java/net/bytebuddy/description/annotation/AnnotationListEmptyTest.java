@@ -20,7 +20,7 @@ public class AnnotationListEmptyTest {
 
     @Test
     public void testAnnotationIsPresentDescription() throws Exception {
-        assertThat(new AnnotationList.Empty().isAnnotationPresent(new TypeDescription.ForLoadedType(Annotation.class)), is(false));
+        assertThat(new AnnotationList.Empty().isAnnotationPresent(TypeDescription.ForLoadedType.of(Annotation.class)), is(false));
     }
 
     @Test

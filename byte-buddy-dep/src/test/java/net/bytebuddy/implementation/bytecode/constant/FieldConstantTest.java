@@ -53,7 +53,7 @@ public class FieldConstantTest {
         when(fieldDescription.getInternalName()).thenReturn(BAR);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getDescriptor()).thenReturn("L" + QUX + ";");
-        when(implementationContext.cache(new FieldConstant(fieldDescription), new TypeDescription.ForLoadedType(Field.class)))
+        when(implementationContext.cache(new FieldConstant(fieldDescription), TypeDescription.ForLoadedType.of(Field.class)))
                 .thenReturn(cacheField);
         when(cacheField.getDeclaringType()).thenReturn(cacheDeclaringType);
         when(cacheField.isStatic()).thenReturn(true);
@@ -143,7 +143,7 @@ public class FieldConstantTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(implementationContext).cache(new FieldConstant(fieldDescription), new TypeDescription.ForLoadedType(Field.class));
+        verify(implementationContext).cache(new FieldConstant(fieldDescription), TypeDescription.ForLoadedType.of(Field.class));
         verifyNoMoreInteractions(implementationContext);
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO + BAR, QUX + BAZ);
         verifyNoMoreInteractions(methodVisitor);

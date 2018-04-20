@@ -107,7 +107,7 @@ public interface EnumerationDescription extends NamedElement {
 
         @Override
         public TypeDescription getEnumerationType() {
-            return new TypeDescription.ForLoadedType(value.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(value.getDeclaringClass());
         }
 
         @Override

@@ -11,7 +11,7 @@ public class RawMatcherForResolvableTypesTest {
 
     @Test
     public void testUnloadedMatches() throws Exception {
-        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(new TypeDescription.ForLoadedType(Foo.class),
+        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 null,
@@ -20,7 +20,7 @@ public class RawMatcherForResolvableTypesTest {
 
     @Test
     public void testResolvableMatches() throws Exception {
-        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(new TypeDescription.ForLoadedType(Foo.class),
+        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -29,7 +29,7 @@ public class RawMatcherForResolvableTypesTest {
 
     @Test
     public void testUnresolvableDoesNotMatch() throws Exception {
-        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(new TypeDescription.ForLoadedType(Bar.class),
+        assertThat(AgentBuilder.RawMatcher.ForResolvableTypes.INSTANCE.matches(TypeDescription.ForLoadedType.of(Bar.class),
                 Bar.class.getClassLoader(),
                 JavaModule.ofType(Bar.class),
                 Bar.class,

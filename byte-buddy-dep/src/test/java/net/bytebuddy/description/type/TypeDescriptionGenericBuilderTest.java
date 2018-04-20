@@ -45,13 +45,13 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @Override
     protected TypeDescription.Generic describeSuperClass(Class<?> type) {
         return describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type))
-                .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
+                .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
     }
 
     @Override
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
         return describe(type.getGenericInterfaces()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, index))
-                .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
+                .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -82,7 +82,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test(expected = IllegalArgumentException.class)
     public void testGenericOwnerType() throws Exception {
-        TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Foo.Nested.class),
+        TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Foo.Nested.class),
                 TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).build(),
                 Collections.<TypeDefinition>singletonList(TypeDescription.OBJECT));
     }
@@ -183,7 +183,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
             for (Type parameter : parameterizedType.getActualTypeArguments()) {
                 parameters.add(describe(parameter, annotationReader.ofTypeArgument(index++)));
             }
-            return TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType()),
+            return TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of((Class<?>) parameterizedType.getRawType()),
                     parameterizedType.getOwnerType() == null
                             ? null
                             : describe(parameterizedType.getOwnerType(), annotationReader.ofOwnerType()),

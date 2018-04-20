@@ -19,7 +19,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
     public void testAttachment() throws Exception {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
+        TypeDescription target = TypeDescription.ForLoadedType.of(Bar.class);
         TypeDescription.Generic attached = detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
         assertThat(attached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.asErasure(), sameInstance(target));

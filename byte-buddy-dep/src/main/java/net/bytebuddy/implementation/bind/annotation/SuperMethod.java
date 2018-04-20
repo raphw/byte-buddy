@@ -132,7 +132,7 @@ public @interface SuperMethod {
                 StackManipulation stackManipulation = MethodConstant.forMethod(implementationContext.registerAccessorFor(specialMethodInvocation,
                         MethodAccessorFactory.AccessType.PUBLIC));
                 return (cached
-                        ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
+                        ? FieldAccess.forField(implementationContext.cache(stackManipulation, TypeDescription.ForLoadedType.of(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
             }
         }

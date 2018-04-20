@@ -987,7 +987,7 @@ public interface ClassInjector {
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
             for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                if (!entry.getKey().isSamePackage(new TypeDescription.ForLoadedType(lookupType()))) {
+                if (!entry.getKey().isSamePackage(TypeDescription.ForLoadedType.of(lookupType()))) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 loaded.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));

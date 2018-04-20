@@ -100,7 +100,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
     public void testBindExplicit() throws Exception {
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
-        when(implementationTarget.invokeDefault(token, new TypeDescription.ForLoadedType(Runnable.class))).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token, TypeDescription.ForLoadedType.of(Runnable.class))).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) Runnable.class);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericInterfaceType, genericInterfaceType));

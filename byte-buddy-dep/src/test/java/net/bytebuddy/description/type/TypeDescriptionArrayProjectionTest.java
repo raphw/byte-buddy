@@ -12,7 +12,7 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Override
     protected TypeDescription describe(Class<?> type) {
-        return TypeDescription.ArrayProjection.of(new TypeDescription.ForLoadedType(type), 0);
+        return TypeDescription.ArrayProjection.of(TypeDescription.ForLoadedType.of(type), 0);
     }
 
     @Override

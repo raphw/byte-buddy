@@ -62,7 +62,7 @@ public class TypePoolDefaultHierarchyTest {
         });
         TypePool.Resolution resolution = typePool.describe(FOO);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(resolution.resolve(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         verify(cacheProvider).find(FOO);
         verify(cacheProvider).register(FOO, resolution);
         verifyZeroInteractions(cacheProvider);

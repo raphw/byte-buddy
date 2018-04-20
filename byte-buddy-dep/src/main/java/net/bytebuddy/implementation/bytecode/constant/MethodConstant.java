@@ -236,7 +236,7 @@ public abstract class MethodConstant implements StackManipulation {
         /**
          * A description of the {@link java.lang.reflect.Method} type.
          */
-        private static final TypeDescription METHOD_TYPE = new TypeDescription.ForLoadedType(Method.class);
+        private static final TypeDescription METHOD_TYPE = TypeDescription.ForLoadedType.of(Method.class);
 
         /**
          * The stack manipulation that is represented by this caching wrapper.
@@ -290,7 +290,7 @@ public abstract class MethodConstant implements StackManipulation {
         /**
          * A description of the {@link java.lang.reflect.Constructor} type.
          */
-        private static final TypeDescription CONSTRUCTOR_TYPE = new TypeDescription.ForLoadedType(Constructor.class);
+        private static final TypeDescription CONSTRUCTOR_TYPE = TypeDescription.ForLoadedType.of(Constructor.class);
 
         /**
          * The stack manipulation that is represented by this caching wrapper.

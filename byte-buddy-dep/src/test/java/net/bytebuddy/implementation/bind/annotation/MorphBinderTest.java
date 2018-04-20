@@ -121,7 +121,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
-        when(implementationTarget.invokeDefault(morphToken, new TypeDescription.ForLoadedType(Foo.class)))
+        when(implementationTarget.invokeDefault(morphToken, TypeDescription.ForLoadedType.of(Foo.class)))
                 .thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
@@ -137,7 +137,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
         doReturn(Foo.class).when(annotation).defaultTarget();
-        when(implementationTarget.invokeDefault(morphToken, new TypeDescription.ForLoadedType(Foo.class)))
+        when(implementationTarget.invokeDefault(morphToken, TypeDescription.ForLoadedType.of(Foo.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)

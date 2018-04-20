@@ -76,7 +76,7 @@ public class JavaTypeTest {
     public void testExecutable() throws Exception {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getName(), is("java.lang.reflect.Executable"));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperClass(), is((TypeDefinition) new TypeDescription.ForLoadedType(AccessibleObject.class)));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperClass(), is((TypeDefinition) TypeDescription.ForLoadedType.of(AccessibleObject.class)));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().size(), is(2));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Member.class)), is(true));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(GenericDeclaration.class)), is(true));

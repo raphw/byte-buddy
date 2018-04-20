@@ -175,7 +175,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(true);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -191,7 +191,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(false);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(false);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -207,7 +207,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(false);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(false);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -224,7 +224,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(source.isStatic()).thenReturn(true);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(true);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -241,7 +241,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(source.isStatic()).thenReturn(true);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(FooStatic.class))).thenReturn(true);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(FooStatic.class))).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
@@ -257,7 +257,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(annotation.value()).thenReturn(BAR);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
-        when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(true);
+        when(instrumentedType.isAssignableTo(TypeDescription.ForLoadedType.of(Foo.class))).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,

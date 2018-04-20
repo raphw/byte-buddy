@@ -111,7 +111,7 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool)).thenReturn((DynamicType.Unloaded) dynamicType);
-        when(dynamicType.getTypeDescription()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(dynamicType.getTypeDescription()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
                 any(ClassFileLocator.class),
@@ -120,10 +120,10 @@ public class AgentBuilderDefaultTest {
                 Mockito.<JavaModule>any(),
                 Mockito.<ProtectionDomain>any())).thenReturn((DynamicType.Builder) builder);
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
-        loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
+        loadedTypeInitializers.put(TypeDescription.ForLoadedType.of(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+        when(transformer.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
                 .thenReturn((DynamicType.Builder) builder);
         when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);
@@ -135,8 +135,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSuccessfulWithoutExistingClass() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -150,7 +150,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -165,9 +165,9 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(transformer).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -177,8 +177,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSuccessfulWithoutExistingClassConjunction() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -192,7 +192,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -215,8 +215,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSuccessfulWithoutExistingClassDisjunction() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -230,7 +230,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), false);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -253,7 +253,7 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSuccessfulWithExistingClass() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -267,7 +267,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -290,11 +290,11 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSuccessfulWithExistingClassFallback() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(new RuntimeException());
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(poolStrategy)
@@ -308,7 +308,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -417,7 +417,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         Throwable throwable = new RuntimeException();
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
         verifyZeroInteractions(listener);
@@ -427,7 +427,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
     }
 
@@ -448,7 +448,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         Throwable throwable = new RuntimeException();
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
         verifyZeroInteractions(listener);
@@ -458,7 +458,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
     }
 
@@ -479,11 +479,11 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         Throwable throwable = new RuntimeException(), suppressed = new RuntimeException();
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(suppressed);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
         verifyZeroInteractions(listener);
@@ -493,8 +493,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
     }
 
@@ -515,11 +515,11 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         Throwable throwable = new RuntimeException(), suppressed = new RuntimeException();
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(suppressed);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenThrow(throwable);
         assertThat(classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
         verifyZeroInteractions(listener);
@@ -529,14 +529,14 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).isModifiableClass(REDEFINED);
         verify(instrumentation).removeTransformer(classFileTransformer);
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
     }
 
     @Test
     public void testSuccessfulWithRetransformationMatched() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -557,7 +557,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).retransformClasses(REDEFINED);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -568,11 +568,11 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRetransformationMatchedFallback() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(new RuntimeException());
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -594,8 +594,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).retransformClasses(REDEFINED);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -605,7 +605,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRetransformationMatchedAndReset() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -629,7 +629,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).retransformClasses(REDEFINED);
         verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -640,11 +640,11 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRetransformationMatchedFallbackAndReset() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(new RuntimeException());
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -669,8 +669,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).retransformClasses(REDEFINED);
         verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -682,8 +682,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRetransformationWithNonRedefinable() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -697,7 +697,7 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
@@ -715,8 +715,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRetransformationWithNonMatched() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -731,7 +731,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
@@ -739,7 +739,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -750,12 +750,12 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRetransformationWithNonMatchedListenerException() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        doThrow(new RuntimeException()).when(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -767,7 +767,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
@@ -775,7 +775,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -786,8 +786,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRetransformationWithNonMatchedListenerCompleteException() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -803,7 +803,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
@@ -811,7 +811,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -823,8 +823,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testSuccessfulWithRetransformationMatchedChunked() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -854,8 +854,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).retransformClasses(OTHER);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -873,8 +873,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRetransformationChunkedOneFails() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -907,8 +907,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).retransformClasses(OTHER);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -927,8 +927,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRetransformationChunkedOneFailsResubmit() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -964,8 +964,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).retransformClasses(OTHER);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -986,8 +986,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRetransformationChunkedOneFailsEscalated() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -1014,8 +1014,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).retransformClasses(REDEFINED, OTHER);
         verify(instrumentation).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1039,7 +1039,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRedefinitionMatched() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1061,7 +1061,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1071,11 +1071,11 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRedefinitionMatchedFallback() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(new RuntimeException());
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1097,8 +1097,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1108,7 +1108,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRedefinitionMatchedAndReset() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1133,7 +1133,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation, times(2)).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(dispatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1144,11 +1144,11 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithRedefinitionMatchedFallbackAndReset() throws Exception {
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(new RuntimeException());
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1173,8 +1173,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation, times(2)).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1185,8 +1185,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithNonRedefinable() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1201,7 +1201,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1219,8 +1219,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithNonMatched() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1235,7 +1235,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1243,7 +1243,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1254,10 +1254,10 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithIgnoredType() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         @SuppressWarnings("unchecked")
         ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
-        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(ignoredTypes.matches(TypeDescription.ForLoadedType.of(REDEFINED))).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1271,7 +1271,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1281,7 +1281,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1291,10 +1291,10 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithIgnoredClassLoader() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         @SuppressWarnings("unchecked")
         ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
-        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(ignoredTypes.matches(TypeDescription.ForLoadedType.of(REDEFINED))).thenReturn(true);
         @SuppressWarnings("unchecked")
         ElementMatcher<? super ClassLoader> ignoredClassLoaders = mock(ElementMatcher.class);
         when(ignoredClassLoaders.matches(REDEFINED.getClassLoader())).thenReturn(true);
@@ -1311,7 +1311,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes, ignoredClassLoaders)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1323,7 +1323,7 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredClassLoaders).matches(REDEFINED.getClassLoader());
         verifyNoMoreInteractions(ignoredClassLoaders);
-        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1333,10 +1333,10 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithIgnoredTypeChainedConjunction() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         @SuppressWarnings("unchecked")
         ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
-        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(ignoredTypes.matches(TypeDescription.ForLoadedType.of(REDEFINED))).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1350,7 +1350,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ElementMatchers.any()).and(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1360,7 +1360,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1370,10 +1370,10 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithIgnoredTypeChainedDisjunction() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
         @SuppressWarnings("unchecked")
         ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
-        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(ignoredTypes.matches(TypeDescription.ForLoadedType.of(REDEFINED))).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1387,7 +1387,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none()).or(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1397,7 +1397,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(ignoredTypes).matches(TypeDescription.ForLoadedType.of(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1407,12 +1407,12 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithNonMatchedListenerException() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        doThrow(new RuntimeException()).when(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
@@ -1424,7 +1424,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1432,7 +1432,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1443,8 +1443,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testSkipRedefinitionWithNonMatchedListenerFinishedException() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1460,7 +1460,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1468,7 +1468,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1480,8 +1480,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testSuccessfulWithRedefinitionMatchedChunked() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1510,8 +1510,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).redefineClasses(any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1529,8 +1529,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRedefinitionChunkedOneFails() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1563,8 +1563,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).redefineClasses(argThat(new ClassRedefinitionMatcher(OTHER)));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1583,8 +1583,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRedefinitionChunkedOneFailsResubmit() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1620,8 +1620,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation, times(2)).redefineClasses(argThat(new ClassRedefinitionMatcher(OTHER)));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -1642,8 +1642,8 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testRedefinitionChunkedOneFailsEscalated() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
@@ -1670,8 +1670,8 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).redefineClasses(any(ClassDefinition.class), any(ClassDefinition.class));
         verify(instrumentation).isRedefineClassesSupported();
         verifyNoMoreInteractions(instrumentation);
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
-        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
@@ -1698,7 +1698,7 @@ public class AgentBuilderDefaultTest {
         when(dynamicType.getBytes()).thenReturn(BAZ);
         RuntimeException exception = new RuntimeException();
         when(resolution.resolve()).thenThrow(exception);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1726,8 +1726,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testIgnored() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1741,7 +1741,7 @@ public class AgentBuilderDefaultTest {
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX),
                 nullValue(byte[].class));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1759,15 +1759,15 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testAuxiliaryTypeInitialization() throws Exception {
-        when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(AUXILIARY), QUX));
+        when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>singletonMap(TypeDescription.ForLoadedType.of(AUXILIARY), QUX));
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
-        loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
+        loadedTypeInitializers.put(TypeDescription.ForLoadedType.of(REDEFINED), loadedTypeInitializer);
         LoadedTypeInitializer auxiliaryInitializer = mock(LoadedTypeInitializer.class);
-        loadedTypeInitializers.put(new TypeDescription.ForLoadedType(AUXILIARY), auxiliaryInitializer);
+        loadedTypeInitializers.put(TypeDescription.ForLoadedType.of(AUXILIARY), auxiliaryInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1781,7 +1781,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1807,7 +1807,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1835,7 +1835,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1863,7 +1863,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
         doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1892,7 +1892,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
         doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -1918,8 +1918,8 @@ public class AgentBuilderDefaultTest {
     @Test
     public void testDecoratedTransformation() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
-        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+        when(resolution.resolve()).thenReturn(TypeDescription.ForLoadedType.of(REDEFINED));
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -1934,7 +1934,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
+        verify(listener).onTransformation(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, dynamicType);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -1949,9 +1949,9 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain())));
         verifyNoMoreInteractions(dispatcher);
-        verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher, times(2)).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer, times(2)).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(transformer, times(2)).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
@@ -2124,10 +2124,10 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), nullValue(byte[].class));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
-        verify(ignored).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(ignored).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(ignored);
     }
 

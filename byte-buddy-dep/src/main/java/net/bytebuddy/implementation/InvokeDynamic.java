@@ -213,7 +213,7 @@ public class InvokeDynamic implements Implementation.Composable {
         List<Object> arguments = new ArrayList<Object>(rawArguments.size());
         for (Object argument : rawArguments) {
             if (argument instanceof Class) {
-                argument = new TypeDescription.ForLoadedType((Class<?>) argument);
+                argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
             } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
                 argument = JavaConstant.MethodHandle.ofLoaded(argument);
             } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
@@ -1174,8 +1174,8 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @param wrapperType   The wrapper type that is to be represented.
                  */
                 ConstantPoolWrapper(Class<?> primitiveType, Class<?> wrapperType) {
-                    this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
-                    this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+                    this.primitiveType = TypeDescription.ForLoadedType.of(primitiveType);
+                    this.wrapperType = TypeDescription.ForLoadedType.of(wrapperType);
                 }
 
                 /**
@@ -1204,7 +1204,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     } else if (value instanceof String) {
                         return new ForStringConstant((String) value);
                     } else if (value instanceof Class<?>) {
-                        return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
+                        return new ForClassConstant(TypeDescription.ForLoadedType.of((Class<?>) value));
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
@@ -1409,7 +1409,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @return A corresponding argument provider.
                  */
                 protected static ArgumentProvider of(Object value) {
-                    return new ForInstance(value, new TypeDescription.ForLoadedType(value.getClass()));
+                    return new ForInstance(value, TypeDescription.ForLoadedType.of(value.getClass()));
                 }
 
                 @Override
@@ -1630,7 +1630,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(boolean.class));
+                    return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(boolean.class));
                 }
 
                 @Override
@@ -1661,7 +1661,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(byte.class));
+                    return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(byte.class));
                 }
 
                 @Override
@@ -1692,7 +1692,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(short.class));
+                    return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(short.class));
                 }
 
                 @Override
@@ -1723,7 +1723,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(char.class));
+                    return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(char.class));
                 }
 
                 @Override
@@ -1754,7 +1754,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(IntegerConstant.forValue(value), new TypeDescription.ForLoadedType(int.class));
+                    return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(int.class));
                 }
 
                 @Override
@@ -1785,7 +1785,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(LongConstant.forValue(value), new TypeDescription.ForLoadedType(long.class));
+                    return new Resolved.Simple(LongConstant.forValue(value), TypeDescription.ForLoadedType.of(long.class));
                 }
 
                 @Override
@@ -1816,7 +1816,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(FloatConstant.forValue(value), new TypeDescription.ForLoadedType(float.class));
+                    return new Resolved.Simple(FloatConstant.forValue(value), TypeDescription.ForLoadedType.of(float.class));
                 }
 
                 @Override
@@ -1847,7 +1847,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(DoubleConstant.forValue(value), new TypeDescription.ForLoadedType(double.class));
+                    return new Resolved.Simple(DoubleConstant.forValue(value), TypeDescription.ForLoadedType.of(double.class));
                 }
 
                 @Override
@@ -2614,7 +2614,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * return type.
          */
         public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
-            return invoke(new TypeDescription.ForLoadedType(returnType));
+            return invoke(TypeDescription.ForLoadedType.of(returnType));
         }
 
         /**
@@ -2660,7 +2660,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * return type while being passed the given method name.
          */
         public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
-            return invoke(methodName, new TypeDescription.ForLoadedType(returnType));
+            return invoke(methodName, TypeDescription.ForLoadedType.of(returnType));
         }
 
         /**
@@ -2716,7 +2716,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @return A new dynamic method invocation where the last argument is represented by the given type.
          */
         public InvokeDynamic as(Class<?> type) {
-            return as(new TypeDescription.ForLoadedType(type));
+            return as(TypeDescription.ForLoadedType.of(type));
         }
 
         /**

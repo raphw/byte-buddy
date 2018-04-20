@@ -126,10 +126,10 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(targetMethod.getParameters())
                 .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(firstParameter, secondParameter));
         when(firstPseudoAnnotation.getAnnotationType())
-                .thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
+                .thenReturn(TypeDescription.ForLoadedType.of(FirstPseudoAnnotation.class));
         when(firstPseudoAnnotation.prepare(FirstPseudoAnnotation.class)).thenReturn(firstPseudoAnnotation);
         when(secondPseudoAnnotation.getAnnotationType())
-                .thenReturn(new TypeDescription.ForLoadedType(SecondPseudoAnnotation.class));
+                .thenReturn(TypeDescription.ForLoadedType.of(SecondPseudoAnnotation.class));
         when(secondPseudoAnnotation.prepare(SecondPseudoAnnotation.class)).thenReturn(secondPseudoAnnotation);
         when(sourceTypeDescription.getStackSize()).thenReturn(StackSize.ZERO);
         when(targetTypeDescription.getStackSize()).thenReturn(StackSize.ZERO);
@@ -156,7 +156,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testIgnoreForBindingAnnotation() throws Exception {
         when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         AnnotationDescription ignoreForBinding = mock(AnnotationDescription.class);
-        when(ignoreForBinding.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(IgnoreForBinding.class));
+        when(ignoreForBinding.getAnnotationType()).thenReturn(TypeDescription.ForLoadedType.of(IgnoreForBinding.class));
         when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(ignoreForBinding)));
         when(termination.isValid()).thenReturn(true);
         MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList());

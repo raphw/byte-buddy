@@ -65,7 +65,7 @@ public class TypeProxyCreationTest {
         for (ModifierContributor modifierContributor : AuxiliaryType.DEFAULT_TYPE_MODIFIER) {
             modifiers = modifiers | modifierContributor.getMask();
         }
-        foo = new TypeDescription.ForLoadedType(Foo.class);
+        foo = TypeDescription.ForLoadedType.of(Foo.class);
         fooMethods = MethodGraph.Compiler.DEFAULT.compile(foo)
                 .listNodes()
                 .asMethodList()
@@ -211,7 +211,7 @@ public class TypeProxyCreationTest {
         when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByConstructor(foo,
                 implementationTarget,
-                Collections.singletonList((TypeDescription) new TypeDescription.ForLoadedType(Void.class)),
+                Collections.singletonList((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)),
                 true,
                 false);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
@@ -291,7 +291,7 @@ public class TypeProxyCreationTest {
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         when(implementationContext.register(any(AuxiliaryType.class)))
-                .thenReturn(new TypeDescription.ForLoadedType(FooProxyMake.class));
+                .thenReturn(TypeDescription.ForLoadedType.of(FooProxyMake.class));
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));

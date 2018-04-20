@@ -44,8 +44,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldType() throws Exception {
-        assertThat(describe(first).getType(), is((TypeDefinition) new TypeDescription.ForLoadedType(first.getType())));
-        assertThat(describe(second).getType(), is((TypeDefinition) new TypeDescription.ForLoadedType(second.getType())));
+        assertThat(describe(first).getType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(first.getType())));
+        assertThat(describe(second).getType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(second.getType())));
     }
 
     @Test
@@ -70,14 +70,14 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldDeclaringType() throws Exception {
-        assertThat(describe(first).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(first.getDeclaringClass())));
-        assertThat(describe(second).getDeclaringType(), is((TypeDescription) new TypeDescription.ForLoadedType(second.getDeclaringClass())));
+        assertThat(describe(first).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(first.getDeclaringClass())));
+        assertThat(describe(second).getDeclaringType(), is((TypeDescription) TypeDescription.ForLoadedType.of(second.getDeclaringClass())));
     }
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(describe(first).hashCode(), is(new TypeDescription.ForLoadedType(FirstSample.class).hashCode() + 31 * (17 + first.getName().hashCode())));
-        assertThat(describe(second).hashCode(), is(new TypeDescription.ForLoadedType(SecondSample.class).hashCode() + 31 * (17 + second.getName().hashCode())));
+        assertThat(describe(first).hashCode(), is(TypeDescription.ForLoadedType.of(FirstSample.class).hashCode() + 31 * (17 + first.getName().hashCode())));
+        assertThat(describe(second).hashCode(), is(TypeDescription.ForLoadedType.of(SecondSample.class).hashCode() + 31 * (17 + second.getName().hashCode())));
         assertThat(describe(first).hashCode(), is(describe(first).hashCode()));
         assertThat(describe(second).hashCode(), is(describe(second).hashCode()));
         assertThat(describe(first).hashCode(), not(describe(second).hashCode()));
@@ -89,19 +89,19 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(identical, is(identical));
         FieldDescription equalFirst = mock(FieldDescription.class);
         when(equalFirst.getName()).thenReturn(first.getName());
-        when(equalFirst.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(FirstSample.class));
+        when(equalFirst.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(FirstSample.class));
         assertThat(describe(first), is(equalFirst));
         FieldDescription equalSecond = mock(FieldDescription.class);
         when(equalSecond.getName()).thenReturn(second.getName());
-        when(equalSecond.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(SecondSample.class));
+        when(equalSecond.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(SecondSample.class));
         assertThat(describe(second), is(equalSecond));
         FieldDescription equalFirstTypeOnly = mock(FieldDescription.class);
         when(equalFirstTypeOnly.getName()).thenReturn(second.getName());
-        when(equalFirstTypeOnly.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(FirstSample.class));
+        when(equalFirstTypeOnly.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(FirstSample.class));
         assertThat(describe(first), not(equalFirstTypeOnly));
         FieldDescription equalFirstNameOnly = mock(FieldDescription.class);
         when(equalFirstNameOnly.getName()).thenReturn(first.getName());
-        when(equalFirstNameOnly.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(SecondSample.class));
+        when(equalFirstNameOnly.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(SecondSample.class));
         assertThat(describe(first), not(equalFirstNameOnly));
         assertThat(describe(first), not(equalSecond));
         assertThat(describe(first), not(new Object()));
@@ -130,21 +130,21 @@ public abstract class AbstractFieldDescriptionTest {
     @Test
     public void testIsVisibleTo() throws Exception {
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(PublicType.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(PublicType.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(PublicType.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(PublicType.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(PublicType.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(FirstSample.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(FirstSample.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(FirstSample.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(FirstSample.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
@@ -154,13 +154,13 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(VisibilityFieldTestHelper.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(VisibilityFieldTestHelper.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(VisibilityFieldTestHelper.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(VisibilityFieldTestHelper.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("publicField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("protectedField"))
@@ -170,7 +170,7 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PackagePrivateType.class.getDeclaredField("privateField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
-                .isVisibleTo(new TypeDescription.ForLoadedType(PackagePrivateFieldType.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(PackagePrivateFieldType.class)), is(true));
         assertThat(describe(PackagePrivateFieldType.class.getDeclaredField("packagePrivateType"))
                 .isVisibleTo(TypeDescription.OBJECT), is(true));
     }
@@ -185,7 +185,7 @@ public abstract class AbstractFieldDescriptionTest {
     @Test
     public void testGenericTypes() throws Exception {
         assertThat(describe(genericField).getType(), is(TypeDefinition.Sort.describe(genericField.getGenericType())));
-        assertThat(describe(genericField).getType().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(genericField.getType())));
+        assertThat(describe(genericField).getType().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(genericField.getType())));
     }
 
     @Test

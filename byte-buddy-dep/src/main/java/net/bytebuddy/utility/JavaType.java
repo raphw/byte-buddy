@@ -71,7 +71,7 @@ public enum JavaType {
     JavaType(String typeName, int modifiers, Class<?> superClass, Class<?>... interfaces) {
         TypeDescription typeDescription;
         try {
-            typeDescription = new TypeDescription.ForLoadedType(Class.forName(typeName));
+            typeDescription = TypeDescription.ForLoadedType.of(Class.forName(typeName));
         } catch (Exception ignored) {
             typeDescription = new TypeDescription.Latent(typeName,
                     modifiers,

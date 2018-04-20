@@ -37,7 +37,7 @@ public class ArrayAccessTest {
     private Implementation.Context implementationContext;
 
     public ArrayAccessTest(Class<?> type, int loadOpcode, int storeOpcode) {
-        typeDescription = new TypeDescription.ForLoadedType(type);
+        typeDescription = TypeDescription.ForLoadedType.of(type);
         this.loadOpcode = loadOpcode;
         this.storeOpcode = storeOpcode;
     }

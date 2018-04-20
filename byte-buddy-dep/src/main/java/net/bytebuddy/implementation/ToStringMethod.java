@@ -33,7 +33,7 @@ public class ToStringMethod implements Implementation {
     /**
      * The {@link StringBuilder#StringBuilder(String)} constructor.
      */
-    private static final MethodDescription.InDefinedShape STRING_BUILDER_CONSTRUCTOR = new TypeDescription.ForLoadedType(StringBuilder.class)
+    private static final MethodDescription.InDefinedShape STRING_BUILDER_CONSTRUCTOR = TypeDescription.ForLoadedType.of(StringBuilder.class)
             .getDeclaredMethods()
             .filter(isConstructor().and(ElementMatchers.takesArguments(String.class)))
             .getOnly();
@@ -41,7 +41,7 @@ public class ToStringMethod implements Implementation {
     /**
      * The {@link StringBuilder#toString()} method.
      */
-    private static final MethodDescription.InDefinedShape TO_STRING = new TypeDescription.ForLoadedType(StringBuilder.class)
+    private static final MethodDescription.InDefinedShape TO_STRING = TypeDescription.ForLoadedType.of(StringBuilder.class)
             .getDeclaredMethods()
             .filter(isToString())
             .getOnly();
@@ -276,7 +276,7 @@ public class ToStringMethod implements Implementation {
                 throw new IllegalStateException("toString method does not return String-compatible type: " + instrumentedMethod);
             }
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(Math.max(0, fieldDescriptions.size() * 7 - 2) + 10);
-            stackManipulations.add(TypeCreation.of(new TypeDescription.ForLoadedType(StringBuilder.class)));
+            stackManipulations.add(TypeCreation.of(TypeDescription.ForLoadedType.of(StringBuilder.class)));
             stackManipulations.add(Duplication.SINGLE);
             stackManipulations.add(new TextConstant(prefix));
             stackManipulations.add(MethodInvocation.invoke(STRING_BUILDER_CONSTRUCTOR));

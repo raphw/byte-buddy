@@ -94,7 +94,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).invokeDefault(token, new TypeDescription.ForLoadedType(INTERFACE_TYPE));
+        verify(implementationTarget).invokeDefault(token, TypeDescription.ForLoadedType.of(INTERFACE_TYPE));
         verifyNoMoreInteractions(implementationTarget);
     }
 

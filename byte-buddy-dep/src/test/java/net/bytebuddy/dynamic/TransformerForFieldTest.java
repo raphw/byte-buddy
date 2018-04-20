@@ -94,7 +94,7 @@ public class TransformerForFieldTest {
 
     @Test
     public void testNoChangesUnlessSpecified() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Bar.class);
         FieldDescription fieldDescription = typeDescription.getSuperClass().getDeclaredFields().filter(named(FOO)).getOnly();
         FieldDescription transformed = Transformer.ForField.withModifiers().transform(typeDescription, fieldDescription);
         assertThat(transformed, is(fieldDescription));
@@ -103,7 +103,7 @@ public class TransformerForFieldTest {
 
     @Test
     public void testRetainsInstrumentedType() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Bar.class);
         FieldDescription fieldDescription = typeDescription.getSuperClass().getDeclaredFields().filter(named(BAR)).getOnly();
         FieldDescription transformed = Transformer.ForField.withModifiers().transform(typeDescription, fieldDescription);
         assertThat(transformed, is(fieldDescription));

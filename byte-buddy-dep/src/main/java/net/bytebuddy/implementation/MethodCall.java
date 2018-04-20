@@ -1373,7 +1373,7 @@ public class MethodCall implements Implementation.Composable {
                 } else if (value instanceof Double) {
                     return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
                 } else if (value instanceof Class) {
-                    return new ForStackManipulation(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value)), Class.class);
+                    return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
                     return new ForStackManipulation(JavaConstant.MethodHandle.ofLoaded(value).asStackManipulation(), JavaType.METHOD_HANDLE.getTypeStub());
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
@@ -1717,7 +1717,7 @@ public class MethodCall implements Implementation.Composable {
              * @param type The type to virtually invoke the method upon.
              */
             protected ForVirtualInvocation(Class<?> type) {
-                this(new TypeDescription.ForLoadedType(type));
+                this(TypeDescription.ForLoadedType.of(type));
             }
 
             @Override

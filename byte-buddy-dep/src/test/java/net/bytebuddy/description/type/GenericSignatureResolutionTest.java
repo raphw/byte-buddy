@@ -25,8 +25,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(GenericType.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(GenericType.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(GenericType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -86,8 +86,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableClassBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -99,8 +99,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableInterfaceBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableInterfaceBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -112,8 +112,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableClassAndInterfaceBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassAndInterfaceBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableClassAndInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -125,8 +125,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableWildcardNoBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardNoBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableWildcardNoBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -138,8 +138,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableWildcardUpperClassBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperClassBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableWildcardUpperClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -151,8 +151,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableWildcardUpperInterfaceBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperInterfaceBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableWildcardUpperInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -164,8 +164,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableWildcardLowerClassBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerClassBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableWildcardLowerClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -177,8 +177,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(TypeVariableWildcardLowerInterfaceBound.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInterfaceBound.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(TypeVariableWildcardLowerInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), is(originalType.getSuperClass()));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
@@ -190,8 +190,8 @@ public class GenericSignatureResolutionTest {
                 .redefine(InterfaceType.class)
                 .make();
         Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
-        TypeDescription createdType = new TypeDescription.ForLoadedType(type);
-        TypeDescription originalType = new TypeDescription.ForLoadedType(InterfaceType.class);
+        TypeDescription createdType = TypeDescription.ForLoadedType.of(type);
+        TypeDescription originalType = TypeDescription.ForLoadedType.of(InterfaceType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
         assertThat(createdType.getSuperClass(), nullValue(TypeDescription.Generic.class));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));

@@ -626,25 +626,25 @@ public interface AnnotationDescription {
                 for (Enum<?> anElement : element) {
                     enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(anElement);
                 }
-                return AnnotationValue.ForDescriptionArray.<Enum>of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
+                return AnnotationValue.ForDescriptionArray.<Enum>of(TypeDescription.ForLoadedType.of(type.getComponentType()), enumerationDescription);
             } else if (Annotation.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForAnnotationDescription.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
+                return AnnotationValue.ForAnnotationDescription.<Annotation>of(TypeDescription.ForLoadedType.of(type), asValue((Annotation) value));
             } else if (Annotation[].class.isAssignableFrom(type)) {
                 Annotation[] element = (Annotation[]) value;
                 AnnotationDescription[] annotationDescription = new AnnotationDescription[element.length];
                 int index = 0;
                 for (Annotation anElement : element) {
-                    annotationDescription[index++] = new AnnotationDescription.Latent(new TypeDescription.ForLoadedType(type.getComponentType()), asValue(anElement));
+                    annotationDescription[index++] = new AnnotationDescription.Latent(TypeDescription.ForLoadedType.of(type.getComponentType()), asValue(anElement));
                 }
-                return AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), annotationDescription);
+                return AnnotationValue.ForDescriptionArray.of(TypeDescription.ForLoadedType.of(type.getComponentType()), annotationDescription);
             } else if (Class.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForTypeDescription.<Class>of(new TypeDescription.ForLoadedType((Class<?>) value));
+                return AnnotationValue.ForTypeDescription.<Class>of(TypeDescription.ForLoadedType.of((Class<?>) value));
             } else if (Class[].class.isAssignableFrom(type)) {
                 Class<?>[] element = (Class<?>[]) value;
                 TypeDescription[] typeDescription = new TypeDescription[element.length];
                 int index = 0;
                 for (Class<?> anElement : element) {
-                    typeDescription[index++] = new TypeDescription.ForLoadedType(anElement);
+                    typeDescription[index++] = TypeDescription.ForLoadedType.of(anElement);
                 }
                 return AnnotationValue.ForDescriptionArray.of(typeDescription);
             } else {
@@ -691,7 +691,7 @@ public interface AnnotationDescription {
 
         @Override
         public TypeDescription getAnnotationType() {
-            return new TypeDescription.ForLoadedType(annotation.annotationType());
+            return TypeDescription.ForLoadedType.of(annotation.annotationType());
         }
     }
 
@@ -780,7 +780,7 @@ public interface AnnotationDescription {
 
             @Override
             public TypeDescription getAnnotationType() {
-                return new TypeDescription.ForLoadedType(annotationType);
+                return TypeDescription.ForLoadedType.of(annotationType);
             }
 
             @Override
@@ -824,7 +824,7 @@ public interface AnnotationDescription {
          * @return A builder for creating an annotation of the given type.
          */
         public static Builder ofType(Class<? extends Annotation> annotationType) {
-            return ofType(new TypeDescription.ForLoadedType(annotationType));
+            return ofType(TypeDescription.ForLoadedType.of(annotationType));
         }
 
         /**
@@ -927,7 +927,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional class property.
          */
         public Builder define(String property, Class<?> type) {
-            return define(property, new TypeDescription.ForLoadedType(type));
+            return define(property, TypeDescription.ForLoadedType.of(type));
         }
 
         /**
@@ -958,7 +958,7 @@ public interface AnnotationDescription {
             for (T aValue : value) {
                 enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(aValue);
             }
-            return defineEnumerationArray(property, new TypeDescription.ForLoadedType(enumerationType), enumerationDescription);
+            return defineEnumerationArray(property, TypeDescription.ForLoadedType.of(enumerationType), enumerationDescription);
         }
 
         /**
@@ -1005,7 +1005,7 @@ public interface AnnotationDescription {
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
             return defineAnnotationArray(property,
-                    new TypeDescription.ForLoadedType(annotationType),
+                    TypeDescription.ForLoadedType.of(annotationType),
                     new AnnotationList.ForLoadedAnnotations(annotation).toArray(new AnnotationDescription[annotation.length]));
         }
 

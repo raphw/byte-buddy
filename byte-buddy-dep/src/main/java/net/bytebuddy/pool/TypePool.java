@@ -747,7 +747,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return RenderingDispatcher.CURRENT.toSourceString(new TypeDescription.ForLoadedType(type));
+                    return RenderingDispatcher.CURRENT.toSourceString(TypeDescription.ForLoadedType.of(type));
                 }
             }
         }
@@ -5652,7 +5652,7 @@ public interface TypePool {
                      * @param values         A map of annotation value names to their value representations.
                      */
                     private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
-                        super(typePool, new ForLoadedType(annotationType), values);
+                        super(typePool, ForLoadedType.of(annotationType), values);
                         this.annotationType = annotationType;
                     }
 
@@ -7659,7 +7659,7 @@ public interface TypePool {
         @Override
         public Resolution doDescribe(String name) {
             try {
-                return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
+                return new Resolution.Simple(TypeDescription.ForLoadedType.of(Class.forName(name, false, classLoader)));
             } catch (ClassNotFoundException ignored) {
                 return new Resolution.Illegal(name);
             }

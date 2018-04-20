@@ -3188,7 +3188,7 @@ public interface AgentBuilder {
                                              JavaModule module) {
                     return type == null
                             ? typePool.describe(typeName).resolve()
-                            : new TypeDescription.ForLoadedType(type);
+                            : TypeDescription.ForLoadedType.of(type);
                 }
             },
 
@@ -3240,7 +3240,7 @@ public interface AgentBuilder {
                     TypePool.Resolution resolution = typePool.describe(typeName);
                     return resolution.isResolved() || type == null
                             ? resolution.resolve()
-                            : new TypeDescription.ForLoadedType(type);
+                            : TypeDescription.ForLoadedType.of(type);
                 }
             };
 
@@ -4573,7 +4573,7 @@ public interface AgentBuilder {
                     typeLoop:
                     for (Class<?> type : types) {
                         for (ElementMatcher<? super TypeDescription> matcher : matchers) {
-                            if (matcher.matches(new TypeDescription.ForLoadedType(type))) {
+                            if (matcher.matches(TypeDescription.ForLoadedType.of(type))) {
                                 matched.get(matcher).add(type);
                                 continue typeLoop;
                             }
@@ -5921,7 +5921,7 @@ public interface AgentBuilder {
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             try {
-                                                if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
+                                                if (instrumentation.isModifiableClass(type) && matcher.matches(TypeDescription.ForLoadedType.of(type),
                                                         type.getClassLoader(),
                                                         JavaModule.ofType(type),
                                                         type,
@@ -6616,7 +6616,7 @@ public interface AgentBuilder {
                         builder = builder.implement(Serializable.class);
                     }
                     builder = builder.defineMethod("writeReplace", Object.class, Visibility.PRIVATE)
-                            .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(targetType),
+                            .intercept(new SerializationImplementation(TypeDescription.ForLoadedType.of(targetType),
                                     factoryMethod.getReturnType(),
                                     lambdaMethodName,
                                     lambdaMethod,
@@ -6957,7 +6957,7 @@ public interface AgentBuilder {
                 public ByteCodeAppender appender(Target implementationTarget) {
                     TypeDescription serializedLambda;
                     try {
-                        serializedLambda = new TypeDescription.ForLoadedType(Class.forName("java.lang.invoke.SerializedLambda"));
+                        serializedLambda = TypeDescription.ForLoadedType.of(Class.forName("java.lang.invoke.SerializedLambda"));
                     } catch (ClassNotFoundException exception) {
                         throw new IllegalStateException("Cannot find class for lambda serialization", exception);
                     }

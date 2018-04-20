@@ -44,7 +44,7 @@ public class HashCodeMethod implements Implementation {
     /**
      * The {@link Object#hashCode()} method.
      */
-    private static final MethodDescription.InDefinedShape HASH_CODE = new TypeDescription.ForLoadedType(Object.class)
+    private static final MethodDescription.InDefinedShape HASH_CODE = TypeDescription.ForLoadedType.of(Object.class)
             .getDeclaredMethods()
             .filter(isHashCode())
             .getOnly();

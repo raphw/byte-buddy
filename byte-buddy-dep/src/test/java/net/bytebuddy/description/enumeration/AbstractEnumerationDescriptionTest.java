@@ -60,14 +60,14 @@ public abstract class AbstractEnumerationDescriptionTest {
 
     @Test
     public void testType() throws Exception {
-        assertThat(describe(Sample.FIRST).getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
-        assertThat(describe(Sample.SECOND).getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
+        assertThat(describe(Sample.FIRST).getEnumerationType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Sample.class)));
+        assertThat(describe(Sample.SECOND).getEnumerationType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Sample.class)));
     }
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(describe(Sample.FIRST).hashCode(), is(Sample.FIRST.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
-        assertThat(describe(Sample.SECOND).hashCode(), is(Sample.SECOND.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
+        assertThat(describe(Sample.FIRST).hashCode(), is(Sample.FIRST.name().hashCode() + 31 * TypeDescription.ForLoadedType.of(Sample.class).hashCode()));
+        assertThat(describe(Sample.SECOND).hashCode(), is(Sample.SECOND.name().hashCode() + 31 * TypeDescription.ForLoadedType.of(Sample.class).hashCode()));
         assertThat(describe(Sample.FIRST).hashCode(), not(describe(Sample.SECOND).hashCode()));
     }
 
@@ -77,19 +77,19 @@ public abstract class AbstractEnumerationDescriptionTest {
         assertThat(identical, is(identical));
         EnumerationDescription equalFirst = mock(EnumerationDescription.class);
         when(equalFirst.getValue()).thenReturn(Sample.FIRST.name());
-        when(equalFirst.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        when(equalFirst.getEnumerationType()).thenReturn(TypeDescription.ForLoadedType.of(Sample.class));
         assertThat(describe(Sample.FIRST), is(equalFirst));
         EnumerationDescription equalSecond = mock(EnumerationDescription.class);
         when(equalSecond.getValue()).thenReturn(Sample.SECOND.name());
-        when(equalSecond.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        when(equalSecond.getEnumerationType()).thenReturn(TypeDescription.ForLoadedType.of(Sample.class));
         assertThat(describe(Sample.SECOND), is(equalSecond));
         EnumerationDescription equalFirstTypeOnly = mock(EnumerationDescription.class);
         when(equalFirstTypeOnly.getValue()).thenReturn(Sample.SECOND.name());
-        when(equalFirstTypeOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Sample.class));
+        when(equalFirstTypeOnly.getEnumerationType()).thenReturn(TypeDescription.ForLoadedType.of(Sample.class));
         assertThat(describe(Sample.FIRST), not(equalFirstTypeOnly));
         EnumerationDescription equalFirstNameOnly = mock(EnumerationDescription.class);
         when(equalFirstNameOnly.getValue()).thenReturn(Sample.FIRST.name());
-        when(equalFirstNameOnly.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(Other.class));
+        when(equalFirstNameOnly.getEnumerationType()).thenReturn(TypeDescription.ForLoadedType.of(Other.class));
         assertThat(describe(Sample.FIRST), not(equalFirstNameOnly));
         assertThat(describe(Sample.FIRST), not(equalSecond));
         assertThat(describe(Sample.FIRST), not(new Object()));

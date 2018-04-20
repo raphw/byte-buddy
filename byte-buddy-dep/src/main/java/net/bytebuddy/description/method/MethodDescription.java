@@ -844,7 +844,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeDescription getDeclaringType() {
-            return new TypeDescription.ForLoadedType(constructor.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(constructor.getDeclaringClass());
         }
 
         @Override
@@ -952,7 +952,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeDescription getDeclaringType() {
-            return new TypeDescription.ForLoadedType(method.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(method.getDeclaringClass());
         }
 
         @Override

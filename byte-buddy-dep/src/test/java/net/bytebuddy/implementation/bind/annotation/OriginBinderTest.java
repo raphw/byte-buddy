@@ -128,7 +128,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
-        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load()));
+        when(genericTargetType.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(JavaType.METHOD_HANDLE.load()));
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         TypeDescription typeDescription = mock(TypeDescription.class);
@@ -142,7 +142,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
-        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load()));
+        when(genericTargetType.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(JavaType.METHOD_TYPE.load()));
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE

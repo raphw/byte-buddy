@@ -11,7 +11,7 @@ public final class TargetType {
     /**
      * A description of the {@link net.bytebuddy.dynamic.TargetType}.
      */
-    public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
+    public static final TypeDescription DESCRIPTION = TypeDescription.ForLoadedType.of(TargetType.class);
 
     /**
      * Resolves the given type description to the supplied target type if it represents the {@link TargetType} placeholder.

@@ -186,12 +186,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Extracts the annotation values for the enter and exit advice annotations.
      */
     static {
-        MethodList<MethodDescription.InDefinedShape> enter = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods();
+        MethodList<MethodDescription.InDefinedShape> enter = TypeDescription.ForLoadedType.of(OnMethodEnter.class).getDeclaredMethods();
         INLINE_ENTER = enter.filter(named("inline")).getOnly();
         SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         SKIP_ON = enter.filter(named("skipOn")).getOnly();
         PREPEND_LINE_NUMBER = enter.filter(named("prependLineNumber")).getOnly();
-        MethodList<MethodDescription.InDefinedShape> exit = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods();
+        MethodList<MethodDescription.InDefinedShape> exit = TypeDescription.ForLoadedType.of(OnMethodExit.class).getDeclaredMethods();
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
@@ -273,7 +273,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> advice, ClassFileLocator classFileLocator) {
-        return to(new TypeDescription.ForLoadedType(advice), classFileLocator);
+        return to(TypeDescription.ForLoadedType.of(advice), classFileLocator);
     }
 
     /**
@@ -350,7 +350,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice, ClassFileLocator classFileLocator) {
-        return to(new TypeDescription.ForLoadedType(enterAdvice), new TypeDescription.ForLoadedType(exitAdvice), classFileLocator);
+        return to(TypeDescription.ForLoadedType.of(enterAdvice), TypeDescription.ForLoadedType.of(exitAdvice), classFileLocator);
     }
 
     /**
@@ -1963,7 +1963,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Looks up all annotation properties to avoid loading of the declaring field type.
              */
             static {
-                MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+                MethodList<MethodDescription.InDefinedShape> methods = TypeDescription.ForLoadedType.of(FieldValue.class).getDeclaredMethods();
                 VALUE = methods.filter(named("value")).getOnly();
                 DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
                 READ_ONLY = methods.filter(named("readOnly")).getOnly();
@@ -3129,28 +3129,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new OfDefaultValue<S>(annotationType);
                     } else if (value instanceof Boolean) {
                         stackManipulation = IntegerConstant.forValue((Boolean) value);
-                        typeDescription = TypeDescription.BOOLEAN_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(boolean.class);
                     } else if (value instanceof Byte) {
                         stackManipulation = IntegerConstant.forValue((Byte) value);
-                        typeDescription = TypeDescription.BYTE_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(byte.class);
                     } else if (value instanceof Short) {
                         stackManipulation = IntegerConstant.forValue((Short) value);
-                        typeDescription = TypeDescription.SHORT_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(short.class);
                     } else if (value instanceof Character) {
                         stackManipulation = IntegerConstant.forValue((Character) value);
-                        typeDescription = TypeDescription.CHARACTER_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(char.class);
                     } else if (value instanceof Integer) {
                         stackManipulation = IntegerConstant.forValue((Integer) value);
-                        typeDescription = TypeDescription.INTEGER_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(int.class);
                     } else if (value instanceof Long) {
                         stackManipulation = LongConstant.forValue((Long) value);
-                        typeDescription = TypeDescription.LONG_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(long.class);
                     } else if (value instanceof Float) {
                         stackManipulation = FloatConstant.forValue((Float) value);
-                        typeDescription = TypeDescription.FLOAT_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(float.class);
                     } else if (value instanceof Double) {
                         stackManipulation = DoubleConstant.forValue((Double) value);
-                        typeDescription = TypeDescription.DOUBLE_PRIMITIVE;
+                        typeDescription = TypeDescription.ForLoadedType.of(double.class);
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
                         typeDescription = TypeDescription.STRING;
@@ -3373,7 +3373,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!targetType.isInstance(target)) {
                         throw new IllegalArgumentException(target + " is no instance of " + targetType);
                     }
-                    return new Factory<S>(annotationType, new TypeDescription.ForLoadedType(targetType), SerializedConstant.of(target));
+                    return new Factory<S>(annotationType, TypeDescription.ForLoadedType.of(targetType), SerializedConstant.of(target));
                 }
 
                 @Override
@@ -5917,7 +5917,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.adviceMethod = adviceMethod;
                     Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
                     for (OffsetMapping.Factory<?> factory : factories) {
-                        offsetMappings.put(new TypeDescription.ForLoadedType(factory.getAnnotationType()), factory);
+                        offsetMappings.put(TypeDescription.ForLoadedType.of(factory.getAnnotationType()), factory);
                     }
                     this.offsetMappings = new LinkedHashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
@@ -9181,7 +9181,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Class<?> value) {
-            return bind(type, new TypeDescription.ForLoadedType(value));
+            return bind(type, TypeDescription.ForLoadedType.of(value));
         }
 
         /**
@@ -9333,7 +9333,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(Class<?> advice, ClassFileLocator classFileLocator) {
-            return to(new TypeDescription.ForLoadedType(advice), classFileLocator);
+            return to(TypeDescription.ForLoadedType.of(advice), classFileLocator);
         }
 
         /**
@@ -9371,7 +9371,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(Class<?> enterAdvice, Class<?> exitAdvice, ClassFileLocator classFileLocator) {
-            return to(new TypeDescription.ForLoadedType(enterAdvice), new TypeDescription.ForLoadedType(exitAdvice), classFileLocator);
+            return to(TypeDescription.ForLoadedType.of(enterAdvice), TypeDescription.ForLoadedType.of(exitAdvice), classFileLocator);
         }
 
         /**
@@ -9408,7 +9408,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A description of the {@link NoExceptionHandler} type.
          */
-        private static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(NoExceptionHandler.class);
+        private static final TypeDescription DESCRIPTION = TypeDescription.ForLoadedType.of(NoExceptionHandler.class);
 
         /**
          * A private constructor as this class is not supposed to be invoked.

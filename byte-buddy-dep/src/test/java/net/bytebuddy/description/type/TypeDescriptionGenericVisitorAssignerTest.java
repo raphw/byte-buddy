@@ -49,7 +49,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Before
     public void setUp() throws Exception {
-        FieldList<?> fields = new TypeDescription.ForLoadedType(GenericTypes.class).getDeclaredFields();
+        FieldList<?> fields = TypeDescription.ForLoadedType.of(GenericTypes.class).getDeclaredFields();
         collectionRaw = fields.filter(named("collectionRaw")).getOnly().getType();
         collectionWildcard = fields.filter(named("collectionWildcard")).getOnly().getType();
         collectionTypeVariableT = fields.filter(named("collectionTypeVariableT")).getOnly().getType();
