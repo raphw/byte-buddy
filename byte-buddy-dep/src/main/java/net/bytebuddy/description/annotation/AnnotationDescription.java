@@ -317,7 +317,7 @@ public interface AnnotationDescription {
             try {
                 for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
                     try {
-                        if (!entry.getValue().represents(entry.getKey().invoke(other))) {
+                        if (!entry.getValue().represents(entry.getKey().invoke(other, (Object[]) null))) {
                             return false;
                         }
                     } catch (RuntimeException exception) {

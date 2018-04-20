@@ -1173,7 +1173,7 @@ public interface ClassInjector {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     try {
-                        return (Class<?>) lookupClass.invoke(lookup);
+                        return (Class<?>) lookupClass.invoke(lookup, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupClass", exception);
                     } catch (InvocationTargetException exception) {
@@ -1184,7 +1184,7 @@ public interface ClassInjector {
                 @Override
                 public int lookupModes(Object lookup) {
                     try {
-                        return (Integer) lookupModes.invoke(lookup);
+                        return (Integer) lookupModes.invoke(lookup, (Object[]) null);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
                     } catch (InvocationTargetException exception) {
