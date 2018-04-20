@@ -217,33 +217,33 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 TypeDescription suppliedType;
                 if (value instanceof Boolean) {
                     stackManipulation = IntegerConstant.forValue((Boolean) value);
-                    suppliedType = new TypeDescription.ForLoadedType(boolean.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(boolean.class);
                 } else if (value instanceof Byte) {
                     stackManipulation = IntegerConstant.forValue((Byte) value);
-                    suppliedType = new TypeDescription.ForLoadedType(byte.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(byte.class);
                 } else if (value instanceof Short) {
                     stackManipulation = IntegerConstant.forValue((Short) value);
-                    suppliedType = new TypeDescription.ForLoadedType(short.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(short.class);
                 } else if (value instanceof Character) {
                     stackManipulation = IntegerConstant.forValue((Character) value);
-                    suppliedType = new TypeDescription.ForLoadedType(char.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(char.class);
                 } else if (value instanceof Integer) {
                     stackManipulation = IntegerConstant.forValue((Integer) value);
-                    suppliedType = new TypeDescription.ForLoadedType(int.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(int.class);
                 } else if (value instanceof Long) {
                     stackManipulation = LongConstant.forValue((Long) value);
-                    suppliedType = new TypeDescription.ForLoadedType(long.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(long.class);
                 } else if (value instanceof Float) {
                     stackManipulation = FloatConstant.forValue((Float) value);
-                    suppliedType = new TypeDescription.ForLoadedType(float.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(float.class);
                 } else if (value instanceof Double) {
                     stackManipulation = DoubleConstant.forValue((Double) value);
-                    suppliedType = new TypeDescription.ForLoadedType(double.class);
+                    suppliedType = TypeDescription.ForLoadedType.of(double.class);
                 } else if (value instanceof String) {
                     stackManipulation = new TextConstant((String) value);
                     suppliedType = TypeDescription.STRING;
                 } else if (value instanceof Class) {
-                    stackManipulation = ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value));
+                    stackManipulation = ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value));
                     suppliedType = TypeDescription.CLASS;
                 } else if (value instanceof TypeDescription) {
                     stackManipulation = ClassConstant.of((TypeDescription) value);
@@ -469,7 +469,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         protected static DelegationProcessor of(List<? extends ParameterBinder<?>> parameterBinders) {
             Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
-                if (parameterBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
+                if (parameterBinderMap.put(TypeDescription.ForLoadedType.of(parameterBinder.getHandledType()), parameterBinder) != null) {
                     throw new IllegalArgumentException("Attempt to bind two handlers to " + parameterBinder.getHandledType());
                 }
             }

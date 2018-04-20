@@ -76,7 +76,7 @@ public abstract class FixedValue implements Implementation {
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue), TypeDescription.STRING);
         } else if (type == Class.class) {
-            return new ForPoolValue(ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) fixedValue)), TypeDescription.CLASS);
+            return new ForPoolValue(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) fixedValue)), TypeDescription.CLASS);
         } else if (type == Boolean.class) {
             return new ForPoolValue(IntegerConstant.forValue((Boolean) fixedValue), boolean.class);
         } else if (type == Byte.class) {
@@ -497,7 +497,7 @@ public abstract class FixedValue implements Implementation {
          * @param loadedType           A type description representing the loaded type.
          */
         protected ForPoolValue(StackManipulation valueLoadInstruction, Class<?> loadedType) {
-            this(valueLoadInstruction, new TypeDescription.ForLoadedType(loadedType));
+            this(valueLoadInstruction, TypeDescription.ForLoadedType.of(loadedType));
         }
 
         /**

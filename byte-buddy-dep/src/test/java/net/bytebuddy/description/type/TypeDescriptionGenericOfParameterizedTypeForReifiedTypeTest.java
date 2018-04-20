@@ -14,94 +14,94 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
 
     @Test
     public void testSuperType() throws Exception {
-        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(new TypeDescription.ForLoadedType(Sample.class)
+        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(TypeDescription.ForLoadedType.of(Sample.class)
                 .getSuperClass());
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(typeDescription.asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Bar.class)));
         assertThat(typeDescription.getTypeArguments().size(), is(1));
         assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getTypeArguments().getOnly().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+        assertThat(typeDescription.getTypeArguments().getOnly().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSuperClass().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(typeDescription.getSuperClass().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(typeDescription.getSuperClass().getTypeArguments().size(), is(1));
         assertThat(typeDescription.getSuperClass().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getSuperClass().getTypeArguments().getOnly().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+        assertThat(typeDescription.getSuperClass().getTypeArguments().getOnly().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredFields().getOnly().getType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getDeclaredFields().getOnly().getType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(List.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(List.class)));
     }
 
     @Test
     public void testInterfaceType() throws Exception {
-        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(new TypeDescription.ForLoadedType(Sample.class)
+        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(TypeDescription.ForLoadedType.of(Sample.class)
                 .getInterfaces().getOnly());
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Baz.class)));
+        assertThat(typeDescription.asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Baz.class)));
         assertThat(typeDescription.getTypeArguments().size(), is(1));
         assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getTypeArguments().getOnly().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+        assertThat(typeDescription.getTypeArguments().getOnly().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getInterfaces().getOnly().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(typeDescription.getInterfaces().getOnly().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Qux.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().size(), is(1));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().getOnly().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(List.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(List.class)));
     }
 
     @Test
     public void testNonGenericIntermediateType() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(new TypeDescription.ForLoadedType(NonGenericSample.class))
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.ForLoadedType.of(NonGenericSample.class))
                 .getSuperClass()
                 .getSuperClass();
         assertThat(typeDescription.getSuperClass().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSuperClass().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(typeDescription.getSuperClass().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(typeDescription.getSuperClass().getTypeArguments().size(), is(1));
         assertThat(typeDescription.getSuperClass().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getTypeArguments().getOnly().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredFields().getOnly().getType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getDeclaredFields().getOnly().getType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(List.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(List.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getInterfaces().getOnly().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
+        assertThat(typeDescription.getInterfaces().getOnly().asErasure(), is((TypeDescription) TypeDescription.ForLoadedType.of(Qux.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().size(), is(1));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().getOnly().getTypeArguments().getOnly().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(Number.class)));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().getSort(),
                 is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(BAR)).getOnly().getReturnType().asErasure(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(List.class)));
+                is((TypeDescription) TypeDescription.ForLoadedType.of(List.class)));
     }
 
     private static class Foo<T> {

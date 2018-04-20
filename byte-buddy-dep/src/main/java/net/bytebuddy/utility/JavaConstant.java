@@ -101,7 +101,7 @@ public interface JavaConstant {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(Class<?> returnType, Class<?>... parameterType) {
-            return of(new TypeDescription.ForLoadedType(returnType), new TypeList.ForLoadedTypes(parameterType));
+            return of(TypeDescription.ForLoadedType.of(returnType), new TypeList.ForLoadedTypes(parameterType));
         }
 
         /**
@@ -202,7 +202,7 @@ public interface JavaConstant {
          * @return A method type for the given constant type.
          */
         public static MethodType ofConstant(Class<?> type) {
-            return ofConstant(new TypeDescription.ForLoadedType(type));
+            return ofConstant(TypeDescription.ForLoadedType.of(type));
         }
 
         /**
@@ -490,9 +490,9 @@ public interface JavaConstant {
             Object methodHandleInfo = dispatcher.reveal(lookup, methodHandle);
             Object methodType = dispatcher.getMethodType(methodHandleInfo);
             return new MethodHandle(HandleType.of(dispatcher.getReferenceKind(methodHandleInfo)),
-                    new TypeDescription.ForLoadedType(dispatcher.getDeclaringClass(methodHandleInfo)),
+                    TypeDescription.ForLoadedType.of(dispatcher.getDeclaringClass(methodHandleInfo)),
                     dispatcher.getName(methodHandleInfo),
-                    new TypeDescription.ForLoadedType(dispatcher.returnType(methodType)),
+                    TypeDescription.ForLoadedType.of(dispatcher.returnType(methodType)),
                     new TypeList.ForLoadedTypes(dispatcher.parameterArray(methodType)));
         }
 
@@ -538,7 +538,7 @@ public interface JavaConstant {
          * @return A method handle representing the given method as special method invocation.
          */
         public static MethodHandle ofSpecial(Method method, Class<?> type) {
-            return ofSpecial(new MethodDescription.ForLoadedMethod(method), new TypeDescription.ForLoadedType(type));
+            return ofSpecial(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(type));
         }
 
         /**

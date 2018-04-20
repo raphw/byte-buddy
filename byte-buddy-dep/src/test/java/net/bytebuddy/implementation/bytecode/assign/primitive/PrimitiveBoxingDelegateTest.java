@@ -64,7 +64,7 @@ public class PrimitiveBoxingDelegateTest {
         this.primitiveType = primitiveType;
         primitiveTypeDescription = mock(TypeDescription.class);
         when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
-        referenceTypeDescription = new TypeDescription.ForLoadedType(referenceType);
+        referenceTypeDescription = TypeDescription.ForLoadedType.of(referenceType);
         this.boxingMethodDescriptor = boxingMethodDescriptor;
         this.sizeChange = sizeChange;
     }

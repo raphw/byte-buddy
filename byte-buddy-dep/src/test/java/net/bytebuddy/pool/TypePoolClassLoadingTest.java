@@ -40,14 +40,14 @@ public class TypePoolClassLoadingTest {
     public void testArrayClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object[].class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
+        assertThat(resolution.resolve(), is((TypeDescription) TypeDescription.ForLoadedType.of(Object[].class)));
     }
 
     @Test
     public void testPrimitiveClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(int.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(int.class)));
+        assertThat(resolution.resolve(), is((TypeDescription) TypeDescription.ForLoadedType.of(int.class)));
     }
 
     @Test

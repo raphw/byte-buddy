@@ -103,7 +103,7 @@ public @interface Morph {
          * Looks up references for all annotation properties of the morph annotation.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(Morph.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(Morph.class).getDeclaredMethods();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
             DEFAULT_METHOD = methodList.filter(named("defaultMethod")).getOnly();
             DEFAULT_TARGET = methodList.filter(named("defaultTarget")).getOnly();
@@ -134,7 +134,7 @@ public @interface Morph {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(type));
+            return install(TypeDescription.ForLoadedType.of(type));
         }
 
         /**

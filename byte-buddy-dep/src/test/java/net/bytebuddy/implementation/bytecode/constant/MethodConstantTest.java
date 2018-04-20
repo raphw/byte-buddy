@@ -109,7 +109,7 @@ public class MethodConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
         verifyNoMoreInteractions(methodVisitor);
-        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Method.class));
+        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), TypeDescription.ForLoadedType.of(Method.class));
         verifyNoMoreInteractions(implementationContext);
     }
 
@@ -135,7 +135,7 @@ public class MethodConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
         verifyNoMoreInteractions(methodVisitor);
-        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Constructor.class));
+        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), TypeDescription.ForLoadedType.of(Constructor.class));
         verifyNoMoreInteractions(implementationContext);
     }
 

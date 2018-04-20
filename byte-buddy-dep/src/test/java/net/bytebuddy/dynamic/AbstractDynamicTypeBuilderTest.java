@@ -539,7 +539,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnTypeAnnotationClassBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
                 .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
@@ -564,7 +564,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnTypeAnnotationInterfaceBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
                 .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Runnable.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
@@ -589,7 +589,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnTypeAnnotationTypeVariableBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
                 .typeVariable(FOO)
                 .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
@@ -621,7 +621,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeAnnotationOnInterfaceType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .implement(TypeDescription.Generic.Builder.rawType(Runnable.class)
@@ -641,7 +641,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnFieldType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
@@ -660,7 +660,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnMethodAnnotationClassBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class)
@@ -689,7 +689,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnMethodAnnotationInterfaceBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class)
@@ -718,7 +718,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testTypeVariableOnMethodAnnotationTypeVariableBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class)
@@ -753,7 +753,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnMethodReturnType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
@@ -774,7 +774,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnMethodParameterType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class).withParameters(TypeDescription.Generic.Builder.rawType(Object.class)
@@ -796,7 +796,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnMethodExceptionType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class).throwing(TypeDescription.Generic.Builder.rawType(Exception.class)
@@ -818,9 +818,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnWildcardWithoutBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                         TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
                                 .define(VALUE, INTEGER_VALUE).build())).build())
                 .make()
@@ -837,9 +837,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnWildcardUpperBoundBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                         TypeDescription.Generic.Builder.rawType(Object.class)
                                 .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                                 .asWildcardUpperBound()).build())
@@ -857,9 +857,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnWildcardLowerBoundBound() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                         TypeDescription.Generic.Builder.rawType(Object.class)
                                 .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                                 .asWildcardLowerBound()).build())
@@ -877,9 +877,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnGenericComponentType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                         TypeDescription.Generic.Builder.unboundWildcard())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .asArray()
@@ -898,7 +898,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnNonGenericComponentType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
@@ -918,9 +918,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnParameterizedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                         TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
                                 .define(VALUE, INTEGER_VALUE).build()))
                         .build())
@@ -938,9 +938,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnNestedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.rawType(new TypeDescription.ForLoadedType(Nested.Inner.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.rawType(TypeDescription.ForLoadedType.of(Nested.Inner.class),
                         TypeDescription.Generic.Builder.rawType(Nested.class).build())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .build())
@@ -959,9 +959,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Ignore("The Java reflection API does not currently support nested generic types")
     public void testAnnotationTypeOnNestedParameterizedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(GenericNested.Inner.class),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(GenericNested.Inner.class),
                         TypeDescription.Generic.Builder.parameterizedType(GenericNested.class, Void.class).build(),
                         Collections.<TypeDefinition>emptyList())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())

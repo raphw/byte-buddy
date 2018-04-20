@@ -30,7 +30,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(T)).getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -56,7 +56,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableU() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic u = typeDescription.getTypeVariables().filter(named(U)).getOnly();
         assertThat(u.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -88,7 +88,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableV() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic v = typeDescription.getTypeVariables().filter(named(V)).getOnly();
         assertThat(v.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -139,7 +139,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableW() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(W)).getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -158,7 +158,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableX() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(X)).getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -181,7 +181,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testMethodVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         MethodDescription methodDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES)).getDeclaredMethods().filter(named(FOO)).getOnly();
         TypeDescription.Generic t = methodDescription.getTypeVariables().getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -199,7 +199,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testNonGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE))
                 .getDeclaredMethods()
                 .filter(named(FOO))
@@ -235,7 +235,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testNonGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + INNER))
                 .getDeclaredMethods()
                 .filter(named(FOO))
@@ -256,7 +256,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testNonGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + INNER))
                 .getDeclaredMethods()
                 .filter(isConstructor())
@@ -276,7 +276,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testNonGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + NESTED))
                 .getDeclaredMethods()
                 .filter(named(FOO))
@@ -313,7 +313,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC))
                 .getDeclaredMethods()
                 .filter(named(FOO))
@@ -355,7 +355,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER))
                 .getDeclaredMethods()
                 .filter(named(FOO))
@@ -391,7 +391,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER))
                 .getDeclaredMethods()
                 .filter(isConstructor())
@@ -417,7 +417,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @JavaVersionRule.Enforce(8)
     public void testGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + NESTED))
                 .getDeclaredMethods()
                 .filter(named(FOO))

@@ -27,7 +27,7 @@ public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase
 
     @Override
     public boolean matches(T target) {
-        return target != null && matcher.matches(new TypeDescription.ForLoadedType(target.getClass()));
+        return target != null && matcher.matches(TypeDescription.ForLoadedType.of(target.getClass()));
     }
 
     @Override

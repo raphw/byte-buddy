@@ -34,7 +34,7 @@ public class TypeDescriptionGenericVisitorReifyingTest {
 
     @Test
     public void testInitiatingNonGenerifiedNonGenericType() throws Exception {
-        when(generic.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Foo.class));
+        when(generic.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(Foo.class));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INITIATING.onNonGenericType(generic), not(sameInstance(generic)));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INITIATING.onNonGenericType(generic).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
     }
@@ -67,7 +67,7 @@ public class TypeDescriptionGenericVisitorReifyingTest {
 
     @Test
     public void testInheritingNonGenerifiedNonGenericType() throws Exception {
-        when(generic.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Foo.class));
+        when(generic.asErasure()).thenReturn(TypeDescription.ForLoadedType.of(Foo.class));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INHERITING.onNonGenericType(generic), not(sameInstance(generic)));
         assertThat(TypeDescription.Generic.Visitor.Reifying.INHERITING.onNonGenericType(generic).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
     }

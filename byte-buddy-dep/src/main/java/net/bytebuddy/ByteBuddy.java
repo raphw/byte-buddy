@@ -247,7 +247,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
-        return (DynamicType.Builder<T>) subclass(new TypeDescription.ForLoadedType(superType));
+        return (DynamicType.Builder<T>) subclass(TypeDescription.ForLoadedType.of(superType));
     }
 
     /**
@@ -270,7 +270,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
-        return (DynamicType.Builder<T>) subclass(new TypeDescription.ForLoadedType(superType), constructorStrategy);
+        return (DynamicType.Builder<T>) subclass(TypeDescription.ForLoadedType.of(superType), constructorStrategy);
     }
 
     /**
@@ -687,7 +687,7 @@ public class ByteBuddy {
      * @return A type builder for redefining the provided type.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> type, ClassFileLocator classFileLocator) {
-        return redefine(new TypeDescription.ForLoadedType(type), classFileLocator);
+        return redefine(TypeDescription.ForLoadedType.of(type), classFileLocator);
     }
 
     /**
@@ -760,7 +760,7 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> type, ClassFileLocator classFileLocator) {
-        return rebase(new TypeDescription.ForLoadedType(type), classFileLocator);
+        return rebase(TypeDescription.ForLoadedType.of(type), classFileLocator);
     }
 
     /**
@@ -775,7 +775,7 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> type, ClassFileLocator classFileLocator, MethodNameTransformer methodNameTransformer) {
-        return rebase(new TypeDescription.ForLoadedType(type), classFileLocator, methodNameTransformer);
+        return rebase(TypeDescription.ForLoadedType.of(type), classFileLocator, methodNameTransformer);
     }
 
     /**

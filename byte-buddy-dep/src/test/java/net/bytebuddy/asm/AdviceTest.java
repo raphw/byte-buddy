@@ -1855,7 +1855,7 @@ public class AdviceTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonResolvedAdvice() throws Exception {
-        Advice.to(new TypeDescription.ForLoadedType(TrivialAdvice.class));
+        Advice.to(TypeDescription.ForLoadedType.of(TrivialAdvice.class));
     }
 
     @Test

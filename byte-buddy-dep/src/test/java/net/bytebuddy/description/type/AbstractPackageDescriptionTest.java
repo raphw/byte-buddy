@@ -27,8 +27,8 @@ public abstract class AbstractPackageDescriptionTest {
 
     @Test
     public void testPackageContains() throws Exception {
-        assertThat(describe(Child.class).contains(new TypeDescription.ForLoadedType(Child.class)), is(true));
-        assertThat(describe(Object.class).contains(new TypeDescription.ForLoadedType(Child.class)), is(false));
+        assertThat(describe(Child.class).contains(TypeDescription.ForLoadedType.of(Child.class)), is(true));
+        assertThat(describe(Object.class).contains(TypeDescription.ForLoadedType.of(Child.class)), is(false));
     }
 
     @Test

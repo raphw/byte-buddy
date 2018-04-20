@@ -453,7 +453,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnInterfaceType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
                 .merge(TypeManifestation.ABSTRACT)
                 .implement(TypeDescription.Generic.Builder.rawType(Callable.class)
@@ -475,7 +475,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeOnTypeVariableType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
                 .merge(TypeManifestation.ABSTRACT)
                 .typeVariable(BAR, TypeDescription.Generic.Builder.rawType(Callable.class)

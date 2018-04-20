@@ -34,8 +34,8 @@ public class ClassInjectorUsingUnsafeTest {
     @ClassUnsafeInjectionAvailableRule.Enforce
     public void testUnsafeInjection() throws Exception {
         assertThat(new ClassInjector.UsingUnsafe(classLoader)
-                .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Foo.class), ClassFileExtraction.extract(Foo.class)))
-                .get(new TypeDescription.ForLoadedType(Foo.class)), notNullValue(Class.class));
+                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileExtraction.extract(Foo.class)))
+                .get(TypeDescription.ForLoadedType.of(Foo.class)), notNullValue(Class.class));
         assertThat(Class.forName(Foo.class.getName(), false, classLoader).getName(), is(Foo.class.getName()));
     }
 

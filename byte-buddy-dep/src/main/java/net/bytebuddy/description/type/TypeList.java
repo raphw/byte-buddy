@@ -91,7 +91,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
         @Override
         public TypeDescription get(int index) {
-            return new TypeDescription.ForLoadedType(types.get(index));
+            return TypeDescription.ForLoadedType.of(types.get(index));
         }
 
         @Override
@@ -718,7 +718,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure[index]);
+                    return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -805,7 +805,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure[index]);
+                    return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -892,7 +892,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure[index]);
+                    return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override

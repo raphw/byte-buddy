@@ -17,14 +17,14 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginMatches() throws Exception {
         Plugin plugin = new HashCodeAndEqualsPlugin();
-        assertThat(plugin.matches(new TypeDescription.ForLoadedType(SimpleSample.class)), is(true));
+        assertThat(plugin.matches(TypeDescription.ForLoadedType.of(SimpleSample.class)), is(true));
         assertThat(plugin.matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
     public void testPluginEnhance() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), new TypeDescription.ForLoadedType(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -35,7 +35,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceRedundant() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(RedundantSample.class), new TypeDescription.ForLoadedType(RedundantSample.class))
+                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -46,7 +46,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceIgnore() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), new TypeDescription.ForLoadedType(IgnoredFieldSample.class))
+                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -60,7 +60,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableHashCode() throws Exception {
         new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), new TypeDescription.ForLoadedType(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -72,7 +72,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableEquals() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), new TypeDescription.ForLoadedType(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -82,7 +82,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceNonNullableReversed() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), new TypeDescription.ForLoadedType(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -94,7 +94,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableReversedHashCode() throws Exception {
         new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), new TypeDescription.ForLoadedType(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -106,7 +106,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableReversedEquals() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), new TypeDescription.ForLoadedType(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -115,23 +115,23 @@ public class HashCodeAndEqualsPluginTest {
 
     @Test
     public void testInvokeSuper() {
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSample.class)),
                 hasPrototype(EqualsMethod.isolated()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSampleSubclass.class)),
                 hasPrototype(EqualsMethod.requiringSuperClassEquality()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSample.class)),
                 hasPrototype(EqualsMethod.isolated()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSampleSubclass.class)),
                 hasPrototype(EqualsMethod.requiringSuperClassEquality()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(new TypeDescription.ForLoadedType(DeclaredSubclass.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_DECLARED.equalsMethod(TypeDescription.ForLoadedType.of(DeclaredSubclass.class)),
                 hasPrototype(EqualsMethod.requiringSuperClassEquality()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSample.class)),
                 hasPrototype(EqualsMethod.requiringSuperClassEquality()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.ALWAYS.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSampleSubclass.class)),
                 hasPrototype(EqualsMethod.requiringSuperClassEquality()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(new TypeDescription.ForLoadedType(SimpleSample.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSample.class)),
                 hasPrototype(EqualsMethod.isolated()));
-        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(new TypeDescription.ForLoadedType(SimpleSampleSubclass.class)),
+        assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSampleSubclass.class)),
                 hasPrototype(EqualsMethod.isolated()));
     }
 

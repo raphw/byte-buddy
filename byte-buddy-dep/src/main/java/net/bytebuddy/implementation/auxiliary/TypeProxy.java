@@ -128,7 +128,7 @@ public class TypeProxy implements AuxiliaryType {
          */
         @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Fields of enumerations are never serialized")
         AbstractMethodErrorThrow() {
-            TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
+            TypeDescription abstractMethodError = TypeDescription.ForLoadedType.of(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()
                     .filter(isConstructor().and(takesArguments(0))).getOnly();
             implementation = new Compound(TypeCreation.of(abstractMethodError),

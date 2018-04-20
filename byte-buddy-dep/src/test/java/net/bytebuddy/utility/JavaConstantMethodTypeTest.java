@@ -58,14 +58,14 @@ public class JavaConstantMethodTypeTest {
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfGetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(BAR));
-        assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Void.class)));
+        assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
 
     @Test
     public void testMethodTypeOfStaticGetter() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(QUX));
-        assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Void.class)));
+        assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Void.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
 
@@ -88,7 +88,7 @@ public class JavaConstantMethodTypeTest {
     @Test
     public void testMethodTypeOfConstant() throws Exception {
         JavaConstant.MethodType methodType = JavaConstant.MethodType.ofConstant(new Foo(null));
-        assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodType.getReturnType(), is((TypeDescription) TypeDescription.ForLoadedType.of(Foo.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
 

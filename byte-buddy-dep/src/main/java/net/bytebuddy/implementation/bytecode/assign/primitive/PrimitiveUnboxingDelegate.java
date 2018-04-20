@@ -95,8 +95,8 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                               String unboxingMethodName,
                               String unboxingMethodDescriptor) {
         this.size = sizeDifference.toIncreasingSize();
-        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
-        this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
+        this.wrapperType = TypeDescription.ForLoadedType.of(wrapperType);
+        this.primitiveType = TypeDescription.ForLoadedType.of(primitiveType);
         this.unboxingMethodName = unboxingMethodName;
         this.unboxingMethodDescriptor = unboxingMethodDescriptor;
     }

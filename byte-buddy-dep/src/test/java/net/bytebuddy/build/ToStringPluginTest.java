@@ -15,14 +15,14 @@ public class ToStringPluginTest {
     @Test
     public void testPluginMatches() throws Exception {
         Plugin plugin = new ToStringPlugin();
-        assertThat(plugin.matches(new TypeDescription.ForLoadedType(SimpleSample.class)), is(true));
+        assertThat(plugin.matches(TypeDescription.ForLoadedType.of(SimpleSample.class)), is(true));
         assertThat(plugin.matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
     public void testPluginEnhance() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), new TypeDescription.ForLoadedType(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -34,7 +34,7 @@ public class ToStringPluginTest {
     @Test
     public void testPluginEnhanceRedundant() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(RedundantSample.class), new TypeDescription.ForLoadedType(RedundantSample.class))
+                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -44,7 +44,7 @@ public class ToStringPluginTest {
     @Test
     public void testPluginEnhanceIgnore() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), new TypeDescription.ForLoadedType(IgnoredFieldSample.class))
+                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

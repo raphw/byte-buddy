@@ -23,13 +23,13 @@ public class InstanceTypeMatcherTest extends AbstractElementMatcherTest<Instance
 
     @Test
     public void testMatch() throws Exception {
-        when(matcher.matches(new TypeDescription.ForLoadedType(object.getClass()))).thenReturn(true);
+        when(matcher.matches(TypeDescription.ForLoadedType.of(object.getClass()))).thenReturn(true);
         assertThat(new InstanceTypeMatcher<Object>(matcher).matches(object), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(matcher.matches(new TypeDescription.ForLoadedType(object.getClass()))).thenReturn(false);
+        when(matcher.matches(TypeDescription.ForLoadedType.of(object.getClass()))).thenReturn(false);
         assertThat(new InstanceTypeMatcher<Object>(matcher).matches(object), is(false));
     }
 

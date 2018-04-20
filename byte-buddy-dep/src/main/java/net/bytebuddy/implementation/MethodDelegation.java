@@ -1191,7 +1191,7 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A method delegation that redirects method calls to a static method of the supplied type.
          */
         public MethodDelegation to(Class<?> type) {
-            return to(new TypeDescription.ForLoadedType(type));
+            return to(TypeDescription.ForLoadedType.of(type));
         }
 
         /**
@@ -1361,7 +1361,7 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A delegation that redirects method calls to a constructor of the supplied type.
          */
         public MethodDelegation toConstructor(Class<?> type) {
-            return toConstructor(new TypeDescription.ForLoadedType(type));
+            return toConstructor(TypeDescription.ForLoadedType.of(type));
         }
 
         /**

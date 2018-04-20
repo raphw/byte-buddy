@@ -44,7 +44,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType) {
-        return throwing(new TypeDescription.ForLoadedType(exceptionType));
+        return throwing(TypeDescription.ForLoadedType.of(exceptionType));
     }
 
     /**
@@ -74,7 +74,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType, String message) {
-        return throwing(new TypeDescription.ForLoadedType(exceptionType), message);
+        return throwing(TypeDescription.ForLoadedType.of(exceptionType), message);
     }
 
     /**

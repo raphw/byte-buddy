@@ -403,9 +403,9 @@ public class InstrumentedTypeDefaultTest {
         assertThat(makePlainInstrumentedType().isAssignableFrom(Integer.class), is(false));
         TypeDescription objectTypeDescription = TypeDescription.OBJECT;
         assertThat(makePlainInstrumentedType().isAssignableFrom(objectTypeDescription), is(false));
-        TypeDescription serializableTypeDescription = new TypeDescription.ForLoadedType(Serializable.class);
+        TypeDescription serializableTypeDescription = TypeDescription.ForLoadedType.of(Serializable.class);
         assertThat(makePlainInstrumentedType().isAssignableFrom(serializableTypeDescription), is(false));
-        TypeDescription integerTypeDescription = new TypeDescription.ForLoadedType(Integer.class);
+        TypeDescription integerTypeDescription = TypeDescription.ForLoadedType.of(Integer.class);
         assertThat(makePlainInstrumentedType().isAssignableFrom(integerTypeDescription), is(false));
     }
 
@@ -581,14 +581,14 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeDuplicateInterface() throws Exception {
         makePlainInstrumentedType().withInterfaces(new TypeList.Generic.Explicit(
-                new TypeDescription.ForLoadedType(Serializable.class),
-                new TypeDescription.ForLoadedType(Serializable.class)
+                TypeDescription.ForLoadedType.of(Serializable.class),
+                TypeDescription.ForLoadedType.of(Serializable.class)
         )).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeThrowableWithGenerics() throws Exception {
-        InstrumentedType.Factory.Default.MODIFIABLE.represent(new TypeDescription.ForLoadedType(Exception.class))
+        InstrumentedType.Factory.Default.MODIFIABLE.represent(TypeDescription.ForLoadedType.of(Exception.class))
                 .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
                 .validated();
     }
@@ -1237,7 +1237,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInconsistentReceiverConstructorInnerClass() throws Exception {
-        InstrumentedType.Factory.Default.MODIFIABLE.represent(new TypeDescription.ForLoadedType(Foo.class))
+        InstrumentedType.Factory.Default.MODIFIABLE.represent(TypeDescription.ForLoadedType.of(Foo.class))
                 .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),

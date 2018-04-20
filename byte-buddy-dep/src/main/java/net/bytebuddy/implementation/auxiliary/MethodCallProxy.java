@@ -171,7 +171,7 @@ public class MethodCallProxy implements AuxiliaryType {
         @SuppressFBWarnings(value = "SE_BAD_FIELD_STORE", justification = "Precomputed method graph is not intended for serialization")
         PrecomputedMethodGraph() {
             LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node>();
-            MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
+            MethodDescription callMethod = new MethodDescription.Latent(TypeDescription.ForLoadedType.of(Callable.class),
                     "call",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                     Collections.<TypeVariableToken>emptyList(),
@@ -182,7 +182,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED);
             nodes.put(callMethod.asSignatureToken(), new MethodGraph.Node.Simple(callMethod));
-            MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
+            MethodDescription runMethod = new MethodDescription.Latent(TypeDescription.ForLoadedType.of(Runnable.class),
                     "run",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
                     Collections.<TypeVariableToken>emptyList(),

@@ -18,37 +18,37 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     protected TypeDescription describe(Class<?> type) {
-        return new TypeDescription.ForLoadedType(type);
+        return TypeDescription.ForLoadedType.of(type);
     }
 
     @Override
     protected TypeDescription.Generic describeType(Field field) {
-        return new TypeDescription.ForLoadedType(field.getDeclaringClass()).getDeclaredFields().filter(ElementMatchers.is(field)).getOnly().getType();
+        return TypeDescription.ForLoadedType.of(field.getDeclaringClass()).getDeclaredFields().filter(ElementMatchers.is(field)).getOnly().getType();
     }
 
     @Override
     protected TypeDescription.Generic describeReturnType(Method method) {
-        return new TypeDescription.ForLoadedType(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getReturnType();
+        return TypeDescription.ForLoadedType.of(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getReturnType();
     }
 
     @Override
     protected TypeDescription.Generic describeParameterType(Method method, int index) {
-        return new TypeDescription.ForLoadedType(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getParameters().get(index).getType();
+        return TypeDescription.ForLoadedType.of(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getParameters().get(index).getType();
     }
 
     @Override
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
-        return new TypeDescription.ForLoadedType(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getExceptionTypes().get(index);
+        return TypeDescription.ForLoadedType.of(method.getDeclaringClass()).getDeclaredMethods().filter(ElementMatchers.is(method)).getOnly().getExceptionTypes().get(index);
     }
 
     @Override
     protected TypeDescription.Generic describeSuperClass(Class<?> type) {
-        return new TypeDescription.ForLoadedType(type).getSuperClass();
+        return TypeDescription.ForLoadedType.of(type).getSuperClass();
     }
 
     @Override
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
-        return new TypeDescription.ForLoadedType(type).getInterfaces().get(index);
+        return TypeDescription.ForLoadedType.of(type).getInterfaces().get(index);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     @Test
     public void testLazyResolution() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Foo.class));
-        new TypeDescription.ForLoadedType(classLoader.loadClass(Foo.class.getName()));
+        TypeDescription.ForLoadedType.of(classLoader.loadClass(Foo.class.getName()));
     }
 
     public static class Foo {

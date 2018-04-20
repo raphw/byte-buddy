@@ -6,12 +6,12 @@ public class TypeListExplicitTest extends AbstractTypeListTest<TypeDescription> 
 
     @Override
     protected TypeDescription getFirst() throws Exception {
-        return new TypeDescription.ForLoadedType(Foo.class);
+        return TypeDescription.ForLoadedType.of(Foo.class);
     }
 
     @Override
     protected TypeDescription getSecond() throws Exception {
-        return new TypeDescription.ForLoadedType(Bar.class);
+        return TypeDescription.ForLoadedType.of(Bar.class);
     }
 
     @Override

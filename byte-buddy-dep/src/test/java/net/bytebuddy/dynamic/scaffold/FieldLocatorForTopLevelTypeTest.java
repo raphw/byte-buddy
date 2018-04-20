@@ -24,31 +24,31 @@ public class FieldLocatorForTopLevelTypeTest {
 
     @Test
     public void testExactTypeFound() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
+        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(TypeDescription.ForLoadedType.of(Foo.class)).locate(FOO);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testExactTypeFoundWithType() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
+        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(TypeDescription.ForLoadedType.of(Foo.class)).locate(FOO, TypeDescription.ForLoadedType.of(Void.class));
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testExactTypeNotFoundInherited() throws Exception {
-        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Bar.class)).locate(FOO).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(TypeDescription.ForLoadedType.of(Bar.class)).locate(FOO).isResolved(), is(false));
     }
 
     @Test
     public void testExactTypeNotFoundNotExistent() throws Exception {
-        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(TypeDescription.ForLoadedType.of(Foo.class)).locate(QUX).isResolved(), is(false));
     }
 
     @Test
     public void testExactTypeNotFoundWrongType() throws Exception {
-        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(TypeDescription.ForLoadedType.of(Foo.class)).locate(FOO, TypeDescription.ForLoadedType.of(Object.class)).isResolved(), is(false));
     }
 
     @Test

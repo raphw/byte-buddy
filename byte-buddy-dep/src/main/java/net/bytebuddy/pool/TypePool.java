@@ -1,5 +1,24 @@
 package net.bytebuddy.pool;
 
+import static net.bytebuddy.matcher.ElementMatchers.hasDescriptor;
+import static net.bytebuddy.matcher.ElementMatchers.hasMethodName;
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericSignatureFormatError;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
@@ -19,19 +38,18 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.OpenedClassReader;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
+import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
-
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericSignatureFormatError;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type pool allows the retrieval of {@link TypeDescription} by its name.
@@ -303,7 +321,7 @@ public interface TypePool {
                     float.class,
                     double.class,
                     void.class}) {
-                primitiveTypes.put(primitiveType.getName(), new TypeDescription.ForLoadedType(primitiveType));
+                primitiveTypes.put(primitiveType.getName(), TypeDescription.ForLoadedType.of(primitiveType));
                 primitiveDescriptors.put(Type.getDescriptor(primitiveType), primitiveType.getName());
             }
             PRIMITIVE_TYPES = Collections.unmodifiableMap(primitiveTypes);
@@ -729,7 +747,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return RenderingDispatcher.CURRENT.toSourceString(new TypeDescription.ForLoadedType(type));
+                    return RenderingDispatcher.CURRENT.toSourceString(TypeDescription.ForLoadedType.of(type));
                 }
             }
         }
@@ -3152,7 +3170,7 @@ public interface TypePool {
                      * @param type The loaded type representing this primitive.
                      */
                     ForPrimitiveType(Class<?> type) {
-                        typeDescription = new ForLoadedType(type);
+                        typeDescription = ForLoadedType.of(type);
                     }
 
                     /**
@@ -5634,7 +5652,7 @@ public interface TypePool {
                      * @param values         A map of annotation value names to their value representations.
                      */
                     private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
-                        super(typePool, new ForLoadedType(annotationType), values);
+                        super(typePool, ForLoadedType.of(annotationType), values);
                         this.annotationType = annotationType;
                     }
 
@@ -7641,7 +7659,7 @@ public interface TypePool {
         @Override
         public Resolution doDescribe(String name) {
             try {
-                return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
+                return new Resolution.Simple(TypeDescription.ForLoadedType.of(Class.forName(name, false, classLoader)));
             } catch (ClassNotFoundException ignored) {
                 return new Resolution.Illegal(name);
             }

@@ -99,7 +99,7 @@ public @interface FieldProxy {
          * Fetches a reference to all annotation properties.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(FieldProxy.class).getDeclaredMethods();
             DECLARING_TYPE = methodList.filter(named("declaringType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
@@ -114,7 +114,7 @@ public @interface FieldProxy {
          * @return A binder for the {@link FieldProxy} annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(type));
+            return install(TypeDescription.ForLoadedType.of(type));
         }
 
         /**
@@ -164,7 +164,7 @@ public @interface FieldProxy {
          * @return A binder for the {@link FieldProxy} annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType, Class<?> setterType) {
-            return install(new TypeDescription.ForLoadedType(getterType), new TypeDescription.ForLoadedType(setterType));
+            return install(TypeDescription.ForLoadedType.of(getterType), TypeDescription.ForLoadedType.of(setterType));
         }
 
         /**

@@ -52,7 +52,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassInjectionAvailableRule.Enforce
     public void testInjection() throws Exception {
         new ClassInjector.UsingReflection(classLoader)
-                .inject(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(Foo.class), ClassFileExtraction.extract(Foo.class)));
+                .inject(Collections.<TypeDescription, byte[]>singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileExtraction.extract(Foo.class)));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 

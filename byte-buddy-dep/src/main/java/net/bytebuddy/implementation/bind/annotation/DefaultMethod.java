@@ -86,7 +86,7 @@ public @interface DefaultMethod {
          * Locates method constants for properties of the default method annotation.
          */
         static {
-            MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(DefaultMethod.class).getDeclaredMethods();
+            MethodList<MethodDescription.InDefinedShape> methodList = TypeDescription.ForLoadedType.of(DefaultMethod.class).getDeclaredMethods();
             CACHED = methodList.filter(named("cached")).getOnly();
             TARGET_TYPE = methodList.filter(named("targetType")).getOnly();
             NULL_IF_IMPOSSIBLE = methodList.filter(named("nullIfImpossible")).getOnly();
@@ -222,7 +222,7 @@ public @interface DefaultMethod {
                 StackManipulation stackManipulation = MethodConstant.forMethod(implementationContext.registerAccessorFor(specialMethodInvocation,
                         MethodAccessorFactory.AccessType.PUBLIC));
                 return (cached
-                        ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
+                        ? FieldAccess.forField(implementationContext.cache(stackManipulation, TypeDescription.ForLoadedType.of(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
             }
         }

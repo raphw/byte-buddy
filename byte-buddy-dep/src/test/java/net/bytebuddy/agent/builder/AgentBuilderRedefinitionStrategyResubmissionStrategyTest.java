@@ -81,7 +81,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -107,7 +107,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verify(instrumentation).isModifiableClass(Foo.class);
         verify(instrumentation).retransformClasses(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -131,7 +131,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -165,7 +165,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
             }
         }));
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -189,7 +189,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -232,7 +232,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -278,7 +278,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -315,7 +315,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -353,7 +353,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -394,7 +394,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -419,7 +419,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -442,7 +442,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -470,7 +470,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -493,7 +493,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -534,7 +534,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -578,7 +578,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -620,7 +620,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
         });
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -666,7 +666,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
             }
         });
         RuntimeException runtimeException = new RuntimeException();
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -691,7 +691,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -717,7 +717,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
             }
         });
         RuntimeException runtimeException = new RuntimeException();
-        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+        when(rawMatcher.matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,
@@ -745,7 +745,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
-        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
+        verify(rawMatcher).matches(TypeDescription.ForLoadedType.of(Foo.class),
                 Foo.class.getClassLoader(),
                 JavaModule.ofType(Foo.class),
                 Foo.class,

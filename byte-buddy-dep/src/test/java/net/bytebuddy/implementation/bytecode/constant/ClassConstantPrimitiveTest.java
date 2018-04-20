@@ -35,8 +35,8 @@ public class ClassConstantPrimitiveTest {
     private Implementation.Context implementationContext;
 
     public ClassConstantPrimitiveTest(Class<?> primitiveType, Class<?> wrapperType) {
-        this.primitiveType = new TypeDescription.ForLoadedType(primitiveType);
-        this.wrapperType = new TypeDescription.ForLoadedType(wrapperType);
+        this.primitiveType = TypeDescription.ForLoadedType.of(primitiveType);
+        this.wrapperType = TypeDescription.ForLoadedType.of(wrapperType);
     }
 
     @Parameterized.Parameters

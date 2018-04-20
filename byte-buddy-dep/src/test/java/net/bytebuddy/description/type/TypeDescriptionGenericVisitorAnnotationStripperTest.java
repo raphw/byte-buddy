@@ -86,7 +86,7 @@ public class TypeDescriptionGenericVisitorAnnotationStripperTest {
 
     @Test
     public void testParameterized() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.Builder.parameterizedType(TypeDescription.ForLoadedType.of(Collection.class),
                 TypeDescription.Generic.Builder.rawType(Object.class).annotate(annotationDescription).build()).annotate(annotationDescription).build();
         assertThat(TypeDescription.Generic.Visitor.AnnotationStripper.INSTANCE.onParameterizedType(typeDescription), is(typeDescription));
         assertThat(TypeDescription.Generic.Visitor.AnnotationStripper.INSTANCE.onParameterizedType(typeDescription).getDeclaredAnnotations().size(), is(0));

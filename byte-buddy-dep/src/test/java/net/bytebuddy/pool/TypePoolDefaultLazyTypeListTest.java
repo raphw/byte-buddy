@@ -41,6 +41,6 @@ public class TypePoolDefaultLazyTypeListTest extends AbstractTypeListTest<Class<
 
     @Override
     protected TypeDescription asElement(Class<?> element) {
-        return new TypeDescription.ForLoadedType(element);
+        return TypeDescription.ForLoadedType.of(element);
     }
 }

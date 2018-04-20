@@ -754,7 +754,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(Class<?> type) {
-        return isDeclaredBy(new TypeDescription.ForLoadedType(type));
+        return isDeclaredBy(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -823,7 +823,7 @@ public final class ElementMatchers {
      * @return A matcher for a byte code element to be visible to a given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(Class<?> type) {
-        return isVisibleTo(new TypeDescription.ForLoadedType(type));
+        return isVisibleTo(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -846,7 +846,7 @@ public final class ElementMatchers {
      * @return A matcher for a byte code element to be accessible to a given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isAccessibleTo(Class<?> type) {
-        return isAccessibleTo(new TypeDescription.ForLoadedType(type));
+        return isAccessibleTo(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -890,7 +890,7 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code type}.
      */
     public static <T extends AnnotationSource> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
-        return isAnnotatedWith(new TypeDescription.ForLoadedType(type));
+        return isAnnotatedWith(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1217,7 +1217,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given argument type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, Class<?> type) {
-        return takesArgument(index, new TypeDescription.ForLoadedType(type));
+        return takesArgument(index, TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1325,7 +1325,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by its declaration of throwing a checked exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {
-        return canThrow(new TypeDescription.ForLoadedType(exceptionType));
+        return canThrow(TypeDescription.ForLoadedType.of(exceptionType));
     }
 
     /**
@@ -1378,7 +1378,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that exactly matches the provided exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(Class<? extends Throwable> exceptionType) {
-        return declaresException(new TypeDescription.ForLoadedType(exceptionType));
+        return declaresException(TypeDescription.ForLoadedType.of(exceptionType));
     }
 
     /**
@@ -1414,7 +1414,7 @@ public final class ElementMatchers {
      * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFrom(Class<?> type) {
-        return isOverriddenFrom(new TypeDescription.ForLoadedType(type));
+        return isOverriddenFrom(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1647,7 +1647,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Class<?> type) {
-        return isSetter(new TypeDescription.ForLoadedType(type));
+        return isSetter(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1738,7 +1738,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with the given type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Class<?> type) {
-        return isGetter(new TypeDescription.ForLoadedType(type));
+        return isGetter(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1832,7 +1832,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a sub type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(Class<?> type) {
-        return isSubTypeOf(new TypeDescription.ForLoadedType(type));
+        return isSubTypeOf(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1854,7 +1854,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(Class<?> type) {
-        return isSuperTypeOf(new TypeDescription.ForLoadedType(type));
+        return isSuperTypeOf(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -1899,7 +1899,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any inherited annotation by their type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
-        return inheritsAnnotation(new TypeDescription.ForLoadedType(type));
+        return inheritsAnnotation(TypeDescription.ForLoadedType.of(type));
     }
 
     /**
@@ -2023,7 +2023,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(Class<?> fieldType) {
-        return fieldType(new TypeDescription.ForLoadedType(fieldType));
+        return fieldType(TypeDescription.ForLoadedType.of(fieldType));
     }
 
     /**
@@ -2076,7 +2076,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the annotation's type for being equal to the given type.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(Class<? extends Annotation> type) {
-        return annotationType(new TypeDescription.ForLoadedType(type));
+        return annotationType(TypeDescription.ForLoadedType.of(type));
     }
 
     /**

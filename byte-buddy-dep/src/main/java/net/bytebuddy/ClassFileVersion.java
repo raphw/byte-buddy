@@ -234,7 +234,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @throws IOException If an error occurs while reading the class file.
      */
     public static ClassFileVersion of(Class<?> type, ClassFileLocator classFileLocator) throws IOException {
-        return of(new TypeDescription.ForLoadedType(type), classFileLocator);
+        return of(TypeDescription.ForLoadedType.of(type), classFileLocator);
     }
 
     /**

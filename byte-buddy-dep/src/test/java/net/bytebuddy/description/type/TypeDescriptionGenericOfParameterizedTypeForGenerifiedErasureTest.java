@@ -15,7 +15,7 @@ public class TypeDescriptionGenericOfParameterizedTypeForGenerifiedErasureTest {
 
     @Test
     public void testGenerifiedType() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(new TypeDescription.ForLoadedType(Foo.class));
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(TypeDescription.ForLoadedType.of(Foo.class));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getTypeArguments().size(), is(1));
         assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));

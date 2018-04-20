@@ -40,7 +40,7 @@ public class EqualsMethod implements Implementation {
     /**
      * The {@link Object#equals(Object)} method.
      */
-    private static final MethodDescription.InDefinedShape EQUALS = new TypeDescription.ForLoadedType(Object.class)
+    private static final MethodDescription.InDefinedShape EQUALS = TypeDescription.OBJECT
             .getDeclaredMethods()
             .filter(isEquals())
             .getOnly();
@@ -244,7 +244,7 @@ public class EqualsMethod implements Implementation {
         /**
          * The {@link Object#getClass()} method.
          */
-        protected static final MethodDescription.InDefinedShape GET_CLASS = new TypeDescription.ForLoadedType(Object.class)
+        protected static final MethodDescription.InDefinedShape GET_CLASS = TypeDescription.ForLoadedType.of(Object.class)
                 .getDeclaredMethods()
                 .filter(named("getClass"))
                 .getOnly();

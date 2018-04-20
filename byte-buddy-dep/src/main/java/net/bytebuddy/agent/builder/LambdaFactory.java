@@ -74,7 +74,7 @@ public class LambdaFactory {
     @SuppressWarnings("all")
     public static boolean register(ClassFileTransformer classFileTransformer, Object classFileFactory) {
         try {
-            TypeDescription typeDescription = new TypeDescription.ForLoadedType(LambdaFactory.class);
+            TypeDescription typeDescription = TypeDescription.ForLoadedType.of(LambdaFactory.class);
             Class<?> lambdaFactory = ClassInjector.UsingReflection.ofSystemClassLoader()
                     .inject(Collections.singletonMap(typeDescription, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
                     .get(typeDescription);

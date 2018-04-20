@@ -29,7 +29,7 @@ public class ClassLoadingStrategyUsingLookupTest {
 
     @Before
     public void setUp() throws Exception {
-        typeDescription = new TypeDescription.ForLoadedType(Foo.class);
+        typeDescription = TypeDescription.ForLoadedType.of(Foo.class);
         binaryRepresentation = new byte[]{1, 2, 3};
     }
 

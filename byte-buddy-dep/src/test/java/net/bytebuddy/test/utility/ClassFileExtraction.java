@@ -38,7 +38,7 @@ public class ClassFileExtraction {
     public static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
         ClassWriter classWriter = new ClassWriter(classReader, AsmVisitorWrapper.NO_FLAGS);
-        classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type),
+        classReader.accept(asmVisitorWrapper.wrap(TypeDescription.ForLoadedType.of(type),
                 classWriter,
                 new IllegalContext(),
                 TypePool.Empty.INSTANCE,

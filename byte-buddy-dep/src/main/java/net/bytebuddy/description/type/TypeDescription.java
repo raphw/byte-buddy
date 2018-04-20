@@ -3364,7 +3364,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(type);
+                    return TypeDescription.ForLoadedType.of(type);
                 }
 
                 @Override
@@ -4449,7 +4449,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
+                    return TypeDescription.ForLoadedType.of((Class<?>) parameterizedType.getRawType());
                 }
 
                 @Override
@@ -5015,7 +5015,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public TypeVariableSource getTypeVariableSource() {
                     GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
                     if (genericDeclaration instanceof Class) {
-                        return new TypeDescription.ForLoadedType((Class<?>) genericDeclaration);
+                        return TypeDescription.ForLoadedType.of((Class<?>) genericDeclaration);
                     } else if (genericDeclaration instanceof Method) {
                         return new MethodDescription.ForLoadedMethod((Method) genericDeclaration);
                     } else if (genericDeclaration instanceof Constructor) {
@@ -5501,7 +5501,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     Class<?> superClass = type.getSuperclass();
                     return superClass == null
                             ? TypeDescription.UNDEFINED
-                            : new ForLoadedType(superClass);
+                            : ForLoadedType.of(superClass);
                 }
 
                 @Override
@@ -5536,7 +5536,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new ForLoadedType(field.getType());
+                    return ForLoadedType.of(field.getType());
                 }
 
                 @Override
@@ -5571,7 +5571,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new ForLoadedType(method.getReturnType());
+                    return ForLoadedType.of(method.getReturnType());
                 }
 
                 @Override
@@ -5624,7 +5624,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure[index]);
+                    return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -5677,7 +5677,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure[index]);
+                    return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -5778,7 +5778,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return A builder for creating a raw type.
              */
             public static Builder rawType(Class<?> type) {
-                return rawType(new ForLoadedType(type));
+                return rawType(ForLoadedType.of(type));
             }
 
             /**
@@ -5799,7 +5799,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return A builder for creating a raw type.
              */
             public static Builder rawType(Class<?> type, Generic ownerType) {
-                return rawType(new ForLoadedType(type), ownerType);
+                return rawType(ForLoadedType.of(type), ownerType);
             }
 
             /**
@@ -5909,7 +5909,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * @return A builder for creating a parameterized type.
              */
             public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type ownerType, List<? extends java.lang.reflect.Type> parameters) {
-                return parameterizedType(new ForLoadedType(rawType),
+                return parameterizedType(ForLoadedType.of(rawType),
                         ownerType == null
                                 ? null
                                 : Sort.describe(ownerType),
@@ -6481,7 +6481,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isAssignableFrom(Class<?> type) {
-            return isAssignableFrom(new ForLoadedType(type));
+            return isAssignableFrom(ForLoadedType.of(type));
         }
 
         @Override
@@ -6491,7 +6491,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isAssignableTo(Class<?> type) {
-            return isAssignableTo(new ForLoadedType(type));
+            return isAssignableTo(ForLoadedType.of(type));
         }
 
         @Override
@@ -6781,21 +6781,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public TypeDescription asBoxed() {
             if (represents(boolean.class)) {
-                return new ForLoadedType(Boolean.class);
+                return ForLoadedType.of(Boolean.class);
             } else if (represents(byte.class)) {
-                return new ForLoadedType(Byte.class);
+                return ForLoadedType.of(Byte.class);
             } else if (represents(short.class)) {
-                return new ForLoadedType(Short.class);
+                return ForLoadedType.of(Short.class);
             } else if (represents(char.class)) {
-                return new ForLoadedType(Character.class);
+                return ForLoadedType.of(Character.class);
             } else if (represents(int.class)) {
-                return new ForLoadedType(Integer.class);
+                return ForLoadedType.of(Integer.class);
             } else if (represents(long.class)) {
-                return new ForLoadedType(Long.class);
+                return ForLoadedType.of(Long.class);
             } else if (represents(float.class)) {
-                return new ForLoadedType(Float.class);
+                return ForLoadedType.of(Float.class);
             } else if (represents(double.class)) {
-                return new ForLoadedType(Double.class);
+                return ForLoadedType.of(Double.class);
             } else {
                 return this;
             }
@@ -6804,21 +6804,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public TypeDescription asUnboxed() {
             if (represents(Boolean.class)) {
-                return new ForLoadedType(boolean.class);
+                return ForLoadedType.of(boolean.class);
             } else if (represents(Byte.class)) {
-                return new ForLoadedType(byte.class);
+                return ForLoadedType.of(byte.class);
             } else if (represents(Short.class)) {
-                return new ForLoadedType(short.class);
+                return ForLoadedType.of(short.class);
             } else if (represents(Character.class)) {
-                return new ForLoadedType(char.class);
+                return ForLoadedType.of(char.class);
             } else if (represents(Integer.class)) {
-                return new ForLoadedType(int.class);
+                return ForLoadedType.of(int.class);
             } else if (represents(Long.class)) {
-                return new ForLoadedType(long.class);
+                return ForLoadedType.of(long.class);
             } else if (represents(Float.class)) {
-                return new ForLoadedType(float.class);
+                return ForLoadedType.of(float.class);
             } else if (represents(Double.class)) {
-                return new ForLoadedType(double.class);
+                return ForLoadedType.of(double.class);
             } else {
                 return this;
             }
@@ -7050,12 +7050,45 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         private static final long serialVersionUID = 1L;
 
         /**
+         * A cache of type descriptions for commonly used types to avoid unnecessary allocations.
+         */
+        @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "This collection is not exposed.")
+        private static final Map<Class<?>, TypeDescription> TYPE_CACHE;
+
+        /*
+         * Initializes the type cache.
+         */
+        static {
+            TYPE_CACHE = new HashMap<Class<?>, TypeDescription>();
+            TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
+            TYPE_CACHE.put(String.class, new ForLoadedType(String.class));
+            TYPE_CACHE.put(Boolean.class, new ForLoadedType(Boolean.class));
+            TYPE_CACHE.put(Byte.class, new ForLoadedType(Byte.class));
+            TYPE_CACHE.put(Short.class, new ForLoadedType(Short.class));
+            TYPE_CACHE.put(Character.class, new ForLoadedType(Character.class));
+            TYPE_CACHE.put(Integer.class, new ForLoadedType(Integer.class));
+            TYPE_CACHE.put(Long.class, new ForLoadedType(Long.class));
+            TYPE_CACHE.put(Float.class, new ForLoadedType(Float.class));
+            TYPE_CACHE.put(Double.class, new ForLoadedType(Double.class));
+            TYPE_CACHE.put(void.class, new ForLoadedType(void.class));
+            TYPE_CACHE.put(boolean.class, new ForLoadedType(boolean.class));
+            TYPE_CACHE.put(byte.class, new ForLoadedType(byte.class));
+            TYPE_CACHE.put(short.class, new ForLoadedType(short.class));
+            TYPE_CACHE.put(char.class, new ForLoadedType(char.class));
+            TYPE_CACHE.put(int.class, new ForLoadedType(int.class));
+            TYPE_CACHE.put(long.class, new ForLoadedType(long.class));
+            TYPE_CACHE.put(float.class, new ForLoadedType(float.class));
+            TYPE_CACHE.put(double.class, new ForLoadedType(double.class));
+        }
+
+        /**
          * The loaded type this instance represents.
          */
         private final Class<?> type;
 
         /**
-         * Creates a new immutable type description for a loaded type.
+         * Creates a new immutable type description for a loaded type. This constructor should not normally be called.
+         * Use {@link ForLoadedType#of(Class)} instead.
          *
          * @param type The type to be represented by this type description.
          */
@@ -7077,6 +7110,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return anonymousLoaderIndex == -1
                     ? name
                     : name.substring(0, anonymousLoaderIndex);
+        }
+
+        /**
+         * Returns a new immutable type description for a loaded type.
+         *
+         * @param type The type to be represented by this type description.
+         * @return the type description representing the given type.
+         */
+        public static TypeDescription of(Class<?> type) {
+            TypeDescription typeDescription = TYPE_CACHE.get(type);
+            return typeDescription == null
+                    ? new ForLoadedType(type)
+                    : typeDescription;
         }
 
         @Override
@@ -7102,7 +7148,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Class<?> componentType = type.getComponentType();
             return componentType == null
                     ? TypeDescription.UNDEFINED
-                    : new ForLoadedType(componentType);
+                    : ForLoadedType.of(componentType);
         }
 
         @Override
@@ -7149,7 +7195,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
                     ? TypeDescription.UNDEFINED
-                    : new ForLoadedType(declaringType);
+                    : ForLoadedType.of(declaringType);
         }
 
         @Override
@@ -7170,7 +7216,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null
                     ? TypeDescription.UNDEFINED
-                    : new ForLoadedType(enclosingType);
+                    : ForLoadedType.of(enclosingType);
         }
 
         @Override
@@ -7977,7 +8023,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public TypeDescription asErasure() {
                 try {
-                    return new ForLoadedType(classLoadingDelegate.load(delegate.asErasure().getName(), classLoader));
+                    return ForLoadedType.of(classLoadingDelegate.load(delegate.asErasure().getName(), classLoader));
                 } catch (ClassNotFoundException ignored) {
                     return delegate.asErasure();
                 }

@@ -145,7 +145,7 @@ public class TransformerForMethodTest {
 
     @Test
     public void testNoChangesUnlessSpecified() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Bar.class);
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
         MethodDescription transformed = Transformer.ForMethod.withModifiers().transform(typeDescription, methodDescription);
         assertThat(transformed, is(methodDescription));
@@ -154,7 +154,7 @@ public class TransformerForMethodTest {
 
     @Test
     public void testRetainsInstrumentedType() throws Exception {
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Bar.class);
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly();
         MethodDescription transformed = Transformer.ForMethod.withModifiers().transform(typeDescription, methodDescription);
         assertThat(transformed, is(methodDescription));

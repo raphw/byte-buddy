@@ -130,7 +130,7 @@ public class NexusAccessor {
                         ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
                                 .withValues(Arrays.asList(
                                         ClassConstant.of(TypeDescription.CLASS),
-                                        ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
+                                        ClassConstant.of(TypeDescription.ForLoadedType.of(int.class)))),
                         MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getMethod("getMethod", String.class, Class[].class))),
                         NullConstant.INSTANCE,
                         ArrayFactory.forType(TypeDescription.Generic.OBJECT)
@@ -200,8 +200,8 @@ public class NexusAccessor {
                 } else {
                     try {
                         Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
-                                .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
-                                .get(new TypeDescription.ForLoadedType(Nexus.class));
+                                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                                .get(TypeDescription.ForLoadedType.of(Nexus.class));
                         return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
                                 nexusType.getMethod("clean", Reference.class));
                     } catch (Exception exception) {
