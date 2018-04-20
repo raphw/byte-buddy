@@ -262,6 +262,11 @@ public class JavaModule implements NamedElement.WithOptionalName {
         class Enabled implements Dispatcher {
 
             /**
+             * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+             */
+            private static final Object[] NO_ARGUMENTS = new Object[0];
+
+            /**
              * The {@code java.lang.Class#getModule()} method.
              */
             private final Method getModule;
@@ -339,7 +344,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public JavaModule moduleOf(Class<?> type) {
                 try {
-                    return new JavaModule(getModule.invoke(type, (Object[]) null));
+                    return new JavaModule(getModule.invoke(type, NO_ARGUMENTS));
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getModule, exception);
                 } catch (InvocationTargetException exception) {
@@ -361,7 +366,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public ClassLoader getClassLoader(Object module) {
                 try {
-                    return (ClassLoader) getClassLoader.invoke(module, (Object[]) null);
+                    return (ClassLoader) getClassLoader.invoke(module, NO_ARGUMENTS);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getClassLoader, exception);
                 } catch (InvocationTargetException exception) {
@@ -372,7 +377,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public boolean isNamed(Object module) {
                 try {
-                    return (Boolean) isNamed.invoke(module, (Object[]) null);
+                    return (Boolean) isNamed.invoke(module, NO_ARGUMENTS);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + isNamed, exception);
                 } catch (InvocationTargetException exception) {
@@ -383,7 +388,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public String getName(Object module) {
                 try {
-                    return (String) getName.invoke(module, (Object[]) null);
+                    return (String) getName.invoke(module, NO_ARGUMENTS);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getName, exception);
                 } catch (InvocationTargetException exception) {

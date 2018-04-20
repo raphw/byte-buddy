@@ -146,6 +146,11 @@ public interface AnnotationDescription {
         private static final String TO_STRING = "toString";
 
         /**
+         * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+         */
+        private static final Object[] NO_ARGUMENTS = new Object[0];
+
+        /**
          * The loaded annotation type.
          */
         private final Class<? extends Annotation> annotationType;
@@ -317,7 +322,7 @@ public interface AnnotationDescription {
             try {
                 for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
                     try {
-                        if (!entry.getValue().represents(entry.getKey().invoke(other, (Object[]) null))) {
+                        if (!entry.getValue().represents(entry.getKey().invoke(other, NO_ARGUMENTS))) {
                             return false;
                         }
                     } catch (RuntimeException exception) {

@@ -335,6 +335,11 @@ public interface JavaConstant {
             class ForJava7CapableVm implements Dispatcher {
 
                 /**
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * A reference to {@code java.lang.invoke.MethodType#returnType}.
                  */
                 private final Method returnType;
@@ -358,7 +363,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> returnType(Object methodType) {
                     try {
-                        return (Class<?>) returnType.invoke(methodType, (Object[]) null);
+                        return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
                     } catch (InvocationTargetException exception) {
@@ -369,7 +374,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?>[] parameterArray(Object methodType) {
                     try {
-                        return (Class<?>[]) parameterArray.invoke(methodType, (Object[]) null);
+                        return (Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#parameterArray", exception);
                     } catch (InvocationTargetException exception) {
@@ -858,6 +863,11 @@ public interface JavaConstant {
             abstract class AbstractBase implements Dispatcher, Initializable {
 
                 /**
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
                  */
                 protected final Method publicLookup;
@@ -930,7 +940,7 @@ public interface JavaConstant {
                 @Override
                 public Object publicLookup() {
                     try {
-                        return publicLookup.invoke(null, (Object[]) null);
+                        return publicLookup.invoke(null, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles#publicLookup", exception);
                     } catch (InvocationTargetException exception) {
@@ -941,7 +951,7 @@ public interface JavaConstant {
                 @Override
                 public Object getMethodType(Object methodHandleInfo) {
                     try {
-                        return getMethodType.invoke(methodHandleInfo, (Object[]) null);
+                        return getMethodType.invoke(methodHandleInfo, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getMethodType", exception);
                     } catch (InvocationTargetException exception) {
@@ -952,7 +962,7 @@ public interface JavaConstant {
                 @Override
                 public int getReferenceKind(Object methodHandleInfo) {
                     try {
-                        return (Integer) getReferenceKind.invoke(methodHandleInfo, (Object[]) null);
+                        return (Integer) getReferenceKind.invoke(methodHandleInfo, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getReferenceKind", exception);
                     } catch (InvocationTargetException exception) {
@@ -963,7 +973,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> getDeclaringClass(Object methodHandleInfo) {
                     try {
-                        return (Class<?>) getDeclaringClass.invoke(methodHandleInfo, (Object[]) null);
+                        return (Class<?>) getDeclaringClass.invoke(methodHandleInfo, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getDeclaringClass", exception);
                     } catch (InvocationTargetException exception) {
@@ -974,7 +984,7 @@ public interface JavaConstant {
                 @Override
                 public String getName(Object methodHandleInfo) {
                     try {
-                        return (String) getName.invoke(methodHandleInfo, (Object[]) null);
+                        return (String) getName.invoke(methodHandleInfo, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandleInfo#getName", exception);
                     } catch (InvocationTargetException exception) {
@@ -985,7 +995,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> returnType(Object methodType) {
                     try {
-                        return (Class<?>) returnType.invoke(methodType, (Object[]) null);
+                        return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodType#returnType", exception);
                     } catch (InvocationTargetException exception) {
@@ -996,7 +1006,7 @@ public interface JavaConstant {
                 @Override
                 public List<? extends Class<?>> parameterArray(Object methodType) {
                     try {
-                        return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType, (Object[]) null));
+                        return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS));
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.MethodType#parameterArray", exception);
                     } catch (InvocationTargetException exception) {
@@ -1007,7 +1017,7 @@ public interface JavaConstant {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     try {
-                        return (Class<?>) lookupClass.invoke(lookup, (Object[]) null);
+                        return (Class<?>) lookupClass.invoke(lookup, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.MethodHandles.Lookup#lookupClass", exception);
                     } catch (InvocationTargetException exception) {

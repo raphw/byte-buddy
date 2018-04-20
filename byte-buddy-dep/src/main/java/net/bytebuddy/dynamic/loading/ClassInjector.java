@@ -1124,6 +1124,11 @@ public interface ClassInjector {
             class ForJava9CapableVm implements Dispatcher {
 
                 /**
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * The {@code java.lang.invoke.MethodHandles$#privateLookupIn} method.
                  */
                 private final Method privateLookupIn;
@@ -1173,7 +1178,7 @@ public interface ClassInjector {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     try {
-                        return (Class<?>) lookupClass.invoke(lookup, (Object[]) null);
+                        return (Class<?>) lookupClass.invoke(lookup, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupClass", exception);
                     } catch (InvocationTargetException exception) {
@@ -1184,7 +1189,7 @@ public interface ClassInjector {
                 @Override
                 public int lookupModes(Object lookup) {
                     try {
-                        return (Integer) lookupModes.invoke(lookup, (Object[]) null);
+                        return (Integer) lookupModes.invoke(lookup, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
                     } catch (InvocationTargetException exception) {

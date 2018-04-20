@@ -405,6 +405,11 @@ public interface ClassFileLocator extends Closeable {
     class ForModule implements ClassFileLocator {
 
         /**
+         * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+         */
+        private static final Object[] NO_ARGUMENTS = new Object[0];
+
+        /**
          * The represented Java module.
          */
         private final JavaModule module;
@@ -432,7 +437,7 @@ public interface ClassFileLocator extends Closeable {
                 Method getPackages = JavaType.MODULE.load().getMethod("getPackages");
                 for (Object rawModule : (Set<?>) layerType.getMethod("modules").invoke(layerType.getMethod("boot").invoke(null))) {
                     ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
-                    for (Object packageName : (Set<?>) getPackages.invoke(rawModule, (Object[]) null)) {
+                    for (Object packageName : (Set<?>) getPackages.invoke(rawModule, NO_ARGUMENTS)) {
                         bootModules.put((String) packageName, classFileLocator);
                     }
                 }
