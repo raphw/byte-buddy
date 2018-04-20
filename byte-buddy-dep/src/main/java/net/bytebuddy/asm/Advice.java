@@ -214,9 +214,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private final Assigner assigner;
 
     /**
-     * The stack manipulation to apply within a suppression handler.
+     * The exception handler to apply.
      */
-    private final StackManipulation exceptionHandler;
+    private final ExceptionHandler exceptionHandler;
 
     /**
      * The delegate implementation to apply if this advice is used as an instrumentation.
@@ -230,7 +230,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
-        this(methodEnter, methodExit, Assigner.DEFAULT, Removal.of(TypeDescription.THROWABLE), SuperMethodCall.INSTANCE);
+        this(methodEnter, methodExit, Assigner.DEFAULT, new ExceptionHandler.Simple(Removal.of(TypeDescription.THROWABLE)), SuperMethodCall.INSTANCE);
     }
 
     /**
@@ -239,13 +239,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodEnter      The dispatcher for instrumenting the instrumented method upon entering.
      * @param methodExit       The dispatcher for instrumenting the instrumented method upon exiting.
      * @param assigner         The assigner to use.
-     * @param exceptionHandler The stack manipulation to apply within a suppression handler.
+     * @param exceptionHandler The exception handler to apply.
      * @param delegate         The delegate implementation to apply if this advice is used as an instrumentation.
      */
     private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter,
                    Dispatcher.Resolved.ForMethodExit methodExit,
                    Assigner assigner,
-                   StackManipulation exceptionHandler,
+                   ExceptionHandler exceptionHandler,
                    Implementation delegate) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
@@ -499,7 +499,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler,
+                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -509,7 +509,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler,
+                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -522,7 +522,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler,
+                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -574,6 +574,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A version of this advice that applies the supplied exception handler.
      */
     public Advice withExceptionHandler(StackManipulation exceptionHandler) {
+        return withExceptionHandler(new ExceptionHandler.Simple(exceptionHandler));
+    }
+
+    /**
+     * Configures this advice to execute the given exception handler upon a suppressed exception. The stack manipulation is executed with a
+     * {@link Throwable} instance on the operand stack. The stack must be empty upon completing the exception handler.
+     *
+     * @param exceptionHandler The exception handler to apply.
+     * @return A version of this advice that applies the supplied exception handler.
+     */
+    public Advice withExceptionHandler(ExceptionHandler exceptionHandler) {
         return new Advice(methodEnter, methodExit, assigner, exceptionHandler, delegate);
     }
 
@@ -5053,6 +5064,47 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         injectFullFrame(methodVisitor, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * An exception handler is responsible for providing byte code for handling an exception thrown from a suppressing advice method.
+     */
+    public interface ExceptionHandler {
+
+        /**
+         * Resolves a stack manipulatuon to apply.
+         *
+         * @param instrumentedMethod The instrumented method.
+         * @param instrumentedType   The instrumented type.
+         * @return The stack manipulation to use.
+         */
+        StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType);
+
+        /**
+         * A simple exception handler that returns a fixed stack manipulation.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class Simple implements ExceptionHandler {
+
+            /**
+             * The stack manipulation to execute.
+             */
+            private final StackManipulation stackManipulation;
+
+            /**
+             * Creates a new simple exception handler.
+             *
+             * @param stackManipulation The stack manipulation to execute.
+             */
+            public Simple(StackManipulation stackManipulation) {
+                this.stackManipulation = stackManipulation;
+            }
+
+            @Override
+            public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                return stackManipulation;
             }
         }
     }
