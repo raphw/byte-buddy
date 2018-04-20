@@ -306,6 +306,11 @@ public interface ParameterDescription extends AnnotationSource,
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * A reference to {@code java.lang.reflect.Executable#getParameters}.
                  */
                 private final Method getParameters;
@@ -343,7 +348,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public int getModifiers(AccessibleObject executable, int index) {
                     try {
-                        return (Integer) getModifiers.invoke(getParameter(executable, index));
+                        return (Integer) getModifiers.invoke(getParameter(executable, index), NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
                     } catch (InvocationTargetException exception) {
@@ -354,7 +359,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public boolean isNamePresent(AccessibleObject executable, int index) {
                     try {
-                        return (Boolean) isNamePresent.invoke(getParameter(executable, index));
+                        return (Boolean) isNamePresent.invoke(getParameter(executable, index), NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#isNamePresent", exception);
                     } catch (InvocationTargetException exception) {
@@ -365,7 +370,7 @@ public interface ParameterDescription extends AnnotationSource,
                 @Override
                 public String getName(AccessibleObject executable, int index) {
                     try {
-                        return (String) getName.invoke(getParameter(executable, index));
+                        return (String) getName.invoke(getParameter(executable, index), NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getName", exception);
                     } catch (InvocationTargetException exception) {
@@ -382,7 +387,7 @@ public interface ParameterDescription extends AnnotationSource,
                  */
                 private Object getParameter(AccessibleObject executable, int index) {
                     try {
-                        return Array.get(getParameters.invoke(executable), index);
+                        return Array.get(getParameters.invoke(executable, NO_ARGUMENTS), index);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getParameters", exception);
                     } catch (InvocationTargetException exception) {

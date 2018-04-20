@@ -240,6 +240,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
+                 * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
+                 */
+                private static final Object[] NO_ARGUMENTS = new Object[0];
+
+                /**
                  * The {@code java.lang.reflect.Executable#getParameterCount()} method.
                  */
                 private final Method getParameterCount;
@@ -256,7 +261,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public int getParameterCount(Object executable) {
                     try {
-                        return (Integer) getParameterCount.invoke(executable);
+                        return (Integer) getParameterCount.invoke(executable, NO_ARGUMENTS);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
                     } catch (InvocationTargetException exception) {
