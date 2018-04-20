@@ -227,7 +227,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public TypeDescription getDeclaringType() {
-            return new TypeDescription.ForLoadedType(field.getDeclaringClass());
+            return TypeDescription.ForLoadedType.of(field.getDeclaringClass());
         }
 
         @Override
