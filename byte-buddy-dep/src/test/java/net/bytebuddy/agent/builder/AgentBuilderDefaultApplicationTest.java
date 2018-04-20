@@ -828,7 +828,7 @@ public class AgentBuilderDefaultApplicationTest {
                         .with(AgentBuilder.LocationStrategy.ForClassLoader.STRONG)
                         .include(BarAdvice.class.getClassLoader())
                         .with(Assigner.DEFAULT)
-                        .withExceptionHandler(Removal.SINGLE)
+                        .withExceptionHandler(new Advice.ExceptionHandler.Simple(Removal.SINGLE))
                         .advice(named(FOO), BarAdvice.class.getName()))
                 .installOnByteBuddyAgent();
         try {

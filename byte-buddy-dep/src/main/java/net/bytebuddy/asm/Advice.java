@@ -230,7 +230,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
-        this(methodEnter, methodExit, Assigner.DEFAULT, new ExceptionHandler.Simple(Removal.of(TypeDescription.THROWABLE)), SuperMethodCall.INSTANCE);
+        this(methodEnter, methodExit, Assigner.DEFAULT, ExceptionHandler.Default.SUPPRESSING, SuperMethodCall.INSTANCE);
     }
 
     /**
@@ -559,11 +559,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A version of this advice that prints any suppressed exception.
      */
     public Advice withExceptionPrinting() {
-        try {
-            return withExceptionHandler(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getMethod("printStackTrace"))));
-        } catch (NoSuchMethodException exception) {
-            throw new IllegalStateException("Cannot locate Throwable::printStackTrace");
-        }
+        return withExceptionHandler(ExceptionHandler.Default.PRINTING);
     }
 
     /**
@@ -5081,6 +5077,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The stack manipulation to use.
          */
         StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType);
+
+        /**
+         * Default implementations for commonly used exception handlers.
+         */
+        enum Default implements ExceptionHandler {
+
+            /**
+             * An exception handler the suppresses the exception.
+             */
+            SUPPRESSING {
+                @Override
+                public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                    return Removal.SINGLE;
+                }
+            },
+
+            /**
+             * An exception handler that invokes {@link Throwable#printStackTrace()}.
+             */
+            PRINTING {
+                @Override
+                public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                    try {
+                        return MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getMethod("printStackTrace")));
+                    } catch (NoSuchMethodException exception) {
+                        throw new IllegalStateException("Cannot locate Throwable::printStackTrace");
+                    }
+                }
+            }
+        }
 
         /**
          * A simple exception handler that returns a fixed stack manipulation.

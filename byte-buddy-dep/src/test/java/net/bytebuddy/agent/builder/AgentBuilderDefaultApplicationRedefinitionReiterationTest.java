@@ -97,7 +97,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
                         .with(AgentBuilder.LocationStrategy.ForClassLoader.STRONG)
                         .include(FooAdvice.class.getClassLoader())
                         .with(Assigner.DEFAULT)
-                        .withExceptionHandler(Removal.SINGLE)
+                        .withExceptionHandler(new Advice.ExceptionHandler.Simple(Removal.SINGLE))
                         .advice(named("createBar"), FooAdvice.class.getName()))
                 .asDecorator()
                 .type(ElementMatchers.named(Bar.class.getName()), ElementMatchers.is(classLoader))
@@ -105,7 +105,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
                         .with(AgentBuilder.LocationStrategy.ForClassLoader.STRONG)
                         .include(BarAdvice.class.getClassLoader())
                         .with(Assigner.DEFAULT)
-                        .withExceptionHandler(Removal.SINGLE)
+                        .withExceptionHandler(new Advice.ExceptionHandler.Simple(Removal.SINGLE))
                         .advice(named("toString"), BarAdvice.class.getName()))
                 .asDecorator()
                 .installOnByteBuddyAgent();

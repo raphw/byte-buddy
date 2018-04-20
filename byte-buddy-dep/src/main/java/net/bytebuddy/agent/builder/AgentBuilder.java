@@ -2053,7 +2053,7 @@ public interface AgentBuilder {
             /**
              * The exception handler to register for the advice.
              */
-            private final StackManipulation exceptionHandler;
+            private final Advice.ExceptionHandler exceptionHandler;
 
             /**
              * The assigner to use for the advice.
@@ -2094,7 +2094,7 @@ public interface AgentBuilder {
              */
             public ForAdvice(Advice.WithCustomMapping advice) {
                 this(advice,
-                        Removal.of(TypeDescription.THROWABLE),
+                        Advice.ExceptionHandler.Default.SUPPRESSING,
                         Assigner.DEFAULT,
                         ClassFileLocator.NoOp.INSTANCE,
                         PoolStrategy.Default.FAST,
@@ -2114,7 +2114,7 @@ public interface AgentBuilder {
              * @param entries          The advice entries to apply.
              */
             protected ForAdvice(Advice.WithCustomMapping advice,
-                                StackManipulation exceptionHandler,
+                                Advice.ExceptionHandler exceptionHandler,
                                 Assigner assigner,
                                 ClassFileLocator classFileLocator,
                                 PoolStrategy poolStrategy,
@@ -2173,7 +2173,7 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied exception handler.
              * @see Advice#withExceptionHandler(StackManipulation)
              */
-            public ForAdvice withExceptionHandler(StackManipulation exceptionHandler) {
+            public ForAdvice withExceptionHandler(Advice.ExceptionHandler exceptionHandler) {
                 return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
