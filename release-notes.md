@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. April 2018: version 1.8.8
+
+- Use cache for loaded `TypeDescription` to avoid overallocation.
+- Generalize exception handler API for `Advice`.
+
 ### 19. April 2018: version 1.8.7
 
 - Added `ClassWriterStrategy` that allows controlling how the constant pool is copied.
