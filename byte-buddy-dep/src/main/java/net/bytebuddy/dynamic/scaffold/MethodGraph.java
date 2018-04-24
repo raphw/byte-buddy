@@ -1055,6 +1055,11 @@ public interface MethodGraph {
                      * @return A store representing a combination of this store and the given store.
                      */
                     protected Store<V> combineWith(Store<V> store) {
+                        if (entries.isEmpty()) {
+                            return store;
+                        } else if (store.entries.isEmpty()) {
+                            return this;
+                        }
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         for (Entry<V> entry : store.entries.values()) {
                             Entry<V> previousEntry = entries.remove(entry.getKey()), injectedEntry = previousEntry == null
@@ -1072,6 +1077,11 @@ public interface MethodGraph {
                      * @return A store that represents this store with the given store injected.
                      */
                     protected Store<V> inject(Store<V> store) {
+                        if (entries.isEmpty()) {
+                            return store;
+                        } else if (store.entries.isEmpty()) {
+                            return this;
+                        }
                         LinkedHashMap<Harmonized<V>, Entry<V>> entries = new LinkedHashMap<Harmonized<V>, Entry<V>>(this.entries);
                         for (Entry<V> entry : store.entries.values()) {
                             Entry<V> dominantEntry = entries.remove(entry.getKey()), injectedEntry = dominantEntry == null
