@@ -1389,6 +1389,21 @@ public interface MethodDescription extends TypeVariableSource,
         public InDefinedShape asDefined() {
             return methodDescription.asDefined();
         }
+
+        @Override
+        public boolean isConstructor() {
+            return methodDescription.isConstructor();
+        }
+
+        @Override
+        public boolean isMethod() {
+            return methodDescription.isMethod();
+        }
+
+        @Override
+        public boolean isTypeInitializer() {
+            return methodDescription.isTypeInitializer();
+        }
     }
 
     /**
