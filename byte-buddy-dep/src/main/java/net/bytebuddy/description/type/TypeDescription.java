@@ -3339,6 +3339,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Represents a non-generic type for a loaded {@link Class}.
              */
+            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfNonGenericType {
 
                 /**
@@ -3396,6 +3397,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other instanceof ForLoadedType && ((ForLoadedType) other).type == type || super.equals(other);
                 }
             }
 
@@ -3758,6 +3764,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A description of a loaded generic array type.
              */
+            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfGenericArray {
 
                 /**
@@ -3798,6 +3805,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other instanceof ForLoadedType && ((ForLoadedType) other).genericArrayType == genericArrayType || super.equals(other);
                 }
             }
 
@@ -3993,6 +4005,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Description of a loaded wildcard.
              */
+            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfWildcardType {
 
                 /**
@@ -4038,6 +4051,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other instanceof ForLoadedType && ((ForLoadedType) other).wildcardType == wildcardType || super.equals(other);
                 }
 
                 /**
@@ -4412,6 +4430,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Description of a loaded parameterized type.
              */
+            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfParameterizedType {
 
                 /**
@@ -4465,6 +4484,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other instanceof ForLoadedType && ((ForLoadedType) other).parameterizedType == parameterizedType || super.equals(other);
                 }
 
                 /**
@@ -4989,6 +5013,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Description of a loaded type variable.
              */
+            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfTypeVariable {
 
                 /**
@@ -5048,6 +5073,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return other instanceof ForLoadedType && ((ForLoadedType) other).typeVariable == typeVariable || super.equals(other);
                 }
 
                 /**
@@ -7052,6 +7082,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A type description implementation that represents a loaded type.
      */
+    @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
     class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
@@ -7137,19 +7168,26 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isAssignableFrom(Class<?> type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return this.type.isAssignableFrom(type) || super.isAssignableFrom(type);
         }
 
         @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && type.isAssignableFrom(((ForLoadedType) typeDescription).type) || super.isAssignableFrom(typeDescription);
+        }
+
+        @Override
         public boolean isAssignableTo(Class<?> type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type.isAssignableFrom(this.type) || super.isAssignableTo(type);
         }
 
         @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && ((ForLoadedType) typeDescription).type.isAssignableFrom(type) || super.isAssignableTo(typeDescription);
+        }
+
+        @Override
         public boolean represents(java.lang.reflect.Type type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type == this.type || super.represents(type);
         }
 
@@ -7339,6 +7377,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof ForLoadedType && ((ForLoadedType) other).type == type || super.equals(other);
         }
     }
 
