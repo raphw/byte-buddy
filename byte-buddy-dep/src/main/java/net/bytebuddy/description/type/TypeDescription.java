@@ -45,27 +45,27 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A representation of the {@link java.lang.Object} type.
      */
-    TypeDescription OBJECT = ForLoadedType.of(Object.class);
+    TypeDescription OBJECT = new ForLoadedType(Object.class);
 
     /**
      * A representation of the {@link java.lang.String} type.
      */
-    TypeDescription STRING = ForLoadedType.of(String.class);
+    TypeDescription STRING = new ForLoadedType(String.class);
 
     /**
      * A representation of the {@link java.lang.Class} type.
      */
-    TypeDescription CLASS = ForLoadedType.of(Class.class);
+    TypeDescription CLASS = new ForLoadedType(Class.class);
 
     /**
      * A representation of the {@link java.lang.Throwable} type.
      */
-    TypeDescription THROWABLE = ForLoadedType.of(Throwable.class);
+    TypeDescription THROWABLE = new ForLoadedType(Throwable.class);
 
     /**
      * A representation of the {@code void} non-type.
      */
-    TypeDescription VOID = ForLoadedType.of(void.class);
+    TypeDescription VOID = new ForLoadedType(void.class);
 
     /**
      * A list of interfaces that are implicitly implemented by any array type.
