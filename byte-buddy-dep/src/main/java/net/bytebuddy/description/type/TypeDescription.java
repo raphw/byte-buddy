@@ -45,27 +45,27 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A representation of the {@link java.lang.Object} type.
      */
-    TypeDescription OBJECT = new ForLoadedType(Object.class);
+    TypeDescription OBJECT = ForLoadedType.of(Object.class);
 
     /**
      * A representation of the {@link java.lang.String} type.
      */
-    TypeDescription STRING = new ForLoadedType(String.class);
+    TypeDescription STRING = ForLoadedType.of(String.class);
 
     /**
      * A representation of the {@link java.lang.Class} type.
      */
-    TypeDescription CLASS = new ForLoadedType(Class.class);
+    TypeDescription CLASS = ForLoadedType.of(Class.class);
 
     /**
      * A representation of the {@link java.lang.Throwable} type.
      */
-    TypeDescription THROWABLE = new ForLoadedType(Throwable.class);
+    TypeDescription THROWABLE = ForLoadedType.of(Throwable.class);
 
     /**
      * A representation of the {@code void} non-type.
      */
-    TypeDescription VOID = new ForLoadedType(void.class);
+    TypeDescription VOID = ForLoadedType.of(void.class);
 
     /**
      * A list of interfaces that are implicitly implemented by any array type.
@@ -340,6 +340,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * A representation of the {@link Object} type.
          */
         Generic OBJECT = new OfNonGenericType.ForLoadedType(Object.class);
+
+        /**
+         * A representation of the {@link Class} non-type.
+         */
+        Generic CLASS = new OfNonGenericType.ForLoadedType(Class.class);
 
         /**
          * A representation of the {@code void} non-type.
@@ -6462,13 +6467,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             if (sourceType.equals(targetType)) {
                 return true;
             }
-            // (3) For arrays, there are special assignment rules.
+            // (2) For arrays, there are special assignment rules.
             if (targetType.isArray()) {
                 return sourceType.isArray()
                         ? isAssignable(sourceType.getComponentType(), targetType.getComponentType())
                         : sourceType.represents(Object.class) || ARRAY_INTERFACES.contains(sourceType.asGenericType());
             }
-            // (2) Interfaces do not extend the Object type but are assignable to the Object type.
+            // (3) Interfaces do not extend the Object type but are assignable to the Object type.
             if (sourceType.represents(Object.class)) {
                 return !targetType.isPrimitive();
             }
