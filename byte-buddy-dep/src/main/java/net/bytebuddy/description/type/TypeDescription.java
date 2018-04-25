@@ -7142,6 +7142,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
+            return (typeDescription instanceof ForLoadedType &&
+                this.type.isAssignableFrom(((ForLoadedType) typeDescription).type))
+                || super.isAssignableFrom(typeDescription);
+        }
+
+        @Override
         public boolean isAssignableTo(Class<?> type) {
             // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type.isAssignableFrom(this.type) || super.isAssignableTo(type);
