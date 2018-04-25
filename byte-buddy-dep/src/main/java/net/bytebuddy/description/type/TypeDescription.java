@@ -5050,6 +5050,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return annotationReader.asList();
                 }
 
+                @Override
+                public boolean equals(Object other) {
+                    return (other instanceof OfTypeVariable &&
+                            this.typeVariable == ((ForLoadedType) other).typeVariable)
+                            || super.equals(other);
+                }
+
+                @Override
+                public int hashCode() {
+                    return super.hashCode();
+                }
+
                 /**
                  * A list of type variable bounds for a loaded {@link TypeVariable} that resolves annotations..
                  */
