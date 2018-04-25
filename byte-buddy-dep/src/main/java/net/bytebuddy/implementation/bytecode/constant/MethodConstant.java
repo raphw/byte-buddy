@@ -76,7 +76,7 @@ public abstract class MethodConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         return new Compound(
                 preparation(),
-                ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
+                ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
                         .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
                 MethodInvocation.invoke(accessorMethod())
         ).apply(methodVisitor, implementationContext);
