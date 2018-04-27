@@ -9414,7 +9414,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A private constructor as this class is not supposed to be invoked.
          */
         private NoExceptionHandler() {
-            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
+            throw new UnsupportedOperationException("This class only serves as a marker type and should not be instantiated");
         }
     }
 
@@ -9431,7 +9431,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A private constructor as this class is not supposed to be invoked.
          */
         private OnDefaultValue() {
-            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
+            throw new UnsupportedOperationException("This class only serves as a marker type and should not be instantiated");
         }
     }
 
@@ -9448,7 +9448,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A private constructor as this class is not supposed to be invoked.
          */
         private OnNonDefaultValue() {
-            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
+            throw new UnsupportedOperationException("This class only serves as a marker type and should not be instantiated");
         }
     }
 }

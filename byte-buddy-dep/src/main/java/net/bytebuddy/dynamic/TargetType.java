@@ -37,6 +37,6 @@ public final class TargetType {
      * An unusable constructor to avoid instance creation.
      */
     private TargetType() {
-        throw new UnsupportedOperationException("This class only serves as a marker type");
+        throw new UnsupportedOperationException("This class only serves as a marker type and should not be instantiated");
     }
 }

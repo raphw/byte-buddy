@@ -35,6 +35,13 @@ public class OpenedClassReader {
     }
 
     /**
+     * Not intended for construction.
+     */
+    private OpenedClassReader() {
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
+    }
+
+    /**
      * Creates a class reader for the given binary representation of a class file.
      *
      * @param binaryRepresentation The binary representation of a class file to read.
@@ -53,12 +60,5 @@ public class OpenedClassReader {
         } else {
             return new ClassReader(binaryRepresentation);
         }
-    }
-
-    /**
-     * Not intended for construction.
-     */
-    private OpenedClassReader() {
-        throw new UnsupportedOperationException("This is a utility class that should not be invoked");
     }
 }

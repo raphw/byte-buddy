@@ -4350,7 +4350,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 RenderingDelegate.CURRENT.apply(stringBuilder, asErasure(), getOwnerType());
                 TypeList.Generic typeArguments = getTypeArguments();
                 if (!typeArguments.isEmpty()) {
-                    stringBuilder.append("<");
+                    stringBuilder.append('<');
                     boolean multiple = false;
                     for (Generic typeArgument : typeArguments) {
                         if (multiple) {
@@ -4359,7 +4359,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         stringBuilder.append(typeArgument.getTypeName());
                         multiple = true;
                     }
-                    stringBuilder.append(">");
+                    stringBuilder.append('>');
                 }
                 return stringBuilder.toString();
             }
@@ -4393,7 +4393,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     protected void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType) {
                         if (ownerType != null) {
-                            stringBuilder.append(ownerType.getTypeName()).append("$");
+                            stringBuilder.append(ownerType.getTypeName()).append('$');
                             if (ownerType.getSort().isParameterized()) {
                                 stringBuilder.append(erasure.getName().replace(ownerType.asErasure().getName() + "$", ""));
                             } else {

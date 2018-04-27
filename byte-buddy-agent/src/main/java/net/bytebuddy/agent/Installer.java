@@ -21,7 +21,7 @@ public class Installer {
      * The installer provides only {@code static} hook-in methods and should not be instantiated.
      */
     private Installer() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
     }
 
     /**

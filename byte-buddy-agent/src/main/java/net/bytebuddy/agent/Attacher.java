@@ -30,6 +30,13 @@ public class Attacher {
     private static final String DETACH_METHOD_NAME = "detach";
 
     /**
+     * The attacher provides only {@code static} utility methods and should not be instantiated.
+     */
+    private Attacher() {
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
+    }
+
+    /**
      * Runs the attacher as a Java application.
      *
      * @param args A list containing the fully qualified name of the virtual machine type,
@@ -84,12 +91,5 @@ public class Attacher {
                     .getMethod(DETACH_METHOD_NAME)
                     .invoke(virtualMachineInstance);
         }
-    }
-
-    /**
-     * The attacher provides only {@code static} utility methods and should not be instantiated.
-     */
-    private Attacher() {
-        throw new UnsupportedOperationException();
     }
 }

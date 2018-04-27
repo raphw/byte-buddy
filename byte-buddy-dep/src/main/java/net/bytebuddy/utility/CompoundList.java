@@ -13,7 +13,7 @@ public class CompoundList {
      * A compound list cannot be created.
      */
     private CompoundList() {
-        throw new UnsupportedOperationException("Cannot create a compound list");
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
     }
 
     /**

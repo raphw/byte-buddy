@@ -153,7 +153,7 @@ public class ByteBuddyAgent {
      * The agent provides only {@code static} utility methods and should not be instantiated.
      */
     private ByteBuddyAgent() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
     }
 
     /**

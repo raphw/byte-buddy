@@ -43,7 +43,7 @@ public final class ElementMatchers {
      * A private constructor that must not be invoked.
      */
     private ElementMatchers() {
-        throw new UnsupportedOperationException("This is a utiltiy class that should not be instantiated");
+        throw new UnsupportedOperationException("This class is a utility class and not supposed to be instantiated");
     }
 
     /**
