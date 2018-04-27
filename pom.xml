@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -57,7 +58,7 @@
         <version.junit>4.12</version.junit>
         <version.mockito>2.18.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
-        <version.plugin.bundle>3.3.0</version.plugin.bundle>
+        <version.plugin.bundle>3.5.0</version.plugin.bundle>
         <version.plugin.compiler>3.7.0</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
@@ -302,6 +303,7 @@
                 <jdk>1.6</jdk>
             </activation>
             <properties>
+                <version.plugin.bundle>3.2.0</version.plugin.bundle>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>

@@ -2,10 +2,7 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -19,10 +16,7 @@ import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
+import java.util.jar.*;
 
 /**
  * <p>
@@ -1034,27 +1028,61 @@ public class ByteBuddyAgent {
             private static final String JAR_FILE_EXTENSION = ".jar";
 
             /**
-             * Attempts to resolve the {@link Installer} class from this jar file if it can be located.
+             * Indicates that the jar file of the {@link Installer} class cannot be used for a self-attachment.
+             */
+            private static final File CANNOT_SELF_RESOLVE = null;
+
+            /**
+             * Attempts to resolve the {@link Installer} class from this jar file if it can be located. Doing so, it is possible
+             * to avoid the creation of a temporary jar file which can remain undeleted on Windows operating systems where the agent
+             * is linked by a class loader such that {@link File#deleteOnExit()} does not have an effect.
              *
              * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
+             * @throws IOException If an I/O exception occurs.
              */
-            private static File trySelfResolve() {
+            private static File trySelfResolve() throws IOException {
                 ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
                 if (protectionDomain == null) {
-                    return null;
+                    return CANNOT_SELF_RESOLVE;
                 }
                 CodeSource codeSource = protectionDomain.getCodeSource();
                 if (codeSource == null) {
-                    return null;
+                    return CANNOT_SELF_RESOLVE;
                 }
                 URL location = codeSource.getLocation();
                 if (!location.getProtocol().equals("file")) {
-                    return null;
+                    return CANNOT_SELF_RESOLVE;
                 }
+                File agentJar;
                 try {
-                    return new File(location.toURI());
+                    agentJar = new File(location.toURI());
                 } catch (URISyntaxException e) {
-                    return new File(location.getPath());
+                    agentJar = new File(location.getPath());
+                }
+                if (!agentJar.isFile() || !agentJar.canRead()) {
+                    return CANNOT_SELF_RESOLVE;
+                }
+                // It is necessary to check the manifest of the containing file as this code can be shaded into another artifact.
+                JarInputStream jarInputStream = new JarInputStream(new FileInputStream(agentJar));
+                try {
+                    Manifest manifest = jarInputStream.getManifest();
+                    if (manifest == null) {
+                        return CANNOT_SELF_RESOLVE;
+                    }
+                    Attributes attributes = manifest.getMainAttributes();
+                    if (attributes == null) {
+                        return CANNOT_SELF_RESOLVE;
+                    }
+                    if (Installer.class.getName().equals(attributes.getValue(AGENT_CLASS_PROPERTY))
+                            && Boolean.parseBoolean(attributes.getValue(CAN_REDEFINE_CLASSES_PROPERTY))
+                            && Boolean.parseBoolean(attributes.getValue(CAN_RETRANSFORM_CLASSES_PROPERTY))
+                            && Boolean.parseBoolean(attributes.getValue(CAN_SET_NATIVE_METHOD_PREFIX))) {
+                        return agentJar;
+                    } else {
+                        return CANNOT_SELF_RESOLVE;
+                    }
+                } finally {
+                    jarInputStream.close();
                 }
             }
 
@@ -1100,7 +1128,7 @@ public class ByteBuddyAgent {
             public File resolve() throws IOException {
                 try {
                     File agentJar = trySelfResolve();
-                    return agentJar == null || !agentJar.isFile()
+                    return agentJar == null
                             ? createJarFile()
                             : agentJar;
                 } catch (Exception ignored) {
