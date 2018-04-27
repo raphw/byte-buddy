@@ -303,7 +303,7 @@
                 <jdk>1.6</jdk>
             </activation>
             <properties>
-                <version.plugin.bundle>3.2.0</version.plugin.bundle>
+                <version.plugin.bundle>2.5.4</version.plugin.bundle>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
