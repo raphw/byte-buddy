@@ -86,7 +86,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>1.8.7</version>
+                <version>1.8.9</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
