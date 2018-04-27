@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. April 2018: version 1.8.9
+
+- Several performance improvements.
+- Adjust `toString` implementation for parameterized types to the changed OpenJDK 8+ behavior.
+- Áttempt self-attachment using the current jar file.
+
 ### 20. April 2018: version 1.8.8
 
 - Use cache for loaded `TypeDescription` to avoid overallocation.
