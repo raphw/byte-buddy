@@ -140,6 +140,11 @@ public class ByteBuddyAgent {
     private static final Instrumentation UNAVAILABLE = null;
 
     /**
+     * Represents a failed attempt to self-resolve a jar file location.
+     */
+    private static final File CANNOT_SELF_RESOLVE = null;
+
+    /**
      * The attachment type evaluator to be used for determining if an attachment requires an external process.
      */
     private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = AccessController.doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
@@ -393,26 +398,30 @@ public class ByteBuddyAgent {
         if (inputStream == null) {
             throw new IllegalStateException("Cannot locate class file for Byte Buddy installation process");
         }
-        File attachmentJar = null;
+        File selfResolvedJar = trySelfResolve(), attachmentJar = null;
         try {
-            try {
-                attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
-                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
+            if (selfResolvedJar == null) {
                 try {
-                    jarOutputStream.putNextEntry(new JarEntry(Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    int index;
-                    while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                        jarOutputStream.write(buffer, START_INDEX, index);
+                    attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
+                    try {
+                        jarOutputStream.putNextEntry(new JarEntry(Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int index;
+                        while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                            jarOutputStream.write(buffer, START_INDEX, index);
+                        }
+                        jarOutputStream.closeEntry();
+                    } finally {
+                        jarOutputStream.close();
                     }
-                    jarOutputStream.closeEntry();
                 } finally {
-                    jarOutputStream.close();
+                    inputStream.close();
                 }
-            } finally {
-                inputStream.close();
             }
-            StringBuilder classPath = new StringBuilder().append(quote(attachmentJar.getCanonicalPath()));
+            StringBuilder classPath = new StringBuilder().append(quote((selfResolvedJar == null
+                    ? attachmentJar
+                    : selfResolvedJar).getCanonicalPath()));
             for (File jar : externalAttachment.getClassPath()) {
                 classPath.append(File.pathSeparatorChar).append(quote(jar.getCanonicalPath()));
             }
@@ -434,6 +443,37 @@ public class ByteBuddyAgent {
                     attachmentJar.deleteOnExit();
                 }
             }
+        }
+    }
+
+    /**
+     * Attempts to resolve the location of the {@link Attacher} class for a self-attachment. Doing so avoids the creation of a temporary jar file.
+     *
+     * @return The self-resolved jar file or {@code null} if the jar file cannot be located.
+     */
+    private static File trySelfResolve() {
+        try {
+            ProtectionDomain protectionDomain = Attacher.class.getProtectionDomain();
+            if (protectionDomain == null) {
+                return CANNOT_SELF_RESOLVE;
+            }
+            CodeSource codeSource = protectionDomain.getCodeSource();
+            if (codeSource == null) {
+                return CANNOT_SELF_RESOLVE;
+            }
+            URL location = codeSource.getLocation();
+            if (!location.getProtocol().equals("file")) {
+                return CANNOT_SELF_RESOLVE;
+            }
+            File agentJar;
+            try {
+                agentJar = new File(location.toURI());
+            } catch (URISyntaxException ignored) {
+                agentJar = new File(location.getPath());
+            }
+            return agentJar;
+        } catch (Exception ignored) {
+            return CANNOT_SELF_RESOLVE;
         }
     }
 
@@ -1056,7 +1096,7 @@ public class ByteBuddyAgent {
                 File agentJar;
                 try {
                     agentJar = new File(location.toURI());
-                } catch (URISyntaxException e) {
+                } catch (URISyntaxException ignored) {
                     agentJar = new File(location.getPath());
                 }
                 if (!agentJar.isFile() || !agentJar.canRead()) {
