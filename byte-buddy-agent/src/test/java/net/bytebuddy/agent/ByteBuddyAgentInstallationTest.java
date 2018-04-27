@@ -64,4 +64,9 @@ public class ByteBuddyAgentInstallationTest {
             }
         }.loadClass(ByteBuddyAgent.class.getName()).getDeclaredMethod("install").invoke(null), instanceOf(Instrumentation.class));
     }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoInstrumentation() throws Exception {
+        ByteBuddyAgent.getInstrumentation();
+    }
 }
