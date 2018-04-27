@@ -762,7 +762,7 @@ public abstract class AbstractMethodDescriptionTest {
                 .getParameters()
                 .get(1)
                 .getDeclaredAnnotations()
-                .isAnnotationPresent(Deprecated.class), is(true));
+                .isAnnotationPresent(SyntheticMarker.class), is(true));
     }
 
     @Test
@@ -1004,7 +1004,13 @@ public abstract class AbstractMethodDescriptionTest {
 
     public class SyntheticParameter {
 
-        public SyntheticParameter(@Deprecated Void unused) {
+        public SyntheticParameter(@SyntheticMarker Void unused) {
+            /* empty */
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SyntheticMarker {
+        /* empty */
     }
 }
