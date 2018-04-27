@@ -100,6 +100,73 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- Create manifest file which is required for creating an OSGi bundle. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.plugin.jar}</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${version.plugin.bundle}</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <instructions>
+                        <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
+                        <Export-Package>
+                            net.bytebuddy,
+                            net.bytebuddy.agent.builder,
+                            net.bytebuddy.asm,
+                            net.bytebuddy.build,
+                            net.bytebuddy.description,
+                            net.bytebuddy.description.annotation,
+                            net.bytebuddy.description.enumeration,
+                            net.bytebuddy.description.field,
+                            net.bytebuddy.description.method,
+                            net.bytebuddy.description.modifier,
+                            net.bytebuddy.description.type,
+                            net.bytebuddy.dynamic,
+                            net.bytebuddy.dynamic.loading,
+                            net.bytebuddy.dynamic.scaffold,
+                            net.bytebuddy.dynamic.scaffold.inline,
+                            net.bytebuddy.dynamic.scaffold.subclass,
+                            net.bytebuddy.implementation,
+                            net.bytebuddy.implementation.attribute,
+                            net.bytebuddy.implementation.auxiliary,
+                            net.bytebuddy.implementation.bind,
+                            net.bytebuddy.implementation.bind.annotation,
+                            net.bytebuddy.implementation.bytecode,
+                            net.bytebuddy.implementation.bytecode.assign,
+                            net.bytebuddy.implementation.bytecode.assign.primitive,
+                            net.bytebuddy.implementation.bytecode.assign.reference,
+                            net.bytebuddy.implementation.bytecode.collection,
+                            net.bytebuddy.implementation.bytecode.constant,
+                            net.bytebuddy.implementation.bytecode.member,
+                            net.bytebuddy.matcher,
+                            net.bytebuddy.pool,
+                            net.bytebuddy.utility,
+                            net.bytebuddy.utility.privilege,
+                            net.bytebuddy.utility.visitor,
+                            ${shade.target}
+                        </Export-Package>
+                        <Automatic-Module-Name>${project.groupId}</Automatic-Module-Name>
+                    </instructions>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -111,73 +178,6 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Create manifest file which is required for creating an OSGi bundle. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${version.plugin.jar}</version>
-                        <configuration>
-                            <archive>
-                                <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <!-- Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. -->
-                    <plugin>
-                        <groupId>org.apache.felix</groupId>
-                        <artifactId>maven-bundle-plugin</artifactId>
-                        <version>${version.plugin.bundle}</version>
-                        <executions>
-                            <execution>
-                                <phase>process-classes</phase>
-                                <goals>
-                                    <goal>manifest</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <instructions>
-                                <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
-                                <Export-Package>
-                                    net.bytebuddy,
-                                    net.bytebuddy.agent.builder,
-                                    net.bytebuddy.asm,
-                                    net.bytebuddy.build,
-                                    net.bytebuddy.description,
-                                    net.bytebuddy.description.annotation,
-                                    net.bytebuddy.description.enumeration,
-                                    net.bytebuddy.description.field,
-                                    net.bytebuddy.description.method,
-                                    net.bytebuddy.description.modifier,
-                                    net.bytebuddy.description.type,
-                                    net.bytebuddy.dynamic,
-                                    net.bytebuddy.dynamic.loading,
-                                    net.bytebuddy.dynamic.scaffold,
-                                    net.bytebuddy.dynamic.scaffold.inline,
-                                    net.bytebuddy.dynamic.scaffold.subclass,
-                                    net.bytebuddy.implementation,
-                                    net.bytebuddy.implementation.attribute,
-                                    net.bytebuddy.implementation.auxiliary,
-                                    net.bytebuddy.implementation.bind,
-                                    net.bytebuddy.implementation.bind.annotation,
-                                    net.bytebuddy.implementation.bytecode,
-                                    net.bytebuddy.implementation.bytecode.assign,
-                                    net.bytebuddy.implementation.bytecode.assign.primitive,
-                                    net.bytebuddy.implementation.bytecode.assign.reference,
-                                    net.bytebuddy.implementation.bytecode.collection,
-                                    net.bytebuddy.implementation.bytecode.constant,
-                                    net.bytebuddy.implementation.bytecode.member,
-                                    net.bytebuddy.matcher,
-                                    net.bytebuddy.pool,
-                                    net.bytebuddy.utility,
-                                    net.bytebuddy.utility.privilege,
-                                    net.bytebuddy.utility.visitor,
-                                    ${shade.target}
-                                </Export-Package>
-                                <Automatic-Module-Name>${project.groupId}</Automatic-Module-Name>
-                            </instructions>
-                        </configuration>
-                    </plugin>
                     <!-- The shadowed source files of this module need to be included explicitly to create a javadoc artifact.-->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

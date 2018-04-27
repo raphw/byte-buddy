@@ -63,7 +63,6 @@
         <module name="RightCurly"/>
 
         <module name="EmptyStatement"/>
-        <module name="EqualsHashCode"/>
         <module name="IllegalInstantiation"/>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>

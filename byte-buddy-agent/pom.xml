@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -54,59 +55,51 @@
         </dependency>
     </dependencies>
 
-    <profiles>
-        <profile>
-            <id>extras</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- Create manifest file which is required for creating an OSGi bundle. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${version.plugin.jar}</version>
-                        <configuration>
-                            <archive>
-                                <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <!-- Specify OSGi packaging and agent manifest headers. -->
-                    <plugin>
-                        <groupId>org.apache.felix</groupId>
-                        <artifactId>maven-bundle-plugin</artifactId>
-                        <version>${version.plugin.bundle}</version>
-                        <executions>
-                            <execution>
-                                <phase>process-classes</phase>
-                                <goals>
-                                    <goal>manifest</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <instructions>
-                                <Premain-Class>${bytebuddy.agent}</Premain-Class>
-                                <Agent-Class>${bytebuddy.agent}</Agent-Class>
-                                <Can-Redefine-Classes>true</Can-Redefine-Classes>
-                                <Can-Retransform-Classes>true</Can-Retransform-Classes>
-                                <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
-                                <Import-Package>
-                                    ${attach.package.sun};resolution:="optional",
-                                    ${attach.package.ibm};resolution:="optional"
-                                </Import-Package>
-                                <Export-Package>
-                                    net.bytebuddy.agent
-                                </Export-Package>
-                                <Automatic-Module-Name>${project.groupId}.agent</Automatic-Module-Name>
-                            </instructions>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <build>
+        <plugins>
+            <!-- Create manifest file which is required for creating an OSGi bundle. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.plugin.jar}</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <!-- Specify OSGi packaging and agent manifest headers. -->
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${version.plugin.bundle}</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <instructions>
+                        <Premain-Class>${bytebuddy.agent}</Premain-Class>
+                        <Agent-Class>${bytebuddy.agent}</Agent-Class>
+                        <Can-Redefine-Classes>true</Can-Redefine-Classes>
+                        <Can-Retransform-Classes>true</Can-Retransform-Classes>
+                        <Can-Set-Native-Method-Prefix>true</Can-Set-Native-Method-Prefix>
+                        <Import-Package>
+                            ${attach.package.sun};resolution:="optional",
+                            ${attach.package.ibm};resolution:="optional"
+                        </Import-Package>
+                        <Export-Package>
+                            net.bytebuddy.agent
+                        </Export-Package>
+                        <Automatic-Module-Name>${project.groupId}.agent</Automatic-Module-Name>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

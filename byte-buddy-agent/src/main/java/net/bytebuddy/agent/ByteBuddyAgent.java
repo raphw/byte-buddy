@@ -11,10 +11,13 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
+import java.security.CodeSource;
 import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -1030,15 +1033,44 @@ public class ByteBuddyAgent {
              */
             private static final String JAR_FILE_EXTENSION = ".jar";
 
-            @Override
-            public File resolve() throws IOException {
-                File agentJar;
+            /**
+             * Attempts to resolve the {@link Installer} class from this jar file if it can be located.
+             *
+             * @return This jar file's location or {@code null} if this jar file's location is inaccessible.
+             */
+            private static File trySelfResolve() {
+                ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
+                if (protectionDomain == null) {
+                    return null;
+                }
+                CodeSource codeSource = protectionDomain.getCodeSource();
+                if (codeSource == null) {
+                    return null;
+                }
+                URL location = codeSource.getLocation();
+                if (!location.getProtocol().equals("file")) {
+                    return null;
+                }
+                try {
+                    return new File(location.toURI());
+                } catch (URISyntaxException e) {
+                    return new File(location.getPath());
+                }
+            }
+
+            /**
+             * Creates an agent jar file containing the {@link Installer} class.
+             *
+             * @return The agent jar file.
+             * @throws IOException If an I/O exception occurs.
+             */
+            private static File createJarFile() throws IOException {
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
                     throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
                 }
                 try {
-                    agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+                    File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
                     agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
                     Manifest manifest = new Manifest();
                     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
@@ -1058,10 +1090,22 @@ public class ByteBuddyAgent {
                     } finally {
                         jarOutputStream.close();
                     }
+                    return agentJar;
                 } finally {
                     inputStream.close();
                 }
-                return agentJar;
+            }
+
+            @Override
+            public File resolve() throws IOException {
+                try {
+                    File agentJar = trySelfResolve();
+                    return agentJar == null || !agentJar.isFile()
+                            ? createJarFile()
+                            : agentJar;
+                } catch (Exception ignored) {
+                    return createJarFile();
+                }
             }
         }
 
