@@ -3344,7 +3344,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Represents a non-generic type for a loaded {@link Class}.
              */
-            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfNonGenericType {
 
                 /**
@@ -3402,11 +3401,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other instanceof ForLoadedType && ((ForLoadedType) other).type == type || super.equals(other);
                 }
             }
 
@@ -3769,7 +3763,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A description of a loaded generic array type.
              */
-            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfGenericArray {
 
                 /**
@@ -3810,11 +3803,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other instanceof ForLoadedType && ((ForLoadedType) other).genericArrayType == genericArrayType || super.equals(other);
                 }
             }
 
@@ -4010,7 +3998,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Description of a loaded wildcard.
              */
-            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfWildcardType {
 
                 /**
@@ -4056,11 +4043,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other instanceof ForLoadedType && ((ForLoadedType) other).wildcardType == wildcardType || super.equals(other);
                 }
 
                 /**
@@ -4365,24 +4347,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public String toString() {
                 StringBuilder stringBuilder = new StringBuilder();
-                Generic ownerType = getOwnerType();
-                if (ownerType != null) {
-                    RenderingDelegate.CURRENT.apply(stringBuilder.append(ownerType.getTypeName()), asErasure(), ownerType);
-                } else {
-                    stringBuilder.append(asErasure().getName());
-                }
-                TypeList.Generic actualTypeArguments = getTypeArguments();
-                if (!actualTypeArguments.isEmpty()) {
-                    stringBuilder.append('<');
+                RenderingDelegate.CURRENT.apply(stringBuilder, asErasure(), getOwnerType());
+                TypeList.Generic typeArguments = getTypeArguments();
+                if (!typeArguments.isEmpty()) {
+                    stringBuilder.append("<");
                     boolean multiple = false;
-                    for (Generic typeArgument : actualTypeArguments) {
+                    for (Generic typeArgument : typeArguments) {
                         if (multiple) {
                             stringBuilder.append(", ");
                         }
                         stringBuilder.append(typeArgument.getTypeName());
                         multiple = true;
                     }
-                    stringBuilder.append('>');
+                    stringBuilder.append(">");
                 }
                 return stringBuilder.toString();
             }
@@ -4396,46 +4373,58 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A rendering delegate for any VM prior to Java 9 where types are concatenated using a {@code .} character
                  * and where the fully qualified names are appended to non-parameterized types.
                  */
-                LEGACY_VM {
+                FOR_LEGACY_VM {
                     @Override
-                    protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
-                        stringBuilder.append('.').append(ownerType.getSort().isParameterized()
-                                ? typeDescription.getSimpleName()
-                                : typeDescription.getName());
+                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType) {
+                        if (ownerType != null) {
+                            stringBuilder.append(ownerType.getTypeName()).append('.').append(ownerType.getSort().isParameterized()
+                                    ? erasure.getSimpleName()
+                                    : erasure.getName());
+                        } else {
+                            stringBuilder.append(erasure.getName());
+                        }
                     }
                 },
 
                 /**
-                 * A rendering delegate for any VM supporting Java 9 or newer where a type's simple name is appended.
+                 * A rendering delegate for any VM supporting Java 8 or newer where a type's simple name is appended.
                  */
-                JAVA_9_CAPABLE_VM {
+                FOR_JAVA_8_CAPABLE_VM {
                     @Override
-                    protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
-                        stringBuilder.append('$').append(typeDescription.getSimpleName());
+                    protected void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType) {
+                        if (ownerType != null) {
+                            stringBuilder.append(ownerType.getTypeName()).append("$");
+                            if (ownerType.getSort().isParameterized()) {
+                                stringBuilder.append(erasure.getName().replace(ownerType.asErasure().getName() + "$", ""));
+                            } else {
+                                stringBuilder.append(erasure.getSimpleName());
+                            }
+                        } else {
+                            stringBuilder.append(erasure.getName());
+                        }
                     }
                 };
 
                 /**
                  * A rendering delegate for the current VM.
                  */
-                protected static final RenderingDelegate CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
-                        ? RenderingDelegate.JAVA_9_CAPABLE_VM
-                        : RenderingDelegate.LEGACY_VM;
+                protected static final RenderingDelegate CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V8)
+                        ? RenderingDelegate.FOR_JAVA_8_CAPABLE_VM
+                        : RenderingDelegate.FOR_LEGACY_VM;
 
                 /**
                  * Applies this rendering delegate.
                  *
-                 * @param stringBuilder   The string builder which is used for creating a parameterized type's string representation.
-                 * @param typeDescription The rendered type's erasure.
-                 * @param ownerType       The rendered type's owner type.
+                 * @param stringBuilder The string builder which is used for creating a parameterized type's string representation.
+                 * @param erasure       The rendered type's erasure.
+                 * @param ownerType     The rendered type's owner type.
                  */
-                protected abstract void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType);
+                protected abstract void apply(StringBuilder stringBuilder, TypeDescription erasure, Generic ownerType);
             }
 
             /**
              * Description of a loaded parameterized type.
              */
-            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfParameterizedType {
 
                 /**
@@ -4489,11 +4478,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other instanceof ForLoadedType && ((ForLoadedType) other).parameterizedType == parameterizedType || super.equals(other);
                 }
 
                 /**
@@ -5018,7 +5002,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Description of a loaded type variable.
              */
-            @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
             public static class ForLoadedType extends OfTypeVariable {
 
                 /**
@@ -5078,11 +5061,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other instanceof ForLoadedType && ((ForLoadedType) other).typeVariable == typeVariable || super.equals(other);
                 }
 
                 /**
@@ -7087,7 +7065,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A type description implementation that represents a loaded type.
      */
-    @SuppressFBWarnings(value = "HE_EQUALS_NO_HASHCODE", justification = "Equals method only implements a performance improved override.")
     class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
@@ -7173,26 +7150,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isAssignableFrom(Class<?> type) {
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return this.type.isAssignableFrom(type) || super.isAssignableFrom(type);
         }
 
         @Override
-        public boolean isAssignableFrom(TypeDescription typeDescription) {
-            return typeDescription instanceof ForLoadedType && type.isAssignableFrom(((ForLoadedType) typeDescription).type) || super.isAssignableFrom(typeDescription);
-        }
-
-        @Override
         public boolean isAssignableTo(Class<?> type) {
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type.isAssignableFrom(this.type) || super.isAssignableTo(type);
         }
 
         @Override
-        public boolean isAssignableTo(TypeDescription typeDescription) {
-            return typeDescription instanceof ForLoadedType && ((ForLoadedType) typeDescription).type.isAssignableFrom(type) || super.isAssignableTo(typeDescription);
-        }
-
-        @Override
         public boolean represents(java.lang.reflect.Type type) {
+            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type == this.type || super.represents(type);
         }
 
@@ -7382,11 +7352,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return other instanceof ForLoadedType && ((ForLoadedType) other).type == type || super.equals(other);
         }
     }
 

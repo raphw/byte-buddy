@@ -777,6 +777,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedTypeVariableType.class.getDeclaredField(FOO));
+        // Some JVM versions do not prefix the outer type correctly.
         assertThat(typeDescription.getTypeName(), is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
@@ -792,6 +793,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedSpecifiedTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO));
+        // Some JVM versions do not prefix the outer type correctly.
         assertThat(typeDescription.getTypeName(), is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
@@ -807,6 +809,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedStaticTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedStaticTypeVariableType.class.getDeclaredField(FOO));
+        // Some JVM versions do not prefix the outer type correctly.
         assertThat(typeDescription.getTypeName(), is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
