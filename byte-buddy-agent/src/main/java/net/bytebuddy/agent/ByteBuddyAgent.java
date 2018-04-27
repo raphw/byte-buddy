@@ -394,13 +394,13 @@ public class ByteBuddyAgent {
                                         String processId,
                                         File agent,
                                         String argument) throws Exception {
-        InputStream inputStream = Attacher.class.getResourceAsStream('/' + Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-        if (inputStream == null) {
-            throw new IllegalStateException("Cannot locate class file for Byte Buddy installation process");
-        }
         File selfResolvedJar = trySelfResolve(), attachmentJar = null;
         try {
             if (selfResolvedJar == null) {
+                InputStream inputStream = Attacher.class.getResourceAsStream('/' + Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                if (inputStream == null) {
+                    throw new IllegalStateException("Cannot locate class file for Byte Buddy installation process");
+                }
                 try {
                     attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
                     JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
@@ -451,6 +451,7 @@ public class ByteBuddyAgent {
      *
      * @return The self-resolved jar file or {@code null} if the jar file cannot be located.
      */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     private static File trySelfResolve() {
         try {
             ProtectionDomain protectionDomain = Attacher.class.getProtectionDomain();

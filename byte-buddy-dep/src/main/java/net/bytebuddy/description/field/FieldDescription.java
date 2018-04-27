@@ -169,10 +169,10 @@ public interface FieldDescription extends ByteCodeElement,
         public String toGenericString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {
-                stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
+                stringBuilder.append(Modifier.toString(getModifiers())).append(' ');
             }
-            stringBuilder.append(getType().getActualName()).append(" ");
-            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
+            stringBuilder.append(getType().getActualName()).append(' ');
+            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
             return stringBuilder.append(getName()).toString();
         }
 
@@ -180,10 +180,10 @@ public interface FieldDescription extends ByteCodeElement,
         public String toString() {
             StringBuilder stringBuilder = new StringBuilder();
             if (getModifiers() != EMPTY_MASK) {
-                stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
+                stringBuilder.append(Modifier.toString(getModifiers())).append(' ');
             }
-            stringBuilder.append(getType().asErasure().getActualName()).append(" ");
-            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
+            stringBuilder.append(getType().asErasure().getActualName()).append(' ');
+            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
             return stringBuilder.append(getName()).toString();
         }
     }

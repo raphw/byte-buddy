@@ -58,6 +58,6 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
             }
             stringBuilder.append(value);
         }
-        return stringBuilder.append(")").toString();
+        return stringBuilder.append(')').toString();
     }
 }

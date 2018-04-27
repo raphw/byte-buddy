@@ -391,11 +391,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public String getDescriptor() {
-            StringBuilder descriptor = new StringBuilder("(");
+            StringBuilder descriptor = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameters().asTypeList().asErasures()) {
                 descriptor.append(parameterType.getDescriptor());
             }
-            return descriptor.append(")").append(getReturnType().asErasure().getDescriptor()).toString();
+            return descriptor.append(')').append(getReturnType().asErasure().getDescriptor()).toString();
         }
 
         @Override
@@ -751,30 +751,30 @@ public interface MethodDescription extends TypeVariableSource,
             StringBuilder stringBuilder = new StringBuilder();
             int modifiers = getModifiers() & SOURCE_MODIFIERS;
             if (modifiers != EMPTY_MASK) {
-                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+                stringBuilder.append(Modifier.toString(modifiers)).append(' ');
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().getActualName()).append(" ");
-                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
+                stringBuilder.append(getReturnType().getActualName()).append(' ');
+                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
             }
-            stringBuilder.append(getName()).append("(");
+            stringBuilder.append(getName()).append('(');
             boolean first = true;
             for (TypeDescription.Generic typeDescription : getParameters().asTypeList()) {
                 if (!first) {
-                    stringBuilder.append(",");
+                    stringBuilder.append(',');
                 } else {
                     first = false;
                 }
                 stringBuilder.append(typeDescription.getActualName());
             }
-            stringBuilder.append(")");
+            stringBuilder.append(')');
             TypeList.Generic exceptionTypes = getExceptionTypes();
             if (!exceptionTypes.isEmpty()) {
                 stringBuilder.append(" throws ");
                 first = true;
                 for (TypeDescription.Generic typeDescription : exceptionTypes) {
                     if (!first) {
-                        stringBuilder.append(",");
+                        stringBuilder.append(',');
                     } else {
                         first = false;
                     }
@@ -789,30 +789,30 @@ public interface MethodDescription extends TypeVariableSource,
             StringBuilder stringBuilder = new StringBuilder();
             int modifiers = getModifiers() & SOURCE_MODIFIERS;
             if (modifiers != EMPTY_MASK) {
-                stringBuilder.append(Modifier.toString(modifiers)).append(" ");
+                stringBuilder.append(Modifier.toString(modifiers)).append(' ');
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().asErasure().getActualName()).append(" ");
-                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
+                stringBuilder.append(getReturnType().asErasure().getActualName()).append(' ');
+                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append('.');
             }
-            stringBuilder.append(getName()).append("(");
+            stringBuilder.append(getName()).append('(');
             boolean first = true;
             for (TypeDescription typeDescription : getParameters().asTypeList().asErasures()) {
                 if (!first) {
-                    stringBuilder.append(",");
+                    stringBuilder.append(',');
                 } else {
                     first = false;
                 }
                 stringBuilder.append(typeDescription.getActualName());
             }
-            stringBuilder.append(")");
+            stringBuilder.append(')');
             TypeList exceptionTypes = getExceptionTypes().asErasures();
             if (!exceptionTypes.isEmpty()) {
                 stringBuilder.append(" throws ");
                 first = true;
                 for (TypeDescription typeDescription : exceptionTypes) {
                     if (!first) {
-                        stringBuilder.append(",");
+                        stringBuilder.append(',');
                     } else {
                         first = false;
                     }
@@ -1790,7 +1790,7 @@ public interface MethodDescription extends TypeVariableSource,
                 if (first) {
                     first = false;
                 } else {
-                    stringBuilder.append(",");
+                    stringBuilder.append(',');
                 }
                 stringBuilder.append(parameterType);
             }

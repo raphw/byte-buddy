@@ -248,11 +248,11 @@ public interface JavaConstant {
 
         @Override
         public Object asConstantPoolValue() {
-            StringBuilder stringBuilder = new StringBuilder("(");
+            StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
-            return Type.getMethodType(stringBuilder.append(")").append(getReturnType().getDescriptor()).toString());
+            return Type.getMethodType(stringBuilder.append(')').append(getReturnType().getDescriptor()).toString());
         }
 
         @Override
@@ -614,11 +614,11 @@ public interface JavaConstant {
 
         @Override
         public Object asConstantPoolValue() {
-            StringBuilder stringBuilder = new StringBuilder("(");
+            StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameterTypes()) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
-            String descriptor = stringBuilder.append(")").append(getReturnType().getDescriptor()).toString();
+            String descriptor = stringBuilder.append(')').append(getReturnType().getDescriptor()).toString();
             return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor, getOwnerType().isInterface());
         }
 

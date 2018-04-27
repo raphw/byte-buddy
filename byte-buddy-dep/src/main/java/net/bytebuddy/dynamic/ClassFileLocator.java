@@ -429,7 +429,7 @@ public interface ClassFileLocator extends Closeable {
          *
          * @return A class file locator that locates classes of the boot layer.
          */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is supposed to be rethrown")
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public static ClassFileLocator ofBootLayer() {
             try {
                 Map<String, ClassFileLocator> bootModules = new HashMap<String, ClassFileLocator>();
