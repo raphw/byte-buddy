@@ -183,35 +183,35 @@ public abstract class AbstractMethodDescriptionTest {
         MethodDescription.InDefinedShape equalMethod = mock(MethodDescription.InDefinedShape.class);
         when(equalMethod.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethod.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstMethod.getDeclaringClass()));
-        when(equalMethod.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(firstMethod.getReturnType()));
+        when(equalMethod.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(firstMethod.getReturnType()));
         when(equalMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethod,
                 new TypeList.Generic.ForLoadedTypes(firstMethod.getParameterTypes())));
         assertThat(describe(firstMethod), is(equalMethod));
         MethodDescription.InDefinedShape equalMethodButName = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButName.getInternalName()).thenReturn(secondMethod.getName());
         when(equalMethodButName.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstMethod.getDeclaringClass()));
-        when(equalMethodButName.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(firstMethod.getReturnType()));
+        when(equalMethodButName.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(firstMethod.getReturnType()));
         when(equalMethodButName.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButName,
                 new TypeList.Generic.ForLoadedTypes(firstMethod.getParameterTypes())));
         assertThat(describe(firstMethod), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButReturnType.getDeclaringType()).thenReturn(TypeDescription.OBJECT);
-        when(equalMethodButReturnType.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(firstMethod.getReturnType()));
+        when(equalMethodButReturnType.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(firstMethod.getReturnType()));
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new TypeList.Generic.ForLoadedTypes(firstMethod.getParameterTypes())));
         assertThat(describe(firstMethod), not(equalMethodButReturnType));
         MethodDescription.InDefinedShape equalMethodButDeclaringType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButDeclaringType.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstMethod.getDeclaringClass()));
-        when(equalMethodButDeclaringType.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(secondMethod.getReturnType()));
+        when(equalMethodButDeclaringType.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(secondMethod.getReturnType()));
         when(equalMethodButDeclaringType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButDeclaringType,
                 new TypeList.Generic.ForLoadedTypes(firstMethod.getParameterTypes())));
         assertThat(describe(firstMethod), not(equalMethodButDeclaringType));
         MethodDescription.InDefinedShape equalMethodButParameterTypes = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButParameterTypes.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButParameterTypes.getDeclaringType()).thenReturn(TypeDescription.ForLoadedType.of(firstMethod.getDeclaringClass()));
-        when(equalMethodButParameterTypes.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(firstMethod.getReturnType()));
+        when(equalMethodButParameterTypes.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(firstMethod.getReturnType()));
         when(equalMethodButParameterTypes.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButParameterTypes,
                 new TypeList.Generic.ForLoadedTypes(secondMethod.getParameterTypes())));
         assertThat(describe(firstMethod), not(equalMethodButParameterTypes));

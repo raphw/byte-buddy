@@ -435,7 +435,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .transform(named(BAR), new Transformer<TypeVariableToken>() {
                     @Override
                     public TypeVariableToken transform(TypeDescription instrumentedType, TypeVariableToken target) {
-                        return new TypeVariableToken(target.getSymbol(), Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Integer.class)));
+                        return new TypeVariableToken(target.getSymbol(), Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Integer.class)));
                     }
                 })
                 .make()
@@ -1182,7 +1182,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     TypeDescription.Generic.OBJECT,
                     Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, QUX).build()))),
-                    Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
+                    Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build()),
                     AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED));

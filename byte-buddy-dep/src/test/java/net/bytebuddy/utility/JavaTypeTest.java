@@ -44,7 +44,7 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().size(), is(1));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)), is(true));
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Serializable.class)), is(true));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class JavaTypeTest {
         assertThat(JavaType.PARAMETER.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
         assertThat(JavaType.PARAMETER.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(JavaType.PARAMETER.getTypeStub().getInterfaces().size(), is(1));
-        assertThat(JavaType.PARAMETER.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(AnnotatedElement.class)), is(true));
+        assertThat(JavaType.PARAMETER.getTypeStub().getInterfaces().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(AnnotatedElement.class)), is(true));
     }
 
     @Test
@@ -78,8 +78,8 @@ public class JavaTypeTest {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperClass(), is((TypeDefinition) TypeDescription.ForLoadedType.of(AccessibleObject.class)));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().size(), is(2));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Member.class)), is(true));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(GenericDeclaration.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Member.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(GenericDeclaration.class)), is(true));
     }
 
     @Test

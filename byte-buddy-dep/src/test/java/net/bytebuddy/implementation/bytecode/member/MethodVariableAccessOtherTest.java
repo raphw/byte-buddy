@@ -44,7 +44,7 @@ public class MethodVariableAccessOtherTest {
     @Test
     public void testLoadParameter() throws Exception {
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
-        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class));
         when(parameterDescription.getOffset()).thenReturn(4);
         assertThat(MethodVariableAccess.load(parameterDescription), hasPrototype(MethodVariableAccess.INTEGER.loadFrom(4)));
     }
@@ -52,7 +52,7 @@ public class MethodVariableAccessOtherTest {
     @Test
     public void testStoreParameter() throws Exception {
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
-        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class));
         when(parameterDescription.getOffset()).thenReturn(4);
         assertThat(MethodVariableAccess.store(parameterDescription), hasPrototype(MethodVariableAccess.INTEGER.storeAt(4)));
     }
@@ -60,7 +60,7 @@ public class MethodVariableAccessOtherTest {
     @Test
     public void testIncrementParameter() throws Exception {
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
-        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class));
         when(parameterDescription.getOffset()).thenReturn(4);
         assertThat(MethodVariableAccess.increment(parameterDescription, 42), hasPrototype(MethodVariableAccess.INTEGER.increment(4, 42)));
     }

@@ -94,7 +94,7 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
         verify(target, atLeast(0)).represents(any(Class.class));
         verify(target, atLeast(1)).isPrimitive();
         verifyNoMoreInteractions(target);
-        verify(chainedAssigner).assign(source, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
+        verify(chainedAssigner).assign(source, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 }

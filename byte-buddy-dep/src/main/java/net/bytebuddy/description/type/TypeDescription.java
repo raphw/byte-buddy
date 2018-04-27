@@ -3347,6 +3347,39 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public static class ForLoadedType extends OfNonGenericType {
 
                 /**
+                 * A cache of generic type descriptions for commonly used types to avoid unnecessary allocations.
+                 */
+                @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "This collection is not exposed.")
+                private static final Map<Class<?>, Generic> TYPE_CACHE;
+
+                /*
+                 * Initializes the type cache.
+                 */
+                static {
+                    TYPE_CACHE = new HashMap<Class<?>, Generic>();
+                    TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
+                    TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
+                    TYPE_CACHE.put(String.class, new ForLoadedType(String.class));
+                    TYPE_CACHE.put(Boolean.class, new ForLoadedType(Boolean.class));
+                    TYPE_CACHE.put(Byte.class, new ForLoadedType(Byte.class));
+                    TYPE_CACHE.put(Short.class, new ForLoadedType(Short.class));
+                    TYPE_CACHE.put(Character.class, new ForLoadedType(Character.class));
+                    TYPE_CACHE.put(Integer.class, new ForLoadedType(Integer.class));
+                    TYPE_CACHE.put(Long.class, new ForLoadedType(Long.class));
+                    TYPE_CACHE.put(Float.class, new ForLoadedType(Float.class));
+                    TYPE_CACHE.put(Double.class, new ForLoadedType(Double.class));
+                    TYPE_CACHE.put(void.class, new ForLoadedType(void.class));
+                    TYPE_CACHE.put(boolean.class, new ForLoadedType(boolean.class));
+                    TYPE_CACHE.put(byte.class, new ForLoadedType(byte.class));
+                    TYPE_CACHE.put(short.class, new ForLoadedType(short.class));
+                    TYPE_CACHE.put(char.class, new ForLoadedType(char.class));
+                    TYPE_CACHE.put(int.class, new ForLoadedType(int.class));
+                    TYPE_CACHE.put(long.class, new ForLoadedType(long.class));
+                    TYPE_CACHE.put(float.class, new ForLoadedType(float.class));
+                    TYPE_CACHE.put(double.class, new ForLoadedType(double.class));
+                }
+
+                /**
                  * The type that this instance represents.
                  */
                 private final Class<?> type;
@@ -3357,7 +3390,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 private final AnnotationReader annotationReader;
 
                 /**
-                 * Creates a new description of a generic type of a loaded type.
+                 * Creates a new description of a generic type of a loaded type. This constructor should not normally be used.
+                 * Use {@link ForLoadedType#of(Class)} instead.
                  *
                  * @param type The represented type.
                  */
@@ -3375,6 +3409,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected ForLoadedType(Class<?> type, AnnotationReader annotationReader) {
                     this.type = type;
                     this.annotationReader = annotationReader;
+                }
+
+                /**
+                 * Returns a new immutable generic type description for a loaded type.
+                 *
+                 * @param type The type to be represented by this generic type description.
+                 * @return The generic type description representing the given type.
+                 */
+                public static Generic of(Class<?> type) {
+                    Generic typeDescription = TYPE_CACHE.get(type);
+                    return typeDescription == null
+                            ? new ForLoadedType(type)
+                            : typeDescription;
                 }
 
                 @Override
@@ -3401,6 +3448,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return this.type == type || super.represents(type);
                 }
             }
 
@@ -3804,6 +3856,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
+
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return genericArrayType == type || super.represents(type);
+                }
             }
 
             /**
@@ -4043,6 +4100,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return wildcardType == type || super.represents(type);
                 }
 
                 /**
@@ -4478,6 +4540,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return parameterizedType == type || super.represents(type);
                 }
 
                 /**
@@ -5063,6 +5130,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return annotationReader.asList();
                 }
 
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return typeVariable == type || super.represents(type);
+                }
+
                 /**
                  * A list of type variable bounds for a loaded {@link TypeVariable} that resolves annotations..
                  */
@@ -5642,7 +5714,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
                     return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure[index]);
+                            : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -5695,7 +5767,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
                     return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure[index]);
+                            : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
                 @Override
@@ -7083,6 +7155,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         static {
             TYPE_CACHE = new HashMap<Class<?>, TypeDescription>();
+            TYPE_CACHE.put(TargetType.class, new ForLoadedType(TargetType.class));
             TYPE_CACHE.put(Object.class, new ForLoadedType(Object.class));
             TYPE_CACHE.put(String.class, new ForLoadedType(String.class));
             TYPE_CACHE.put(Boolean.class, new ForLoadedType(Boolean.class));
@@ -7110,7 +7183,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         private final Class<?> type;
 
         /**
-         * Creates a new immutable type description for a loaded type. This constructor should not normally be called.
+         * Creates a new immutable type description for a loaded type. This constructor should not normally be used.
          * Use {@link ForLoadedType#of(Class)} instead.
          *
          * @param type The type to be represented by this type description.
@@ -7139,7 +7212,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * Returns a new immutable type description for a loaded type.
          *
          * @param type The type to be represented by this type description.
-         * @return the type description representing the given type.
+         * @return The type description representing the given type.
          */
         public static TypeDescription of(Class<?> type) {
             TypeDescription typeDescription = TYPE_CACHE.get(type);
@@ -7150,19 +7223,26 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isAssignableFrom(Class<?> type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return this.type.isAssignableFrom(type) || super.isAssignableFrom(type);
         }
 
         @Override
+        public boolean isAssignableFrom(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && type.isAssignableFrom(((ForLoadedType) typeDescription).type) || super.isAssignableFrom(typeDescription);
+        }
+
+        @Override
         public boolean isAssignableTo(Class<?> type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type.isAssignableFrom(this.type) || super.isAssignableTo(type);
         }
 
         @Override
+        public boolean isAssignableTo(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && ((ForLoadedType) typeDescription).type.isAssignableFrom(type) || super.isAssignableTo(typeDescription);
+        }
+
+        @Override
         public boolean represents(java.lang.reflect.Type type) {
-            // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
             return type == this.type || super.represents(type);
         }
 
@@ -7194,7 +7274,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             if (RAW_TYPES) {
                 return type.getSuperclass() == null
                         ? TypeDescription.Generic.UNDEFINED
-                        : new Generic.OfNonGenericType.ForLoadedType(type.getSuperclass());
+                        : Generic.OfNonGenericType.ForLoadedType.of(type.getSuperclass());
             }
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
@@ -7352,6 +7432,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
+        }
+
+        @Override
+        public Generic asGenericType() {
+            return Generic.OfNonGenericType.ForLoadedType.of(type);
         }
     }
 

@@ -958,7 +958,7 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public TypeDescription.Generic getReturnType() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
-                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(method.getReturnType());
+                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(method.getReturnType());
             }
             return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(method);
         }

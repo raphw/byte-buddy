@@ -93,7 +93,7 @@ public class ReferenceTypeAwareAssignerTest {
 
     @Test
     public void testPrimitiveAssignabilityWhenEqual() throws Exception {
-        TypeDescription.Generic primitiveType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class); // Note: cannot mock equals
+        TypeDescription.Generic primitiveType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class); // Note: cannot mock equals
         StackManipulation stackManipulation = ReferenceTypeAwareAssigner.INSTANCE.assign(primitiveType, primitiveType, Assigner.Typing.DYNAMIC);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
@@ -104,8 +104,8 @@ public class ReferenceTypeAwareAssignerTest {
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveAssignabilityWhenNotEqual() throws Exception {
-        TypeDescription.Generic primitiveType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class); // Note: cannot mock equals
-        TypeDescription.Generic otherPrimitiveType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(long.class); // Note: cannot mock equals
+        TypeDescription.Generic primitiveType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class); // Note: cannot mock equals
+        TypeDescription.Generic otherPrimitiveType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(long.class); // Note: cannot mock equals
         StackManipulation stackManipulation = ReferenceTypeAwareAssigner.INSTANCE.assign(primitiveType, otherPrimitiveType, Assigner.Typing.DYNAMIC);
         assertThat(stackManipulation.isValid(), is(false));
         stackManipulation.apply(methodVisitor, implementationContext);

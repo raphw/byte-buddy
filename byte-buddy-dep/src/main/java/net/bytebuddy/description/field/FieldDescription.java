@@ -210,7 +210,7 @@ public interface FieldDescription extends ByteCodeElement,
         @Override
         public TypeDescription.Generic getType() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
-                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(field.getType());
+                return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(field.getType());
             }
             return new TypeDescription.Generic.LazyProjection.ForLoadedFieldType(field);
         }

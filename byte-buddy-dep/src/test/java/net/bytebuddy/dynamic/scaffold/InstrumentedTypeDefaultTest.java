@@ -427,8 +427,8 @@ public class InstrumentedTypeDefaultTest {
     @Test
     public void testSuperClass() {
         assertThat(makePlainInstrumentedType().getSuperClass(), is(TypeDescription.Generic.OBJECT));
-        assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Integer.class)));
-        assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)));
+        assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Integer.class)));
+        assertThat(makePlainInstrumentedType().getSuperClass(), not((TypeDescription.Generic) TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Serializable.class)));
     }
 
     @Test
@@ -1254,7 +1254,7 @@ public class InstrumentedTypeDefaultTest {
     public void testTypeVariableOutOfScopeIsErased() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(AbstractOuter.ExtendedInner.class),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(AbstractOuter.ExtendedInner.class),
                 Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),

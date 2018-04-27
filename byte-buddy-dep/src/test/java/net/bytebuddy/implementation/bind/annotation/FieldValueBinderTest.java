@@ -300,7 +300,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("isFoo");
         when(source.getActualName()).thenReturn("isFoo");
-        when(source.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class));
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(boolean.class));
         when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,

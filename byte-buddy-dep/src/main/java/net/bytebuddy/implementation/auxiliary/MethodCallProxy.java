@@ -179,7 +179,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<TypeVariableToken>emptyList(),
                     TypeDescription.Generic.OBJECT,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
+                    Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
                     AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED);

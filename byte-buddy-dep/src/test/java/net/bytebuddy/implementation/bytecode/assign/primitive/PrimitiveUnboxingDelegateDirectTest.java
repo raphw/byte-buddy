@@ -139,7 +139,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
                 unboxingMethodDescriptor,
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
+        verify(chainedAssigner).assign(referenceTypeDescription, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
         verify(stackManipulation, atLeast(1)).isValid();
         verify(stackManipulation).apply(methodVisitor, implementationContext);

@@ -88,7 +88,7 @@ public class PrimitiveTypeAwareAssignerBoxingTest {
         verifyNoMoreInteractions(sourceTypeDescription);
         verify(targetTypeDescription, atLeast(1)).isPrimitive();
         verifyNoMoreInteractions(targetTypeDescription);
-        verify(chainedAssigner).assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(targetType), targetTypeDescription, Assigner.Typing.STATIC);
+        verify(chainedAssigner).assign(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(targetType), targetTypeDescription, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 }

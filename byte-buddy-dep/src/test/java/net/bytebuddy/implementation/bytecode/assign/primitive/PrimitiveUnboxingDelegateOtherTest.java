@@ -7,7 +7,7 @@ public class PrimitiveUnboxingDelegateOtherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalSourceTypeThrowsException() throws Exception {
-        PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        PrimitiveUnboxingDelegate.forReferenceType(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(int.class));
     }
 
     @Test(expected = IllegalArgumentException.class)

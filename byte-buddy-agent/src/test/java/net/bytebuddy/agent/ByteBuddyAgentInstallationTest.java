@@ -1,6 +1,7 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.AgentAttachmentRule;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -20,6 +21,9 @@ public class ByteBuddyAgentInstallationTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
     @Before
     public void setUp() throws Exception {
         Field instrumentation = Installer.class.getDeclaredField("instrumentation");
@@ -35,6 +39,7 @@ public class ByteBuddyAgentInstallationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @JavaVersionRule.Enforce(9) // To avoid duplicate binding of native library to two class loader.
     public void testAgentInstallationOtherClassLoader() throws Exception {
         assertThat(new ClassLoader(null) {
             @Override

@@ -1041,9 +1041,9 @@ public class MethodGraphCompilerDefaultTest {
     public void testVisibilityExtension() throws Exception {
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(VisibilityExtension.Base.class),
+                TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.Base.class),
                 Collections.<TypeVariableToken>emptyList(),
-                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(VisibilityExtension.class)),
+                Collections.<TypeDescription.Generic>singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),

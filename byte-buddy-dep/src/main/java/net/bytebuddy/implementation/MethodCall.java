@@ -1208,7 +1208,7 @@ public class MethodCall implements Implementation.Composable {
                     return instrumentedType
                             .withField(new FieldDescription.Token(name,
                                     Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass())))
+                                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass())))
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
 
@@ -1895,7 +1895,7 @@ public class MethodCall implements Implementation.Composable {
          */
         public <T> MethodCall on(T target, Class<? super T> type) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForValue(target, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type)),
+                    new TargetHandler.ForValue(target, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(type)),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(type),
                     terminationHandler,

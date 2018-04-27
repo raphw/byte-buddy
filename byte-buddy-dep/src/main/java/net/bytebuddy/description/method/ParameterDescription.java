@@ -449,7 +449,7 @@ public interface ParameterDescription extends AnnotationSource,
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
-                    return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(executable.getParameterTypes()[index]);
+                    return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(executable.getParameterTypes()[index]);
                 }
                 return new TypeDescription.Generic.LazyProjection.OfMethodParameter(executable, index, executable.getParameterTypes());
             }
@@ -486,7 +486,7 @@ public interface ParameterDescription extends AnnotationSource,
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
-                    return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(executable.getParameterTypes()[index]);
+                    return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(executable.getParameterTypes()[index]);
                 }
                 return new TypeDescription.Generic.LazyProjection.OfConstructorParameter(executable, index, executable.getParameterTypes());
             }
@@ -550,7 +550,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
-                    return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(parameterType[index]);
+                    return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(parameterType[index]);
                 }
                 return new TypeDescription.Generic.LazyProjection.OfMethodParameter(method, index, parameterType);
             }
@@ -625,7 +625,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             public TypeDescription.Generic getType() {
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
-                    return new TypeDescription.Generic.OfNonGenericType.ForLoadedType(parameterType[index]);
+                    return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(parameterType[index]);
                 }
                 return new TypeDescription.Generic.LazyProjection.OfConstructorParameter(constructor, index, parameterType);
             }

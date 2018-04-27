@@ -22,7 +22,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
         TypeDescription target = TypeDescription.ForLoadedType.of(Bar.class);
         TypeDescription.Generic attached = detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
         assertThat(attached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(attached.asErasure(), sameInstance(target));
+        assertThat(attached.asErasure(), is(target));
         assertThat(attached.getTypeArguments().size(), is(4));
         assertThat(attached.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(attached.getTypeArguments().get(0).getSymbol(), is("T"));
