@@ -777,8 +777,10 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedTypeVariableType.class.getDeclaredField(FOO));
-        // Some JVM versions do not prefix the outer type correctly.
-        assertThat(typeDescription.getTypeName(), is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        // The toString implementation for parameterized types was changed within the Java 8 version range.
+        assertThat(typeDescription.getTypeName(), CoreMatchers.anyOf(
+                is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()),
+                is("net.bytebuddy.description.type.AbstractTypeDescriptionGenericTest$NestedTypeVariableType<T>$Placeholder")));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeArguments().size(), is(0));
@@ -793,8 +795,10 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedSpecifiedTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO));
-        // Some JVM versions do not prefix the outer type correctly.
-        assertThat(typeDescription.getTypeName(), is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        // The toString implementation for parameterized types was changed within the Java 8 version range.
+        assertThat(typeDescription.getTypeName(), CoreMatchers.anyOf(
+                is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()),
+                is("net.bytebuddy.description.type.AbstractTypeDescriptionGenericTest$NestedSpecifiedTypeVariableType<java.lang.String>$Placeholder")));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeArguments().size(), is(0));
@@ -809,8 +813,10 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test
     public void testNestedStaticTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedStaticTypeVariableType.class.getDeclaredField(FOO));
-        // Some JVM versions do not prefix the outer type correctly.
-        assertThat(typeDescription.getTypeName(), is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        // The toString implementation for parameterized types was changed within the Java 8 version range.
+        assertThat(typeDescription.getTypeName(), CoreMatchers.anyOf(
+                is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()),
+                is("net.bytebuddy.description.type.AbstractTypeDescriptionGenericTest$NestedStaticTypeVariableType$Placeholder<java.lang.String>")));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeArguments().size(), is(1));
