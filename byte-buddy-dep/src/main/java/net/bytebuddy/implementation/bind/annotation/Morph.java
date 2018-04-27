@@ -11,6 +11,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
@@ -339,6 +340,7 @@ public @interface Morph {
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
                 return new ByteBuddy(classFileVersion)
+                        .with(TypeValidation.DISABLED)
                         .subclass(morphingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)

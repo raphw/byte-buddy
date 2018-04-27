@@ -6,6 +6,7 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
@@ -719,6 +720,7 @@ public interface ClassInjector {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
                     DynamicType.Builder<?> builder = new ByteBuddy()
+                            .with(TypeValidation.DISABLED)
                             .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                             .name(ClassLoader.class.getName() + "$ByteBuddyAccessor$" + RandomString.make())
                             .defineMethod("findLoadedClass", Class.class, Visibility.PUBLIC)

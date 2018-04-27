@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bytecode.*;
@@ -98,6 +99,7 @@ public class TypeProxy implements AuxiliaryType {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
+                .with(TypeValidation.DISABLED)
                 .ignore(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
                 .subclass(proxiedType)
                 .name(auxiliaryTypeName)

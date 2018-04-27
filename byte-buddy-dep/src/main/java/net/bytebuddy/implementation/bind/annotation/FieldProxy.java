@@ -11,6 +11,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
@@ -932,6 +933,7 @@ public @interface FieldProxy {
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
                 return fieldResolver.apply(new ByteBuddy(classFileVersion)
+                        .with(TypeValidation.DISABLED)
                         .subclass(fieldResolver.getProxyType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)

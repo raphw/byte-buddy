@@ -15,6 +15,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
@@ -258,6 +259,7 @@ public @interface Pipe {
                                     MethodAccessorFactory methodAccessorFactory) {
                 LinkedHashMap<String, TypeDescription> parameterFields = extractFields(sourceMethod);
                 DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
+                        .with(TypeValidation.DISABLED)
                         .subclass(forwardingType, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)

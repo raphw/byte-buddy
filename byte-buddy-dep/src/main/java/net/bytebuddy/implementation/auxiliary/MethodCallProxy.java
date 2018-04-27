@@ -17,6 +17,7 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
@@ -136,6 +137,7 @@ public class MethodCallProxy implements AuxiliaryType {
         MethodDescription accessorMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
+                .with(TypeValidation.DISABLED)
                 .with(PrecomputedMethodGraph.INSTANCE)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(auxiliaryTypeName)

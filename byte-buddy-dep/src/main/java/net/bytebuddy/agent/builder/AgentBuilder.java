@@ -21,6 +21,7 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.ExceptionMethod;
@@ -9697,6 +9698,7 @@ public interface AgentBuilder {
                     public Factory run() {
                         try {
                             return new Factory.ForJava9CapableVm(new ByteBuddy()
+                                    .with(TypeValidation.DISABLED)
                                     .subclass(ExecutingTransformer.class)
                                     .name(ExecutingTransformer.class.getName() + "$ByteBuddy$ModuleSupport")
                                     .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
