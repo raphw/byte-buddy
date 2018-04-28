@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. April 2018: version 1.8.10
+
+- Extended support for self-attachment by using current jar file for Java 9+.
+- Minor performance improvements.
+
 ### 27. April 2018: version 1.8.9
 
 - Several performance improvements.
