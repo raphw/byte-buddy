@@ -24,8 +24,7 @@ public class ByteBuddyAgentInstallationTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    @Before
-    public void setUp() throws Exception {
+    private static void resetField() throws Exception {
         Field instrumentation = Installer.class.getDeclaredField("instrumentation");
         instrumentation.setAccessible(true);
         instrumentation.set(null, null);
@@ -39,8 +38,9 @@ public class ByteBuddyAgentInstallationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
-    @JavaVersionRule.Enforce(9) // To avoid duplicate binding of native library to two class loader.
+    @JavaVersionRule.Enforce(9) // To avoid unsupported duplicate binding of native library to two class loaders.
     public void testAgentInstallationOtherClassLoader() throws Exception {
+        resetField();
         assertThat(new ClassLoader(null) {
             @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {
@@ -70,7 +70,9 @@ public class ByteBuddyAgentInstallationTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(9) // To avoid unsupported duplicate binding of native library to two class loaders.
     public void testNoInstrumentation() throws Exception {
+        resetField();
         ByteBuddyAgent.getInstrumentation();
     }
 }
