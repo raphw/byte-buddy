@@ -135,6 +135,11 @@ public class ByteBuddyAgent {
     private static final String INSTRUMENTATION_METHOD = "getInstrumentation";
 
     /**
+     * Represents the {@code file} URL protocol.
+     */
+    private static final String FILE_PROTOCOL = "file";
+
+    /**
      * An indicator variable to express that no instrumentation is available.
      */
     private static final Instrumentation UNAVAILABLE = null;
@@ -463,16 +468,14 @@ public class ByteBuddyAgent {
                 return CANNOT_SELF_RESOLVE;
             }
             URL location = codeSource.getLocation();
-            if (!location.getProtocol().equals("file")) {
+            if (!location.getProtocol().equals(FILE_PROTOCOL)) {
                 return CANNOT_SELF_RESOLVE;
             }
-            File agentJar;
             try {
-                agentJar = new File(location.toURI());
+                return new File(location.toURI());
             } catch (URISyntaxException ignored) {
-                agentJar = new File(location.getPath());
+                return new File(location.getPath());
             }
-            return agentJar;
         } catch (Exception ignored) {
             return CANNOT_SELF_RESOLVE;
         }
@@ -1064,16 +1067,6 @@ public class ByteBuddyAgent {
             private static final String AGENT_FILE_NAME = "byteBuddyAgent";
 
             /**
-             * The jar file extension.
-             */
-            private static final String JAR_FILE_EXTENSION = ".jar";
-
-            /**
-             * Indicates that the jar file of the {@link Installer} class cannot be used for a self-attachment.
-             */
-            private static final File CANNOT_SELF_RESOLVE = null;
-
-            /**
              * Attempts to resolve the {@link Installer} class from this jar file if it can be located. Doing so, it is possible
              * to avoid the creation of a temporary jar file which can remain undeleted on Windows operating systems where the agent
              * is linked by a class loader such that {@link File#deleteOnExit()} does not have an effect.
@@ -1091,7 +1084,7 @@ public class ByteBuddyAgent {
                     return CANNOT_SELF_RESOLVE;
                 }
                 URL location = codeSource.getLocation();
-                if (!location.getProtocol().equals("file")) {
+                if (!location.getProtocol().equals(FILE_PROTOCOL)) {
                     return CANNOT_SELF_RESOLVE;
                 }
                 File agentJar;
