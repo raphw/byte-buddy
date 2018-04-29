@@ -55,7 +55,7 @@ public class ClassConstantReferenceTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(typeDescription).getDescriptor();
         verify(typeDescription).isVisibleTo(instrumentedType);
-        verify(typeDescription, times(9)).represents(any(Class.class));
+        verify(typeDescription).isPrimitive();
         verifyNoMoreInteractions(typeDescription);
         verify(methodVisitor).visitLdcInsn(Type.getType(FOO));
         verifyNoMoreInteractions(methodVisitor);
@@ -66,14 +66,16 @@ public class ClassConstantReferenceTest {
         when(typeDescription.isVisibleTo(instrumentedType)).thenReturn(false);
         when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
         when(typeDescription.getName()).thenReturn(FOO);
+        when(typeDescription.isPrimitiveWrapper()).thenReturn(false);
         StackManipulation stackManipulation = ClassConstant.of(typeDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(typeDescription).getName();
+
+        verify(typeDescription).isPrimitive();
         verify(typeDescription).isVisibleTo(instrumentedType);
-        verify(typeDescription, times(9)).represents(any(Class.class));
+        verify(typeDescription).getName();
         verifyNoMoreInteractions(typeDescription);
         verify(methodVisitor).visitLdcInsn(FOO);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
@@ -95,7 +97,7 @@ public class ClassConstantReferenceTest {
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(typeDescription).getName();
-        verify(typeDescription, times(9)).represents(any(Class.class));
+        verify(typeDescription).isPrimitive();
         verifyNoMoreInteractions(typeDescription);
         verify(methodVisitor).visitLdcInsn(FOO);
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,

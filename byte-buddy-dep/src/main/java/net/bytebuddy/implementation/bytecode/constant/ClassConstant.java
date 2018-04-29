@@ -97,27 +97,28 @@ public enum ClassConstant implements StackManipulation {
      * @return The corresponding stack manipulation.
      */
     public static StackManipulation of(TypeDescription typeDescription) {
-        if (typeDescription.represents(void.class)) {
-            return VOID;
-        } else if (typeDescription.represents(boolean.class)) {
-            return BOOLEAN;
-        } else if (typeDescription.represents(byte.class)) {
-            return BYTE;
-        } else if (typeDescription.represents(short.class)) {
-            return SHORT;
-        } else if (typeDescription.represents(char.class)) {
-            return CHARACTER;
-        } else if (typeDescription.represents(int.class)) {
-            return INTEGER;
-        } else if (typeDescription.represents(long.class)) {
-            return LONG;
-        } else if (typeDescription.represents(float.class)) {
-            return FLOAT;
-        } else if (typeDescription.represents(double.class)) {
-            return DOUBLE;
-        } else {
-            return new ForReferenceType(typeDescription);
+        if (typeDescription.isPrimitive()) {
+            if (typeDescription.represents(void.class)) {
+                return VOID;
+            } else if (typeDescription.represents(boolean.class)) {
+                return BOOLEAN;
+            } else if (typeDescription.represents(byte.class)) {
+                return BYTE;
+            } else if (typeDescription.represents(short.class)) {
+                return SHORT;
+            } else if (typeDescription.represents(char.class)) {
+                return CHARACTER;
+            } else if (typeDescription.represents(int.class)) {
+                return INTEGER;
+            } else if (typeDescription.represents(long.class)) {
+                return LONG;
+            } else if (typeDescription.represents(float.class)) {
+                return FLOAT;
+            } else if (typeDescription.represents(double.class)) {
+                return DOUBLE;
+            }
         }
+        return new ForReferenceType(typeDescription);
     }
 
     @Override
