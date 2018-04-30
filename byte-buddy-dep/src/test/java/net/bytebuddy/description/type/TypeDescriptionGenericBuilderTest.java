@@ -3,8 +3,11 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -17,6 +20,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGenericTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Override
     protected TypeDescription.Generic describeType(Field field) {
@@ -143,7 +149,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support owner types")
+    @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
