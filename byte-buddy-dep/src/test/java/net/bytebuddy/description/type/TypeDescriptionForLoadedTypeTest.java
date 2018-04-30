@@ -5,8 +5,11 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -15,6 +18,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Override
     protected TypeDescription describe(Class<?> type) {
@@ -81,7 +87,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support owner types")
+    @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
@@ -102,7 +108,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(9)
     public void testGenericNestedTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         super.testGenericNestedTypeAnnotationReceiverTypeOnConstructor();
     }
@@ -123,7 +129,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support nested non-generic types")
+    @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationNonGenericInnerType() throws Exception {
         super.testTypeAnnotationNonGenericInnerType();
     }

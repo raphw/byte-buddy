@@ -1,7 +1,10 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -9,6 +12,9 @@ import java.lang.reflect.Method;
 import static org.mockito.Mockito.mock;
 
 public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Override
     protected TypeDescription describe(Class<?> type) {
@@ -82,7 +88,7 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support owner types")
+    @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
@@ -103,7 +109,7 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @JavaVersionRule.Enforce(9)
     public void testGenericNestedTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         super.testGenericNestedTypeAnnotationReceiverTypeOnConstructor();
     }
@@ -124,7 +130,7 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Override
     @Test
-    @Ignore("The Java reflection API does not currently support nested non-generic types")
+    @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationNonGenericInnerType() throws Exception {
         super.testTypeAnnotationNonGenericInnerType();
     }

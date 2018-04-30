@@ -48,11 +48,4 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
     protected boolean canReadDebugInformation() {
         return true;
     }
-
-    @Test
-    @Override
-//    @Ignore("Fails due to limitation since ASM 6.1: https://gitlab.ow2.org/asm/asm/issues/317814")
-    public void testSyntethicParameter() throws Exception {
-        super.testSyntethicParameter();
-    }
 }
