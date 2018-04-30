@@ -57,10 +57,10 @@ public class ClassFileExtraction {
     public void testClassFileExtraction() throws Exception {
         byte[] binaryFoo = extract(Foo.class);
         assertThat(binaryFoo.length > 4, is(true));
-        assertThat(binaryFoo[0], is(new Integer(CA).byteValue()));
-        assertThat(binaryFoo[1], is(new Integer(FE).byteValue()));
-        assertThat(binaryFoo[2], is(new Integer(BA).byteValue()));
-        assertThat(binaryFoo[3], is(new Integer(BE).byteValue()));
+        assertThat(binaryFoo[0], is((byte) CA));
+        assertThat(binaryFoo[1], is((byte) FE));
+        assertThat(binaryFoo[2], is((byte) BA));
+        assertThat(binaryFoo[3], is((byte) BE));
     }
 
     private static class Foo {
