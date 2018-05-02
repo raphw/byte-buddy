@@ -74,6 +74,18 @@
                                         <exclude>module-info.class</exclude>
                                     </excludes>
                                 </filter>
+                                <filter>
+                                    <artifact>org.ow2.asm:asm-commons</artifact>
+                                    <includes>
+                                        <include>org/objectweb/asm/commons/Remapper.class</include>
+                                        <include>org/objectweb/asm/commons/ClassRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/FieldRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/MethodRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/AnnotationRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/ModuleRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/SimpleRemapper.class</include>
+                                    </includes>
+                                </filter>
                             </filters>
                         </configuration>
                     </execution>
