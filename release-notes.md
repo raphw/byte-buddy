@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. Mai 2018: version 1.8.11
+
+- Avoid shading unused ASM classes with incomplete links what breaks lint on Android and JPMS module generation.
+
 ### 28. April 2018: version 1.8.10
 
 - Extended support for self-attachment by using current jar file for Java 9+.
