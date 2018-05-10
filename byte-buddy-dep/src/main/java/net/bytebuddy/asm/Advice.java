@@ -5573,17 +5573,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface Bound {
 
                 /**
+                 * Indicates that this relocation handler does not require a minimal stack size.
+                 */
+                int NO_REQUIRED_SIZE = 0;
+
+                /**
                  * Applies this relocation handler.
                  *
-                 * @param methodVisitor        The method visitor to use.
-                 * @param argumentHandler      The argument handler to use.
-                 * @param methodSizeHandler    The method size handler to use.
-                 * @param stackMapFrameHandler The stack map frame handler to use.
+                 * @param methodVisitor The method visitor to use.
+                 * @param offset        The offset of the relevant value.
+                 * @return The minimal required stack size to apply this relocation handler.
                  */
-                void apply(MethodVisitor methodVisitor,
-                           ArgumentHandler.ForAdvice argumentHandler,
-                           MethodSizeHandler.ForAdvice methodSizeHandler,
-                           StackMapFrameHandler.ForAdvice stackMapFrameHandler);
+                int apply(MethodVisitor methodVisitor, int offset);
             }
 
             /**
@@ -5602,11 +5603,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void apply(MethodVisitor methodVisitor,
-                                  ArgumentHandler.ForAdvice argumentHandler,
-                                  MethodSizeHandler.ForAdvice methodSizeHandler,
-                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
-                    /* do nothing */
+                public int apply(MethodVisitor methodVisitor, int offset) {
+                    return NO_REQUIRED_SIZE;
                 }
             }
 
@@ -5618,9 +5616,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A relocation handler for an {@code int} type or any compatible type.
                  */
-                INTEGER(Opcodes.ILOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                INTEGER(Opcodes.ILOAD, Opcodes.IFNE, Opcodes.IFEQ, 0) {
                     @Override
-                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    protected void convertValue(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
                 },
@@ -5628,9 +5626,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A relocation handler for a {@code long} type.
                  */
-                LONG(Opcodes.LLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                LONG(Opcodes.LLOAD, Opcodes.IFNE, Opcodes.IFEQ, 0) {
                     @Override
-                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    protected void convertValue(MethodVisitor methodVisitor) {
                         methodVisitor.visitInsn(Opcodes.L2I);
                     }
                 },
@@ -5638,33 +5636,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A relocation handler for a {@code float} type.
                  */
-                FLOAT(Opcodes.FLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                FLOAT(Opcodes.FLOAD, Opcodes.IFNE, Opcodes.IFEQ, 2) {
                     @Override
-                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    protected void convertValue(MethodVisitor methodVisitor) {
                         methodVisitor.visitInsn(Opcodes.FCONST_0);
                         methodVisitor.visitInsn(Opcodes.FCMPL);
-                        methodSizeHandler.requireStackSize(2);
                     }
                 },
 
                 /**
                  * A relocation handler for a {@code double} type.
                  */
-                DOUBLE(Opcodes.DLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
+                DOUBLE(Opcodes.DLOAD, Opcodes.IFNE, Opcodes.IFEQ, 4) {
                     @Override
-                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    protected void convertValue(MethodVisitor methodVisitor) {
                         methodVisitor.visitInsn(Opcodes.DCONST_0);
                         methodVisitor.visitInsn(Opcodes.DCMPL);
-                        methodSizeHandler.requireStackSize(4);
                     }
                 },
 
                 /**
                  * A relocation handler for a reference type.
                  */
-                REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL, Opcodes.IFNULL) {
+                REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL, Opcodes.IFNULL, 0) {
                     @Override
-                    protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    protected void convertValue(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
                 };
@@ -5685,16 +5681,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final int nonDefaultJump;
 
                 /**
+                 * The minimal required stack size to apply this relocation handler.
+                 */
+                private final int requiredSize;
+
+                /**
                  * Creates a new relocation handler for a type's default or non-default value.
                  *
                  * @param load           An opcode for loading a value of the represented type from the local variable array.
                  * @param defaultJump    The opcode to check for a non-default value.
                  * @param nonDefaultJump The opcode to check for a default value.
+                 * @param requiredSize   The minimal required stack size to apply this relocation handler.
                  */
-                ForValue(int load, int defaultJump, int nonDefaultJump) {
+                ForValue(int load, int defaultJump, int nonDefaultJump, int requiredSize) {
                     this.load = load;
                     this.defaultJump = defaultJump;
                     this.nonDefaultJump = nonDefaultJump;
+                    this.requiredSize = requiredSize;
                 }
 
                 /**
@@ -5727,10 +5730,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Applies a value conversion prior to a applying a conditional jump.
                  *
-                 * @param methodVisitor     The method visitor to use.
-                 * @param methodSizeHandler The method size handler to use.
+                 * @param methodVisitor The method visitor to use.
                  */
-                protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
+                protected abstract void convertValue(MethodVisitor methodVisitor);
 
                 @Override
                 public RelocationHandler.Bound bind(MethodDescription instrumentedMethod, Relocation relocation) {
@@ -5784,21 +5786,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void apply(MethodVisitor methodVisitor,
-                                      ArgumentHandler.ForAdvice argumentHandler,
-                                      MethodSizeHandler.ForAdvice methodSizeHandler,
-                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
+                    public int apply(MethodVisitor methodVisitor, int offset) {
                         if (instrumentedMethod.isConstructor()) {
                             throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
                         }
-                        methodVisitor.visitVarInsn(load, argumentHandler.enter());
-                        convertValue(methodVisitor, methodSizeHandler);
+                        methodVisitor.visitVarInsn(load, offset);
+                        convertValue(methodVisitor);
                         Label noSkip = new Label();
                         methodVisitor.visitJumpInsn(inverted
                                 ? nonDefaultJump
                                 : defaultJump, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
+                        return requiredSize;
                     }
                 }
             }
@@ -5877,19 +5877,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void apply(MethodVisitor methodVisitor,
-                                      ArgumentHandler.ForAdvice argumentHandler,
-                                      MethodSizeHandler.ForAdvice methodSizeHandler,
-                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler) {
+                    public int apply(MethodVisitor methodVisitor, int offset) {
                         if (instrumentedMethod.isConstructor()) {
                             throw new IllegalStateException("Cannot skip code execution from constructor: " + instrumentedMethod);
                         }
-                        methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.enter());
+                        methodVisitor.visitVarInsn(Opcodes.ALOAD, offset);
                         methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
                         Label noSkip = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
                         relocation.apply(methodVisitor);
                         methodVisitor.visitLabel(noSkip);
+                        return NO_REQUIRED_SIZE;
                     }
                 }
             }
@@ -7034,7 +7032,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     suppressionHandler.onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
                     methodVisitor.visitLabel(endOfMethod);
                     onMethodReturn();
-                    relocationHandler.apply(methodVisitor, argumentHandler, methodSizeHandler, stackMapFrameHandler);
+                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, relocationOffset()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                 }
 
@@ -7095,6 +7093,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Invoked after returning from the advice method.
                  */
                 protected abstract void onMethodReturn();
+
+                /**
+                 * Resolves the offset that holds the value of the instance that determines a relocation.
+                 *
+                 * @return The offset that holds the value of the instance that determines a relocation.
+                 */
+                protected abstract int relocationOffset();
 
                 /**
                  * A code translation visitor that retains the return value of the represented advice method.
@@ -7201,6 +7206,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                         }
                     }
+
+                    @Override
+                    protected int relocationOffset() {
+                        return argumentHandler.enter();
+                    }
                 }
 
                 /**
@@ -7274,6 +7284,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected void onMethodReturn() {
                         /* do nothing */
+                    }
+
+                    @Override
+                    protected int relocationOffset() {
+                        return argumentHandler.exit();
                     }
                 }
             }
@@ -7507,7 +7522,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 false);
                         onMethodReturn();
                         suppressionHandler.onEndSkipped(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
-                        relocationHandler.apply(methodVisitor, argumentHandler, methodSizeHandler, stackMapFrameHandler);
+                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, relocationOffset()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
@@ -7516,6 +7531,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Invoked directly after the advice method was called.
                      */
                     protected abstract void onMethodReturn();
+
+                    /**
+                     * Resolves the offset that holds the value of the instance that determines a relocation.
+                     *
+                     * @return The offset that holds the value of the instance that determines a relocation.
+                     */
+                    protected abstract int relocationOffset();
 
                     /**
                      * An advice method writer for a method enter.
@@ -7556,25 +7578,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onMethodReturn() {
-                            if (adviceMethod.getReturnType().represents(boolean.class)
-                                    || adviceMethod.getReturnType().represents(byte.class)
-                                    || adviceMethod.getReturnType().represents(short.class)
-                                    || adviceMethod.getReturnType().represents(char.class)
-                                    || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
-                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
-                            }
-                        }
-
-                        @Override
                         public void onDefaultValue(MethodVisitor methodVisitor) {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
@@ -7596,6 +7599,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
                             }
+                        }
+
+                        @Override
+                        protected void onMethodReturn() {
+                            if (adviceMethod.getReturnType().represents(boolean.class)
+                                    || adviceMethod.getReturnType().represents(byte.class)
+                                    || adviceMethod.getReturnType().represents(short.class)
+                                    || adviceMethod.getReturnType().represents(char.class)
+                                    || adviceMethod.getReturnType().represents(int.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(long.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(float.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(double.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
+                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
+                            }
+                        }
+
+                        @Override
+                        protected int relocationOffset() {
+                            return argumentHandler.enter();
                         }
                     }
 
@@ -7638,6 +7665,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
+                        public void onDefaultValue(MethodVisitor methodVisitor) {
+                            /* do nothing */
+                        }
+
+                        @Override
                         protected void onMethodReturn() {
                             switch (adviceMethod.getReturnType().getStackSize()) {
                                 case ZERO:
@@ -7654,8 +7686,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onDefaultValue(MethodVisitor methodVisitor) {
-                            /* do nothing */
+                        protected int relocationOffset() {
+                            return argumentHandler.exit();
                         }
                     }
                 }
