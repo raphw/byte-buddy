@@ -5252,6 +5252,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         boolean isAlive();
 
         /**
+         * The type that is produced as a result of executing this advice method.
+         *
+         * @return A description of the type that is produced by this advice method.
+         */
+        TypeDefinition getAdviceType();
+
+        /**
          * A dispatcher that is not yet resolved.
          */
         interface Unresolved extends Dispatcher {
@@ -5262,13 +5269,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @return {@code true} if this dispatcher requires access to the advice method's class file.
              */
             boolean isBinary();
-
-            /**
-             * The type that is produced as a result of executing this advice method.
-             *
-             * @return A description of the type that is produced by this advice method.
-             */
-            TypeDescription getAdviceType();
 
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
@@ -5930,14 +5930,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ForMethodEnter extends Resolved {
 
                 /**
-                 * Returns the type that this dispatcher supplies as a result of its advice or a description of {@code void} if
-                 * no type is supplied as a result of the enter advice.
-                 *
-                 * @return The type that this dispatcher supplies as a result of its advice or a description of {@code void}.
-                 */
-                TypeDefinition getEnterType();
-
-                /**
                  * Returns {@code true} if the first discovered line number information should be prepended to the advice code.
                  *
                  * @return {@code true} if the first discovered line number information should be prepended to the advice code.
@@ -6092,11 +6084,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public ArgumentHandler.Factory getArgumentHandlerFactory() {
                 return ArgumentHandler.Factory.SIMPLE;
-            }
-
-            @Override
-            public TypeDefinition getEnterType() {
-                return TypeDescription.VOID;
             }
 
             @Override
@@ -6654,7 +6641,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDefinition getEnterType() {
+                        public TypeDefinition getAdviceType() {
                             return adviceMethod.getReturnType();
                         }
                     }
@@ -6678,7 +6665,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDefinition getEnterType() {
+                        public TypeDefinition getAdviceType() {
                             return TypeDescription.VOID;
                         }
                     }
@@ -6789,6 +6776,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return backupArguments
                                 ? ArgumentHandler.Factory.COPYING
                                 : ArgumentHandler.Factory.SIMPLE;
+                    }
+
+                    @Override
+                    public TypeDefinition getAdviceType() {
+                        return adviceMethod.getReturnType();
                     }
 
                     @Override
@@ -7796,7 +7788,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDefinition getEnterType() {
+                        public TypeDefinition getAdviceType() {
                             return adviceMethod.getReturnType();
                         }
                     }
@@ -7818,7 +7810,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDefinition getEnterType() {
+                        public TypeDefinition getAdviceType() {
                             return TypeDescription.VOID;
                         }
                     }
@@ -7918,6 +7910,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return backupArguments
                                 ? ArgumentHandler.Factory.COPYING
                                 : ArgumentHandler.Factory.SIMPLE;
+                    }
+
+                    @Override
+                    public TypeDefinition getAdviceType() {
+                        return adviceMethod.getReturnType();
                     }
 
                     /**
@@ -8055,10 +8052,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
             // TODO: Resolve exit type.
-            List<TypeDescription> enterTypes = methodEnter.getEnterType().represents(void.class)
+            List<TypeDescription> enterTypes = methodEnter.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
-                    : Collections.singletonList(methodEnter.getEnterType().asErasure());
-            argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod, methodEnter.getEnterType(), TypeDescription.VOID);
+                    : Collections.singletonList(methodEnter.getAdviceType().asErasure());
+            argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod, methodEnter.getAdviceType(), TypeDescription.VOID);
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod, enterTypes, exitTypes, argumentHandler.isCopyingArguments(), writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
