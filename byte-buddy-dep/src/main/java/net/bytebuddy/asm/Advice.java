@@ -7193,8 +7193,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected void onMethodReturn() {
                         if (doesReturn) {
                             stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                            if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitVarInsn(Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor()).getOpcode(Opcodes.ISTORE), argumentHandler.enter());
+                            if (adviceMethod.getReturnType().represents(boolean.class)
+                                    || adviceMethod.getReturnType().represents(byte.class)
+                                    || adviceMethod.getReturnType().represents(short.class)
+                                    || adviceMethod.getReturnType().represents(char.class)
+                                    || adviceMethod.getReturnType().represents(int.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(long.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(float.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
+                            } else if (adviceMethod.getReturnType().represents(double.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
+                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
                             }
                         }
                     }
