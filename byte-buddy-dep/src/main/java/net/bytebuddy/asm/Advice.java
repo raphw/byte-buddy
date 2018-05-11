@@ -2789,6 +2789,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Enter> annotation,
                                           AdviceType adviceType) {
+                    // TODO: void handling?
                     if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
@@ -2797,6 +2798,77 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
         }
+
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForExitValue implements OffsetMapping {
+
+            private final TypeDescription.Generic target;
+
+            private final TypeDescription.Generic enterType;
+
+            private final boolean readOnly;
+
+            private final Assigner.Typing typing;
+
+            protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic enterType, Exit exit) {
+                this(target, enterType, exit.readOnly(), exit.typing());
+            }
+
+            public ForExitValue(TypeDescription.Generic target, TypeDescription.Generic enterType, boolean readOnly, Assigner.Typing typing) {
+                this.target = target;
+                this.enterType = enterType;
+                this.readOnly = readOnly;
+                this.typing = typing;
+            }
+
+            @Override
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                StackManipulation readAssignment = assigner.assign(enterType, target, typing);
+                if (!readAssignment.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + enterType + " to " + target);
+                } else if (readOnly) {
+                    return new Target.ForVariable.ReadOnly(target, argumentHandler.exit(), readAssignment);
+                } else {
+                    StackManipulation writeAssignment = assigner.assign(target, enterType, typing);
+                    if (!writeAssignment.isValid()) {
+                        throw new IllegalStateException("Cannot assign " + target + " to " + enterType);
+                    }
+                    return new Target.ForVariable.ReadWrite(target, argumentHandler.exit(), readAssignment, writeAssignment);
+                }
+            }
+
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class Factory implements OffsetMapping.Factory<Exit> {
+
+                private final TypeDefinition exitType;
+
+                protected Factory(TypeDefinition exitType) {
+                    // TODO: Return illegal handler if void?
+                    this.exitType = exitType;
+                }
+
+                @Override
+                public Class<Exit> getAnnotationType() {
+                    return Exit.class;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Exit> annotation,
+                                          AdviceType adviceType) {
+                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                        throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
+                    } else {
+                        return new ForExitValue(target.getType(), exitType.asGenericType(), annotation.loadSilent());
+                    }
+                }
+            }
+        }
+
 
         /**
          * An offset mapping that provides access to the value that is returned by the instrumented method.
@@ -6264,12 +6336,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
-                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, classReader, methodExit.isAlive());
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                    ClassReader classReader,
+                                                                    Unresolved methodExit) {
+                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, methodExit.getAdviceType(), classReader, methodExit.isAlive());
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
+            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                  ClassReader classReader,
+                                                                  Unresolved methodEnter) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, methodEnter.getAdviceType());
             }
 
@@ -6652,6 +6728,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
+                                             TypeDefinition exitType,
                                              ClassReader classReader) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
@@ -6662,6 +6739,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
+                                        new OffsetMapping.ForExitValue.Factory(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
@@ -6682,11 +6760,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                TypeDefinition exitType,
                                                                 ClassReader classReader,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, userFactories, classReader)
-                                : new WithDiscardedEnterType(adviceMethod, userFactories, classReader);
+                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType, classReader)
+                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType, classReader);
                     }
 
                     @Override
@@ -6769,8 +6848,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                        TypeDefinition exitType,
                                                         ClassReader classReader) {
-                            super(adviceMethod, userFactories, classReader);
+                            super(adviceMethod, userFactories, exitType, classReader);
                         }
 
                         @Override
@@ -6793,8 +6873,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                         TypeDefinition exitType,
                                                          ClassReader classReader) {
-                            super(adviceMethod, userFactories, classReader);
+                            super(adviceMethod, userFactories, exitType, classReader);
                         }
 
                         @Override
@@ -6837,6 +6918,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType),
+                                        new OffsetMapping.ForExitValue.Factory(adviceMethod.getReturnType()),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -7466,12 +7548,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
-                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, methodExit.isAlive());
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                    ClassReader classReader,
+                                                                    Unresolved methodExit) {
+                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
+            public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                  ClassReader classReader,
+                                                                  Unresolved methodEnter) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, methodEnter.getAdviceType());
             }
 
@@ -7875,7 +7961,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param userFactories A list of user-defined factories for offset mappings.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
-                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory<?>> userFactories) {
+                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
+                                             List<? extends OffsetMapping.Factory<?>> userFactories,
+                                             TypeDefinition exitType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -7884,6 +7972,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
+                                        new OffsetMapping.ForExitValue.Factory(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
@@ -7902,10 +7991,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                                TypeDefinition exitType,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, userFactories)
-                                : new WithDiscardedEnterType(adviceMethod, userFactories);
+                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType)
+                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType);
                     }
 
                     @Override
@@ -7956,8 +8046,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param userFactories A list of user-defined factories for offset mappings.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                        List<? extends OffsetMapping.Factory<?>> userFactories) {
-                            super(adviceMethod, userFactories);
+                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                        TypeDefinition exitType) {
+                            super(adviceMethod, userFactories, exitType);
                         }
 
                         @Override
@@ -7978,8 +8069,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param userFactories A list of user-defined factories for offset mappings.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                         List<? extends OffsetMapping.Factory<?>> userFactories) {
-                            super(adviceMethod, userFactories);
+                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                         TypeDefinition exitType) {
+                            super(adviceMethod, userFactories, exitType);
                         }
 
                         @Override
@@ -8020,6 +8112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType),
+                                        new OffsetMapping.ForExitValue.Factory(adviceMethod.getReturnType()),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -9332,6 +9425,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return The typing to apply upon assignment.
          */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Exit {
+
+        boolean readOnly() default true;
+
         Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
