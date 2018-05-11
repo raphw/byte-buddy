@@ -4569,7 +4569,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, initialTypes, CompoundList.of(initialTypes, enterTypes), TranslationMode.ENTER);
+                return new ForAdvice(adviceMethod, initialTypes, enterTypes, TranslationMode.ENTER);
             }
 
             @Override
