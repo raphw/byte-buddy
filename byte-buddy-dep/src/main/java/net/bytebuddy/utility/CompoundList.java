@@ -68,4 +68,16 @@ public class CompoundList {
         list.addAll(right);
         return list;
     }
+
+    public static <S> List<S> of(List<? extends S>... origin) {
+        int size = 0;
+        for (List<? extends S> aList : origin) {
+            size += aList.size();
+        }
+        List<S> list = new ArrayList<S>(size);
+        for (List<? extends S> aList : origin) {
+            list.addAll(aList);
+        }
+        return list;
+    }
 }
