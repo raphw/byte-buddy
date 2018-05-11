@@ -4355,6 +4355,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             int getReaderHint();
 
+            void injectInitializationFrame(MethodVisitor methodVisitor);
+
             /**
              * Injects a frame before executing the instrumented method.
              *
@@ -4405,7 +4407,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /* do nothing */
             }
 
-
             @Override
             public void injectReturnFrame(MethodVisitor methodVisitor) {
                 /* do nothing */
@@ -4418,6 +4419,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                /* do nothing */
+            }
+
+            @Override
+            public void injectInitializationFrame(MethodVisitor methodVisitor) {
                 /* do nothing */
             }
 
@@ -4845,6 +4851,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                public void injectInitializationFrame(MethodVisitor methodVisitor) {
+                    /* do nothing */
+                }
+
+                @Override
                 public void injectStartFrame(MethodVisitor methodVisitor) {
                     /* do nothing */
                 }
@@ -4920,6 +4931,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(initialTypes, enterTypes, exitTypes), Collections.<TypeDescription>emptyList());
+                    }
+                }
+
+                @Override
+                public void injectInitializationFrame(MethodVisitor methodVisitor) {
+                    if (!initialTypes.isEmpty()) {
+                        if (!expandFrames && initialTypes.size() < 4) {
+                            Object[] localVariable = new Object[initialTypes.size()];
+                            int index = 0;
+                            for (TypeDescription typeDescription : initialTypes) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
+                        } else {
+                            Object[] localVariable = new Object[(instrumentedMethod.isStatic() ? 0 : 1)
+                                    + instrumentedMethod.getParameters().size()
+                                    + initialTypes.size()];
+                            int index = 0;
+                            if (instrumentedMethod.isConstructor()) {
+                                localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
+                            } else if (!instrumentedMethod.isStatic()) {
+                                localVariable[index++] = toFrame(instrumentedType);
+                            }
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            for (TypeDescription typeDescription : initialTypes) {
+                                localVariable[index++] = toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
+                        }
                     }
                 }
 
@@ -6098,6 +6140,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             void prepare();
 
+            void initialize();
+
             /**
              * Applies this dispatcher.
              */
@@ -6156,6 +6200,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void prepare() {
+                /* do nothing */
+            }
+
+            @Override
+            public void initialize() {
                 /* do nothing */
             }
 
@@ -6251,6 +6300,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     super(adviceMethod, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.INLINING);
                     this.classReader = classReader;
                 }
+
+                protected abstract TypeDefinition getInitializationType();
 
                 /**
                  * Applies a resolution for a given instrumented method.
@@ -6389,6 +6440,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void prepare() {
                         classReader.accept(new ExceptionTableExtractor(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                         suppressionHandler.onPrepare(methodVisitor);
+                    }
+
+                    @Override
+                    public void initialize() {
+                        if (getInitializationType().represents(boolean.class)
+                                || getInitializationType().represents(byte.class)
+                                || getInitializationType().represents(short.class)
+                                || getInitializationType().represents(char.class)
+                                || getInitializationType().represents(int.class)) {
+                            methodVisitor.visitInsn(Opcodes.ICONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.exit());
+                        } else if (getInitializationType().represents(long.class)) {
+                            methodVisitor.visitInsn(Opcodes.LCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.exit());
+                        } else if (getInitializationType().represents(float.class)) {
+                            methodVisitor.visitInsn(Opcodes.FCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.exit());
+                        } else if (getInitializationType().represents(double.class)) {
+                            methodVisitor.visitInsn(Opcodes.DCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.exit());
+                        } else if (!getInitializationType().represents(void.class)) {
+                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.exit());
+                        }
                     }
 
                     @Override
@@ -6615,6 +6690,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    protected TypeDefinition getInitializationType() {
+                        return TypeDescription.VOID;
+                    }
+
+                    @Override
                     public Bound bind(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
@@ -6731,11 +6811,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
-                     * The type of the value supplied by the enter advice method or {@code void} if no such value exists.
-                     */
-                    private final TypeDefinition enterType;
-
-                    /**
                      * {@code true} if the arguments of the instrumented method should be copied before executing the instrumented method.
                      */
                     private final boolean backupArguments;
@@ -6768,7 +6843,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
                                 TypeDescription.VOID,
                                 classReader);
-                        this.enterType = enterType;
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -6791,6 +6865,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return throwable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, classReader, enterType)
                                 : new WithExceptionHandler(adviceMethod, userFactories, classReader, enterType, throwable);
+                    }
+
+                    @Override
+                    protected TypeDefinition getInitializationType() {
+                        return adviceMethod.getReturnType();
                     }
 
                     @Override
@@ -7635,6 +7714,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
+                        public void initialize() {
+                            /* do nothing */
+                        }
+
+                        @Override
                         public void onDefaultValue(MethodVisitor methodVisitor) {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
@@ -7719,6 +7803,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     stackMapFrameHandler,
                                     suppressionHandler,
                                     relocationHandler);
+                        }
+
+                        @Override
+                        public void initialize() {
+                            if (adviceMethod.getReturnType().represents(boolean.class)
+                                    || adviceMethod.getReturnType().represents(byte.class)
+                                    || adviceMethod.getReturnType().represents(short.class)
+                                    || adviceMethod.getReturnType().represents(char.class)
+                                    || adviceMethod.getReturnType().represents(int.class)) {
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.exit());
+                            } else if (adviceMethod.getReturnType().represents(long.class)) {
+                                methodVisitor.visitInsn(Opcodes.LCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.exit());
+                            } else if (adviceMethod.getReturnType().represents(float.class)) {
+                                methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.exit());
+                            } else if (adviceMethod.getReturnType().represents(double.class)) {
+                                methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.exit());
+                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.exit());
+                            }
                         }
 
                         @Override
@@ -8122,7 +8230,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             List<TypeDescription> enterTypes = methodEnter.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getAdviceType().asErasure());
-            argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod, methodEnter.getAdviceType(), methodExit.getAdviceType());
+            argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
+                    methodEnter.getAdviceType(),
+                    methodExit.getAdviceType());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod,
                     initialTypes,
                     enterTypes,
@@ -8166,8 +8276,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodEnter.prepare();
             onUserPrepare();
             methodExit.prepare();
-            // store exit type to argumentHandler.exit();
-            //stackMapFrameHandler.injectInitialFrame(methodVisitor);
+            methodEnter.initialize();
+            methodExit.initialize();
+            stackMapFrameHandler.injectInitializationFrame(methodVisitor);
             methodEnter.apply();
             methodSizeHandler.requireStackSize(argumentHandler.prepare(methodVisitor));
             stackMapFrameHandler.injectStartFrame(methodVisitor);
