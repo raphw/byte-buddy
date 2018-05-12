@@ -143,6 +143,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private static final ClassReader UNDEFINED = null;
 
     /**
+     * A reference to the {@link OnMethodEnter#skipOn()} method.
+     */
+    private static final MethodDescription.InDefinedShape SKIP_ON;
+
+    /**
+     * A reference to the {@link OnMethodEnter#prependLineNumber()} method.
+     */
+    private static final MethodDescription.InDefinedShape PREPEND_LINE_NUMBER;
+
+    /**
      * A reference to the {@link OnMethodEnter#inline()} method.
      */
     private static final MethodDescription.InDefinedShape INLINE_ENTER;
@@ -152,25 +162,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
 
-    /**
-     * A reference to the {@link OnMethodEnter#prependLineNumber()} method.
-     */
-    private static final MethodDescription.InDefinedShape PREPEND_LINE_NUMBER;
-
-    /**
-     * A reference to the {@link OnMethodEnter#skipOn()} method.
-     */
-    private static final MethodDescription.InDefinedShape SKIP_ON;
-
-    /**
-     * A reference to the {@link OnMethodExit#inline()} method.
-     */
-    private static final MethodDescription.InDefinedShape INLINE_EXIT;
-
-    /**
-     * A reference to the {@link OnMethodExit#suppress()} method.
-     */
-    private static final MethodDescription.InDefinedShape SUPPRESS_EXIT;
+    private static final MethodDescription.InDefinedShape REPEAT_ON;
 
     /**
      * A reference to the {@link OnMethodExit#onThrowable()} method.
@@ -182,20 +174,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape BACKUP_ARGUMENTS;
 
+    /**
+     * A reference to the {@link OnMethodExit#inline()} method.
+     */
+    private static final MethodDescription.InDefinedShape INLINE_EXIT;
+
+    /**
+     * A reference to the {@link OnMethodExit#suppress()} method.
+     */
+    private static final MethodDescription.InDefinedShape SUPPRESS_EXIT;
+
     /*
      * Extracts the annotation values for the enter and exit advice annotations.
      */
     static {
         MethodList<MethodDescription.InDefinedShape> enter = TypeDescription.ForLoadedType.of(OnMethodEnter.class).getDeclaredMethods();
-        INLINE_ENTER = enter.filter(named("inline")).getOnly();
-        SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         SKIP_ON = enter.filter(named("skipOn")).getOnly();
         PREPEND_LINE_NUMBER = enter.filter(named("prependLineNumber")).getOnly();
+        INLINE_ENTER = enter.filter(named("inline")).getOnly();
+        SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         MethodList<MethodDescription.InDefinedShape> exit = TypeDescription.ForLoadedType.of(OnMethodExit.class).getDeclaredMethods();
-        INLINE_EXIT = exit.filter(named("inline")).getOnly();
-        SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
+        REPEAT_ON = exit.filter(named("repeatOn")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
         BACKUP_ARGUMENTS = exit.filter(named("backupArguments")).getOnly();
+        INLINE_EXIT = exit.filter(named("inline")).getOnly();
+        SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
     }
 
     /**
@@ -6923,7 +6926,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
-                                TypeDescription.VOID,
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
                                 classReader);
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
@@ -8966,6 +8969,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.METHOD)
     public @interface OnMethodExit {
+
+        Class<?> repeatOn() default void.class;
 
         /**
          * Indicates a {@link Throwable} super type for which this exit advice is invoked if it was thrown from the instrumented method.
