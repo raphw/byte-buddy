@@ -7142,6 +7142,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final Label endOfMethod;
 
                 /**
+                 * {@code true} if the method can return non-exceptionally.
+                 */
+                private boolean doesReturn;
+
+                /**
                  * Creates a new code translation visitor.
                  *
                  * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
@@ -7237,8 +7242,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitEnd() {
                     suppressionHandler.onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
                     methodVisitor.visitLabel(endOfMethod);
-                    onMethodReturn();
-                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, relocationOffset()));
+                    if (doesReturn) {
+                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
+                        if (adviceMethod.getReturnType().represents(boolean.class)
+                                || adviceMethod.getReturnType().represents(byte.class)
+                                || adviceMethod.getReturnType().represents(short.class)
+                                || adviceMethod.getReturnType().represents(char.class)
+                                || adviceMethod.getReturnType().represents(int.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(long.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(float.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(double.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, getReturnValueOffset());
+                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
+                        }
+                    }
+                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                 }
 
@@ -7293,29 +7315,60 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public abstract void visitInsn(int opcode);
+                public void visitInsn(int opcode) {
+                    switch (opcode) {
+                        case Opcodes.RETURN:
+                            ((StackAwareMethodVisitor) mv).drainStack();
+                            break;
+                        case Opcodes.IRETURN:
+                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
+                            break;
+                        case Opcodes.ARETURN:
+                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE));
+                            break;
+                        case Opcodes.FRETURN:
+                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
+                            break;
+                        case Opcodes.LRETURN:
+                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE));
+                            break;
+                        case Opcodes.DRETURN:
+                            methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
+                            break;
+                        default:
+                            mv.visitInsn(opcode);
+                            return;
+                    }
+                    mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                    doesReturn = true;
+                }
 
-                /**
-                 * Invoked after returning from the advice method.
-                 */
-                protected abstract void onMethodReturn();
+                @Override
+                public void onDefaultValue(MethodVisitor methodVisitor) {
+                    if (adviceMethod.getReturnType().represents(boolean.class)
+                            || adviceMethod.getReturnType().represents(byte.class)
+                            || adviceMethod.getReturnType().represents(short.class)
+                            || adviceMethod.getReturnType().represents(char.class)
+                            || adviceMethod.getReturnType().represents(int.class)) {
+                        methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    } else if (adviceMethod.getReturnType().represents(long.class)) {
+                        methodVisitor.visitInsn(Opcodes.LCONST_0);
+                    } else if (adviceMethod.getReturnType().represents(float.class)) {
+                        methodVisitor.visitInsn(Opcodes.FCONST_0);
+                    } else if (adviceMethod.getReturnType().represents(double.class)) {
+                        methodVisitor.visitInsn(Opcodes.DCONST_0);
+                    } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    }
+                    doesReturn = true;
+                }
 
-                /**
-                 * Resolves the offset that holds the value of the instance that determines a relocation.
-                 *
-                 * @return The offset that holds the value of the instance that determines a relocation.
-                 */
-                protected abstract int relocationOffset();
+                protected abstract int getReturnValueOffset();
 
                 /**
                  * A code translation visitor that retains the return value of the represented advice method.
                  */
                 protected static class ForMethodEnter extends CodeTranslationVisitor {
-
-                    /**
-                     * {@code true} if the method can return non-exceptionally.
-                     */
-                    private boolean doesReturn;
 
                     /**
                      * Creates a code translation visitor for translating exit advice.
@@ -7351,82 +7404,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 suppressionHandler,
                                 relocationHandler);
-                        doesReturn = false;
                     }
 
                     @Override
-                    public void visitInsn(int opcode) {
-                        switch (opcode) {
-                            case Opcodes.RETURN:
-                                ((StackAwareMethodVisitor) mv).drainStack();
-                                break;
-                            case Opcodes.IRETURN:
-                                methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
-                                break;
-                            case Opcodes.ARETURN:
-                                methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE));
-                                break;
-                            case Opcodes.FRETURN:
-                                methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
-                                break;
-                            case Opcodes.LRETURN:
-                                methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE));
-                                break;
-                            case Opcodes.DRETURN:
-                                methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
-                                break;
-                            default:
-                                mv.visitInsn(opcode);
-                                return;
-                        }
-                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                        doesReturn = true;
-                    }
-
-                    @Override
-                    public void onDefaultValue(MethodVisitor methodVisitor) {
-                        if (adviceMethod.getReturnType().represents(boolean.class)
-                                || adviceMethod.getReturnType().represents(byte.class)
-                                || adviceMethod.getReturnType().represents(short.class)
-                                || adviceMethod.getReturnType().represents(char.class)
-                                || adviceMethod.getReturnType().represents(int.class)) {
-                            methodVisitor.visitInsn(Opcodes.ICONST_0);
-                        } else if (adviceMethod.getReturnType().represents(long.class)) {
-                            methodVisitor.visitInsn(Opcodes.LCONST_0);
-                        } else if (adviceMethod.getReturnType().represents(float.class)) {
-                            methodVisitor.visitInsn(Opcodes.FCONST_0);
-                        } else if (adviceMethod.getReturnType().represents(double.class)) {
-                            methodVisitor.visitInsn(Opcodes.DCONST_0);
-                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                        }
-                        doesReturn = true;
-                    }
-
-                    @Override
-                    protected void onMethodReturn() {
-                        if (doesReturn) {
-                            stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                            if (adviceMethod.getReturnType().represents(boolean.class)
-                                    || adviceMethod.getReturnType().represents(byte.class)
-                                    || adviceMethod.getReturnType().represents(short.class)
-                                    || adviceMethod.getReturnType().represents(char.class)
-                                    || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
-                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
-                            }
-                        }
-                    }
-
-                    @Override
-                    protected int relocationOffset() {
+                    protected int getReturnValueOffset() {
                         return argumentHandler.enter();
                     }
                 }
@@ -7473,39 +7454,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void visitInsn(int opcode) {
-                        switch (opcode) {
-                            case Opcodes.RETURN:
-                                break;
-                            case Opcodes.IRETURN:
-                            case Opcodes.ARETURN:
-                            case Opcodes.FRETURN:
-                                mv.visitInsn(Opcodes.POP);
-                                break;
-                            case Opcodes.LRETURN:
-                            case Opcodes.DRETURN:
-                                mv.visitInsn(Opcodes.POP2);
-                                break;
-                            default:
-                                mv.visitInsn(opcode);
-                                return;
-                        }
-                        ((StackAwareMethodVisitor) mv).drainStack();
-                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                    }
-
-                    @Override
-                    public void onDefaultValue(MethodVisitor methodVisitor) {
-                        /* do nothing */
-                    }
-
-                    @Override
-                    protected void onMethodReturn() {
-                        /* do nothing */
-                    }
-
-                    @Override
-                    protected int relocationOffset() {
+                    protected int getReturnValueOffset() {
                         return argumentHandler.exit();
                     }
                 }
@@ -7742,24 +7691,52 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
-                        onMethodReturn();
+                        if (adviceMethod.getReturnType().represents(boolean.class)
+                                || adviceMethod.getReturnType().represents(byte.class)
+                                || adviceMethod.getReturnType().represents(short.class)
+                                || adviceMethod.getReturnType().represents(char.class)
+                                || adviceMethod.getReturnType().represents(int.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(long.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(float.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, getReturnValueOffset());
+                        } else if (adviceMethod.getReturnType().represents(double.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, getReturnValueOffset());
+                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
+                        }
                         suppressionHandler.onEndSkipped(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
-                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, relocationOffset()));
+                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
-                    /**
-                     * Invoked directly after the advice method was called.
-                     */
-                    protected abstract void onMethodReturn();
+                    @Override
+                    public void onDefaultValue(MethodVisitor methodVisitor) {
+                        if (adviceMethod.getReturnType().represents(boolean.class)
+                                || adviceMethod.getReturnType().represents(byte.class)
+                                || adviceMethod.getReturnType().represents(short.class)
+                                || adviceMethod.getReturnType().represents(char.class)
+                                || adviceMethod.getReturnType().represents(int.class)) {
+                            methodVisitor.visitInsn(Opcodes.ICONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
+                        } else if (adviceMethod.getReturnType().represents(long.class)) {
+                            methodVisitor.visitInsn(Opcodes.LCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
+                        } else if (adviceMethod.getReturnType().represents(float.class)) {
+                            methodVisitor.visitInsn(Opcodes.FCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
+                        } else if (adviceMethod.getReturnType().represents(double.class)) {
+                            methodVisitor.visitInsn(Opcodes.DCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
+                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
+                        }
+                    }
 
-                    /**
-                     * Resolves the offset that holds the value of the instance that determines a relocation.
-                     *
-                     * @return The offset that holds the value of the instance that determines a relocation.
-                     */
-                    protected abstract int relocationOffset();
+                    protected abstract int getReturnValueOffset();
 
                     /**
                      * An advice method writer for a method enter.
@@ -7805,50 +7782,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onDefaultValue(MethodVisitor methodVisitor) {
-                            if (adviceMethod.getReturnType().represents(boolean.class)
-                                    || adviceMethod.getReturnType().represents(byte.class)
-                                    || adviceMethod.getReturnType().represents(short.class)
-                                    || adviceMethod.getReturnType().represents(char.class)
-                                    || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitInsn(Opcodes.LCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
-                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
-                            }
-                        }
-
-                        @Override
-                        protected void onMethodReturn() {
-                            if (adviceMethod.getReturnType().represents(boolean.class)
-                                    || adviceMethod.getReturnType().represents(byte.class)
-                                    || adviceMethod.getReturnType().represents(short.class)
-                                    || adviceMethod.getReturnType().represents(char.class)
-                                    || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
-                            } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
-                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
-                            }
-                        }
-
-                        @Override
-                        protected int relocationOffset() {
+                        protected int getReturnValueOffset() {
                             return argumentHandler.enter();
                         }
                     }
@@ -7916,28 +7850,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onDefaultValue(MethodVisitor methodVisitor) {
-                            /* do nothing */
-                        }
-
-                        @Override
-                        protected void onMethodReturn() {
-                            switch (adviceMethod.getReturnType().getStackSize()) {
-                                case ZERO:
-                                    return;
-                                case SINGLE:
-                                    methodVisitor.visitInsn(Opcodes.POP);
-                                    return;
-                                case DOUBLE:
-                                    methodVisitor.visitInsn(Opcodes.POP2);
-                                    return;
-                                default:
-                                    throw new IllegalStateException("Unexpected size: " + adviceMethod.getReturnType().getStackSize());
-                            }
-                        }
-
-                        @Override
-                        protected int relocationOffset() {
+                        protected int getReturnValueOffset() {
                             return argumentHandler.exit();
                         }
                     }
