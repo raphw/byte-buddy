@@ -529,19 +529,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceWithEntranceValue() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(EntranceValueAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
-
-    @Test
     public void testAdviceWithReturnValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -731,32 +718,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testVariableMappingAdviceLarger() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(AdviceWithVariableValues.class).on(named(BAR)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO + BAR + QUX + BAZ), is((Object) (FOO + BAR + QUX + BAZ)));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
-
-    @Test
-    public void testVariableMappingInstrumentedLarger() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(AdviceWithVariableValues.class).on(named(QUX + BAZ)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(QUX + BAZ).invoke(type.getDeclaredConstructor().newInstance()), is((Object) (FOO + BAR + QUX + BAZ)));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
-
-    @Test
     public void testExceptionWhenNotThrown() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -940,25 +901,6 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(IllegalReturnSubstitutionAdvice.class).on(named(FOO)))
-                .make();
-    }
-
-    @Test
-    public void testEnterValueSubstitution() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(EnterSubstitutionAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testIllegalEnterValueSubstitution() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(IllegalEnterSubstitutionAdvice.class).on(named(BAR)))
                 .make();
     }
 
@@ -1364,28 +1306,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testInstanceOfSkip() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(InstanceOfSkip.class)
-                .visit(Advice.to(InstanceOfSkip.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
-    }
-
-    @Test
-    public void testInstanceOfNoSkip() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(InstanceOfNoSkip.class)
-                .visit(Advice.to(InstanceOfNoSkip.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-    }
-
-    @Test
     public void testExceptionPrinting() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1429,26 +1349,6 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations().length, is(1));
         assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations()[0][0], instanceOf(ParameterAnnotationSample.SampleParameter.class));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testInstanceOfPrimitiveSkip() throws Exception {
-        Advice.to(InstanceOfIllegalPrimitiveSkip.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testInstanceOfPrimitiveInstanceOfSkip() throws Exception {
-        Advice.to(InstanceOfIllegalPrimitiveInstanceOfSkip.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testDefaultValuePrimitiveSkip() throws Exception {
-        Advice.to(DefaultValueIllegalPrimitiveSkip.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNonDefaultValuePrimitiveSkip() throws Exception {
-        Advice.to(NonDefaultValueIllegalPrimitiveSkip.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1616,11 +1516,6 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testCannotBindEnterToEnter() throws Exception {
-        Advice.to(EnterToEnterAdvice.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testCannotBindEnterToReturn() throws Exception {
         Advice.to(EnterToReturnAdvice.class);
     }
@@ -1727,22 +1622,6 @@ public class AdviceTest {
                 mock(TypePool.class),
                 IGNORED,
                 IGNORED), sameInstance(methodVisitor));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testAdviceWithNonAssignableEnterValue() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(NonAssignableEnterAdvice.class).on(named(FOO)))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testAdviceWithNonAssignableEnterValueWritable() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(NonAssignableEnterWriteAdvice.class).on(named(FOO)))
-                .make();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1929,22 +1808,6 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(BoxedArgumentsCannotWrite.class).on(named(FOO)))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testInstanceOfSkipOnConstructor() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(InstanceOfSkip.class).on(isConstructor()))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testValueSkipOnConstructor() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(DefaultValueIllegalPrimitiveSkip.class).on(isConstructor()))
                 .make();
     }
 
@@ -2241,26 +2104,6 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
-    public static class AdviceWithVariableValues {
-
-        @Advice.OnMethodEnter
-        private static int enter() {
-            int foo = VALUE, bar = VALUE * 2;
-            Sample.enter++;
-            return foo + bar;
-        }
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter int enter, @Advice.Return String value) {
-            int foo = VALUE, bar = VALUE * 2;
-            if (foo + bar != enter || !value.equals(FOO + BAR + QUX + BAZ)) {
-                throw new AssertionError();
-            }
-            Sample.exit++;
-        }
-    }
-
-    @SuppressWarnings("unused")
     public static class TrivialAdviceSkipException {
 
         @Advice.OnMethodEnter
@@ -2424,24 +2267,6 @@ public class AdviceTest {
 
         @Advice.OnMethodExit
         private static void exit(@Advice.This(optional = true) Sample thiz) {
-            Sample.exit++;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class EntranceValueAdvice {
-
-        @Advice.OnMethodEnter
-        private static int enter() {
-            Sample.enter++;
-            return VALUE;
-        }
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter int value) {
-            if (value != VALUE) {
-                throw new AssertionError();
-            }
             Sample.exit++;
         }
     }
@@ -2633,40 +2458,6 @@ public class AdviceTest {
         @SuppressWarnings("all")
         private static void enter(@Advice.Argument(0) String value) {
             value = BAR;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class EnterSubstitutionAdvice {
-
-        @Advice.OnMethodEnter
-        private static String enter() {
-            return FOO;
-        }
-
-        @Advice.OnMethodExit
-        @SuppressWarnings("all")
-        private static void exit(@Advice.Enter(readOnly = false) String value) {
-            value = BAR;
-            if (!value.equals(BAR)) {
-                throw new AssertionError();
-            }
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class IllegalEnterSubstitutionAdvice {
-
-        @Advice.OnMethodEnter
-        private static String enter() {
-            return FOO;
-        }
-
-        @Advice.OnMethodExit
-        @SuppressWarnings("all")
-        private static void exit(@Advice.Enter String value) {
-            value = BAR;
-            throw new AssertionError();
         }
     }
 
@@ -3018,6 +2809,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class OptionalArgumentAdvice {
 
         public String foo() {
@@ -3032,6 +2824,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ParameterAnnotationSample {
 
         public String foo(@SampleParameter String value) {
@@ -3184,50 +2977,10 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
-    public static class EnterToEnterAdvice {
-
-        @Advice.OnMethodEnter
-        private static void enter(@Advice.Enter Object value) {
-            throw new AssertionError();
-        }
-    }
-
-    @SuppressWarnings("unused")
     public static class EnterToReturnAdvice {
 
         @Advice.OnMethodEnter
         private static void enter(@Advice.Return Object value) {
-            throw new AssertionError();
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class NonAssignableEnterAdvice {
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter Object value) {
-            throw new AssertionError();
-        }
-    }
-
-    public static class NonAssignableEnterWriteAdvice {
-
-        @Advice.OnMethodEnter
-        private static String enter() {
-            throw new AssertionError();
-        }
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter(readOnly = false) Object value) {
-            throw new AssertionError();
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class NonEqualEnterAdvice {
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter(readOnly = false) Object value) {
             throw new AssertionError();
         }
     }
@@ -3456,62 +3209,6 @@ public class AdviceTest {
             if (top.getLineNumber() >= 0) {
                 throw new AssertionError();
             }
-        }
-    }
-
-    public static class InstanceOfSkip {
-
-        public String foo() {
-            throw new AssertionError();
-        }
-
-        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
-        private static Object enter() {
-            return new InstanceOfSkip();
-        }
-    }
-
-    public static class InstanceOfNoSkip {
-
-        public String foo() {
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
-        private static Object enter() {
-            return null;
-        }
-    }
-
-    public static class InstanceOfIllegalPrimitiveSkip {
-
-        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
-        private static void enter() {
-            /* empty */
-        }
-    }
-
-    public static class DefaultValueIllegalPrimitiveSkip {
-
-        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
-        private static void enter() {
-            /* empty */
-        }
-    }
-
-    public static class NonDefaultValueIllegalPrimitiveSkip {
-
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        private static void enter() {
-            /* empty */
-        }
-    }
-
-    public static class InstanceOfIllegalPrimitiveInstanceOfSkip {
-
-        @Advice.OnMethodEnter(skipOn = int.class)
-        private static void enter() {
-            /* empty */
         }
     }
 

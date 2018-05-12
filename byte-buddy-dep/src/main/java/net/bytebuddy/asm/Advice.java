@@ -2783,6 +2783,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.enterType = enterType;
                 }
 
+                protected static OffsetMapping.Factory<Enter> of(TypeDefinition typeDefinition) {
+                    return typeDefinition.represents(void.class)
+                            ? new Illegal<Enter>(Enter.class)
+                            : new Factory(typeDefinition);
+                }
+
                 @Override
                 public Class<Enter> getAnnotationType() {
                     return Enter.class;
@@ -2792,7 +2798,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Enter> annotation,
                                           AdviceType adviceType) {
-                    // TODO: void handling?
                     if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
@@ -2850,8 +2855,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final TypeDefinition exitType;
 
                 protected Factory(TypeDefinition exitType) {
-                    // TODO: Return illegal handler if void?
                     this.exitType = exitType;
+                }
+
+                protected static OffsetMapping.Factory<Exit> of(TypeDefinition typeDefinition) {
+                    return typeDefinition.represents(void.class)
+                            ? new Illegal<Exit>(Exit.class)
+                            : new Factory(typeDefinition);
                 }
 
                 @Override
@@ -6740,7 +6750,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
-                                        new OffsetMapping.ForExitValue.Factory(exitType),
+                                        OffsetMapping.ForExitValue.Factory.of(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
@@ -6918,8 +6928,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.ForEnterValue.Factory(enterType),
-                                        new OffsetMapping.ForExitValue.Factory(adviceMethod.getReturnType()),
+                                        OffsetMapping.ForEnterValue.Factory.of(enterType),
+                                        OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -7886,7 +7896,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.ForExitValue.Factory(exitType),
+                                        OffsetMapping.ForExitValue.Factory.of(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
@@ -8025,8 +8035,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.ForEnterValue.Factory(enterType),
-                                        new OffsetMapping.ForExitValue.Factory(adviceMethod.getReturnType()),
+                                        OffsetMapping.ForEnterValue.Factory.of(enterType),
+                                        OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -8278,11 +8288,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodSizeHandler,
                     stackMapFrameHandler,
                     exceptionHandler,
-                    new ForLabel(initializationStart)); // TODO: Argument handler
+                    new ForLabel(initializationStart));
         }
 
         @Override
         protected void onAfterExceptionTable() {
+            // TODO: Stack map frames at beginning of method?
             methodEnter.prepare();
             onUserPrepare();
             methodExit.prepare();

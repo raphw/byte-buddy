@@ -58,6 +58,24 @@ public class AdviceRepeatOnDefaultValueTest {
                 {FloatAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
                 {DoubleAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
                 {ReferenceAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
+                {BooleanAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ByteAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ShortAdviceWithEnterAdviceAndExceptionHandler.class},
+                {CharacterAdviceWithEnterAdviceAndExceptionHandler.class},
+                {IntegerAdviceWithEnterAdviceAndExceptionHandler.class},
+                {LongAdviceWithEnterAdviceAndExceptionHandler.class},
+                {FloatAdviceWithEnterAdviceAndExceptionHandler.class},
+                {DoubleAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ReferenceAdviceWithEnterAdviceAndExceptionHandler.class},
+                {BooleanAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ByteAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ShortAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {CharacterAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {IntegerAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {LongAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {FloatAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {DoubleAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ReferenceAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
                 {BooleanDelegatingAdvice.class},
                 {ByteDelegatingAdvice.class},
                 {ShortDelegatingAdvice.class},
@@ -94,6 +112,24 @@ public class AdviceRepeatOnDefaultValueTest {
                 {FloatDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
                 {DoubleDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
                 {ReferenceDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackup.class},
+                {BooleanDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ByteDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ShortDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {CharacterDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {IntegerDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {LongDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {FloatDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {DoubleDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {ReferenceDelegatingAdviceWithEnterAdviceAndExceptionHandler.class},
+                {BooleanDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ByteDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ShortDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {CharacterDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {IntegerDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {LongDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {FloatDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {DoubleDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class},
+                {ReferenceDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler.class}
         });
     }
 
@@ -107,6 +143,7 @@ public class AdviceRepeatOnDefaultValueTest {
     public void testAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
+                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(this.type).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -124,7 +161,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -139,7 +179,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -154,7 +197,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -169,7 +215,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -184,7 +233,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -199,7 +251,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -214,7 +269,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -229,7 +287,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -244,7 +305,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -259,7 +323,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -274,7 +341,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -289,7 +359,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -304,7 +377,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -319,7 +395,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -334,7 +413,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -349,7 +431,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -364,7 +449,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -379,7 +467,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -394,12 +485,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static boolean enter() {
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return false;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -414,12 +511,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static byte enter() {
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -434,12 +537,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static short enter() {
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -454,12 +563,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static char enter() {
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -474,12 +589,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static int enter() {
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -494,12 +615,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static long enter() {
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return 0L;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -514,12 +641,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static float enter() {
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return 0f;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -534,12 +667,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static double enter() {
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return 0d;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -554,12 +693,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static Object enter() {
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return null;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -574,12 +719,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static boolean enter() {
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return false;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -594,12 +745,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static byte enter() {
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -614,12 +771,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static short enter() {
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -634,12 +797,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static char enter() {
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -654,12 +823,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static int enter() {
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -674,12 +849,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static long enter() {
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return 0L;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -694,12 +875,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static float enter() {
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return 0f;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -714,12 +901,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static double enter() {
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return 0d;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -734,12 +927,486 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter
-        private static Object enter() {
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return null;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? FOO : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return false;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return count >= 3;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (byte) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (short) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (char) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1 : 0;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return 0L;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1L : 0L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return 0f;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1f : 0f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return 0d;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1d : 0d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return null;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? FOO : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return false;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return count >= 3;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (byte) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (short) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (char) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1 : 0;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return 0L;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1L : 0L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return 0f;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1f : 0f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return 0d;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1d : 0d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return null;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, suppress = Exception.class, onThrowable = Exception.class)
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -754,7 +1421,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -769,7 +1439,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -784,7 +1457,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -799,7 +1475,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -814,7 +1493,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -829,7 +1511,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -844,7 +1529,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -859,7 +1547,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -874,7 +1565,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -889,7 +1583,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -904,7 +1601,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -919,7 +1619,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -934,7 +1637,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -949,7 +1655,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -964,7 +1673,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -979,7 +1691,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -994,7 +1709,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -1009,7 +1727,10 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, backupArguments = false, inline = false)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -1024,12 +1745,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static boolean enter() {
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return false;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -1044,12 +1771,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static byte enter() {
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -1064,12 +1797,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static short enter() {
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -1084,12 +1823,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static char enter() {
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -1104,12 +1849,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static int enter() {
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -1124,12 +1875,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static long enter() {
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return 0L;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -1144,12 +1901,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static float enter() {
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return 0f;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -1164,12 +1927,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static double enter() {
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return 0d;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -1184,12 +1953,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static Object enter() {
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return null;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
@@ -1204,12 +1979,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static boolean enter() {
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return false;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static boolean exit(@Advice.Return int count) {
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
             return count >= 3;
         }
     }
@@ -1224,12 +2005,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static byte enter() {
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static byte exit(@Advice.Return int count) {
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (byte) (count >= 3 ? 1 : 0);
         }
     }
@@ -1244,12 +2031,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static short enter() {
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static short exit(@Advice.Return int count) {
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (short) (count >= 3 ? 1 : 0);
         }
     }
@@ -1264,12 +2057,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static char enter() {
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static char exit(@Advice.Return int count) {
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return (char) (count >= 3 ? 1 : 0);
         }
     }
@@ -1284,12 +2083,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static int enter() {
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return 0;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static int exit(@Advice.Return int count) {
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1 : 0;
         }
     }
@@ -1304,12 +2109,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static long enter() {
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return 0L;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static long exit(@Advice.Return int count) {
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1L : 0L;
         }
     }
@@ -1324,12 +2135,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static float enter() {
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return 0f;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static float exit(@Advice.Return int count) {
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1f : 0f;
         }
     }
@@ -1344,12 +2161,18 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static double enter() {
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return 0d;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static double exit(@Advice.Return int count) {
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
             return count >= 3 ? 1d : 0d;
         }
     }
@@ -1364,12 +2187,486 @@ public class AdviceRepeatOnDefaultValueTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        private static Object enter() {
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return null;
         }
 
         @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false)
-        private static Object exit(@Advice.Return int count) {
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? FOO : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return false;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return count >= 3;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (byte) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (short) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (char) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1 : 0;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return 0L;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1L : 0L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return 0f;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1f : 0f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return 0d;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1d : 0d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceDelegatingAdviceWithEnterAdviceAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return null;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? FOO : null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static boolean enter(@Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return false;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static boolean exit(@Advice.Return int count, @Advice.Exit boolean exit) {
+            if (exit) {
+                throw new AssertionError();
+            }
+            return count >= 3;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static byte enter(@Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static byte exit(@Advice.Return int count, @Advice.Exit byte exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (byte) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static short enter(@Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static short exit(@Advice.Return int count, @Advice.Exit short exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (short) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static char enter(@Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static char exit(@Advice.Return int count, @Advice.Exit char exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return (char) (count >= 3 ? 1 : 0);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static int enter(@Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return 0;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static int exit(@Advice.Return int count, @Advice.Exit int exit) {
+            if (exit != 0) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1 : 0;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static long enter(@Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return 0L;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static long exit(@Advice.Return int count, @Advice.Exit long exit) {
+            if (exit != 0L) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1L : 0L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static float enter(@Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return 0f;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static float exit(@Advice.Return int count, @Advice.Exit float exit) {
+            if (exit != 0f) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1f : 0f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static double enter(@Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return 0d;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static double exit(@Advice.Return int count, @Advice.Exit double exit) {
+            if (exit != 0d) {
+                throw new AssertionError();
+            }
+            return count >= 3 ? 1d : 0d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceDelegatingAdviceWithEnterAdviceAndWithoutArgumentBackupAndExceptionHandler {
+
+        private int count;
+
+        public int foo() {
+            return ++count;
+        }
+
+        @Advice.OnMethodEnter(inline = false, suppress = Exception.class)
+        private static Object enter(@Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
+            return null;
+        }
+
+        @Advice.OnMethodExit(repeatOn = Advice.OnDefaultValue.class, inline = false, suppress = Exception.class, onThrowable = Exception.class)
+        private static Object exit(@Advice.Return int count, @Advice.Exit Object exit) {
+            if (exit != null) {
+                throw new AssertionError();
+            }
             return count >= 3 ? FOO : null;
         }
     }
