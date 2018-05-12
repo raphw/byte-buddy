@@ -5720,19 +5720,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 void apply(MethodVisitor methodVisitor);
 
-                /**
-                 * A relocator that does not allow for relocation.
-                 */
-                enum Illegal implements Relocation {
+                class ForLabel implements Relocation {
 
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
+                    private final Label label;
+
+                    public ForLabel(Label label) {
+                        this.label = label;
+                    }
 
                     @Override
                     public void apply(MethodVisitor methodVisitor) {
-                        throw new IllegalStateException("Relocation is illegal");
+                        methodVisitor.visitJumpInsn(Opcodes.GOTO, label);
                     }
                 }
             }
@@ -8203,6 +8201,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler;
 
         /**
+         * Indicates the start of the user method.
+         */
+        protected final Label userStart;
+
+        /**
          * Creates a new advice visitor.
          *
          * @param methodVisitor         The actual method visitor that is underlying this method visitor to which all instructions are written.
@@ -8258,6 +8261,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
+            userStart = new Label();
             this.methodEnter = methodEnter.bind(instrumentedType,
                     instrumentedMethod,
                     methodVisitor,
@@ -8277,7 +8281,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodSizeHandler,
                     stackMapFrameHandler,
                     exceptionHandler,
-                    Illegal.INSTANCE);
+                    new ForLabel(userStart));
         }
 
         @Override
@@ -8290,7 +8294,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             stackMapFrameHandler.injectInitializationFrame(methodVisitor);
             methodEnter.apply();
             methodSizeHandler.requireStackSize(argumentHandler.prepare(methodVisitor));
-            stackMapFrameHandler.injectStartFrame(methodVisitor);
+            mv.visitLabel(userStart);
+            stackMapFrameHandler.injectStartFrame(methodVisitor); // TODO: Required if relocation
             onUserStart();
         }
 
@@ -8617,12 +8622,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserPrepare() {
-                    /* empty */
+                    /* do nothing */
                 }
 
                 @Override
                 protected void onUserStart() {
-                    /* empty */
+                    /* do nothing */
                 }
 
                 @Override
@@ -8634,7 +8639,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onExitAdviceReturn() {
-                    /* empty */
+                    /* do nothing */
                 }
             }
 
@@ -8647,11 +8652,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * The type of the handled throwable type for which this advice is invoked.
                  */
                 private final TypeDescription throwable;
-
-                /**
-                 * Indicates the start of the user method.
-                 */
-                private final Label userStart;
 
                 /**
                  * Indicates the exception handler.
@@ -8698,7 +8698,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             writerFlags,
                             readerFlags);
                     this.throwable = throwable;
-                    userStart = new Label();
                     this.exceptionHandler = new Label();
                 }
 
@@ -8709,7 +8708,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserStart() {
-                    methodVisitor.visitLabel(userStart);
+                    /* do nothing */
                 }
 
                 @Override
