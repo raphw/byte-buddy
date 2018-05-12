@@ -8031,7 +8031,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
-                                TypeDescription.VOID);
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class));
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -8175,6 +8175,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final MethodDescription instrumentedMethod;
 
+        private final Label initializationStart;
+
         /**
          * The dispatcher to be used for method enter.
          */
@@ -8199,11 +8201,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A handler for translating and injecting stack map frames.
          */
         protected final StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler;
-
-        /**
-         * Indicates the start of the user method.
-         */
-        protected final Label userStart;
 
         /**
          * Creates a new advice visitor.
@@ -8236,6 +8233,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super(Opcodes.ASM6, delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
+            initializationStart = new Label();
             List<TypeDescription> initialTypes = methodExit.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodExit.getAdviceType().asErasure());
@@ -8261,7 +8259,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
-            userStart = new Label();
             this.methodEnter = methodEnter.bind(instrumentedType,
                     instrumentedMethod,
                     methodVisitor,
@@ -8281,7 +8278,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodSizeHandler,
                     stackMapFrameHandler,
                     exceptionHandler,
-                    new ForLabel(userStart));
+                    new ForLabel(initializationStart)); // TODO: Argument handler
         }
 
         @Override
@@ -8293,9 +8290,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodExit.initialize();
             stackMapFrameHandler.injectInitializationFrame(methodVisitor);
             methodEnter.apply();
+            methodVisitor.visitLabel(initializationStart);
             methodSizeHandler.requireStackSize(argumentHandler.prepare(methodVisitor));
-            mv.visitLabel(userStart);
-            stackMapFrameHandler.injectStartFrame(methodVisitor); // TODO: Required if relocation
+            stackMapFrameHandler.injectStartFrame(methodVisitor);
             onUserStart();
         }
 
@@ -8659,6 +8656,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final Label exceptionHandler;
 
                 /**
+                 * Indicates the start of the user method.
+                 */
+                protected final Label userStart;
+
+                /**
                  * Creates a new advice visitor that captures exception by weaving try-catch blocks around user code.
                  *
                  * @param methodVisitor         The method visitor for the instrumented method.
@@ -8699,6 +8701,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             readerFlags);
                     this.throwable = throwable;
                     this.exceptionHandler = new Label();
+                    userStart = new Label();
                 }
 
                 @Override
@@ -8708,7 +8711,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserStart() {
-                    /* do nothing */
+                    methodVisitor.visitLabel(userStart);
                 }
 
                 @Override
