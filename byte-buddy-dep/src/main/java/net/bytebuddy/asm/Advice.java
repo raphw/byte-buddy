@@ -7720,19 +7720,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 || adviceMethod.getReturnType().represents(char.class)
                                 || adviceMethod.getReturnType().represents(int.class)) {
                             methodVisitor.visitInsn(Opcodes.ICONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.enter());
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, getReturnValueOffset());
                         } else if (adviceMethod.getReturnType().represents(long.class)) {
                             methodVisitor.visitInsn(Opcodes.LCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.enter());
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, getReturnValueOffset());
                         } else if (adviceMethod.getReturnType().represents(float.class)) {
                             methodVisitor.visitInsn(Opcodes.FCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.enter());
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, getReturnValueOffset());
                         } else if (adviceMethod.getReturnType().represents(double.class)) {
                             methodVisitor.visitInsn(Opcodes.DCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.enter());
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, getReturnValueOffset());
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                            methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.enter());
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
                         }
                     }
 
