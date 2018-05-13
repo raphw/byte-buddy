@@ -4470,9 +4470,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Injects a frame indicating the completion of the currently handled method, i.e. all yielded types were added.
          *
          * @param methodVisitor The method visitor onto which to apply the stack map frame.
-         * @param secondary     {@code true} if another completion frame for this method was written previously.
          */
-        void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary);
+        void injectCompletionFrame(MethodVisitor methodVisitor);
 
         /**
          * A stack map frame handler for an instrumented method.
@@ -4515,6 +4514,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodVisitor The method visitor to write any frames to.
              */
             void injectStartFrame(MethodVisitor methodVisitor);
+
+            /**
+             * Injects a frame indicating the completion of the currently handled method, i.e. all yielded types were added.
+             *
+             * @param methodVisitor The method visitor onto which to apply the stack map frame.
+             */
+            void injectPostCompletionFrame(MethodVisitor methodVisitor);
         }
 
         /**
@@ -4570,7 +4576,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+            public void injectCompletionFrame(MethodVisitor methodVisitor) {
                 /* do nothing */
             }
 
@@ -4581,6 +4587,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void injectStartFrame(MethodVisitor methodVisitor) {
+                /* do nothing */
+            }
+
+            @Override
+            public void injectPostCompletionFrame(MethodVisitor methodVisitor) {
                 /* do nothing */
             }
         }
@@ -5003,8 +5014,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                public void injectCompletionFrame(MethodVisitor methodVisitor) {
                     throw new IllegalStateException("Did not expect completion frame for " + instrumentedMethod);
+                }
+
+                @Override
+                public void injectPostCompletionFrame(MethodVisitor methodVisitor) {
+                    throw new IllegalStateException("Did not expect post completion frame for " + instrumentedMethod);
                 }
 
                 @Override
@@ -5052,7 +5068,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
-                    if (!expandFrames && currentFrameDivergence == 0 && !instrumentedMethod.isConstructor()) {
+                    if (!expandFrames && currentFrameDivergence == 0) {
                         if (instrumentedMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
@@ -5075,18 +5091,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
-                    if (!expandFrames && currentFrameDivergence == 0 && (secondary || !instrumentedMethod.isConstructor())) {
-                        if (secondary) {
-                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                        } else {
-                            Object[] local = new Object[exitTypes.size()];
-                            int index = 0;
-                            for (TypeDescription typeDescription : exitTypes) {
-                                local[index++] = toFrame(typeDescription);
-                            }
-                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
+                public void injectCompletionFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0) {
+                        Object[] local = new Object[exitTypes.size()];
+                        int index = 0;
+                        for (TypeDescription typeDescription : exitTypes) {
+                            local[index++] = toFrame(typeDescription);
                         }
+                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
+                    } else {
+                        injectFullFrame(methodVisitor, CompoundList.of(initialTypes, enterTypes, exitTypes), Collections.<TypeDescription>emptyList());
+                    }
+                }
+
+                @Override
+                public void injectPostCompletionFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0) {
+                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(initialTypes, enterTypes, exitTypes), Collections.<TypeDescription>emptyList());
                     }
@@ -5393,9 +5414,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
-                    if ((!expandFrames && currentFrameDivergence == 0 && endTypes.size() < 4)) {
-                        if (secondary || endTypes.isEmpty()) {
+                public void injectCompletionFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0 && endTypes.size() < 4) {
+                        if (endTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             Object[] local = new Object[endTypes.size()];
@@ -7369,7 +7390,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
                     }
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
-                    stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
+                    stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 }
 
                 @Override
@@ -7805,7 +7826,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
                         }
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
-                        stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
+                        stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
@@ -8623,7 +8644,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected void onUserEnd() {
                 methodVisitor.visitLabel(returnHandler);
                 onUserReturn();
-                stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
+                stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 methodExit.apply();
                 onExitAdviceReturn();
                 if (instrumentedMethod.getReturnType().represents(boolean.class)
@@ -8874,7 +8895,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, argumentHandler.thrown());
                     methodVisitor.visitInsn(Opcodes.ATHROW);
                     methodVisitor.visitLabel(endOfHandler);
-                    stackMapFrameHandler.injectCompletionFrame(methodVisitor, true); // TODO: What for?
+                    stackMapFrameHandler.injectPostCompletionFrame(methodVisitor);
                 }
             }
         }
