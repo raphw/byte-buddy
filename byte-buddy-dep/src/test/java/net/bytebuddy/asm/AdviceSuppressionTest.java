@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -74,6 +75,7 @@ public class AdviceSuppressionTest {
     public void testIllegalAssignment() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .redefine(type)
+                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(type).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
