@@ -9,7 +9,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
@@ -213,7 +212,6 @@ public class AdviceTest {
     public void testTrivialAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
