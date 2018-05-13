@@ -8748,6 +8748,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.returned());
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
                         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                        methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.returned());
                     }
                     methodVisitor.visitLabel(endOfHandler);
                 }
