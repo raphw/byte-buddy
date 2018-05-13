@@ -5667,7 +5667,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 || returnType.represents(short.class)
                                 || returnType.represents(char.class)
                                 || returnType.represents(int.class)) {
-                            stackMapFrameHandler.injectReturnFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.ICONST_0);
                         } else if (returnType.represents(long.class)) {
                             methodVisitor.visitInsn(Opcodes.LCONST_0);
