@@ -162,6 +162,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
 
+    /**
+     * A reference to the {@link OnMethodExit#repeatOn()} method.
+     */
     private static final MethodDescription.InDefinedShape REPEAT_ON;
 
     /**
@@ -2770,7 +2773,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class Factory implements OffsetMapping.Factory<Enter> {
 
                 /**
-                 * The supplied type of the enter method.
+                 * The supplied type of the enter advice.
                  */
                 private final TypeDefinition enterType;
 
@@ -2783,6 +2786,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.enterType = enterType;
                 }
 
+                /**
+                 * Creates a new factory for creating a {@link ForEnterValue} offset mapping.
+                 *
+                 * @param typeDefinition The supplied type of the enter advice.
+                 * @return An appropriate offset mapping factory.
+                 */
                 protected static OffsetMapping.Factory<Enter> of(TypeDefinition typeDefinition) {
                     return typeDefinition.represents(void.class)
                             ? new Illegal<Enter>(Enter.class)
@@ -2807,24 +2816,54 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * An offset mapping that provides access to the value that is returned by the exit advice.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class ForExitValue implements OffsetMapping {
 
+            /**
+             * The represented target type.
+             */
             private final TypeDescription.Generic target;
 
-            private final TypeDescription.Generic enterType;
+            /**
+             * The exit type.
+             */
+            private final TypeDescription.Generic exitType;
 
+            /**
+             * {@code true} if the annotated value is read-only.
+             */
             private final boolean readOnly;
 
+            /**
+             * The typing to apply.
+             */
             private final Assigner.Typing typing;
 
-            protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic enterType, Exit exit) {
-                this(target, enterType, exit.readOnly(), exit.typing());
+            /**
+             * Creates a new offset mapping for the exit type.
+             *
+             * @param target   The represented target type.
+             * @param exitType The exit type.
+             * @param exit     The represented annotation.
+             */
+            protected ForExitValue(TypeDescription.Generic target, TypeDescription.Generic exitType, Exit exit) {
+                this(target, exitType, exit.readOnly(), exit.typing());
             }
 
-            public ForExitValue(TypeDescription.Generic target, TypeDescription.Generic enterType, boolean readOnly, Assigner.Typing typing) {
+            /**
+             * Creates a new offset mapping for the enter type.
+             *
+             * @param target   The represented target type.
+             * @param exitType The exit type.
+             * @param readOnly {@code true} if the annotated value is read-only.
+             * @param typing   The typing to apply.
+             */
+            public ForExitValue(TypeDescription.Generic target, TypeDescription.Generic exitType, boolean readOnly, Assigner.Typing typing) {
                 this.target = target;
-                this.enterType = enterType;
+                this.exitType = exitType;
                 this.readOnly = readOnly;
                 this.typing = typing;
             }
@@ -2835,29 +2874,46 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                StackManipulation readAssignment = assigner.assign(enterType, target, typing);
+                StackManipulation readAssignment = assigner.assign(exitType, target, typing);
                 if (!readAssignment.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + enterType + " to " + target);
+                    throw new IllegalStateException("Cannot assign " + exitType + " to " + target);
                 } else if (readOnly) {
                     return new Target.ForVariable.ReadOnly(target, argumentHandler.exit(), readAssignment);
                 } else {
-                    StackManipulation writeAssignment = assigner.assign(target, enterType, typing);
+                    StackManipulation writeAssignment = assigner.assign(target, exitType, typing);
                     if (!writeAssignment.isValid()) {
-                        throw new IllegalStateException("Cannot assign " + target + " to " + enterType);
+                        throw new IllegalStateException("Cannot assign " + target + " to " + exitType);
                     }
                     return new Target.ForVariable.ReadWrite(target, argumentHandler.exit(), readAssignment, writeAssignment);
                 }
             }
 
+            /**
+             * A factory for creating a {@link ForExitValue} offset mapping.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements OffsetMapping.Factory<Exit> {
 
+                /**
+                 * The supplied type of the exit advice.
+                 */
                 private final TypeDefinition exitType;
 
+                /**
+                 * Creates a new factory for creating a {@link ForExitValue} offset mapping.
+                 *
+                 * @param exitType The supplied type of the exit advice.
+                 */
                 protected Factory(TypeDefinition exitType) {
                     this.exitType = exitType;
                 }
 
+                /**
+                 * Creates a new factory for creating a {@link ForExitValue} offset mapping.
+                 *
+                 * @param typeDefinition The supplied type of the enter method.
+                 * @return An appropriate offset mapping factory.
+                 */
                 protected static OffsetMapping.Factory<Exit> of(TypeDefinition typeDefinition) {
                     return typeDefinition.represents(void.class)
                             ? new Illegal<Exit>(Exit.class)
@@ -2881,7 +2937,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
         }
-
 
         /**
          * An offset mapping that provides access to the value that is returned by the instrumented method.
@@ -4142,6 +4197,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription instrumentedMethod;
 
+            /**
+             * A list of virtual method arguments that are explicitly added before any code execution.
+             */
             protected final List<? extends TypeDescription> initialTypes;
 
             /**
@@ -4168,6 +4226,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a new default meta data handler that recomputes the space requirements of an instrumented method.
              *
              * @param instrumentedMethod The instrumented method.
+             * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              */
@@ -4186,6 +4245,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a method size handler applicable for the given instrumented method.
              *
              * @param instrumentedMethod The instrumented method.
+             * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param copyArguments      {@code true} if the original arguments are copied before invoking the instrumented method.
@@ -4257,6 +4317,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new default method size handler that expects that the original arguments are retained.
                  *
                  * @param instrumentedMethod The instrumented method.
+                 * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
                  * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
                  * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
                  */
@@ -4285,6 +4346,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new default method size handler that expectes the original arguments to be copied.
                  *
                  * @param instrumentedMethod The instrumented method.
+                 * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
                  * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
                  * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
                  */
@@ -4440,6 +4502,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             int getReaderHint();
 
+            /**
+             * Injects a frame after initialization if any initialization is performed.
+             *
+             * @param methodVisitor The method visitor to write any frames to.
+             */
             void injectInitializationFrame(MethodVisitor methodVisitor);
 
             /**
@@ -4538,6 +4605,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription instrumentedMethod;
 
+            /**
+             * A list of virtual method arguments that are explicitly added before any code execution.
+             */
             protected final List<? extends TypeDescription> initialTypes;
 
             /**
@@ -4565,6 +4635,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
+             * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
@@ -4588,6 +4659,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
+             * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
              * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
              * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
              * @param exitAdvice         {@code true} if the current advice implies exit advice.
@@ -4956,6 +5028,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param instrumentedType   The instrumented type.
                  * @param instrumentedMethod The instrumented method.
+                 * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
                  * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
                  * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
                  * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
@@ -5060,6 +5133,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param instrumentedType   The instrumented type.
                      * @param instrumentedMethod The instrumented method.
+                     * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
                      * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
                      * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
                      * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
@@ -5107,6 +5181,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param instrumentedType   The instrumented type.
                      * @param instrumentedMethod The instrumented method.
+                     * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
                      * @param enterTypes         A list of virtual method arguments that are available before the instrumented method is executed.
                      * @param exitTypes          A list of virtual method arguments that are available after the instrumented method has completed.
                      * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
@@ -5510,6 +5585,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param implementationContext The implementation context to use.
                  * @param methodSizeHandler     The advice method's method size handler.
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param returnType            The return type of the advice method.
                  */
                 void onEnd(MethodVisitor methodVisitor,
                            Implementation.Context implementationContext,
@@ -5517,11 +5593,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                            StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                            TypeDefinition returnType);
 
+                /**
+                 * Invoked at the end of a method if the exception handler should be wrapped in a skipping block.
+                 *
+                 * @param methodVisitor         The method visitor of the instrumented method.
+                 * @param implementationContext The implementation context to use.
+                 * @param methodSizeHandler     The advice method's method size handler.
+                 * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param returnType            The return type of the advice method.
+                 */
                 void onEndWithSkip(MethodVisitor methodVisitor,
-                           Implementation.Context implementationContext,
-                           MethodSizeHandler.ForAdvice methodSizeHandler,
-                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                           TypeDefinition returnType);
+                                   Implementation.Context implementationContext,
+                                   MethodSizeHandler.ForAdvice methodSizeHandler,
+                                   StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                   TypeDefinition returnType);
             }
 
             /**
@@ -5560,10 +5645,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void onEndWithSkip(MethodVisitor methodVisitor,
-                                  Implementation.Context implementationContext,
-                                  MethodSizeHandler.ForAdvice methodSizeHandler,
-                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                  TypeDefinition returnType) {
+                                          Implementation.Context implementationContext,
+                                          MethodSizeHandler.ForAdvice methodSizeHandler,
+                                          StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                          TypeDefinition returnType) {
                     /* do nothing */
                 }
             }
@@ -5681,10 +5766,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void onEndWithSkip(MethodVisitor methodVisitor,
-                                      Implementation.Context implementationContext,
-                                      MethodSizeHandler.ForAdvice methodSizeHandler,
-                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                      TypeDefinition returnType) {
+                                              Implementation.Context implementationContext,
+                                              MethodSizeHandler.ForAdvice methodSizeHandler,
+                                              StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                              TypeDefinition returnType) {
                         Label skipExceptionHandler = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, skipExceptionHandler);
                         onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, returnType);
@@ -5721,10 +5806,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 void apply(MethodVisitor methodVisitor);
 
+                /**
+                 * A relocation that unconditionally jumps to a given label.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
                 class ForLabel implements Relocation {
 
+                    /**
+                     * The label to jump to.
+                     */
                     private final Label label;
 
+                    /**
+                     * Creates a new relocation for an unconditional jump to a given label.
+                     *
+                     * @param label The label to jump to.
+                     */
                     public ForLabel(Label label) {
                         this.label = label;
                     }
@@ -6214,6 +6311,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             void prepare();
 
+            /**
+             * Initialized the advice's methods local variables.
+             */
             void initialize();
 
             /**
@@ -6379,6 +6479,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.classReader = classReader;
                 }
 
+                /**
+                 * Returns the type to initialize at this advice method's variable offset or {@code void} if no type should be initialized.
+                 *
+                 * @return The type to initialize.
+                 */
                 protected abstract TypeDefinition getInitializationType();
 
                 /**
@@ -6725,6 +6830,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
@@ -6756,6 +6862,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   The class reader for parsing the advice method's class file.
                      * @param methodExit    {@code true} if exit advice is applied.
                      * @return An appropriate enter handler.
@@ -6846,6 +6953,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
@@ -6871,6 +6979,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
@@ -7144,11 +7253,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final Label endOfMethod;
 
                 /**
-                 * {@code true} if the method can return non-exceptionally.
-                 */
-                private boolean doesReturn;
-
-                /**
                  * Creates a new code translation visitor.
                  *
                  * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
@@ -7344,9 +7448,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return;
                     }
                     mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                    doesReturn = true;
                 }
 
+                /**
+                 * Resolves the offset of the advice method's local variable. The returned value is only valid if
+                 * this advice method does not return {@code void}.
+                 *
+                 * @return The offset of the represented advice method.
+                 */
                 protected abstract int getReturnValueOffset();
 
                 /**
@@ -7700,6 +7809,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
+                    /**
+                     * Resolves the offset of the advice method's local variable. The returned value is only valid if
+                     * this advice method does not return {@code void}.
+                     *
+                     * @return The offset of the represented advice method.
+                     */
                     protected abstract int getReturnValueOffset();
 
                     /**
@@ -7836,6 +7951,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param exitType      The exit type or {@code void} if no exit type is defined.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
@@ -7863,6 +7979,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param adviceMethod  The advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param methodExit    {@code true} if exit advice is applied.
                      * @return An appropriate enter handler.
                      */
@@ -7921,6 +8038,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param exitType      The exit type or {@code void} if no exit type is defined.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -7944,6 +8062,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param exitType      The exit type or {@code void} if no exit type is defined.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -8138,6 +8257,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final MethodDescription instrumentedMethod;
 
+        /**
+         * A label that indicates the start of the preparation of a user method execution.
+         */
         private final Label preparationStart;
 
         /**
@@ -8409,11 +8531,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected final Label returnHandler;
 
             /**
-             * {@code true} if the advice method ever returns non-exceptionally.
-             */
-            protected boolean doesReturn;
-
-            /**
              * Creates an advice visitor that applies exit advice.
              *
              * @param methodVisitor         The method visitor for the instrumented method.
@@ -8452,7 +8569,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         writerFlags,
                         readerFlags);
                 returnHandler = new Label();
-                doesReturn = false;
             }
 
             @Override
@@ -8473,7 +8589,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                 }
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, returnHandler);
-                doesReturn = true;
             }
 
             @Override
@@ -8502,7 +8617,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return;
                 }
                 mv.visitJumpInsn(Opcodes.GOTO, returnHandler);
-                doesReturn = true;
             }
 
             @Override
@@ -8900,12 +9014,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface OnMethodEnter {
 
         /**
+         * <p>
+         * Determines if the execution of the instrumented method should be skipped. This does not include any exit advice.
+         * </p>
+         * <p>
          * When specifying a non-primitive type, this method's return value that is subject to an {@code instanceof} check where
          * the instrumented method is only executed, if the returned instance is {@code not} an instance of the specified class.
          * Alternatively, it is possible to specify either {@link OnDefaultValue} or {@link OnNonDefaultValue} where the instrumented
          * method is only executed if the advice method returns a default or non-default value of the advice method's return type.
          * It is illegal to specify a primitive type as an argument whereas setting the value to {@code void} indicates that the
          * instrumented method should never be skipped.
+         * </p>
          *
          * @return A value defining what return values of the advice method indicate that the instrumented method
          * should be skipped or {@code void} if the instrumented method should never be skipped.
@@ -8966,6 +9085,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @java.lang.annotation.Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
+        /**
+         * <p>
+         * Determines if the execution of the instrumented method should be repeated. This does not include any enter advice.
+         * </p>
+         * <p>
+         * When specifying a non-primitive type, this method's return value that is subject to an {@code instanceof} check where
+         * the instrumented method is only executed, if the returned instance is {@code not} an instance of the specified class.
+         * Alternatively, it is possible to specify either {@link OnDefaultValue} or {@link OnNonDefaultValue} where the instrumented
+         * method is only repeated if the advice method returns a default or non-default value of the advice method's return type.
+         * It is illegal to specify a primitive type as an argument whereas setting the value to {@code void} indicates that the
+         * instrumented method should never be repeated.
+         * </p>
+         *
+         * @return A value defining what return values of the advice method indicate that the instrumented method
+         * should be repeated or {@code void} if the instrumented method should never be repeated.
+         */
         Class<?> repeatOn() default void.class;
 
         /**
@@ -9342,13 +9477,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
+    /**
+     * Indicates that the annotated parameter should be mapped to the value that is returned by the advice method that is annotated
+     * by {@link OnMethodExit}. Before the exit advice returns for the first time, this parameter is initialized to its type's default value.
+     *
+     * @see Advice
+     * @see OnMethodExit
+     */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
     public @interface Exit {
 
+        /**
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
+         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
+         *
+         * @return {@code true} if this parameter is read-only.
+         */
         boolean readOnly() default true;
 
+        /**
+         * The typing that should be applied when assigning the exit value.
+         *
+         * @return The typing to apply upon assignment.
+         */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 

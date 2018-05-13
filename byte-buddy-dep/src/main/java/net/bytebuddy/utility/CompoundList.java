@@ -60,7 +60,7 @@ public class CompoundList {
      * @param left  The left list.
      * @param right The right list.
      * @param <S>   The type of the list's elements.
-     * @return A compound list representing the element and the list.
+     * @return A compound list representing the elements of both lists.
      */
     public static <S> List<S> of(List<? extends S> left, List<? extends S> right) {
         List<S> list = new ArrayList<S>(left.size() + right.size());
@@ -69,6 +69,16 @@ public class CompoundList {
         return list;
     }
 
+
+    /**
+     * Creates a list of a left, a middle and a right list.
+     *
+     * @param left   The left list.
+     * @param middle The middle list.
+     * @param right  The right list.
+     * @param <S>    The type of the list's elements.
+     * @return A compound list representing the elements of all lists.
+     */
     public static <S> List<S> of(List<? extends S> left, List<? extends S> middle, List<? extends S> right) {
         List<S> list = new ArrayList<S>(left.size() + middle.size() + right.size());
         list.addAll(left);
