@@ -402,7 +402,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription);
         }
         if (!methodExit.isAlive()) {
-            throw new IllegalArgumentException("No enter advice defined by " + exitAdvice);
+            throw new IllegalArgumentException("No exit advice defined by " + exitAdvice);
         }
         try {
             return new Advice(methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
