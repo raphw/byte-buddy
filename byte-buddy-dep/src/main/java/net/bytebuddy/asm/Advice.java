@@ -9046,6 +9046,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * It is illegal to specify a primitive type as an argument whereas setting the value to {@code void} indicates that the
          * instrumented method should never be skipped.
          * </p>
+         * <p>
+         * <b>Important</b>: Constructors cannot be skipped.
+         * </p>
          *
          * @return A value defining what return values of the advice method indicate that the instrumented method
          * should be skipped or {@code void} if the instrumented method should never be skipped.
@@ -9117,6 +9120,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * method is only repeated if the advice method returns a default or non-default value of the advice method's return type.
          * It is illegal to specify a primitive type as an argument whereas setting the value to {@code void} indicates that the
          * instrumented method should never be repeated.
+         * </p>
+         * <p>
+         * <b>Important</b>: Constructors cannot be repeated.
          * </p>
          *
          * @return A value defining what return values of the advice method indicate that the instrumented method
@@ -9198,9 +9204,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         boolean optional() default false;
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
          * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
          * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9235,9 +9246,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int value();
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9270,9 +9286,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface AllArguments {
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
          * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
          * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9306,9 +9327,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface Return {
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9343,14 +9369,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * <p>
-         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, it is illegal to
-         * write to the annotated parameter. If this property is set to {@code true}, the annotated parameter can either be set
-         * to {@code null} to suppress an exception that was thrown by the adviced method or it can be set to any other exception
-         * that will be thrown after the advice method returned.
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
          * </p>
          * <p>
-         * If an exception is suppressed, the default value for the return type is returned from the method, i.e. {@code 0} for any
-         * numeric type and {@code null} for a reference type. The default value can be replaced via the {@link Return} annotation.
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
          * </p>
          *
          * @return {@code true} if this parameter is read-only.
@@ -9407,9 +9431,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Class<?> declaringType() default void.class;
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the mapped field type if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the  annotated parameter can be any super type of the field type.
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9482,9 +9511,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface Enter {
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -9511,9 +9545,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface Exit {
 
         /**
+         * <p>
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * </p>
+         * <p>
+         * <b>Important</b>: This property must be set to {@code true} if the advice method is not inlined.
+         * </p>
          *
          * @return {@code true} if this parameter is read-only.
          */
