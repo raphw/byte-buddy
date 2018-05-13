@@ -8293,7 +8293,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onAfterExceptionTable() {
-            // TODO: Stack map frames at beginning of method?
             methodEnter.prepare();
             onUserPrepare();
             methodExit.prepare();
