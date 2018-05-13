@@ -3700,7 +3700,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, enterType);
+                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, exitType);
                 }
 
                 @Override
