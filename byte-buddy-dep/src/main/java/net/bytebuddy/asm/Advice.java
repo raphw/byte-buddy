@@ -27,7 +27,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
@@ -2949,10 +2948,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             private final String name;
 
-            protected ForLocalValue(TypeDescription.Generic target, TypeDescription.Generic localType, Local local) {
-                this(target, localType, local.value());
-            }
-
             public ForLocalValue(TypeDescription.Generic target, TypeDescription.Generic localType, String name) {
                 this.target = target;
                 this.localType = localType;
@@ -2966,10 +2961,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
                 StackManipulation readAssignment = assigner.assign(localType, target, Assigner.Typing.STATIC);
-                if (!readAssignment.isValid()) {
+                StackManipulation writeAssignment = assigner.assign(target, localType, Assigner.Typing.STATIC);
+                if (!readAssignment.isValid() || !writeAssignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + localType + " to " + target);
                 } else {
-                    return new Target.ForVariable.ReadOnly(target, argumentHandler.named(name), readAssignment);
+                    return new Target.ForVariable.ReadWrite(target, argumentHandler.named(name), readAssignment, writeAssignment);
                 }
             }
 
@@ -3730,7 +3726,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public int named(String name) {
                     return instrumentedMethod.getStackSize()
                             + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.tailMap(name).values());
+                            + StackSize.of(namedTypes.headMap(name).values());
                 }
 
                 @Override
@@ -3939,7 +3935,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public int named(String name) {
                     return instrumentedMethod.getStackSize()
                             + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.tailMap(name).values());
+                            + StackSize.of(namedTypes.headMap(name).values());
                 }
 
                 @Override
