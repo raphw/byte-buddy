@@ -42,7 +42,13 @@ public class AdviceLocalValueTest {
 
         @Advice.OnMethodEnter
         private static void enter(@Advice.Local(FOO) Object foo) {
+            if (foo != null) {
+                throw new AssertionError();
+            }
             foo = FOO;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
             Sample.enter++;
         }
 
