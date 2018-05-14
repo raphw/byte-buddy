@@ -44,6 +44,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -2938,6 +2939,62 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForLocalValue implements OffsetMapping {
+
+            private final TypeDescription.Generic target;
+
+            private final TypeDescription.Generic localType;
+
+            private final String name;
+
+            protected ForLocalValue(TypeDescription.Generic target, TypeDescription.Generic localType, Local local) {
+                this(target, localType, local.value());
+            }
+
+            public ForLocalValue(TypeDescription.Generic target, TypeDescription.Generic localType, String name) {
+                this.target = target;
+                this.localType = localType;
+                this.name = name;
+            }
+
+            @Override
+            public Target resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler,
+                                  Sort sort) {
+                StackManipulation readAssignment = assigner.assign(localType, target, Assigner.Typing.STATIC);
+                if (!readAssignment.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + localType + " to " + target);
+                } else {
+                    return new Target.ForVariable.ReadOnly(target, argumentHandler.named(name), readAssignment);
+                }
+            }
+
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class Factory implements OffsetMapping.Factory<Local> {
+
+                private final TypeDefinition localType;
+
+                protected Factory(TypeDefinition localType) {
+                    this.localType = localType;
+                }
+
+                @Override
+                public Class<Local> getAnnotationType() {
+                    return Local.class;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Local> annotation,
+                                          AdviceType adviceType) {
+                    return new ForLocalValue(target.getType(), localType.asGenericType(), annotation.loadSilent());
+                }
+            }
+        }
+
         /**
          * An offset mapping that provides access to the value that is returned by the instrumented method.
          */
@@ -3561,6 +3618,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         int enter();
 
+        int named(String name);
+
         /**
          * Resolves the offset of the returned value of the instrumented method.
          *
@@ -3662,6 +3721,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                public int named(String name) {
+                    return instrumentedMethod.getStackSize()
+                            + exitType.getStackSize().getSize()
+                            + StackSize.of(namedTypes.tailMap(name).values());
+                }
+
+                @Override
                 public int enter() {
                     return instrumentedMethod.getStackSize()
                             + exitType.getStackSize().getSize()
@@ -3737,7 +3803,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return 0;
                     }
                 }
-
 
                 /**
                  * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
@@ -3818,8 +3883,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             int mapped(int offset);
 
-            int named(String name);
-
             abstract class Default implements ForAdvice {
 
                 /**
@@ -3847,9 +3910,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
                  */
                 protected Default(MethodDescription instrumentedMethod,
-                                       MethodDescription adviceMethod,
-                                       TypeDefinition exitType,
-                                       NavigableMap<String, TypeDefinition> namedTypes) {
+                                  MethodDescription adviceMethod,
+                                  TypeDefinition exitType,
+                                  NavigableMap<String, TypeDefinition> namedTypes) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.exitType = exitType;
@@ -3868,9 +3931,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public int named(String name) {
-                    if (!namedTypes.containsKey(name)) {
-                        throw new IllegalArgumentException();
-                    }
                     return instrumentedMethod.getStackSize()
                             + exitType.getStackSize().getSize()
                             + StackSize.of(namedTypes.tailMap(name).values());
@@ -3988,7 +4048,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
-                                                        Map<String, TypeDescription> namedTypes) {
+                                                        Map<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Simple(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(namedTypes), enterType);
                 }
             },
@@ -4001,7 +4061,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
-                                                        Map<String, TypeDescription> namedTypes) {
+                                                        Map<String, TypeDefinition> namedTypes) {
                     return new ForInstrumentedMethod.Default.Copying(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(namedTypes), enterType);
                 }
             };
@@ -4017,7 +4077,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
                                                              TypeDefinition enterType,
                                                              TypeDefinition exitType,
-                                                             Map<String, TypeDescription> namedTypes);
+                                                             Map<String, TypeDefinition> namedTypes);
         }
     }
 
@@ -6193,7 +6253,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 boolean isPrependLineNumber();
 
-                Map<String, TypeDescription> getNamedTypes();
+                Map<String, TypeDefinition> getNamedTypes();
             }
 
             /**
@@ -6346,7 +6406,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Map<String, TypeDescription> getNamedTypes() {
+            public Map<String, TypeDefinition> getNamedTypes() {
                 return Collections.emptyMap();
             }
 
@@ -6481,12 +6541,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.classReader = classReader;
                 }
 
-                /**
-                 * Returns the type to initialize at this advice method's variable offset or {@code void} if no type should be initialized.
-                 *
-                 * @return The type to initialize.
-                 */
-                protected abstract TypeDefinition getInitializationType();
+                protected abstract Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler); // TODO: Rename
 
                 /**
                  * Applies a resolution for a given instrumented method.
@@ -6629,25 +6684,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void initialize() {
-                        if (getInitializationType().represents(boolean.class)
-                                || getInitializationType().represents(byte.class)
-                                || getInitializationType().represents(short.class)
-                                || getInitializationType().represents(char.class)
-                                || getInitializationType().represents(int.class)) {
-                            methodVisitor.visitInsn(Opcodes.ICONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.ISTORE, argumentHandler.exit());
-                        } else if (getInitializationType().represents(long.class)) {
-                            methodVisitor.visitInsn(Opcodes.LCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.LSTORE, argumentHandler.exit());
-                        } else if (getInitializationType().represents(float.class)) {
-                            methodVisitor.visitInsn(Opcodes.FCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.FSTORE, argumentHandler.exit());
-                        } else if (getInitializationType().represents(double.class)) {
-                            methodVisitor.visitInsn(Opcodes.DCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.DSTORE, argumentHandler.exit());
-                        } else if (!getInitializationType().represents(void.class)) {
-                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                            methodVisitor.visitVarInsn(Opcodes.ASTORE, argumentHandler.exit());
+                        for (Map.Entry<Integer, TypeDefinition> typeDefinition : resolveInitializationTypes(argumentHandler).entrySet()) {
+                            if (typeDefinition.getValue().represents(boolean.class)
+                                    || typeDefinition.getValue().represents(byte.class)
+                                    || typeDefinition.getValue().represents(short.class)
+                                    || typeDefinition.getValue().represents(char.class)
+                                    || typeDefinition.getValue().represents(int.class)) {
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, typeDefinition.getKey());
+                            } else if (typeDefinition.getValue().represents(long.class)) {
+                                methodVisitor.visitInsn(Opcodes.LCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, typeDefinition.getKey());
+                            } else if (typeDefinition.getValue().represents(float.class)) {
+                                methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, typeDefinition.getKey());
+                            } else if (typeDefinition.getValue().represents(double.class)) {
+                                methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, typeDefinition.getKey());
+                            } else if (!typeDefinition.getValue().represents(void.class)) {
+                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, typeDefinition.getKey());
+                            }
                         }
                     }
 
@@ -6827,6 +6884,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final boolean prependLineNumber;
 
+                    private final Map<String, TypeDefinition> namedTypes;
+
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
@@ -6839,7 +6898,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
-                                             ClassReader classReader) {
+                                             ClassReader classReader) { // TODO: Register named types.
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -6857,6 +6916,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
                                 classReader);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
+                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: Extract local variables
+                        for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
+                            String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
+                            TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
+                            if (previous != null && !previous.equals(parameterDescription.getType())) {
+                                throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
+                            }
+                        }
                     }
 
                     /**
@@ -6880,8 +6947,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected TypeDefinition getInitializationType() {
-                        return TypeDescription.VOID;
+                    protected Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler) {
+                        Map<Integer, TypeDefinition> namedTypes = new HashMap<Integer, TypeDefinition>(); // TODO: Iteration order?
+                        for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
+                            namedTypes.put(argumentHandler.named(entry.getKey()), entry.getValue());
+                        }
+                        return namedTypes;
                     }
 
                     @Override
@@ -6914,8 +6985,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public Map<String, TypeDescription> getNamedTypes() {
-                        return Collections.emptyMap(); // TODO: Extract local variables
+                    public Map<String, TypeDefinition> getNamedTypes() {
+                        return namedTypes;
                     }
 
                     @Override
@@ -7068,8 +7139,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected TypeDefinition getInitializationType() {
-                        return adviceMethod.getReturnType();
+                    protected Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler) {
+                        return adviceMethod.getReturnType().represents(void.class)
+                                ? Collections.<Integer, TypeDefinition>emptyMap()
+                                : Collections.<Integer, TypeDefinition>singletonMap(argumentHandler.exit(), adviceMethod.getReturnType());
                     }
 
                     @Override
@@ -8006,7 +8079,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public Map<String, TypeDescription> getNamedTypes() {
+                    public Map<String, TypeDefinition> getNamedTypes() {
                         return Collections.emptyMap();
                     }
 
