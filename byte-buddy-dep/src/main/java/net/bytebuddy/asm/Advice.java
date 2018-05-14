@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
@@ -2975,10 +2976,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements OffsetMapping.Factory<Local> {
 
-                private final Map<String, TypeDefinition> localTypes;
+                private final Map<String, TypeDefinition> namedTypes;
 
-                protected Factory(Map<String, TypeDefinition> localTypes) {
-                    this.localTypes = localTypes;
+                protected Factory(Map<String, TypeDefinition> namedTypes) {
+                    this.namedTypes = namedTypes;
                 }
 
                 @Override
@@ -2991,11 +2992,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           AnnotationDescription.Loadable<Local> annotation,
                                           AdviceType adviceType) {
                     String name = annotation.loadSilent().value();
-                    TypeDefinition localType = localTypes.get(name);
-                    if (localType == null) {
+                    TypeDefinition namedType = namedTypes.get(name);
+                    if (namedType == null) {
                         throw new IllegalStateException(); // TODO: Add exception message.
                     }
-                    return new ForLocalValue(target.getType(), localType.asGenericType(), name);
+                    return new ForLocalValue(target.getType(), namedType.asGenericType(), name);
                 }
             }
         }
@@ -5581,6 +5582,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             boolean isBinary();
 
+            Map<String, TypeDefinition> getNamedTypes();
+
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
@@ -6480,6 +6483,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription.InDefinedShape adviceMethod;
 
+            private final Map<String, TypeDefinition> namedTypes;
+
             /**
              * Creates a dispatcher for inlined advice method.
              *
@@ -6487,6 +6492,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected Inlining(MethodDescription.InDefinedShape adviceMethod) {
                 this.adviceMethod = adviceMethod;
+                namedTypes = new HashMap<String, TypeDefinition>();
+                for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
+                    TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
+                    if (previous != null && !previous.equals(parameterDescription.getType())) {
+                        throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
+                    }
+                }
             }
 
             @Override
@@ -6505,17 +6518,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public Map<String, TypeDefinition> getNamedTypes() {
+                return namedTypes;
+            }
+
+            @Override
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit) {
-                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, methodExit.getAdviceType(), classReader, methodExit.isAlive());
+                return Resolved.ForMethodEnter.of(adviceMethod, namedTypes, userFactories, methodExit.getAdviceType(), classReader, methodExit.isAlive());
             }
 
             @Override
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                   ClassReader classReader,
                                                                   Unresolved methodEnter) {
-                return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, methodEnter.getAdviceType());
+                Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
+                for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
+                    TypeDefinition typeDefinition = this.namedTypes.get(entry.getKey());
+                    if (typeDefinition == null) {
+                        throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + entry.getKey());
+                    } else if (!typeDefinition.equals(entry.getValue())) {
+                        throw new IllegalStateException(adviceMethod + " does not read variable " + entry.getKey() + " as " + typeDefinition);
+                    }
+                }
+                return Resolved.ForMethodExit.of(adviceMethod, namedTypes, userFactories, classReader, methodEnter.getAdviceType());
             }
 
             /**
@@ -6884,12 +6911,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
+                    private final Map<String, TypeDefinition> namedTypes;
+
                     /**
                      * {@code true} if the first discovered line number information should be prepended to the advice code.
                      */
                     private final boolean prependLineNumber;
-
-                    private final Map<String, TypeDefinition> namedTypes;
 
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
@@ -6901,9 +6928,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
+                                             Map<String, TypeDefinition> namedTypes,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
-                                             ClassReader classReader) { // TODO: Local variable support.
+                                             ClassReader classReader) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -6914,21 +6942,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.INSTANCE,
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
+                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
                                 classReader);
+                        this.namedTypes = namedTypes;
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
-                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: Is this the right place?
-                        for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                            String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
-                            TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
-                            if (previous != null && !previous.equals(parameterDescription.getType())) {
-                                throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
-                            }
-                        }
                     }
 
                     /**
@@ -6942,13 +6964,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate enter handler.
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
+                                                                Map<String, TypeDefinition> namedTypes,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
                                                                 ClassReader classReader,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType, classReader)
-                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType, classReader);
+                                ? new WithRetainedEnterType(adviceMethod, namedTypes, userFactories, exitType, classReader)
+                                : new WithDiscardedEnterType(adviceMethod, namedTypes, userFactories, exitType, classReader);
                     }
 
                     @Override
@@ -7040,10 +7063,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
+                                                        Map<String, TypeDefinition> namedTypes,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
                                                         TypeDefinition exitType,
                                                         ClassReader classReader) {
-                            super(adviceMethod, userFactories, exitType, classReader);
+                            super(adviceMethod, namedTypes, userFactories, exitType, classReader);
                         }
 
                         @Override
@@ -7066,10 +7090,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
+                                                         Map<String, TypeDefinition> namedTypes,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          TypeDefinition exitType,
                                                          ClassReader classReader) {
-                            super(adviceMethod, userFactories, exitType, classReader);
+                            super(adviceMethod, namedTypes, userFactories, exitType, classReader);
                         }
 
                         @Override
@@ -7100,9 +7125,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
+                                            Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
-                                            TypeDefinition enterType) { // TODO: Local variable support.
+                                            TypeDefinition enterType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -7113,6 +7139,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
                                         OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
+                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -7132,6 +7159,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
+                                                               Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                ClassReader classReader,
                                                                TypeDefinition enterType) {
@@ -7139,8 +7167,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .ofType(OnMethodExit.class)
                                 .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, userFactories, classReader, enterType)
-                                : new WithExceptionHandler(adviceMethod, userFactories, classReader, enterType, throwable);
+                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, classReader, enterType)
+                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, classReader, enterType, throwable);
                     }
 
                     @Override
@@ -7239,11 +7267,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                       Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        ClassReader classReader,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
-                            super(adviceMethod, userFactories, classReader, enterType);
+                            super(adviceMethod, namedTypes, userFactories, classReader, enterType);
                             this.throwable = throwable;
                         }
 
@@ -7268,10 +7297,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                          Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           ClassReader classReader,
                                                           TypeDefinition enterType) {
-                            super(adviceMethod, userFactories, classReader, enterType);
+                            super(adviceMethod, namedTypes, userFactories, classReader, enterType);
                         }
 
                         @Override
@@ -7675,6 +7705,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public Map<String, TypeDefinition> getNamedTypes() {
+                return Collections.emptyMap();
+            }
+
+            @Override
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit) {
@@ -7685,7 +7720,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                   ClassReader classReader,
                                                                   Unresolved methodEnter) {
-                return Resolved.ForMethodExit.of(adviceMethod, userFactories, methodEnter.getAdviceType());
+                Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
+                for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
+                    TypeDefinition typeDefinition = namedTypes.get(name);
+                    if (typeDefinition == null) {
+                        throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + name);
+                    } else if (!typeDefinition.equals(parameterDescription.getType())) {
+                        throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
+                    }
+                }
+                return Resolved.ForMethodExit.of(adviceMethod, namedTypes, userFactories, methodEnter.getAdviceType());
             }
 
             /**
@@ -8053,7 +8098,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
-                                        new OffsetMapping.Factory.Illegal<Local>(Local.class), // TODO: Is this sufficient?
+                                        new OffsetMapping.Factory.Illegal<Local>(Local.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class));
@@ -8188,8 +8233,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
+                                            Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
-                                            TypeDefinition enterType) { // TODO: Local variable support.
+                                            TypeDefinition enterType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -8200,6 +8246,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         OffsetMapping.ForEnterValue.Factory.of(enterType),
                                         OffsetMapping.ForExitValue.Factory.of(adviceMethod.getReturnType()),
+                                        new OffsetMapping.ForLocalValue.Factory(namedTypes),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
@@ -8217,6 +8264,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
+                                                               Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
@@ -8224,8 +8272,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .getValue(ON_THROWABLE)
                                 .resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, userFactories, enterType)
-                                : new WithExceptionHandler(adviceMethod, userFactories, enterType, throwable);
+                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, enterType)
+                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, throwable);
                     }
 
                     @Override
@@ -8291,10 +8339,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                       Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
-                            super(adviceMethod, userFactories, enterType);
+                            super(adviceMethod, namedTypes, userFactories, enterType);
                             this.throwable = throwable;
                         }
 
@@ -8318,9 +8367,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                          Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           TypeDefinition enterType) {
-                            super(adviceMethod, userFactories, enterType);
+                            super(adviceMethod, namedTypes, userFactories, enterType);
                         }
 
                         @Override
