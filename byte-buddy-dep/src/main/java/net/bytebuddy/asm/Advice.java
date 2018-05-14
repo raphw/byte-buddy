@@ -6541,7 +6541,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.classReader = classReader;
                 }
 
-                protected abstract Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler); // TODO: Rename
+                protected abstract Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler);
 
                 /**
                  * Applies a resolution for a given instrumented method.
@@ -6916,7 +6916,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
                                 classReader);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
-                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: Extract local variables
+                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: move
                         for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
                             String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
                             TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
@@ -6948,7 +6948,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler) {
-                        Map<Integer, TypeDefinition> namedTypes = new HashMap<Integer, TypeDefinition>(); // TODO: Iteration order?
+                        SortedMap<Integer, TypeDefinition> namedTypes = new TreeMap<Integer, TypeDefinition>();
                         for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
                             namedTypes.put(argumentHandler.named(entry.getKey()), entry.getValue());
                         }
