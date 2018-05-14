@@ -2975,10 +2975,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements OffsetMapping.Factory<Local> {
 
-                private final TypeDefinition localType;
+                private final Map<String, TypeDefinition> localTypes;
 
-                protected Factory(TypeDefinition localType) {
-                    this.localType = localType;
+                protected Factory(Map<String, TypeDefinition> localTypes) {
+                    this.localTypes = localTypes;
                 }
 
                 @Override
@@ -2990,7 +2990,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Local> annotation,
                                           AdviceType adviceType) {
-                    return new ForLocalValue(target.getType(), localType.asGenericType(), annotation.loadSilent());
+                    String name = annotation.loadSilent().value();
+                    TypeDefinition localType = localTypes.get(name);
+                    if (localType == null) {
+                        throw new IllegalStateException(); // TODO: Add exception message.
+                    }
+                    return new ForLocalValue(target.getType(), localType.asGenericType(), name);
                 }
             }
         }
@@ -6898,7 +6903,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
-                                             ClassReader classReader) { // TODO: Register named types.
+                                             ClassReader classReader) { // TODO: Local variable support.
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -6916,7 +6921,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
                                 classReader);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
-                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: move
+                        namedTypes = new HashMap<String, TypeDefinition>(); // TODO: Is this the right place?
                         for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
                             String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
                             TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
@@ -7097,7 +7102,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
-                                            TypeDefinition enterType) {
+                                            TypeDefinition enterType) { // TODO: Local variable support.
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -8048,7 +8053,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
-                                        new OffsetMapping.Factory.Illegal<Local>(Local.class),
+                                        new OffsetMapping.Factory.Illegal<Local>(Local.class), // TODO: Is this sufficient?
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class));
@@ -8184,7 +8189,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
-                                            TypeDefinition enterType) {
+                                            TypeDefinition enterType) { // TODO: Local variable support.
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
