@@ -14,8 +14,6 @@ public class AdviceLocalValueTest {
 
     private static final String ENTER = "enter", EXIT = "exit";
 
-    private static final int VALUE = 42;
-
     @Test
     public void testAdviceWithEnterValue() throws Exception {
         Class<?> type = new ByteBuddy()

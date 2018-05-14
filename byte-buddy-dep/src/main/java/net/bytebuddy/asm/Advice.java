@@ -6729,10 +6729,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             } else if (typeDefinition.getValue().represents(double.class)) {
                                 methodVisitor.visitInsn(Opcodes.DCONST_0);
                                 methodVisitor.visitVarInsn(Opcodes.DSTORE, typeDefinition.getKey());
-                            } else if (!typeDefinition.getValue().represents(void.class)) {
+                            } else {
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, typeDefinition.getKey());
                             }
+                            methodSizeHandler.requireStackSize(typeDefinition.getValue().getStackSize().getSize());
                         }
                     }
 
