@@ -3985,8 +3985,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             SIMPLE {
                 @Override
-                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType) {
-                    return new ForInstrumentedMethod.Default.Simple(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(), enterType);
+                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
+                                                        TypeDefinition enterType,
+                                                        TypeDefinition exitType,
+                                                        Map<String, TypeDescription> namedTypes) {
+                    return new ForInstrumentedMethod.Default.Simple(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(namedTypes), enterType);
                 }
             },
 
@@ -3995,8 +3998,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             COPYING {
                 @Override
-                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType) {
-                    return new ForInstrumentedMethod.Default.Copying(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(), enterType);
+                protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
+                                                        TypeDefinition enterType,
+                                                        TypeDefinition exitType,
+                                                        Map<String, TypeDescription> namedTypes) {
+                    return new ForInstrumentedMethod.Default.Copying(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(namedTypes), enterType);
                 }
             };
 
@@ -4008,7 +4014,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param exitType           The exit type or {@code void} if no exit type is defined.
              * @return An argument handler for the instrumented method.
              */
-            protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType);
+            protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
+                                                             TypeDefinition enterType,
+                                                             TypeDefinition exitType,
+                                                             Map<String, TypeDescription> namedTypes);
         }
     }
 
@@ -6183,6 +6192,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if the first discovered line number information should be prepended to the advice code.
                  */
                 boolean isPrependLineNumber();
+
+                Map<String, TypeDescription> getNamedTypes();
             }
 
             /**
@@ -6330,6 +6341,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public boolean isPrependLineNumber() {
+                return false;
+            }
+
+            @Override
+            public Map<String, TypeDescription> getNamedTypes() {
+                return Collections.emptyMap();
+            }
+
+            @Override
             public TypeDescription getThrowable() {
                 return NoExceptionHandler.DESCRIPTION;
             }
@@ -6340,17 +6361,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean isPrependLineNumber() {
-                return false;
-            }
-
-            @Override
-            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodExit) {
+            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                         ClassReader classReader,
+                                                         Unresolved methodExit) {
                 return this;
             }
 
             @Override
-            public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories, ClassReader classReader, Unresolved methodEnter) {
+            public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
+                                                       ClassReader classReader,
+                                                       Unresolved methodEnter) {
                 return this;
             }
 
@@ -6891,6 +6911,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public boolean isPrependLineNumber() {
                         return prependLineNumber;
+                    }
+
+                    @Override
+                    public Map<String, TypeDescription> getNamedTypes() {
+                        return Collections.emptyMap(); // TODO: Extract local variables
                     }
 
                     @Override
@@ -7950,6 +7975,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForExitValue.Factory.of(exitType),
                                         new OffsetMapping.Factory.Illegal<Thrown>(Thrown.class),
                                         new OffsetMapping.Factory.Illegal<Enter>(Enter.class),
+                                        new OffsetMapping.Factory.Illegal<Local>(Local.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class));
@@ -7977,6 +8003,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public boolean isPrependLineNumber() {
                         return prependLineNumber;
+                    }
+
+                    @Override
+                    public Map<String, TypeDescription> getNamedTypes() {
+                        return Collections.emptyMap();
                     }
 
                     @Override
@@ -8309,7 +8340,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     : Collections.singletonList(methodEnter.getAdviceType().asErasure());
             argumentHandler = methodExit.getArgumentHandlerFactory().resolve(instrumentedMethod,
                     methodEnter.getAdviceType(),
-                    methodExit.getAdviceType());
+                    methodExit.getAdviceType(),
+                    methodEnter.getNamedTypes());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod,
                     initialTypes,
                     enterTypes,
