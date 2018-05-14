@@ -3620,28 +3620,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             boolean isCopyingArguments();
 
-            /**
-             * A simple argument handler for an instrumented method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class Simple implements ForInstrumentedMethod {
+            abstract class Default implements ForInstrumentedMethod {
 
                 /**
                  * The instrumented method.
                  */
-                private final MethodDescription instrumentedMethod;
+                protected final MethodDescription instrumentedMethod;
 
                 /**
                  * The exit type or {@code void} if no exit type is defined.
                  */
-                private final TypeDefinition exitType;
+                protected final TypeDefinition exitType;
 
                 protected final NavigableMap<String, TypeDefinition> namedTypes;
 
                 /**
                  * The enter type or {@code void} if no enter type is defined.
                  */
-                private final TypeDefinition enterType;
+                protected final TypeDefinition enterType;
 
                 /**
                  * Creates a new simple argument handler for an instrumented method.
@@ -3650,21 +3646,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param enterType          The enter type or {@code void} if no enter type is defined.
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
                  */
-                protected Simple(MethodDescription instrumentedMethod,
-                                 TypeDefinition exitType,
-                                 NavigableMap<String, TypeDefinition> namedTypes,
-                                 TypeDefinition enterType) {
+                protected Default(MethodDescription instrumentedMethod,
+                                  TypeDefinition exitType,
+                                  NavigableMap<String, TypeDefinition> namedTypes,
+                                  TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.namedTypes = namedTypes;
                     this.exitType = exitType;
                     this.enterType = enterType;
-                }
-
-                @Override
-                public int argument(int offset) {
-                    return offset < instrumentedMethod.getStackSize()
-                            ? offset
-                            : offset + exitType.getStackSize().getSize() + StackSize.of(namedTypes.values()) + enterType.getStackSize().getSize();
                 }
 
                 @Override
@@ -3697,25 +3686,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public int variable(int index) {
-                    return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
-                            ? index
-                            : index + (exitType.represents(void.class) ? 0 : 1) + StackSize.of(namedTypes.values()) +(enterType.represents(void.class) ? 0 : 1);
-                }
-
-                @Override
-                public int prepare(MethodVisitor methodVisitor) {
-                    return 0;
-                }
-
-                @Override
                 public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                    return new ForAdvice.Default.ForMethodEnter(instrumentedMethod, adviceMethod, exitType, namedTypes);
                 }
 
                 @Override
                 public ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable) {
-                    return new ForAdvice.ForMethodExit(instrumentedMethod,
+                    return new ForAdvice.Default.ForMethodExit(instrumentedMethod,
                             adviceMethod,
                             exitType,
                             namedTypes,
@@ -3723,129 +3700,107 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             skipThrowable ? StackSize.ZERO : StackSize.SINGLE);
                 }
 
-                @Override
-                public boolean isCopyingArguments() {
-                    return false;
-                }
-            }
-
-            /**
-             * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class Copying implements ForInstrumentedMethod {
-
                 /**
-                 * The instrumented method.
+                 * A simple argument handler for an instrumented method.
                  */
-                private final MethodDescription instrumentedMethod;
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class Simple extends Default {
 
-                /**
-                 * The enter type or {@code void} if no enter type is defined.
-                 */
-                private final TypeDefinition enterType;
-
-                /**
-                 * The exit type or {@code void} if no exit type is defined.
-                 */
-                private final TypeDefinition exitType;
-
-                /**
-                 * Creates a new argument-copying argument handler for an instrumented method.
-                 *
-                 * @param instrumentedMethod The instrumented method.
-                 * @param enterType          The enter type or {@code void} if no enter type is defined.
-                 * @param exitType           The exit type or {@code void} if no exit type is defined.
-                 */
-                protected Copying(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType) {
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.enterType = enterType;
-                    this.exitType = exitType;
-                }
-
-                @Override
-                public int argument(int offset) {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + enterType.getStackSize().getSize()
-                            + offset;
-                }
-
-                @Override
-                public int exit() {
-                    return instrumentedMethod.getStackSize();
-                }
-
-                @Override
-                public int enter() {
-                    return instrumentedMethod.getStackSize() + exitType.getStackSize().getSize();
-                }
-
-                @Override
-                public int returned() {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + enterType.getStackSize().getSize();
-                }
-
-                @Override
-                public int thrown() {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + enterType.getStackSize().getSize()
-                            + instrumentedMethod.getReturnType().getStackSize().getSize();
-                }
-
-                @Override
-                public int variable(int index) {
-                    return (instrumentedMethod.isStatic() ? 0 : 1)
-                            + instrumentedMethod.getParameters().size()
-                            + (exitType.represents(void.class) ? 0 : 1)
-                            + (enterType.represents(void.class) ? 0 : 1)
-                            + index;
-                }
-
-                @Override
-                public int prepare(MethodVisitor methodVisitor) {
-                    StackSize stackSize;
-                    if (!instrumentedMethod.isStatic()) {
-                        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                        methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize()
-                                + exitType.getStackSize().getSize()
-                                + enterType.getStackSize().getSize());
-                        stackSize = StackSize.SINGLE;
-                    } else {
-                        stackSize = StackSize.ZERO;
+                    protected Simple(MethodDescription instrumentedMethod,
+                                     TypeDefinition exitType,
+                                     NavigableMap<String, TypeDefinition> namedTypes,
+                                     TypeDefinition enterType) {
+                        super(instrumentedMethod, exitType, namedTypes, enterType);
                     }
-                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                        Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
-                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
-                        methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize()
+
+                    @Override
+                    public int argument(int offset) {
+                        return offset < instrumentedMethod.getStackSize()
+                                ? offset
+                                : offset + exitType.getStackSize().getSize() + StackSize.of(namedTypes.values()) + enterType.getStackSize().getSize();
+                    }
+
+                    @Override
+                    public int variable(int index) {
+                        return index < (instrumentedMethod.isStatic() ? 0 : 1) + instrumentedMethod.getParameters().size()
+                                ? index
+                                : index + (exitType.represents(void.class) ? 0 : 1) + StackSize.of(namedTypes.values()) + (enterType.represents(void.class) ? 0 : 1);
+                    }
+
+                    @Override
+                    public boolean isCopyingArguments() {
+                        return false;
+                    }
+
+                    @Override
+                    public int prepare(MethodVisitor methodVisitor) {
+                        return 0;
+                    }
+                }
+
+
+                /**
+                 * An argument handler for an instrumented method that copies all arguments before executing the instrumented method.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class Copying extends Default {
+
+                    protected Copying(MethodDescription instrumentedMethod,
+                                      TypeDefinition exitType,
+                                      NavigableMap<String, TypeDefinition> namedTypes,
+                                      TypeDefinition enterType) {
+                        super(instrumentedMethod, exitType, namedTypes, enterType);
+                    }
+
+                    @Override
+                    public int argument(int offset) {
+                        return instrumentedMethod.getStackSize()
                                 + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
                                 + enterType.getStackSize().getSize()
-                                + parameterDescription.getOffset());
-                        stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
+                                + offset;
                     }
-                    return stackSize.getSize();
-                }
 
-                @Override
-                public ForAdvice bindEnter(MethodDescription adviceMethod) {
-                    return new ForAdvice.ForMethodEnter(instrumentedMethod, adviceMethod, exitType);
-                }
+                    @Override
+                    public int variable(int index) {
+                        return (instrumentedMethod.isStatic() ? 0 : 1)
+                                + instrumentedMethod.getParameters().size()
+                                + (exitType.represents(void.class) ? 0 : 1)
+                                + namedTypes.size()
+                                + (enterType.represents(void.class) ? 0 : 1)
+                                + index;
+                    }
 
-                @Override
-                public ForAdvice bindExit(MethodDescription adviceMethod, boolean skipThrowable) {
-                    return new ForAdvice.ForMethodExit(instrumentedMethod,
-                            adviceMethod,
-                            enterType,
-                            exitType,
-                            skipThrowable ? StackSize.ZERO : StackSize.SINGLE);
-                }
+                    @Override
+                    public boolean isCopyingArguments() {
+                        return true;
+                    }
 
-                @Override
-                public boolean isCopyingArguments() {
-                    return true;
+                    @Override
+                    public int prepare(MethodVisitor methodVisitor) {
+                        StackSize stackSize;
+                        if (!instrumentedMethod.isStatic()) {
+                            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize()
+                                    + exitType.getStackSize().getSize()
+                                    + StackSize.of(namedTypes.values())
+                                    + enterType.getStackSize().getSize());
+                            stackSize = StackSize.SINGLE;
+                        } else {
+                            stackSize = StackSize.ZERO;
+                        }
+                        for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                            Type type = Type.getType(parameterDescription.getType().asErasure().getDescriptor());
+                            methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ILOAD), parameterDescription.getOffset());
+                            methodVisitor.visitVarInsn(type.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize()
+                                    + exitType.getStackSize().getSize()
+                                    + StackSize.of(namedTypes.values())
+                                    + enterType.getStackSize().getSize()
+                                    + parameterDescription.getOffset());
+                            stackSize = stackSize.maximum(parameterDescription.getType().getStackSize());
+                        }
+                        return stackSize.getSize();
+                    }
                 }
             }
         }
@@ -3865,7 +3820,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             int named(String name);
 
-            abstract class AbstractBase implements ForAdvice {
+            abstract class Default implements ForAdvice {
 
                 /**
                  * The instrumented method.
@@ -3891,7 +3846,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod       The advice method.
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
                  */
-                protected AbstractBase(MethodDescription instrumentedMethod,
+                protected Default(MethodDescription instrumentedMethod,
                                        MethodDescription adviceMethod,
                                        TypeDefinition exitType,
                                        NavigableMap<String, TypeDefinition> namedTypes) {
@@ -3928,95 +3883,95 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             + StackSize.of(namedTypes.values());
                 }
 
-            }
+                /**
+                 * An argument handler for an enter advice method.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class ForMethodEnter extends Default {
 
-            /**
-             * An argument handler for an enter advice method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForMethodEnter extends AbstractBase {
+                    protected ForMethodEnter(MethodDescription instrumentedMethod,
+                                             MethodDescription adviceMethod,
+                                             TypeDefinition exitType,
+                                             NavigableMap<String, TypeDefinition> namedTypes) {
+                        super(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                    }
 
-                protected ForMethodEnter(MethodDescription instrumentedMethod,
-                                         MethodDescription adviceMethod,
-                                         TypeDefinition exitType,
-                                         NavigableMap<String, TypeDefinition> namedTypes) {
-                    super(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                    @Override
+                    public int returned() {
+                        throw new IllegalStateException("Cannot resolve the return value offset during enter advice");
+                    }
+
+                    @Override
+                    public int thrown() {
+                        throw new IllegalStateException("Cannot resolve the thrown value offset during enter advice");
+                    }
+
+                    @Override
+                    public int mapped(int offset) {
+                        return instrumentedMethod.getStackSize()
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                - adviceMethod.getStackSize() + offset;
+                    }
                 }
-
-                @Override
-                public int returned() {
-                    throw new IllegalStateException("Cannot resolve the return value offset during enter advice");
-                }
-
-                @Override
-                public int thrown() {
-                    throw new IllegalStateException("Cannot resolve the thrown value offset during enter advice");
-                }
-
-                @Override
-                public int mapped(int offset) {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            - adviceMethod.getStackSize() + offset;
-                }
-            }
-
-            /**
-             * An argument handler for an exit advice method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForMethodExit extends AbstractBase {
 
                 /**
-                 * The enter type or {@code void} if no enter type is defined.
+                 * An argument handler for an exit advice method.
                  */
-                private final TypeDefinition enterType;
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class ForMethodExit extends Default {
 
-                /**
-                 * The stack size of a possibly stored throwable.
-                 */
-                private final StackSize throwableSize;
+                    /**
+                     * The enter type or {@code void} if no enter type is defined.
+                     */
+                    private final TypeDefinition enterType;
 
-                protected ForMethodExit(MethodDescription instrumentedMethod,
-                                        MethodDescription adviceMethod,
-                                        TypeDefinition exitType,
-                                        NavigableMap<String, TypeDefinition> namedTypes,
-                                        TypeDefinition enterType,
-                                        StackSize throwableSize) {
-                    super(instrumentedMethod, adviceMethod, exitType, namedTypes);
-                    this.enterType = enterType;
-                    this.throwableSize = throwableSize;
+                    /**
+                     * The stack size of a possibly stored throwable.
+                     */
+                    private final StackSize throwableSize;
+
+                    protected ForMethodExit(MethodDescription instrumentedMethod,
+                                            MethodDescription adviceMethod,
+                                            TypeDefinition exitType,
+                                            NavigableMap<String, TypeDefinition> namedTypes,
+                                            TypeDefinition enterType,
+                                            StackSize throwableSize) {
+                        super(instrumentedMethod, adviceMethod, exitType, namedTypes);
+                        this.enterType = enterType;
+                        this.throwableSize = throwableSize;
+                    }
+
+                    @Override
+                    public int returned() {
+                        return instrumentedMethod.getStackSize()
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                + enterType.getStackSize().getSize();
+                    }
+
+                    @Override
+                    public int thrown() {
+                        return instrumentedMethod.getStackSize()
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                + enterType.getStackSize().getSize()
+                                + instrumentedMethod.getReturnType().getStackSize().getSize();
+                    }
+
+                    @Override
+                    public int mapped(int offset) {
+                        return instrumentedMethod.getStackSize()
+                                + exitType.getStackSize().getSize()
+                                + StackSize.of(namedTypes.values())
+                                + enterType.getStackSize().getSize()
+                                + instrumentedMethod.getReturnType().getStackSize().getSize()
+                                + throwableSize.getSize()
+                                - adviceMethod.getStackSize()
+                                + offset;
+                    }
                 }
 
-                @Override
-                public int returned() {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            + enterType.getStackSize().getSize();
-                }
-
-                @Override
-                public int thrown() {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            + enterType.getStackSize().getSize()
-                            + instrumentedMethod.getReturnType().getStackSize().getSize();
-                }
-
-                @Override
-                public int mapped(int offset) {
-                    return instrumentedMethod.getStackSize()
-                            + exitType.getStackSize().getSize()
-                            + StackSize.of(namedTypes.values())
-                            + enterType.getStackSize().getSize()
-                            + instrumentedMethod.getReturnType().getStackSize().getSize()
-                            + throwableSize.getSize()
-                            - adviceMethod.getStackSize()
-                            + offset;
-                }
             }
         }
 
@@ -4031,7 +3986,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             SIMPLE {
                 @Override
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType) {
-                    return new ForInstrumentedMethod.Simple(instrumentedMethod, enterType, exitType);
+                    return new ForInstrumentedMethod.Default.Simple(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(), enterType);
                 }
             },
 
@@ -4041,7 +3996,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             COPYING {
                 @Override
                 protected ForInstrumentedMethod resolve(MethodDescription instrumentedMethod, TypeDefinition enterType, TypeDefinition exitType) {
-                    return new ForInstrumentedMethod.Copying(instrumentedMethod, enterType, exitType);
+                    return new ForInstrumentedMethod.Default.Copying(instrumentedMethod, exitType, new TreeMap<String, TypeDefinition>(), enterType);
                 }
             };
 
