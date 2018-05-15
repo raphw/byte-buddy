@@ -15,10 +15,23 @@ public class AdviceLocalValueTest {
     private static final String ENTER = "enter", EXIT = "exit";
 
     @Test
-    public void testAdviceWithEnterValue() throws Exception {
+    public void testAdviceWithLocalValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(LocalValueAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithTwoLocalValues() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(LocalValueTwoParametersAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -59,6 +72,36 @@ public class AdviceLocalValueTest {
             }
             foo = BAR;
             if (!foo.equals(BAR)) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LocalValueTwoParametersAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Local(FOO) Object foo, @Advice.Local(BAR) Object bar) {
+            if (foo != null || bar != null) {
+                throw new AssertionError();
+            }
+            foo = FOO;
+            bar = BAR;
+            if (!foo.equals(FOO) || !bar.equals(BAR)) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Local(FOO) Object foo, @Advice.Local(BAR) Object bar) {
+            if (!foo.equals(FOO) || !bar.equals(BAR)) {
+                throw new AssertionError();
+            }
+            foo = BAR;
+            bar = FOO;
+            if (!foo.equals(BAR) || !bar.equals(FOO)) {
                 throw new AssertionError();
             }
             Sample.exit++;
