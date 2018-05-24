@@ -214,9 +214,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isMemberClass();
 
     /**
-     * Returns the package internalName of the type described by this instance.
+     * Returns the package of the type described by this instance or {@code null} if the described type does not imply a package.
      *
-     * @return The package internalName of the type described by this instance.
+     * @return The package of the type described by this instance or {@code null} if the described type does not imply a package.
      */
     PackageDescription getPackage();
 
