@@ -4165,12 +4165,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface ForAdvice extends MethodSizeHandler {
 
-            /**
-             * Records a minimum padding additionally to the computed stack size that is required for implementing this advice method.
-             *
-             * @param padding The minimum required padding.
-             */
-            void requireStackPadding(int padding);
+            void requireStackSizePadding(int stackSizePadding);
+
+            void requireLocalVariableLengthPadding(int localVariableLengthPadding);
 
             /**
              * Records the maximum values for stack size and local variable array which are required by the advice method
@@ -4213,17 +4210,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void requireLocalVariableLength(int localVariableLength) {
-                /* do nothing */
-            }
-
-            @Override
             public void requireStackSize(int stackSize) {
                 /* do nothing */
             }
 
             @Override
-            public void requireStackPadding(int padding) {
+            public void requireLocalVariableLength(int localVariableLength) {
+                /* do nothing */
+            }
+
+            @Override
+            public void requireStackSizePadding(int stackSizePadding) {
+                /* do nothing */
+            }
+
+            @Override
+            public void requireLocalVariableLengthPadding(int localVariableLengthPadding) {
                 /* do nothing */
             }
 
@@ -4318,6 +4320,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public void requireStackSize(int stackSize) {
+                Default.this.stackSize = Math.max(this.stackSize, stackSize);
+            }
+
+            @Override
+            public void requireLocalVariableLength(int localVariableLength) {
+                this.localVariableLength = Math.max(this.localVariableLength, localVariableLength);
+            }
+
+            @Override
             public int compoundStackSize(int stackSize) {
                 return Math.max(this.stackSize, stackSize);
             }
@@ -4328,16 +4340,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         + StackSize.of(exitTypes)
                         + StackSize.of(initialTypes)
                         + StackSize.of(enterTypes));
-            }
-
-            @Override
-            public void requireStackSize(int stackSize) {
-                Default.this.stackSize = Math.max(this.stackSize, stackSize);
-            }
-
-            @Override
-            public void requireLocalVariableLength(int localVariableLength) {
-                this.localVariableLength = Math.max(this.localVariableLength, localVariableLength);
             }
 
             /**
@@ -4425,16 +4427,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final MethodDescription.InDefinedShape adviceMethod;
 
-                private final int localVariablePadding;
+                private final int baseLocalVariableLength;
 
-                /**
-                 * The stack padding that this advice method requires additionally to its computed size.
-                 */
-                private int stackPadding;
+                private int localVariableLengthPadding;
 
-                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod, int localVariablePadding) {
+                private int stackSizePadding;
+
+                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod, int baseLocalVariableLength) {
                     this.adviceMethod = adviceMethod;
-                    this.localVariablePadding = localVariablePadding;
+                    this.baseLocalVariableLength = baseLocalVariableLength;
                 }
 
                 @Override
@@ -4448,14 +4449,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void requireStackPadding(int stackPadding) {
-                    this.stackPadding = Math.max(this.stackPadding, stackPadding);
+                public void requireStackSizePadding(int stackSizePadding) {
+                    this.stackSizePadding = Math.max(this.stackSizePadding, stackSizePadding);
+                }
+
+                @Override
+                public void requireLocalVariableLengthPadding(int localVariableLengthPadding) {
+                    this.localVariableLengthPadding = Math.max(this.localVariableLengthPadding, localVariableLengthPadding);
                 }
 
                 @Override
                 public void recordMaxima(int stackSize, int localVariableLength) {
-                    Default.this.requireStackSize(stackSize + stackPadding);
-                    Default.this.requireLocalVariableLength(localVariableLength - adviceMethod.getStackSize() + localVariablePadding);
+                    Default.this.requireStackSize(stackSize + stackSizePadding);
+                    Default.this.requireLocalVariableLength(localVariableLength
+                            - adviceMethod.getStackSize()
+                            + baseLocalVariableLength
+                            + localVariableLengthPadding);
                 }
             }
         }
@@ -7027,10 +7036,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler.bindEnter(adviceMethod),
                                     OffsetMapping.Sort.ENTER));
                         }
+                        // TODO: Make this better!
+                        MethodSizeHandler.ForAdvice forAdvice = methodSizeHandler.bindEnter(adviceMethod);
+                        forAdvice.requireLocalVariableLengthPadding(adviceMethod.getReturnType().getStackSize().getSize());
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
                                 implementationContext,
                                 argumentHandler.bindEnter(adviceMethod),
-                                methodSizeHandler.bindEnter(adviceMethod),
+                                forAdvice,
                                 stackMapFrameHandler.bindEnter(adviceMethod),
                                 instrumentedMethod,
                                 adviceMethod,
@@ -7512,7 +7524,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
-                        methodSizeHandler.requireStackPadding(stackManipulation.apply(mv, implementationContext).getMaximalSize() - expectedGrowth.getSize());
+                        methodSizeHandler.requireStackSizePadding(stackManipulation.apply(mv, implementationContext).getMaximalSize() - expectedGrowth.getSize());
                     } else {
                         mv.visitVarInsn(opcode, argumentHandler.mapped(offset));
                     }
@@ -7522,7 +7534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitIincInsn(int offset, int value) {
                     OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        methodSizeHandler.requireStackPadding(target.resolveIncrement(value).apply(mv, implementationContext).getMaximalSize());
+                        methodSizeHandler.requireStackSizePadding(target.resolveIncrement(value).apply(mv, implementationContext).getMaximalSize());
                     } else {
                         mv.visitIincInsn(argumentHandler.mapped(offset), value);
                     }
@@ -8144,12 +8156,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler.bindEnter(adviceMethod),
                                     OffsetMapping.Sort.ENTER));
                         }
+                        // TODO: Make this better!
+                        MethodSizeHandler.ForAdvice forAdvice = methodSizeHandler.bindEnter(adviceMethod);
+                        forAdvice.requireLocalVariableLengthPadding(adviceMethod.getReturnType().getStackSize().getSize());
                         return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
                                 argumentHandler.bindEnter(adviceMethod),
-                                methodSizeHandler.bindEnter(adviceMethod),
+                                forAdvice,
                                 stackMapFrameHandler.bindEnter(adviceMethod),
                                 suppressionHandler.bind(exceptionHandler),
                                 relocationHandler.bind(instrumentedMethod, relocation));
@@ -8543,8 +8558,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
             onUserEnd();
-            methodVisitor.visitMaxs(100, 100);
-//            methodVisitor.visitMaxs(methodSizeHandler.compoundStackSize(stackSize), methodSizeHandler.compoundLocalVariableLength(localVariableLength));
+            methodVisitor.visitMaxs(methodSizeHandler.compoundStackSize(stackSize), methodSizeHandler.compoundLocalVariableLength(localVariableLength));
         }
 
         @Override
