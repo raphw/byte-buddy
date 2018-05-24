@@ -3681,7 +3681,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             boolean isCopyingArguments();
 
-            List<TypeDescription> getInitialTypes();
+            List<TypeDescription> getLocalTypes();
 
             abstract class Default implements ForInstrumentedMethod {
 
@@ -3771,7 +3771,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public List<TypeDescription> getInitialTypes() {
+                public List<TypeDescription> getLocalTypes() {
                     return new ArrayList<TypeDescription>(namedTypes.values());
                 }
 
@@ -8456,20 +8456,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodEnter.getAdviceType(),
                     methodExit.getAdviceType(),
                     methodEnter.getNamedTypes());
+            List<TypeDescription> initialTypes = CompoundList.of(methodExit.getAdviceType().represents(void.class)
+                    ? Collections.<TypeDescription>emptyList()
+                    : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getLocalTypes());
+            List<TypeDescription> enterTypes = methodEnter.getAdviceType().represents(void.class)
+                    ? Collections.<TypeDescription>emptyList()
+                    : Collections.singletonList(methodEnter.getAdviceType().asErasure());
             methodSizeHandler = MethodSizeHandler.Default.of(instrumentedMethod,
-                    argumentHandler.getInitialTypes(),
-                    methodEnter.getAdviceType().represents(void.class)
-                            ? Collections.<TypeDescription>emptyList()
-                            : Collections.singletonList(methodEnter.getAdviceType().asErasure()),
+                    initialTypes,
+                    enterTypes,
                     exitTypes,
                     argumentHandler.isCopyingArguments(),
                     writerFlags);
             stackMapFrameHandler = StackMapFrameHandler.Default.of(instrumentedType,
                     instrumentedMethod,
-                    argumentHandler.getInitialTypes(),
-                    methodEnter.getAdviceType().represents(void.class)
-                            ? Collections.<TypeDescription>emptyList()
-                            : Collections.singletonList(methodEnter.getAdviceType().asErasure()),
+                    initialTypes,
+                    enterTypes,
                     exitTypes,
                     methodExit.isAlive(),
                     argumentHandler.isCopyingArguments(),
