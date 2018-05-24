@@ -7247,16 +7247,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler);
                     }
 
-                    protected MethodVisitor doApply(MethodVisitor methodVisitor,
-                                                    Implementation.Context implementationContext,
-                                                    Assigner assigner,
-                                                    ArgumentHandler.ForAdvice argumentHandler,
-                                                    MethodSizeHandler.ForAdvice methodSizeHandler,
-                                                    StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                                    TypeDescription instrumentedType,
-                                                    MethodDescription instrumentedMethod,
-                                                    SuppressionHandler.Bound suppressionHandler,
-                                                    RelocationHandler.Bound relocationHandler) {
+                    private MethodVisitor doApply(MethodVisitor methodVisitor,
+                                                  Implementation.Context implementationContext,
+                                                  Assigner assigner,
+                                                  ArgumentHandler.ForAdvice argumentHandler,
+                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
+                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                                  TypeDescription instrumentedType,
+                                                  MethodDescription instrumentedMethod,
+                                                  SuppressionHandler.Bound suppressionHandler,
+                                                  RelocationHandler.Bound relocationHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedType,
