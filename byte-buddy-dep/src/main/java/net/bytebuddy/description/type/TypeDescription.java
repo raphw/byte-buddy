@@ -7371,10 +7371,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public PackageDescription getPackage() {
-            Package aPackage = type.getPackage();
-            return aPackage == null
-                    ? PackageDescription.UNDEFINED
-                    : new PackageDescription.ForLoadedPackage(aPackage);
+            if (type.isArray() || type.isPrimitive()) {
+                return PackageDescription.UNDEFINED;
+            } else {
+                Package aPackage = type.getPackage();
+                if (aPackage == null) {
+                    String name = type.getName();
+                    int index = name.lastIndexOf('.');
+                    return index == -1
+                            ? new PackageDescription.Simple(EMPTY_NAME)
+                            : new PackageDescription.Simple(name.substring(0, index));
+                } else {
+                    return new PackageDescription.ForLoadedPackage(aPackage);
+                }
+            }
         }
 
         @Override
@@ -7766,9 +7776,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public PackageDescription getPackage() {
             String name = getName();
             int index = name.lastIndexOf('.');
-            return index == -1
-                    ? PackageDescription.UNDEFINED
-                    : new PackageDescription.Simple(name.substring(0, index));
+            return new PackageDescription.Simple(index == -1
+                    ? EMPTY_NAME
+                    : name.substring(0, index));
         }
 
         @Override

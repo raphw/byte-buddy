@@ -21,8 +21,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
     int PACKAGE_MODIFIERS = Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SYNTHETIC;
 
     /**
-     * Represents any undefined property of a type description that is instead represented as {@code null} in order
-     * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
+     * A named constant for an undefined package what applies for primitive and array types.
      */
     PackageDescription UNDEFINED = null;
 

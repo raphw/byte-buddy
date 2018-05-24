@@ -1,11 +1,13 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.scope.EnclosingType;
@@ -102,7 +104,21 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 Array.newInstance(EnclosingType.FINAL_INNER, 1).getClass(),
                 EnclosingType.DEPRECATED,
                 Array.newInstance(EnclosingType.DEPRECATED, 1).getClass(),
-                Type$With$Dollar.class);
+                Type$With$Dollar.class,
+                new ByteBuddy()
+                        .subclass(Object.class)
+                        .name("sample.WithoutDefinedPackage")
+                        .make()
+                        .load(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                                ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(PackageDefinitionStrategy.NoOp.INSTANCE))
+                        .getLoaded(),
+                new ByteBuddy()
+                        .subclass(Object.class)
+                        .name("WithoutPackage")
+                        .make()
+                        .load(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                                ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                        .getLoaded());
     }
 
     @Test
@@ -328,11 +344,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testPackage() throws Exception {
-        assertThat(describe(SampleClass.class).getPackage(),
-                is((PackageDescription) new PackageDescription.ForLoadedPackage(SampleClass.class.getPackage())));
-        assertThat(describe(Object.class).getPackage(),
-                is((PackageDescription) new PackageDescription.ForLoadedPackage(Object.class.getPackage())));
-        assertThat(describe(Object[].class).getPackage(), nullValue(PackageDescription.class));
+        for (Class<?> type : standardTypes) {
+            if (type.isArray() || type.isPrimitive()) {
+                assertThat(describe(type).getPackage(), nullValue(PackageDescription.class));
+            } else {
+                String packageName = type.getName();
+                int packageIndex = packageName.lastIndexOf('.');
+                assertThat(describe(type).getPackage().getName(), is(packageIndex == -1 ? "" : packageName.substring(0, packageIndex)));
+            }
+        }
     }
 
     @Test

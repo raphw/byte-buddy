@@ -709,9 +709,9 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
-            return packageIndex == -1
-                    ? PackageDescription.UNDEFINED
-                    : new PackageDescription.Simple(name.substring(0, packageIndex));
+            return new PackageDescription.Simple(packageIndex == -1
+                    ? EMPTY_NAME
+                    : name.substring(0, packageIndex));
         }
 
         @Override
