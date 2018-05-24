@@ -350,7 +350,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             } else {
                 String packageName = type.getName();
                 int packageIndex = packageName.lastIndexOf('.');
-                assertThat(describe(type).getPackage().getName(), is(packageIndex == -1 ? "" : packageName.substring(0, packageIndex)));
+                assertThat(describe(type).getPackage().getName(), is(packageIndex == -1
+                        ? ""
+                        : packageName.substring(0, packageIndex)));
             }
         }
     }
