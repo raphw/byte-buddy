@@ -2939,15 +2939,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * An offset mapping that provides access to a named local variable that is declared by the advice methods via {@link Local}.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class ForLocalValue implements OffsetMapping {
 
+            /**
+             * The variable's target type.
+             */
             private final TypeDescription.Generic target;
 
+            /**
+             * The local variable's type.
+             */
             private final TypeDescription.Generic localType;
 
+            /**
+             * The local variable's name.
+             */
             private final String name;
 
+            /**
+             * Creates an offset mapping for a local variable that is declared by the advice methods via {@link Local}.
+             *
+             * @param target    The variable's target type.
+             * @param localType The local variable's type.
+             * @param name      The local variable's name.
+             */
             public ForLocalValue(TypeDescription.Generic target, TypeDescription.Generic localType, String name) {
                 this.target = target;
                 this.localType = localType;
@@ -2969,11 +2988,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * A factory for an offset mapping for a local variable that is declared by the advice methods via {@link Local}.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements OffsetMapping.Factory<Local> {
 
+                /**
+                 * The mapping of type names to their type that are available.
+                 */
                 private final Map<String, TypeDefinition> namedTypes;
 
+                /**
+                 * Creates a factory for a {@link Local} variable mapping.
+                 *
+                 * @param namedTypes The mapping of type names to their type that are available.
+                 */
                 protected Factory(Map<String, TypeDefinition> namedTypes) {
                     this.namedTypes = namedTypes;
                 }
@@ -2990,7 +3020,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     String name = annotation.loadSilent().value();
                     TypeDefinition namedType = namedTypes.get(name);
                     if (namedType == null) {
-                        throw new IllegalStateException(); // TODO: Add exception message.
+                        throw new IllegalStateException("Named local variable is unknown: " + name);
                     }
                     return new ForLocalValue(target.getType(), namedType.asGenericType(), name);
                 }
@@ -3620,6 +3650,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         int enter();
 
+        /**
+         * Returns the offset of the local variable with the given name.
+         *
+         * @param name The name of the local variable being accessed.
+         * @return The named variable's offset.
+         */
         int named(String name);
 
         /**
@@ -3681,8 +3717,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             boolean isCopyingArguments();
 
+            /**
+             * Returns a list of local variables that are declared to support advice execution.
+             *
+             * @return The list of local varibales that are declared to support advice execution.
+             */
             List<TypeDescription> getLocalTypes();
 
+            /**
+             * A default implementation of an argument handler for an instrumented method.
+             */
             abstract class Default implements ForInstrumentedMethod {
 
                 /**
@@ -3695,6 +3739,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final TypeDefinition exitType;
 
+                /**
+                 * A mapping of all available local variables by their name to their type.
+                 */
                 protected final NavigableMap<String, TypeDescription> namedTypes;
 
                 /**
@@ -3703,11 +3750,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final TypeDefinition enterType;
 
                 /**
-                 * Creates a new simple argument handler for an instrumented method.
+                 * Creates a new default argument handler for an instrumented method.
                  *
                  * @param instrumentedMethod The instrumented method.
-                 * @param enterType          The enter type or {@code void} if no enter type is defined.
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
+                 * @param namedTypes         A mapping of all available local variables by their name to their type.
+                 * @param enterType          The enter type or {@code void} if no enter type is defined.
                  */
                 protected Default(MethodDescription instrumentedMethod,
                                   TypeDefinition exitType,
@@ -3781,6 +3829,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Simple extends Default {
 
+                    /**
+                     * Creates a new simple argument handler for an instrumented method.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @param exitType           The exit type or {@code void} if no exit type is defined.
+                     * @param namedTypes         A mapping of all available local variables by their name to their type.
+                     * @param enterType          The enter type or {@code void} if no enter type is defined.
+                     */
                     protected Simple(MethodDescription instrumentedMethod,
                                      TypeDefinition exitType,
                                      NavigableMap<String, TypeDescription> namedTypes,
@@ -3819,6 +3875,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class Copying extends Default {
 
+                    /**
+                     * Creates a new copying argument handler for an instrumented method.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @param exitType           The exit type or {@code void} if no exit type is defined.
+                     * @param namedTypes         A mapping of all available local variables by their name to their type.
+                     * @param enterType          The enter type or {@code void} if no enter type is defined.
+                     */
                     protected Copying(MethodDescription instrumentedMethod,
                                       TypeDefinition exitType,
                                       NavigableMap<String, TypeDescription> namedTypes,
@@ -3892,6 +3956,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             int mapped(int offset);
 
+            /**
+             * A default implementation for an argument handler for an advice method.
+             */
             abstract class Default implements ForAdvice {
 
                 /**
@@ -3909,6 +3976,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final TypeDefinition exitType;
 
+                /**
+                 * A mapping of all available local variables by their name to their type.
+                 */
                 protected final NavigableMap<String, TypeDescription> namedTypes;
 
                 /**
@@ -3917,6 +3987,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
                  * @param exitType           The exit type or {@code void} if no exit type is defined.
+                 * @param namedTypes         A mapping of all available local variables by their name to their type.
                  */
                 protected Default(MethodDescription instrumentedMethod,
                                   MethodDescription adviceMethod,
@@ -3958,6 +4029,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @HashCodeAndEqualsPlugin.Enhance
                 protected static class ForMethodEnter extends Default {
 
+                    /**
+                     * Creates a new argument handler for an enter advice method.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @param adviceMethod       The advice method.
+                     * @param exitType           The exit type or {@code void} if no exit type is defined.
+                     * @param namedTypes         A mapping of all available local variables by their name to their type.
+                     */
                     protected ForMethodEnter(MethodDescription instrumentedMethod,
                                              MethodDescription adviceMethod,
                                              TypeDefinition exitType,
@@ -4000,6 +4079,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final StackSize throwableSize;
 
+                    /**
+                     * Creates a new argument handler for an exit advice method.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @param adviceMethod       The advice method.
+                     * @param exitType           The exit type or {@code void} if no exit type is defined.
+                     * @param namedTypes         A mapping of all available local variables by their name to their type.
+                     * @param enterType          The enter type or {@code void} if no enter type is defined.
+                     * @param throwableSize      The stack size of a possibly stored throwable.
+                     */
                     protected ForMethodExit(MethodDescription instrumentedMethod,
                                             MethodDescription adviceMethod,
                                             TypeDefinition exitType,
@@ -4089,6 +4178,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedMethod The instrumented method.
              * @param enterType          The enter type or {@code void} if no such type is defined.
              * @param exitType           The exit type or {@code void} if no exit type is defined.
+             * @param namedTypes         A mapping of all available local variables by their name to their type.
              * @return An argument handler for the instrumented method.
              */
             protected abstract ForInstrumentedMethod resolve(MethodDescription instrumentedMethod,
@@ -4165,8 +4255,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface ForAdvice extends MethodSizeHandler {
 
+            /**
+             * Requires additional padding for the operand stack that is required for this advice's execution.
+             *
+             * @param stackSizePadding The required padding.
+             */
             void requireStackSizePadding(int stackSizePadding);
 
+            /**
+             * Requires additional padding for the local variable array that is required for this advice's execution.
+             *
+             * @param localVariableLengthPadding The required padding.
+             */
             void requireLocalVariableLengthPadding(int localVariableLengthPadding);
 
             /**
@@ -4427,12 +4527,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final MethodDescription.InDefinedShape adviceMethod;
 
+                /**
+                 * The base of the local variable length that is implied by the method instrumentation prior to applying this advice method.
+                 */
                 private final int baseLocalVariableLength;
 
-                private int localVariableLengthPadding;
-
+                /**
+                 * The additional padding to apply to the operand stack.
+                 */
                 private int stackSizePadding;
 
+                /**
+                 * The additional padding to apply to the local variable array.
+                 */
+                private int localVariableLengthPadding;
+
+                /**
+                 * Creates a default method size handler for an advice method.
+                 *
+                 * @param adviceMethod            The advice method.
+                 * @param baseLocalVariableLength The base of the local variable length that is implied by the method instrumentation
+                 *                                prior to applying this advice method.
+                 */
                 protected ForAdvice(MethodDescription.InDefinedShape adviceMethod, int baseLocalVariableLength) {
                     this.adviceMethod = adviceMethod;
                     this.baseLocalVariableLength = baseLocalVariableLength;
@@ -5581,6 +5697,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             boolean isBinary();
 
+            /**
+             * Returns the named types declared by this enter advice.
+             *
+             * @return The named types declared by this enter advice.
+             */
             Map<String, TypeDefinition> getNamedTypes();
 
             /**
@@ -6260,6 +6381,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 boolean isPrependLineNumber();
 
+                /**
+                 * Returns the named types declared by this enter advice.
+                 *
+                 * @return The named types declared by this enter advice.
+                 */
                 Map<String, TypeDefinition> getNamedTypes();
             }
 
@@ -6482,6 +6608,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription.InDefinedShape adviceMethod;
 
+            /**
+             * A mapping of all available local variables by their name to their type.
+             */
             private final Map<String, TypeDefinition> namedTypes;
 
             /**
@@ -6572,6 +6701,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.classReader = classReader;
                 }
 
+                /**
+                 * Resolves the initialization types of this advice method.
+                 *
+                 * @param argumentHandler The argument handler to use for resolving the initialization.
+                 * @return A mapping of parameter offsets to the type to initialize.
+                 */
                 protected abstract Map<Integer, TypeDefinition> resolveInitializationTypes(ArgumentHandler argumentHandler);
 
                 /**
@@ -6911,6 +7046,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @HashCodeAndEqualsPlugin.Enhance
                 protected abstract static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
+                    /**
+                     * A mapping of all available local variables by their name to their type.
+                     */
                     private final Map<String, TypeDefinition> namedTypes;
 
                     /**
@@ -6922,6 +7060,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   A class reader to query for the class file of the advice method.
@@ -6957,6 +7096,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves enter advice that only exposes the enter type if this is necessary.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   The class reader for parsing the advice method's class file.
@@ -7040,6 +7180,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler);
                     }
 
+                    /**
+                     * Applies a resolution for a given instrumented method.
+                     *
+                     * @param instrumentedType      A description of the instrumented type.
+                     * @param instrumentedMethod    The instrumented method that is being bound.
+                     * @param methodVisitor         The method visitor for writing to the instrumented method.
+                     * @param implementationContext The implementation context to use.
+                     * @param assigner              The assigner to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
+                     * @param methodSizeHandler     A handler for computing the method size requirements.
+                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param suppressionHandler    The bound suppression handler to use.
+                     * @param relocationHandler     The bound relocation handler to use.
+                     * @return A method visitor for visiting the advice method's byte code.
+                     */
                     protected MethodVisitor doApply(MethodVisitor methodVisitor,
                                                     Implementation.Context implementationContext,
                                                     Assigner assigner,
@@ -7080,6 +7235,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
@@ -7107,6 +7263,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does not expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
@@ -7165,6 +7322,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
@@ -7199,6 +7357,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
@@ -7247,6 +7406,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler);
                     }
 
+                    /**
+                     * Applies a resolution for a given instrumented method.
+                     *
+                     * @param instrumentedType      A description of the instrumented type.
+                     * @param instrumentedMethod    The instrumented method that is being bound.
+                     * @param methodVisitor         The method visitor for writing to the instrumented method.
+                     * @param implementationContext The implementation context to use.
+                     * @param assigner              The assigner to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
+                     * @param methodSizeHandler     A handler for computing the method size requirements.
+                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param suppressionHandler    The bound suppression handler to use.
+                     * @param relocationHandler     The bound relocation handler to use.
+                     * @return A method visitor for visiting the advice method's byte code.
+                     */
                     private MethodVisitor doApply(MethodVisitor methodVisitor,
                                                   Implementation.Context implementationContext,
                                                   Assigner assigner,
@@ -7328,6 +7502,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param classReader   The class reader for parsing the advice method's class file.
                          * @param enterType     The type of the value supplied by the enter advice method or
@@ -7359,6 +7534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param classReader   A class reader to query for the class file of the advice method.
                          * @param enterType     The type of the value supplied by the enter advice method or
@@ -8225,6 +8401,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler.bind(instrumentedMethod, relocation));
                     }
 
+                    /**
+                     * Binds this dispatcher for resolution to a specific method.
+                     *
+                     * @param instrumentedType      A description of the instrumented type.
+                     * @param instrumentedMethod    The instrumented method that is being bound.
+                     * @param methodVisitor         The method visitor for writing to the instrumented method.
+                     * @param implementationContext The implementation context to use.
+                     * @param assigner              The assigner to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
+                     * @param methodSizeHandler     A handler for computing the method size requirements.
+                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param suppressionHandler    The bound suppression handler to use.
+                     * @param relocationHandler     The bound relocation handler to use.
+                     * @return An appropriate bound advice dispatcher.
+                     */
                     protected Bound doResolve(TypeDescription instrumentedType,
                                               MethodDescription instrumentedMethod,
                                               MethodVisitor methodVisitor,
@@ -8343,6 +8534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      */
@@ -8374,6 +8566,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
@@ -8414,6 +8607,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 relocationHandler.bind(instrumentedMethod, relocation));
                     }
 
+                    /**
+                     * Binds this dispatcher for resolution to a specific method.
+                     *
+                     * @param instrumentedType      A description of the instrumented type.
+                     * @param instrumentedMethod    The instrumented method that is being bound.
+                     * @param methodVisitor         The method visitor for writing to the instrumented method.
+                     * @param implementationContext The implementation context to use.
+                     * @param assigner              The assigner to use.
+                     * @param argumentHandler       A handler for accessing values on the local variable array.
+                     * @param methodSizeHandler     A handler for computing the method size requirements.
+                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param suppressionHandler    The bound suppression handler to use.
+                     * @param relocationHandler     The bound relocation handler to use.
+                     * @return An appropriate bound advice dispatcher.
+                     */
                     private Bound doResolve(TypeDescription instrumentedType,
                                             MethodDescription instrumentedMethod,
                                             MethodVisitor methodVisitor,
@@ -8470,6 +8678,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param enterType     The type of the value supplied by the enter advice method or
                          *                      a description of {@code void} if no such value exists.
@@ -8499,6 +8708,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param enterType     The type of the value supplied by the enter advice method or
                          *                      a description of {@code void} if no such value exists.
@@ -9826,11 +10036,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
+    /**
+     * Declares the annotated parameter as a local variable that is created by Byte Buddy for the instrumented method. The local variable can
+     * be both read and written by advice methods with {@link OnMethodEnter} and {@link OnMethodExit} annotation and are uniquely identified by
+     * their name. However, if a local variable is referenced from an exit advice method, it must also be declared by an enter advice method.
+     * It is possible to annotate multiple parameters of an advice method with local variables of the same name as long as all annotated parameters
+     * share the same parameter type. All local variables are initialized with their default value which is {@code 0} value for primitive types and
+     * {@code null} for reference types.
+     */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
     public @interface Local {
 
+        /**
+         * The name of the local variable that the annotated parameter references.
+         *
+         * @return The name of the local variable that the annotated parameter references.
+         */
         String value();
     }
 
