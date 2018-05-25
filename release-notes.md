@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. Mai 2018: version 1.8.12
+
+- Fix misrepresentation of default package as `null`.
+- Add `Advice.Exit` annotation and allow for method repetition based on exit advice value.
+- Add `Advice.Local` annotation to allow for stack allocation of additional variables.
+- Improve advice's method size handler.
+
 ### 4. Mai 2018: version 1.8.11
 
 - Avoid shading unused ASM classes with incomplete links what breaks lint on Android and JPMS module generation.
