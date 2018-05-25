@@ -3718,11 +3718,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             boolean isCopyingArguments();
 
             /**
-             * Returns a list of local variables that are declared to support advice execution.
+             * Returns a list of the named types in their declared order.
              *
-             * @return The list of local varibales that are declared to support advice execution.
+             * @return A list of the named types in their declared order.
              */
-            List<TypeDescription> getLocalTypes();
+            List<TypeDescription> getNamedTypes();
 
             /**
              * A default implementation of an argument handler for an instrumented method.
@@ -3742,7 +3742,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping of all available local variables by their name to their type.
                  */
-                protected final NavigableMap<String, TypeDescription> namedTypes;
+                protected final NavigableMap<String, TypeDefinition> namedTypes;
 
                 /**
                  * The enter type or {@code void} if no enter type is defined.
@@ -3759,7 +3759,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected Default(MethodDescription instrumentedMethod,
                                   TypeDefinition exitType,
-                                  NavigableMap<String, TypeDescription> namedTypes,
+                                  NavigableMap<String, TypeDefinition> namedTypes,
                                   TypeDefinition enterType) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.namedTypes = namedTypes;
@@ -3819,8 +3819,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public List<TypeDescription> getLocalTypes() {
-                    return new ArrayList<TypeDescription>(namedTypes.values());
+                public List<TypeDescription> getNamedTypes() {
+                    List<TypeDescription> namedTypes = new ArrayList<TypeDescription>(this.namedTypes.size());
+                    for (TypeDefinition typeDefinition : this.namedTypes.values()) {
+                        namedTypes.add(typeDefinition.asErasure());
+                    }
+                    return namedTypes;
                 }
 
                 /**
@@ -3839,7 +3843,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected Simple(MethodDescription instrumentedMethod,
                                      TypeDefinition exitType,
-                                     NavigableMap<String, TypeDescription> namedTypes,
+                                     NavigableMap<String, TypeDefinition> namedTypes,
                                      TypeDefinition enterType) {
                         super(instrumentedMethod, exitType, namedTypes, enterType);
                     }
@@ -3885,7 +3889,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected Copying(MethodDescription instrumentedMethod,
                                       TypeDefinition exitType,
-                                      NavigableMap<String, TypeDescription> namedTypes,
+                                      NavigableMap<String, TypeDefinition> namedTypes,
                                       TypeDefinition enterType) {
                         super(instrumentedMethod, exitType, namedTypes, enterType);
                     }
@@ -3979,7 +3983,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A mapping of all available local variables by their name to their type.
                  */
-                protected final NavigableMap<String, TypeDescription> namedTypes;
+                protected final NavigableMap<String, TypeDefinition> namedTypes;
 
                 /**
                  * Creates a new argument handler for an enter advice.
@@ -3992,7 +3996,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected Default(MethodDescription instrumentedMethod,
                                   MethodDescription adviceMethod,
                                   TypeDefinition exitType,
-                                  NavigableMap<String, TypeDescription> namedTypes) {
+                                  NavigableMap<String, TypeDefinition> namedTypes) {
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.exitType = exitType;
@@ -4040,7 +4044,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription instrumentedMethod,
                                              MethodDescription adviceMethod,
                                              TypeDefinition exitType,
-                                             NavigableMap<String, TypeDescription> namedTypes) {
+                                             NavigableMap<String, TypeDefinition> namedTypes) {
                         super(instrumentedMethod, adviceMethod, exitType, namedTypes);
                     }
 
@@ -4092,7 +4096,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodExit(MethodDescription instrumentedMethod,
                                             MethodDescription adviceMethod,
                                             TypeDefinition exitType,
-                                            NavigableMap<String, TypeDescription> namedTypes,
+                                            NavigableMap<String, TypeDefinition> namedTypes,
                                             TypeDefinition enterType,
                                             StackSize throwableSize) {
                         super(instrumentedMethod, adviceMethod, exitType, namedTypes);
@@ -4146,12 +4150,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
                                                         Map<String, TypeDefinition> namedTypes) {
-                    // TODO: Improve.
-                    NavigableMap<String, TypeDescription> namedTypes2 = new TreeMap<String, TypeDescription>();
-                    for (Map.Entry<String, TypeDefinition> entry : namedTypes.entrySet()) {
-                        namedTypes2.put(entry.getKey(), entry.getValue().asErasure());
-                    }
-                    return new ForInstrumentedMethod.Default.Simple(instrumentedMethod, exitType, namedTypes2, enterType);
+                    return new ForInstrumentedMethod.Default.Simple(instrumentedMethod,
+                            exitType,
+                            new TreeMap<String, TypeDefinition>(namedTypes),
+                            enterType);
                 }
             },
 
@@ -4164,11 +4166,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                         TypeDefinition enterType,
                                                         TypeDefinition exitType,
                                                         Map<String, TypeDefinition> namedTypes) {
-                    NavigableMap<String, TypeDescription> namedTypes2 = new TreeMap<String, TypeDescription>();
-                    for (Map.Entry<String, TypeDefinition> entry : namedTypes.entrySet()) {
-                        namedTypes2.put(entry.getKey(), entry.getValue().asErasure());
-                    }
-                    return new ForInstrumentedMethod.Default.Copying(instrumentedMethod, exitType, namedTypes2, enterType);
+                    return new ForInstrumentedMethod.Default.Copying(instrumentedMethod,
+                            exitType,
+                            new TreeMap<String, TypeDefinition>(namedTypes),
+                            enterType);
                 }
             };
 
@@ -8813,7 +8814,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodEnter.getNamedTypes());
             List<TypeDescription> initialTypes = CompoundList.of(methodExit.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
-                    : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getLocalTypes());
+                    : Collections.singletonList(methodExit.getAdviceType().asErasure()), argumentHandler.getNamedTypes());
             List<TypeDescription> preMethodTypes = methodEnter.getAdviceType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getAdviceType().asErasure());
