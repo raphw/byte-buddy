@@ -163,11 +163,15 @@ public class AdviceTypeTest {
         @Advice.OnMethodEnter
         public static void enter(@Advice.AllArguments Object[] boxed,
                                  @Advice.StubValue Object stubValue,
+                                 @Advice.Local(FOO) Void local,
                                  @CustomAnnotation Void custom) {
             if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
                 throw new AssertionError();
             }
             if (stubValue != null) {
+                throw new AssertionError();
+            }
+            if (local != null) {
                 throw new AssertionError();
             }
             if (custom != null) {
@@ -180,6 +184,7 @@ public class AdviceTypeTest {
         public static void exit(@Advice.Thrown Throwable throwable,
                                 @Advice.Return(typing = Assigner.Typing.DYNAMIC) Object boxedReturn,
                                 @Advice.AllArguments Object[] boxed,
+                                @Advice.Local(FOO) Void local,
                                 @CustomAnnotation Void custom) {
             if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
@@ -188,6 +193,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
+                throw new AssertionError();
+            }
+            if (local != null) {
                 throw new AssertionError();
             }
             if (custom != null) {
@@ -278,6 +286,7 @@ public class AdviceTypeTest {
                                     @Advice.FieldValue(STATIC_FIELD) boolean staticField,
                                     @Advice.FieldValue(value = MUTATED, readOnly = false) boolean mutated,
                                     @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) boolean mutatedStatic,
+                                    @Advice.Local(FOO) boolean local,
                                     @CustomAnnotation boolean custom) {
             if (value) {
                 throw new AssertionError();
@@ -303,6 +312,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = false;
+            if (local) {
+                throw new AssertionError();
+            }
+            local = true;
+            if (!local) {
+                throw new AssertionError();
+            }
             if (!custom) {
                 throw new AssertionError();
             }
@@ -323,6 +339,7 @@ public class AdviceTypeTest {
                                    @Advice.FieldValue(STATIC_FIELD) boolean staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) boolean mutated,
                                    @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) boolean mutatedStatic,
+                                   @Advice.Local(FOO) boolean local,
                                    @CustomAnnotation boolean custom) {
             if (result == exception
                     || !enter
@@ -339,6 +356,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (!field || mutated || !staticField || mutatedStatic) {
+                throw new AssertionError();
+            }
+            if (!local) {
                 throw new AssertionError();
             }
             if (!custom) {
@@ -465,6 +485,7 @@ public class AdviceTypeTest {
                                  @Advice.FieldValue(STATIC_FIELD) byte staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) byte mutated,
                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) byte mutatedStatic,
+                                 @Advice.Local(FOO) byte local,
                                  @CustomAnnotation byte custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -490,6 +511,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -509,6 +537,7 @@ public class AdviceTypeTest {
                                 @Advice.FieldValue(STATIC_FIELD) byte staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) byte mutated,
                                 @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) byte mutatedStatic,
+                                @Advice.Local(FOO) byte local,
                                 @CustomAnnotation byte custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -525,6 +554,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -648,6 +680,7 @@ public class AdviceTypeTest {
                                   @Advice.FieldValue(STATIC_FIELD) short staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) short mutated,
                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) short mutatedStatic,
+                                  @Advice.Local(FOO) short local,
                                   @CustomAnnotation short custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -673,6 +706,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -692,6 +732,7 @@ public class AdviceTypeTest {
                                  @Advice.FieldValue(STATIC_FIELD) short staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) short mutated,
                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) short mutatedStatic,
+                                 @Advice.Local(FOO) short local,
                                  @CustomAnnotation short custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -708,6 +749,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -828,6 +872,7 @@ public class AdviceTypeTest {
                                  @Advice.FieldValue(STATIC_FIELD) char staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) char mutated,
                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) char mutatedStatic,
+                                 @Advice.Local(FOO) char local,
                                  @CustomAnnotation char custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -853,6 +898,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -872,6 +924,7 @@ public class AdviceTypeTest {
                                 @Advice.FieldValue(STATIC_FIELD) char staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) char mutated,
                                 @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) char mutatedStatic,
+                                @Advice.Local(FOO) char local,
                                 @CustomAnnotation char custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -888,6 +941,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -1011,6 +1067,7 @@ public class AdviceTypeTest {
                                 @Advice.FieldValue(STATIC_FIELD) int staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) int mutated,
                                 @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) int mutatedStatic,
+                                @Advice.Local(FOO) int local,
                                 @CustomAnnotation int custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -1039,6 +1096,14 @@ public class AdviceTypeTest {
             mutated = mutatedStatic = VALUE * 2;
             mutated++;
             mutatedStatic++;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
+            local++;
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -1058,6 +1123,7 @@ public class AdviceTypeTest {
                                @Advice.FieldValue(STATIC_FIELD) int staticField,
                                @Advice.FieldValue(value = MUTATED, readOnly = false) int mutated,
                                @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) int mutatedStatic,
+                               @Advice.Local(FOO) int local,
                                @CustomAnnotation int custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -1074,6 +1140,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 + 1 || staticField != VALUE || mutatedStatic != VALUE * 2 + 1) {
+                throw new AssertionError();
+            }
+            if (local != VALUE + 1) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -1197,6 +1266,7 @@ public class AdviceTypeTest {
                                  @Advice.FieldValue(STATIC_FIELD) long staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) long mutated,
                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) long mutatedStatic,
+                                 @Advice.Local(FOO) long local,
                                  @CustomAnnotation long custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -1222,6 +1292,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -1241,6 +1318,7 @@ public class AdviceTypeTest {
                                 @Advice.FieldValue(STATIC_FIELD) long staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) long mutated,
                                 @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) long mutatedStatic,
+                                @Advice.Local(FOO) long local,
                                 @CustomAnnotation long custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -1257,6 +1335,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -1380,6 +1461,7 @@ public class AdviceTypeTest {
                                   @Advice.FieldValue(STATIC_FIELD) float staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) float mutated,
                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) float mutatedStatic,
+                                  @Advice.Local(FOO) float local,
                                   @CustomAnnotation float custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -1405,6 +1487,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -1424,6 +1513,7 @@ public class AdviceTypeTest {
                                  @Advice.FieldValue(STATIC_FIELD) float staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) float mutated,
                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) float mutatedStatic,
+                                 @Advice.Local(FOO) float local,
                                  @CustomAnnotation float custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -1440,6 +1530,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -1563,6 +1656,7 @@ public class AdviceTypeTest {
                                    @Advice.FieldValue(STATIC_FIELD) double staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) double mutated,
                                    @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) double mutatedStatic,
+                                   @Advice.Local(FOO) double local,
                                    @CustomAnnotation double custom) {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
@@ -1588,6 +1682,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            if (local != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            local = VALUE;
+            if (local != VALUE) {
+                throw new AssertionError();
+            }
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -1607,6 +1708,7 @@ public class AdviceTypeTest {
                                   @Advice.FieldValue(STATIC_FIELD) double staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) double mutated,
                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) double mutatedStatic,
+                                  @Advice.Local(FOO) double local,
                                   @CustomAnnotation double custom) {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
@@ -1623,6 +1725,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (local != VALUE) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {
@@ -1740,6 +1845,7 @@ public class AdviceTypeTest {
                                    @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
                                    @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic,
+                                   @Advice.Local(FOO) Object local,
                                    @CustomAnnotation String custom) {
             if (value != null) {
                 throw new AssertionError();
@@ -1765,6 +1871,13 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = BAR;
+            if (local != null) {
+                throw new AssertionError();
+            }
+            local = BAR;
+            if (!local.equals(BAR)) {
+                throw new AssertionError();
+            }
             if (!custom.equals(FOO)) {
                 throw new AssertionError();
             }
@@ -1784,6 +1897,7 @@ public class AdviceTypeTest {
                                   @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic,
+                                  @Advice.Local(FOO) Object local,
                                   @CustomAnnotation String custom) {
             if ((exception ? result != null : !result.equals(FOO))
                     || !enter.equals(FOO + BAR)
@@ -1800,6 +1914,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (!field.equals(FOO) || !mutated.equals(BAR) || !staticField.equals(FOO) || !mutatedStatic.equals(BAR)) {
+                throw new AssertionError();
+            }
+            if (!local.equals(BAR)) {
                 throw new AssertionError();
             }
             if (!custom.equals(FOO)) {
