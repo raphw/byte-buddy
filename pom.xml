@@ -52,8 +52,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
-        <asm.javadoc>http://asm.ow2.org/asm60/javadoc/user/</asm.javadoc>
-        <version.asm>6.1.1</version.asm>
+        <asm.javadoc>http://asm.ow2.io/javadoc</asm.javadoc>
+        <version.asm>6.2</version.asm>
         <version.junit>4.12</version.junit>
         <version.mockito>2.18.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
