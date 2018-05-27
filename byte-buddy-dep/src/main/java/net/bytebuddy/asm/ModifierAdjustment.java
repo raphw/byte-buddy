@@ -26,7 +26,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * </p>
  * <p>
  * <b>Important</b>: The removal of the method is not reflected in the created {@link net.bytebuddy.dynamic.DynamicType}'s
- * type description of the instrumented type.
+ * type description of the instrumented type. The modifier changes are neither visible to element matchers during an instrumentation.
  * </p>
  *
  * @see net.bytebuddy.dynamic.Transformer.ForField#withModifiers(ModifierContributor.ForField...)
@@ -115,8 +115,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
      */
     public ModifierAdjustment withTypeModifiers(ElementMatcher<? super TypeDescription> matcher,
                                                 List<? extends ModifierContributor.ForType> modifierContributors) {
-        return new ModifierAdjustment(CompoundList.of(typeAdjustments, new Adjustment<TypeDescription>(matcher,
-                ModifierContributor.Resolver.of(modifierContributors))), fieldAdjustments, methodAdjustments);
+        return new ModifierAdjustment(CompoundList.of(new Adjustment<TypeDescription>(matcher,
+                ModifierContributor.Resolver.of(modifierContributors)), typeAdjustments), fieldAdjustments, methodAdjustments);
     }
 
     /**
@@ -160,8 +160,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
      */
     public ModifierAdjustment withFieldModifiers(ElementMatcher<? super FieldDescription.InDefinedShape> matcher,
                                                  List<? extends ModifierContributor.ForField> modifierContributors) {
-        return new ModifierAdjustment(typeAdjustments, CompoundList.of(fieldAdjustments, new Adjustment<FieldDescription.InDefinedShape>(matcher,
-                ModifierContributor.Resolver.of(modifierContributors))), methodAdjustments);
+        return new ModifierAdjustment(typeAdjustments, CompoundList.of(new Adjustment<FieldDescription.InDefinedShape>(matcher,
+                ModifierContributor.Resolver.of(modifierContributors)), fieldAdjustments), methodAdjustments);
     }
 
     /**
@@ -293,8 +293,8 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
      */
     public ModifierAdjustment withInvokableModifiers(ElementMatcher<? super MethodDescription> matcher,
                                                      List<? extends ModifierContributor.ForMethod> modifierContributors) {
-        return new ModifierAdjustment(typeAdjustments, fieldAdjustments, CompoundList.of(methodAdjustments, new Adjustment<MethodDescription>(matcher,
-                ModifierContributor.Resolver.of(modifierContributors))));
+        return new ModifierAdjustment(typeAdjustments, fieldAdjustments, CompoundList.of(new Adjustment<MethodDescription>(matcher,
+                ModifierContributor.Resolver.of(modifierContributors)), methodAdjustments));
     }
 
     @Override
@@ -435,6 +435,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
             for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                 if (adjustment.matches(instrumentedType)) {
                     modifiers = adjustment.resolve(modifiers);
+                    break;
                 }
             }
             super.visit(version, modifiers, internalName, signature, superClassName, interfaceName);
@@ -446,6 +447,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                 for (Adjustment<TypeDescription> adjustment : typeAdjustments) {
                     if (adjustment.matches(instrumentedType)) {
                         modifiers = adjustment.resolve(modifiers);
+                        break;
                     }
                 }
             }
@@ -459,6 +461,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                 for (Adjustment<FieldDescription.InDefinedShape> adjustment : fieldAdjustments) {
                     if (adjustment.matches(fieldDescription)) {
                         modifiers = adjustment.resolve(modifiers);
+                        break;
                     }
                 }
             }
@@ -472,6 +475,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                 for (Adjustment<MethodDescription> adjustment : methodAdjustments) {
                     if (adjustment.matches(methodDescription)) {
                         modifiers = adjustment.resolve(modifiers);
+                        break;
                     }
                 }
             }
