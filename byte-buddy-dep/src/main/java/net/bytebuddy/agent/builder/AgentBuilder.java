@@ -29,7 +29,10 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Duplication;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
@@ -1605,13 +1608,10 @@ public interface AgentBuilder {
              * @param type            The types for which to extract the modules.
              * @return An appropriate listener.
              */
-            protected static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
+            public static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
                 Set<JavaModule> modules = new HashSet<JavaModule>();
                 for (Class<?> aType : type) {
-                    JavaModule module = JavaModule.ofType(aType);
-                    if (module.isNamed()) {
-                        modules.add(module);
-                    }
+                    modules.add(JavaModule.ofType(aType));
                 }
                 return modules.isEmpty()
                         ? Listener.NoOp.INSTANCE
