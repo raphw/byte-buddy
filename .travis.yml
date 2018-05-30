@@ -5,20 +5,20 @@ dist: trusty
 
 before_install:
   - unset _JAVA_OPTIONS
-  - wget https://raw.githubusercontent.com/sormuras/bach/master/install-jdk.sh
+
+install: echo "The default Travis install script is being skipped!"
 
 matrix:
   include:
     # Java 9
     - jdk: oraclejdk9
-      env: JDK='JDK 9' TARGET='-Pjava9'
-      install: echo "The default Travis install script is being skipped!"
+      env: TARGET='-Pjava9'
     # Java 10
-    - env: JDK='JDK 10' TARGET='-Pjava10'
-      install: . ./install-jdk.sh -F 10 -L GPL
+    - env: TARGET='-Pjava10'
+      jdk: oraclejdk10
     # Java 11
-    - env: JDK='JDK 11' TARGET='-Pjava10'
-      install: . ./install-jdk.sh -F 11 -L BCL
+    - env: TARGET='-Pjava10'
+      jdk: oraclejdk11
       script:
         - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
         - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
