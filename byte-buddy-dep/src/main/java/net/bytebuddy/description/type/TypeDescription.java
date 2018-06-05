@@ -6046,16 +6046,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
                 }
-                if (!rawType.isGenerified()) {
-                    throw new IllegalArgumentException(rawType + " is not a parameterized type");
-                } else if (ownerType == null && declaringType != null && !rawType.isStatic()) {
-                    throw new IllegalArgumentException(rawType + " requires an owner type");
-                } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
-                    throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
-                } else if (ownerType != null && (rawType.isStatic() ^ ownerType.getSort().isNonGeneric())) {
-                    throw new IllegalArgumentException(ownerType + " does not define the correct parameters for owning " + rawType);
-                } else if (rawType.getTypeVariables().size() != parameters.size()) {
-                    throw new IllegalArgumentException(parameters + " does not contain number of required parameters for " + rawType);
+                if (!rawType.represents(TargetType.class)) {
+                    if (!rawType.isGenerified()) {
+                        throw new IllegalArgumentException(rawType + " is not a parameterized type");
+                    } else if (ownerType == null && declaringType != null && !rawType.isStatic()) {
+                        throw new IllegalArgumentException(rawType + " requires an owner type");
+                    } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
+                        throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
+                    } else if (ownerType != null && (rawType.isStatic() ^ ownerType.getSort().isNonGeneric())) {
+                        throw new IllegalArgumentException(ownerType + " does not define the correct parameters for owning " + rawType);
+                    } else if (rawType.getTypeVariables().size() != parameters.size()) {
+                        throw new IllegalArgumentException(parameters + " does not contain number of required parameters for " + rawType);
+                    }
                 }
                 return new Builder.OfParameterizedType(rawType, ownerType, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(parameters)));
             }
