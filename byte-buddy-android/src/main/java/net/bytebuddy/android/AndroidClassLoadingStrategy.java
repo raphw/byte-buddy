@@ -366,8 +366,8 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         static {
             Dispatcher dispatcher;
             try {
-                dispatcher = new Dispatcher.ForAndroidPVm(BaseDexClassLoader.class.getMethod("addDexPath", String.class));
-            } catch (Exception ignored) {
+                dispatcher = new Dispatcher.ForAndroidPVm(BaseDexClassLoader.class.getMethod("addDexPath", String.class, boolean.class));
+            } catch (Throwable ignored) {
                 dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
             }
             DISPATCHER = dispatcher;
@@ -492,14 +492,14 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 private static final dalvik.system.DexFile NO_RETURN_VALUE = null;
 
                 /**
-                 * The {@code BaseDexClassLoader#addDexPath(String)} method.
+                 * The {@code BaseDexClassLoader#addDexPath(String, boolean)} method.
                  */
                 private final Method addDexPath;
 
                 /**
                  * Creates a new Android P-compatible dispatcher for loading a dex file.
                  *
-                 * @param addDexPath The {@code BaseDexClassLoader#addDexPath(String)} method.
+                 * @param addDexPath The {@code BaseDexClassLoader#addDexPath(String, boolean)} method.
                  */
                 protected ForAndroidPVm(Method addDexPath) {
                     this.addDexPath = addDexPath;
@@ -514,15 +514,16 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         throw new IllegalArgumentException("On Android P, a class injection can only be applied to BaseDexClassLoader: " + classLoader);
                     }
                     try {
-                        addDexPath.invoke(classLoader, jar.getAbsolutePath());
+                        addDexPath.invoke(classLoader, jar.getAbsolutePath(), true);
                         return NO_RETURN_VALUE;
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access BaseDexClassLoader#addDexPath(String)", exception);
+                        throw new IllegalStateException("Cannot access BaseDexClassLoader#addDexPath(String, boolean)", exception);
                     } catch (InvocationTargetException exception) {
-                        if (exception.getCause() instanceof IOException) {
-                            throw (IOException) exception.getCause();
+                        Throwable cause = exception.getCause();
+                        if (cause instanceof IOException) {
+                            throw (IOException) cause;
                         } else {
-                            throw new IllegalStateException("Cannot invoke BaseDexClassLoader#addDexPath(String)", exception.getCause());
+                            throw new IllegalStateException("Cannot invoke BaseDexClassLoader#addDexPath(String, boolean)", cause);
                         }
                     }
                 }
