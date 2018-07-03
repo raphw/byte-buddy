@@ -4224,8 +4224,8 @@ public interface TypeWriter<T> {
             @Override
             public Void run() throws Exception {
                 OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName()
-                        + (original ? ".original" : "")
-                        + "." + System.currentTimeMillis()));
+                        + (original ? "-original." : ".")
+                        + System.currentTimeMillis()));
                 try {
                     outputStream.write(binaryRepresentation);
                     return NOTHING;
