@@ -8,6 +8,7 @@ import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
 import com.android.dx.dex.file.DexFile;
+import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexClassLoader;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
@@ -15,6 +16,8 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -353,14 +356,22 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
     public static class Injecting extends AndroidClassLoadingStrategy {
 
         /**
-         * A constant indicating the use of no flags.
+         * The dispatcher to use for loading a dex file.
          */
-        private static final int NO_FLAGS = 0;
+        private static final Dispatcher DISPATCHER;
 
-        /**
-         * A file extension used for holding Android's optimized data.
+        /*
+         * Creates a dispatcher to use for loading a dex file.
          */
-        private static final String EXTENSION = ".data";
+        static {
+            Dispatcher dispatcher;
+            try {
+                dispatcher = new Dispatcher.ForAndroidPVm(BaseDexClassLoader.class.getMethod("addDexPath", String.class));
+            } catch (Exception ignored) {
+                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
+            }
+            DISPATCHER = dispatcher;
+        }
 
         /**
          * Creates a new injecting class loading strategy for Android that uses the default SDK-compiler based dex processor.
@@ -393,13 +404,11 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
 
         @Override
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
-            dalvik.system.DexFile dexFile = dalvik.system.DexFile.loadDex(jar.getAbsolutePath(),
-                    new File(privateDirectory.getAbsolutePath(), randomString.nextString() + EXTENSION).getAbsolutePath(),
-                    NO_FLAGS);
+            dalvik.system.DexFile dexFile = DISPATCHER.loadDex(privateDirectory, jar, classLoader, randomString);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : typeDescriptions) {
                 synchronized (classLoader) { // Guaranteed to be non-null by check in 'load' method.
-                    Class<?> type = dexFile.loadClass(typeDescription.getName(), classLoader);
+                    Class<?> type = DISPATCHER.loadClass(dexFile, classLoader, typeDescription);
                     if (type == null) {
                         throw new IllegalStateException("Could not load " + typeDescription);
                     }
@@ -407,6 +416,126 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 }
             }
             return loadedTypes;
+        }
+
+        /**
+         * A dispatcher for loading a dex file.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Loads a dex file.
+             *
+             * @param privateDirectory The private directory to use if required.
+             * @param jar              The jar to load.
+             * @param classLoader      The class loader to inject into.
+             * @param randomString     The random string to use.
+             * @return The created {@link dalvik.system.DexFile} or {@code null} if no such file is created.
+             * @throws IOException If an I/O exception is thrown.
+             */
+            dalvik.system.DexFile loadDex(File privateDirectory, File jar, ClassLoader classLoader, RandomString randomString) throws IOException;
+
+            /**
+             * Loads a class.
+             *
+             * @param dexFile         The dex file to process if any was created.
+             * @param classLoader     The class loader to load the class from.
+             * @param typeDescription The type to load.
+             * @return The loaded class.
+             */
+            Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription);
+
+            /**
+             * A dispatcher for legacy VMs that allow {@link dalvik.system.DexFile#loadDex(String, String, int)}.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * A constant indicating the use of no flags.
+                 */
+                private static final int NO_FLAGS = 0;
+
+                /**
+                 * A file extension used for holding Android's optimized data.
+                 */
+                private static final String EXTENSION = ".data";
+
+                @Override
+                public dalvik.system.DexFile loadDex(File privateDirectory,
+                                                     File jar,
+                                                     ClassLoader classLoader,
+                                                     RandomString randomString) throws IOException {
+                    return dalvik.system.DexFile.loadDex(jar.getAbsolutePath(),
+                            new File(privateDirectory.getAbsolutePath(), randomString.nextString() + EXTENSION).getAbsolutePath(),
+                            NO_FLAGS);
+                }
+
+                @Override
+                public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
+                    return dexFile.loadClass(typeDescription.getName(), classLoader);
+                }
+            }
+
+            /**
+             * A dispatcher for an Android P VM that uses the reflection-only method {@code addDexPath} of {@link DexClassLoader}.
+             */
+            class ForAndroidPVm implements Dispatcher {
+
+                /**
+                 * Indicates that this dispatcher does not return a {@link dalvik.system.DexFile} instance.
+                 */
+                private static final dalvik.system.DexFile NO_RETURN_VALUE = null;
+
+                /**
+                 * The {@code BaseDexClassLoader#addDexPath(String)} method.
+                 */
+                private final Method addDexPath;
+
+                /**
+                 * Creates a new Android P-compatible dispatcher for loading a dex file.
+                 *
+                 * @param addDexPath The {@code BaseDexClassLoader#addDexPath(String)} method.
+                 */
+                protected ForAndroidPVm(Method addDexPath) {
+                    this.addDexPath = addDexPath;
+                }
+
+                @Override
+                public dalvik.system.DexFile loadDex(File privateDirectory,
+                                                     File jar,
+                                                     ClassLoader classLoader,
+                                                     RandomString randomString) throws IOException {
+                    if (!(classLoader instanceof BaseDexClassLoader)) {
+                        throw new IllegalArgumentException("On Android P, a class injection can only be applied to BaseDexClassLoader: " + classLoader);
+                    }
+                    try {
+                        addDexPath.invoke(classLoader, jar.getAbsolutePath());
+                        return NO_RETURN_VALUE;
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access BaseDexClassLoader#addDexPath(String)", exception);
+                    } catch (InvocationTargetException exception) {
+                        if (exception.getCause() instanceof IOException) {
+                            throw (IOException) exception.getCause();
+                        } else {
+                            throw new IllegalStateException("Cannot invoke BaseDexClassLoader#addDexPath(String)", exception.getCause());
+                        }
+                    }
+                }
+
+                @Override
+                public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
+                    try {
+                        return Class.forName(typeDescription.getName(), false, classLoader);
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException("Could not locate " + typeDescription, exception);
+                    }
+                }
+            }
         }
     }
 }
