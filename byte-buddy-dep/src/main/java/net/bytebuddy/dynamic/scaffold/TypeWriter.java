@@ -1309,7 +1309,7 @@ public interface TypeWriter<T> {
         /**
          * A folder for dumping class files or {@code null} if no dump should be generated.
          */
-        private static final String DUMP_FOLDER;
+        protected static final String DUMP_FOLDER;
 
         /*
          * Reads the dumping property that is set at program start up. This might cause an error because of security constraints.
@@ -1650,13 +1650,7 @@ public interface TypeWriter<T> {
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
-            if (DUMP_FOLDER != null) {
-                try {
-                    AccessController.doPrivileged(new ClassDumpAction(DUMP_FOLDER, instrumentedType, unresolvedType.getBinaryRepresentation()));
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-            }
+            ClassDumpAction.dump(DUMP_FOLDER, instrumentedType, false, unresolvedType.getBinaryRepresentation());
             return unresolvedType.toDynamicType(typeResolutionStrategy);
         }
 
@@ -2877,7 +2871,9 @@ public interface TypeWriter<T> {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
-                    ClassReader classReader = OpenedClassReader.of(classFileLocator.locate(originalType.getName()).resolve());
+                    byte[] binaryRepresentation = classFileLocator.locate(originalType.getName()).resolve();
+                    ClassDumpAction.dump(DUMP_FOLDER, instrumentedType, true, binaryRepresentation);
+                    ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
                     ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool, classReader);
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter, typeValidation),
@@ -4183,6 +4179,11 @@ public interface TypeWriter<T> {
             private final TypeDescription instrumentedType;
 
             /**
+             * {@code true} if the dumped class file is an input to a class transformation.
+             */
+            private final boolean original;
+
+            /**
              * The type's binary representation.
              */
             private final byte[] binaryRepresentation;
@@ -4192,17 +4193,39 @@ public interface TypeWriter<T> {
              *
              * @param target               The target folder for writing the class file to.
              * @param instrumentedType     The instrumented type.
+             * @param original             {@code true} if the dumped class file is an input to a class transformation.
              * @param binaryRepresentation The type's binary representation.
              */
-            protected ClassDumpAction(String target, TypeDescription instrumentedType, byte[] binaryRepresentation) {
+            protected ClassDumpAction(String target, TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
                 this.target = target;
                 this.instrumentedType = instrumentedType;
+                this.original = original;
                 this.binaryRepresentation = binaryRepresentation;
+            }
+
+            /**
+             * Dumps the instrumented type if a {@link TypeWriter.Default#DUMP_FOLDER} is configured.
+             *
+             * @param dumpFolder           The dump folder.
+             * @param instrumentedType     The instrumented type.
+             * @param original             {@code true} if the dumped class file is an input to a class transformation.
+             * @param binaryRepresentation The binary representation.
+             */
+            protected static void dump(String dumpFolder, TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
+                if (dumpFolder != null) {
+                    try {
+                        AccessController.doPrivileged(new ClassDumpAction(dumpFolder, instrumentedType, original, binaryRepresentation));
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+                }
             }
 
             @Override
             public Void run() throws Exception {
-                OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName() + "." + System.currentTimeMillis()));
+                OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName()
+                        + (original ? ".original" : "")
+                        + "." + System.currentTimeMillis()));
                 try {
                     outputStream.write(binaryRepresentation);
                     return NOTHING;

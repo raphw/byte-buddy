@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
@@ -18,7 +17,6 @@ import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
@@ -586,7 +584,25 @@ public class TypeWriterDefaultTest {
         file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
         assertThat(file.mkdir(), is(true));
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
-        new TypeWriter.Default.ClassDumpAction(file.getAbsolutePath(), instrumentedType, binaryRepresentation).run();
+        TypeWriter.Default.ClassDumpAction.dump(file.getAbsolutePath(), instrumentedType, false, binaryRepresentation);
+        File[] child = file.listFiles();
+        assertThat(child, notNullValue(File[].class));
+        assertThat(child.length, is(1));
+        assertThat(child[0].length(), is(3L));
+        assertThat(child[0].delete(), is(true));
+        assertThat(file.delete(), is(true));
+    }
+
+    @Test
+    public void testClassDumpOriginal() throws Exception {
+        TypeDescription instrumentedType = mock(TypeDescription.class);
+        byte[] binaryRepresentation = new byte[]{1, 2, 3};
+        File file = File.createTempFile(FOO, BAR);
+        assertThat(file.delete(), is(true));
+        file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
+        assertThat(file.mkdir(), is(true));
+        when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
+        TypeWriter.Default.ClassDumpAction.dump(file.getAbsolutePath(), instrumentedType, true, binaryRepresentation);
         File[] child = file.listFiles();
         assertThat(child, notNullValue(File[].class));
         assertThat(child.length, is(1));
