@@ -5,7 +5,7 @@ jobs:
       - image: openjdk:6-jdk
     steps:
       - checkout
-      - run: ./mvnw verify -Pintegration -Pcentral-no-ssl -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+      - run: ./mvnw verify -Pintegration -s .circleci/nossl.settings.xml -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
   jdk7:
     docker:
       - image: openjdk:7-jdk
