@@ -25,6 +25,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -74,6 +75,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * @return An implementation that combines this implementation with the provided one.
          */
         Implementation andThen(Implementation implementation);
+
+        /**
+         * Appends the supplied composable implementation to this implementation.
+         *
+         * @param implementation The subsequent composable implementation.
+         * @return A composable implementation that combines this implementation with the provided one.
+         */
+        Composable andThen(Composable implementation);
     }
 
     /**
@@ -1535,7 +1544,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
         public Compound(List<? extends Implementation> implementations) {
             this.implementations = new ArrayList<Implementation>();
             for (Implementation implementation : implementations) {
-                if (implementation instanceof Compound) {
+                if (implementation instanceof Compound.Composable) {
+                    this.implementations.addAll(((Compound.Composable) implementation).implementations);
+                    this.implementations.add(((Compound.Composable) implementation).composable);
+                } else if (implementation instanceof Compound) {
                     this.implementations.addAll(((Compound) implementation).implementations);
                 } else {
                     this.implementations.add(implementation);
@@ -1559,6 +1571,94 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 byteCodeAppender[index++] = implementation.appender(implementationTarget);
             }
             return new ByteCodeAppender.Compound(byteCodeAppender);
+        }
+
+        /**
+         * A compound implementation that allows to combine several implementations and that is {@link Implementation.Composable}.
+         * <p>&nbsp;</p>
+         * Note that the combination of two implementation might break the contract for implementing
+         * {@link java.lang.Object#equals(Object)} and {@link Object#hashCode()} as described for
+         * {@link Implementation}.
+         *
+         * @see Implementation
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        public static class Composable implements Implementation.Composable {
+
+            /**
+             * The composable implementation that is applied last.
+             */
+            private final Implementation.Composable composable;
+
+            /**
+             * All implementation that are represented by this compound implementation.
+             */
+            private final List<Implementation> implementations;
+
+            /**
+             * Creates a new compound composable.
+             *
+             * @param implementation An implementation that is represented by this compound implementation prior to the composable.
+             * @param composable     The composable implementation that is applied last.
+             */
+            public Composable(Implementation implementation, Implementation.Composable composable) {
+                this(Collections.singletonList(implementation), composable);
+            }
+
+            /**
+             * Creates a new compound composable.
+             *
+             * @param implementations All implementation that are represented by this compound implementation excluding the composable.
+             * @param composable      The composable implementation that is applied last.
+             */
+            public Composable(List<? extends Implementation> implementations, Implementation.Composable composable) {
+                this.implementations = new ArrayList<Implementation>();
+                for (Implementation implementation : implementations) {
+                    if (implementation instanceof Compound.Composable) {
+                        this.implementations.addAll(((Compound.Composable) implementation).implementations);
+                        this.implementations.add(((Compound.Composable) implementation).composable);
+                    } else if (implementation instanceof Compound) {
+                        this.implementations.addAll(((Compound) implementation).implementations);
+                    } else {
+                        this.implementations.add(implementation);
+                    }
+                }
+                if (composable instanceof Compound.Composable) {
+                    this.implementations.addAll(((Compound.Composable) composable).implementations);
+                    this.composable = ((Compound.Composable) composable).composable;
+                } else {
+                    this.composable = composable;
+                }
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                for (Implementation implementation : implementations) {
+                    instrumentedType = implementation.prepare(instrumentedType);
+                }
+                return composable.prepare(instrumentedType);
+            }
+
+            @Override
+            public ByteCodeAppender appender(Target implementationTarget) {
+                ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[implementations.size() + 1];
+                int index = 0;
+                for (Implementation implementation : implementations) {
+                    byteCodeAppender[index++] = implementation.appender(implementationTarget);
+                }
+                byteCodeAppender[index] = composable.appender(implementationTarget);
+                return new ByteCodeAppender.Compound(byteCodeAppender);
+            }
+
+            @Override
+            public Implementation andThen(Implementation implementation) {
+                return new Compound(CompoundList.of(implementations, composable.andThen(implementation)));
+            }
+
+            @Override
+            public Implementation.Composable andThen(Implementation.Composable implementation) {
+                return new Compound.Composable(implementations, composable.andThen(implementation));
+            }
         }
     }
 

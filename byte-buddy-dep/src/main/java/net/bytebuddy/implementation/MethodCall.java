@@ -563,6 +563,17 @@ public class MethodCall implements Implementation.Composable {
     }
 
     @Override
+    public Composable andThen(Composable implementation) {
+        return new Implementation.Compound.Composable(new MethodCall(methodLocator,
+                targetHandler,
+                argumentLoaders,
+                methodInvoker,
+                TerminationHandler.DROPPING,
+                assigner,
+                typing), implementation);
+    }
+
+    @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         for (ArgumentLoader.Factory argumentLoader : argumentLoaders) {
             instrumentedType = argumentLoader.prepare(instrumentedType);

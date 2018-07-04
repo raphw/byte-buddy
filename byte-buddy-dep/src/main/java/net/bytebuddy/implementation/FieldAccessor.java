@@ -619,6 +619,14 @@ public abstract class FieldAccessor implements Implementation {
                     index, TerminationHandler.NON_OPERATIONAL), implementation);
         }
 
+        @Override
+        public Composable andThen(Composable implementation) {
+            return new Compound.Composable(new ForParameterSetter(fieldLocation,
+                    assigner,
+                    typing,
+                    index, TerminationHandler.NON_OPERATIONAL), implementation);
+        }
+
         /**
          * A termination handler is responsible for handling a field accessor's return.
          */

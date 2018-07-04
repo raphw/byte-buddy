@@ -753,6 +753,17 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     @Override
+    public Composable andThen(Composable implementation) {
+        return new Implementation.Compound.Composable(new InvokeDynamic(bootstrapMethod,
+                handleArguments,
+                invocationProvider,
+                TerminationHandler.DROPPING,
+                assigner,
+                typing),
+                implementation);
+    }
+
+    @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return invocationProvider.prepare(instrumentedType);
     }

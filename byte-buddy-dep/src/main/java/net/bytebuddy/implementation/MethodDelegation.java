@@ -529,6 +529,16 @@ public class MethodDelegation implements Implementation.Composable {
     }
 
     @Override
+    public Composable andThen(Composable implementation) {
+        return new Compound.Composable(new MethodDelegation(implementationDelegate,
+                parameterBinders,
+                ambiguityResolver,
+                MethodDelegationBinder.TerminationHandler.Default.DROPPING,
+                bindingResolver,
+                assigner), implementation);
+    }
+
+    @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return implementationDelegate.prepare(instrumentedType);
     }

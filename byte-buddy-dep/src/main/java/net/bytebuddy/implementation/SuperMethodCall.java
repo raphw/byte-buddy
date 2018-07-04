@@ -42,6 +42,11 @@ public enum SuperMethodCall implements Implementation.Composable {
         return new Compound(WithoutReturn.INSTANCE, implementation);
     }
 
+    @Override
+    public Composable andThen(Composable implementation) {
+        return new Compound.Composable(WithoutReturn.INSTANCE, implementation);
+    }
+
     /**
      * A super method invocation where the return value is dropped instead of returning from the method.
      */

@@ -42,6 +42,11 @@ public enum StubMethod implements Implementation.Composable, ByteCodeAppender {
     }
 
     @Override
+    public Composable andThen(Composable implementation) {
+        return implementation;
+    }
+
+    @Override
     public Size apply(MethodVisitor methodVisitor,
                       Context implementationContext,
                       MethodDescription instrumentedMethod) {
