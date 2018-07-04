@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -593,6 +594,20 @@
                 <module>byte-buddy-android</module>
                 <module>byte-buddy-android-test</module>
             </modules>
+        </profile>
+        <!-- Disable SSL to allow build with outdated protocols on Java 6. -->
+        <profile>
+            <id>central-no-ssl</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <name>Central (no SSL)</name>
+                    <url>http://repo.maven.apache.org/maven2</url>
+                </repository>
+            </repositories>
         </profile>
     </profiles>
 
