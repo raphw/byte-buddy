@@ -2,7 +2,7 @@
     <mirrors>
         <mirror>
             <id>central-no-ssl</id>
-            <name>Central without ssl</name>
+            <name>Central without SSL</name>
             <url>http://repo.maven.apache.org/maven2</url>
             <mirrorOf>central</mirrorOf>
         </mirror>
