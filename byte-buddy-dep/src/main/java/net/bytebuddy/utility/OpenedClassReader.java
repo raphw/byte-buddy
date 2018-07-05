@@ -31,18 +31,15 @@ public class OpenedClassReader {
      */
     static {
         boolean experimental;
-        int asmApi;
         try {
             experimental = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(EXPERIMENTAL_PROPERTY)));
-            @SuppressWarnings("deprecation")
-            int asm7Experimental = Opcodes.ASM7_EXPERIMENTAL;
-            asmApi = experimental ? asm7Experimental : Opcodes.ASM6;
         } catch (Exception ignored) {
             experimental = false;
-            asmApi = Opcodes.ASM6;
         }
         EXPERIMENTAL = experimental;
-        ASM_API = asmApi;
+        @SuppressWarnings("deprecation")
+        int asm7Experimental = Opcodes.ASM7_EXPERIMENTAL;
+        ASM_API = experimental ? asm7Experimental : Opcodes.ASM6;
     }
 
     /**
