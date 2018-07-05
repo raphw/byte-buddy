@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. July 2018: version 1.8.13
+
+- Update to ASM 6.2
+- Reinstate support for latest Java 11 EA if `net.bytebuddy.experimental` is set.
+- Fix edge completion for `AgentBuilder`.
+- Dump input class file if the `net.bytebuddy.dump` is set.
+- Add convenice chaining methods to `Implementation.Compound`.
+- Fix nestmate changes in method invocation.
+
 ### 25. Mai 2018: version 1.8.12
 
 - Fix misrepresentation of default package as `null`.
