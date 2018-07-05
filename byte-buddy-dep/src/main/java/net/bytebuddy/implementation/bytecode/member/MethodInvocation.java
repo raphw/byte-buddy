@@ -71,7 +71,7 @@ public enum MethodInvocation {
     private final int legacyOpcode;
 
     /**
-     * The handle being used for a dynamic method invocation before Java 11
+     * The handle being used for a dynamic method invocation before Java 11.
      */
     private final int legacyHandle;
 
