@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -22,32 +23,42 @@ public enum MethodInvocation {
     /**
      * A virtual method invocation.
      */
-    VIRTUAL(Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
+    VIRTUAL(Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL, Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL),
 
     /**
      * An interface-typed virtual method invocation.
      */
-    INTERFACE(Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE),
+    INTERFACE(Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE, Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE),
 
     /**
      * A static method invocation.
      */
-    STATIC(Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
+    STATIC(Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC, Opcodes.INVOKESTATIC, Opcodes.H_INVOKESTATIC),
 
     /**
      * A specialized pseudo-virtual method invocation for a non-constructor.
      */
-    SPECIAL(Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
+    SPECIAL(Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
 
     /**
      * A specialized pseudo-virtual method invocation for a constructor.
      */
-    SPECIAL_CONSTRUCTOR(Opcodes.INVOKESPECIAL, Opcodes.H_NEWINVOKESPECIAL);
+    SPECIAL_CONSTRUCTOR(Opcodes.INVOKESPECIAL, Opcodes.H_NEWINVOKESPECIAL, Opcodes.INVOKESPECIAL, Opcodes.H_NEWINVOKESPECIAL),
+
+    /**
+     * A private method call that is potentially virtual.
+     */
+    VIRTUAL_PRIVATE(Opcodes.INVOKEVIRTUAL, Opcodes.H_INVOKEVIRTUAL, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL),
+
+    /**
+     * A private method call that is potentially virtual on an interface type.
+     */
+    INTERFACE_PRIVATE(Opcodes.INVOKEINTERFACE, Opcodes.H_INVOKEINTERFACE, Opcodes.INVOKESPECIAL, Opcodes.H_INVOKESPECIAL);
 
     /**
      * The opcode for invoking a method.
      */
-    private final int invocationOpcode;
+    private final int opcode;
 
     /**
      * The handle being used for a dynamic method invocation.
@@ -55,14 +66,28 @@ public enum MethodInvocation {
     private final int handle;
 
     /**
+     * The opcode for invoking a method before Java 11.
+     */
+    private final int legacyOpcode;
+
+    /**
+     * The handle being used for a dynamic method invocation before Java 11
+     */
+    private final int legacyHandle;
+
+    /**
      * Creates a new type of method invocation.
      *
-     * @param callOpcode The opcode for invoking a method.
-     * @param handle     The handle being used for a dynamic method invocation.
+     * @param opcode       The opcode for invoking a method.
+     * @param handle       The handle being used for a dynamic method invocation.
+     * @param legacyOpcode The opcode for invoking a method before Java 11.
+     * @param legacyHandle The handle being used for a dynamic method invocation before Java 11.
      */
-    MethodInvocation(int callOpcode, int handle) {
-        this.invocationOpcode = callOpcode;
+    MethodInvocation(int opcode, int handle, int legacyOpcode, int legacyHandle) {
+        this.opcode = opcode;
         this.handle = handle;
+        this.legacyOpcode = legacyOpcode;
+        this.legacyHandle = legacyHandle;
     }
 
     /**
@@ -79,7 +104,9 @@ public enum MethodInvocation {
         } else if (methodDescription.isConstructor()) {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
         } else if (methodDescription.isPrivate()) {
-            return SPECIAL.new Invocation(methodDescription);
+            return (methodDescription.getDeclaringType().isInterface()
+                    ? INTERFACE_PRIVATE
+                    : VIRTUAL_PRIVATE).new Invocation(methodDescription);
         } else if (methodDescription.getDeclaringType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
         } else {
@@ -304,7 +331,9 @@ public enum MethodInvocation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            methodVisitor.visitMethodInsn(invocationOpcode,
+            methodVisitor.visitMethodInsn(opcode == legacyOpcode || implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11)
+                            ? opcode
+                            : legacyOpcode,
                     typeDescription.getInternalName(),
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
@@ -315,8 +344,12 @@ public enum MethodInvocation {
 
         @Override
         public StackManipulation virtual(TypeDescription invocationTarget) {
-            if (methodDescription.isPrivate() || methodDescription.isConstructor() || methodDescription.isStatic()) {
+            if (methodDescription.isConstructor() || methodDescription.isStatic()) {
                 return Illegal.INSTANCE;
+            } else if (methodDescription.isPrivate()) {
+                return methodDescription.getDeclaringType().equals(invocationTarget)
+                        ? this
+                        : Illegal.INSTANCE;
             } else if (invocationTarget.isInterface()) {
                 return methodDescription.getDeclaringType().represents(Object.class)
                         ? this
@@ -415,7 +448,9 @@ public enum MethodInvocation {
             String methodDescriptor = stringBuilder.append(')').append(returnType.getDescriptor()).toString();
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
-                    new Handle(handle,
+                    new Handle(handle == legacyHandle || implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11)
+                            ? handle
+                            : legacyHandle,
                             bootstrapMethod.getDeclaringType().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor(),

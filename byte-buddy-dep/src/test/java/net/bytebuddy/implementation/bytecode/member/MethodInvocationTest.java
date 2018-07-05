@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -83,7 +84,7 @@ public class MethodInvocationTest {
 
     @After
     public void tearDown() throws Exception {
-        verifyZeroInteractions(implementationContext);
+        verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
@@ -106,9 +107,37 @@ public class MethodInvocationTest {
     }
 
     @Test
-    public void testPrivateMethodInvocation() throws Exception {
+    public void testPrivateMethodInvocationVirtualLegacy() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
+        when(implementationContext.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V10);
         assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO, false);
+        verify(implementationContext).getClassFileVersion();
+    }
+
+    @Test
+    public void testPrivateMethodInvocationVirtualJava11() throws Exception {
+        when(methodDescription.isPrivate()).thenReturn(true);
+        when(implementationContext.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V11);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEVIRTUAL, FOO, false);
+        verify(implementationContext).getClassFileVersion();
+    }
+
+    @Test
+    public void testPrivateMethodInvocationVirtualInterfaceLegacy() throws Exception {
+        when(methodDescription.isPrivate()).thenReturn(true);
+        when(declaringType.isInterface()).thenReturn(true);
+        when(implementationContext.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V10);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKESPECIAL, FOO, true);
+        verify(implementationContext).getClassFileVersion();
+    }
+
+    @Test
+    public void testPrivateMethodInvocationVirtualInterfaceJava11() throws Exception {
+        when(methodDescription.isPrivate()).thenReturn(true);
+        when(declaringType.isInterface()).thenReturn(true);
+        when(implementationContext.getClassFileVersion()).thenReturn(ClassFileVersion.JAVA_V11);
+        assertInvocation(MethodInvocation.invoke(methodDescription), Opcodes.INVOKEINTERFACE, FOO, true);
+        verify(implementationContext).getClassFileVersion();
     }
 
     @Test
@@ -199,6 +228,12 @@ public class MethodInvocationTest {
     public void testPrivateVirtualInvocation() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
         assertThat(MethodInvocation.invoke(methodDescription).virtual(rawOtherType).isValid(), is(false));
+    }
+
+    @Test
+    public void testPrivateVirtualInvocationOnSelf() throws Exception {
+        when(methodDescription.isPrivate()).thenReturn(true);
+        assertThat(MethodInvocation.invoke(methodDescription).virtual(declaringType).isValid(), is(true));
     }
 
     @Test
