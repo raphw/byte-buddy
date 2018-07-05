@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
@@ -231,7 +232,9 @@ public class ByteArrayClassLoaderChildFirstTest {
                                  MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
-            return new ClassRemapper(classVisitor, new SimpleRemapper(oldName, newName));
+            return new ClassRemapper(OpenedClassReader.ASM_API, classVisitor, new SimpleRemapper(oldName, newName)) {
+                /* only anonymous to define usage of Byte Buddy specific API version */
+            };
         }
     }
 }

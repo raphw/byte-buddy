@@ -41,6 +41,7 @@ import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.File;
@@ -2905,7 +2906,7 @@ public interface TypeWriter<T> {
                 classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
                 return originalType.getName().equals(instrumentedType.getName())
                         ? classVisitor
-                        : new ClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
+                        : new OpenedClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
             }
 
             /**
@@ -3534,6 +3535,22 @@ public interface TypeWriter<T> {
                 @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Lazy value definition is intended")
                 public List<DynamicType> getAuxiliaryTypes() {
                     return implementationContext.getAuxiliaryTypes();
+                }
+            }
+
+            /**
+             * A {@link ClassRemapper} that uses the Byte Buddy-defined API version.
+             */
+            protected static class OpenedClassRemapper extends ClassRemapper {
+
+                /**
+                 * Creates a new opened class remapper.
+                 *
+                 * @param classVisitor The class visitor to wrap
+                 * @param remapper     The remapper to apply.
+                 */
+                protected OpenedClassRemapper(ClassVisitor classVisitor, Remapper remapper) {
+                    super(OpenedClassReader.ASM_API, classVisitor, remapper);
                 }
             }
 
