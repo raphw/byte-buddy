@@ -80,7 +80,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 11 (preliminary).
      */
-    public static final ClassFileVersion JAVA_V11 = new ClassFileVersion(Opcodes.V10 + 1);
+    public static final ClassFileVersion JAVA_V11 = new ClassFileVersion(Opcodes.V11);
 
     /**
      * A version locator for the executing JVM.

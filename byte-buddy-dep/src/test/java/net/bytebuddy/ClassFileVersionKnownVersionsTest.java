@@ -9,7 +9,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -65,7 +64,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {8, Arrays.asList("1.8", "8"), Opcodes.V1_8, 52, 0, true, true, true},
                 {9, Arrays.asList("1.9", "9"), Opcodes.V9, 53, 0, true, true, true},
                 {10, Arrays.asList("1.10", "10"), Opcodes.V10, 54, 0, true, true, true},
-                {11, Arrays.asList("1.11", "11"), Opcodes.V10 + 1, 55, 0, true, true, true}
+                {11, Arrays.asList("1.11", "11"), Opcodes.V11, 55, 0, true, true, true}
         });
     }
 
