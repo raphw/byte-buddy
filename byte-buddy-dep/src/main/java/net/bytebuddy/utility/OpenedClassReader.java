@@ -21,17 +21,28 @@ public class OpenedClassReader {
      */
     public static final boolean EXPERIMENTAL;
 
+    /**
+     * Indicates the ASM API version that is used throughout Byte Buddy.
+     */
+    public static final int ASM_API;
+
     /*
      * Checks the experimental property.
      */
     static {
         boolean experimental;
+        int asmApi;
         try {
             experimental = Boolean.parseBoolean(AccessController.doPrivileged(new GetSystemPropertyAction(EXPERIMENTAL_PROPERTY)));
+            @SuppressWarnings("deprecation")
+            int asm7Experimental = Opcodes.ASM7_EXPERIMENTAL;
+            asmApi = experimental ? asm7Experimental : Opcodes.ASM6;
         } catch (Exception ignored) {
             experimental = false;
+            asmApi = Opcodes.ASM6;
         }
         EXPERIMENTAL = experimental;
+        ASM_API = asmApi;
     }
 
     /**

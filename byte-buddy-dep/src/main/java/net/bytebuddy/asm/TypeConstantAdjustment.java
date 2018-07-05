@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 /**
@@ -69,7 +70,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
          * @param classVisitor The underlying class visitor.
          */
         protected TypeConstantDissolvingClassVisitor(ClassVisitor classVisitor) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
         }
 
         @Override
@@ -112,7 +113,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
              * @param methodVisitor The underlying method visitor.
              */
             protected TypeConstantDissolvingMethodVisitor(MethodVisitor methodVisitor) {
-                super(Opcodes.ASM6, methodVisitor);
+                super(OpenedClassReader.ASM_API, methodVisitor);
             }
 
             @Override

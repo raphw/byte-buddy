@@ -19,6 +19,7 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -672,7 +673,7 @@ public class TypeWriterDefaultTest {
                 .getBytes();
 
         ClassReader classReader = new ClassReader(binaryRepresentation);
-        classReader.accept(new ClassVisitor(Opcodes.ASM6) {
+        classReader.accept(new ClassVisitor(OpenedClassReader.ASM_API) {
             @Override
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 if ((access & Opcodes.ACC_DEPRECATED) == 0) {

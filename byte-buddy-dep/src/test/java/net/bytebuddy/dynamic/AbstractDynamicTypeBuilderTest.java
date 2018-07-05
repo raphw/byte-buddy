@@ -28,13 +28,13 @@ import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.ClassVisitor;
@@ -344,7 +344,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 anyInt())).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM6, (ClassVisitor) invocationOnMock.getArguments()[1]) {
+                return new ClassVisitor(OpenedClassReader.ASM_API, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public void visitEnd() {
                         MethodVisitor mv = visitMethod(Opcodes.ACC_PUBLIC, FOO, "()Ljava/lang/String;", null, null);

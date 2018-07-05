@@ -9,12 +9,12 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.ObjectInputStream;
@@ -2052,7 +2052,7 @@ public class AdviceTypeTest {
         private static class SerializationClassVisitor extends ClassVisitor {
 
             public SerializationClassVisitor(ClassVisitor classVisitor) {
-                super(Opcodes.ASM6, classVisitor);
+                super(OpenedClassReader.ASM_API, classVisitor);
             }
 
             @Override
@@ -2064,7 +2064,7 @@ public class AdviceTypeTest {
         private static class SerializationMethodVisitor extends MethodVisitor {
 
             public SerializationMethodVisitor(MethodVisitor methodVisitor) {
-                super(Opcodes.ASM6, methodVisitor);
+                super(OpenedClassReader.ASM_API, methodVisitor);
             }
 
             @Override

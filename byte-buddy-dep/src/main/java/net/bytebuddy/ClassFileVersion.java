@@ -4,10 +4,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
-import net.bytebuddy.utility.OpenedClassReader;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -462,7 +462,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
          * Creates a new extractor.
          */
         protected VersionExtractor() {
-            super(Opcodes.ASM6);
+            super(OpenedClassReader.ASM_API);
         }
 
         @Override

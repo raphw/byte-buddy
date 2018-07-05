@@ -11,10 +11,10 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -177,7 +177,7 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
                                              ElementMatcher.Junction<MethodDescription> methodMatcher,
                                              Map<String, FieldDescription.InDefinedShape> fields,
                                              Map<String, MethodDescription> methods) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
             this.fieldMatcher = fieldMatcher;
             this.methodMatcher = methodMatcher;
             this.fields = fields;

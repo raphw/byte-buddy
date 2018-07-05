@@ -21,6 +21,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -1268,7 +1269,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             TypeDescription instrumentedType,
                                             Implementation.Context implementationContext,
                                             TypePool typePool) {
-            super(Opcodes.ASM6, methodVisitor);
+            super(OpenedClassReader.ASM_API, methodVisitor);
             this.methodGraphCompiler = methodGraphCompiler;
             this.strict = strict;
             this.substitution = substitution;

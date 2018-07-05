@@ -13,6 +13,7 @@ import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -729,7 +730,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         private static class BreakingClassVisitor extends ClassVisitor {
 
             public BreakingClassVisitor(ClassVisitor classVisitor) {
-                super(Opcodes.ASM6, classVisitor);
+                super(OpenedClassReader.ASM_API, classVisitor);
             }
 
             @Override

@@ -8,12 +8,16 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -1988,7 +1992,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         }
 
         public GenericDisintegrator(ClassVisitor classVisitor) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
         }
 
         @Override

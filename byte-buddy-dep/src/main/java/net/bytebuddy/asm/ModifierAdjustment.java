@@ -11,10 +11,10 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
@@ -421,7 +421,7 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                                                 TypeDescription instrumentedType,
                                                 Map<String, FieldDescription.InDefinedShape> fields,
                                                 Map<String, MethodDescription> methods) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
             this.typeAdjustments = typeAdjustments;
             this.fieldAdjustments = fieldAdjustments;
             this.methodAdjustments = methodAdjustments;

@@ -10,12 +10,11 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.EnclosingType;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
-import net.bytebuddy.utility.OpenedClassReader;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,7 +73,7 @@ public class TypeWriterModifierPreservationTest {
         public int modifiers, inner;
 
         public TypeModifierExtractor() {
-            super(Opcodes.ASM6);
+            super(OpenedClassReader.ASM_API);
         }
 
         @Override
@@ -98,7 +97,7 @@ public class TypeWriterModifierPreservationTest {
         public final int modifiers, inner;
 
         public TypeValidator(ClassVisitor classVisitor, int modifiers, int inner) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
             this.modifiers = modifiers;
             this.inner = inner;
         }

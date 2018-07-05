@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 
 import java.util.*;
@@ -58,7 +59,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
      * @param instrumentedMethod The method description for which this method visitor is applied.
      */
     public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
-        super(Opcodes.ASM6, methodVisitor);
+        super(OpenedClassReader.ASM_API, methodVisitor);
         current = new ArrayList<StackSize>();
         sizes = new HashMap<Label, List<StackSize>>();
         freeIndex = instrumentedMethod.getStackSize();

@@ -1,8 +1,8 @@
 package net.bytebuddy.utility.visitor;
 
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 /**
  * A method visitor that maps the first available line number information, if available, to the beginning of the method.
@@ -25,7 +25,7 @@ public class LineNumberPrependingMethodVisitor extends ExceptionTableSensitiveMe
      * @param methodVisitor The method visitor to delegate to.
      */
     public LineNumberPrependingMethodVisitor(MethodVisitor methodVisitor) {
-        super(Opcodes.ASM6, methodVisitor);
+        super(OpenedClassReader.ASM_API, methodVisitor);
         startOfMethod = new Label();
         prependLineNumber = true;
     }

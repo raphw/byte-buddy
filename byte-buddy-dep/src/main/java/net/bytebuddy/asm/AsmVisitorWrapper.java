@@ -10,10 +10,10 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
@@ -268,7 +268,7 @@ public interface AsmVisitorWrapper {
              * @param fields           The instrumented type's declared fields.
              */
             protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, Map<String, FieldDescription.InDefinedShape> fields) {
-                super(Opcodes.ASM6, classVisitor);
+                super(OpenedClassReader.ASM_API, classVisitor);
                 this.instrumentedType = instrumentedType;
                 this.fields = fields;
             }
@@ -543,7 +543,7 @@ public interface AsmVisitorWrapper {
                                          Map<String, MethodDescription> methods,
                                          int writerFlags,
                                          int readerFlags) {
-                super(Opcodes.ASM6, classVisitor);
+                super(OpenedClassReader.ASM_API, classVisitor);
                 this.instrumentedType = instrumentedType;
                 this.implementationContext = implementationContext;
                 this.typePool = typePool;

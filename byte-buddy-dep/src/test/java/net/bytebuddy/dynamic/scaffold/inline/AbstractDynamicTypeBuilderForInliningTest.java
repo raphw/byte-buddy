@@ -14,7 +14,9 @@ import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.Transformer;
-import net.bytebuddy.dynamic.loading.*;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
@@ -26,6 +28,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,7 +52,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.assertEquals;
-import static net.bytebuddy.matcher.ElementMatchers.failSafe;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
@@ -377,7 +379,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 anyInt())).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM6, (ClassVisitor) invocationOnMock.getArguments()[1]) {
+                return new ClassVisitor(OpenedClassReader.ASM_API, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                         return new LocalVariablesSorter(access, desc, super.visitMethod(access, name, desc, signature, exceptions));
