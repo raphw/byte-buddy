@@ -1337,11 +1337,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     candidates = resolution.resolve()
                             .getDeclaredMethods()
                             .filter(named(internalName).and(hasDescriptor(descriptor)));
-                } else {
-                    candidates = methodGraphCompiler.compile(resolution.resolve())
-                            .listNodes()
-                            .asMethodList()
-                            .filter(named(internalName).and(hasDescriptor(descriptor)));
+                } else { // Invokevirtual and invokeinterface can represent a private, non-static method from Java 11.
+                    TypeDescription typeDescription = resolution.resolve();
+                    candidates = typeDescription.getDeclaredMethods()
+                            .filter(named(internalName).and(hasDescriptor(descriptor)).and(isPrivate()).and(not(isStatic())));
+                    if (candidates.isEmpty()) {
+                        candidates = methodGraphCompiler.compile(resolution.resolve())
+                                .listNodes()
+                                .asMethodList()
+                                .filter(named(internalName).and(hasDescriptor(descriptor)));
+                    }
                 }
                 if (!candidates.isEmpty()) {
                     Substitution.Resolver resolver = substitution.resolve(candidates.getOnly(), Substitution.InvocationType.of(opcode, candidates.getOnly()));
