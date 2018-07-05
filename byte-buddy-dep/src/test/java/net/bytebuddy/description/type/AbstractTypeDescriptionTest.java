@@ -13,6 +13,7 @@ import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
+import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.Test;
@@ -710,7 +711,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         private static final String FOO = "foo";
 
         public SignatureMalformer(ClassVisitor classVisitor) {
-            super(Opcodes.ASM6, classVisitor);
+            super(OpenedClassReader.ASM_API, classVisitor);
         }
 
         public static Class<?> malform(Class<?> type) throws Exception {
