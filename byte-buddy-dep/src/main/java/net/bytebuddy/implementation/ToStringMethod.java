@@ -305,7 +305,7 @@ public class ToStringMethod implements Implementation {
     }
 
     /**
-     * A prefix resolver is responsible for providing a value that is preprended to a {@link Object#toString()} implementation.
+     * A prefix resolver is responsible for providing a value that is prepended to a {@link Object#toString()} implementation.
      */
     public interface PrefixResolver {
 

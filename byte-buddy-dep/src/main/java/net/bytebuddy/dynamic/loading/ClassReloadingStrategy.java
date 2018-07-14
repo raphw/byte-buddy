@@ -131,7 +131,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
      * </p>
      * or after the start up using the Attach API. A convenience installer for the OpenJDK is provided by the
      * {@code ByteBuddyAgent} within the {@code byte-buddy-agent} module. The strategy is determined by the agent's support
-     * for redefinition where are retransformation is prefered over a redefinition.
+     * for redefinition where are retransformation is preferred over a redefinition.
      *
      * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
      */

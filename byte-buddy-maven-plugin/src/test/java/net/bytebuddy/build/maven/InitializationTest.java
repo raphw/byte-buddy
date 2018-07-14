@@ -30,64 +30,64 @@ public class InitializationTest {
 
     @Test
     public void testResolved() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.groupId = BAR;
-        initalization.artifactId = QUX;
-        initalization.version = BAZ;
-        initalization.packaging = JAR;
-        assertThat(initalization.getGroupId(FOO), is(BAR));
-        assertThat(initalization.getArtifactId(FOO), is(QUX));
-        assertThat(initalization.getVersion(FOO), is(BAZ));
-        assertThat(initalization.getPackaging(JAR), is(JAR));
+        Initialization initialization = new Initialization();
+        initialization.groupId = BAR;
+        initialization.artifactId = QUX;
+        initialization.version = BAZ;
+        initialization.packaging = JAR;
+        assertThat(initialization.getGroupId(FOO), is(BAR));
+        assertThat(initialization.getArtifactId(FOO), is(QUX));
+        assertThat(initialization.getVersion(FOO), is(BAZ));
+        assertThat(initialization.getPackaging(JAR), is(JAR));
     }
 
     @Test
     public void testRebase() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = EntryPoint.Default.REBASE.name();
-        assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REBASE));
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = EntryPoint.Default.REBASE.name();
+        assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REBASE));
         verifyZeroInteractions(classLoaderResolver);
     }
 
     @Test
     public void testRedefine() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = EntryPoint.Default.REDEFINE.name();
-        assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE));
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = EntryPoint.Default.REDEFINE.name();
+        assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE));
         verifyZeroInteractions(classLoaderResolver);
     }
 
     @Test
     public void testRedefineLocal() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = EntryPoint.Default.REDEFINE_LOCAL.name();
-        assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = EntryPoint.Default.REDEFINE_LOCAL.name();
+        assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));
         verifyZeroInteractions(classLoaderResolver);
     }
 
     @Test
     public void testCustom() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = Foo.class.getName();
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = Foo.class.getName();
         when(classLoaderResolver.resolve(new MavenCoordinate(BAR, QUX, BAZ, JAR))).thenReturn(Foo.class.getClassLoader());
-        assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), instanceOf(Foo.class));
+        assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), instanceOf(Foo.class));
         verify(classLoaderResolver).resolve(new MavenCoordinate(BAR, QUX, BAZ, JAR));
         verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test(expected = MojoExecutionException.class)
     public void testCustomFailed() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = FOO;
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = FOO;
         when(classLoaderResolver.resolve(new MavenCoordinate(BAR, QUX, BAZ, JAR))).thenReturn(Foo.class.getClassLoader());
-        initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
+        initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
     }
 
     @Test(expected = MojoExecutionException.class)
     public void testEmpty() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.entryPoint = "";
-        initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = "";
+        initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR);
     }
 
     @Test(expected = MojoExecutionException.class)

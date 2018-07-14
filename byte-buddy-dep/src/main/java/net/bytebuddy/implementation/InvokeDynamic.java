@@ -2741,7 +2741,7 @@ public class InvokeDynamic implements Implementation.Composable {
         /**
          * A step in the invoke dynamic domain specific language that allows to explicitly specify a field type for a reference value.
          */
-        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
+        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation covers use case")
         protected static class OfInstance extends WithImplicitType {
 
             /**
@@ -2804,7 +2804,7 @@ public class InvokeDynamic implements Implementation.Composable {
         /**
          * An invoke dynamic implementation where the last argument is an implicitly typed method argument.
          */
-        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
+        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation covers use case")
         protected static class OfArgument extends WithImplicitType {
 
             /**
@@ -2858,7 +2858,7 @@ public class InvokeDynamic implements Implementation.Composable {
         /**
          * An invoke dynamic implementation where the last argument is an implicitly typed field value.
          */
-        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
+        @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation covers use case")
         protected static class OfField extends WithImplicitType {
 
             /**

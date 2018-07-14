@@ -28,19 +28,19 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     /**
      * Creates a new instance of an implementation for throwing throwables.
      *
-     * @param constructionDelegate A delegate that is responsible for calling the isThrowable's constructor.
+     * @param constructionDelegate A delegate that is responsible for calling the Throwable's constructor.
      */
     public ExceptionMethod(ConstructionDelegate constructionDelegate) {
         this.constructionDelegate = constructionDelegate;
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param exceptionType The type of the isThrowable.
-     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
+     * @param exceptionType The type of the Throwable.
+     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType) {
@@ -48,12 +48,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param exceptionType The type of the isThrowable.
-     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
+     * @param exceptionType The type of the Throwable.
+     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(TypeDescription exceptionType) {
@@ -64,13 +64,13 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
-     * @param exceptionType The type of the isThrowable.
+     * @param exceptionType The type of the Throwable.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType, String message) {
@@ -78,13 +78,13 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given isThrowable type on each method invocation
+     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a constructor that
      * takes a single {@link java.lang.String} as its argument.
      *
-     * @param exceptionType The type of the isThrowable.
+     * @param exceptionType The type of the Throwable.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An implementation that will throw an instance of the isThrowable on each method invocation of the
+     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
      * instrumented methods.
      */
     public static Implementation throwing(TypeDescription exceptionType, String message) {
@@ -122,7 +122,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
          * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
          * and subsequently calls the constructor.
          *
-         * @return A stack manipulation for constructing a isThrowable.
+         * @return A stack manipulation for constructing a Throwable.
          */
         StackManipulation make();
 
@@ -145,7 +145,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a default constructor.
              *
-             * @param exceptionType The type of the isThrowable.
+             * @param exceptionType The type of the Throwable.
              */
             public ForDefaultConstructor(TypeDescription exceptionType) {
                 this.exceptionType = exceptionType;
@@ -186,7 +186,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a constructor by handing it the given string.
              *
-             * @param exceptionType The type of the isThrowable.
+             * @param exceptionType The type of the Throwable.
              * @param message       The string that is handed to the constructor.
              */
             public ForStringConstructor(TypeDescription exceptionType, String message) {

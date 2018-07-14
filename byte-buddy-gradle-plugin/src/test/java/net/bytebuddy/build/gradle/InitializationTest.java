@@ -38,25 +38,25 @@ public class InitializationTest {
 
     @Test
     public void testRebase() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setEntryPoint(EntryPoint.Default.REBASE.name());
-        assertThat(initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REBASE));
+        Initialization initialization = new Initialization();
+        initialization.setEntryPoint(EntryPoint.Default.REBASE.name());
+        assertThat(initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REBASE));
         verifyZeroInteractions(classLoaderResolver);
     }
 
     @Test
     public void testRedefine() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setEntryPoint(EntryPoint.Default.REDEFINE.name());
-        assertThat(initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REDEFINE));
+        Initialization initialization = new Initialization();
+        initialization.setEntryPoint(EntryPoint.Default.REDEFINE.name());
+        assertThat(initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REDEFINE));
         verifyZeroInteractions(classLoaderResolver);
     }
 
     @Test
     public void testRedefineLocal() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setEntryPoint(EntryPoint.Default.REDEFINE_LOCAL.name());
-        assertThat(initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));
+        Initialization initialization = new Initialization();
+        initialization.setEntryPoint(EntryPoint.Default.REDEFINE_LOCAL.name());
+        assertThat(initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));
         verifyZeroInteractions(classLoaderResolver);
     }
 
@@ -72,29 +72,29 @@ public class InitializationTest {
 
     @Test
     public void testCustom() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setEntryPoint(Foo.class.getName());
-        initalization.setClassPath(Collections.singleton(file));
+        Initialization initialization = new Initialization();
+        initialization.setEntryPoint(Foo.class.getName());
+        initialization.setClassPath(Collections.singleton(file));
         when(classLoaderResolver.resolve(Collections.singleton(file))).thenReturn(Foo.class.getClassLoader());
-        assertThat(initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), instanceOf(Foo.class));
+        assertThat(initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other)), instanceOf(Foo.class));
         verify(classLoaderResolver).resolve(Collections.singleton(file));
         verifyNoMoreInteractions(classLoaderResolver);
     }
 
     @Test(expected = GradleException.class)
     public void testCustomFailed() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setClassPath(Collections.singleton(file));
-        initalization.setEntryPoint(FOO);
+        Initialization initialization = new Initialization();
+        initialization.setClassPath(Collections.singleton(file));
+        initialization.setEntryPoint(FOO);
         when(classLoaderResolver.resolve(Collections.singleton(file)));
-        initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other));
+        initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other));
     }
 
     @Test(expected = GradleException.class)
     public void testEmpty() throws Exception {
-        Initialization initalization = new Initialization();
-        initalization.setEntryPoint("");
-        initalization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other));
+        Initialization initialization = new Initialization();
+        initialization.setEntryPoint("");
+        initialization.getEntryPoint(classLoaderResolver, explicit, Collections.singleton(other));
     }
 
     @Test(expected = GradleException.class)

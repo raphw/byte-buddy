@@ -1519,7 +1519,7 @@ public interface AgentBuilder {
             private final Listener delegate;
 
             /**
-             * Creates a new listener that only delegates events if they are succesful or failed transformations.
+             * Creates a new listener that only delegates events if they are successful or failed transformations.
              *
              * @param delegate The delegate listener.
              */
@@ -4334,7 +4334,7 @@ public interface AgentBuilder {
         protected abstract Collector make();
 
         /**
-         * Applies this redefinition strategy by submitting all loaded types to redefiniton. If this redefinition strategy is disabled,
+         * Applies this redefinition strategy by submitting all loaded types to redefinition. If this redefinition strategy is disabled,
          * this method is non-operational.
          *
          * @param instrumentation               The instrumentation instance to use.
@@ -5781,7 +5781,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is inteded for avoiding unnecessary weak reference")
+                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
                     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                         if (!loaded && matcher.matches(throwable)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));

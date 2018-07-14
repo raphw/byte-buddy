@@ -56,7 +56,7 @@ public class EqualsMethod implements Implementation {
     private final TypeCompatibilityCheck typeCompatibilityCheck;
 
     /**
-     * A matcher to filter fields that should not be used for a equality resoltion.
+     * A matcher to filter fields that should not be used for a equality resolution.
      */
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored;
 
@@ -79,7 +79,7 @@ public class EqualsMethod implements Implementation {
      *
      * @param superClassCheck        The baseline equality to check.
      * @param typeCompatibilityCheck The instance type compatibility check.
-     * @param ignored                A matcher to filter fields that should not be used for a equality resoltion.
+     * @param ignored                A matcher to filter fields that should not be used for a equality resolution.
      * @param nonNullable            A matcher to determine fields of a reference type that cannot be {@code null}.
      */
     private EqualsMethod(SuperClassCheck superClassCheck,

@@ -1409,11 +1409,11 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation assigment = assigner.assign(typeDefinition.asGenericType(), target.getType(), typing);
-                if (!assigment.isValid()) {
+                StackManipulation assignment = assigner.assign(typeDefinition.asGenericType(), target.getType(), typing);
+                if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + target + " to " + typeDefinition);
                 }
-                return new StackManipulation.Compound(stackManipulation, assigment);
+                return new StackManipulation.Compound(stackManipulation, assignment);
             }
         }
     }

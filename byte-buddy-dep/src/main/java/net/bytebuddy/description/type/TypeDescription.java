@@ -2425,7 +2425,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
+                     * A delegator for an existing {@code java.lang.reflect.AnnotatedElement}.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
                     protected static class Resolved extends Delegator {
