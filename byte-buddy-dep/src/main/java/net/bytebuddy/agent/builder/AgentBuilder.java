@@ -2135,7 +2135,7 @@ public interface AgentBuilder {
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
                                                     JavaModule module) {
-                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(locationStrategy.classFileLocator(classLoader, module), this.classFileLocator);
+                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(this.classFileLocator, locationStrategy.classFileLocator(classLoader, module));
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
