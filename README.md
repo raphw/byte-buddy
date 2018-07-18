@@ -57,7 +57,7 @@ making Byte Buddy the success it has become. We really appreciate it!
 
 ___
 
-Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished frameworks and tools such as [Mockito](http://mockito.org), [Hibernate](http://hibernate.org), [Jackson](https://github.com/FasterXML/jackson), [Google's Bazel build system](http://bazel.io) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over a million times a year.
+Byte Buddy offers excellent performance at production quality. It is stable and in use by distinguished frameworks and tools such as [Mockito](http://mockito.org), [Hibernate](http://hibernate.org), [Jackson](https://github.com/FasterXML/jackson), [Google's Bazel build system](http://bazel.io) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over a million times a year.
 
 Hello World
 -----------
@@ -187,7 +187,7 @@ public class TimingInterceptor {
 }
 ```
 
-Using a Java agent, we can now apply this interceptor to all types that match an `ElementMatcher` for a `TypeDescription`.  For the example, we choose to add the above interceptor to all types with a name that ends in `Timed`. This is done for the sake of similicity whereas an annotation would probably be a more appropriate alternative to mark such classes for a production agent. Using Byte Buddy's `AgentBuilder` API, creating a Java agent is as easy as defining the following agent class:
+Using a Java agent, we can now apply this interceptor to all types that match an `ElementMatcher` for a `TypeDescription`.  For the example, we choose to add the above interceptor to all types with a name that ends in `Timed`. This is done for the sake of simplicity whereas an annotation would probably be a more appropriate alternative to mark such classes for a production agent. Using Byte Buddy's `AgentBuilder` API, creating a Java agent is as easy as defining the following agent class:
 
 ```java
 public class TimerAgent {
@@ -203,7 +203,7 @@ public class TimerAgent {
 }
 ```
 
-Similar to Java's `main` method, the `premain` method is the entry point to any Java agent from which we apply the redefinition. As one argument, a Java agent receives an instace of the `Instrumentation` interface which allows Byte Buddy to hook into the JVM's standard API for runtime class redefinition.
+Similar to Java's `main` method, the `premain` method is the entry point to any Java agent from which we apply the redefinition. As one argument, a Java agent receives an instance of the `Instrumentation` interface which allows Byte Buddy to hook into the JVM's standard API for runtime class redefinition.
 
 This program is packaged together with a manifest file with the [`Premain-Class` attribute](https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html) pointing to the `TimerAgent`. The resulting *jar* file can now be added to any Java application by setting `-javaagent:timingagent.jar` similar to adding a jar to the class path. With the agent active, all classes ending in `Timed` do now print their execution time to the console. 
 
@@ -240,7 +240,7 @@ Byte Buddy is written on top of [ASM](http://asm.ow2.org/), a mature and well-te
 compiled Java classes. In order to allow for advanced type manipulations, Byte Buddy is intentionally exposing the
 ASM API to its users. Of course, the direct use of ASM remains fully optional and most users will most likely never
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
-but can implement custom implementations without a fuzz when it is necessary.
+but can implement custom implementations without a fuss when it is necessary.
 
 ASM has previously changed its public API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, use the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
 

@@ -20,7 +20,7 @@ public class CollectionElementMatcherTest extends AbstractElementMatcherTest<Col
 
     private Iterable<Object> iterable;
 
-    private Object elemet;
+    private Object element;
 
     @Mock
     private ElementMatcher<? super Object> elementMatcher;
@@ -32,23 +32,23 @@ public class CollectionElementMatcherTest extends AbstractElementMatcherTest<Col
 
     @Before
     public void setUp() throws Exception {
-        elemet = new Object();
-        iterable = Arrays.asList(new Object(), elemet);
+        element = new Object();
+        iterable = Arrays.asList(new Object(), element);
     }
 
     @Test
     public void testMatch() throws Exception {
-        when(elementMatcher.matches(elemet)).thenReturn(true);
+        when(elementMatcher.matches(element)).thenReturn(true);
         assertThat(new CollectionElementMatcher<Object>(1, elementMatcher).matches(iterable), is(true));
-        verify(elementMatcher).matches(elemet);
+        verify(elementMatcher).matches(element);
         verifyNoMoreInteractions(elementMatcher);
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(elementMatcher.matches(elemet)).thenReturn(false);
+        when(elementMatcher.matches(element)).thenReturn(false);
         assertThat(new CollectionElementMatcher<Object>(1, elementMatcher).matches(iterable), is(false));
-        verify(elementMatcher).matches(elemet);
+        verify(elementMatcher).matches(element);
         verifyNoMoreInteractions(elementMatcher);
     }
 

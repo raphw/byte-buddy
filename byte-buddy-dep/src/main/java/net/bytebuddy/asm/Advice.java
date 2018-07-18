@@ -3280,11 +3280,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   Assigner assigner,
                                   ArgumentHandler argumentHandler,
                                   Sort sort) {
-                StackManipulation assigment = assigner.assign(typeDescription, targetType, typing);
-                if (!assigment.isValid()) {
+                StackManipulation assignment = assigner.assign(typeDescription, targetType, typing);
+                if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + targetType);
                 }
-                return new Target.ForStackManipulation(new StackManipulation.Compound(stackManipulation, assigment));
+                return new Target.ForStackManipulation(new StackManipulation.Compound(stackManipulation, assignment));
             }
 
             /**
@@ -3686,7 +3686,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             int variable(int index);
 
             /**
-             * Prepates this argument handler for future offset access.
+             * Prepares this argument handler for future offset access.
              *
              * @param methodVisitor The method visitor to which to write any potential byte code.
              * @return The minimum stack size that is required to apply this manipulation.
@@ -4486,7 +4486,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class WithCopiedArguments extends Default {
 
                 /**
-                 * Creates a new default method size handler that expectes the original arguments to be copied.
+                 * Creates a new default method size handler that expects the original arguments to be copied.
                  *
                  * @param instrumentedMethod The instrumented method.
                  * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
@@ -5592,7 +5592,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public interface ExceptionHandler {
 
         /**
-         * Resolves a stack manipulatuon to apply.
+         * Resolves a stack manipulation to apply.
          *
          * @param instrumentedMethod The instrumented method.
          * @param instrumentedType   The instrumented type.
@@ -5961,7 +5961,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * A relocation handler is responsible for chaning the usual control flow of an instrumented method.
+         * A relocation handler is responsible for chaining the usual control flow of an instrumented method.
          */
         interface RelocationHandler {
 
@@ -6968,7 +6968,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private int index;
 
                         /**
-                         * Creates a label substitor.
+                         * Creates a label substitutor.
                          *
                          * @param methodVisitor The method visitor for which to substitute labels.
                          */

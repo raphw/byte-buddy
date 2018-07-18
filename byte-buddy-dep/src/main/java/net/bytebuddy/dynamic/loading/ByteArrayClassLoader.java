@@ -228,7 +228,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      * Resolves a method handle in the scope of the {@link ByteArrayClassLoader} class.
      *
      * @return A method handle for this class.
-     * @throws Exception If the method handle facitily is not supported by the current virtual machine.
+     * @throws Exception If the method handle facility is not supported by the current virtual machine.
      */
     private static Object methodHandle() throws Exception {
         return Class.forName("java.lang.invoke.MethodHandles").getMethod("lookup").invoke(null);

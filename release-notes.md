@@ -7,17 +7,17 @@ Byte Buddy release notes
 - Reinstate support for latest Java 11 EA if `net.bytebuddy.experimental` is set.
 - Fix edge completion for `AgentBuilder`.
 - Dump input class file if the `net.bytebuddy.dump` is set.
-- Add convenice chaining methods to `Implementation.Compound`.
+- Add convenience chaining methods to `Implementation.Compound`.
 - Fix nestmate changes in method invocation.
 
-### 25. Mai 2018: version 1.8.12
+### 25. May 2018: version 1.8.12
 
 - Fix misrepresentation of default package as `null`.
 - Add `Advice.Exit` annotation and allow for method repetition based on exit advice value.
 - Add `Advice.Local` annotation to allow for stack allocation of additional variables.
 - Improve advice's method size handler.
 
-### 4. Mai 2018: version 1.8.11
+### 4. May 2018: version 1.8.11
 
 - Avoid shading unused ASM classes with incomplete links what breaks lint on Android and JPMS module generation.
 
@@ -30,7 +30,7 @@ Byte Buddy release notes
 
 - Several performance improvements.
 - Adjust `toString` implementation for parameterized types to the changed OpenJDK 8+ behavior.
-- Áttempt self-attachment using the current jar file.
+- Attempt self-attachment using the current jar file.
 
 ### 20. April 2018: version 1.8.8
 
@@ -79,7 +79,7 @@ Byte Buddy release notes
 
 ### 13. March 2018: version 1.8.0
 
-- Refactored `Advice` argument handling to be controlled by a decicated structure.
+- Refactored `Advice` argument handling to be controlled by a dedicated structure.
 - Added basic logic for argument copying in `Advice`.
 - Fix performance degradation for cached fields.
 - Add support for Java 10 and preliminary support for Java 11.
@@ -94,10 +94,10 @@ Byte Buddy release notes
 ### 2. February 2018: version 1.7.10
 
 - Fixes self-attachment on Java 9+ on Windows.
-- Check for non-accessability on `MethodCall`.
+- Check for non-accessibility on `MethodCall`.
 - Change static proxy fields to be `volatile`.
 - Do not copy security-related meta-data on jar file copying.
-- Guard resolution of annotations for methods with syntetic parameters.
+- Guard resolution of annotations for methods with synthetic parameters.
 - Forbid skipping code in constructors for `Advice`.
 - Added constructor strategy for defining a default constructor that invokes a non-default constructor.
 - Improve performance of accessor methods and cache fields by reducing use of `String::format`.
@@ -150,7 +150,7 @@ Byte Buddy release notes
 - Added global circularity lock.
 - Removed sporadic use of Java util logging API.
 
-### 14. Mai 2017: version 1.7.0
+### 14. May 2017: version 1.7.0
 
 - Define names for automatic modules in Java 9.
 - Introduce property `net.bytebuddy.nexus.disabled` to allow disabling `Nexus` mechanism.
@@ -241,7 +241,7 @@ Byte Buddy release notes
 - Added check to `@Pipe` for method invokability.
 - Added unsafe `ClassInjector` and class loading strategy.
 - Improved reflection-based class injector on Java 9.
-- Removed uneccessary class file location using modules on Java 9.
+- Removed unnecessary class file location using modules on Java 9.
 - Improved fail-safety for type variable resolution to allow processing incorrectly declared type variables.
 
 ### 2. January 2017: version 1.6.0
@@ -252,7 +252,7 @@ Byte Buddy release notes
 - Added `@SuperMethod` and `@DefaultMethod` annotations for `MethodDelegation`.
 - Refactored `AsmVisitorWrapper` to accept a list of fields and methods that are intercepted. This allows to use the wrapper also for methods that are overridden.
 - Added a `MethodGraph.Compiler.ForDeclaredMethods` to avoid processing full type hierarchy if only type enhancement should be done without declaring new methods on a type. This should be used in combination with `Advice` instead of `MethodGraph.Empty` as those methods are supplied to the ASM visitor wrappers.
-- Refactored `MethodDelegation` to precomile records for all candidates to avoid duplicate annotation processing.
+- Refactored `MethodDelegation` to precompile records for all candidates to avoid duplicate annotation processing.
 
 ### 29. December 2016: version 1.5.13
 
@@ -272,7 +272,7 @@ Byte Buddy release notes
 
 ### 20. December 2016: version 1.5.11
 
-- Resolved compound components to linerarize nested collections for vastly improved performance with large structures.
+- Resolved compound components to linearize nested collections for vastly improved performance with large structures.
 - Added `TypeCache`.
 - Added fallback to assign `null` to `SuperCall` and `DefaultCall` if assignment is impossible.
 - Deprecated `Forwarding` in favor of `MethodCall`.
@@ -337,7 +337,7 @@ Byte Buddy release notes
 
 ### 25. October 2016: version 1.5.0
 
-- Refactor `Instrumentation`s to only delegate to fields instead of requireing their definition. The `defineField` API should be generally preferred for defining fields as it is much richer and therefore easier to extend.
+- Refactor `Instrumentation`s to only delegate to fields instead of requiring their definition. The `defineField` API should be generally preferred for defining fields as it is much richer and therefore easier to extend.
 - Made type annotation reader more robust towards older versions of Java 8.
 - Refactored lazy type resolution for generic types to no longer eagerly load generic types when navigating through a type hierarchy.
 - Unified several implementation APIs and added better abstractions.
@@ -434,17 +434,17 @@ Byte Buddy release notes
 ### 9. August 2016: version 1.4.18
 
 - Added automatic support for Java 9 class file location for boot modules.
-- Improvided `FieldProxy.Binder` to allow for a single accessor interface.
+- Improved `FieldProxy.Binder` to allow for a single accessor interface.
 - Fixed counting problem in `Advice` component.
 
 ### 1. August 2016: version 1.4.17
 
-- Fixed annotation resolution for Java 9 to exlude the `jdk.internal` namespace by default.
+- Fixed annotation resolution for Java 9 to exclude the `jdk.internal` namespace by default.
 - Do not copy annotations for default constructor strategies but allow configuring annotation strategy.
 - Added file-system class file locators for modules in Java 9.
 - Added convenience methods to default location strategies.
 - Exclude `sun.reflect` namespace by default from `AgentBuilder` to avoid error messages.
-- Fixed resolution of type varibales for transformed methods and fields.
+- Fixed resolution of type variables for transformed methods and fields.
 - Fixed stack-aware method visitor when encountering exchanging duplication instructions.
 
 ### 28. July 2016: version 1.4.16
@@ -511,7 +511,7 @@ Byte Buddy release notes
 ### 30. June 2016: version 1.4.6
 
 - Added a `ClassFileLocator` for a class loader that only references it weakly.
-- Allow to supply `TypePool` and `ClassFileLocator` seperatly within an `AgentBuilder`.
+- Allow to supply `TypePool` and `ClassFileLocator` separately within an `AgentBuilder`.
 - Made `MethodPool` sensitive to bridge methods which should only be added to classes of a version older than Java 4.
 - Fixed creation of Java 9 aware `ClassFileTransformer` to only apply on Java 9 VMs.
 - Added matcher for the type of a class loader.
@@ -525,7 +525,7 @@ Byte Buddy release notes
 ### 23. June 2016: version 1.4.4
 
 - Added `net.bytebuddy` qualifier when logging.
-- Added `net.bytebuddy.dump` system property for specifing a location for writing all created class files.
+- Added `net.bytebuddy.dump` system property for specifying a location for writing all created class files.
 
 ### 17. June 2016: version 1.4.3
 
@@ -622,9 +622,9 @@ Byte Buddy release notes
 ### 6. April 2016: version 1.3.8
 
 - Fixed frame computation for the `Advice`.
-- Optimized frame computation to emitt frames of the minimal, possible size when using `Advice`.
-- Only add exit `Advice` once to reduce amound of added bytes to avoid size explosion when a method supplied several exits.
-- Optimized `Advice` injection to only add advice infrastucture if entry/exit advice is supplied.
+- Optimized frame computation to emit frames of the minimal, possible size when using `Advice`.
+- Only add exit `Advice` once to reduce amount of added bytes to avoid size explosion when a method supplied several exits.
+- Optimized `Advice` injection to only add advice infrastructure if entry/exit advice is supplied.
 - Optimized exception handling infrastructure for exit `Advice` to only be applied when exceptions are catched.
 - Added mapping for the *IINC* instruction which was missing from before.
 - Added possibility to propagate AMS reader and writer flags for `AsmVisitorWrapper`.

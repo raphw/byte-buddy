@@ -304,7 +304,7 @@ public final class ElementMatchers {
      * None of the values must be {@code null}.
      * </p>
      * <p>
-     * <b>Important</b>: This method cannot be used interchangably with any of its overloaded versions which also apply a type
+     * <b>Important</b>: This method cannot be used interchangeably with any of its overloaded versions which also apply a type
      * conversion.
      * </p>
      *
@@ -322,7 +322,7 @@ public final class ElementMatchers {
      * None of the values must be {@code null}.
      * </p>
      * <p>
-     * <b>Important</b>: This method cannot be used interchangably with any of the overloaded versions of {@link ElementMatchers#anyOf(Object...)}
+     * <b>Important</b>: This method cannot be used interchangeably with any of the overloaded versions of {@link ElementMatchers#anyOf(Object...)}
      * which also apply a type conversion.
      * </p>
      *
@@ -2102,7 +2102,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches exactly the bootstrap {@link java.lang.ClassLoader} . The returned matcher is a synonym to
+     * Matches exactly the bootstrap {@link java.lang.ClassLoader}. The returned matcher is a synonym to
      * a matcher matching {@code null}.
      *
      * @param <T> The type of the matched object.

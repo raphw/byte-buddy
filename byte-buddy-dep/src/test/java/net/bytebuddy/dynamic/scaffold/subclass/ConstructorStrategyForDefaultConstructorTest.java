@@ -104,31 +104,31 @@ public class ConstructorStrategyForDefaultConstructorTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testSingleConstructorsStrategyNoSuperConstuctorExtract() throws Exception {
-        TypeDescription noConstuctor = mock(TypeDescription.class);
-        TypeDescription.Generic noConstuctorSuper = mock(TypeDescription.Generic.class);
-        when(noConstuctor.getSuperClass()).thenReturn(noConstuctorSuper);
-        when(noConstuctorSuper.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        new ConstructorStrategy.ForDefaultConstructor().extractConstructors(noConstuctor);
+        TypeDescription noConstructor = mock(TypeDescription.class);
+        TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);
+        when(noConstructor.getSuperClass()).thenReturn(noConstructorSuper);
+        when(noConstructorSuper.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        new ConstructorStrategy.ForDefaultConstructor().extractConstructors(noConstructor);
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testSingleConstructorsStrategyNoSuperConstuctorInject() throws Exception {
-        TypeDescription noConstuctor = mock(TypeDescription.class);
-        TypeDescription.Generic noConstuctorSuper = mock(TypeDescription.Generic.class);
-        when(noConstuctor.getSuperClass()).thenReturn(noConstuctorSuper);
-        when(noConstuctorSuper.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        new ConstructorStrategy.ForDefaultConstructor().inject(noConstuctor, methodRegistry);
+        TypeDescription noConstructor = mock(TypeDescription.class);
+        TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);
+        when(noConstructor.getSuperClass()).thenReturn(noConstructorSuper);
+        when(noConstructorSuper.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        new ConstructorStrategy.ForDefaultConstructor().inject(noConstructor, methodRegistry);
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testSingleConstructorsStrategyMultipleSuperConstuctorInject() throws Exception {
-        TypeDescription noConstuctor = mock(TypeDescription.class);
-        TypeDescription.Generic noConstuctorSuper = mock(TypeDescription.Generic.class);
-        when(noConstuctor.getSuperClass()).thenReturn(noConstuctorSuper);
-        when(noConstuctorSuper.getDeclaredMethods()).thenReturn(new MethodList.Explicit(methodDescription, methodDescription));
+        TypeDescription noConstructor = mock(TypeDescription.class);
+        TypeDescription.Generic noConstructorSuper = mock(TypeDescription.Generic.class);
+        when(noConstructor.getSuperClass()).thenReturn(noConstructorSuper);
+        when(noConstructorSuper.getDeclaredMethods()).thenReturn(new MethodList.Explicit(methodDescription, methodDescription));
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-        new ConstructorStrategy.ForDefaultConstructor().inject(noConstuctor, methodRegistry);
+        new ConstructorStrategy.ForDefaultConstructor().inject(noConstructor, methodRegistry);
     }
 }

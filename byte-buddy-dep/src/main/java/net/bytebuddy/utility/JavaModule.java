@@ -411,7 +411,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 try {
                     if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
-                        throw new IllegalStateException(source + " is not modifable");
+                        throw new IllegalStateException(source + " is not modifiable");
                     }
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + redefineModule, exception);

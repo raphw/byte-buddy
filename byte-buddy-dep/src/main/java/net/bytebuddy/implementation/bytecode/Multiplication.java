@@ -5,7 +5,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * A stack manipulation that multiplies to numbers on the operand stack.
+ * A stack manipulation that multiplies two numbers on the operand stack.
  */
 public enum Multiplication implements StackManipulation {
 
