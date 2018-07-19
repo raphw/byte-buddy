@@ -476,6 +476,7 @@ public class ClassByExtensionBenchmark {
             }
         };
         proxyFactory.setUseCache(false);
+        proxyFactory.setUseWriteReplace(false);
         proxyFactory.setSuperclass(baseClass);
         proxyFactory.setFilter(new MethodFilter() {
             public boolean isHandled(Method method) {

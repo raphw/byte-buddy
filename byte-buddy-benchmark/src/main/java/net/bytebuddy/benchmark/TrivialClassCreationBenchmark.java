@@ -106,14 +106,14 @@ public class TrivialClassCreationBenchmark {
      */
     @Benchmark
     public Class<?> benchmarkJavassist() {
-        ProxyFactory proxyFactory = new ProxyFactory();
-        proxyFactory.setUseCache(false);
-        ProxyFactory.classLoaderProvider = new ProxyFactory.ClassLoaderProvider() {
+        ProxyFactory proxyFactory = new ProxyFactory() {
             @Override
-            public ClassLoader get(ProxyFactory proxyFactory) {
+            protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }
         };
+        proxyFactory.setUseCache(false);
+        proxyFactory.setUseWriteReplace(false);
         proxyFactory.setSuperclass(baseClass);
         proxyFactory.setFilter(new MethodFilter() {
             public boolean isHandled(Method method) {

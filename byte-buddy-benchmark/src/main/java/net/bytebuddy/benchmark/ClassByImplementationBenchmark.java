@@ -353,14 +353,14 @@ public class ClassByImplementationBenchmark {
      */
     @Benchmark
     public ExampleInterface benchmarkJavassist() throws Exception {
-        ProxyFactory proxyFactory = new ProxyFactory();
-        proxyFactory.setUseCache(false);
-        ProxyFactory.classLoaderProvider = new ProxyFactory.ClassLoaderProvider() {
+        ProxyFactory proxyFactory = new ProxyFactory() {
             @Override
-            public ClassLoader get(ProxyFactory proxyFactory) {
+            protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }
         };
+        proxyFactory.setUseCache(false);
+        proxyFactory.setUseWriteReplace(false);
         proxyFactory.setSuperclass(Object.class);
         proxyFactory.setInterfaces(new Class<?>[]{baseClass});
         proxyFactory.setFilter(new MethodFilter() {

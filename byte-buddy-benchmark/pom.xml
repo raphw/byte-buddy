@@ -26,8 +26,8 @@
         <benchmark.mainClass>net.bytebuddy.benchmark.runner.BenchmarkRunner</benchmark.mainClass>
         <!-- Newer versions require Java 7. -->
         <version.jmh>1.16</version.jmh>
-        <version.cglib>3.2.5</version.cglib>
-        <version.javassist>3.22.0-GA</version.javassist>
+        <version.cglib>3.2.7</version.cglib>
+        <version.javassist>3.23.1-GA</version.javassist>
     </properties>
 
     <dependencies>
