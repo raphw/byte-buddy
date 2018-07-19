@@ -4370,7 +4370,7 @@ public interface AgentBuilder {
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
                 RedefinitionStrategy.Collector collector = make();
                 for (Class<?> type : types) {
-                    if (type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
+                    if (type == null || type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                         continue;
                     }
                     JavaModule module = JavaModule.ofType(type);
