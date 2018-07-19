@@ -94,7 +94,7 @@ public abstract class MethodConstant implements StackManipulation {
      *
      * @return The method for loading a declared method or constructor onto the operand stack.
      */
-    protected abstract MethodDescription accessorMethod();
+    protected abstract MethodDescription.InDefinedShape accessorMethod();
 
     /**
      * Returns a cached version of this method constant as specified by {@link CachedMethod} and {@link CachedConstructor}.
@@ -173,6 +173,22 @@ public abstract class MethodConstant implements StackManipulation {
     protected static class ForMethod extends MethodConstant implements CanCache {
 
         /**
+         * The {@link Class#getDeclaredMethod(String, Class[])} method.
+         */
+        private static final MethodDescription.InDefinedShape GET_DECLARED_METHOD;
+
+        /*
+         * Looks up the method used for creating the manipulation.
+         */
+        static {
+            try {
+                GET_DECLARED_METHOD = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredMethod", String.class, Class[].class));
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("Could not locate Class::getDeclaredMethod", exception);
+            }
+        }
+
+        /**
          * Creates a new {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant} for
          * creating a {@link java.lang.reflect.Method} instance.
          *
@@ -188,12 +204,8 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected MethodDescription accessorMethod() {
-            try {
-                return new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredMethod", String.class, Class[].class));
-            } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("Cannot locate Class::getDeclaredMethod", exception);
-            }
+        protected MethodDescription.InDefinedShape accessorMethod() {
+            return GET_DECLARED_METHOD;
         }
     }
 
@@ -202,6 +214,22 @@ public abstract class MethodConstant implements StackManipulation {
      * a {@link java.lang.reflect.Constructor} instance onto the operand stack.
      */
     protected static class ForConstructor extends MethodConstant implements CanCache {
+
+        /**
+         * The {@link Class#getDeclaredConstructor(Class[])} method.
+         */
+        private static final MethodDescription.InDefinedShape GET_DECLARED_CONSTRUCTOR;
+
+        /*
+         * Looks up the method used for creating the manipulation.
+         */
+        static {
+            try {
+                GET_DECLARED_CONSTRUCTOR = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredConstructor", Class[].class));
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("Could not locate Class::getDeclaredConstructor", exception);
+            }
+        }
 
         /**
          * Creates a new {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant} for
@@ -219,12 +247,8 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected MethodDescription accessorMethod() {
-            try {
-                return new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredConstructor", Class[].class));
-            } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("Cannot locate Class::getDeclaredConstructor", exception);
-            }
+        protected MethodDescription.InDefinedShape accessorMethod() {
+            return GET_DECLARED_CONSTRUCTOR;
         }
     }
 
