@@ -16,6 +16,7 @@ import net.bytebuddy.utility.CompoundList;
 
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -82,8 +83,7 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Could not locate method: " + name, exception);
         }
-        fields = new LinkedHashMap<String, Class<?>>();
-        fields.put(field, type);
+        fields = Collections.<String, Class<?>>singletonMap(field, type);
     }
 
     /**
