@@ -684,6 +684,11 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        public boolean isDefinedPublic() {
+            return getDeclaringType().asErasure().isDefinedPublic() && isPublic();
+        }
+
+        @Override
         public MethodDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             TypeDescription.Generic receiverType = getReceiverType();
             return new MethodDescription.Token(getInternalName(),
