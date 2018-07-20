@@ -1,10 +1,12 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.auxiliary.PrivilegedMethodConstantAction;
+import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -12,8 +14,12 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 
 /**
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
@@ -59,7 +65,7 @@ public abstract class MethodConstant implements StackManipulation {
      *                       load operations.
      * @return A corresponding list of type constant load operations.
      */
-    private static List<StackManipulation> typeConstantsFor(List<TypeDescription> parameterTypes) {
+    protected static List<StackManipulation> typeConstantsFor(List<TypeDescription> parameterTypes) {
         List<StackManipulation> typeConstants = new ArrayList<StackManipulation>(parameterTypes.size());
         for (TypeDescription parameterType : parameterTypes) {
             typeConstants.add(ClassConstant.of(parameterType));
@@ -75,7 +81,8 @@ public abstract class MethodConstant implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         return new Compound(
-                preparation(),
+                ClassConstant.of(methodDescription.getDeclaringType()),
+                methodName(),
                 ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
                         .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
                 MethodInvocation.invoke(accessorMethod())
@@ -83,11 +90,20 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Returns a stack manipulation that loads the values that are required for loading a method constant onto the operand stack.
+     * Returns a method constant that uses an {@link AccessController} to look up this constant.
      *
-     * @return A stack manipulation for loading a method or constructor onto the operand stack.
+     * @return A method constant that uses an {@link AccessController} to look up this constant.
      */
-    protected abstract StackManipulation preparation();
+    public CanCache privileged() {
+        return new PrivilegedLookup(methodDescription, methodName());
+    }
+
+    /**
+     * Returns a stack manipulation that loads the method name onto the operand stack if this is required.
+     *
+     * @return A stack manipulation that loads the method name onto the operand stack if this is required.
+     */
+    protected abstract StackManipulation methodName();
 
     /**
      * Returns the method for loading a declared method or constructor onto the operand stack.
@@ -96,15 +112,9 @@ public abstract class MethodConstant implements StackManipulation {
      */
     protected abstract MethodDescription.InDefinedShape accessorMethod();
 
-    /**
-     * Returns a cached version of this method constant as specified by {@link CachedMethod} and {@link CachedConstructor}.
-     *
-     * @return A cached version of this method constant.
-     */
-    public StackManipulation cached() {
-        return methodDescription.isConstructor()
-                ? new CachedConstructor(this)
-                : new CachedMethod(this);
+    @Override
+    public int hashCode() {
+        return methodDescription.hashCode();
     }
 
     @Override
@@ -116,11 +126,6 @@ public abstract class MethodConstant implements StackManipulation {
         }
         MethodConstant methodConstant = (MethodConstant) other;
         return methodDescription.equals(methodConstant.methodDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return methodDescription.hashCode();
     }
 
     /**
@@ -199,13 +204,18 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected StackManipulation preparation() {
-            return new Compound(ClassConstant.of(methodDescription.getDeclaringType()), new TextConstant(methodDescription.getInternalName()));
+        protected StackManipulation methodName() {
+            return new TextConstant(methodDescription.getInternalName());
         }
 
         @Override
         protected MethodDescription.InDefinedShape accessorMethod() {
             return GET_DECLARED_METHOD;
+        }
+
+        @Override
+        public StackManipulation cached() {
+            return new CachedMethod(this);
         }
     }
 
@@ -242,13 +252,106 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected StackManipulation preparation() {
-            return ClassConstant.of(methodDescription.getDeclaringType());
+        protected StackManipulation methodName() {
+            return Trivial.INSTANCE;
         }
 
         @Override
         protected MethodDescription.InDefinedShape accessorMethod() {
             return GET_DECLARED_CONSTRUCTOR;
+        }
+
+        @Override
+        public StackManipulation cached() {
+            return new CachedConstructor(this);
+        }
+    }
+
+    /**
+     * Performs a privileged lookup of a method constant by using an {@link AccessController}.
+     */
+    protected static class PrivilegedLookup implements StackManipulation, CanCache {
+
+        /**
+         * The {@link AccessController#doPrivileged(PrivilegedExceptionAction)} method.
+         */
+        private static final MethodDescription.InDefinedShape DO_PRIVILEGED;
+
+        /*
+         * Locates the access controller's do privileged method.
+         */
+        static {
+            try {
+                DO_PRIVILEGED = new MethodDescription.ForLoadedMethod(AccessController.class.getMethod("doPrivileged", PrivilegedExceptionAction.class));
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("Cannot locate AccessController::doPrivileged");
+            }
+        }
+
+        /**
+         * The method constant to load.
+         */
+        private final MethodDescription.InDefinedShape methodDescription;
+
+        /**
+         * The stack manipulation for locating the method name.
+         */
+        private final StackManipulation methodName;
+
+        /**
+         * Creates a new privileged lookup.
+         *
+         * @param methodDescription The method constant to load.
+         * @param methodName        The stack manipulation for locating the method name.
+         */
+        protected PrivilegedLookup(MethodDescription.InDefinedShape methodDescription, StackManipulation methodName) {
+            this.methodDescription = methodDescription;
+            this.methodName = methodName;
+        }
+
+        @Override
+        public boolean isValid() {
+            return methodName.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            TypeDescription privilegedAction = implementationContext.register(methodDescription.isConstructor()
+                    ? PrivilegedMethodConstantAction.FOR_CONSTRUCTOR
+                    : PrivilegedMethodConstantAction.FOR_METHOD);
+            return new Compound(
+                    TypeCreation.of(privilegedAction),
+                    Duplication.SINGLE,
+                    ClassConstant.of(methodDescription.getDeclaringType()),
+                    methodName,
+                    ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
+                            .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
+                    MethodInvocation.invoke(privilegedAction.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                    MethodInvocation.invoke(DO_PRIVILEGED)
+            ).apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public StackManipulation cached() {
+            return methodDescription.isConstructor()
+                    ? new CachedConstructor(this)
+                    : new CachedMethod(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return methodDescription.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            PrivilegedLookup privilegedLookup = (PrivilegedLookup) other;
+            return methodDescription.equals(privilegedLookup.methodDescription);
         }
     }
 
@@ -289,6 +392,11 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
+        public int hashCode() {
+            return methodConstant.hashCode();
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -298,17 +406,11 @@ public abstract class MethodConstant implements StackManipulation {
             CachedMethod cachedMethod = (CachedMethod) other;
             return methodConstant.equals(cachedMethod.methodConstant);
         }
-
-        @Override
-        public int hashCode() {
-            return methodConstant.hashCode();
-        }
     }
 
     /**
      * Represents a cached constructor for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
-    @HashCodeAndEqualsPlugin.Enhance
     protected static class CachedConstructor implements StackManipulation {
 
         /**
@@ -343,6 +445,11 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
+        public int hashCode() {
+            return constructorConstant.hashCode();
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -351,11 +458,6 @@ public abstract class MethodConstant implements StackManipulation {
             }
             CachedConstructor cachedConstructor = (CachedConstructor) other;
             return constructorConstant.equals(cachedConstructor.constructorConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return constructorConstant.hashCode();
         }
     }
 }

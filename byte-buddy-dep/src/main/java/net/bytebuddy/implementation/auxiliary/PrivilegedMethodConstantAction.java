@@ -20,21 +20,46 @@ import java.util.Map;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
-public enum MethodConstantAction implements AuxiliaryType {
+/**
+ * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@link java.security.AccessController}.
+ */
+public enum PrivilegedMethodConstantAction implements AuxiliaryType {
 
+    /**
+     * Looks up a method using {@link Class#getDeclaredMethod(String, Class[])}.
+     */
     FOR_METHOD("getDeclaredMethod", "name", String.class, "parameters", Class[].class),
 
+    /**
+     * Looks up a method using {@link Class#getDeclaredConstructor(Class[])}.
+     */
     FOR_CONSTRUCTOR("getDeclaredConstructor", "parameters", Class[].class);
 
+    /**
+     * The default constructor of the {@link Object} class.
+     */
     private static final MethodDescription.InDefinedShape DEFAULT_CONSTRUCTOR = TypeDescription.OBJECT.getDeclaredMethods()
             .filter(isConstructor())
             .getOnly();
 
+    /**
+     * The method to invoke from the action.
+     */
     private final MethodDescription.InDefinedShape methodDescription;
 
+    /**
+     * A mapping of field names to their types in a fixed iteration order.
+     */
     private final Map<String, Class<?>> fields;
 
-    MethodConstantAction(String name, String field, Class<?> type) {
+    /**
+     * Creates a privileged method constant action with one argument.
+     *
+     * @param name  The name of the method.
+     * @param field The name of a field to define.
+     * @param type  The type of the field to define.
+     */
+    PrivilegedMethodConstantAction(String name, String field, Class<?> type) {
         try {
             methodDescription = new MethodDescription.ForLoadedMethod(Class.class.getMethod(name, type));
         } catch (NoSuchMethodException exception) {
@@ -45,7 +70,16 @@ public enum MethodConstantAction implements AuxiliaryType {
         fields.put(field, type);
     }
 
-    MethodConstantAction(String name, String firstField, Class<?> firstType, String secondField, Class<?> secondType) {
+    /**
+     * Creates a privileged method constant action with one argument.
+     *
+     * @param name        The name of the method.
+     * @param firstField  The name of the first field to define.
+     * @param firstType   The type of the first field to define.
+     * @param secondField The name of the first field to define.
+     * @param secondType  The type of the first field to define.
+     */
+    PrivilegedMethodConstantAction(String name, String firstField, Class<?> firstType, String secondField, Class<?> secondType) {
         try {
             methodDescription = new MethodDescription.ForLoadedMethod(Class.class.getMethod(name, firstType, secondType));
         } catch (NoSuchMethodException exception) {
