@@ -82,8 +82,8 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
      * @param name        The name of the method.
      * @param firstField  The name of the first field to define.
      * @param firstType   The type of the first field to define.
-     * @param secondField The name of the first field to define.
-     * @param secondType  The type of the first field to define.
+     * @param secondField The name of the second field to define.
+     * @param secondType  The type of the second field to define.
      */
     PrivilegedMethodConstantAction(String name, String firstField, Class<?> firstType, String secondField, Class<?> secondType) {
         try {
