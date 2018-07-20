@@ -137,11 +137,6 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean isDefinedPublic() {
-            return getDeclaringType().asErasure().isDefinedPublic() && isPublic();
-        }
-
-        @Override
         public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),

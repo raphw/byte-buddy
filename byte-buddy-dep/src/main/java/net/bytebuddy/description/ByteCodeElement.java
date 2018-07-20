@@ -79,13 +79,6 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
     boolean isAccessibleTo(TypeDescription typeDescription);
 
     /**
-     * Indicates that this byte code element is defined with public visibility, i.e. it is itself public and its dependants are public.
-     *
-     * @return {@code true} if this byte code element is defined public.
-     */
-    boolean isDefinedPublic();
-
-    /**
      * A type dependant describes an element that is an extension of a type definition, i.e. a field, method or method parameter.
      *
      * @param <T> The type dependant's type.

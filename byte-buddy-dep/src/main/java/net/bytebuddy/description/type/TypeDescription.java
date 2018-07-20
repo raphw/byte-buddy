@@ -6945,11 +6945,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isDefinedPublic() {
-            return isPublic();
-        }
-
-        @Override
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
