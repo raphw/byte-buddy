@@ -30,12 +30,22 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
     /**
      * Looks up a method using {@link Class#getDeclaredMethod(String, Class[])}.
      */
-    FOR_METHOD("getDeclaredMethod", "name", String.class, "parameters", Class[].class),
+    FOR_PUBLIC_METHOD("getMethod", "name", String.class, "parameters", Class[].class),
+
+    /**
+     * Looks up a method using {@link Class#getDeclaredMethod(String, Class[])}.
+     */
+    FOR_DECLARED_METHOD("getDeclaredMethod", "name", String.class, "parameters", Class[].class),
+
+    /**
+     * Looks up a method using {@link Class#getConstructor(Class[])}.
+     */
+    FOR_PUBLIC_CONSTRUCTOR("getConstructor", "parameters", Class[].class),
 
     /**
      * Looks up a method using {@link Class#getDeclaredConstructor(Class[])}.
      */
-    FOR_CONSTRUCTOR("getDeclaredConstructor", "parameters", Class[].class);
+    FOR_DECLARED_CONSTRUCTOR("getDeclaredConstructor", "parameters", Class[].class);
 
     /**
      * The name of the field that holds the type instance to look the method up from.
@@ -94,6 +104,26 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
         fields = new LinkedHashMap<String, Class<?>>();
         fields.put(firstField, firstType);
         fields.put(secondField, secondType);
+    }
+
+    /**
+     * Returns an auxiliary type for loading the supplied method description as a constant.
+     *
+     * @param methodDescription The method description to represent as a constant.
+     * @return An appropriate auxiliary type.
+     */
+    public static AuxiliaryType of(MethodDescription methodDescription) {
+        if (methodDescription.isConstructor()) {
+            return methodDescription.isPublic()
+                    ? FOR_PUBLIC_CONSTRUCTOR
+                    : FOR_DECLARED_CONSTRUCTOR;
+        } else if (methodDescription.isMethod()) {
+            return methodDescription.isPublic()
+                    ? FOR_PUBLIC_METHOD
+                    : FOR_DECLARED_METHOD;
+        } else {
+            throw new IllegalStateException("Cannot load constant for type initializer: " + methodDescription);
+        }
     }
 
     @Override

@@ -195,18 +195,24 @@ public abstract class MethodConstant implements StackManipulation {
     protected static class ForMethod extends MethodConstant implements CanCache {
 
         /**
+         * The {@link Class#getMethod(String, Class[])} method.
+         */
+        private static final MethodDescription.InDefinedShape GET_METHOD;
+
+        /**
          * The {@link Class#getDeclaredMethod(String, Class[])} method.
          */
         private static final MethodDescription.InDefinedShape GET_DECLARED_METHOD;
 
         /*
-         * Looks up the method used for creating the manipulation.
+         * Looks up methods used for creating the manipulation.
          */
         static {
             try {
+                GET_METHOD = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getMethod", String.class, Class[].class));
                 GET_DECLARED_METHOD = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredMethod", String.class, Class[].class));
             } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("Could not locate Class::getDeclaredMethod", exception);
+                throw new IllegalStateException("Could not locate method lookup", exception);
             }
         }
 
@@ -227,7 +233,9 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         protected MethodDescription.InDefinedShape accessorMethod() {
-            return GET_DECLARED_METHOD;
+            return methodDescription.isPublic()
+                    ? GET_METHOD
+                    : GET_DECLARED_METHOD;
         }
 
         @Override
@@ -243,6 +251,11 @@ public abstract class MethodConstant implements StackManipulation {
     protected static class ForConstructor extends MethodConstant implements CanCache {
 
         /**
+         * The {@link Class#getConstructor(Class[])} method.
+         */
+        private static final MethodDescription.InDefinedShape GET_CONSTRUCTOR;
+
+        /**
          * The {@link Class#getDeclaredConstructor(Class[])} method.
          */
         private static final MethodDescription.InDefinedShape GET_DECLARED_CONSTRUCTOR;
@@ -252,6 +265,7 @@ public abstract class MethodConstant implements StackManipulation {
          */
         static {
             try {
+                GET_CONSTRUCTOR = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getConstructor", Class[].class));
                 GET_DECLARED_CONSTRUCTOR = new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredConstructor", Class[].class));
             } catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("Could not locate Class::getDeclaredConstructor", exception);
@@ -275,7 +289,9 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         protected MethodDescription.InDefinedShape accessorMethod() {
-            return GET_DECLARED_CONSTRUCTOR;
+            return methodDescription.isPublic()
+                    ? GET_CONSTRUCTOR
+                    : GET_DECLARED_CONSTRUCTOR;
         }
 
         @Override
@@ -333,17 +349,15 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            TypeDescription privilegedAction = implementationContext.register(methodDescription.isConstructor()
-                    ? PrivilegedMethodConstantAction.FOR_CONSTRUCTOR
-                    : PrivilegedMethodConstantAction.FOR_METHOD);
+            TypeDescription auxiliaryType = implementationContext.register(PrivilegedMethodConstantAction.of(methodDescription));
             return new Compound(
-                    TypeCreation.of(privilegedAction),
+                    TypeCreation.of(auxiliaryType),
                     Duplication.SINGLE,
                     ClassConstant.of(methodDescription.getDeclaringType()),
                     methodName,
                     ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
                             .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
-                    MethodInvocation.invoke(privilegedAction.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                    MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     MethodInvocation.invoke(DO_PRIVILEGED),
                     TypeCasting.to(TypeDescription.ForLoadedType.of(methodDescription.isConstructor()
                             ? Constructor.class
