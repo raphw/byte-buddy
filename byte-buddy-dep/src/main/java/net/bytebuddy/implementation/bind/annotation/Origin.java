@@ -76,8 +76,7 @@ public @interface Origin {
     boolean privileged() default true;
 
     /**
-     * A binder for binding parameters that are annotated with
-     * {@link net.bytebuddy.implementation.bind.annotation.Origin}.
+     * A binder for binding parameters that are annotated with {@link net.bytebuddy.implementation.bind.annotation.Origin}.
      *
      * @see TargetMethodAnnotationDrivenBinder
      */
