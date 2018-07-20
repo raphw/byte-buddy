@@ -546,7 +546,7 @@ public class ClassByExtensionBenchmark {
          * @throws Exception If the super method call yields an exception.
          */
         @RuntimeType
-        public static Object intercept(@This Object target, @AllArguments Object[] arguments, @SuperMethod Method method) throws Exception {
+        public static Object intercept(@This Object target, @AllArguments Object[] arguments, @SuperMethod(privileged = false) Method method) throws Exception {
             return method.invoke(target, arguments);
         }
     }

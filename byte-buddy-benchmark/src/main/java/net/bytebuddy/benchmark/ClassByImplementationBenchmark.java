@@ -331,7 +331,7 @@ public class ClassByImplementationBenchmark {
                 if (method.getDeclaringClass() == baseClass) {
                     return new FixedValue() {
                         @Override
-                        public Object loadObject() throws Exception {
+                        public Object loadObject() {
                             return null;
                         }
                     };

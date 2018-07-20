@@ -42,12 +42,17 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     /**
      * Indicates that a value should not be cached.
      */
-    private static final boolean NO_CACHING = false;
+    private static final boolean UNCACHED = false;
 
     /**
      * Indicates that a {@link java.lang.reflect.Method} should be cached.
      */
-    protected static final boolean CACHING = true;
+    private static final boolean CACHED = true;
+
+    /**
+     * Indicates that a lookup of a method constant should be looked up using an {@link java.security.AccessController}.
+     */
+    private static final boolean PRIVILEGED = true;
 
     /**
      * The name of the field for storing an invocation handler.
@@ -64,19 +69,26 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * Determines if the {@link java.lang.reflect.Method} instances that are handed to the intercepted methods are
      * cached in {@code static} fields.
      */
-    protected final boolean cacheMethods;
+    protected final boolean cached;
+
+    /**
+     * Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@link java.security.AccessController}.
+     */
+    protected final boolean privileged;
 
     /**
      * Creates a new invocation handler for a given field.
      *
-     * @param fieldName    The name of the field.
-     * @param cacheMethods Determines if the {@link java.lang.reflect.Method} instances that are handed to the
-     *                     intercepted methods are cached in {@code static} fields.
-     * @param assigner     The assigner to apply when defining this implementation.
+     * @param fieldName  The name of the field.
+     * @param cached     Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+     *                   intercepted methods are cached in {@code static} fields.
+     * @param privileged Determines if the {@link java.lang.reflect.Method} instances are retrieved by using an {@link java.security.AccessController}.
+     * @param assigner   The assigner to apply when defining this implementation.
      */
-    protected InvocationHandlerAdapter(String fieldName, boolean cacheMethods, Assigner assigner) {
+    protected InvocationHandlerAdapter(String fieldName, boolean cached, boolean privileged, Assigner assigner) {
         this.fieldName = fieldName;
-        this.cacheMethods = cacheMethods;
+        this.cached = cached;
+        this.privileged = privileged;
         this.assigner = assigner;
     }
 
@@ -100,7 +112,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForInstance(fieldName, CACHING, Assigner.DEFAULT, invocationHandler);
+        return new ForInstance(fieldName, CACHED, PRIVILEGED, Assigner.DEFAULT, invocationHandler);
     }
 
     /**
@@ -127,7 +139,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toField(String name, FieldLocator.Factory fieldLocatorFactory) {
-        return new ForField(name, CACHING, Assigner.DEFAULT, fieldLocatorFactory);
+        return new ForField(name, CACHED, PRIVILEGED, Assigner.DEFAULT, fieldLocatorFactory);
     }
 
     /**
@@ -159,6 +171,15 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     public abstract AssignerConfigurable withoutMethodCache();
 
     /**
+     * Determines if the {@link java.lang.reflect.Method} instances that are supplied to the invocation handler should be retrieved
+     * by using an {@link java.security.AccessController}. This is the default configuration.
+     *
+     * @param privileged {@code true} if the lookup should be privileged.
+     * @return This invocation handler adapter with the specified privilege setting.
+     */
+    public abstract InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged);
+
+    /**
      * Applies an implementation that delegates to a invocation handler.
      *
      * @param methodVisitor         The method visitor for writing the byte code to.
@@ -180,9 +201,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 preparingManipulation,
                 FieldAccess.forField(fieldDescription).read(),
                 MethodVariableAccess.loadThis(),
-                cacheMethods
-                        ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()
-                        : MethodConstant.forMethod(instrumentedMethod.asDefined()),
+                cached
+                        ? (privileged ? MethodConstant.of(instrumentedMethod.asDefined()) : MethodConstant.of(instrumentedMethod.asDefined())).cached()
+                        : (privileged ? MethodConstant.of(instrumentedMethod.asDefined()) : MethodConstant.of(instrumentedMethod.asDefined())),
                 ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
@@ -195,7 +216,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * Allows for the configuration of an {@link net.bytebuddy.implementation.bytecode.assign.Assigner}
      * of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter}.
      */
-    protected interface AssignerConfigurable extends Implementation {
+    public interface AssignerConfigurable extends Implementation {
 
         /**
          * Configures an assigner to use with this invocation handler adapter.
@@ -228,24 +249,31 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * in a static field.
          *
          * @param fieldName         The name of the field.
-         * @param cacheMethods      Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+         * @param cached            Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                          intercepted methods are cached in {@code static} fields.
+         * @param privileged        Determines if the {@link java.lang.reflect.Method} instances are retrieved by
+         *                          using an {@link java.security.AccessController}.
          * @param assigner          The assigner to apply when defining this implementation.
          * @param invocationHandler The invocation handler to which all method calls are delegated.
          */
-        protected ForInstance(String fieldName, boolean cacheMethods, Assigner assigner, InvocationHandler invocationHandler) {
-            super(fieldName, cacheMethods, assigner);
+        protected ForInstance(String fieldName, boolean cached, boolean privileged, Assigner assigner, InvocationHandler invocationHandler) {
+            super(fieldName, cached, privileged, assigner);
             this.invocationHandler = invocationHandler;
         }
 
         @Override
         public AssignerConfigurable withoutMethodCache() {
-            return new ForInstance(fieldName, NO_CACHING, assigner, invocationHandler);
+            return new ForInstance(fieldName, UNCACHED, privileged, assigner, invocationHandler);
+        }
+
+        @Override
+        public InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged) {
+            return new ForInstance(fieldName, cached, privileged, assigner, invocationHandler);
         }
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForInstance(fieldName, cacheMethods, assigner, invocationHandler);
+            return new ForInstance(fieldName, cached, privileged, assigner, invocationHandler);
         }
 
         @Override
@@ -309,24 +337,31 @@ public abstract class InvocationHandlerAdapter implements Implementation {
          * Creates a new invocation handler adapter that loads its value from a field.
          *
          * @param fieldName           The name of the field.
-         * @param cacheMethods        Determines if the {@link java.lang.reflect.Method} instances that are handed to the
+         * @param cached              Determines if the {@link java.lang.reflect.Method} instances that are handed to the
          *                            intercepted methods are cached in {@code static} fields.
+         * @param privileged          Determines if the {@link java.lang.reflect.Method} instances are retrieved by using
+         *                            an {@link java.security.AccessController}.
          * @param assigner            The assigner to apply when defining this implementation.
          * @param fieldLocatorFactory The field locator factory to use.
          */
-        protected ForField(String fieldName, boolean cacheMethods, Assigner assigner, FieldLocator.Factory fieldLocatorFactory) {
-            super(fieldName, cacheMethods, assigner);
+        protected ForField(String fieldName, boolean cached, boolean privileged, Assigner assigner, FieldLocator.Factory fieldLocatorFactory) {
+            super(fieldName, cached, privileged, assigner);
             this.fieldLocatorFactory = fieldLocatorFactory;
         }
 
         @Override
         public AssignerConfigurable withoutMethodCache() {
-            return new ForField(fieldName, NO_CACHING, assigner, fieldLocatorFactory);
+            return new ForField(fieldName, UNCACHED, privileged, assigner, fieldLocatorFactory);
+        }
+
+        @Override
+        public InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged) {
+            return new ForField(fieldName, cached, privileged, assigner, fieldLocatorFactory);
         }
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForField(fieldName, cacheMethods, assigner, fieldLocatorFactory);
+            return new ForField(fieldName, cached, privileged, assigner, fieldLocatorFactory);
         }
 
         @Override
@@ -342,7 +377,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             } else if (!resolution.getField().getType().asErasure().isAssignableTo(InvocationHandler.class)) {
                 throw new IllegalStateException("Field " + resolution.getField() + " does not declare a type that is assignable to invocation handler");
             }
-            return new Appender(implementationTarget.getInstrumentedType(), resolution.getField());
+            return new Appender(resolution.getField());
         }
 
         /**
@@ -352,11 +387,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         protected class Appender implements ByteCodeAppender {
 
             /**
-             * The type that is subject of the instrumentation.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
              * The field that contains the invocation handler.
              */
             private final FieldDescription fieldDescription;
@@ -364,11 +394,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             /**
              * Creates a new appender.
              *
-             * @param instrumentedType The type that is instrumented.
              * @param fieldDescription The field that contains the invocation handler.
              */
-            protected Appender(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-                this.instrumentedType = instrumentedType;
+            protected Appender(FieldDescription fieldDescription) {
                 this.fieldDescription = fieldDescription;
             }
 

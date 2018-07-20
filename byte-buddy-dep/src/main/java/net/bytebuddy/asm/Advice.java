@@ -1138,7 +1138,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return A mapping for a method or constructor constant.
                  */
                 public static Target of(MethodDescription.InDefinedShape methodDescription) {
-                    return new ForStackManipulation(MethodConstant.forMethod(methodDescription));
+                    return new ForStackManipulation(MethodConstant.of(methodDescription));
                 }
 
                 /**

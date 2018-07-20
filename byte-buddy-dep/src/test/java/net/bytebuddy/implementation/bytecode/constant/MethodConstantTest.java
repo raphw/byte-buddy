@@ -91,7 +91,7 @@ public class MethodConstantTest {
 
     @Test
     public void testMethod() throws Exception {
-        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).apply(methodVisitor, implementationContext);
+        StackManipulation.Size size = MethodConstant.of(methodDescription).apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(6));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
@@ -104,19 +104,19 @@ public class MethodConstantTest {
     @Test
     public void testMethodCached() throws Exception {
         when(implementationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);
-        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).cached().apply(methodVisitor, implementationContext);
+        StackManipulation.Size size = MethodConstant.of(methodDescription).cached().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
         verifyNoMoreInteractions(methodVisitor);
-        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), TypeDescription.ForLoadedType.of(Method.class));
+        verify(implementationContext).cache(MethodConstant.of(methodDescription), TypeDescription.ForLoadedType.of(Method.class));
         verifyNoMoreInteractions(implementationContext);
     }
 
     @Test
     public void testConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).apply(methodVisitor, implementationContext);
+        StackManipulation.Size size = MethodConstant.of(methodDescription).apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(5));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
@@ -130,19 +130,19 @@ public class MethodConstantTest {
     public void testConstructorCached() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(implementationContext.cache(any(StackManipulation.class), any(TypeDescription.class))).thenReturn(fieldDescription);
-        StackManipulation.Size size = MethodConstant.forMethod(methodDescription).cached().apply(methodVisitor, implementationContext);
+        StackManipulation.Size size = MethodConstant.of(methodDescription).cached().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
         verifyNoMoreInteractions(methodVisitor);
-        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), TypeDescription.ForLoadedType.of(Constructor.class));
+        verify(implementationContext).cache(MethodConstant.of(methodDescription), TypeDescription.ForLoadedType.of(Constructor.class));
         verifyNoMoreInteractions(implementationContext);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeInitializer() throws Exception {
         when(methodDescription.isTypeInitializer()).thenReturn(true);
-        MethodConstant.CanCache methodConstant = MethodConstant.forMethod(methodDescription);
+        MethodConstant.CanCache methodConstant = MethodConstant.of(methodDescription);
         assertThat(methodConstant.isValid(), is(false));
         assertThat(methodConstant.cached().isValid(), is(false));
         methodConstant.apply(methodVisitor, implementationContext);

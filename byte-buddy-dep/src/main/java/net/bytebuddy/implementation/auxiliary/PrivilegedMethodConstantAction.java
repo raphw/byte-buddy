@@ -7,10 +7,12 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.utility.CompoundList;
 
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -34,6 +36,11 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
      * Looks up a method using {@link Class#getDeclaredConstructor(Class[])}.
      */
     FOR_CONSTRUCTOR("getDeclaredConstructor", "parameters", Class[].class);
+
+    /**
+     * The name of the field that holds the type instance to look the method up from.
+     */
+    private static final String TYPE_FIELD = "type";
 
     /**
      * The default constructor of the {@link Object} class.
@@ -66,7 +73,6 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
             throw new IllegalStateException("Could not locate method: " + name, exception);
         }
         fields = new LinkedHashMap<String, Class<?>>();
-        fields.put("type", Class.class);
         fields.put(field, type);
     }
 
@@ -86,7 +92,6 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
             throw new IllegalStateException("Could not locate method: " + name, exception);
         }
         fields = new LinkedHashMap<String, Class<?>>();
-        fields.put("type", Class.class);
         fields.put(firstField, firstType);
         fields.put(secondField, secondType);
     }
@@ -95,21 +100,24 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
-        Implementation.Composable constructor = MethodCall.invoke(DEFAULT_CONSTRUCTOR);
-        int index = 0;
+        Implementation.Composable constructor = MethodCall.invoke(DEFAULT_CONSTRUCTOR).andThen(FieldAccessor.ofField(TYPE_FIELD).setsArgumentAt(0));
+        int index = 1;
         for (String field : fields.keySet()) {
-            constructor = constructor.andThen(FieldAccessor.ofField(field).setsArgumentAt(++index));
+            constructor = constructor.andThen(FieldAccessor.ofField(field).setsArgumentAt(index++));
         }
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
                 .with(TypeValidation.DISABLED)
-                .subclass(PrivilegedExceptionAction.class)
+                .subclass(PrivilegedExceptionAction.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .defineConstructor(Visibility.PUBLIC)
-                .withParameters(new ArrayList<Class<?>>(fields.values()))
+                .withParameters(CompoundList.of(Class.class, new ArrayList<Class<?>>(fields.values())))
                 .intercept(constructor)
                 .method(named("run"))
-                .intercept(MethodCall.invoke(methodDescription).withField(fields.keySet().toArray(new String[fields.size()])));
+                .intercept(MethodCall.invoke(methodDescription)
+                        .onField(TYPE_FIELD)
+                        .withField(fields.keySet().toArray(new String[fields.size()])))
+                .defineField(TYPE_FIELD, Class.class, Visibility.PRIVATE);
         for (Map.Entry<String, Class<?>> entry : fields.entrySet()) {
             builder = builder.defineField(entry.getKey(), entry.getValue(), Visibility.PRIVATE);
         }

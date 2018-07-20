@@ -40,6 +40,13 @@ public @interface SuperMethod {
     boolean cached() default true;
 
     /**
+     * Indicates if the instance assigned to this parameter should be looked up using an {@link java.security.AccessController}.
+     *
+     * @return {@code true} if this method should be looked up using an {@link java.security.AccessController}.
+     */
+    boolean privileged() default true;
+
+    /**
      * Indicates that the assigned method should attempt the invocation of an unambiguous default method if no super method is available.
      *
      * @return {@code true} if a default method should be invoked if it is not ambiguous and no super class method is available.
@@ -82,7 +89,9 @@ public @interface SuperMethod {
                         ? implementationTarget.invokeDominant(source.asSignatureToken())
                         : implementationTarget.invokeSuper(source.asSignatureToken());
                 if (specialMethodInvocation.isValid()) {
-                    return new MethodDelegationBinder.ParameterBinding.Anonymous(new DelegationMethod(specialMethodInvocation, annotation.loadSilent().cached()));
+                    return new MethodDelegationBinder.ParameterBinding.Anonymous(new DelegationMethod(specialMethodInvocation,
+                            annotation.loadSilent().cached(),
+                            annotation.loadSilent().privileged()));
                 } else if (annotation.loadSilent().nullIfImpossible()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
                 } else {
@@ -112,14 +121,21 @@ public @interface SuperMethod {
             private final boolean cached;
 
             /**
+             * {@code true} if this method should be looked up using an {@link java.security.AccessController}.
+             */
+            private final boolean privileged;
+
+            /**
              * Creates a new delegation method.
              *
              * @param specialMethodInvocation The special method invocation that represents the super method call.
              * @param cached                  {@code true} if the method constant should be cached.
+             * @param privileged              {@code true} if this method should be looked up using an {@link java.security.AccessController}.
              */
-            protected DelegationMethod(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean cached) {
+            protected DelegationMethod(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean cached, boolean privileged) {
                 this.specialMethodInvocation = specialMethodInvocation;
                 this.cached = cached;
+                this.privileged = privileged;
             }
 
             @Override
@@ -129,8 +145,9 @@ public @interface SuperMethod {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                StackManipulation stackManipulation = MethodConstant.forMethod(implementationContext.registerAccessorFor(specialMethodInvocation,
-                        MethodAccessorFactory.AccessType.PUBLIC));
+                StackManipulation stackManipulation = privileged
+                        ? MethodConstant.ofPrivileged(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC))
+                        : MethodConstant.of(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC));
                 return (cached
                         ? FieldAccess.forField(implementationContext.cache(stackManipulation, TypeDescription.ForLoadedType.of(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);

@@ -7,6 +7,7 @@ import net.bytebuddy.implementation.auxiliary.PrivilegedMethodConstantAction;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -48,13 +49,29 @@ public abstract class MethodConstant implements StackManipulation {
      * @param methodDescription The method to be loaded onto the stack.
      * @return A stack manipulation that assigns a method constant for the given method description.
      */
-    public static CanCache forMethod(MethodDescription.InDefinedShape methodDescription) {
+    public static CanCache of(MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.isTypeInitializer()) {
             return CanCacheIllegal.INSTANCE;
         } else if (methodDescription.isConstructor()) {
             return new ForConstructor(methodDescription);
         } else {
             return new ForMethod(methodDescription);
+        }
+    }
+
+    /**
+     * Creates a stack manipulation that loads a method constant onto the operand stack using an {@link AccessController}.
+     *
+     * @param methodDescription The method to be loaded onto the stack.
+     * @return A stack manipulation that assigns a method constant for the given method description.
+     */
+    public static CanCache ofPrivileged(MethodDescription.InDefinedShape methodDescription) {
+        if (methodDescription.isTypeInitializer()) {
+            return CanCacheIllegal.INSTANCE;
+        } else if (methodDescription.isConstructor()) {
+            return new ForConstructor(methodDescription).privileged();
+        } else {
+            return new ForMethod(methodDescription).privileged();
         }
     }
 
@@ -94,7 +111,7 @@ public abstract class MethodConstant implements StackManipulation {
      *
      * @return A method constant that uses an {@link AccessController} to look up this constant.
      */
-    public CanCache privileged() {
+    protected CanCache privileged() {
         return new PrivilegedLookup(methodDescription, methodName());
     }
 
@@ -327,7 +344,10 @@ public abstract class MethodConstant implements StackManipulation {
                     ArrayFactory.forType(TypeDescription.Generic.OfNonGenericType.CLASS)
                             .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
                     MethodInvocation.invoke(privilegedAction.getDeclaredMethods().filter(isConstructor()).getOnly()),
-                    MethodInvocation.invoke(DO_PRIVILEGED)
+                    MethodInvocation.invoke(DO_PRIVILEGED),
+                    TypeCasting.to(TypeDescription.ForLoadedType.of(methodDescription.isConstructor()
+                            ? Constructor.class
+                            : Method.class))
             ).apply(methodVisitor, implementationContext);
         }
 

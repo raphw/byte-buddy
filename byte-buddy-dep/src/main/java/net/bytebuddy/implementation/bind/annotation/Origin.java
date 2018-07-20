@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
@@ -67,6 +68,14 @@ public @interface Origin {
     boolean cache() default true;
 
     /**
+     * Determines if the method should be resolved by using an {@link java.security.AccessController} using the privileges of the generated class.
+     * Doing so requires the generation of an auxiliary class that implements {@link java.security.PrivilegedExceptionAction}.
+     *
+     * @return {@code true} if the class should be looked up using an {@link java.security.AccessController}.
+     */
+    boolean privileged() default true;
+
+    /**
      * A binder for binding parameters that are annotated with
      * {@link net.bytebuddy.implementation.bind.annotation.Origin}.
      *
@@ -78,6 +87,20 @@ public @interface Origin {
          * The singleton instance.
          */
         INSTANCE;
+
+        /**
+         * Loads a method constant onto the operand stack.
+         *
+         * @param origin            The origin annotation.
+         * @param methodDescription The method description to load.
+         * @return An appropriate stack manipulation.
+         */
+        private static StackManipulation methodConstant(Origin origin, MethodDescription.InDefinedShape methodDescription) {
+            MethodConstant.CanCache methodConstant = origin.privileged()
+                    ? MethodConstant.ofPrivileged(methodDescription)
+                    : MethodConstant.of(methodDescription);
+            return origin.cache() ? methodConstant.cached() : methodConstant;
+        }
 
         @Override
         public Class<Origin> getHandledType() {
@@ -96,22 +119,14 @@ public @interface Origin {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType().asErasure()));
             } else if (parameterType.represents(Method.class)) {
                 return source.isMethod()
-                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(
-                        annotation.loadSilent().cache()
-                                ? MethodConstant.forMethod(source.asDefined()).cached()
-                                : MethodConstant.forMethod(source.asDefined()))
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()))
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else if (parameterType.represents(Constructor.class)) {
                 return source.isConstructor()
-                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(
-                        annotation.loadSilent().cache()
-                                ? MethodConstant.forMethod(source.asDefined()).cached()
-                                : MethodConstant.forMethod(source.asDefined()))
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()))
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else if (JavaType.EXECUTABLE.getTypeStub().equals(parameterType)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.loadSilent().cache()
-                        ? MethodConstant.forMethod(source.asDefined()).cached()
-                        : MethodConstant.forMethod(source.asDefined()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
             } else if (parameterType.represents(int.class)) {
