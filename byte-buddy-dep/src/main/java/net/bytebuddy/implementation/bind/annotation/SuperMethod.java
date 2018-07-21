@@ -44,7 +44,7 @@ public @interface SuperMethod {
      *
      * @return {@code true} if this method should be looked up using an {@link java.security.AccessController}.
      */
-    boolean privileged() default true;
+    boolean privileged() default false;
 
     /**
      * Indicates that the assigned method should attempt the invocation of an unambiguous default method if no super method is available.

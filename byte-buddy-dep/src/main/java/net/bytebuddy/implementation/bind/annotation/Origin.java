@@ -73,7 +73,7 @@ public @interface Origin {
      *
      * @return {@code true} if the class should be looked up using an {@link java.security.AccessController}.
      */
-    boolean privileged() default true;
+    boolean privileged() default false;
 
     /**
      * A binder for binding parameters that are annotated with {@link net.bytebuddy.implementation.bind.annotation.Origin}.

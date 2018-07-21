@@ -50,9 +50,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     private static final boolean CACHED = true;
 
     /**
-     * Indicates that a lookup of a method constant should be looked up using an {@link java.security.AccessController}.
+     * Indicates that a lookup of a method constant should not be looked up using an {@link java.security.AccessController}.
      */
-    private static final boolean PRIVILEGED = true;
+    private static final boolean UNPRIVILEGED = false;
 
     /**
      * The name of the field for storing an invocation handler.
@@ -112,7 +112,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForInstance(fieldName, CACHED, PRIVILEGED, Assigner.DEFAULT, invocationHandler);
+        return new ForInstance(fieldName, CACHED, UNPRIVILEGED, Assigner.DEFAULT, invocationHandler);
     }
 
     /**
@@ -139,7 +139,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toField(String name, FieldLocator.Factory fieldLocatorFactory) {
-        return new ForField(name, CACHED, PRIVILEGED, Assigner.DEFAULT, fieldLocatorFactory);
+        return new ForField(name, CACHED, UNPRIVILEGED, Assigner.DEFAULT, fieldLocatorFactory);
     }
 
     /**

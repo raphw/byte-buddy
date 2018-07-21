@@ -48,7 +48,7 @@ public @interface DefaultMethod {
      *
      * @return {@code true} if this method should be looked up using an {@link java.security.AccessController}.
      */
-    boolean privileged() default true;
+    boolean privileged() default false;
 
     /**
      * Specifies an explicit type that declares the default method to invoke.
