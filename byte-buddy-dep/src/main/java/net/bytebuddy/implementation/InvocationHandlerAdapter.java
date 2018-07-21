@@ -197,13 +197,14 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         if (instrumentedMethod.isStatic()) {
             throw new IllegalStateException("It is not possible to apply an invocation handler onto the static method " + instrumentedMethod);
         }
+        MethodConstant.CanCache methodConstant = privileged
+                ? MethodConstant.of(instrumentedMethod.asDefined())
+                : MethodConstant.of(instrumentedMethod.asDefined());
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
                 FieldAccess.forField(fieldDescription).read(),
                 MethodVariableAccess.loadThis(),
-                cached
-                        ? (privileged ? MethodConstant.of(instrumentedMethod.asDefined()) : MethodConstant.of(instrumentedMethod.asDefined())).cached()
-                        : (privileged ? MethodConstant.of(instrumentedMethod.asDefined()) : MethodConstant.of(instrumentedMethod.asDefined())),
+                cached ? methodConstant.cached() : methodConstant,
                 ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
