@@ -3,7 +3,7 @@ package net.bytebuddy.implementation.bytecode.constant;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.auxiliary.PrivilegedMethodConstantAction;
+import net.bytebuddy.implementation.auxiliary.PrivilegedMemberLookupAction;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
@@ -349,7 +349,7 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            TypeDescription auxiliaryType = implementationContext.register(PrivilegedMethodConstantAction.of(methodDescription));
+            TypeDescription auxiliaryType = implementationContext.register(PrivilegedMemberLookupAction.of(methodDescription));
             return new Compound(
                     TypeCreation.of(auxiliaryType),
                     Duplication.SINGLE,

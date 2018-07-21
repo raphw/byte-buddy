@@ -26,7 +26,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * A {@link PrivilegedExceptionAction} to lookup a method constant using an {@link java.security.AccessController}.
  */
-public enum PrivilegedMethodConstantAction implements AuxiliaryType {
+public enum PrivilegedMemberLookupAction implements AuxiliaryType {
 
     /**
      * Looks up a method using {@link Class#getDeclaredMethod(String, Class[])}.
@@ -77,7 +77,7 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
      * @param field The name of a field to define.
      * @param type  The type of the field to define.
      */
-    PrivilegedMethodConstantAction(String name, String field, Class<?> type) {
+    PrivilegedMemberLookupAction(String name, String field, Class<?> type) {
         try {
             methodDescription = new MethodDescription.ForLoadedMethod(Class.class.getMethod(name, type));
         } catch (NoSuchMethodException exception) {
@@ -95,7 +95,7 @@ public enum PrivilegedMethodConstantAction implements AuxiliaryType {
      * @param secondField The name of the second field to define.
      * @param secondType  The type of the second field to define.
      */
-    PrivilegedMethodConstantAction(String name, String firstField, Class<?> firstType, String secondField, Class<?> secondType) {
+    PrivilegedMemberLookupAction(String name, String firstField, Class<?> firstType, String secondField, Class<?> secondType) {
         try {
             methodDescription = new MethodDescription.ForLoadedMethod(Class.class.getMethod(name, firstType, secondType));
         } catch (NoSuchMethodException exception) {
