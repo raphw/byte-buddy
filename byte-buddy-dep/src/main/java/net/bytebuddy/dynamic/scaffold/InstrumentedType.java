@@ -910,7 +910,7 @@ public interface InstrumentedType extends TypeDescription {
                 } else if (!returnType.accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + returnType + " for " + methodDescription);
                 } else if (!returnType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
-                    throw new IllegalStateException("Illegal type annotations return type " + returnType + " for " + methodDescription);
+                    throw new IllegalStateException("Illegal type annotations on return type " + returnType + " for " + methodDescription);
                 } else if (!methodDescription.isSynthetic() && !methodDescription.getReturnType().asErasure().isVisibleTo(this)) {
                     throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 }
@@ -920,7 +920,7 @@ public interface InstrumentedType extends TypeDescription {
                     if (!parameterType.accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
                         throw new IllegalStateException("Illegal parameter type of " + parameterDescription + " for " + methodDescription);
                     } else if (!parameterType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
-                        throw new IllegalStateException("Illegal type annotations return type " + parameterType + " for " + methodDescription);
+                        throw new IllegalStateException("Illegal type annotations on parameter " + parameterDescription + " for " + methodDescription);
                     } else if (!methodDescription.isSynthetic() && !parameterType.asErasure().isVisibleTo(this)) {
                         throw new IllegalStateException("Invisible parameter type of " + parameterDescription + " for " + methodDescription);
                     }
