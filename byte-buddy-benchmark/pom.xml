@@ -27,6 +27,7 @@
         <!-- Newer versions require Java 7. -->
         <version.jmh>1.16</version.jmh>
         <version.cglib>3.2.7</version.cglib>
+        <!-- Newer versions are not Java 6 compatible as they reference the MethodHandle class. -->
         <version.javassist>3.22.0-GA</version.javassist>
     </properties>
 
