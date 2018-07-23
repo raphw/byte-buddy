@@ -5399,7 +5399,7 @@ public interface AgentBuilder {
                         if (types == null) {
                             types = new ArrayList<Class<?>>();
                             for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                                if (processed.add(type)) {
+                                if (type != null && processed.add(type)) {
                                     types.add(type);
                                 }
                             }

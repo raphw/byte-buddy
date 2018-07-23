@@ -55,6 +55,11 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     private static final boolean UNPRIVILEGED = false;
 
     /**
+     * Indicates that a lookup of a method constant should be looked up using an {@link java.security.AccessController}.
+     */
+    private static final boolean PRIVILEGED = true;
+
+    /**
      * The name of the field for storing an invocation handler.
      */
     protected final String fieldName;
@@ -168,16 +173,22 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      *
      * @return A similar invocation handler adapter that applies caching.
      */
-    public abstract AssignerConfigurable withoutMethodCache();
+    public abstract WithoutPrivilegeConfiguration withoutMethodCache();
 
     /**
-     * Determines if the {@link java.lang.reflect.Method} instances that are supplied to the invocation handler should be retrieved
-     * by using an {@link java.security.AccessController}. This is the default configuration.
+     * Configures an assigner to use with this invocation handler adapter.
      *
-     * @param privileged {@code true} if the lookup should be privileged.
-     * @return This invocation handler adapter with the specified privilege setting.
+     * @param assigner The assigner to apply when defining this implementation.
+     * @return This instrumentation with the given {@code assigner} configured.
      */
-    public abstract InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged);
+    public abstract Implementation withAssigner(Assigner assigner);
+
+    /**
+     * Configures that the method constants supplied to the invocation handler adapter are resolved using an {@link java.security.AccessController}.
+     *
+     * @return This instrumentation with a privileged lookup configured.
+     */
+    public abstract AssignerConfigurable withPrivilegedLookup();
 
     /**
      * Applies an implementation that delegates to a invocation handler.
@@ -229,11 +240,25 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     }
 
     /**
+     * Allows the configuration of privileged lookup for the resolution of {@link java.lang.reflect.Method}
+     * constants that are provided to the invocation handler.
+     */
+    public interface WithoutPrivilegeConfiguration extends AssignerConfigurable {
+
+        /**
+         * Configures that the method constants supplied to the invocation handler adapter are resolved using an {@link java.security.AccessController}.
+         *
+         * @return This instrumentation with a privileged lookup configured.
+         */
+        AssignerConfigurable withPrivilegedLookup();
+    }
+
+    /**
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in a static field.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ForInstance extends InvocationHandlerAdapter implements AssignerConfigurable {
+    protected static class ForInstance extends InvocationHandlerAdapter implements WithoutPrivilegeConfiguration {
 
         /**
          * The prefix for field that are created for storing the instrumented value.
@@ -263,18 +288,18 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         }
 
         @Override
-        public AssignerConfigurable withoutMethodCache() {
+        public WithoutPrivilegeConfiguration withoutMethodCache() {
             return new ForInstance(fieldName, UNCACHED, privileged, assigner, invocationHandler);
-        }
-
-        @Override
-        public InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged) {
-            return new ForInstance(fieldName, cached, privileged, assigner, invocationHandler);
         }
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
             return new ForInstance(fieldName, cached, privileged, assigner, invocationHandler);
+        }
+
+        @Override
+        public AssignerConfigurable withPrivilegedLookup() {
+            return new ForInstance(fieldName, cached, PRIVILEGED, assigner, invocationHandler);
         }
 
         @Override
@@ -327,7 +352,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * invocations to an adapter that is stored in an instance field.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class ForField extends InvocationHandlerAdapter implements AssignerConfigurable {
+    protected static class ForField extends InvocationHandlerAdapter implements WithoutPrivilegeConfiguration {
 
         /**
          * The field locator factory to use.
@@ -351,18 +376,18 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         }
 
         @Override
-        public AssignerConfigurable withoutMethodCache() {
+        public WithoutPrivilegeConfiguration withoutMethodCache() {
             return new ForField(fieldName, UNCACHED, privileged, assigner, fieldLocatorFactory);
-        }
-
-        @Override
-        public InvocationHandlerAdapter withPrivilegedMethodLookup(boolean privileged) {
-            return new ForField(fieldName, cached, privileged, assigner, fieldLocatorFactory);
         }
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
             return new ForField(fieldName, cached, privileged, assigner, fieldLocatorFactory);
+        }
+
+        @Override
+        public AssignerConfigurable withPrivilegedLookup() {
+            return new ForField(fieldName, cached, PRIVILEGED, assigner, fieldLocatorFactory);
         }
 
         @Override

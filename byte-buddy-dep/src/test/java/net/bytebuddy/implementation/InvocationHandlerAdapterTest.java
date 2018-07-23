@@ -47,12 +47,12 @@ public class InvocationHandlerAdapterTest {
     }
 
     @Test
-    public void testStaticAdapterWithoutCachePrivileged() throws Exception {
+    public void testStaticAdapterPrivileged() throws Exception {
         Foo foo = new Foo();
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(InvocationHandlerAdapter.of(foo).withPrivilegedMethodLookup(true).withoutMethodCache())
+                .intercept(InvocationHandlerAdapter.of(foo).withoutMethodCache().withPrivilegedLookup())
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
