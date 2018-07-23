@@ -28,70 +28,70 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     /**
      * Creates a new instance of an implementation for throwing throwables.
      *
-     * @param constructionDelegate A delegate that is responsible for calling the Throwable's constructor.
+     * @param constructionDelegate A delegate that is responsible for calling the {@link Throwable}'s constructor.
      */
     public ExceptionMethod(ConstructionDelegate constructionDelegate) {
         this.constructionDelegate = constructionDelegate;
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
+     * Creates an implementation that creates a new instance of the given {@link Throwable} type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param exceptionType The type of the Throwable.
-     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
+     * @param throwableType The type of the {@link Throwable}.
+     * @return An implementation that will throw an instance of the {@link Throwable} on each method invocation of the
      * instrumented methods.
      */
-    public static Implementation throwing(Class<? extends Throwable> exceptionType) {
-        return throwing(TypeDescription.ForLoadedType.of(exceptionType));
+    public static Implementation throwing(Class<? extends Throwable> throwableType) {
+        return throwing(TypeDescription.ForLoadedType.of(throwableType));
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
+     * Creates an implementation that creates a new instance of the given {@link Throwable} type on each method invocation
      * which is then thrown immediately. For this to be possible, the given type must define a default constructor
      * which is visible from the instrumented type.
      *
-     * @param exceptionType The type of the Throwable.
-     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
+     * @param throwableType The type of the {@link Throwable}.
+     * @return An implementation that will throw an instance of the {@link Throwable} on each method invocation of the
      * instrumented methods.
      */
-    public static Implementation throwing(TypeDescription exceptionType) {
-        if (!exceptionType.isAssignableTo(Throwable.class)) {
-            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
+    public static Implementation throwing(TypeDescription throwableType) {
+        if (!throwableType.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(throwableType + " does not extend throwable");
         }
-        return new ExceptionMethod(new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+        return new ExceptionMethod(new ConstructionDelegate.ForDefaultConstructor(throwableType));
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
-     * which is then thrown immediately. For this to be possible, the given type must define a constructor that
-     * takes a single {@link java.lang.String} as its argument.
+     * Creates an implementation that creates a new instance of the given {@link Throwable} type on each method
+     * invocation which is then thrown immediately. For this to be possible, the given type must define a
+     * constructor that takes a single {@link java.lang.String} as its argument.
      *
-     * @param exceptionType The type of the Throwable.
+     * @param throwableType The type of the {@link Throwable}.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
-     * instrumented methods.
+     * @return An implementation that will throw an instance of the {@link Throwable} on each method invocation
+     * of the instrumented methods.
      */
-    public static Implementation throwing(Class<? extends Throwable> exceptionType, String message) {
-        return throwing(TypeDescription.ForLoadedType.of(exceptionType), message);
+    public static Implementation throwing(Class<? extends Throwable> throwableType, String message) {
+        return throwing(TypeDescription.ForLoadedType.of(throwableType), message);
     }
 
     /**
-     * Creates an implementation that creates a new instance of the given Throwable type on each method invocation
-     * which is then thrown immediately. For this to be possible, the given type must define a constructor that
-     * takes a single {@link java.lang.String} as its argument.
+     * Creates an implementation that creates a new instance of the given {@link Throwable} type on each method
+     * invocation which is then thrown immediately. For this to be possible, the given type must define a
+     * constructor that takes a single {@link java.lang.String} as its argument.
      *
-     * @param exceptionType The type of the Throwable.
+     * @param throwableType The type of the {@link Throwable}.
      * @param message       The string that is handed to the constructor. Usually an exception message.
-     * @return An implementation that will throw an instance of the Throwable on each method invocation of the
-     * instrumented methods.
+     * @return An implementation that will throw an instance of the {@link Throwable} on each method invocation
+     * of the instrumented methods.
      */
-    public static Implementation throwing(TypeDescription exceptionType, String message) {
-        if (!exceptionType.isAssignableTo(Throwable.class)) {
-            throw new IllegalArgumentException(exceptionType + " does not extend throwable");
+    public static Implementation throwing(TypeDescription throwableType, String message) {
+        if (!throwableType.isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException(throwableType + " does not extend throwable");
         }
-        return new ExceptionMethod(new ConstructionDelegate.ForStringConstructor(exceptionType, message));
+        return new ExceptionMethod(new ConstructionDelegate.ForStringConstructor(throwableType, message));
     }
 
     @Override
@@ -114,7 +114,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
     }
 
     /**
-     * A construction delegate is responsible for calling a Throwable's constructor.
+     * A construction delegate is responsible for calling a {@link Throwable}'s constructor.
      */
     public interface ConstructionDelegate {
 
@@ -122,7 +122,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
          * Creates a stack manipulation that creates pushes all constructor arguments onto the operand stack
          * and subsequently calls the constructor.
          *
-         * @return A stack manipulation for constructing a Throwable.
+         * @return A stack manipulation for constructing a {@link Throwable}.
          */
         StackManipulation make();
 
@@ -135,7 +135,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * The type of the exception that is to be thrown.
              */
-            private final TypeDescription exceptionType;
+            private final TypeDescription throwableType;
 
             /**
              * The constructor that is used for creating the exception.
@@ -145,18 +145,18 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a default constructor.
              *
-             * @param exceptionType The type of the Throwable.
+             * @param throwableType The type of the {@link Throwable}.
              */
-            public ForDefaultConstructor(TypeDescription exceptionType) {
-                this.exceptionType = exceptionType;
-                this.targetConstructor = exceptionType.getDeclaredMethods()
+            public ForDefaultConstructor(TypeDescription throwableType) {
+                this.throwableType = throwableType;
+                this.targetConstructor = throwableType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(0))).getOnly();
             }
 
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.of(exceptionType),
+                        TypeCreation.of(throwableType),
                         Duplication.SINGLE,
                         MethodInvocation.invoke(targetConstructor));
             }
@@ -171,7 +171,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * The type of the exception that is to be thrown.
              */
-            private final TypeDescription exceptionType;
+            private final TypeDescription throwableType;
 
             /**
              * The constructor that is used for creating the exception.
@@ -186,12 +186,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             /**
              * Creates a new construction delegate that calls a constructor by handing it the given string.
              *
-             * @param exceptionType The type of the Throwable.
+             * @param throwableType The type of the {@link Throwable}.
              * @param message       The string that is handed to the constructor.
              */
-            public ForStringConstructor(TypeDescription exceptionType, String message) {
-                this.exceptionType = exceptionType;
-                this.targetConstructor = exceptionType.getDeclaredMethods()
+            public ForStringConstructor(TypeDescription throwableType, String message) {
+                this.throwableType = throwableType;
+                this.targetConstructor = throwableType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class))).getOnly();
                 this.message = message;
             }
@@ -199,7 +199,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.of(exceptionType),
+                        TypeCreation.of(throwableType),
                         Duplication.SINGLE,
                         new TextConstant(message),
                         MethodInvocation.invoke(targetConstructor));
