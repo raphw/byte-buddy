@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. July 2018: version 1.8.14
+
+- Query explicitly added class loaders before the instrumented class's class loader in advice transformer for an agent builder.
+- Add nullcheck for `Instrumentation::getAllLoadedClasses`.
+- Allow for access controller-based lookups for `Method` constants.
+- Use `getMethod` instead of `getDeclaredMethod` for method lookup if possible.
+
 ### 5. July 2018: version 1.8.13
 
 - Update to ASM 6.2
