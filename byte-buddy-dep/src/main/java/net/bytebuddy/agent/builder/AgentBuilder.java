@@ -2191,6 +2191,7 @@ public interface AgentBuilder {
 
             /**
              * Includes the supplied class loaders as a source for looking up an advice class or its dependencies.
+             * Note that the supplied class loaders are queried for types before the class loader of the instrumented class.
              *
              * @param classLoader The class loaders to include when looking up classes in their order. Duplicates are filtered.
              * @return A new instance of this advice transformer that considers the supplied class loaders as a lookup source.
@@ -2205,6 +2206,7 @@ public interface AgentBuilder {
 
             /**
              * Includes the supplied class file locators as a source for looking up an advice class or its dependencies.
+             * Note that the supplied class loaders are queried for types before the class loader of the instrumented class.
              *
              * @param classFileLocator The class file locators to include when looking up classes in their order. Duplicates are filtered.
              * @return A new instance of this advice transformer that considers the supplied class file locators as a lookup source.
@@ -2215,6 +2217,7 @@ public interface AgentBuilder {
 
             /**
              * Includes the supplied class file locators as a source for looking up an advice class or its dependencies.
+             * Note that the supplied class loaders are queried for types before the class loader of the instrumented class.
              *
              * @param classFileLocators The class file locators to include when looking up classes in their order. Duplicates are filtered.
              * @return A new instance of this advice transformer that considers the supplied class file locators as a lookup source.
