@@ -47,6 +47,27 @@ public class InvocationHandlerAdapterTest {
     }
 
     @Test
+    public void testStaticAdapterWithoutCachePrivileged() throws Exception {
+        Foo foo = new Foo();
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(InvocationHandlerAdapter.of(foo).withPrivilegedMethodLookup(true).withoutMethodCache())
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.bar(FOO), is((Object) instance));
+        assertThat(foo.methods.size(), is(1));
+        assertThat(instance.bar(FOO), is((Object) instance));
+        assertThat(foo.methods.size(), is(2));
+        assertThat(foo.methods.get(0), not(sameInstance(foo.methods.get(1))));
+        instance.assertZeroCalls();
+    }
+
+    @Test
     public void testStaticAdapterWithoutCacheForPrimitiveValue() throws Exception {
         Qux qux = new Qux();
         DynamicType.Loaded<Baz> loaded = new ByteBuddy()
