@@ -41,6 +41,40 @@ public class MethodDelegationDefaultMethodTest {
                 .intercept(MethodDelegation.to(SampleClass.class))
                 .make()
                 .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        Method method = loaded.getLoaded().getMethod(FOO);
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testCallableDefaultCallNoCache() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(SampleClassNoCache.class))
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        Method method = loaded.getLoaded().getMethod(FOO);
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testCallableDefaultCallPrivileged() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(SampleClassPrivileged.class))
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
@@ -98,6 +132,26 @@ public class MethodDelegationDefaultMethodTest {
     public static class SampleClass {
 
         public static String bar(@DefaultMethod Method method, @This Object target) throws Exception {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                throw new AssertionError();
+            }
+            return (String) method.invoke(target);
+        }
+    }
+
+    public static class SampleClassNoCache {
+
+        public static String bar(@DefaultMethod(cached = false) Method method, @This Object target) throws Exception {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                throw new AssertionError();
+            }
+            return (String) method.invoke(target);
+        }
+    }
+
+    public static class SampleClassPrivileged {
+
+        public static String bar(@DefaultMethod(privileged = true) Method method, @This Object target) throws Exception {
             if (!Modifier.isPublic(method.getModifiers())) {
                 throw new AssertionError();
             }

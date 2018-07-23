@@ -241,12 +241,12 @@ public @interface DefaultMethod {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                StackManipulation stackManipulation = privileged
+                StackManipulation methodConstant = privileged
                         ? MethodConstant.ofPrivileged(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC))
                         : MethodConstant.of(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC));
                 return (cached
-                        ? FieldAccess.forField(implementationContext.cache(stackManipulation, TypeDescription.ForLoadedType.of(Method.class))).read()
-                        : stackManipulation).apply(methodVisitor, implementationContext);
+                        ? FieldAccess.forField(implementationContext.cache(methodConstant, TypeDescription.ForLoadedType.of(Method.class))).read()
+                        : methodConstant).apply(methodVisitor, implementationContext);
             }
         }
     }

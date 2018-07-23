@@ -38,6 +38,40 @@ public class MethodDelegationSuperMethodTest {
                 .intercept(MethodDelegation.to(SampleClass.class))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.value, is(BAR));
+        instance.foo();
+        assertThat(instance.value, is(FOO));
+    }
+
+    @Test
+    public void testRunnableSuperCallNoCache() throws Exception {
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(SampleClassNoCache.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.value, is(BAR));
+        instance.foo();
+        assertThat(instance.value, is(FOO));
+    }
+
+    @Test
+    public void testRunnableSuperCallWithPrivilege() throws Exception {
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(SampleClassWithPrivilege.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getAuxiliaryTypes().size(), is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.value, is(BAR));
         instance.foo();
@@ -121,6 +155,20 @@ public class MethodDelegationSuperMethodTest {
     public static class SampleClass {
 
         public static void foo(@SuperMethod Method method, @This Object target) throws Exception {
+            method.invoke(target);
+        }
+    }
+
+    public static class SampleClassNoCache {
+
+        public static void foo(@SuperMethod(cached = false) Method method, @This Object target) throws Exception {
+            method.invoke(target);
+        }
+    }
+
+    public static class SampleClassWithPrivilege {
+
+        public static void foo(@SuperMethod(privileged = true) Method method, @This Object target) throws Exception {
             method.invoke(target);
         }
     }

@@ -317,7 +317,7 @@ public abstract class MethodConstant implements StackManipulation {
             try {
                 DO_PRIVILEGED = new MethodDescription.ForLoadedMethod(AccessController.class.getMethod("doPrivileged", PrivilegedExceptionAction.class));
             } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("Cannot locate AccessController::doPrivileged");
+                throw new IllegalStateException("Cannot locate AccessController::doPrivileged", exception);
             }
         }
 
