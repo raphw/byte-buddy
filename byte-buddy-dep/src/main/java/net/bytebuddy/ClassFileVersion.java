@@ -78,9 +78,14 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V10 = new ClassFileVersion(Opcodes.V10);
 
     /**
-     * The class file version of Java 11 (preliminary).
+     * The class file version of Java 11.
      */
     public static final ClassFileVersion JAVA_V11 = new ClassFileVersion(Opcodes.V11);
+
+    /**
+     * The class file version of Java 12 (preliminary).
+     */
+    public static final ClassFileVersion JAVA_V12 = new ClassFileVersion(Opcodes.V11 + 1);
 
     /**
      * A version locator for the executing JVM.
@@ -144,6 +149,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             return JAVA_V10;
         } else if (javaVersionString.equals("1.11") || javaVersionString.equals("11")) {
             return JAVA_V11;
+        } else if (javaVersionString.equals("1.12") || javaVersionString.equals("12")) {
+            return JAVA_V11;
         } else {
             throw new IllegalArgumentException("Unknown Java version string: " + javaVersionString);
         }
@@ -181,6 +188,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V10;
             case 11:
                 return JAVA_V11;
+            case 12:
+                return JAVA_V12;
             default:
                 throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
         }
