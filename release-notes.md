@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. July 2018: version 1.8.15
+
+- Add preliminary support for Java 12.
+
 ### 24. July 2018: version 1.8.14
 
 - Query explicitly added class loaders before the instrumented class's class loader in advice transformer for an agent builder.
