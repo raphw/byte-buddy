@@ -19,6 +19,7 @@ import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
@@ -1284,8 +1285,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             TypePool.Resolution resolution = typePool.describe(owner.replace('/', '.'));
             if (resolution.isResolved()) {
                 FieldList<FieldDescription.InDefinedShape> candidates = resolution.resolve().getDeclaredFields().filter(strict
-                        ? named(internalName).and(hasDescriptor(descriptor))
-                        : failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                        ? ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))
+                        : failSafe(ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))));
                 if (!candidates.isEmpty()) {
                     Substitution.Resolver resolver = substitution.resolve(candidates.getOnly(), opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
                     if (resolver.isResolved()) {
@@ -1331,21 +1332,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 MethodList<?> candidates;
                 if (opcode == Opcodes.INVOKESPECIAL && internalName.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
-                            ? isConstructor().and(hasDescriptor(descriptor))
-                            : failSafe(isConstructor().and(hasDescriptor(descriptor))));
+                            ? ElementMatchers.<MethodDescription>isConstructor().and(hasDescriptor(descriptor))
+                            : failSafe(ElementMatchers.<MethodDescription>isConstructor().and(hasDescriptor(descriptor))));
                 } else if (opcode == Opcodes.INVOKESTATIC || opcode == Opcodes.INVOKESPECIAL) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
-                            ? named(internalName).and(hasDescriptor(descriptor))
-                            : failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                            ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
+                            : failSafe(ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))));
                 } else { // Invokevirtual and invokeinterface can represent a private, non-static method from Java 11.
                     TypeDescription typeDescription = resolution.resolve();
                     candidates = typeDescription.getDeclaredMethods().filter(strict
-                            ? isPrivate().and(not(isStatic())).<MethodDescription>and(named(internalName).and(hasDescriptor(descriptor)))
-                            : failSafe(isPrivate().and(not(isStatic())).<MethodDescription>and(named(internalName).and(hasDescriptor(descriptor)))));
+                            ? ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))
+                            : failSafe(ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))));
                     if (candidates.isEmpty()) {
                         candidates = methodGraphCompiler.compile(resolution.resolve()).listNodes().asMethodList().filter(strict
-                                ? named(internalName).and(hasDescriptor(descriptor))
-                                : failSafe(named(internalName).and(hasDescriptor(descriptor))));
+                                ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
+                                : failSafe(ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))));
                     }
                 }
                 if (!candidates.isEmpty()) {
