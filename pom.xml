@@ -200,7 +200,7 @@
                 <artifactId>jitwatch-jarscan-maven-plugin</artifactId>
                 <version>${version.plugin.jitwatch}</version>
             </plugin>
-            <!-- Enable scanning for binar changes between releases -->
+            <!-- Enable scanning for binary changes between releases -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>clirr-maven-plugin</artifactId>
