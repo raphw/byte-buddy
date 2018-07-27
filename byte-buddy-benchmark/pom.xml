@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -121,12 +122,12 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Do not run tests on JDK 11 where cglib and javassist do not function -->
+        <!-- Do not run tests on JDK 11 or later as the benchmark currently requires sun.misc.Unsafe::defineClass -->
         <profile>
             <id>java11-tests</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
-                <jdk>11</jdk>
+                <jdk>[11,)</jdk>
             </activation>
             <build>
                 <plugins>
