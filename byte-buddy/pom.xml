@@ -173,7 +173,8 @@
                             net.bytebuddy.utility,
                             net.bytebuddy.utility.privilege,
                             net.bytebuddy.utility.visitor,
-                            ${shade.target}
+                            ${shade.target},
+                            ${shade.target}.commons
                         </Export-Package>
                         <Automatic-Module-Name>${project.groupId}</Automatic-Module-Name>
                     </instructions>
