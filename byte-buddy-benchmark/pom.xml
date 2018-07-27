@@ -122,7 +122,7 @@
                 </plugins>
             </build>
         </profile>
-        <!-- Do not run tests on JDK 11 or later as the benchmark currently requires sun.misc.Unsafe::defineClass -->
+        <!-- Do not run tests on JDK 11 or later as the benchmark currently requires sun.misc.Unsafe::defineClass. -->
         <profile>
             <id>java11-tests</id>
             <activation>
