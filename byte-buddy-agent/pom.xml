@@ -48,9 +48,20 @@
             <exclusions>
                 <exclusion>
                     <groupId>net.bytebuddy</groupId>
+                    <artifactId>byte-buddy</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.bytebuddy</groupId>
                     <artifactId>byte-buddy-agent</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- Include last version of Byte Buddy manually. -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${version.bytebuddy}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

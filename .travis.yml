@@ -23,11 +23,11 @@ matrix:
         - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
         - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
     # Java 12
-    #- env: TARGET='-Pjava10'
-    #  jdk: openjdk-ea
-    #  script:
-    #    - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-    #    - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
+    - env: TARGET='-Pjava10'
+      jdk: openjdk-ea
+      script:
+        - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+        - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -Dnet.bytebuddy.experimental=true -pl '!byte-buddy-gradle-plugin'
 
 script:
   - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
