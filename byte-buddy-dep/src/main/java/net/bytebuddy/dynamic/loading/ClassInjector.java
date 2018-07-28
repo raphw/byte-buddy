@@ -472,6 +472,33 @@ public interface ClassInjector {
                 }
 
                 @Override
+                public boolean isAvailable() {
+                    return true;
+                }
+
+                @Override
+                @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
+                public Dispatcher initialize() {
+                    try {
+                        // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
+                        // By always setting accessibility, the security manager is always triggered if this operation was illegal.
+                        findLoadedClass.setAccessible(true);
+                        defineClass.setAccessible(true);
+                        getPackage.setAccessible(true);
+                        definePackage.setAccessible(true);
+                        onInitialization();
+                        return this;
+                    } catch (Exception exception) {
+                        return new Dispatcher.Unavailable(exception);
+                    }
+                }
+
+                /**
+                 * Invoked upon initializing methods.
+                 */
+                protected abstract void onInitialization();
+
+                @Override
                 public Class<?> findClass(ClassLoader classLoader, String name) {
                     try {
                         return (Class<?>) findLoadedClass.invoke(classLoader, name);
@@ -530,33 +557,6 @@ public interface ClassInjector {
                         throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean isAvailable() {
-                    return true;
-                }
-
-                @Override
-                @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
-                public Dispatcher initialize() {
-                    try {
-                        // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
-                        // By always setting accessibility, the security manager is always triggered if this operation was illegal.
-                        findLoadedClass.setAccessible(true);
-                        defineClass.setAccessible(true);
-                        getPackage.setAccessible(true);
-                        definePackage.setAccessible(true);
-                        onInitialization();
-                        return this;
-                    } catch (Exception exception) {
-                        return new Dispatcher.Unavailable(exception);
-                    }
-                }
-
-                /**
-                 * Invoked upon initializing methods.
-                 */
-                protected abstract void onInitialization();
 
                 /**
                  * A resolved class dispatcher for a class injector on a VM running at least Java 7.
@@ -699,11 +699,6 @@ public interface ClassInjector {
                     this.getClassLoadingLock = getClassLoadingLock;
                 }
 
-                @Override
-                public boolean isAvailable() {
-                    return true;
-                }
-
                 /**
                  * Creates an indirect dispatcher.
                  *
@@ -711,7 +706,7 @@ public interface ClassInjector {
                  * @throws Exception If the dispatcher cannot be created.
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
-                public static Initializable make() throws Exception {
+                protected static Initializable make() throws Exception {
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
@@ -764,6 +759,11 @@ public interface ClassInjector {
                             type.getMethod("getPackage", ClassLoader.class, String.class),
                             type.getMethod("definePackage", ClassLoader.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class),
                             type.getMethod("getClassLoadingLock", ClassLoader.class, String.class));
+                }
+
+                @Override
+                public boolean isAvailable() {
+                    return true;
                 }
 
                 @Override
@@ -898,7 +898,8 @@ public interface ClassInjector {
                  * @return An appropriate initializable.
                  * @throws Exception If the injector cannot be created.
                  */
-                public static Initializable make() throws Exception {
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
+                protected static Initializable make() throws Exception {
                     Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
@@ -944,6 +945,20 @@ public interface ClassInjector {
                     } catch (NoSuchMethodException ignored) {
                         return new ForLegacyVm(findLoadedClass, defineClass, getPackage, definePackage);
                     }
+                }
+
+                @Override
+                public boolean isAvailable() {
+                    return true;
+                }
+
+                @Override
+                public Dispatcher initialize() {
+                    SecurityManager securityManager = System.getSecurityManager();
+                    if (securityManager != null) {
+                        securityManager.checkPermission(ACCESS_PERMISSION);
+                    }
+                    return this;
                 }
 
                 @Override
@@ -1004,20 +1019,6 @@ public interface ClassInjector {
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
                     }
-                }
-
-                @Override
-                public boolean isAvailable() {
-                    return true;
-                }
-
-                @Override
-                public Dispatcher initialize() {
-                    SecurityManager securityManager = System.getSecurityManager();
-                    if (securityManager != null) {
-                        securityManager.checkPermission(ACCESS_PERMISSION);
-                    }
-                    return this;
                 }
 
                 /**
