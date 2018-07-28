@@ -19,10 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ReflectPermission;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.Permission;
@@ -272,6 +269,11 @@ public interface ClassInjector {
             interface Initializable {
 
                 /**
+                 * The access permission to check upon injection if a security manager is active.
+                 */
+                Permission ACCESS_PERMISSION = new ReflectPermission("suppressAccessChecks");
+
+                /**
                  * Indicates if this dispatcher is available.
                  *
                  * @return {@code true} if this dispatcher is available.
@@ -368,9 +370,15 @@ public interface ClassInjector {
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
                     try {
-                        return JavaModule.isSupported()
-                                ? Dispatcher.Indirect.make()
-                                : Dispatcher.Direct.make();
+                        if (JavaModule.isSupported()) {
+                            try {
+                                return Dispatcher.UsingUnsafeInjection.make();
+                            } catch (NoSuchMethodException ignored) {
+                                return Dispatcher.UsingUnsafeOverride.make();
+                            }
+                        } else {
+                            return Dispatcher.Direct.make();
+                        }
                     } catch (InvocationTargetException exception) {
                         return new Initializable.Unavailable(exception.getCause().getMessage());
                     } catch (Exception exception) {
@@ -633,12 +641,7 @@ public interface ClassInjector {
              * An indirect dispatcher that uses a redirection accessor class that was injected into the bootstrap class loader.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class Indirect implements Dispatcher, Initializable {
-
-                /**
-                 * The access permission to check upon injection if a security manager is active.
-                 */
-                private static final Permission ACCESS_PERMISSION = new ReflectPermission("suppressAccessChecks");
+            class UsingUnsafeInjection implements Dispatcher, Initializable {
 
                 /**
                  * An instance of the accessor class that is required for using it's intentionally non-static methods.
@@ -672,7 +675,7 @@ public interface ClassInjector {
                 private final Method getClassLoadingLock;
 
                 /**
-                 * Creates a new indirect class loading injection dispatcher.
+                 * Creates a new class loading injection dispatcher using an unsafe injected dispatcher.
                  *
                  * @param accessor            An instance of the accessor class that is required for using it's intentionally non-static methods.
                  * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
@@ -682,12 +685,12 @@ public interface ClassInjector {
                  * @param getClassLoadingLock The accessor method for using {@code ClassLoader#getClassLoadingLock(String)} or returning the
                  *                            supplied {@link ClassLoader} if this method does not exist on the current VM.
                  */
-                protected Indirect(Object accessor,
-                                   Method findLoadedClass,
-                                   Method defineClass,
-                                   Method getPackage,
-                                   Method definePackage,
-                                   Method getClassLoadingLock) {
+                protected UsingUnsafeInjection(Object accessor,
+                                                Method findLoadedClass,
+                                                Method defineClass,
+                                                Method getPackage,
+                                                Method definePackage,
+                                                Method getClassLoadingLock) {
                     this.accessor = accessor;
                     this.findLoadedClass = findLoadedClass;
                     this.defineClass = defineClass;
@@ -755,7 +758,7 @@ public interface ClassInjector {
                                 .intercept(FixedValue.argument(0));
                     }
                     Class<?> type = builder.make().load(ClassLoadingStrategy.BOOTSTRAP_LOADER, new ClassLoadingStrategy.ForUnsafeInjection()).getLoaded();
-                    return new Indirect(unsafe.getDeclaredMethod("allocateInstance", Class.class).invoke(unsafeInstance, type),
+                    return new UsingUnsafeInjection(unsafe.getDeclaredMethod("allocateInstance", Class.class).invoke(unsafeInstance, type),
                             type.getMethod("findLoadedClass", ClassLoader.class, String.class),
                             type.getMethod("defineClass", ClassLoader.class, String.class, byte[].class, int.class, int.class, ProtectionDomain.class),
                             type.getMethod("getPackage", ClassLoader.class, String.class),
@@ -841,6 +844,246 @@ public interface ClassInjector {
                         throw new IllegalStateException("Could not access (accessor)::definePackage", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking (accessor)::definePackage", exception.getCause());
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher implementation that uses {@code sun.misc.Unsafe#putBoolean} to set the {@link AccessibleObject} field
+             * for making methods accessible.
+             */
+            abstract class UsingUnsafeOverride implements Dispatcher, Initializable {
+
+                /**
+                 * An instance of {@link ClassLoader#findLoadedClass(String)}.
+                 */
+                protected final Method findLoadedClass;
+
+                /**
+                 * An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                 */
+                protected final Method defineClass;
+
+                /**
+                 * An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 */
+                protected final Method getPackage;
+
+                /**
+                 * An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 */
+                protected final Method definePackage;
+
+                /**
+                 * Creates a new unsafe field injecting injection dispatcher.
+                 *
+                 * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                 * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                 * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 */
+                protected UsingUnsafeOverride(Method findLoadedClass,
+                                              Method defineClass,
+                                              Method getPackage,
+                                              Method definePackage) {
+                    this.findLoadedClass = findLoadedClass;
+                    this.defineClass = defineClass;
+                    this.getPackage = getPackage;
+                    this.definePackage = definePackage;
+                }
+
+                /**
+                 * Creates a new initializable class injector using an unsafe field injection.
+                 *
+                 * @return An appropriate initializable.
+                 * @throws Exception If the injector cannot be created.
+                 */
+                public static Initializable make() throws Exception {
+                    Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
+                    Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
+                    theUnsafe.setAccessible(true);
+                    Object unsafe = theUnsafe.get(null);
+                    long offset = (Long) unsafeType
+                            .getMethod("objectFieldOffset", Field.class)
+                            .invoke(unsafe, AccessibleObject.class.getDeclaredField("override"));
+                    Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
+                    Method getPackage;
+                    try {
+                        getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                    } catch (NoSuchMethodException ignored) {
+                        getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        putBoolean.invoke(unsafe, getPackage, offset, true);
+                    }
+                    Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                    Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
+                            String.class,
+                            byte[].class,
+                            int.class,
+                            int.class,
+                            ProtectionDomain.class);
+                    Method definePackage = ClassLoader.class.getDeclaredMethod("definePackage",
+                            String.class,
+                            String.class,
+                            String.class,
+                            String.class,
+                            String.class,
+                            String.class,
+                            String.class,
+                            URL.class);
+                    putBoolean.invoke(unsafe, defineClass, offset, true);
+                    putBoolean.invoke(unsafe, findLoadedClass, offset, true);
+                    putBoolean.invoke(unsafe, definePackage, offset, true);
+                    try {
+                        Method getClassLoadingLock = ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class);
+                        putBoolean.invoke(unsafe, getClassLoadingLock, offset, true);
+                        return new ForJava7CapableVm(findLoadedClass,
+                                defineClass,
+                                getPackage,
+                                definePackage,
+                                getClassLoadingLock);
+                    } catch (NoSuchMethodException ignored) {
+                        return new ForLegacyVm(findLoadedClass, defineClass, getPackage, definePackage);
+                    }
+                }
+
+                @Override
+                public Class<?> findClass(ClassLoader classLoader, String name) {
+                    try {
+                        return (Class<?>) findLoadedClass.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    try {
+                        return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#defineClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#defineClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Package getPackage(ClassLoader classLoader, String name) {
+                    try {
+                        return (Package) getPackage.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#getPackage", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#getPackage", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Package definePackage(ClassLoader classLoader,
+                                             String name,
+                                             String specificationTitle,
+                                             String specificationVersion,
+                                             String specificationVendor,
+                                             String implementationTitle,
+                                             String implementationVersion,
+                                             String implementationVendor,
+                                             URL sealBase) {
+                    try {
+                        return (Package) definePackage.invoke(classLoader,
+                                name,
+                                specificationTitle,
+                                specificationVersion,
+                                specificationVendor,
+                                implementationTitle,
+                                implementationVersion,
+                                implementationVendor,
+                                sealBase);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access java.lang.ClassLoader#definePackage", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.ClassLoader#definePackage", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean isAvailable() {
+                    return true;
+                }
+
+                @Override
+                public Dispatcher initialize() {
+                    SecurityManager securityManager = System.getSecurityManager();
+                    if (securityManager != null) {
+                        securityManager.checkPermission(ACCESS_PERMISSION);
+                    }
+                    return this;
+                }
+
+                /**
+                 * A resolved class dispatcher using unsafe field injection for a class injector on a VM running at least Java 7.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class ForJava7CapableVm extends UsingUnsafeOverride {
+
+                    /**
+                     * An instance of {@code ClassLoader#getClassLoadingLock(String)}.
+                     */
+                    private final Method getClassLoadingLock;
+
+                    /**
+                     * Creates a new resolved class injector using unsafe field injection for a VM running at least Java 7.
+                     *
+                     * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
+                     * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     */
+                    protected ForJava7CapableVm(Method findLoadedClass,
+                                                Method defineClass,
+                                                Method getPackage,
+                                                Method definePackage,
+                                                Method getClassLoadingLock) {
+                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                        this.getClassLoadingLock = getClassLoadingLock;
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        try {
+                            return getClassLoadingLock.invoke(classLoader, name);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Could not access java.lang.ClassLoader#getClassLoadingLock", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getCause());
+                        }
+                    }
+                }
+
+                /**
+                 * A resolved class dispatcher using unsafe field injection for a class injector prior to Java 7.
+                 */
+                protected static class ForLegacyVm extends UsingUnsafeOverride {
+
+                    /**
+                     * Creates a new resolved class injector using unsafe field injection for a VM prior to Java 7.
+                     *
+                     * @param findLoadedClass An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass     An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getPackage      An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param definePackage   An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     */
+                    protected ForLegacyVm(Method findLoadedClass,
+                                          Method defineClass,
+                                          Method getPackage,
+                                          Method definePackage) {
+                        super(findLoadedClass, defineClass, getPackage, definePackage);
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        return classLoader;
                     }
                 }
             }

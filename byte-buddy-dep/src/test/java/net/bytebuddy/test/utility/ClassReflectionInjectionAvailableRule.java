@@ -9,7 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.logging.Logger;
 
-public class ClassInjectionAvailableRule implements MethodRule {
+public class ClassReflectionInjectionAvailableRule implements MethodRule {
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {

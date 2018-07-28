@@ -5,7 +5,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassInjectionAvailableRule;
+import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Rule;
@@ -30,7 +30,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @Rule
-    public MethodRule classInjectionAvailableRule = new ClassInjectionAvailableRule();
+    public MethodRule classInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();
 
     private File file;
 
@@ -56,7 +56,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
 
     @Test
     @AgentAttachmentRule.Enforce
-    @ClassInjectionAvailableRule.Enforce
+    @ClassReflectionInjectionAvailableRule.Enforce
     public void testClassLoaderInjection() throws Exception {
         ClassLoadingStrategy<ClassLoader> bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = BAR + RandomString.make();
