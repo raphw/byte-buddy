@@ -1286,7 +1286,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             if (resolution.isResolved()) {
                 FieldList<FieldDescription.InDefinedShape> candidates = resolution.resolve().getDeclaredFields().filter(strict
                         ? ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))
-                        : failSafe(ElementMatchers.<FieldDescription>named(internalName).and(hasDescriptor(descriptor))));
+                        : ElementMatchers.<FieldDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                 if (!candidates.isEmpty()) {
                     Substitution.Resolver resolver = substitution.resolve(candidates.getOnly(), opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC);
                     if (resolver.isResolved()) {
@@ -1333,20 +1333,20 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 if (opcode == Opcodes.INVOKESPECIAL && internalName.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>isConstructor().and(hasDescriptor(descriptor))
-                            : failSafe(ElementMatchers.<MethodDescription>isConstructor().and(hasDescriptor(descriptor))));
+                            : ElementMatchers.<MethodDescription>failSafe(isConstructor().and(hasDescriptor(descriptor))));
                 } else if (opcode == Opcodes.INVOKESTATIC || opcode == Opcodes.INVOKESPECIAL) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
-                            : failSafe(ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))));
+                            : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                 } else { // Invokevirtual and invokeinterface can represent a private, non-static method from Java 11.
                     TypeDescription typeDescription = resolution.resolve();
                     candidates = typeDescription.getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))
-                            : failSafe(ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))));
+                            : ElementMatchers.<MethodDescription>failSafe(isPrivate().<MethodDescription>and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))));
                     if (candidates.isEmpty()) {
                         candidates = methodGraphCompiler.compile(resolution.resolve()).listNodes().asMethodList().filter(strict
                                 ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
-                                : failSafe(ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))));
+                                : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                     }
                 }
                 if (!candidates.isEmpty()) {
