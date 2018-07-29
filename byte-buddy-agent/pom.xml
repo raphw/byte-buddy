@@ -15,7 +15,7 @@
         <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
-        <version.unixsocket>2.0.4.3</version.unixsocket>
+        <version.unixsocket>2.0.4</version.unixsocket>
         <packages.list>net.bytebuddy.agent</packages.list>
     </properties>
 
@@ -30,7 +30,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.cosium.junixsocket</groupId>
+            <groupId>com.kohlschutter.junixsocket</groupId>
             <artifactId>junixsocket-native-common</artifactId>
             <version>${version.unixsocket}</version>
             <scope>provided</scope>
