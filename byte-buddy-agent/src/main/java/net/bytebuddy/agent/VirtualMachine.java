@@ -6,6 +6,7 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -240,9 +241,28 @@ public interface VirtualMachine {
              * if this VM does not support Unix socket communication, a {@link Throwable} is thrown.
              *
              * @return This virtual machine type.
-             * @throws Throwable If this VM does not support POSIX sockets or is not running on a HotSpot VM.
+             * @throws Throwable If this attachment method is not available.
              */
             public static Class<?> assertAvailability() throws Throwable {
+                try {
+                    Class<?> moduleType = Class.forName("java.lang.Module");
+                    Method getModule = Class.class.getMethod("getModule"), canRead = moduleType.getMethod("canRead", moduleType);
+                    Object thisModule = getModule.invoke(OnUnix.class), otherModule = getModule.invoke(AFUNIXSocket.class);
+                    if (!(Boolean) canRead.invoke(thisModule, otherModule)) {
+                        moduleType.getMethod("addReads", moduleType).invoke(thisModule, otherModule);
+                    }
+                    return doAssertAvailability();
+                } catch (ClassNotFoundException ignored) {
+                    return doAssertAvailability();
+                }
+            }
+
+            /**
+             * Asserts the availability of this virtual machine implementation.
+             *
+             * @return This virtual machine type.
+             */
+            private static Class<?> doAssertAvailability() {
                 if (!AFUNIXSocket.isSupported()) {
                     throw new IllegalStateException("POSIX sockets are not supported on the current system");
                 } else if (!System.getProperty("java.vm.name").toLowerCase(Locale.US).contains("hotspot")) {
