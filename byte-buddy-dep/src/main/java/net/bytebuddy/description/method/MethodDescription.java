@@ -109,8 +109,8 @@ public interface MethodDescription extends TypeVariableSource,
      * is marked {@link Deprecated} and adjusts the modifiers for being abstract or not. Additionally, this method
      * resolves a required minimal visibility.
      *
-     * @param manifest {@code true} if the method should be treated as non-abstract.
-     * @param visibility  The minimal visibility to enforce for this method.
+     * @param manifest   {@code true} if the method should be treated as non-abstract.
+     * @param visibility The minimal visibility to enforce for this method.
      * @return The method's actual modifiers.
      */
     int getActualModifiers(boolean manifest, Visibility visibility);
@@ -210,23 +210,13 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isInvokableOn(TypeDescription typeDescription);
 
-    /**
-     * Checks if the method is a bootstrap method.
-     *
-     * @return {@code true} if the method is a bootstrap method.
-     */
-    boolean isBootstrap();
+    boolean isInvokeBootstrap();
 
-    /**
-     * Checks if the method is a bootstrap method that accepts the given arguments.
-     *
-     * @param arguments The arguments that the bootstrap method is expected to accept where primitive values
-     *                  are to be represented as their wrapper types, loaded types by {@link TypeDescription},
-     *                  method handles by {@link JavaConstant.MethodHandle} instances and
-     *                  method types by {@link JavaConstant.MethodType} instances.
-     * @return {@code true} if the method is a bootstrap method that accepts the given arguments.
-     */
-    boolean isBootstrap(List<?> arguments);
+    boolean isInvokeBootstrap(List<?> arguments);
+
+    boolean isConstantBootstrap();
+
+    boolean isConstantBootstrap(List<?> arguments);
 
     /**
      * Checks if this method is capable of defining a default annotation value.
@@ -508,14 +498,7 @@ public interface MethodDescription extends TypeVariableSource,
                     : getDeclaringType().asErasure().equals(typeDescription));
         }
 
-        @Override
-        public boolean isBootstrap() {
-            TypeDescription returnType = getReturnType().asErasure();
-            if ((isMethod() && (!isStatic()
-                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
-                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asErasure()))) {
-                return false;
-            }
+        private boolean isBootstrap(TypeDescription typeType) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
                 case 0:
@@ -528,11 +511,11 @@ public interface MethodDescription extends TypeVariableSource,
                 case 3:
                     return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (parameterTypes.get(2).represents(Object[].class) || JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2)));
+                            && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(typeType));
                 default:
                     if (!(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (JavaType.METHOD_TYPE.getTypeStub().isAssignableTo(parameterTypes.get(2))))) {
+                            && parameterTypes.get(2).isAssignableFrom(typeType))) {
                         return false;
                     }
                     int parameterIndex = 4;
@@ -546,11 +529,7 @@ public interface MethodDescription extends TypeVariableSource,
             }
         }
 
-        @Override
-        public boolean isBootstrap(List<?> arguments) {
-            if (!isBootstrap()) {
-                return false;
-            }
+        private boolean isBootstrap(List<?> arguments) {
             for (Object argument : arguments) {
                 Class<?> argumentType = argument.getClass();
                 if (!(argumentType == String.class
@@ -559,13 +538,11 @@ public interface MethodDescription extends TypeVariableSource,
                         || argumentType == Float.class
                         || argumentType == Double.class
                         || TypeDescription.class.isAssignableFrom(argumentType)
-                        || JavaConstant.MethodHandle.class.isAssignableFrom(argumentType)
-                        || JavaConstant.MethodType.class.isAssignableFrom(argumentType))) {
-                    throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
+                        || JavaConstant.class.isAssignableFrom(argumentType))) {
+                    throw new IllegalArgumentException("Not a Java constant representation: " + argument);
                 }
             }
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
-            // The following assumes that the bootstrap method is a valid one, as checked above.
             if (parameterTypes.size() < 4) {
                 return arguments.isEmpty() || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
             } else {
@@ -574,15 +551,14 @@ public interface MethodDescription extends TypeVariableSource,
                 for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
                     boolean finalParameterCheck = !argumentIterator.hasNext();
                     if (!finalParameterCheck) {
-                        Class<?> argumentType = argumentIterator.next().getClass();
-                        finalParameterCheck = !(parameterType.represents(String.class) && argumentType == String.class)
-                                && !(parameterType.represents(int.class) && argumentType == Integer.class)
-                                && !(parameterType.represents(long.class) && argumentType == Long.class)
-                                && !(parameterType.represents(float.class) && argumentType == Float.class)
-                                && !(parameterType.represents(double.class) && argumentType == Double.class)
-                                && !(parameterType.represents(Class.class) && TypeDescription.class.isAssignableFrom(argumentType))
-                                && !(parameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub()) && JavaConstant.MethodHandle.class.isAssignableFrom(argumentType))
-                                && !(parameterType.equals(JavaType.METHOD_TYPE.getTypeStub()) && JavaConstant.MethodType.class.isAssignableFrom(argumentType));
+                        Object argument = argumentIterator.next();
+                        finalParameterCheck = !((argument instanceof JavaConstant) && ((JavaConstant) argument).getType().isAssignableTo(parameterType))
+                                && !(parameterType.represents(Class.class) && argument instanceof TypeDescription)
+                                && !(parameterType.represents(String.class) && argument.getClass() == String.class)
+                                && !(parameterType.represents(int.class) && argument.getClass() == Integer.class)
+                                && !(parameterType.represents(long.class) && argument.getClass() == Long.class)
+                                && !(parameterType.represents(float.class) && argument.getClass() == Float.class)
+                                && !(parameterType.represents(double.class) && argument.getClass() == Double.class);
                     }
                     if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);
@@ -591,6 +567,35 @@ public interface MethodDescription extends TypeVariableSource,
                 }
                 return true;
             }
+        }
+
+        @Override
+        public boolean isInvokeBootstrap() {
+            TypeDescription returnType = getReturnType().asErasure();
+            if ((isMethod() && (!isStatic()
+                    || !(JavaType.CALL_SITE.getTypeStub().isAssignableFrom(returnType) || JavaType.CALL_SITE.getTypeStub().isAssignableTo(returnType))))
+                    || (isConstructor() && !JavaType.CALL_SITE.getTypeStub().isAssignableFrom(getDeclaringType().asErasure()))) {
+                return false;
+            }
+            return isBootstrap(JavaType.METHOD_TYPE.getTypeStub());
+        }
+
+        @Override
+        public boolean isInvokeBootstrap(List<?> arguments) {
+            return isInvokeBootstrap() && isBootstrap(arguments);
+        }
+
+        @Override
+        public boolean isConstantBootstrap() {
+            ParameterList<?> parameters = getParameters();
+            return !parameters.isEmpty()
+                    && getParameters().get(0).getType().asErasure().equals(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub())
+                    && isBootstrap(TypeDescription.CLASS);
+        }
+
+        @Override
+        public boolean isConstantBootstrap(List<?> arguments) {
+            return isConstantBootstrap() && isBootstrap(arguments);
         }
 
         @Override

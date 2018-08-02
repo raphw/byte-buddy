@@ -64,7 +64,7 @@ public class MethodInvocationDynamicTest {
 
     @Test
     public void testDynamicStaticBootstrap() throws Exception {
-        when(methodDescription.isBootstrap()).thenReturn(true);
+        when(methodDescription.isInvokeBootstrap()).thenReturn(true);
         when(methodDescription.isStatic()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
                 .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));
@@ -77,7 +77,7 @@ public class MethodInvocationDynamicTest {
 
     @Test
     public void testDynamicConstructorBootstrap() throws Exception {
-        when(methodDescription.isBootstrap()).thenReturn(true);
+        when(methodDescription.isInvokeBootstrap()).thenReturn(true);
         when(methodDescription.isConstructor()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
                 .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));

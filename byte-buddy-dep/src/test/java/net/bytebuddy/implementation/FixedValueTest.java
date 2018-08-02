@@ -220,11 +220,9 @@ public class FixedValueTest {
                 .make()
                 .load(FooQux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-
         assertThat(fooQux.getDeclaredFields().length, is(0));
         assertThat(fooQux.getDeclaredMethods().length, is(1));
-        assertThat(fooQux.getDeclaredMethod(BAR, Integer.class, String.class)
-                .invoke(fooQux.getDeclaredConstructor().newInstance(), 0, BAR), is((Object) BAR));
+        assertThat(fooQux.getDeclaredMethod(BAR, Integer.class, String.class).invoke(fooQux.getDeclaredConstructor().newInstance(), 0, BAR), is((Object) BAR));
     }
 
     @Test(expected = IllegalArgumentException.class)

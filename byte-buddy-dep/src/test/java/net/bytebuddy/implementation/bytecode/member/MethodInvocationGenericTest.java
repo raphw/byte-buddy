@@ -113,7 +113,7 @@ public class MethodInvocationGenericTest {
     public void testGenericMethodDynamic() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class);
         when(methodReturnType.asErasure()).thenReturn(genericErasure);
-        when(declaredMethod.isBootstrap()).thenReturn(true);
+        when(declaredMethod.isInvokeBootstrap()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),
@@ -128,7 +128,7 @@ public class MethodInvocationGenericTest {
     @Test
     public void testGenericMethodDynamicErasureEqual() throws Exception {
         when(methodReturnType.asErasure()).thenReturn(declaredErasure);
-        when(declaredMethod.isBootstrap()).thenReturn(true);
+        when(declaredMethod.isInvokeBootstrap()).thenReturn(true);
         StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).dynamic(FOO,
                 otherType,
                 Collections.<TypeDescription>emptyList(),

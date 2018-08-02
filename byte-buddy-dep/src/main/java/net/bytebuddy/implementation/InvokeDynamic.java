@@ -221,7 +221,7 @@ public class InvokeDynamic implements Implementation.Composable {
             }
             arguments.add(argument);
         }
-        if (!bootstrapMethod.isBootstrap(arguments)) {
+        if (!bootstrapMethod.isInvokeBootstrap(arguments)) {
             throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
         }
         List<Object> serializedArguments = new ArrayList<Object>(arguments.size());

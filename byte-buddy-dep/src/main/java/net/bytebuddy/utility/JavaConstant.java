@@ -2,6 +2,7 @@ package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -18,9 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
@@ -1322,6 +1321,301 @@ public interface JavaConstant {
             public int getIdentifier() {
                 return identifier;
             }
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    class Dynamic implements JavaConstant {
+
+        private static final String CONSTANT_BOOTSTRAPS = "java/lang/invoke/ConstantBootstraps";
+
+        private final org.objectweb.asm.ConstantDynamic value;
+
+        private final TypeDescription typeDescription;
+
+        protected Dynamic(org.objectweb.asm.ConstantDynamic value, TypeDescription typeDescription) {
+            this.value = value;
+            this.typeDescription = typeDescription;
+        }
+
+        public static Dynamic ofNullConstant() {
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic("nullConstant",
+                    TypeDescription.OBJECT.getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "nullConstant",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;",
+                            false)), TypeDescription.OBJECT);
+        }
+
+        public static JavaConstant ofPrimitiveType(Class<?> type) {
+            return ofPrimitiveType(TypeDescription.ForLoadedType.of(type));
+        }
+
+        public static JavaConstant ofPrimitiveType(TypeDescription typeDescription) {
+            if (!typeDescription.isPrimitive() || typeDescription.represents(void.class)) {
+                throw new IllegalArgumentException("Not a primitive type: " + typeDescription);
+            }
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(typeDescription.getInternalName(),
+                    TypeDescription.CLASS.getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "primitiveClass",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;",
+                            false)), TypeDescription.CLASS);
+        }
+
+        public static JavaConstant ofEnumeration(Enum<?> enumeration) {
+            return ofEnumeration(new EnumerationDescription.ForLoadedEnumeration(enumeration));
+        }
+
+        public static JavaConstant ofEnumeration(EnumerationDescription enumerationDescription) {
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(enumerationDescription.getValue(),
+                    "Ljava/lang/Enum;",
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "enumConstant",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Enum;",
+                            false)), enumerationDescription.getEnumerationType());
+        }
+
+        public static Dynamic ofField(Field field) {
+            return ofField(new FieldDescription.ForLoadedField(field));
+        }
+
+        public static Dynamic ofField(FieldDescription.InDefinedShape fieldDescription) {
+            if (!fieldDescription.isStatic() || !fieldDescription.isFinal()) {
+                throw new IllegalArgumentException("Field must be static and final: " + fieldDescription);
+            }
+            boolean selfDeclared = fieldDescription.getType().isPrimitive()
+                    ? fieldDescription.getType().asErasure().asBoxed().equals(fieldDescription.getType().asErasure())
+                    : fieldDescription.getDeclaringType().equals(fieldDescription.getType().asErasure());
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
+                    fieldDescription.getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "getStaticFinal",
+                            selfDeclared
+                                    ? "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;"
+                                    : "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;",
+                            false), selfDeclared
+                    ? new Object[0]
+                    : new Object[]{fieldDescription.getType().asErasure()}), fieldDescription.getType().asErasure());
+        }
+
+        public static Dynamic ofInvocation(Method method, Object... rawArgument) {
+            return ofInvocation(method, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic ofInvocation(Method method, List<?> rawArguments) {
+            return ofInvocation(new MethodDescription.ForLoadedMethod(method), rawArguments);
+        }
+
+        public static Dynamic ofInvocation(Constructor<?> constructor, Object... rawArgument) {
+            return ofInvocation(constructor, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic ofInvocation(Constructor<?> constructor, List<?> rawArguments) {
+            return ofInvocation(new MethodDescription.ForLoadedConstructor(constructor), rawArguments);
+        }
+
+        public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, Object... rawArgument) {
+            return ofInvocation(methodDescription, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, List<?> rawArguments) {
+            if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
+                throw new IllegalArgumentException("Cannot invoke method without return value: " + methodDescription);
+            }
+            List<TypeDescription> typeDescriptions = (methodDescription.isStatic()
+                    ? methodDescription.getParameters().asTypeList().asErasures()
+                    : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures()));
+            if (typeDescriptions.size() != rawArguments.size()) {
+                throw new IllegalArgumentException("Cannot assign " + rawArguments + " to " + methodDescription);
+            }
+            List<Object> arguments = new ArrayList<Object>(rawArguments.size());
+            Iterator<TypeDescription> iterator = typeDescriptions.iterator();
+            for (Object argument : rawArguments) {
+                if (argument instanceof Class) {
+                    argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+                    argument = JavaConstant.MethodHandle.ofLoaded(argument);
+                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+                    argument = JavaConstant.MethodType.ofLoaded(argument);
+                }
+                TypeDescription targetType;
+                if (argument instanceof JavaConstant) {
+                    targetType = ((JavaConstant) argument).getType();
+                } else if (argument instanceof TypeDescription) {
+                    targetType = TypeDescription.CLASS;
+                } else {
+                    targetType = TypeDescription.ForLoadedType.of(argument.getClass());
+                }
+                if (!targetType.isAssignableTo(iterator.next().asBoxed())) {
+                    throw new IllegalArgumentException("Cannot assign argument of type " + targetType + " to " + methodDescription);
+                }
+                arguments.add(argument);
+            }
+            Object[] serializedArgument = new Object[arguments.size() + 1];
+            serializedArgument[0] = new Handle(methodDescription.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
+                    methodDescription.getDeclaringType().getInternalName(),
+                    methodDescription.getInternalName(),
+                    methodDescription.getDescriptor(),
+                    false);
+            int index = 1;
+            for (Object argument : arguments) {
+                if (argument instanceof TypeDescription) {
+                    argument = Type.getType(((TypeDescription) argument).getDescriptor());
+                } else if (argument instanceof JavaConstant) {
+                    argument = ((JavaConstant) argument).asConstantPoolValue();
+                }
+                serializedArgument[index++] = argument;
+            }
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic("invoke",
+                    (methodDescription.isConstructor()
+                            ? methodDescription.getDeclaringType()
+                            : methodDescription.getReturnType().asErasure()).getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "invoke",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;",
+                            false),
+                    serializedArgument), methodDescription.isConstructor() ? methodDescription.getDeclaringType() : methodDescription.getReturnType().asErasure());
+        }
+
+        public JavaConstant ofVarHandle(Field field) {
+            return ofVarHandle(new FieldDescription.ForLoadedField(field));
+        }
+
+        public JavaConstant ofVarHandle(FieldDescription.InDefinedShape fieldDescription) {
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
+                    JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            fieldDescription.isStatic()
+                                    ? "staticFieldVarHandle"
+                                    : "fieldVarHandle",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;",
+                            false),
+                    Type.getType(fieldDescription.getDeclaringType().getDescriptor()),
+                    Type.getType(fieldDescription.getType().asErasure().getDescriptor())), JavaType.VAR_HANDLE.getTypeStub());
+        }
+
+        public JavaConstant ofArrayVarHandle(Class<?> type) {
+            return ofArrayVarHandle(TypeDescription.ForLoadedType.of(type));
+        }
+
+        public JavaConstant ofArrayVarHandle(TypeDescription typeDescription) {
+            if (!typeDescription.isArray()) {
+                throw new IllegalArgumentException("Not an array type: " + typeDescription);
+            }
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic("arrayVarHandle",
+                    JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESPECIAL,
+                            CONSTANT_BOOTSTRAPS,
+                            "arrayVarHandle",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;",
+                            false),
+                    Type.getType(typeDescription.getDescriptor())), JavaType.VAR_HANDLE.getTypeStub());
+        }
+
+        public static Dynamic bootstrap(Method method, Object... rawArgument) {
+            return bootstrap(method, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic bootstrap(Method method, List<?> rawArguments) {
+            return bootstrap(new MethodDescription.ForLoadedMethod(method), rawArguments);
+        }
+
+        public static Dynamic bootstrap(Constructor<?> constructor, Object... rawArgument) {
+            return bootstrap(constructor, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic bootstrap(Constructor<?> constructor, List<?> rawArguments) {
+            return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), rawArguments);
+        }
+
+        public static Dynamic bootstrap(MethodDescription.InDefinedShape bootstrapMethod, Object... rawArgument) {
+            return bootstrap(bootstrapMethod, Arrays.asList(rawArgument));
+        }
+
+        public static Dynamic bootstrap(MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
+            List<Object> arguments = new ArrayList<Object>(rawArguments.size());
+            for (Object argument : rawArguments) {
+                if (argument instanceof Class) {
+                    argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+                    argument = JavaConstant.MethodHandle.ofLoaded(argument);
+                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+                    argument = JavaConstant.MethodType.ofLoaded(argument);
+                }
+                arguments.add(argument);
+            }
+            if (!bootstrapMethod.isConstantBootstrap(arguments)) {
+                throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
+            }
+            Object[] serializedArgument = new Object[arguments.size()];
+            int index = 0;
+            for (Object argument : arguments) {
+                if (argument instanceof TypeDescription) {
+                    argument = Type.getType(((TypeDescription) argument).getDescriptor());
+                } else if (argument instanceof JavaConstant) {
+                    argument = ((JavaConstant) argument).asConstantPoolValue();
+                }
+                serializedArgument[index++] = argument;
+            }
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(bootstrapMethod.getName(),
+                    bootstrapMethod.getReturnType().asErasure().getDescriptor(),
+                    new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.INVOKESTATIC,
+                            bootstrapMethod.getDeclaringType().getInternalName(),
+                            bootstrapMethod.getInternalName(),
+                            bootstrapMethod.getDescriptor(),
+                            false),
+                    serializedArgument),
+                    bootstrapMethod.getReturnType().asErasure());
+        }
+
+        public JavaConstant withType(TypeDescription typeDescription) {
+            if (!typeDescription.isAssignableTo(this.typeDescription)) {
+                throw new IllegalArgumentException(typeDescription + " is not assignable to bootstrapped type " + this.typeDescription);
+            }
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(value.getName(),
+                    typeDescription.getDescriptor(),
+                    value.getBootstrapMethod(),
+                    value.getBootstrapMethodArguments()), typeDescription);
+        }
+
+        @Override
+        public Object asConstantPoolValue() {
+            return value;
+        }
+
+        @Override
+        public StackManipulation asStackManipulation() {
+            return new JavaConstantValue(this);
+        }
+
+        @Override
+        public TypeDescription getType() {
+            return typeDescription;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = value.hashCode();
+            result = 31 * result + typeDescription.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            Dynamic dynamic = (Dynamic) other;
+            return value.equals(dynamic.value) && typeDescription.equals(dynamic.typeDescription);
         }
     }
 }
