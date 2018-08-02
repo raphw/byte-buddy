@@ -106,9 +106,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                    constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                    it is also possible to supply unloaded types as {@link TypeDescription},
-     *                    {@link JavaConstant.MethodHandle} or
-     *                    {@link JavaConstant.MethodType} instances.
+     *                    it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                    instances. The latter do also allow for the representation of dynamic constants.
      *                    instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
@@ -126,9 +125,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                     constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                     it is also possible to supply unloaded types as {@link TypeDescription},
-     *                     {@link JavaConstant.MethodHandle} or
-     *                     {@link JavaConstant.MethodType} instances.
+     *                     it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                     instances. The latter do also allow for the representation of dynamic constants.
      *                     instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
@@ -142,13 +140,12 @@ public class InvokeDynamic implements Implementation.Composable {
      * specified bootstrap constructor.
      *
      * @param constructor The bootstrap constructor that is used to link the instrumented method.
-     * @param rawArgument The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     * @param rawArgument The arguments that are handed to the bootstrap constructor. Any argument must be saved in the
      *                    constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                    it is also possible to supply unloaded types as {@link TypeDescription},
-     *                    {@link JavaConstant.MethodHandle} or
-     *                    {@link JavaConstant.MethodType} instances.
+     *                    it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                    instances. The latter do also allow for the representation of dynamic constants.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -161,13 +158,12 @@ public class InvokeDynamic implements Implementation.Composable {
      * specified bootstrap constructor.
      *
      * @param constructor  The bootstrap constructor that is used to link the instrumented method.
-     * @param rawArguments The arguments that are handed to the bootstrap method. Any argument must be saved in the
+     * @param rawArguments The arguments that are handed to the bootstrap constructor. Any argument must be saved in the
      *                     constant pool, i.e. primitive types (represented as their wrapper types) with a size of
      *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                     it is also possible to supply unloaded types as {@link TypeDescription},
-     *                     {@link JavaConstant.MethodHandle} or
-     *                     {@link JavaConstant.MethodType} instances.
+     *                     it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                     instances. The latter do also allow for the representation of dynamic constants.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -180,13 +176,12 @@ public class InvokeDynamic implements Implementation.Composable {
      * specified bootstrap method or constructor.
      *
      * @param bootstrapMethod The bootstrap method or constructor that is used to link the instrumented method.
-     * @param rawArgument     The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
-     *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     * @param rawArgument     The arguments that are handed to the bootstrap method or constructor. Any argument must be
+     *                        saved in the constant pool, i.e. primitive types (represented as their wrapper types) with
+     *                        a size of at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                        it is also possible to supply unloaded types as {@link TypeDescription},
-     *                        {@link JavaConstant.MethodHandle} or
-     *                        {@link JavaConstant.MethodType} instances.
+     *                        it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                        instances. The latter do also allow for the representation of dynamic constants.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -199,13 +194,12 @@ public class InvokeDynamic implements Implementation.Composable {
      * specified bootstrap method or constructor.
      *
      * @param bootstrapMethod The bootstrap method or constructor that is used to link the instrumented method.
-     * @param rawArguments    The arguments that are handed to the bootstrap method. Any argument must be saved in the
-     *                        constant pool, i.e. primitive types (represented as their wrapper types) with a size of
-     *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
+     * @param rawArguments    The arguments that are handed to the bootstrap method or constructor. Any argument must be
+     *                        saved in the constant pool, i.e. primitive types (represented as their wrapper types) with
+     *                        a size of at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
-     *                        it is also possible to supply unloaded types as {@link TypeDescription},
-     *                        {@link JavaConstant.MethodHandle} or
-     *                        {@link JavaConstant.MethodType} instances.
+     *                        it is also possible to supply unloaded types as {@link TypeDescription}, {@link JavaConstant}
+     *                        instances. The latter do also allow for the representation of dynamic constants.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -224,17 +218,17 @@ public class InvokeDynamic implements Implementation.Composable {
         if (!bootstrapMethod.isInvokeBootstrap(arguments)) {
             throw new IllegalArgumentException("Not a valid bootstrap method " + bootstrapMethod + " for " + arguments);
         }
-        List<Object> serializedArguments = new ArrayList<Object>(arguments.size());
-        for (Object anArgument : arguments) {
-            if (anArgument instanceof TypeDescription) {
-                anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());
-            } else if (anArgument instanceof JavaConstant) {
-                anArgument = ((JavaConstant) anArgument).asConstantPoolValue();
+        List<Object> asmifiedArgument = new ArrayList<Object>(arguments.size());
+        for (Object argument : arguments) {
+            if (argument instanceof TypeDescription) {
+                argument = Type.getType(((TypeDescription) argument).getDescriptor());
+            } else if (argument instanceof JavaConstant) {
+                argument = ((JavaConstant) argument).asConstantPoolValue();
             }
-            serializedArguments.add(anArgument);
+            asmifiedArgument.add(argument);
         }
         return new WithImplicitTarget(bootstrapMethod,
-                serializedArguments,
+                asmifiedArgument,
                 new InvocationProvider.Default(),
                 TerminationHandler.RETURNING,
                 Assigner.DEFAULT,

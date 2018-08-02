@@ -40,7 +40,10 @@ public enum JavaType {
      */
     CALL_SITE("java.lang.invoke.CallSite", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
 
-    VAR_HANDLE("java.lang.invoke,VarHandle", Opcodes.ACC_ABSTRACT, Object.class),
+    /**
+     * The Java 9 {@code java.lang.invoke.VarHandle} type.
+     */
+    VAR_HANDLE("java.lang.invoke.VarHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
 
     /**
      * The Java 8 {@code java.lang.reflect.Parameter} type.

@@ -210,12 +210,36 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isInvokableOn(TypeDescription typeDescription);
 
+    /**
+     * Checks if this method is a valid bootstrap method for an invokedynamic call.
+     *
+     * @return {@code true} if this method is a valid bootstrap method for an invokedynamic call.
+     */
     boolean isInvokeBootstrap();
 
+    /**
+     * Checks if this method is a valid bootstrap method for an invokedynamic call.
+     *
+     * @param arguments The arguments to the bootstrap method represented by instances of primitive wrapper types,
+     *                  {@link String}, {@link TypeDescription} and {@link JavaConstant} values.
+     * @return {@code true} if this method is a valid bootstrap method for an invokedynamic call.
+     */
     boolean isInvokeBootstrap(List<?> arguments);
 
+    /**
+     * Checks if this method is a valid bootstrap method for an constantdynamic call.
+     *
+     * @return {@code true} if this method is a valid bootstrap method for an constantdynamic call.
+     */
     boolean isConstantBootstrap();
 
+    /**
+     * Checks if this method is a valid bootstrap method for an constantdynamic call.
+     *
+     * @param arguments The arguments to the bootstrap method represented by instances of primitive wrapper types,
+     *                  {@link String}, {@link TypeDescription} and {@link JavaConstant} values.
+     * @return {@code true} if this method is a valid bootstrap method for an constantdynamic call.
+     */
     boolean isConstantBootstrap(List<?> arguments);
 
     /**
@@ -498,6 +522,12 @@ public interface MethodDescription extends TypeVariableSource,
                     : getDeclaringType().asErasure().equals(typeDescription));
         }
 
+        /**
+         * Checks if this method is a bootstrap method while expecting the supplied type as a type representation.
+         *
+         * @param typeType The type of the bootstrap method's type representation.
+         * @return {@code true} if this method is a bootstrap method assuming the supplied type representation.
+         */
         private boolean isBootstrap(TypeDescription typeType) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
@@ -529,6 +559,13 @@ public interface MethodDescription extends TypeVariableSource,
             }
         }
 
+        /**
+         * Checks if this method is a bootstrap method given the supplied arguments. This method does not implement a full check but assumes that
+         * {@link MethodDescription.AbstractBase#isBootstrap(TypeDescription)} is invoked, as well.
+         *
+         * @param arguments The arguments to the bootstrap method.
+         * @return {@code true} if this method is a bootstrap method for the supplied arguments..
+         */
         private boolean isBootstrap(List<?> arguments) {
             for (Object argument : arguments) {
                 Class<?> argumentType = argument.getClass();

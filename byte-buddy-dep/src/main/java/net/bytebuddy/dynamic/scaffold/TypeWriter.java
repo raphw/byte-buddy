@@ -1995,6 +1995,11 @@ public interface TypeWriter<T> {
                 void assertSubRoutine();
 
                 /**
+                 * Asserts the capability of storing a dynamic value in the constant pool.
+                 */
+                void assertDynamicValueInConstantPool();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -2092,6 +2097,11 @@ public interface TypeWriter<T> {
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
+
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2168,6 +2178,11 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         if (modifier != PackageDescription.PACKAGE_MODIFIERS) {
                             throw new IllegalStateException("A package description type must define " + PackageDescription.PACKAGE_MODIFIERS + " as modifier");
@@ -2175,6 +2190,7 @@ public interface TypeWriter<T> {
                             throw new IllegalStateException("Cannot implement interface for package type");
                         }
                     }
+
                 }
 
                 /**
@@ -2283,6 +2299,11 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertSubRoutine() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
                 }
@@ -2395,6 +2416,11 @@ public interface TypeWriter<T> {
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
+
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2452,14 +2478,14 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertAnnotation() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write annotations for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertTypeAnnotation() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type annotations for class file version " + classFileVersion);
                         }
                     }
@@ -2478,36 +2504,43 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertTypeInConstantPool() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertMethodTypeInConstantPool() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertHandleInConstantPool() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method handle to constant pool for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertInvokeDynamic() {
-                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write invoke dynamic instruction for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertSubRoutine() {
-                        if (!classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
+                        if (classFileVersion.isGreaterThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write subroutine for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
+                            throw new IllegalStateException("Cannot write dynamic constant for class file version " + classFileVersion);
                         }
                     }
                 }
@@ -2638,6 +2671,13 @@ public interface TypeWriter<T> {
                             constraint.assertSubRoutine();
                         }
                     }
+
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertDynamicValueInConstantPool();
+                        }
+                    }
                 }
             }
 
@@ -2697,6 +2737,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
+                @SuppressWarnings("deprecation")
                 public void visitLdcInsn(Object constant) {
                     if (constant instanceof Type) {
                         Type type = (Type) constant;
@@ -2711,6 +2752,8 @@ public interface TypeWriter<T> {
                         }
                     } else if (constant instanceof Handle) {
                         constraint.assertHandleInConstantPool();
+                    } else if (constant instanceof ConstantDynamic) {
+                        constraint.assertDynamicValueInConstantPool();
                     }
                     super.visitLdcInsn(constant);
                 }
@@ -2724,8 +2767,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object... bootstrapArgument) {
+                @SuppressWarnings("deprecation")
+                public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object[] bootstrapArgument) {
                     constraint.assertInvokeDynamic();
+                    for (Object constant : bootstrapArgument) {
+                        if (constant instanceof ConstantDynamic) {
+                            constraint.assertDynamicValueInConstantPool();
+                        }
+                    }
                     super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethod, bootstrapArgument);
                 }
 

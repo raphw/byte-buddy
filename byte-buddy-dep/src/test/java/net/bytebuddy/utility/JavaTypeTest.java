@@ -64,6 +64,14 @@ public class JavaTypeTest {
     }
 
     @Test
+    public void testVarHandle() throws Exception {
+        assertThat(JavaType.VAR_HANDLE.getTypeStub().getName(), is("java.lang.invoke.VarHandle"));
+        assertThat(JavaType.VAR_HANDLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
+        assertThat(JavaType.VAR_HANDLE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(JavaType.VAR_HANDLE.getTypeStub().getInterfaces().size(), is(0));
+    }
+
+    @Test
     public void testParameter() throws Exception {
         assertThat(JavaType.PARAMETER.getTypeStub().getName(), is("java.lang.reflect.Parameter"));
         assertThat(JavaType.PARAMETER.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
