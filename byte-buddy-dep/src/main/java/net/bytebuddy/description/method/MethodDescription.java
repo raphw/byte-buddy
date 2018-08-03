@@ -543,19 +543,9 @@ public interface MethodDescription extends TypeVariableSource,
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
                             && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(typeType));
                 default:
-                    if (!(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                    return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && parameterTypes.get(2).isAssignableFrom(typeType))) {
-                        return false;
-                    }
-                    int parameterIndex = 4;
-                    for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
-                        if (!parameterType.represents(Object.class) && !parameterType.isConstantPool()) {
-                            return parameterType.represents(Object[].class) && parameterIndex == parameterTypes.size();
-                        }
-                        parameterIndex++;
-                    }
-                    return true;
+                            && parameterTypes.get(2).isAssignableFrom(typeType);
             }
         }
 
@@ -568,6 +558,9 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private boolean isBootstrap(List<?> arguments) {
             for (Object argument : arguments) {
+                if (argument == null) {
+                    throw new IllegalArgumentException("The null value is not a bootstrap constant");
+                }
                 Class<?> argumentType = argument.getClass();
                 if (!(argumentType == String.class
                         || argumentType == Integer.class
@@ -590,7 +583,7 @@ public interface MethodDescription extends TypeVariableSource,
                     if (!finalParameterCheck) {
                         Object argument = argumentIterator.next();
                         finalParameterCheck = !((argument instanceof JavaConstant) && ((JavaConstant) argument).getType().isAssignableTo(parameterType))
-                                && !(parameterType.represents(Class.class) && argument instanceof TypeDescription)
+                                && !(parameterType.represents(Class.class) && argument instanceof TypeDescription && !((TypeDescription) argument).isPrimitive())
                                 && !(parameterType.represents(String.class) && argument.getClass() == String.class)
                                 && !(parameterType.represents(int.class) && argument.getClass() == Integer.class)
                                 && !(parameterType.represents(long.class) && argument.getClass() == Long.class)

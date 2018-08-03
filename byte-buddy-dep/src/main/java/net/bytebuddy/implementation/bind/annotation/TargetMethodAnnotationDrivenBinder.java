@@ -249,7 +249,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     stackManipulation = ClassConstant.of((TypeDescription) value);
                     suppliedType = TypeDescription.CLASS;
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                    stackManipulation = JavaConstant.MethodHandle.ofLoaded(value).asStackManipulation();
+                    stackManipulation = new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value));
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (value instanceof JavaConstant.MethodHandle) {
                     stackManipulation = new JavaConstantValue((JavaConstant.MethodHandle) value);

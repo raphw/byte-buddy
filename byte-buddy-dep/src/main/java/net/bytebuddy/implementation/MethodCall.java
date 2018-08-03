@@ -307,7 +307,7 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(JavaConstant... javaConstant) {
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaConstant.length);
         for (JavaConstant aJavaConstant : javaConstant) {
-            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(aJavaConstant.asStackManipulation(), aJavaConstant.getType()));
+            argumentLoaders.add(new ArgumentLoader.ForStackManipulation(new JavaConstantValue(aJavaConstant), aJavaConstant.getType()));
         }
         return with(argumentLoaders);
     }
@@ -1386,9 +1386,9 @@ public class MethodCall implements Implementation.Composable {
                 } else if (value instanceof Class) {
                     return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                    return new ForStackManipulation(JavaConstant.MethodHandle.ofLoaded(value).asStackManipulation(), JavaType.METHOD_HANDLE.getTypeStub());
+                    return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), JavaType.METHOD_HANDLE.getTypeStub());
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                    return new ForStackManipulation(JavaConstant.MethodType.ofLoaded(value).asStackManipulation(), JavaType.METHOD_TYPE.getTypeStub());
+                    return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), JavaType.METHOD_TYPE.getTypeStub());
                 } else if (value instanceof Enum<?>) {
                     EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
                     return new ForStackManipulation(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());

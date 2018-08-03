@@ -7,8 +7,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.JavaConstantValue;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -33,13 +31,6 @@ public interface JavaConstant {
      * @return The constant pool value in a format that can be written by ASM.
      */
     Object asConstantPoolValue();
-
-    /**
-     * Returns the instance as loadable onto the operand stack.
-     *
-     * @return A stack manipulation that loads the represented value onto the operand stack.
-     */
-    StackManipulation asStackManipulation();
 
     /**
      * Returns a description of the type of the represented instance or at least a stub.
@@ -252,11 +243,6 @@ public interface JavaConstant {
                 stringBuilder.append(parameterType.getDescriptor());
             }
             return Type.getMethodType(stringBuilder.append(')').append(getReturnType().getDescriptor()).toString());
-        }
-
-        @Override
-        public StackManipulation asStackManipulation() {
-            return new JavaConstantValue(this);
         }
 
         @Override
@@ -619,11 +605,6 @@ public interface JavaConstant {
             }
             String descriptor = stringBuilder.append(')').append(getReturnType().getDescriptor()).toString();
             return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor, getOwnerType().isInterface());
-        }
-
-        @Override
-        public StackManipulation asStackManipulation() {
-            return new JavaConstantValue(this);
         }
 
         @Override
@@ -1364,7 +1345,7 @@ public interface JavaConstant {
         public static Dynamic ofNullConstant() {
             return new Dynamic(new org.objectweb.asm.ConstantDynamic("nullConstant",
                     TypeDescription.OBJECT.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "nullConstant",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;",
@@ -1391,9 +1372,9 @@ public interface JavaConstant {
             if (!typeDescription.isPrimitive()) {
                 throw new IllegalArgumentException("Not a primitive type: " + typeDescription);
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(typeDescription.getInternalName(),
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(typeDescription.getDescriptor(),
                     TypeDescription.CLASS.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "primitiveClass",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;",
@@ -1418,8 +1399,8 @@ public interface JavaConstant {
          */
         public static JavaConstant ofEnumeration(EnumerationDescription enumerationDescription) {
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(enumerationDescription.getValue(),
-                    "Ljava/lang/Enum;",
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    enumerationDescription.getEnumerationType().getDescriptor(),
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "enumConstant",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Enum;",
@@ -1451,7 +1432,7 @@ public interface JavaConstant {
                     : fieldDescription.getDeclaringType().equals(fieldDescription.getType().asErasure());
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
                     fieldDescription.getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "getStaticFinal",
                             selfDeclared
@@ -1459,7 +1440,7 @@ public interface JavaConstant {
                                     : "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;",
                             false), selfDeclared
                     ? new Object[0]
-                    : new Object[]{fieldDescription.getType().asErasure()}), fieldDescription.getType().asErasure());
+                    : new Object[]{Type.getType(fieldDescription.getDeclaringType().getDescriptor())}), fieldDescription.getType().asErasure());
         }
 
         /**
@@ -1525,17 +1506,13 @@ public interface JavaConstant {
          * @return A dynamic constant that is resolved by the supplied factory method or constructor.
          */
         public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, List<?> rawArguments) {
-            if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
-                throw new IllegalArgumentException("Cannot invoke method without return value: " + methodDescription);
-            }
-            List<TypeDescription> typeDescriptions = (methodDescription.isStatic()
-                    ? methodDescription.getParameters().asTypeList().asErasures()
-                    : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures()));
-            if (typeDescriptions.size() != rawArguments.size()) {
+            if (!methodDescription.isConstructor() && (!methodDescription.isStatic() || methodDescription.getReturnType().represents(void.class))) {
+                throw new IllegalArgumentException("Bootstrap method is no constructor or non-void static factory: " + methodDescription);
+            } else if (methodDescription.getParameters().size() != rawArguments.size()) {
                 throw new IllegalArgumentException("Cannot assign " + rawArguments + " to " + methodDescription);
             }
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
-            Iterator<TypeDescription> iterator = typeDescriptions.iterator();
+            Iterator<TypeDescription> iterator = methodDescription.getParameters().asTypeList().asErasures().iterator();
             for (Object argument : rawArguments) {
                 if (argument instanceof Class) {
                     argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
@@ -1576,7 +1553,7 @@ public interface JavaConstant {
                     (methodDescription.isConstructor()
                             ? methodDescription.getDeclaringType()
                             : methodDescription.getReturnType().asErasure()).getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "invoke",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;",
@@ -1590,7 +1567,7 @@ public interface JavaConstant {
          * @param field The field to represent a var handle for.
          * @return A dynamic constant that represents the created var handle constant.
          */
-        public JavaConstant ofVarHandle(Field field) {
+        public static JavaConstant ofVarHandle(Field field) {
             return ofVarHandle(new FieldDescription.ForLoadedField(field));
         }
 
@@ -1600,10 +1577,10 @@ public interface JavaConstant {
          * @param fieldDescription The field to represent a var handle for.
          * @return A dynamic constant that represents the created var handle constant.
          */
-        public JavaConstant ofVarHandle(FieldDescription.InDefinedShape fieldDescription) {
+        public static JavaConstant ofVarHandle(FieldDescription.InDefinedShape fieldDescription) {
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
                     JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             fieldDescription.isStatic()
                                     ? "staticFieldVarHandle"
@@ -1620,7 +1597,7 @@ public interface JavaConstant {
          * @param type The array type for which the var handle is resolved.
          * @return A dynamic constant that represents the created var handle constant.
          */
-        public JavaConstant ofArrayVarHandle(Class<?> type) {
+        public static JavaConstant ofArrayVarHandle(Class<?> type) {
             return ofArrayVarHandle(TypeDescription.ForLoadedType.of(type));
         }
 
@@ -1630,13 +1607,13 @@ public interface JavaConstant {
          * @param typeDescription The array type for which the var handle is resolved.
          * @return A dynamic constant that represents the created var handle constant.
          */
-        public JavaConstant ofArrayVarHandle(TypeDescription typeDescription) {
+        public static JavaConstant ofArrayVarHandle(TypeDescription typeDescription) {
             if (!typeDescription.isArray()) {
                 throw new IllegalArgumentException("Not an array type: " + typeDescription);
             }
             return new Dynamic(new org.objectweb.asm.ConstantDynamic("arrayVarHandle",
                     JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
-                    new Handle(Opcodes.H_INVOKESPECIAL,
+                    new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
                             "arrayVarHandle",
                             "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;",
@@ -1647,72 +1624,78 @@ public interface JavaConstant {
         /**
          * Binds the supplied bootstrap method for the resolution of a dynamic constant.
          *
+         * @param name        The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param method      The bootstrap method to invoke.
          * @param rawArgument The arguments for the bootstrap method represented as primitive wrapper types,
          *                    {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped method's result.
          */
-        public static Dynamic bootstrap(Method method, Object... rawArgument) {
-            return bootstrap(method, Arrays.asList(rawArgument));
+        public static Dynamic bootstrap(String name, Method method, Object... rawArgument) {
+            return bootstrap(name, method, Arrays.asList(rawArgument));
         }
 
         /**
          * Binds the supplied bootstrap method for the resolution of a dynamic constant.
          *
+         * @param name         The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param method       The bootstrap method to invoke.
          * @param rawArguments The arguments for the bootstrap method represented as primitive wrapper types,
          *                     {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped method's result.
          */
-        public static Dynamic bootstrap(Method method, List<?> rawArguments) {
-            return bootstrap(new MethodDescription.ForLoadedMethod(method), rawArguments);
+        public static Dynamic bootstrap(String name, Method method, List<?> rawArguments) {
+            return bootstrap(name, new MethodDescription.ForLoadedMethod(method), rawArguments);
         }
 
         /**
          * Binds the supplied bootstrap constructor for the resolution of a dynamic constant.
          *
+         * @param name        The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param constructor The bootstrap constructor to invoke.
          * @param rawArgument The arguments for the bootstrap constructor represented as primitive wrapper types,
          *                    {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped constructor's result.
          */
-        public static Dynamic bootstrap(Constructor<?> constructor, Object... rawArgument) {
-            return bootstrap(constructor, Arrays.asList(rawArgument));
+        public static Dynamic bootstrap(String name, Constructor<?> constructor, Object... rawArgument) {
+            return bootstrap(name, constructor, Arrays.asList(rawArgument));
         }
 
         /**
          * Binds the supplied bootstrap constructor for the resolution of a dynamic constant.
          *
+         * @param name         The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param constructor  The bootstrap constructor to invoke.
          * @param rawArguments The arguments for the bootstrap constructor represented as primitive wrapper types,
          *                     {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped constructor's result.
          */
-        public static Dynamic bootstrap(Constructor<?> constructor, List<?> rawArguments) {
-            return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), rawArguments);
+        public static Dynamic bootstrap(String name, Constructor<?> constructor, List<?> rawArguments) {
+            return bootstrap(name, new MethodDescription.ForLoadedConstructor(constructor), rawArguments);
         }
 
         /**
          * Binds the supplied bootstrap method or constructor for the resolution of a dynamic constant.
          *
+         * @param name            The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param bootstrapMethod The bootstrap method or constructor to invoke.
          * @param rawArgument     The arguments for the bootstrap method or constructor represented as primitive wrapper types,
          *                        {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped method's or constructor's result.
          */
-        public static Dynamic bootstrap(MethodDescription.InDefinedShape bootstrapMethod, Object... rawArgument) {
-            return bootstrap(bootstrapMethod, Arrays.asList(rawArgument));
+        public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrapMethod, Object... rawArgument) {
+            return bootstrap(name, bootstrapMethod, Arrays.asList(rawArgument));
         }
 
         /**
          * Binds the supplied bootstrap method or constructor for the resolution of a dynamic constant.
          *
+         * @param name            The name of the bootstrap constant that is provided to the bootstrap method or constructor.
          * @param bootstrapMethod The bootstrap method or constructor to invoke.
          * @param rawArguments    The arguments for the bootstrap method or constructor represented as primitive wrapper types,
          *                        {@link String}, {@link TypeDescription} or {@link JavaConstant} values or their loaded forms.
          * @return A dynamic constant that represents the bootstrapped method's or constructor's result.
          */
-        public static Dynamic bootstrap(MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
+        public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
             for (Object argument : rawArguments) {
                 if (argument instanceof Class) {
@@ -1737,15 +1720,19 @@ public interface JavaConstant {
                 }
                 asmifiedArgument[index++] = argument;
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(bootstrapMethod.getName(),
-                    bootstrapMethod.getReturnType().asErasure().getDescriptor(),
+            return new Dynamic(new org.objectweb.asm.ConstantDynamic(name,
+                    (bootstrapMethod.isConstructor()
+                            ? bootstrapMethod.getDeclaringType()
+                            : bootstrapMethod.getReturnType().asErasure()).getDescriptor(),
                     new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
                             bootstrapMethod.getDeclaringType().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor(),
                             false),
                     asmifiedArgument),
-                    bootstrapMethod.getReturnType().asErasure());
+                    bootstrapMethod.isConstructor()
+                            ? bootstrapMethod.getDeclaringType()
+                            : bootstrapMethod.getReturnType().asErasure());
         }
 
         /**
@@ -1770,11 +1757,6 @@ public interface JavaConstant {
         @Override
         public Object asConstantPoolValue() {
             return value;
-        }
-
-        @Override
-        public StackManipulation asStackManipulation() {
-            return new JavaConstantValue(this);
         }
 
         @Override

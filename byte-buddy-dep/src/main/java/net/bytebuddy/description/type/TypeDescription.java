@@ -19,7 +19,6 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -234,15 +233,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * @return {@code true} if this type and the given type are in the same package.
      */
     boolean isSamePackage(TypeDescription typeDescription);
-
-    /**
-     * Checks if instances of this type can be stored in the constant pool of a class. Note that any primitive
-     * type that is smaller than an {@code int} cannot be stored in the constant pool as those types are represented
-     * as {@code int} values internally.
-     *
-     * @return {@code true} if instances of this type can be stored in the constant pool of a class.
-     */
-    boolean isConstantPool();
 
     /**
      * Checks if this type represents a wrapper type for a primitive type. The {@link java.lang.Void} type is
@@ -6768,18 +6758,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             } else {
                 return getName();
             }
-        }
-
-        @Override
-        public boolean isConstantPool() {
-            return represents(int.class)
-                    || represents(long.class)
-                    || represents(float.class)
-                    || represents(double.class)
-                    || represents(String.class)
-                    || represents(Class.class)
-                    || JavaType.METHOD_HANDLE.getTypeStub().equals(this)
-                    || JavaType.METHOD_TYPE.getTypeStub().equals(this);
         }
 
         @Override

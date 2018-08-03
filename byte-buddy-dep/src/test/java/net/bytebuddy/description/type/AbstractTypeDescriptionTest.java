@@ -529,16 +529,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testConstantPool() throws Exception {
-        assertThat(describe(Object.class).isConstantPool(), is(false));
-        assertThat(describe(boolean.class).isConstantPool(), is(false));
-        assertThat(describe(int.class).isConstantPool(), is(true));
-        assertThat(describe(Integer.class).isConstantPool(), is(false));
-        assertThat(describe(String.class).isConstantPool(), is(true));
-        assertThat(describe(Class.class).isConstantPool(), is(true));
-    }
-
-    @Test
     public void testGenericType() throws Exception {
         assertThat(describe(SampleGenericType.class).getTypeVariables(), is(TypeDescription.ForLoadedType.of(SampleGenericType.class).getTypeVariables()));
         assertThat(describe(SampleGenericType.class).getSuperClass(), is(TypeDescription.ForLoadedType.of(SampleGenericType.class).getSuperClass()));
