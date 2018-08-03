@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. August 2018: version 1.8.16
+
+- Add support for dynamic class file constants for Java 11+.
+- Suppress lazy resolution errors within `MemberSubstitution::relaxed`.
+- Generalize method matcher for `clone` method.
+- Add `toString` method to `ClassFileVersion`.
+- Reenable `ClassFileInjection.Default.INJECTION` in Java 11+ via fallback onto `Unsafe::putBoolean`.
+
 ### 26. July 2018: version 1.8.15
 
 - Add preliminary support for Java 12.
