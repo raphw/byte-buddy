@@ -55,6 +55,26 @@ public class DynamicConstantBootstrap {
         }
     }
 
+    public DynamicConstantBootstrap(int intValue,
+                                    long longValue,
+                                    float floatValue,
+                                    double doubleValue,
+                                    String stringValue,
+                                    Class<?> typeValue,
+                                    MethodHandle methodHandle,
+                                    MethodType methodType) {
+        if (intValue != 42
+                || longValue != 42L
+                || floatValue != 42f
+                || doubleValue != 42d
+                || !stringValue.equals("foo")
+                || typeValue != Object.class
+                || methodHandle == null
+                || methodType == null) {
+            throw new AssertionError();
+        }
+    }
+
     public static DynamicConstantBootstrap bootstrap(Object... args) {
         return new DynamicConstantBootstrap();
     }
@@ -93,6 +113,27 @@ public class DynamicConstantBootstrap {
                                                      Class<?> typeValue,
                                                      MethodHandle methodHandle,
                                                      MethodType methodType) {
+        if (intValue != 42
+                || longValue != 42L
+                || floatValue != 42f
+                || doubleValue != 42d
+                || !stringValue.equals("foo")
+                || typeValue != Object.class
+                || methodHandle == null
+                || methodType == null) {
+            throw new AssertionError();
+        }
+        return new DynamicConstantBootstrap();
+    }
+
+    public static DynamicConstantBootstrap make(int intValue,
+                                                long longValue,
+                                                float floatValue,
+                                                double doubleValue,
+                                                String stringValue,
+                                                Class<?> typeValue,
+                                                MethodHandle methodHandle,
+                                                MethodType methodType) {
         if (intValue != 42
                 || longValue != 42L
                 || floatValue != 42f

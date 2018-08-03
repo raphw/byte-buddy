@@ -376,6 +376,32 @@ public class JavaConstantDynamicTest {
 
     @Test
     @JavaVersionRule.Enforce(11)
+    public void testConstructWithArguments() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.value(JavaConstant.Dynamic.ofInvocation(bootstrap.getConstructor(
+                        int.class,
+                        long.class,
+                        float.class,
+                        double.class,
+                        String.class,
+                        Class.class,
+                        Class.forName("java.lang.invoke.MethodHandle"),
+                        Class.forName("java.lang.invoke.MethodType")), 42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), instanceOf(bootstrap));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
     public void testInvoke() throws Exception {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
@@ -405,6 +431,32 @@ public class JavaConstantDynamicTest {
         assertThat(baz.getDeclaredMethods().length, is(1));
         Foo foo = baz.getDeclaredConstructor().newInstance();
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), instanceOf(SampleClass.class));
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testInvokeWithArguments() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        Class<? extends Foo> baz = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.value(JavaConstant.Dynamic.ofInvocation(bootstrap.getMethod("make",
+                        int.class,
+                        long.class,
+                        float.class,
+                        double.class,
+                        String.class,
+                        Class.class,
+                        Class.forName("java.lang.invoke.MethodHandle"),
+                        Class.forName("java.lang.invoke.MethodType")), 42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        Foo foo = baz.getDeclaredConstructor().newInstance();
+        assertThat(baz.getDeclaredMethod(FOO).invoke(foo), instanceOf(bootstrap));
         assertThat(baz.getDeclaredMethod(FOO).invoke(foo), sameInstance(baz.getDeclaredMethod(FOO).invoke(foo)));
     }
 
@@ -464,7 +516,26 @@ public class JavaConstantDynamicTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalTypeResolution() throws Exception {
-        JavaConstant.Dynamic.ofNullConstant().withType(TypeDescription.VOID);
+        JavaConstant.Dynamic.ofNullConstant().withType(void.class);
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(11)
+    public void testConstructorTypeResolutionEqual() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        JavaConstant.Dynamic dynamic = JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getConstructor(
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class));
+        assertThat(dynamic.withType(bootstrap), equalTo((JavaConstant) dynamic));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(11)
+    public void testConstructorTypeResolutionNonEqual() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
+        JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getConstructor(
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class)).withType(Object.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -490,6 +561,11 @@ public class JavaConstantDynamicTest {
     @Test(expected = IllegalArgumentException.class)
     public void testInvokeNonStatic() throws Exception {
         JavaConstant.Dynamic.ofInvocation(SampleClass.class.getMethod("bar"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInvokeWrongArguments() throws Exception {
+        JavaConstant.Dynamic.ofInvocation(SampleClass.class.getConstructor(), "foo");
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -1739,12 +1739,27 @@ public interface JavaConstant {
          * Resolves this {@link Dynamic} constant to resolve the returned instance to the supplied type. The type must be a subtype of the
          * bootstrap method's return type. Constructors cannot be resolved to a different type.
          *
+         * @param type The type to resolve the bootstrapped value to.
+         * @return This dynamic constant but resolved to the supplied type.
+         */
+        public JavaConstant withType(Class<?> type) {
+            return withType(TypeDescription.ForLoadedType.of(type));
+        }
+
+        /**
+         * Resolves this {@link Dynamic} constant to resolve the returned instance to the supplied type. The type must be a subtype of the
+         * bootstrap method's return type. Constructors cannot be resolved to a different type.
+         *
          * @param typeDescription The type to resolve the bootstrapped value to.
          * @return This dynamic constant but resolved to the supplied type.
          */
         public JavaConstant withType(TypeDescription typeDescription) {
             if (value.getBootstrapMethod().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-                throw new IllegalArgumentException("It is not possible to change the resolved type of a bootstrap constructor");
+                if (typeDescription.equals(this.typeDescription)) {
+                    return this;
+                } else {
+                    throw new IllegalArgumentException("It is not possible to change the resolved type of a bootstrap constructor");
+                }
             } else if (!typeDescription.isAssignableTo(this.typeDescription)) {
                 throw new IllegalArgumentException(typeDescription + " is not assignable to bootstrapped type " + this.typeDescription);
             }
