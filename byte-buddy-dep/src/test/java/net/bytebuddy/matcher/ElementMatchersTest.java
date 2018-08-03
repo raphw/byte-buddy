@@ -965,6 +965,10 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isClone()
                 .matches(new MethodDescription.ForLoadedMethod(ObjectMethods.class.getDeclaredMethod("clone"))), is(true));
         assertThat(ElementMatchers.isClone()
+                .matches(new MethodDescription.ForLoadedMethod(CloneMethods.class.getDeclaredMethod("clone"))), is(true));
+        assertThat(ElementMatchers.isClone()
+                .matches(new MethodDescription.ForLoadedMethod(CloneMethods.class.getDeclaredMethod("clone", int.class))), is(false));
+        assertThat(ElementMatchers.isClone()
                 .matches(new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"))), is(false));
     }
 
@@ -1368,6 +1372,19 @@ public class ElementMatchersTest {
         protected void finalize() throws Throwable {
             super.finalize();
         }
+    }
+
+    private static class CloneMethods {
+
+        @Override
+        public CloneMethods clone() throws CloneNotSupportedException {
+            return new CloneMethods();
+        }
+
+        public Object clone(int someArgument) {
+            return null;
+        }
+
     }
 
     @SuppressWarnings("unused")

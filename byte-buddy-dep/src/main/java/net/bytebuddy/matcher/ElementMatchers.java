@@ -1602,7 +1602,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#clone()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isClone() {
-        return named("clone").and(takesArguments(0)).and(returns(TypeDescription.OBJECT));
+        return named("clone").and(takesArguments(0));
     }
 
     /**
