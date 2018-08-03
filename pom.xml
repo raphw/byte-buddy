@@ -60,7 +60,7 @@
         <version.bytebuddy>1.8.15</version.bytebuddy>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.5.0</version.plugin.bundle>
-        <version.plugin.compiler>3.7.0</version.plugin.compiler>
+        <version.plugin.compiler>3.8.0</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
