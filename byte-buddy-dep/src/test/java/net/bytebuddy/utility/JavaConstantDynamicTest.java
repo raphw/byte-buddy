@@ -578,6 +578,22 @@ public class JavaConstantDynamicTest {
         JavaConstant.Dynamic.bootstrap(FOO, SampleClass.class.getMethod("foo"));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(11)
+    public void testEmptyName() throws Exception {
+        JavaConstant.Dynamic.bootstrap("", Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap").getMethod("bootstrap",
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(11)
+    public void testNameWithDot() throws Exception {
+        JavaConstant.Dynamic.bootstrap(".", Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap").getMethod("bootstrap",
+                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                Object[].class));
+    }
+
     public static class Foo {
 
         public Object foo() {

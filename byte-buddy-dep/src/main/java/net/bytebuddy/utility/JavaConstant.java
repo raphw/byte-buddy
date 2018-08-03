@@ -1696,6 +1696,9 @@ public interface JavaConstant {
          * @return A dynamic constant that represents the bootstrapped method's or constructor's result.
          */
         public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
+            if (name.isEmpty() || name.contains(".")) {
+                throw new IllegalArgumentException("Not a valid field name: " + name);
+            }
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
             for (Object argument : rawArguments) {
                 if (argument instanceof Class) {
@@ -1760,7 +1763,7 @@ public interface JavaConstant {
                 } else {
                     throw new IllegalArgumentException("It is not possible to change the resolved type of a bootstrap constructor");
                 }
-            } else if (!typeDescription.isAssignableTo(this.typeDescription)) {
+            } else if (!typeDescription.isAssignableTo(this.typeDescription) && !this.typeDescription.represents(Object.class) && typeDescription.isPrimitive()) {
                 throw new IllegalArgumentException(typeDescription + " is not assignable to bootstrapped type " + this.typeDescription);
             }
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(value.getName(),
