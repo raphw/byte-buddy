@@ -65,7 +65,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {9, Arrays.asList("1.9", "9"), Opcodes.V9, 53, 0, true, true, true},
                 {10, Arrays.asList("1.10", "10"), Opcodes.V10, 54, 0, true, true, true},
                 {11, Arrays.asList("1.11", "11"), Opcodes.V11, 55, 0, true, true, true},
-                {11, Arrays.asList("1.12", "12"), Opcodes.V11, 55, 0, true, true, true}
+                {12, Arrays.asList("1.12", "12"), Opcodes.V11, 55, 0, true, true, true}
         });
     }
 
@@ -137,6 +137,11 @@ public class ClassFileVersionKnownVersionsTest {
                     .getLoaded();
             assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
         }
+    }
+
+    @Test
+    public void testToString() {
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).toString(), is("Java " + (javaVersion == 12 ? 11 : javaVersion)));
     }
 
     public static class Foo {

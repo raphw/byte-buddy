@@ -344,6 +344,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 : getMajorVersion() - other.getMajorVersion());
     }
 
+    @Override
+    public String toString() {
+        return "Java " + getJavaVersion();
+    }
+
     /**
      * A locator for the executing VM's Java version.
      */

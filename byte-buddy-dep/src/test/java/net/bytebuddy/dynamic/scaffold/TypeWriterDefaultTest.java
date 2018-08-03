@@ -489,6 +489,15 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testDynamicConstantInPre11ConstantPool() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V10)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class)
+                .intercept(FixedValue.value(JavaConstant.Dynamic.ofNullConstant()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodHandleInLegacyConstantPool() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
