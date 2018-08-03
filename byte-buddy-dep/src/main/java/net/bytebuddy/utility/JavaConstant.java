@@ -1739,7 +1739,7 @@ public interface JavaConstant {
             }
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(bootstrapMethod.getName(),
                     bootstrapMethod.getReturnType().asErasure().getDescriptor(),
-                    new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.INVOKESTATIC,
+                    new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
                             bootstrapMethod.getDeclaringType().getInternalName(),
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor(),
