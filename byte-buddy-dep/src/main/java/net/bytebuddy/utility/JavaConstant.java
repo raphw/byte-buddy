@@ -1516,12 +1516,18 @@ public interface JavaConstant {
                     : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures())).iterator();
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
             for (Object argument : rawArguments) {
-                if (argument instanceof Class) {
-                    argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
+                if (argument == null) {
+                    argument = Dynamic.ofNullConstant();
+                } else if (argument instanceof Class) {
+                    argument = ((Class<?>) argument).isPrimitive()
+                            ? ofPrimitiveType((Class<?>) argument)
+                            : TypeDescription.ForLoadedType.of((Class<?>) argument);
+                } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
+                    argument = ofPrimitiveType((TypeDescription) argument);
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
-                    argument = JavaConstant.MethodHandle.ofLoaded(argument);
+                    argument = MethodHandle.ofLoaded(argument);
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
-                    argument = JavaConstant.MethodType.ofLoaded(argument);
+                    argument = MethodType.ofLoaded(argument);
                 }
                 TypeDescription targetType;
                 if (argument instanceof JavaConstant) {
@@ -1703,12 +1709,18 @@ public interface JavaConstant {
             }
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
             for (Object argument : rawArguments) {
-                if (argument instanceof Class) {
-                    argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
+                if (argument == null) {
+                    argument = ofNullConstant();
+                } else if (argument instanceof Class) {
+                    argument = ((Class<?>) argument).isPrimitive()
+                            ? ofPrimitiveType((Class<?>) argument)
+                            : TypeDescription.ForLoadedType.of((Class<?>) argument);
+                } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
+                    argument = ofPrimitiveType((TypeDescription) argument);
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
-                    argument = JavaConstant.MethodHandle.ofLoaded(argument);
+                    argument = MethodHandle.ofLoaded(argument);
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
-                    argument = JavaConstant.MethodType.ofLoaded(argument);
+                    argument = MethodType.ofLoaded(argument);
                 }
                 arguments.add(argument);
             }

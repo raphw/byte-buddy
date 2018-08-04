@@ -206,8 +206,14 @@ public class InvokeDynamic implements Implementation.Composable {
     public static WithImplicitTarget bootstrap(MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
         List<Object> arguments = new ArrayList<Object>(rawArguments.size());
         for (Object argument : rawArguments) {
-            if (argument instanceof Class) {
-                argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
+            if (argument == null) {
+                argument = JavaConstant.Dynamic.ofNullConstant();
+            } else if (argument instanceof Class) {
+                argument = ((Class<?>) argument).isPrimitive()
+                        ? JavaConstant.Dynamic.ofPrimitiveType((Class<?>) argument)
+                        : TypeDescription.ForLoadedType.of((Class<?>) argument);
+            } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
+                argument = JavaConstant.Dynamic.ofPrimitiveType((TypeDescription) argument);
             } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
                 argument = JavaConstant.MethodHandle.ofLoaded(argument);
             } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
