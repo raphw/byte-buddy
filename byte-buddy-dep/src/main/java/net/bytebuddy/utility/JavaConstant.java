@@ -1511,7 +1511,7 @@ public interface JavaConstant {
             } else if (methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != rawArguments.size()) {
                 throw new IllegalArgumentException("Cannot assign " + rawArguments + " to " + methodDescription);
             }
-            Iterator<TypeDescription> iterator = (methodDescription.isStatic()
+            Iterator<TypeDescription> iterator = (methodDescription.isStatic() || methodDescription.isConstructor()
                     ? methodDescription.getParameters().asTypeList().asErasures()
                     : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures())).iterator();
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
