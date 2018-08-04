@@ -521,7 +521,7 @@ public class JavaConstantDynamicTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIncompatibleTypeForMethod() throws Exception {
-        JavaConstant.Dynamic.ofInvocation(Object.class.getMethod("toString"), FOO).withType(Object.class);
+        JavaConstant.Dynamic.ofInvocation(Object.class.getMethod("toString"), FOO).withType(Integer.class);
     }
 
     @Test

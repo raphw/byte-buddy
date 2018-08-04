@@ -1763,7 +1763,7 @@ public interface JavaConstant {
                 throw new IllegalArgumentException("Constant value cannot represent void");
             } else if (value.getBootstrapMethod().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
                     ? !this.typeDescription.isAssignableTo(typeDescription)
-                    : (!typeDescription.isAssignableTo(this.typeDescription) && !(typeDescription.isPrimitive() && this.typeDescription.represents(Object.class)))) {
+                    : (!typeDescription.asBoxed().isInHierarchyWith(this.typeDescription.asBoxed()))) {
                 throw new IllegalArgumentException(typeDescription + " is not compatible with bootstrapped type " + this.typeDescription);
             }
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(value.getName(),

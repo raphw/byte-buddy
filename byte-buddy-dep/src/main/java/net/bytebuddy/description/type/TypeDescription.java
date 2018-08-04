@@ -137,6 +137,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     boolean isAssignableTo(TypeDescription typeDescription);
 
+    /**
+     * Returns {@code true} if this type and the supplied type are in a type hierarchy with each other, i.e. if this type is assignable
+     * to the supplied type or the other way around.
+     *
+     * @param type The type of interest.
+     * @return {@code true} if this type and the supplied type are in a type hierarchy with each other.
+     */
+    boolean isInHierarchyWith(Class<?> type);
+
+    /**
+     * Returns {@code true} if this type and the supplied type are in a type hierarchy with each other, i.e. if this type is assignable
+     * to the supplied type or the other way around.
+     *
+     * @param typeDescription The type of interest.
+     * @return {@code true} if this type and the supplied type are in a type hierarchy with each other.
+     */
+    boolean isInHierarchyWith(TypeDescription typeDescription);
+
     @Override
     TypeDescription getComponentType();
 
@@ -6587,6 +6605,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        public boolean isInHierarchyWith(Class<?> type) {
+            return isAssignableTo(type) || isAssignableFrom(type);
+        }
+
+        @Override
+        public boolean isInHierarchyWith(TypeDescription typeDescription) {
+            return isAssignableTo(typeDescription) || isAssignableFrom(typeDescription);
+        }
+
+        @Override
         public TypeDescription asErasure() {
             return this;
         }
@@ -7219,6 +7247,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public boolean isAssignableTo(TypeDescription typeDescription) {
             return typeDescription instanceof ForLoadedType && ((ForLoadedType) typeDescription).type.isAssignableFrom(type) || super.isAssignableTo(typeDescription);
+        }
+
+        @Override
+        public boolean isInHierarchyWith(Class<?> type) {
+            return type.isAssignableFrom(this.type) || this.type.isAssignableFrom(type) || super.isInHierarchyWith(type);
+        }
+
+        @Override
+        public boolean isInHierarchyWith(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && (((ForLoadedType) typeDescription).type.isAssignableFrom(type)
+                    || type.isAssignableFrom(((ForLoadedType) typeDescription).type)) || super.isInHierarchyWith(typeDescription);
         }
 
         @Override

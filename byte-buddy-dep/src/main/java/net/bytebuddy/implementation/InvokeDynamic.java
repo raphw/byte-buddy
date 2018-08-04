@@ -768,15 +768,6 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
-     * Returns the invocation provider to be used for equals and hash code calculations.
-     *
-     * @return The invocation provider that represents this instance.
-     */
-    protected InvocationProvider getInvocationProvider() {
-        return invocationProvider;
-    }
-
-    /**
      * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
      * stack and for creating the actual <i>invoke dynamic</i> instruction.
      */

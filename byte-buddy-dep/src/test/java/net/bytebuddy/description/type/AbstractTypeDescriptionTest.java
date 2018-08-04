@@ -469,6 +469,16 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    public void testIsInHierarchyWith() throws Exception {
+        assertThat(describe(Object.class).isInHierarchyWith(Object.class), is(true));
+        assertThat(describe(Object.class).isInHierarchyWith(String.class), is(true));
+        assertThat(describe(String.class).isInHierarchyWith(Object.class), is(true));
+        assertThat(describe(Integer.class).isInHierarchyWith(Long.class), is(false));
+        assertThat(describe(Integer.class).isInHierarchyWith(int.class), is(false));
+        assertThat(describe(Object.class).isInHierarchyWith(int.class), is(false));
+    }
+
+    @Test
     public void testIsVisible() throws Exception {
         assertThat(describe(SampleClass.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleInterface.class)), is(true));
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
