@@ -1506,13 +1506,15 @@ public interface JavaConstant {
          * @return A dynamic constant that is resolved by the supplied factory method or constructor.
          */
         public static Dynamic ofInvocation(MethodDescription.InDefinedShape methodDescription, List<?> rawArguments) {
-            if (!methodDescription.isConstructor() && (!methodDescription.isStatic() || methodDescription.getReturnType().represents(void.class))) {
+            if (!methodDescription.isConstructor() && methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalArgumentException("Bootstrap method is no constructor or non-void static factory: " + methodDescription);
-            } else if (methodDescription.getParameters().size() != rawArguments.size()) {
+            } else if (methodDescription.getParameters().size() + (methodDescription.isStatic() || methodDescription.isConstructor() ? 0 : 1) != rawArguments.size()) {
                 throw new IllegalArgumentException("Cannot assign " + rawArguments + " to " + methodDescription);
             }
+            Iterator<TypeDescription> iterator = (methodDescription.isStatic()
+                    ? methodDescription.getParameters().asTypeList().asErasures()
+                    : CompoundList.of(methodDescription.getDeclaringType(), methodDescription.getParameters().asTypeList().asErasures())).iterator();
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
-            Iterator<TypeDescription> iterator = methodDescription.getParameters().asTypeList().asErasures().iterator();
             for (Object argument : rawArguments) {
                 if (argument instanceof Class) {
                     argument = TypeDescription.ForLoadedType.of((Class<?>) argument);
@@ -1529,7 +1531,7 @@ public interface JavaConstant {
                 } else {
                     targetType = TypeDescription.ForLoadedType.of(argument.getClass());
                 }
-                if (!targetType.isAssignableTo(iterator.next().asBoxed())) {
+                if (!targetType.asBoxed().isAssignableTo(iterator.next().asBoxed())) {
                     throw new IllegalArgumentException("Cannot assign argument of type " + targetType + " to " + methodDescription);
                 }
                 arguments.add(argument);
@@ -1757,14 +1759,12 @@ public interface JavaConstant {
          * @return This dynamic constant but resolved to the supplied type.
          */
         public JavaConstant withType(TypeDescription typeDescription) {
-            if (value.getBootstrapMethod().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-                if (typeDescription.equals(this.typeDescription)) {
-                    return this;
-                } else {
-                    throw new IllegalArgumentException("It is not possible to change the resolved type of a bootstrap constructor");
-                }
-            } else if (!typeDescription.isAssignableTo(this.typeDescription) && !this.typeDescription.represents(Object.class) && typeDescription.isPrimitive()) {
-                throw new IllegalArgumentException(typeDescription + " is not assignable to bootstrapped type " + this.typeDescription);
+            if (typeDescription.represents(void.class)) {
+                throw new IllegalArgumentException("Constant value cannot represent void");
+            } else if (value.getBootstrapMethod().getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                    ? !this.typeDescription.isAssignableTo(typeDescription)
+                    : (!typeDescription.isAssignableTo(this.typeDescription) && !(typeDescription.isPrimitive() && this.typeDescription.represents(Object.class)))) {
+                throw new IllegalArgumentException(typeDescription + " is not compatible with bootstrapped type " + this.typeDescription);
             }
             return new Dynamic(new org.objectweb.asm.ConstantDynamic(value.getName(),
                     typeDescription.getDescriptor(),

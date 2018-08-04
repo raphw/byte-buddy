@@ -515,13 +515,18 @@ public class JavaConstantDynamicTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testIllegalTypeResolution() throws Exception {
+    public void testIllegalTypeResolutionForVoid() throws Exception {
         JavaConstant.Dynamic.ofNullConstant().withType(void.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIncompatibleTypeForMethod() throws Exception {
+        JavaConstant.Dynamic.ofInvocation(Object.class.getMethod("toString"), FOO).withType(Object.class);
     }
 
     @Test
     @JavaVersionRule.Enforce(11)
-    public void testConstructorTypeResolutionEqual() throws Exception {
+    public void testConstructorTypeResolutionCompatible() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         JavaConstant.Dynamic dynamic = JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getConstructor(
                 Class.forName("java.lang.invoke.MethodHandles$Lookup"),
@@ -531,11 +536,11 @@ public class JavaConstantDynamicTest {
 
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(11)
-    public void testConstructorTypeResolutionNonEqual() throws Exception {
+    public void testConstructorTypeResolutionIncompatible() throws Exception {
         Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.DynamicConstantBootstrap");
         JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getConstructor(
                 Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                Object[].class)).withType(Object.class);
+                Object[].class)).withType(String.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
