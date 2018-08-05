@@ -371,11 +371,10 @@ public interface ClassInjector {
                 public Initializable run() {
                     try {
                         if (JavaModule.isSupported()) {
-                            try {
-                                return Dispatcher.UsingUnsafeInjection.make();
-                            } catch (NoSuchMethodException ignored) {
-                                return Dispatcher.UsingUnsafeOverride.make();
-                            }
+                            Initializable initializable = UsingUnsafeInjection.make();
+                            return initializable.isAvailable()
+                                    ? initializable
+                                    : Dispatcher.UsingUnsafeOverride.make();
                         } else {
                             return Dispatcher.Direct.make();
                         }
@@ -686,11 +685,11 @@ public interface ClassInjector {
                  *                            supplied {@link ClassLoader} if this method does not exist on the current VM.
                  */
                 protected UsingUnsafeInjection(Object accessor,
-                                                Method findLoadedClass,
-                                                Method defineClass,
-                                                Method getPackage,
-                                                Method definePackage,
-                                                Method getClassLoadingLock) {
+                                               Method findLoadedClass,
+                                               Method defineClass,
+                                               Method getPackage,
+                                               Method definePackage,
+                                               Method getClassLoadingLock) {
                     this.accessor = accessor;
                     this.findLoadedClass = findLoadedClass;
                     this.defineClass = defineClass;
@@ -707,13 +706,16 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
+                    if (!ClassInjector.UsingUnsafe.isAvailable()) {
+                        return new Initializable.Unavailable("Unsafe injection is not supplied");
+                    }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
                     Object unsafeInstance = theUnsafe.get(null);
                     Method getPackage;
                     try {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getDeclaredPackage", String.class);
+                        getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
                     } catch (NoSuchMethodException ignored) {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
