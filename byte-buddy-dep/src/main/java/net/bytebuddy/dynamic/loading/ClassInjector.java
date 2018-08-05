@@ -373,7 +373,7 @@ public interface ClassInjector {
                         if (JavaModule.isSupported()) {
                             try {
                                 return Dispatcher.UsingUnsafeInjection.make();
-                            } catch (NoSuchMethodException ignored) {
+                            } catch (Exception ignored) {
                                 return Dispatcher.UsingUnsafeOverride.make();
                             }
                         } else {
