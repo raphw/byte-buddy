@@ -315,7 +315,9 @@ public interface VirtualMachine {
                         }
                     }
                 }
-                ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));
+                if (timeout != 0) {
+                  ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));
+                }
                 ((AFUNIXSocket) socket).connect(new AFUNIXSocketAddress(socketFile));
             }
 
