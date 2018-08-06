@@ -53,7 +53,7 @@
         <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.javadoc>http://asm.ow2.io/javadoc</asm.javadoc>
-        <version.asm>6.2</version.asm>
+        <version.asm>6.2.1</version.asm>
         <version.junit>4.12</version.junit>
         <version.mockito>2.21.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
