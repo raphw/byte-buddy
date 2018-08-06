@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaModule;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -619,9 +620,13 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @Override
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public PackageLookupStrategy run() {
-                try {
-                    return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getMethod("getDefinedPackage", String.class));
-                } catch (Exception ignored) {
+                if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
+                    try {
+                        return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getMethod("getDefinedPackage", String.class));
+                    } catch (Exception ignored) {
+                        return PackageLookupStrategy.ForLegacyVm.INSTANCE;
+                    }
+                } else {
                     return PackageLookupStrategy.ForLegacyVm.INSTANCE;
                 }
             }

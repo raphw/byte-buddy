@@ -371,12 +371,11 @@ public interface ClassInjector {
                 public Initializable run() {
                     try {
                         if (JavaModule.isSupported()) {
-                            Initializable initializable = UsingUnsafeInjection.make();
-                            return initializable.isAvailable()
-                                    ? initializable
-                                    : Dispatcher.UsingUnsafeOverride.make();
+                            return UsingUnsafe.isAvailable()
+                                    ? UsingUnsafeInjection.make()
+                                    : UsingUnsafeOverride.make();
                         } else {
-                            return Dispatcher.Direct.make();
+                            return Direct.make();
                         }
                     } catch (InvocationTargetException exception) {
                         return new Initializable.Unavailable(exception.getCause().getMessage());
@@ -438,9 +437,13 @@ public interface ClassInjector {
                  */
                 protected static Initializable make() throws Exception {
                     Method getPackage;
-                    try {
-                        getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
-                    } catch (NoSuchMethodException ignored) {
+                    if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
+                        try {
+                            getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                        } catch (NoSuchMethodException ignored) {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        }
+                    } else {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
                     Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
@@ -706,17 +709,18 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
-                    if (!ClassInjector.UsingUnsafe.isAvailable()) {
-                        return new Initializable.Unavailable("Unsafe injection is not supplied");
-                    }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
                     Object unsafeInstance = theUnsafe.get(null);
                     Method getPackage;
-                    try {
-                        getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
-                    } catch (NoSuchMethodException ignored) {
+                    if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
+                        try {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
+                        } catch (NoSuchMethodException ignored) {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        }
+                    } else {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
                     DynamicType.Builder<?> builder = new ByteBuddy()
@@ -911,9 +915,14 @@ public interface ClassInjector {
                             .invoke(unsafe, AccessibleObject.class.getDeclaredField("override"));
                     Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
                     Method getPackage;
-                    try {
-                        getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
-                    } catch (NoSuchMethodException ignored) {
+                    if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
+                        try {
+                            getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
+                        } catch (NoSuchMethodException ignored) {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                            putBoolean.invoke(unsafe, getPackage, offset, true);
+                        }
+                    } else {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                         putBoolean.invoke(unsafe, getPackage, offset, true);
                     }
