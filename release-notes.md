@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. August 2018: version 1.8.17
+
+- Fix class loader injection using `putBoolean`.
+- Do not set timeout for Unix attach simulation if value is `0`.
+- Avoid incorrect lookup of `getDefinedPackage` on Java 8 IBM VMs.
+- Fix type checks on constantdynamic support.
+
 ### 3. August 2018: version 1.8.16
 
 - Add support for dynamic class file constants for Java 11+.
