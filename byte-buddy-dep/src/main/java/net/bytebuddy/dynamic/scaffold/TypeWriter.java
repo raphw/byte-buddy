@@ -1812,6 +1812,20 @@ public interface TypeWriter<T> {
             }
 
             @Override
+            @SuppressWarnings("deprecation")
+            public void visitNestHostExperimental(String nestHost) {
+                constraint.assertNestMate();
+                super.visitNestHostExperimental(nestHost);
+            }
+
+            @Override
+            @SuppressWarnings("deprecation")
+            public void visitNestMemberExperimental(String nestMember) {
+                constraint.assertNestMate();
+                super.visitNestMemberExperimental(nestMember);
+            }
+
+            @Override
             public FieldVisitor visitField(int modifiers, String name, String descriptor, String signature, Object defaultValue) {
                 if (defaultValue != null) {
                     Class<?> type;
@@ -2000,6 +2014,11 @@ public interface TypeWriter<T> {
                 void assertDynamicValueInConstantPool();
 
                 /**
+                 * Asserts the capability of storing nest mate information.
+                 */
+                void assertNestMate();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -2102,6 +2121,11 @@ public interface TypeWriter<T> {
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
+
+                    @Override
+                    public void assertNestMate() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2178,11 +2202,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertDynamicValueInConstantPool() {
-                        /* do nothing */
-                    }
-
-                    @Override
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         if (modifier != PackageDescription.PACKAGE_MODIFIERS) {
                             throw new IllegalStateException("A package description type must define " + PackageDescription.PACKAGE_MODIFIERS + " as modifier");
@@ -2191,6 +2210,15 @@ public interface TypeWriter<T> {
                         }
                     }
 
+                    @Override
+                    public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertNestMate() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2306,6 +2334,11 @@ public interface TypeWriter<T> {
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
+
+                    @Override
+                    public void assertNestMate() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2419,6 +2452,11 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertNestMate() {
                         /* do nothing */
                     }
                 }
@@ -2541,6 +2579,13 @@ public interface TypeWriter<T> {
                     public void assertDynamicValueInConstantPool() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
                             throw new IllegalStateException("Cannot write dynamic constant for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertNestMate() {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
+                            throw new IllegalStateException("Cannot define nest mate for class file version " + classFileVersion);
                         }
                     }
                 }
@@ -2676,6 +2721,13 @@ public interface TypeWriter<T> {
                     public void assertDynamicValueInConstantPool() {
                         for (Constraint constraint : constraints) {
                             constraint.assertDynamicValueInConstantPool();
+                        }
+                    }
+
+                    @Override
+                    public void assertNestMate() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertNestMate();
                         }
                     }
                 }

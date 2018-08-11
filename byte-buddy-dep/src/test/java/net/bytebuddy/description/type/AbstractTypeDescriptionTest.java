@@ -694,12 +694,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testNestMatesPreJava() {
+    public void testNestMatesTrivial() {
         assertThat(describe(Object.class).getNestHost(), is(TypeDescription.OBJECT));
         assertThat(describe(Object.class).getNestMembers().size(), is(1));
         assertThat(describe(Object.class).getNestMembers(), hasItem(TypeDescription.OBJECT));
         assertThat(describe(Object.class).isNestMateOf(Object.class), is(true));
         assertThat(describe(Object.class).isNestMateOf(TypeDescription.STRING), is(false));
+        assertThat(describe(Object.class).isNestHost(), is(true));
     }
 
     private Class<?> inMethodClass() {

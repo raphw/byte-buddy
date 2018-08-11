@@ -348,6 +348,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     TypeList getNestMembers();
 
     /**
+     * Checks if this class is the host of a nest group.
+     *
+     * @return {@code true} if this class is a nest group's host.
+     */
+    boolean isNestHost();
+
+    /**
      * Checks if this type and the supplied type are members of the same nest group.
      *
      * @param type The type for which to check if it is a member of the same nest group.
@@ -6982,6 +6989,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        public boolean isNestHost() {
+            return equals(getNestHost());
+        }
+
+        @Override
         public boolean isNestMateOf(Class<?> type) {
             return isNestMateOf(ForLoadedType.of(type));
         }
@@ -7532,6 +7544,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public TypeList getNestMembers() {
             return new TypeList.ForLoadedTypes(DISPATCHER.getNestMembers(type));
+        }
+
+        @Override
+        public boolean isNestHost() {
+            return DISPATCHER.getNestHost(type) == type;
         }
 
         @Override
