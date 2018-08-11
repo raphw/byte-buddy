@@ -2802,7 +2802,9 @@ public interface TypePool {
 
             @Override
             public TypeList getNestMembers() {
-                return new LazyNestMemberList(this, typePool, nestMembers);
+                return nestHost == null
+                        ? new LazyNestMemberList(this, typePool, nestMembers)
+                        : typePool.describe(nestHost).resolve().getNestMembers();
             }
 
             @Override
