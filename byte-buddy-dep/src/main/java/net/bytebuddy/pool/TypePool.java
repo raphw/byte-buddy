@@ -2587,6 +2587,10 @@ public interface TypePool {
              */
             private final boolean anonymousType;
 
+            private final String nestHost;
+
+            private final List<String> nestMembers;
+
             /**
              * A mapping of type annotations for this type's super type and interface types by their indices.
              */
@@ -2650,6 +2654,8 @@ public interface TypePool {
                                           String declaringTypeInternalName,
                                           List<String> declaredTypes,
                                           boolean anonymousType,
+                                          String nestHostInternalName,
+                                          List<String> nestMemberInternalNames,
                                           Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
                                           Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                           Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens,
@@ -2681,6 +2687,13 @@ public interface TypePool {
                         : declaringTypeInternalName.replace('/', '.');
                 this.declaredTypes = declaredTypes;
                 this.anonymousType = anonymousType;
+                nestHost = nestHostInternalName == null
+                        ? NO_TYPE
+                        : Type.getObjectType(nestHostInternalName).getClassName();
+                nestMembers = new ArrayList<String>(nestMemberInternalNames.size());
+                for (String nestMemberInternalName : nestMemberInternalNames) {
+                    nestMembers.add(Type.getObjectType(nestMemberInternalName).getClassName());
+                }
                 this.superTypeAnnotationTokens = superTypeAnnotationTokens;
                 this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
                 this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
@@ -2770,6 +2783,18 @@ public interface TypePool {
             @Override
             public int getActualModifiers(boolean superFlag) {
                 return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
+            }
+
+            @Override
+            public TypeDescription getNestHost() {
+                return nestHost == null
+                        ? this
+                        : typePool.describe(nestHost).resolve();
+            }
+
+            @Override
+            public TypeList getNestMembers() {
+                return new LazyNestMemberList(this, typePool, nestMembers);
             }
 
             @Override
@@ -2920,7 +2945,7 @@ public interface TypePool {
                      * @param internalName The type's internal name.
                      * @param localType    {@code true} if the type is a local type unless it is an anonymous type.
                      */
-                    public WithinType(String internalName, boolean localType) {
+                    protected WithinType(String internalName, boolean localType) {
                         name = internalName.replace('/', '.');
                         this.localType = localType;
                     }
@@ -2979,7 +3004,7 @@ public interface TypePool {
                      * @param methodName       The method's internal name.
                      * @param methodDescriptor The method's descriptor.
                      */
-                    public WithinMethod(String internalName, String methodName, String methodDescriptor) {
+                    protected WithinMethod(String internalName, String methodName, String methodDescriptor) {
                         name = internalName.replace('/', '.');
                         this.methodName = methodName;
                         this.methodDescriptor = methodDescriptor;
@@ -3746,9 +3771,9 @@ public interface TypePool {
                              * @param interfaceTypeTokens The interface type's generic type tokens.
                              * @param typeVariableTokens  The type variables generic type tokens.
                              */
-                            public Tokenized(GenericTypeToken superClassToken,
-                                             List<GenericTypeToken> interfaceTypeTokens,
-                                             List<OfFormalTypeVariable> typeVariableTokens) {
+                            protected Tokenized(GenericTypeToken superClassToken,
+                                                List<GenericTypeToken> interfaceTypeTokens,
+                                                List<OfFormalTypeVariable> typeVariableTokens) {
                                 this.superClassToken = superClassToken;
                                 this.interfaceTypeTokens = interfaceTypeTokens;
                                 this.typeVariableTokens = typeVariableTokens;
@@ -3861,10 +3886,10 @@ public interface TypePool {
                              * @param exceptionTypeTokens A token describing the represented method's exception types.
                              * @param typeVariableTokens  A token describing the represented method's type variables.
                              */
-                            public Tokenized(GenericTypeToken returnTypeToken,
-                                             List<GenericTypeToken> parameterTypeTokens,
-                                             List<GenericTypeToken> exceptionTypeTokens,
-                                             List<OfFormalTypeVariable> typeVariableTokens) {
+                            protected Tokenized(GenericTypeToken returnTypeToken,
+                                                List<GenericTypeToken> parameterTypeTokens,
+                                                List<GenericTypeToken> exceptionTypeTokens,
+                                                List<OfFormalTypeVariable> typeVariableTokens) {
                                 this.returnTypeToken = returnTypeToken;
                                 this.parameterTypeTokens = parameterTypeTokens;
                                 this.exceptionTypeTokens = exceptionTypeTokens;
@@ -3943,7 +3968,7 @@ public interface TypePool {
                              *
                              * @param fieldTypeToken The token of the represented field's type.
                              */
-                            public Tokenized(GenericTypeToken fieldTypeToken) {
+                            protected Tokenized(GenericTypeToken fieldTypeToken) {
                                 this.fieldTypeToken = fieldTypeToken;
                             }
 
@@ -5698,7 +5723,7 @@ public interface TypePool {
             /**
              * A list that is constructing {@link LazyTypeDescription}s.
              */
-            private static class LazyTypeList extends TypeList.AbstractBase {
+            protected static class LazyTypeList extends TypeList.AbstractBase {
 
                 /**
                  * The type pool to use for locating types.
@@ -5716,7 +5741,7 @@ public interface TypePool {
                  * @param typePool    The type pool to use for locating types.
                  * @param descriptors A list of type descriptors that this list represents.
                  */
-                private LazyTypeList(TypePool typePool, List<String> descriptors) {
+                protected LazyTypeList(TypePool typePool, List<String> descriptors) {
                     this.typePool = typePool;
                     this.descriptors = descriptors;
                 }
@@ -5753,10 +5778,37 @@ public interface TypePool {
                 }
             }
 
+            protected static class LazyNestMemberList extends TypeList.AbstractBase {
+
+                private final TypeDescription typeDescription;
+
+                private final TypePool typePool;
+
+                private final List<String> nestMembers;
+
+                protected LazyNestMemberList(TypeDescription typeDescription, TypePool typePool, List<String> nestMembers) {
+                    this.typeDescription = typeDescription;
+                    this.typePool = typePool;
+                    this.nestMembers = nestMembers;
+                }
+
+                @Override
+                public TypeDescription get(int index) {
+                    return index == 0
+                            ? typeDescription
+                            : typePool.describe(nestMembers.get(index)).resolve();
+                }
+
+                @Override
+                public int size() {
+                    return nestMembers.size() + 1;
+                }
+            }
+
             /**
              * A representation of a generic type that is described by a {@link GenericTypeToken}.
              */
-            private static class TokenizedGenericType extends Generic.LazyProjection.WithEagerNavigation {
+            protected static class TokenizedGenericType extends Generic.LazyProjection.WithEagerNavigation {
 
                 /**
                  * The type pool to use for locating referenced types.
@@ -6797,6 +6849,10 @@ public interface TypePool {
              */
             private boolean anonymousType;
 
+            private String nestHost;
+
+            private final List<String> nestMembers;
+
             /**
              * The declaration context found for this type.
              */
@@ -6825,6 +6881,7 @@ public interface TypePool {
                 methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
                 typeContainment = LazyTypeDescription.TypeContainment.SelfContained.INSTANCE;
+                nestMembers = new ArrayList<String>();
                 declaredTypes = new ArrayList<String>();
             }
 
@@ -6918,6 +6975,18 @@ public interface TypePool {
                         : new MethodExtractor(modifiers & REAL_MODIFIER_MASK, internalName, descriptor, genericSignature, exceptionName);
             }
 
+            @Override
+            @SuppressWarnings("deprecation")
+            public void visitNestHostExperimental(String nestHost) {
+                this.nestHost = nestHost;
+            }
+
+            @Override
+            @SuppressWarnings("deprecation")
+            public void visitNestMemberExperimental(String nestMember) {
+                nestMembers.add(nestMember);
+            }
+
             /**
              * Creates a type description from all data that is currently collected. This method should only be invoked
              * after a class file was parsed fully.
@@ -6936,6 +7005,8 @@ public interface TypePool {
                         declaringTypeName,
                         declaredTypes,
                         anonymousType,
+                        nestHost,
+                        nestMembers,
                         superTypeAnnotationTokens,
                         typeVariableAnnotationTokens,
                         typeVariableBoundsAnnotationTokens,

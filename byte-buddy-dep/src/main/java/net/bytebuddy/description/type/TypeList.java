@@ -59,6 +59,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         public int getStackSize() {
             return StackSize.of(this);
         }
+
+        @Override
+        public String[] toInternalNames() {
+            String[] internalNames = new String[size()];
+            int i = 0;
+            for (TypeDescription typeDescription : this) {
+                internalNames[i++] = typeDescription.getInternalName();
+            }
+            return internalNames.length == 0
+                    ? NO_INTERFACES
+                    : internalNames;
+        }
     }
 
     /**
@@ -148,18 +160,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         public int size() {
             return typeDescriptions.size();
-        }
-
-        @Override
-        public String[] toInternalNames() {
-            String[] internalNames = new String[typeDescriptions.size()];
-            int i = 0;
-            for (TypeDescription typeDescription : typeDescriptions) {
-                internalNames[i++] = typeDescription.getInternalName();
-            }
-            return internalNames.length == 0
-                    ? NO_INTERFACES
-                    : internalNames;
         }
     }
 

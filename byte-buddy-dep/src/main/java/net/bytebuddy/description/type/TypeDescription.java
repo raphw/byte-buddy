@@ -332,6 +332,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     Object getDefaultValue();
 
+    TypeDescription getNestHost();
+
+    TypeList getNestMembers();
+
+    boolean isNestMateOf(Class<?> type);
+
+    boolean isNestMateOf(TypeDescription typeDescription);
+
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
@@ -6951,6 +6959,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        public boolean isNestMateOf(Class<?> type) {
+            return isNestMateOf(ForLoadedType.of(type));
+        }
+
+        @Override
+        public boolean isNestMateOf(TypeDescription typeDescription) {
+            return getNestHost().equals(typeDescription.getNestHost());
+        }
+
+        @Override
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
@@ -7138,6 +7156,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     // Embrace use of native actual modifiers by direct delegation.
                     return delegate().getActualModifiers(superFlag);
                 }
+
+                @Override
+                public TypeDescription getNestHost() {
+                    return delegate().getNestHost();
+                }
+
+                @Override
+                public TypeList getNestMembers() {
+                    return delegate().getNestMembers();
+                }
             }
         }
     }
@@ -7151,6 +7179,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * The class's serial version UID.
          */
         private static final long serialVersionUID = 1L;
+
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * A cache of type descriptions for commonly used types to avoid unnecessary allocations.
@@ -7467,6 +7497,118 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public Generic asGenericType() {
             return Generic.OfNonGenericType.ForLoadedType.of(type);
         }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return TypeDescription.ForLoadedType.of(DISPATCHER.getNestHost(type));
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return new TypeList.ForLoadedTypes(DISPATCHER.getNestMembers(type));
+        }
+
+        @Override
+        public boolean isNestMateOf(Class<?> type) {
+            return DISPATCHER.isNestmateOf(this.type, type) || super.isNestMateOf(type);
+        }
+
+        protected interface Dispatcher {
+
+            Class<?> getNestHost(Class<?> self);
+
+            Class<?>[] getNestMembers(Class<?> self);
+
+            boolean isNestmateOf(Class<?> self, Class<?> type);
+
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                INSTANCE;
+
+                @Override
+                public Dispatcher run() {
+                    try {
+                        return ForJava11CapableVm.make();
+                    } catch (NoSuchMethodException ignored) {
+                        return Disabled.INSTANCE;
+                    }
+                }
+            }
+
+            enum Disabled implements Dispatcher {
+
+                INSTANCE;
+
+                @Override
+                public Class<?> getNestHost(Class<?> self) {
+                    return self;
+                }
+
+                @Override
+                public Class<?>[] getNestMembers(Class<?> self) {
+                    return new Class<?>[]{self};
+                }
+
+                @Override
+                public boolean isNestmateOf(Class<?> self, Class<?> type) {
+                    return self == type;
+                }
+            }
+
+            class ForJava11CapableVm implements Dispatcher {
+
+                private final Method getNestHost;
+
+                private final Method getNestMembers;
+
+                private final Method isNestmateOf;
+
+                protected ForJava11CapableVm(Method getNestHost, Method getNestMembers, Method isNestmateOf) {
+                    this.getNestHost = getNestHost;
+                    this.getNestMembers = getNestMembers;
+                    this.isNestmateOf = isNestmateOf;
+                }
+
+                protected static Dispatcher make() throws NoSuchMethodException {
+                    return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
+                            Class.class.getMethod("getNestMembers"),
+                            Class.class.getMethod("isNestmateOf", Class.class));
+                }
+
+                @Override
+                public Class<?> getNestHost(Class<?> self) {
+                    try {
+                        return (Class<?>) getNestHost.invoke(self);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::getNestHost", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class:getNestHost", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Class<?>[] getNestMembers(Class<?> self) {
+                    try {
+                        return (Class<?>[]) getNestMembers.invoke(self);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::getNestMembers", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class:getNestMembers", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean isNestmateOf(Class<?> self, Class<?> type) {
+                    try {
+                        return (Boolean) isNestmateOf.invoke(self, type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class:isNestmateOf", exception.getCause());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -7681,6 +7823,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public TypeList.Generic getTypeVariables() {
             return new TypeList.Generic.Empty();
         }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return this;
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return new TypeList.Explicit(this);
+        }
     }
 
     /**
@@ -7824,6 +7976,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public TypeList.Generic getTypeVariables() {
             throw new IllegalStateException("Cannot resolve type variables of a latent type description: " + this);
         }
+
+        @Override
+        public TypeDescription getNestHost() {
+            throw new IllegalStateException("Cannot resolve nest host of a latent type description: " + this);
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            throw new IllegalStateException("Cannot resolve nest mates of a latent type description: " + this);
+        }
     }
 
     /**
@@ -7923,6 +8085,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public String getName() {
             return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
+        }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return this;
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return new TypeList.Explicit(this);
         }
     }
 
@@ -8085,6 +8257,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public PackageDescription getPackage() {
             return delegate.getPackage();
+        }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return delegate.getNestHost();
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return delegate.getNestMembers();
         }
 
         /**

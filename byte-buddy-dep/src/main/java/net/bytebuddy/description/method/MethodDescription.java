@@ -474,8 +474,8 @@ public interface MethodDescription extends TypeVariableSource,
             return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
-                    || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+                    || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
         }
 
         @Override
@@ -483,7 +483,8 @@ public interface MethodDescription extends TypeVariableSource,
             return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()))
+                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure());
         }
 
         @Override

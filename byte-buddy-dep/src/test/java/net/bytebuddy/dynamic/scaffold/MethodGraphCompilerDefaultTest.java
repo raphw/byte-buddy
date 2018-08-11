@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -1055,7 +1056,9 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false);
+                false,
+                TargetType.DESCRIPTION,
+                Collections.singletonList(TargetType.DESCRIPTION));
         MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("foo",
                 TypeDescription.ForLoadedType.of(void.class),
                 Collections.<TypeDescription>emptyList());
@@ -1093,7 +1096,9 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false);
+                false,
+                TargetType.DESCRIPTION,
+                Collections.singletonList(TargetType.DESCRIPTION));
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
         MethodGraph.Node node = methodGraph.locate(bridgeMethod);

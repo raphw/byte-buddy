@@ -74,7 +74,9 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false);
+                false,
+                TargetType.DESCRIPTION,
+                Collections.singletonList(TargetType.DESCRIPTION));
     }
 
     @Test
@@ -1271,7 +1273,9 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false);
+                false,
+                TargetType.DESCRIPTION,
+                Collections.singletonList(TargetType.DESCRIPTION));
         MethodDescription methodDescription = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OBJECT));
     }

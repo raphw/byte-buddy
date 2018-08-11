@@ -13,6 +13,7 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -23,6 +24,7 @@ import java.lang.annotation.ElementType;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -230,7 +232,11 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getDeclaredTypes(),
                             typeDescription.isMemberClass(),
                             typeDescription.isAnonymousClass(),
-                            typeDescription.isLocalClass());
+                            typeDescription.isLocalClass(),
+                            typeDescription.getNestHost().equals(typeDescription)
+                                    ? TargetType.DESCRIPTION
+                                    : typeDescription.getNestHost(),
+                            typeDescription.getNestMembers().filter(not(is(typeDescription))));
                 }
             },
 
@@ -262,7 +268,9 @@ public interface InstrumentedType extends TypeDescription {
                         Collections.<TypeDescription>emptyList(),
                         false,
                         false,
-                        false);
+                        false,
+                        TargetType.DESCRIPTION,
+                        Collections.<TypeDescription>emptyList());
             }
         }
     }
@@ -368,6 +376,10 @@ public interface InstrumentedType extends TypeDescription {
          */
         private final boolean localClass;
 
+        private final TypeDescription nestHost;
+
+        private final List<? extends TypeDescription> nestMembers;
+
         /**
          * Creates a new instrumented type.
          *
@@ -405,7 +417,9 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends TypeDescription> declaredTypes,
                           boolean memberClass,
                           boolean anonymousClass,
-                          boolean localClass) {
+                          boolean localClass,
+                          TypeDescription nestHost,
+                          List<? extends TypeDescription> nestMembers) {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
@@ -423,6 +437,8 @@ public interface InstrumentedType extends TypeDescription {
             this.memberClass = memberClass;
             this.anonymousClass = anonymousClass;
             this.localClass = localClass;
+            this.nestHost = nestHost;
+            this.nestMembers = nestMembers;
         }
 
         /**
@@ -467,7 +483,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -488,7 +506,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -509,7 +529,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -530,7 +552,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -551,7 +575,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -572,7 +598,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -593,7 +621,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -621,7 +651,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -642,7 +674,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -663,7 +697,9 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     memberClass,
                     anonymousClass,
-                    localClass);
+                    localClass,
+                    nestHost,
+                    nestMembers);
         }
 
         @Override
@@ -759,6 +795,18 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return nestHost.represents(TargetType.class)
+                    ? this
+                    : nestHost;
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return new TypeList.Explicit(CompoundList.of(this, nestMembers));
         }
 
         @Override
@@ -1139,6 +1187,16 @@ public interface InstrumentedType extends TypeDescription {
         public int getActualModifiers(boolean superFlag) {
             // Embrace use of native actual modifiers by direct delegation.
             return typeDescription.getActualModifiers(superFlag);
+        }
+
+        @Override
+        public TypeDescription getNestHost() {
+            return typeDescription.getNestHost();
+        }
+
+        @Override
+        public TypeList getNestMembers() {
+            return typeDescription.getNestMembers();
         }
 
         @Override
