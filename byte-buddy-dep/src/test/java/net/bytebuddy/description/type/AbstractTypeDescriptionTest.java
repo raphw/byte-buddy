@@ -643,6 +643,20 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    public void testInnerClass() throws Exception {
+        assertThat(describe(Object.class).isInnerClass(), is(false));
+        assertThat(describe(GenericSample.class).isInnerClass(), is(false));
+        assertThat(describe(GenericSample.Inner.class).isInnerClass(), is(true));
+    }
+
+    @Test
+    public void testNestedClass() throws Exception {
+        assertThat(describe(Object.class).isNestedClass(), is(false));
+        assertThat(describe(GenericSample.class).isNestedClass(), is(true));
+        assertThat(describe(GenericSample.Inner.class).isNestedClass(), is(true));
+    }
+
+    @Test
     public void testGetSegmentCount() throws Exception {
         assertThat(describe(GenericSample.class).getInnerClassCount(), is(0));
         assertThat(describe(GenericSample.Inner.class).getInnerClassCount(), is(1));

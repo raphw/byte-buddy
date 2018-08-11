@@ -565,7 +565,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
-                .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
+                .isAccessibleTo(TypeDescription.ForLoadedType.of(AbstractMethodDescriptionTestNoNestMate.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
                 .isAccessibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
