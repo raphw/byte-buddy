@@ -332,12 +332,35 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     Object getDefaultValue();
 
+    /**
+     * Returns the nest host of this type. For types prior to Java 11, this type is returned which is the default nest host.
+     *
+     * @return The nest host of this type.
+     */
     TypeDescription getNestHost();
 
+    /**
+     * Returns a list of members that are part of a nesting group. Prior to Java 11, a list that only contains this type is returned which is
+     * the default nest group.
+     *
+     * @return A list of members of this nest group.
+     */
     TypeList getNestMembers();
 
+    /**
+     * Checks if this type and the supplied type are members of the same nest group.
+     *
+     * @param type The type for which to check if it is a member of the same nest group.
+     * @return {@code true} if this type and the supplied type are members of the same nest group.
+     */
     boolean isNestMateOf(Class<?> type);
 
+    /**
+     * Checks if this type and the supplied type are members of the same nest group.
+     *
+     * @param typeDescription The type for which to check if it is a member of the same nest group.
+     * @return {@code true} if this type and the supplied type are members of the same nest group.
+     */
     boolean isNestMateOf(TypeDescription typeDescription);
 
     /**
@@ -7180,6 +7203,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         private static final long serialVersionUID = 1L;
 
+        /**
+         * A dispatcher for invking methods on {@link Class} reflectively.
+         */
         private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
@@ -7510,75 +7536,129 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isNestMateOf(Class<?> type) {
-            return DISPATCHER.isNestmateOf(this.type, type) || super.isNestMateOf(type);
+            return DISPATCHER.isNestmateOf(this.type, type) || super.isNestMateOf(ForLoadedType.of(type));
         }
 
+        @Override
+        public boolean isNestMateOf(TypeDescription typeDescription) {
+            return typeDescription instanceof ForLoadedType && DISPATCHER.isNestmateOf(type, ((ForLoadedType) typeDescription).type) || super.isNestMateOf(typeDescription);
+        }
+
+        /**
+         * A dispatcher for using methods of {@link Class} that are not declared for Java 6.
+         */
         protected interface Dispatcher {
 
-            Class<?> getNestHost(Class<?> self);
+            /**
+             * Returns the specified class's nest host.
+             *
+             * @param type The class for which to locate the nest host.
+             * @return The nest host of the specified class.
+             */
+            Class<?> getNestHost(Class<?> type);
 
-            Class<?>[] getNestMembers(Class<?> self);
+            /**
+             * Returns the nest members of the other class.
+             *
+             * @param type The type to get the nest members for.
+             * @return An array containing all nest members of the specified type's nest group.
+             */
+            Class<?>[] getNestMembers(Class<?> type);
 
-            boolean isNestmateOf(Class<?> self, Class<?> type);
+            /**
+             * Returns {@code true} if the specified type is a nest mate of the other type.
+             *
+             * @param type      The type to evaluate for being a nest mate of another type.
+             * @param candidate The candidate type.
+             * @return {@code true} if the specified type is a nest mate of the other class.
+             */
+            boolean isNestmateOf(Class<?> type, Class<?> candidate);
 
+            /**
+             * An action to resolve the dispatcher for invoking methods of {@link Class} reflectively.
+             */
             enum CreationAction implements PrivilegedAction<Dispatcher> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
                 public Dispatcher run() {
                     try {
-                        return ForJava11CapableVm.make();
+                        return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
+                                Class.class.getMethod("getNestMembers"),
+                                Class.class.getMethod("isNestmateOf", Class.class));
                     } catch (NoSuchMethodException ignored) {
-                        return Disabled.INSTANCE;
+                        return ForLegacyVm.INSTANCE;
                     }
                 }
             }
 
-            enum Disabled implements Dispatcher {
+            /**
+             * A dispatcher for a legacy VM.
+             */
+            enum ForLegacyVm implements Dispatcher {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
-                public Class<?> getNestHost(Class<?> self) {
-                    return self;
+                public Class<?> getNestHost(Class<?> type) {
+                    return type;
                 }
 
                 @Override
-                public Class<?>[] getNestMembers(Class<?> self) {
-                    return new Class<?>[]{self};
+                public Class<?>[] getNestMembers(Class<?> type) {
+                    return new Class<?>[]{type};
                 }
 
                 @Override
-                public boolean isNestmateOf(Class<?> self, Class<?> type) {
-                    return self == type;
+                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
+                    return type == candidate;
                 }
             }
 
+            /**
+             * A dispatcher for a Java 11-capable VM.
+             */
             class ForJava11CapableVm implements Dispatcher {
 
+                /**
+                 * The {@code java.lang.Class#getNestHost} method.
+                 */
                 private final Method getNestHost;
 
+                /**
+                 * The {@code java.lang.Class#getNestMembers} method.
+                 */
                 private final Method getNestMembers;
 
+                /**
+                 * The {@code java.lang.Class#isNestmateOf} method.
+                 */
                 private final Method isNestmateOf;
 
+                /**
+                 * Creates a dispatcher for a Java 11-capable VM.
+                 *
+                 * @param getNestHost    The {@code java.lang.Class#getNestHost} method.
+                 * @param getNestMembers The {@code java.lang.Class#getNestMembers} method.
+                 * @param isNestmateOf   The {@code java.lang.Class#isNestmateOf} method.
+                 */
                 protected ForJava11CapableVm(Method getNestHost, Method getNestMembers, Method isNestmateOf) {
                     this.getNestHost = getNestHost;
                     this.getNestMembers = getNestMembers;
                     this.isNestmateOf = isNestmateOf;
                 }
 
-                protected static Dispatcher make() throws NoSuchMethodException {
-                    return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
-                            Class.class.getMethod("getNestMembers"),
-                            Class.class.getMethod("isNestmateOf", Class.class));
-                }
-
                 @Override
-                public Class<?> getNestHost(Class<?> self) {
+                public Class<?> getNestHost(Class<?> type) {
                     try {
-                        return (Class<?>) getNestHost.invoke(self);
+                        return (Class<?>) getNestHost.invoke(type);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::getNestHost", exception);
                     } catch (InvocationTargetException exception) {
@@ -7587,9 +7667,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public Class<?>[] getNestMembers(Class<?> self) {
+                public Class<?>[] getNestMembers(Class<?> type) {
                     try {
-                        return (Class<?>[]) getNestMembers.invoke(self);
+                        return (Class<?>[]) getNestMembers.invoke(type);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::getNestMembers", exception);
                     } catch (InvocationTargetException exception) {
@@ -7598,9 +7678,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public boolean isNestmateOf(Class<?> self, Class<?> type) {
+                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
                     try {
-                        return (Boolean) isNestmateOf.invoke(self, type);
+                        return (Boolean) isNestmateOf.invoke(type, candidate);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
                     } catch (InvocationTargetException exception) {

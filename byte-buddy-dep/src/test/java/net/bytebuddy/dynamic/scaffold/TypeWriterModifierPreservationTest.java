@@ -72,7 +72,7 @@ public class TypeWriterModifierPreservationTest {
 
         public int modifiers, inner;
 
-        public TypeModifierExtractor() {
+        private TypeModifierExtractor() {
             super(OpenedClassReader.ASM_API);
         }
 
@@ -96,7 +96,7 @@ public class TypeWriterModifierPreservationTest {
 
         public final int modifiers, inner;
 
-        public TypeValidator(ClassVisitor classVisitor, int modifiers, int inner) {
+        private TypeValidator(ClassVisitor classVisitor, int modifiers, int inner) {
             super(OpenedClassReader.ASM_API, classVisitor);
             this.modifiers = modifiers;
             this.inner = inner;

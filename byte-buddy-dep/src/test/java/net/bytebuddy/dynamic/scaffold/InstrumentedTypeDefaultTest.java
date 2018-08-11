@@ -1275,7 +1275,7 @@ public class InstrumentedTypeDefaultTest {
                 false,
                 false,
                 TargetType.DESCRIPTION,
-                Collections.singletonList(TargetType.DESCRIPTION));
+                Collections.<TypeDescription>emptyList());
         MethodDescription methodDescription = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OBJECT));
     }

@@ -2587,8 +2587,14 @@ public interface TypePool {
              */
             private final boolean anonymousType;
 
+            /**
+             * The binary name of the nest host or {@code null} if no nest host was specified.
+             */
             private final String nestHost;
 
+            /**
+             * A list of binary names of all specified nest members.
+             */
             private final List<String> nestMembers;
 
             /**
@@ -2635,6 +2641,8 @@ public interface TypePool {
              * @param declaringTypeInternalName          The internal name of this type's declaring type or {@code null} if no such type exists.
              * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
              * @param anonymousType                      {@code true} if this type is an anonymous type.
+             * @param nestHostInternalName               The internal name of the nest host or {@code null} if no nest host was specified.
+             * @param nestMemberInternalNames            A list of internal names of the nest members.
              * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
              * @param typeVariableAnnotationTokens       A mapping of type annotations of the type variables' type annotations by their indices.
              * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
@@ -5778,14 +5786,33 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A lazy list that represents all nest members of the represented type.
+             */
             protected static class LazyNestMemberList extends TypeList.AbstractBase {
 
+                /**
+                 * The type for which the nest members are represented.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * The type pool to use for looking up types.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * The binary names of all nest members of this nest mate group excluding the represented type.
+                 */
                 private final List<String> nestMembers;
 
+                /**
+                 * Creates a new lazy type list of all nest members of this group.
+                 *
+                 * @param typeDescription The type for which the nest members are represented.
+                 * @param typePool        The type pool to use for looking up types.
+                 * @param nestMembers     The binary names of all nest members of this nest mate group excluding the represented type.
+                 */
                 protected LazyNestMemberList(TypeDescription typeDescription, TypePool typePool, List<String> nestMembers) {
                     this.typeDescription = typeDescription;
                     this.typePool = typePool;
@@ -5801,6 +5828,22 @@ public interface TypePool {
 
                 @Override
                 public int size() {
+                    return nestMembers.size() + 1;
+                }
+
+                @Override
+                public String[] toInternalNames() {
+                    String[] internalName = new String[nestMembers.size() + 1];
+                    internalName[0] = typeDescription.getInternalName();
+                    int index = 1;
+                    for (String name : nestMembers) {
+                        internalName[index++] = name.replace('.', '/');
+                    }
+                    return internalName;
+                }
+
+                @Override
+                public int getStackSize() {
                     return nestMembers.size() + 1;
                 }
             }
@@ -6849,8 +6892,14 @@ public interface TypePool {
              */
             private boolean anonymousType;
 
+            /**
+             * The nest host that was found in the class file or {@code null} if no nest host was specified.
+             */
             private String nestHost;
 
+            /**
+             * A list of nest members that were found in the class file.
+             */
             private final List<String> nestMembers;
 
             /**

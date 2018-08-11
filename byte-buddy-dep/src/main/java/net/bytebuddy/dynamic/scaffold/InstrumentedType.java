@@ -376,8 +376,14 @@ public interface InstrumentedType extends TypeDescription {
          */
         private final boolean localClass;
 
+        /**
+         * The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
+         */
         private final TypeDescription nestHost;
 
+        /**
+         * A list of all members of this types nest group excluding this type.
+         */
         private final List<? extends TypeDescription> nestMembers;
 
         /**
@@ -400,6 +406,8 @@ public interface InstrumentedType extends TypeDescription {
          * @param memberClass            {@code true} if this type is a member class.
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
+         * @param nestHost               The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
+         * @param nestMembers            A list of all members of this types nest group excluding this type.
          */
         protected Default(String name,
                           int modifiers,

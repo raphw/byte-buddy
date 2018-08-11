@@ -1058,7 +1058,7 @@ public class MethodGraphCompilerDefaultTest {
                 false,
                 false,
                 TargetType.DESCRIPTION,
-                Collections.singletonList(TargetType.DESCRIPTION));
+                Collections.<TypeDescription>emptyList());
         MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("foo",
                 TypeDescription.ForLoadedType.of(void.class),
                 Collections.<TypeDescription>emptyList());
@@ -1098,7 +1098,7 @@ public class MethodGraphCompilerDefaultTest {
                 false,
                 false,
                 TargetType.DESCRIPTION,
-                Collections.singletonList(TargetType.DESCRIPTION));
+                Collections.<TypeDescription>emptyList());
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
         MethodGraph.Node node = methodGraph.locate(bridgeMethod);
