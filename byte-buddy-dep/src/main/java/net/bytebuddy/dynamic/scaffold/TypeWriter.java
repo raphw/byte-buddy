@@ -39,6 +39,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
+import net.bytebuddy.utility.visitor.MetadataAwareClassVisitor;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
@@ -2849,9 +2850,9 @@ public interface TypeWriter<T> {
         public static class ForInlining<U> extends Default<U> {
 
             /**
-             * Indicates that a type does not define a super type in its class file, i.e. the {@link Object} type.
+             * Indicates an empty reference in a class file which is expressed by {@code null}.
              */
-            private static final String NO_SUPER_TYPE = null;
+            private static final String NO_REFERENCE = null;
 
             /**
              * Indicates that a field should be ignored.
@@ -3659,7 +3660,7 @@ public interface TypeWriter<T> {
              * A class visitor which is capable of applying a redefinition of an existing class file.
              */
             @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
-            protected class RedefinitionClassVisitor extends ClassVisitor {
+            protected class RedefinitionClassVisitor extends MetadataAwareClassVisitor {
 
                 /**
                  * The type initializer to apply.
@@ -3775,10 +3776,43 @@ public interface TypeWriter<T> {
                                     ? genericSignature
                                     : instrumentedType.getGenericSignature(),
                             instrumentedType.getSuperClass() == null
-                                    ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_SUPER_TYPE)
+                                    ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_REFERENCE)
                                     : instrumentedType.getSuperClass().asErasure().getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                }
+
+                @Override
+                public void visitNestHostExperimental(String nestHost) {
+                    onNestHost();
+                }
+
+                @Override
+                public void visitOuterClass(String owner, String name, String descriptor) {
+                    onOuterClass();
+                }
+
+                @Override
+                @SuppressWarnings("deprecation")
+                protected void onNestHost() {
+                    if (!instrumentedType.isNestHost()) {
+                        super.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                    }
+                }
+
+                @Override
+                protected void onOuterClass() {
+                    MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
+                    if (enclosingMethod != null) {
+                        super.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
+                                enclosingMethod.getInternalName(),
+                                enclosingMethod.getDescriptor());
+                    } else {
+                        TypeDescription enclosingType = instrumentedType.getEnclosingType();
+                        if (enclosingType != null) {
+                            super.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                        }
+                    }
                 }
 
                 @Override

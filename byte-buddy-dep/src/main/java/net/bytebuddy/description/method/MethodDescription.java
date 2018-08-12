@@ -64,7 +64,7 @@ public interface MethodDescription extends TypeVariableSource,
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
-    MethodDescription UNDEFINED = null;
+    InDefinedShape UNDEFINED = null;
 
     /**
      * Returns the return type of the described method.

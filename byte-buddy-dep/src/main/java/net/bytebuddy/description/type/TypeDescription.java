@@ -174,7 +174,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
      */
-    MethodDescription getEnclosingMethod();
+    MethodDescription.InDefinedShape getEnclosingMethod();
 
     /**
      * Returns a description of this type's enclosing type if any.
@@ -7131,7 +7131,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public MethodDescription getEnclosingMethod() {
+                public MethodDescription.InDefinedShape getEnclosingMethod() {
                     return delegate().getEnclosingMethod();
                 }
 
@@ -7389,7 +7389,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             Method enclosingMethod = type.getEnclosingMethod();
             Constructor<?> enclosingConstructor = type.getEnclosingConstructor();
             if (enclosingMethod != null) {
@@ -7802,7 +7802,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
 
@@ -8001,7 +8001,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             throw new IllegalStateException("Cannot resolve enclosing method of a latent type description: " + this);
         }
 
@@ -8115,7 +8115,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
 
@@ -8317,7 +8317,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             return delegate.getEnclosingMethod();
         }
 

@@ -349,7 +349,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The enclosing method of the instrumented type or {@code null} if no such type exists.
          */
-        private final MethodDescription enclosingMethod;
+        private final MethodDescription.InDefinedShape enclosingMethod;
 
         /**
          * The enclosing type of the instrumented type or {@code null} if no such type exists.
@@ -420,7 +420,7 @@ public interface InstrumentedType extends TypeDescription {
                           TypeInitializer typeInitializer,
                           LoadedTypeInitializer loadedTypeInitializer,
                           TypeDescription declaringType,
-                          MethodDescription enclosingMethod,
+                          MethodDescription.InDefinedShape enclosingMethod,
                           TypeDescription enclosingType,
                           List<? extends TypeDescription> declaredTypes,
                           boolean memberClass,
@@ -721,7 +721,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             return enclosingMethod;
         }
 
@@ -1181,7 +1181,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public MethodDescription getEnclosingMethod() {
+        public MethodDescription.InDefinedShape getEnclosingMethod() {
             return typeDescription.getEnclosingMethod();
         }
 

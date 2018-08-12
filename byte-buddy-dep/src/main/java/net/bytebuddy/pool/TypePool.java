@@ -2723,7 +2723,7 @@ public interface TypePool {
             }
 
             @Override
-            public MethodDescription getEnclosingMethod() {
+            public MethodDescription.InDefinedShape getEnclosingMethod() {
                 return typeContainment.getEnclosingMethod(typePool);
             }
 
@@ -2866,7 +2866,7 @@ public interface TypePool {
                  * @param typePool The type pool to be used for looking up linked types.
                  * @return A method description describing the linked type or {@code null}.
                  */
-                MethodDescription getEnclosingMethod(TypePool typePool);
+                MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool);
 
                 /**
                  * Returns the enclosing type or {@code null} if no such type exists.
@@ -2908,7 +2908,7 @@ public interface TypePool {
                     INSTANCE;
 
                     @Override
-                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         return MethodDescription.UNDEFINED;
                     }
 
@@ -2961,7 +2961,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         return MethodDescription.UNDEFINED;
                     }
 
@@ -3021,7 +3021,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                    public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
                         return getEnclosingType(typePool).getDeclaredMethods().filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor))).getOnly();
                     }
 
