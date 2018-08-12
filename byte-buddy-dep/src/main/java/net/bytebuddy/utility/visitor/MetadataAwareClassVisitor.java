@@ -70,6 +70,9 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         }
     }
 
+    /**
+     * Considers triggering the after attribute visitation.
+     */
     protected void considerTriggerAfterAttributes() {
         if (triggerAttributes) {
             triggerAttributes = false;

@@ -59,6 +59,14 @@ public class MetadataAwareClassVisitorTest {
     }
 
     @Test
+    public void testVisitTypeAnnotation() {
+        classVisitor.visitTypeAnnotation(0, null, null, false);
+        assertThat(classVisitor.nestHostVisited, is(true));
+        assertThat(classVisitor.outerClassVisited, is(true));
+        assertThat(classVisitor.afterAttributesVisited, is(false));
+    }
+
+    @Test
     public void testVisitAttribute() {
         classVisitor.visitAttribute(null);
         assertThat(classVisitor.nestHostVisited, is(true));

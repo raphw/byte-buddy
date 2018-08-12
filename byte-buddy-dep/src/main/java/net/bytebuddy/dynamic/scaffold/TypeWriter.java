@@ -1308,6 +1308,11 @@ public interface TypeWriter<T> {
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
+         * Indicates an empty reference in a class file which is expressed by {@code null}.
+         */
+        private static final String NO_REFERENCE = null;
+
+        /**
          * A folder for dumping class files or {@code null} if no dump should be generated.
          */
         protected static final String DUMP_FOLDER;
@@ -2849,11 +2854,6 @@ public interface TypeWriter<T> {
         public static class ForInlining<U> extends Default<U> {
 
             /**
-             * Indicates an empty reference in a class file which is expressed by {@code null}.
-             */
-            private static final String NO_REFERENCE = null;
-
-            /**
              * Indicates that a field should be ignored.
              */
             private static final FieldVisitor IGNORE_FIELD = null;
@@ -3696,6 +3696,9 @@ public interface TypeWriter<T> {
                  */
                 private final Set<String> nestMembers;
 
+                /**
+                 * A mapping of the internal names of all declared types to their description.
+                 */
                 private final LinkedHashMap<String, TypeDescription> declaredTypes;
 
                 /**
@@ -4311,6 +4314,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
+            @SuppressWarnings("deprecation")
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
@@ -4335,6 +4339,20 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
+                if (!instrumentedType.isNestHost()) {
+                    classVisitor.visitNestHostExperimental(instrumentedType.getInternalName());
+                }
+                MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
+                if (enclosingMethod != null) {
+                    classVisitor.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
+                            enclosingMethod.getInternalName(),
+                            enclosingMethod.getDescriptor());
+                } else {
+                    TypeDescription enclosingType = instrumentedType.getEnclosingType();
+                    if (enclosingType != null) {
+                        classVisitor.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                    }
+                }
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : fields) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
@@ -4345,6 +4363,17 @@ public interface TypeWriter<T> {
                 implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
                         methodPool,
                         annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
+                if (instrumentedType.isNestHost()) {
+                    for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
+                        classVisitor.visitNestMemberExperimental(typeDescription.getInternalName());
+                    }
+                }
+                for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
+                    classVisitor.visitInnerClass(typeDescription.getInternalName(),
+                            instrumentedType.getInternalName(),
+                            typeDescription.getSimpleName(),
+                            typeDescription.getModifiers());
+                }
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }
