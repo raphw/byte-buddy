@@ -18,6 +18,11 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     private boolean triggerOuterClass;
 
     /**
+     * {@code true} if the attribute visitation is not yet completed.
+     */
+    private boolean triggerAttributes;
+
+    /**
      * Creates a metadata aware class visitor.
      *
      * @param api          The API version.
@@ -27,6 +32,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         super(api, classVisitor);
         triggerNestHost = true;
         triggerOuterClass = true;
+        triggerAttributes = true;
     }
 
     /**
@@ -40,9 +46,14 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     protected abstract void onOuterClass();
 
     /**
+     * Invoked if the attribute visitation is about to complete.
+     */
+    protected abstract void onAfterAttributes();
+
+    /**
      * Considers triggering a nest host visitation.
      */
-    private void considerTriggerNestHost() {
+    protected void considerTriggerNestHost() {
         if (triggerNestHost) {
             triggerNestHost = false;
             onNestHost();
@@ -52,10 +63,17 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * Considers triggering an outer class visitation.
      */
-    private void considerTriggerOuterClass() {
+    protected void considerTriggerOuterClass() {
         if (triggerOuterClass) {
             triggerOuterClass = false;
             onOuterClass();
+        }
+    }
+
+    protected void considerTriggerAfterAttributes() {
+        if (triggerAttributes) {
+            triggerAttributes = false;
+            onAfterAttributes();
         }
     }
 
@@ -99,6 +117,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public void visitNestMemberExperimental(String nestMember) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         super.visitNestMemberExperimental(nestMember);
     }
 
@@ -106,6 +125,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         super.visitInnerClass(name, outerName, innerName, modifiers);
     }
 
@@ -113,6 +133,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         return super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
     }
 
@@ -120,6 +141,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         return super.visitMethod(modifiers, internalName, descriptor, signature, exception);
     }
 
@@ -127,6 +149,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public void visitEnd() {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         super.visitEnd();
     }
 }

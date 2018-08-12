@@ -3696,6 +3696,8 @@ public interface TypeWriter<T> {
                  */
                 private final Set<String> nestMembers;
 
+                private final LinkedHashMap<String, TypeDescription> declaredTypes;
+
                 /**
                  * The method pool to use or {@code null} if the pool was not yet initialized.
                  */
@@ -3744,12 +3746,16 @@ public interface TypeWriter<T> {
                         declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }
                     if (instrumentedType.isNestHost()) {
-                        nestMembers = new HashSet<String>();
+                        nestMembers = new LinkedHashSet<String>();
                         for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
                             nestMembers.add(typeDescription.getInternalName());
                         }
                     } else {
                         nestMembers = Collections.emptySet();
+                    }
+                    declaredTypes = new LinkedHashMap<String, TypeDescription>();
+                    for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
+                        declaredTypes.put(typeDescription.getInternalName(), typeDescription);
                     }
                 }
 
@@ -3791,7 +3797,6 @@ public interface TypeWriter<T> {
                                     ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_REFERENCE)
                                     : instrumentedType.getSuperClass().asErasure().getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 }
 
                 @Override
@@ -3828,20 +3833,8 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                    if (internalName.equals(instrumentedType.getInternalName())) {
-                        modifiers = instrumentedType.getModifiers();
-                    }
-                    super.visitInnerClass(internalName, outerName, innerName, modifiers);
-                }
-
-                @Override
-                @SuppressWarnings("deprecation")
-                public void visitNestMemberExperimental(String nestMember) {
-                    if (instrumentedType.isNestHost()) {
-                        nestMembers.remove(nestMember);
-                        super.visitNestMemberExperimental(nestMember);
-                    }
+                protected void onAfterAttributes() {
+                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 }
 
                 @Override
@@ -3979,7 +3972,28 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                    declaredTypes.remove(innerName);
+                    if (internalName.equals(instrumentedType.getInternalName())) {
+                        modifiers = instrumentedType.getModifiers();
+                    }
+                    super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
+                @SuppressWarnings("deprecation")
+                public void visitNestMemberExperimental(String nestMember) {
+                    if (instrumentedType.isNestHost()) {
+                        nestMembers.remove(nestMember);
+                        super.visitNestMemberExperimental(nestMember);
+                    }
+                }
+
+                @Override
                 public void visitEnd() {
+                    considerTriggerNestHost();
+                    considerTriggerOuterClass();
+                    considerTriggerAfterAttributes();
                     for (FieldDescription fieldDescription : declarableFields.values()) {
                         fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
                     }
@@ -3987,6 +4001,12 @@ public interface TypeWriter<T> {
                         methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
                     }
                     initializationHandler.complete(cv, implementationContext);
+                    for (TypeDescription typeDescription : declaredTypes.values()) {
+                        super.visitInnerClass(typeDescription.getInternalName(),
+                                instrumentedType.getInternalName(),
+                                typeDescription.getSimpleName(),
+                                typeDescription.getModifiers());
+                    }
                     super.visitEnd();
                 }
 
