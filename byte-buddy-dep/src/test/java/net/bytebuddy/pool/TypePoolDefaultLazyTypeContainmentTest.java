@@ -96,7 +96,7 @@ public class TypePoolDefaultLazyTypeContainmentTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testDeclaredInMethodGetMethodIsNull() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         when(methodDescription.getActualName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         TypeDescription typeDescription = mock(TypeDescription.class);

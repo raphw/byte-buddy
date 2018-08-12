@@ -53,8 +53,7 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A type writer is a utility for writing an actual class file using the ASM library.
@@ -3693,6 +3692,11 @@ public interface TypeWriter<T> {
                 private final LinkedHashMap<String, MethodDescription> declarableMethods;
 
                 /**
+                 * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty.
+                 */
+                private final Set<String> nestMembers;
+
+                /**
                  * The method pool to use or {@code null} if the pool was not yet initialized.
                  */
                 private MethodPool methodPool;
@@ -3738,6 +3742,14 @@ public interface TypeWriter<T> {
                     declarableMethods = new LinkedHashMap<String, MethodDescription>();
                     for (MethodDescription methodDescription : instrumentedMethods) {
                         declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+                    }
+                    if (instrumentedType.isNestHost()) {
+                        nestMembers = new HashSet<String>();
+                        for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
+                            nestMembers.add(typeDescription.getInternalName());
+                        }
+                    } else {
+                        nestMembers = Collections.emptySet();
                     }
                 }
 
@@ -3821,6 +3833,15 @@ public interface TypeWriter<T> {
                         modifiers = instrumentedType.getModifiers();
                     }
                     super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
+                @SuppressWarnings("deprecation")
+                public void visitNestMemberExperimental(String nestMember) {
+                    if (instrumentedType.isNestHost()) {
+                        nestMembers.remove(nestMember);
+                        super.visitNestMemberExperimental(nestMember);
+                    }
                 }
 
                 @Override
