@@ -993,6 +993,24 @@ public class MethodCallTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testCallConstructorFromMethod() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, void.class)
+                .intercept(MethodCall.invoke(Object.class.getConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorCallFromNonRelatedConstructor() throws Exception {
+        new ByteBuddy()
+                .subclass(Number.class)
+                .constructor(ElementMatchers.any())
+                .intercept(MethodCall.invoke(Object.class.getConstructor()))
+                .make();
+    }
+
     public static class SimpleMethod {
 
         public String foo() {

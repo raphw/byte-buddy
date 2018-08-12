@@ -119,7 +119,13 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Invokes the given constructor on the instance of the instrumented type.
+     * </p>
+     * <p>
+     * <b>Important</b>: A constructor invocation can only be applied within another constructor to invoke the super constructor or an auxiliary
+     * constructor. To construct a new instance, use {@link MethodCall#construct(Constructor)}.
+     * </p>
      *
      * @param constructor The constructor to invoke.
      * @return A method call implementation that invokes the given constructor without providing any arguments.
@@ -129,9 +135,15 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Invokes the given method. If the method description describes a constructor, it is automatically invoked as
      * a special method invocation on the instance of the instrumented type. The same is true for {@code private}
      * methods. Finally, {@code static} methods are invoked statically.
+     * </p>
+     * <p>
+     * <b>Important</b>: A constructor invocation can only be applied within another constructor to invoke the super constructor or an auxiliary
+     * constructor. To construct a new instance, use {@link MethodCall#construct(MethodDescription)}.
+     * </p>
      *
      * @param methodDescription The method to invoke.
      * @return A method call implementation that invokes the given method without providing any arguments.
@@ -1459,6 +1471,10 @@ public class MethodCall implements Implementation.Composable {
                                              Assigner.Typing typing) {
                 if (instrumentedMethod.isStatic() && !invokedMethod.isStatic() && !invokedMethod.isConstructor()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod);
+                } else if (invokedMethod.isConstructor() && (!instrumentedMethod.isConstructor()
+                        || !instrumentedType.equals(invokedMethod.getDeclaringType().asErasure())
+                        && !instrumentedType.getSuperClass().asErasure().equals(invokedMethod.getDeclaringType().asErasure()))) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + instrumentedMethod + " in " + instrumentedType);
                 }
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
