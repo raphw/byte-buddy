@@ -81,6 +81,48 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
 
     /**
+     * Creates a new instrumented type with the supplied nest host. An instrumented type can be its own nest host.
+     * Setting a nest host removes all nest members from the instrumented type.
+     *
+     * @param nestHost The nest host of the created instrumented type.
+     * @return A new instrumented type with the supplied type as its nest host.
+     */
+    InstrumentedType withNestHost(TypeDescription nestHost);
+
+    /**
+     * Creates a new instrumented types with the supplied nest members added to this instrumented type. The instrumented
+     * type is defined as a nest host if this method is invoked. Any previous nest members are prepended to the supplied types.
+     *
+     * @param nestMembers The nest members to add to the created instrumented type.
+     * @return A new instrumented type that applies the supplied nest members.
+     */
+    InstrumentedType withNestMember(TypeList nestMembers);
+
+    /**
+     * Creates a new instrumented type with the supplied enclosing type.
+     *
+     * @param enclosingType The type to define as the created instrumented type's enclosing type.
+     * @return A new instrumented type with the supplied type as its enclosing type.
+     */
+    InstrumentedType withEnclosingType(TypeDescription enclosingType);
+
+    /**
+     * Creates a new instrumented type with the supplied enclosing method.
+     *
+     * @param enclosingMethod The method to define as the created instrumented type's enclosing method.
+     * @return A new instrumented type with the supplied method as its enclosing method.
+     */
+    InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod);
+
+    /**
+     * Creates a new instrumented type that indicates that it declared the supplied types.
+     *
+     * @param declaredTypes The types to add to the created instrumented type as declared types.
+     * @return A new instrumented type that indicates that it has declared the supplied types.
+     */
+    InstrumentedType withDeclaredTypes(TypeList declaredTypes);
+
+    /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
      *
      * @param loadedTypeInitializer The type initializer to include.
@@ -581,6 +623,123 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withNestHost(TypeDescription nestHost) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost.equals(this)
+                            ? TargetType.DESCRIPTION
+                            : nestHost,
+                    Collections.<TypeDescription>emptyList());
+        }
+
+        @Override
+        public InstrumentedType withNestMember(TypeList nestMembers) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    TargetType.DESCRIPTION,
+                    CompoundList.of(this.nestMembers, nestMembers));
+        }
+
+        @Override
+        public InstrumentedType withEnclosingType(TypeDescription enclosingType) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    MethodDescription.UNDEFINED,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    TypeDescription.UNDEFINED,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withDeclaredTypes(TypeList declaredTypes) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    CompoundList.of(this.declaredTypes, declaredTypes),
                     memberClass,
                     anonymousClass,
                     localClass,
@@ -1235,6 +1394,31 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             throw new IllegalStateException("Cannot add annotation to frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withNestHost(TypeDescription nestHost) {
+            throw new IllegalStateException("Cannot set nest host of frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withNestMember(TypeList nestMembers) {
+            throw new IllegalStateException("Cannot add nest members to frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withEnclosingType(TypeDescription enclosingType) {
+            throw new IllegalStateException("Cannot set enclosing type of frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
+            throw new IllegalStateException("Cannot set enclosing method of frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withDeclaredTypes(TypeList declaredTypes) {
+            throw new IllegalStateException("Cannot add declared types to frozen type: " + typeDescription);
         }
 
         @Override
