@@ -3977,10 +3977,9 @@ public interface TypeWriter<T> {
                 @Override
                 public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                     declaredTypes.remove(internalName);
-                    if (internalName.equals(instrumentedType.getInternalName())) {
-                        modifiers = instrumentedType.getModifiers();
+                    if (!internalName.equals(instrumentedType.getInternalName())) {
+                        super.visitInnerClass(internalName, outerName, innerName, modifiers);
                     }
-                    super.visitInnerClass(internalName, outerName, innerName, modifiers);
                 }
 
                 @Override
@@ -4009,6 +4008,13 @@ public interface TypeWriter<T> {
                                 instrumentedType.getInternalName(),
                                 typeDescription.getSimpleName(),
                                 typeDescription.getModifiers());
+                    }
+                    TypeDescription declaringType = instrumentedType.getDeclaringType();
+                    if (declaringType != null) {
+                        super.visitInnerClass(instrumentedType.getInternalName(),
+                                declaringType.getInternalName(),
+                                instrumentedType.getSimpleName(),
+                                instrumentedType.getModifiers());
                     }
                     super.visitEnd();
                 }
@@ -4373,6 +4379,13 @@ public interface TypeWriter<T> {
                             instrumentedType.getInternalName(),
                             typeDescription.getSimpleName(),
                             typeDescription.getModifiers());
+                }
+                TypeDescription declaringType = instrumentedType.getDeclaringType();
+                if (declaringType != null) {
+                    classVisitor.visitInnerClass(instrumentedType.getInternalName(),
+                            declaringType.getInternalName(),
+                            instrumentedType.getSimpleName(),
+                            instrumentedType.getModifiers());
                 }
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
