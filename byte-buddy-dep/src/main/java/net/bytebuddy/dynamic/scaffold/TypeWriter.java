@@ -3976,7 +3976,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                    declaredTypes.remove(innerName);
+                    declaredTypes.remove(internalName);
                     if (internalName.equals(instrumentedType.getInternalName())) {
                         modifiers = instrumentedType.getModifiers();
                     }
