@@ -130,7 +130,7 @@ public class MetadataAwareClassVisitorTest {
         }
 
         @Override
-        protected void onOuterClass() {
+        protected void onOuterType() {
             outerClassVisited = true;
         }
 

@@ -43,7 +43,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * Invoked if the outer class was not visited.
      */
-    protected abstract void onOuterClass();
+    protected abstract void onOuterType();
 
     /**
      * Invoked if the attribute visitation is about to complete.
@@ -66,7 +66,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     protected void considerTriggerOuterClass() {
         if (triggerOuterClass) {
             triggerOuterClass = false;
-            onOuterClass();
+            onOuterType();
         }
     }
 

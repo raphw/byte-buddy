@@ -3809,7 +3809,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visitOuterClass(String owner, String name, String descriptor) {
-                    onOuterClass();
+                    onOuterType();
                 }
 
                 @Override
@@ -3821,7 +3821,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                protected void onOuterClass() {
+                protected void onOuterType() {
                     MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                     if (enclosingMethod != null) {
                         super.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
@@ -3976,8 +3976,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                    declaredTypes.remove(internalName);
                     if (!internalName.equals(instrumentedType.getInternalName())) {
+                        declaredTypes.remove(internalName);
                         super.visitInnerClass(internalName, outerName, innerName, modifiers);
                     }
                 }

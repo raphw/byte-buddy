@@ -9,6 +9,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.*;
 
 public class AgentBuilderDefaultApplicationResubmissionTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final long TIMEOUT = 1L;
 
@@ -48,7 +49,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Foo.class));
+        classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SimpleType.class));
     }
 
     @Test
@@ -76,12 +77,12 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                             return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
                         }
                     })
-                    .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                    .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new SampleTransformer())
                     .installOnByteBuddyAgent();
             try {
-                Class<?> type = classLoader.loadClass(Foo.class.getName());
+                Class<?> type = classLoader.loadClass(SimpleType.class.getName());
                 Thread.sleep(TimeUnit.SECONDS.toMillis(TIMEOUT * 3));
-                assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+                assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
             } finally {
                 ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             }
@@ -103,18 +104,11 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
         verifyNoMoreInteractions(future);
     }
 
-    public static class Foo {
-
-        public String foo() {
-            return null;
-        }
-    }
-
-    private static class FooTransformer implements AgentBuilder.Transformer {
+    private static class SampleTransformer implements AgentBuilder.Transformer {
 
         @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-            return builder.method(named(FOO)).intercept(FixedValue.value(FOO));
+            return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
 }
