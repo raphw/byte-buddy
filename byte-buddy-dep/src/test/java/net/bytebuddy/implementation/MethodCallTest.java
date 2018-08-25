@@ -25,7 +25,11 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.util.Textifier;
+import org.objectweb.asm.util.TraceClassVisitor;
 
+import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
@@ -1009,6 +1013,117 @@ public class MethodCallTest {
                 .constructor(ElementMatchers.any())
                 .intercept(MethodCall.invoke(Object.class.getConstructor()))
                 .make();
+    }
+
+    public interface A {
+        int a(int i);
+
+        int b(int i);
+
+        int c(int i);
+    }
+
+    @Test
+    public void testStuffz() throws Exception {
+        DynamicType.Unloaded<A> make = new ByteBuddy()
+                                               .subclass(A.class)
+                                               .name("ATest")
+
+                                               .defineMethod("a", int.class, Visibility.PUBLIC)
+                                               .withParameters(int.class)
+                                               .intercept(MethodDelegation.to(this.getClass()))
+
+                                               .defineMethod("b", int.class, Visibility.PUBLIC)
+                                               .withParameters(int.class)
+                                               .intercept(MethodDelegation.to(this.getClass()))
+
+                                               .defineMethod("c", int.class, Visibility.PUBLIC)
+                                               .withParameters(int.class)
+                                               .intercept(
+                                                       MethodCall.invoke(named("a"))
+                                                               .withMethodCall(MethodCall.invoke(this.getClass()
+                                                                                                         .getMethod("b"
+                                                                                                                 ,
+                                                                                                                 int.class))
+                                                                                       .withArgument(0)))
+                                               .make();
+        ClassReader classReader = new ClassReader(make.getBytes());
+        Textifier text = new Textifier();
+        TraceClassVisitor traceClassVisitor = new TraceClassVisitor(null, text, new PrintWriter(System.out));
+        classReader.accept(traceClassVisitor, 0);
+
+        A a = make
+                      .load(this.getClass().getClassLoader())
+                      .getLoaded().newInstance();
+
+        int z = a.c(2);
+
+    }
+
+//    @Test
+//    public void testMethodCallWithMethodCall() {
+//        DynamicType.Unloaded<X> x = new ByteBuddy()
+//                                                 .subclass(X.class)
+//                                                 .method(named("x"))
+//                                                 .intercept(MethodDelegation.to(getClass()))
+//                                                 .make();
+//        DynamicType.Unloaded<Y> y = new ByteBuddy()
+//                                            .subclass(Y.class)
+//                                            .method(named("y"))
+//                                            .intercept(MethodDelegation.to(getClass()))
+//                                            .make();
+//        DynamicType.Unloaded<Z> z = new ByteBuddy()
+//                                               .subclass(Z.class)
+//                                               .defineConstructor(Visibility.PUBLIC)
+//                                               .withParameters(X.class, Y.class)
+//                                               .intercept(new Implementation.Compound(
+//                                                       FieldAccessor.ofField("x").setsArgumentAt(0),
+//                                                       FieldAccessor.ofField("y").setsArgumentAt(1)
+//                                               ))
+//                                               .method(named("z"))
+//                                               .intercept(MethodCall.invoke(named("x")))
+////                                                                                                   .withMethodCall(
+////                                                                            MethodCall.invoke(named("y"))
+////                                                                    )
+////                                                                                                   .withField("y")
+////                                                                                                   .withArgument(0))
+//                                               .make();
+//
+//        ClassReader classReader = new ClassReader(x.getBytes());
+//        TraceClassVisitor traceClassVisitor = new TraceClassVisitor(null, new Textifier(), new PrintWriter(System
+// .out));
+//        classReader.accept(traceClassVisitor, 0);
+//
+//        classReader = new ClassReader(y.getBytes());
+//        classReader.accept(traceClassVisitor, 0);
+//
+//        classReader = new ClassReader(z.getBytes());
+//        classReader.accept(traceClassVisitor, 0);
+//    }
+
+
+    public static int x(int i) { return i * 3; }
+
+    public static int y(int i) { return i * 5; }
+
+    public interface X {
+        int x(int i);
+    }
+
+    public interface Y {
+        int y(int x);
+    }
+
+    public interface Z {
+        int z(int y);
+    }
+
+    public static int a(int i) {
+        return i + 5;
+    }
+
+    public static int b(int i) {
+        return i * 3;
     }
 
     public static class SimpleMethod {
