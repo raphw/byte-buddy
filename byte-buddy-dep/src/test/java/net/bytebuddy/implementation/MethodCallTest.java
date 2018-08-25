@@ -25,11 +25,7 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.util.Textifier;
-import org.objectweb.asm.util.TraceClassVisitor;
 
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
@@ -214,6 +210,34 @@ public class MethodCallTest {
         assertThat(instance.foo(new ArgumentCallDynamic.Target(BAR)), is(BAR));
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
         assertThat(instance, instanceOf(ArgumentCallDynamic.class));
+    }
+
+    @Test
+    public void testInvokeOnMethodCall() throws Exception {
+        DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(String.class.getMethod("toUpperCase"))
+                        .onMethodCall(MethodCall.invoke(named("bar"))))
+                .make()
+                .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallChaining instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foobar(), is("BAR"));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(MethodCallChaining.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeOnIncompatibleMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(Integer.class.getMethod("toString"))
+                        .onMethodCall(MethodCall.invoke(named("bar"))))
+                .make();
     }
 
     @Test
@@ -680,6 +704,41 @@ public class MethodCallTest {
     }
 
     @Test
+    public void testInvokeWithMethodCall() throws Exception {
+        DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("bar"))))
+                .make()
+                .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        MethodCallChaining instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod("foobar"), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(instance.foobar(), is("foobar"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticInvokeWithMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .defineMethod("staticFoobar", String.class, Ownership.STATIC)
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("bar"))))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeWithIncompatibleMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("someInt"))))
+                .make();
+    }
+
+    @Test
     public void testImplementationAppendingMethod() throws Exception {
         DynamicType.Loaded<MethodCallAppending> loaded = new ByteBuddy()
                 .subclass(MethodCallAppending.class)
@@ -1015,117 +1074,6 @@ public class MethodCallTest {
                 .make();
     }
 
-    public interface A {
-        int a(int i);
-
-        int b(int i);
-
-        int c(int i);
-    }
-
-    @Test
-    public void testStuffz() throws Exception {
-        DynamicType.Unloaded<A> make = new ByteBuddy()
-                                               .subclass(A.class)
-                                               .name("ATest")
-
-                                               .defineMethod("a", int.class, Visibility.PUBLIC)
-                                               .withParameters(int.class)
-                                               .intercept(MethodDelegation.to(this.getClass()))
-
-                                               .defineMethod("b", int.class, Visibility.PUBLIC)
-                                               .withParameters(int.class)
-                                               .intercept(MethodDelegation.to(this.getClass()))
-
-                                               .defineMethod("c", int.class, Visibility.PUBLIC)
-                                               .withParameters(int.class)
-                                               .intercept(
-                                                       MethodCall.invoke(named("a"))
-                                                               .withMethodCall(MethodCall.invoke(this.getClass()
-                                                                                                         .getMethod("b"
-                                                                                                                 ,
-                                                                                                                 int.class))
-                                                                                       .withArgument(0)))
-                                               .make();
-        ClassReader classReader = new ClassReader(make.getBytes());
-        Textifier text = new Textifier();
-        TraceClassVisitor traceClassVisitor = new TraceClassVisitor(null, text, new PrintWriter(System.out));
-        classReader.accept(traceClassVisitor, 0);
-
-        A a = make
-                      .load(this.getClass().getClassLoader())
-                      .getLoaded().newInstance();
-
-        int z = a.c(2);
-
-    }
-
-//    @Test
-//    public void testMethodCallWithMethodCall() {
-//        DynamicType.Unloaded<X> x = new ByteBuddy()
-//                                                 .subclass(X.class)
-//                                                 .method(named("x"))
-//                                                 .intercept(MethodDelegation.to(getClass()))
-//                                                 .make();
-//        DynamicType.Unloaded<Y> y = new ByteBuddy()
-//                                            .subclass(Y.class)
-//                                            .method(named("y"))
-//                                            .intercept(MethodDelegation.to(getClass()))
-//                                            .make();
-//        DynamicType.Unloaded<Z> z = new ByteBuddy()
-//                                               .subclass(Z.class)
-//                                               .defineConstructor(Visibility.PUBLIC)
-//                                               .withParameters(X.class, Y.class)
-//                                               .intercept(new Implementation.Compound(
-//                                                       FieldAccessor.ofField("x").setsArgumentAt(0),
-//                                                       FieldAccessor.ofField("y").setsArgumentAt(1)
-//                                               ))
-//                                               .method(named("z"))
-//                                               .intercept(MethodCall.invoke(named("x")))
-////                                                                                                   .withMethodCall(
-////                                                                            MethodCall.invoke(named("y"))
-////                                                                    )
-////                                                                                                   .withField("y")
-////                                                                                                   .withArgument(0))
-//                                               .make();
-//
-//        ClassReader classReader = new ClassReader(x.getBytes());
-//        TraceClassVisitor traceClassVisitor = new TraceClassVisitor(null, new Textifier(), new PrintWriter(System
-// .out));
-//        classReader.accept(traceClassVisitor, 0);
-//
-//        classReader = new ClassReader(y.getBytes());
-//        classReader.accept(traceClassVisitor, 0);
-//
-//        classReader = new ClassReader(z.getBytes());
-//        classReader.accept(traceClassVisitor, 0);
-//    }
-
-
-    public static int x(int i) { return i * 3; }
-
-    public static int y(int i) { return i * 5; }
-
-    public interface X {
-        int x(int i);
-    }
-
-    public interface Y {
-        int y(int x);
-    }
-
-    public interface Z {
-        int z(int y);
-    }
-
-    public static int a(int i) {
-        return i + 5;
-    }
-
-    public static int b(int i) {
-        return i * 3;
-    }
-
     public static class SimpleMethod {
 
         public String foo() {
@@ -1265,6 +1213,23 @@ public class MethodCallTest {
 
         public Class<?> foo(Class<?> value) {
             return value;
+        }
+    }
+
+    public static abstract class MethodCallChaining {
+
+        public String foo(String bar) {
+            return "foo" + bar;
+        }
+
+        public String bar() {
+            return "bar";
+        }
+
+        public abstract String foobar();
+
+        public int someInt() {
+            return 0xCAFEBABE;
         }
     }
 

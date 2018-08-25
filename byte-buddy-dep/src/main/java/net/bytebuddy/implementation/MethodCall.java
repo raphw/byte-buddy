@@ -1340,23 +1340,40 @@ public class MethodCall implements Implementation.Composable {
                 }
             }
         }
-    
+
+        /**
+         * Loads the return value of a method call onto the operand stack.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodCall implements ArgumentLoader {
             
             /**
-             * The method containing the loaded value.
+             * The description of the method call.
              */
             private final MethodDescription methodDescription;
+
+            /**
+             * The instrumented method.
+             */
             private MethodDescription instrumentedMethod;
-    
+
+            /**
+             * The implementation target to use.
+             */
             private Target implementationTarget;
+
+            /**
+             * The method call that is used
+             */
             private final MethodCall methodCall;
     
             /**
-             * Creates a new argument loader for loading an existing field.
-             * @param methodCall   The field containing the loaded value.
-             * @param methodDescription
+             * Creates a new argument loader for loading a method call's return value.
+             *
+             * @param implementationTarget The implementation target to use.
+             * @param methodCall           The method call returning the desired value.
+             * @param methodDescription    The method call's description.
+             * @param instrumentedMethod   The instrumented method.
              */
             public ForMethodCall(Target implementationTarget, MethodCall methodCall, MethodDescription methodDescription, MethodDescription instrumentedMethod) {
                 this.methodCall = methodCall;
@@ -1370,7 +1387,6 @@ public class MethodCall implements Implementation.Composable {
                 if (!methodDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + methodDescription + " from " + instrumentedMethod);
                 }
-                
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         methodCall.toStackManipulation(implementationTarget, instrumentedMethod),
                         assigner.assign(methodDescription.getReturnType(), target.getType(), typing)
@@ -1380,7 +1396,10 @@ public class MethodCall implements Implementation.Composable {
                 }
                 return stackManipulation;
             }
-            
+
+            /**
+             * A factory for an argument loaded that loads the return value of a method call as an argument.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements ArgumentLoader.Factory {
     
@@ -1521,6 +1540,8 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Creates a stack manipulation that represents the method's invocation.
          *
+         *
+         * @param implementationTarget
          * @param invokedMethod      The method to be invoked.
          * @param instrumentedMethod The instrumented method.
          * @param instrumentedType   The instrumented type.  @return A stack manipulation that invokes the method.
@@ -1528,7 +1549,8 @@ public class MethodCall implements Implementation.Composable {
          * @param typing             The typing to apply.
          * @return A stack manipulation that loads the method target onto the operand stack.
          */
-        StackManipulation resolve(MethodDescription invokedMethod,
+        StackManipulation resolve(Target implementationTarget,
+                                  MethodDescription invokedMethod,
                                   MethodDescription instrumentedMethod,
                                   TypeDescription instrumentedType,
                                   Assigner assigner,
@@ -1546,7 +1568,8 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
@@ -1585,7 +1608,8 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
@@ -1639,7 +1663,8 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
@@ -1693,7 +1718,12 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
@@ -1740,7 +1770,8 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod,
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
@@ -1754,6 +1785,48 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + parameterDescription.getType());
                 }
                 return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), stackManipulation);
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
+
+        /**
+         * A target handler that executes the method and uses it's return value as the target object.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class ForMethodCall implements TargetHandler {
+
+            /**
+             * The method that is executed and whose return value is used as the target object.
+             */
+            private final MethodCall methodCall;
+
+            /**
+             * Creates a new target handler for the instrumented method.
+             *
+             * @param methodCall The method call that is the target of the method invocation.
+             */
+            protected ForMethodCall(MethodCall methodCall) {
+                this.methodCall = methodCall;
+            }
+
+            @Override
+            public StackManipulation resolve(Target implementationTarget,
+                                             MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
+                MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, instrumentedMethod);
+                StackManipulation stackManipulation = assigner.assign(methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + methodDescription.getReturnType());
+                }
+
+                return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod), stackManipulation);
             }
 
             @Override
@@ -2059,6 +2132,22 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
+         * Invokes a method on the method call's return value.
+         *
+         * @param methodCall The method call that return's value is to be used in this method call
+         * @return A method call that invokes the given method on an instance that is returned from a method call.
+         */
+        public MethodCall onMethodCall(MethodCall methodCall) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.ForMethodCall(methodCall),
+                    argumentLoaders,
+                    MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+                    terminationHandler,
+                    assigner,
+                    typing);
+        }
+
+        /**
          * Invokes the given method by a super method invocation on the instance of the instrumented type.
          * Note that the super method is resolved depending on the type of implementation when this method is called.
          * In case that a subclass is created, the super type is invoked. If a type is rebased, the rebased method
@@ -2092,15 +2181,17 @@ public class MethodCall implements Implementation.Composable {
         }
     }
 
-    StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
+    protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
         return toStackManipulation(implementationTarget, instrumentedMethod, false);
     }
-    
-    StackManipulation toTerminatedStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
+
+    protected StackManipulation toTerminatedStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
         return toStackManipulation(implementationTarget, instrumentedMethod, true);
     }
     
-    private StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, boolean terminate) {
+    private StackManipulation toStackManipulation(Target implementationTarget,
+                                                  MethodDescription instrumentedMethod,
+                                                  boolean terminate) {
         MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
         if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
             throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + implementationTarget.getInstrumentedType());
@@ -2120,7 +2211,7 @@ public class MethodCall implements Implementation.Composable {
         }
         
         return new StackManipulation.Compound(
-                targetHandler.resolve(invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(), assigner, typing),
+                targetHandler.resolve(implementationTarget, invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(), assigner, typing),
                 new StackManipulation.Compound(argumentInstructions),
                 methodInvoker.invoke(invokedMethod, implementationTarget),
                 terminate ?
