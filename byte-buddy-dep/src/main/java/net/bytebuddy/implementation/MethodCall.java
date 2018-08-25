@@ -493,17 +493,17 @@ public class MethodCall implements Implementation.Composable {
         }
         return with(argumentLoaders);
     }
-    
+
     /**
-     * Defines a method call which fetches a value from a method call
+     * Defines a method call which fetches a value from a method call.
      *
-     * @param methodCall The method call to use
-     * @return A method call which assigns the parameter to the result of the given method call
+     * @param methodCall The method call to use.
+     * @return A method call which assigns the parameter to the result of the given method call.
      */
     public MethodCall withMethodCall(MethodCall methodCall) {
         return with(new ArgumentLoader.ForMethodCall.Factory(methodCall));
     }
-    
+
     /**
      * Adds a stack manipulation as an assignment to the next parameter.
      *
@@ -736,10 +736,10 @@ public class MethodCall implements Implementation.Composable {
             /**
              * Creates any number of argument loaders for an instrumentation.
              *
-             *
-             * @param instrumentedType   The instrumented type.
-             * @param instrumentedMethod The instrumented method.
-             * @param invokedMethod      The invoked method.
+             * @param implementationTarget The implementation target.
+             * @param instrumentedType     The instrumented type.
+             * @param instrumentedMethod   The instrumented method.
+             * @param invokedMethod        The invoked method.
              * @return Any number of argument loaders to supply for the method call.
              */
             List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod);
@@ -1346,7 +1346,7 @@ public class MethodCall implements Implementation.Composable {
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForMethodCall implements ArgumentLoader {
-            
+
             /**
              * The description of the method call.
              */
@@ -1363,10 +1363,10 @@ public class MethodCall implements Implementation.Composable {
             private Target implementationTarget;
 
             /**
-             * The method call that is used
+             * The method call that is used.
              */
             private final MethodCall methodCall;
-    
+
             /**
              * Creates a new argument loader for loading a method call's return value.
              *
@@ -1381,7 +1381,7 @@ public class MethodCall implements Implementation.Composable {
                 this.instrumentedMethod = instrumentedMethod;
                 this.implementationTarget = implementationTarget;
             }
-    
+
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 if (!methodDescription.isStatic() && instrumentedMethod.isStatic()) {
@@ -1402,12 +1402,12 @@ public class MethodCall implements Implementation.Composable {
              */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class Factory implements ArgumentLoader.Factory {
-    
+
                 /**
                  * The method call to use.
                  */
                 private final MethodCall methodCall;
-    
+
                 /**
                  * Creates a new argument loader for an existing method call.
                  *
@@ -1416,21 +1416,21 @@ public class MethodCall implements Implementation.Composable {
                 public Factory(MethodCall methodCall) {
                     this.methodCall = methodCall;
                 }
-    
+
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-    
+
                 @Override
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, instrumentedMethod);
-    
+
                     return Collections.<ArgumentLoader>singletonList(new ForMethodCall(implementationTarget, methodCall, methodDescription, instrumentedMethod));
                 }
             }
         }
-        
+
         /**
          * Loads a stack manipulation resulting in a specific type as an argument.
          */
@@ -1541,12 +1541,12 @@ public class MethodCall implements Implementation.Composable {
          * Creates a stack manipulation that represents the method's invocation.
          *
          *
-         * @param implementationTarget
-         * @param invokedMethod      The method to be invoked.
-         * @param instrumentedMethod The instrumented method.
-         * @param instrumentedType   The instrumented type.  @return A stack manipulation that invokes the method.
-         * @param assigner           The assigner to use.
-         * @param typing             The typing to apply.
+         * @param implementationTarget The implementation target.
+         * @param invokedMethod        The method to be invoked.
+         * @param instrumentedMethod   The instrumented method.
+         * @param instrumentedType     The instrumented type.  @return A stack manipulation that invokes the method.
+         * @param assigner             The assigner to use.
+         * @param typing               The typing to apply.
          * @return A stack manipulation that loads the method target onto the operand stack.
          */
         StackManipulation resolve(Target implementationTarget,
@@ -2181,14 +2181,36 @@ public class MethodCall implements Implementation.Composable {
         }
     }
 
+    /**
+     * Creates a stack manipulation of this method call and leaves it's return value on the stack.
+     *
+     * @param implementationTarget The implementation target.
+     * @param instrumentedMethod   The instrumented method.
+     * @return The method call's stack manipulation.
+     */
     protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
         return toStackManipulation(implementationTarget, instrumentedMethod, false);
     }
 
+    /**
+     * Creates a stack manipulation of this method call and removes the return value from the stack.
+     *
+     * @param implementationTarget The implementation target.
+     * @param instrumentedMethod   The instrumented method.
+     * @return The method call's stack manipulation.
+     */
     protected StackManipulation toTerminatedStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
         return toStackManipulation(implementationTarget, instrumentedMethod, true);
     }
-    
+
+    /**
+     * Creates a stack manipulation of this method call.
+     *
+     * @param implementationTarget The implementation target.
+     * @param instrumentedMethod   The instrumented method.
+     * @param terminate            Determines whether the {@link MethodCall#terminationHandler} should be called.
+     * @return The method call's stack manipulation.
+     */
     private StackManipulation toStackManipulation(Target implementationTarget,
                                                   MethodDescription instrumentedMethod,
                                                   boolean terminate) {
@@ -2209,7 +2231,7 @@ public class MethodCall implements Implementation.Composable {
         for (ArgumentLoader argumentLoader : argumentLoaders) {
             argumentInstructions.add(argumentLoader.resolve(parameterIterator.next(), assigner, typing));
         }
-        
+
         return new StackManipulation.Compound(
                 targetHandler.resolve(implementationTarget, invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(), assigner, typing),
                 new StackManipulation.Compound(argumentInstructions),
@@ -2219,7 +2241,7 @@ public class MethodCall implements Implementation.Composable {
                         : StackManipulation.Trivial.INSTANCE
         );
     }
-    
+
     /**
      * The appender being used to implement a {@link net.bytebuddy.implementation.MethodCall}.
      */
