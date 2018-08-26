@@ -95,7 +95,7 @@ public class InstrumentedTypeFrozenTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithNestMember() {
-        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestMember(mock(TypeList.class));
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestMembers(mock(TypeList.class));
     }
 
     @Test(expected = IllegalStateException.class)

@@ -244,6 +244,52 @@ public interface DynamicType {
          */
         Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors);
 
+        Builder<T> topLevelType();
+
+        Builder<T> innerTypeOf(Class<?> type);
+
+        Builder<T> innerTypeOf(TypeDescription type);
+
+        Builder<T> localTypeOf(Class<?> type);
+
+        Builder<T> localTypeOf(TypeDescription type);
+
+        Builder<T> anonymousClassOf(Class<?> type);
+
+        Builder<T> anonymousClassOf(TypeDescription type);
+
+        Builder<T> enclosedBy(Class<?> type);
+
+        Builder<T> enclosedBy(TypeDescription type);
+
+        Builder<T> enclosedBy(Method method);
+
+        Builder<T> enclosedBy(Constructor<?> constructor);
+
+        Builder<T> enclosedBy(MethodDescription.InDefinedShape method);
+
+        Builder<T> declaredTypes(Class<?>... type);
+
+        Builder<T> declaredTypes(TypeDescription... type);
+
+        Builder<T> declaredTypes(List<? extends Class<?>> types);
+
+        Builder<T> declaredTypes(Collection<? extends TypeDescription> types);
+
+        Builder<T> noNestMate();
+
+        Builder<T> nestHost(Class<?> type);
+
+        Builder<T> nestHost(TypeDescription type);
+
+        Builder<T> nestMembers(Class<?>... type);
+
+        Builder<T> nestMembers(TypeDescription... type);
+
+        Builder<T> nestMembers(List<? extends Class<?>> types);
+
+        Builder<T> nestMembers(Collection<? extends TypeDescription> types);
+
         /**
          * Applies the given type attribute appender onto the instrumented type. Using a type attribute appender, it is possible to append
          * any type of meta data to a type, not only Java {@link Annotation}s.
@@ -2408,6 +2454,81 @@ public interface DynamicType {
         abstract class AbstractBase<S> implements Builder<S> {
 
             @Override
+            public Builder<S> topLevelType() {
+                return innerTypeOf(TypeDescription.UNDEFINED);
+            }
+
+            @Override
+            public Builder<S> innerTypeOf(Class<?> type) {
+                return innerTypeOf(TypeDescription.ForLoadedType.of(type));
+            }
+
+            @Override
+            public Builder<S> localTypeOf(Class<?> type) {
+                return localTypeOf(TypeDescription.ForLoadedType.of(type));
+            }
+
+            @Override
+            public Builder<S> anonymousClassOf(Class<?> type) {
+                return anonymousClassOf(TypeDescription.ForLoadedType.of(type));
+            }
+
+            @Override
+            public Builder<S> declaredTypes(Class<?>... type) {
+                return declaredTypes(Arrays.asList(type));
+            }
+
+            @Override
+            public Builder<S> declaredTypes(TypeDescription... type) {
+                return declaredTypes(Arrays.asList(type));
+            }
+
+            @Override
+            public Builder<S> declaredTypes(List<? extends Class<?>> type) {
+                return declaredTypes(new TypeList.ForLoadedTypes(type));
+            }
+
+            @Override
+            public Builder<S> enclosedBy(Class<?> type) {
+                return enclosedBy(TypeDescription.ForLoadedType.of(type));
+            }
+
+            @Override
+            public Builder<S> enclosedBy(Method method) {
+                return enclosedBy(new MethodDescription.ForLoadedMethod(method));
+            }
+
+            @Override
+            public Builder<S> enclosedBy(Constructor<?> constructor) {
+                return enclosedBy(new MethodDescription.ForLoadedConstructor(constructor));
+            }
+
+            @Override
+            public Builder<S> noNestMate() {
+                return nestHost(TargetType.DESCRIPTION);
+            }
+
+            @Override
+            public Builder<S> nestHost(Class<?> type) {
+                return nestHost(TypeDescription.ForLoadedType.of(type));
+            }
+
+            @Override
+            public Builder<S> nestMembers(Class<?>... type) {
+                return nestMembers(Arrays.asList(type));
+            }
+
+            @Override
+            public Builder<S> nestMembers(TypeDescription... type) {
+                return nestMembers(Arrays.asList(type));
+            }
+
+            @Override
+            public Builder<S> nestMembers(List<? extends Class<?>> types) {
+                return nestMembers(new TypeList.ForLoadedTypes(types));
+            }
+
+            @Override
             public Builder<S> annotateType(Annotation... annotation) {
                 return annotateType(Arrays.asList(annotation));
             }
@@ -2709,6 +2830,46 @@ public interface DynamicType {
                 @Override
                 public Builder<U> name(String name) {
                     return materialize().name(name);
+                }
+
+                @Override
+                public Builder<U> innerTypeOf(TypeDescription type) {
+                    return materialize().innerTypeOf(type);
+                }
+
+                @Override
+                public Builder<U> localTypeOf(TypeDescription type) {
+                    return materialize().localTypeOf(type);
+                }
+
+                @Override
+                public Builder<U> anonymousClassOf(TypeDescription type) {
+                    return materialize().anonymousClassOf(type);
+                }
+
+                @Override
+                public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
+                    return materialize().declaredTypes(types);
+                }
+
+                @Override
+                public Builder<U> enclosedBy(TypeDescription type) {
+                    return materialize().enclosedBy(type);
+                }
+
+                @Override
+                public Builder<U> enclosedBy(MethodDescription.InDefinedShape method) {
+                    return materialize().enclosedBy(method);
+                }
+
+                @Override
+                public Builder<U> nestHost(TypeDescription type) {
+                    return materialize().nestHost(type);
+                }
+
+                @Override
+                public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
+                    return materialize().nestMembers(types);
                 }
 
                 @Override
@@ -3044,6 +3205,150 @@ public interface DynamicType {
                 @Override
                 public Builder<U> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
                     return materialize(instrumentedType.withModifiers(ModifierContributor.Resolver.of(modifierContributors).resolve(instrumentedType.getModifiers())),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> innerTypeOf(TypeDescription type) {
+                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(false).withLocalClass(false),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> localTypeOf(TypeDescription type) {
+                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(false).withLocalClass(true),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> anonymousClassOf(TypeDescription type) {
+                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(true).withLocalClass(false),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
+                    return materialize(instrumentedType.withDeclaredTypes(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> enclosedBy(TypeDescription type) {
+                    return materialize(instrumentedType.withEnclosingType(type),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> enclosedBy(MethodDescription.InDefinedShape method) {
+                    return materialize(instrumentedType.withEnclosingMethod(method),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> nestHost(TypeDescription type) {
+                    return materialize(instrumentedType.withNestHost(type),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
+                    return materialize(instrumentedType.withNestMembers(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,

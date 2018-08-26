@@ -96,7 +96,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param nestMembers The nest members to add to the created instrumented type.
      * @return A new instrumented type that applies the supplied nest members.
      */
-    InstrumentedType withNestMember(TypeList nestMembers);
+    InstrumentedType withNestMembers(TypeList nestMembers);
 
     /**
      * Creates a new instrumented type with the supplied enclosing type.
@@ -202,6 +202,30 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes);
+
+        @Override
+        WithFlexibleName withNestHost(TypeDescription nestHost);
+
+        @Override
+        WithFlexibleName withNestMembers(TypeList nestMembers);
+
+        @Override
+        WithFlexibleName withEnclosingType(TypeDescription enclosingType);
+
+        @Override
+        WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod);
+
+        @Override
+        WithFlexibleName withDeclaringType(TypeDescription declaringType);
+
+        @Override
+        WithFlexibleName withDeclaredTypes(TypeList declaredTypes);
+
+        @Override
+        WithFlexibleName withLocalClass(boolean localClass);
+
+        @Override
+        WithFlexibleName withAnonymousClass(boolean anonymousClass);
 
         @Override
         WithFlexibleName withTypeVariable(TypeVariableToken typeVariable);
@@ -640,7 +664,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withNestHost(TypeDescription nestHost) {
+        public WithFlexibleName  withNestHost(TypeDescription nestHost) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -664,7 +688,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withNestMember(TypeList nestMembers) {
+        public WithFlexibleName withNestMembers(TypeList nestMembers) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -686,7 +710,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withEnclosingType(TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -708,7 +732,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
+        public WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -730,7 +754,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withDeclaringType(TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -752,7 +776,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withDeclaredTypes(TypeList declaredTypes) {
+        public WithFlexibleName withDeclaredTypes(TypeList declaredTypes) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -847,7 +871,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withLocalClass(boolean localClass) {
+        public WithFlexibleName withLocalClass(boolean localClass) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -869,7 +893,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withAnonymousClass(boolean anonymousClass) {
+        public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -1483,42 +1507,42 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withNestHost(TypeDescription nestHost) {
+        public WithFlexibleName withNestHost(TypeDescription nestHost) {
             throw new IllegalStateException("Cannot set nest host of frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withNestMember(TypeList nestMembers) {
+        public WithFlexibleName withNestMembers(TypeList nestMembers) {
             throw new IllegalStateException("Cannot add nest members to frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withEnclosingType(TypeDescription enclosingType) {
+        public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
             throw new IllegalStateException("Cannot set enclosing type of frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
+        public WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
             throw new IllegalStateException("Cannot set enclosing method of frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withDeclaringType(TypeDescription declaringType) {
+        public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
             throw new IllegalStateException("Cannot add declaring type to frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withDeclaredTypes(TypeList declaredTypes) {
+        public WithFlexibleName withDeclaredTypes(TypeList declaredTypes) {
             throw new IllegalStateException("Cannot add declared types to frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withLocalClass(boolean localClass) {
+        public WithFlexibleName withLocalClass(boolean localClass) {
             throw new IllegalStateException("Cannot define local class state to frozen type: " + typeDescription);
         }
 
         @Override
-        public InstrumentedType withAnonymousClass(boolean anonymousClass) {
+        public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             throw new IllegalStateException("Cannot define anonymous class state to frozen type: " + typeDescription);
         }
 

@@ -559,7 +559,7 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getNestMembers().size(), is(1));
         assertThat(instrumentedType.getNestMembers(), hasItems((TypeDescription) instrumentedType));
-        InstrumentedType transformed = instrumentedType.withNestMember(new TypeList.Explicit(typeDescription));
+        InstrumentedType transformed = instrumentedType.withNestMembers(new TypeList.Explicit(typeDescription));
         assertThat(transformed.getNestHost(), is((TypeDescription) transformed));
         assertThat(transformed.getNestMembers(), hasItems(transformed, typeDescription));
     }
@@ -775,14 +775,14 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testNestMemberArray() throws Exception {
         makePlainInstrumentedType()
-                .withNestMember(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object[].class)))
+                .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object[].class)))
                 .validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNestMemberPrimitive() throws Exception {
         makePlainInstrumentedType()
-                .withNestMember(new TypeList.Explicit(TypeDescription.ForLoadedType.of(void.class)))
+                .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(void.class)))
                 .validated();
     }
 
