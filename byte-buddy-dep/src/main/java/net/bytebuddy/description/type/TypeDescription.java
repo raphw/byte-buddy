@@ -7004,6 +7004,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        public boolean isMemberClass() {
+            return !isLocalClass() && getEnclosingType() != null;
+        }
+
+        @Override
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }

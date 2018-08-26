@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -65,6 +66,46 @@ public class InstrumentedTypeFrozenTest {
     @Test(expected = IllegalStateException.class)
     public void testWithName() throws Exception {
         new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withName("foo");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithDeclaringType() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withDeclaringType(mock(TypeDescription.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithDeclaredType() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withDeclaredTypes(mock(TypeList.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithEnclosingType() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingType(mock(TypeDescription.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithEnclosingMethod() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withEnclosingMethod(mock(MethodDescription.InDefinedShape.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithNestHost() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestHost(mock(TypeDescription.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithNestMember() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withNestMember(mock(TypeList.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithLocalClass() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withLocalClass(true);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testWithAnonymousClass() {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withAnonymousClass(true);
     }
 
     @Test

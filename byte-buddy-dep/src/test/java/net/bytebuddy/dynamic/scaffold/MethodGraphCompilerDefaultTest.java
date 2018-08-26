@@ -1056,7 +1056,6 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false,
                 TargetType.DESCRIPTION,
                 Collections.<TypeDescription>emptyList());
         MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("foo",
@@ -1094,7 +1093,6 @@ public class MethodGraphCompilerDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
-                false,
                 false,
                 false,
                 TargetType.DESCRIPTION,

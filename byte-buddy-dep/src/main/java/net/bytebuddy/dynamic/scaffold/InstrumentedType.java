@@ -115,12 +115,36 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod);
 
     /**
+     * Creates a new instrumented type that is declared by the supplied type..
+     *
+     * @param declaringType The type that declares the instrumented type.
+     * @return A new instrumented type that is declared by the instrumented type.
+     */
+    InstrumentedType withDeclaringType(TypeDescription declaringType);
+
+    /**
      * Creates a new instrumented type that indicates that it declared the supplied types.
      *
      * @param declaredTypes The types to add to the created instrumented type as declared types.
      * @return A new instrumented type that indicates that it has declared the supplied types.
      */
     InstrumentedType withDeclaredTypes(TypeList declaredTypes);
+
+    /**
+     * Creates a new instrumented type that indicates that is defined as a local class.
+     *
+     * @param localClass {@code true} if the instrumented type is supposed to be treated as a local class.
+     * @return A new instrumented type that is treated as a local class.
+     */
+    InstrumentedType withLocalClass(boolean localClass);
+
+    /**
+     * Creates a new instrumented type that indicates that is defined as an anonymous class.
+     *
+     * @param anonymousClass {@code true} if the instrumented type is supposed to be treated as an anonymous class.
+     * @return A new instrumented type that is treated as an anonymous class.
+     */
+    InstrumentedType withAnonymousClass(boolean anonymousClass);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -272,7 +296,6 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getEnclosingMethod(),
                             typeDescription.getEnclosingType(),
                             typeDescription.getDeclaredTypes(),
-                            typeDescription.isMemberClass(),
                             typeDescription.isAnonymousClass(),
                             typeDescription.isLocalClass(),
                             typeDescription.getNestHost().equals(typeDescription)
@@ -308,7 +331,6 @@ public interface InstrumentedType extends TypeDescription {
                         MethodDescription.UNDEFINED,
                         TypeDescription.UNDEFINED,
                         Collections.<TypeDescription>emptyList(),
-                        false,
                         false,
                         false,
                         TargetType.DESCRIPTION,
@@ -404,11 +426,6 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends TypeDescription> declaredTypes;
 
         /**
-         * {@code true} if this type is a member class.
-         */
-        private final boolean memberClass;
-
-        /**
          * {@code true} if this type is a anonymous class.
          */
         private final boolean anonymousClass;
@@ -445,7 +462,6 @@ public interface InstrumentedType extends TypeDescription {
          * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
          * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
          * @param declaredTypes          A list of types that are declared by this type.
-         * @param memberClass            {@code true} if this type is a member class.
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
          * @param nestHost               The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
@@ -465,7 +481,6 @@ public interface InstrumentedType extends TypeDescription {
                           MethodDescription.InDefinedShape enclosingMethod,
                           TypeDescription enclosingType,
                           List<? extends TypeDescription> declaredTypes,
-                          boolean memberClass,
                           boolean anonymousClass,
                           boolean localClass,
                           TypeDescription nestHost,
@@ -484,7 +499,6 @@ public interface InstrumentedType extends TypeDescription {
             this.enclosingMethod = enclosingMethod;
             this.enclosingType = enclosingType;
             this.declaredTypes = declaredTypes;
-            this.memberClass = memberClass;
             this.anonymousClass = anonymousClass;
             this.localClass = localClass;
             this.nestHost = nestHost;
@@ -531,7 +545,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -554,7 +567,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -577,7 +589,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -600,7 +611,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -623,7 +633,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -646,7 +655,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost.equals(this)
@@ -671,7 +679,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     TargetType.DESCRIPTION,
@@ -694,7 +701,6 @@ public interface InstrumentedType extends TypeDescription {
                     MethodDescription.UNDEFINED,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -717,7 +723,28 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     TypeDescription.UNDEFINED,
                     declaredTypes,
-                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withDeclaringType(TypeDescription declaringType) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -740,7 +767,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     CompoundList.of(this.declaredTypes, declaredTypes),
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -763,7 +789,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -786,7 +811,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -816,7 +840,50 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withLocalClass(boolean localClass) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        @Override
+        public InstrumentedType withAnonymousClass(boolean anonymousClass) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -839,7 +906,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -862,7 +928,6 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    memberClass,
                     anonymousClass,
                     localClass,
                     nestHost,
@@ -902,11 +967,6 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public boolean isLocalClass() {
             return localClass;
-        }
-
-        @Override
-        public boolean isMemberClass() {
-            return memberClass;
         }
 
         @Override
@@ -1038,6 +1098,33 @@ public interface InstrumentedType extends TypeDescription {
                 if (!interfaceBound) {
                     throw new IllegalStateException("Type variable " + typeVariable + " for " + this + " does not define at least one bound");
                 }
+            }
+            TypeDescription declaringType = getDeclaringType();
+            if (declaringType != null) {
+                if (declaringType.isPrimitive() || declaringType.isArray()) {
+                    throw new IllegalStateException("Cannot define array type or primitive type " + declaringType + " as declaring type for " + this);
+                }
+            } else if (isLocalClass() || isAnonymousClass()) {
+                throw new IllegalStateException("Cannot define an anonymous or local class without a declaring type for " + this);
+            }
+            for (TypeDescription declaredType : getDeclaredTypes()) {
+                if (declaredType.isArray() || declaredType.isPrimitive()) {
+                    throw new IllegalStateException("Cannot define array type or primitive type " + declaredType + " + as declared type for " + this);
+                }
+            }
+            TypeDescription enclosingType = getEnclosingType();
+            if (enclosingType != null && (enclosingType.isArray() || enclosingType.isPrimitive())) {
+                throw new IllegalStateException("Cannot define array type or primitive type " + enclosingType + " + as enclosing type for " + this);
+            }
+            TypeDescription nestHost = getNestHost();
+            if (nestHost.equals(this)) {
+                for (TypeDescription nestMember : getNestMembers()) {
+                    if (nestMember.isArray() || nestMember.isPrimitive()) {
+                        throw new IllegalStateException("Cannot define array type or primitive type " + nestMember + " + as nest member of " + this);
+                    }
+                }
+            } else if (nestHost.isArray() || nestHost.isPrimitive()) {
+                throw new IllegalStateException("Cannot define array type or primitive type " + nestHost + " + as nest host for " + this);
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
@@ -1188,7 +1275,6 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Static method " + methodDescription + " defines a non-null receiver " + receiverType);
                     }
                 } else if (methodDescription.isConstructor()) {
-                    TypeDescription enclosingType = getEnclosingType();
                     if (receiverType == null || !receiverType.asErasure().equals(enclosingType == null ? this : enclosingType)) {
                         throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
                     }
@@ -1417,8 +1503,23 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
+        public InstrumentedType withDeclaringType(TypeDescription declaringType) {
+            throw new IllegalStateException("Cannot add declaring type to frozen type: " + typeDescription);
+        }
+
+        @Override
         public InstrumentedType withDeclaredTypes(TypeList declaredTypes) {
             throw new IllegalStateException("Cannot add declared types to frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withLocalClass(boolean localClass) {
+            throw new IllegalStateException("Cannot define local class state to frozen type: " + typeDescription);
+        }
+
+        @Override
+        public InstrumentedType withAnonymousClass(boolean anonymousClass) {
+            throw new IllegalStateException("Cannot define anonymous class state to frozen type: " + typeDescription);
         }
 
         @Override

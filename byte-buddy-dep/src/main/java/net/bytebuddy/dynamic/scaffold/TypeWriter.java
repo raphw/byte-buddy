@@ -4012,8 +4012,12 @@ public interface TypeWriter<T> {
                     TypeDescription declaringType = instrumentedType.getDeclaringType();
                     if (declaringType != null) {
                         super.visitInnerClass(instrumentedType.getInternalName(),
-                                declaringType.getInternalName(),
-                                instrumentedType.getSimpleName(),
+                                instrumentedType.isLocalClass() || instrumentedType.isMemberClass()
+                                        ? declaringType.getInternalName()
+                                        : NO_REFERENCE,
+                                instrumentedType.isAnonymousClass()
+                                        ? NO_REFERENCE
+                                        : instrumentedType.getSimpleName(),
                                 instrumentedType.getModifiers());
                     }
                     super.visitEnd();
@@ -4383,8 +4387,12 @@ public interface TypeWriter<T> {
                 TypeDescription declaringType = instrumentedType.getDeclaringType();
                 if (declaringType != null) {
                     classVisitor.visitInnerClass(instrumentedType.getInternalName(),
-                            declaringType.getInternalName(),
-                            instrumentedType.getSimpleName(),
+                            instrumentedType.isLocalClass() || instrumentedType.isMemberClass()
+                                    ? declaringType.getInternalName()
+                                    : NO_REFERENCE,
+                            instrumentedType.isAnonymousClass()
+                                    ? NO_REFERENCE
+                                    : instrumentedType.getSimpleName(),
                             instrumentedType.getModifiers());
                 }
                 classVisitor.visitEnd();

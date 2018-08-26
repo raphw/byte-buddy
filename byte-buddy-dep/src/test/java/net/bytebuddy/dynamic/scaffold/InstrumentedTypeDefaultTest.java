@@ -74,9 +74,8 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,
-                false,
                 TargetType.DESCRIPTION,
-                Collections.singletonList(TargetType.DESCRIPTION));
+                Collections.<TypeDescription>emptyList());
     }
 
     @Test
@@ -449,21 +448,6 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
-    public void testEnclosingMethod() throws Exception {
-        assertThat(makePlainInstrumentedType().getEnclosingMethod(), nullValue());
-    }
-
-    @Test
-    public void testEnclosingType() throws Exception {
-        assertThat(makePlainInstrumentedType().getEnclosingType(), nullValue());
-    }
-
-    @Test
-    public void testDeclaringType() throws Exception {
-        assertThat(makePlainInstrumentedType().getDeclaringType(), nullValue());
-    }
-
-    @Test
     public void testIsAnonymous() throws Exception {
         assertThat(makePlainInstrumentedType().isAnonymousClass(), is(false));
     }
@@ -477,11 +461,6 @@ public class InstrumentedTypeDefaultTest {
     @Test
     public void testIsMemberClass() throws Exception {
         assertThat(makePlainInstrumentedType().isMemberClass(), is(false));
-    }
-
-    @Test
-    public void testDeclaredTypes() throws Exception {
-        assertThat(makePlainInstrumentedType().getDeclaredTypes().size(), is(0));
     }
 
     @Test
@@ -522,6 +501,91 @@ public class InstrumentedTypeDefaultTest {
         verify(typeDescription).accept(matchesPrototype(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType)));
         verify(typeDescription, times(2)).asGenericType();
         verifyNoMoreInteractions(typeDescription);
+    }
+
+
+    @Test
+    public void testDeclaringType() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaringType(), nullValue(TypeDescription.class));
+        InstrumentedType transformed = instrumentedType.withDeclaringType(typeDescription);
+        assertThat(transformed.getDeclaringType(), is(typeDescription));
+    }
+
+    @Test
+    public void testDeclaredTypes() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredTypes().size(), is(0));
+        InstrumentedType transformed = instrumentedType.withDeclaredTypes(new TypeList.Explicit(typeDescription));
+        assertThat(transformed.getDeclaredTypes(), hasItems(typeDescription));
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getEnclosingType(), nullValue(TypeDescription.class));
+        InstrumentedType transformed = instrumentedType.withEnclosingType(typeDescription);
+        assertThat(transformed.getEnclosingType(), is(typeDescription));
+        assertThat(transformed.getEnclosingMethod(), nullValue(MethodDescription.InDefinedShape.class));
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getEnclosingMethod(), nullValue(MethodDescription.InDefinedShape.class));
+        InstrumentedType transformed = instrumentedType.withEnclosingMethod(methodDescription);
+        assertThat(transformed.getEnclosingType(), nullValue(TypeDescription.class));
+        assertThat(transformed.getEnclosingMethod(), is(methodDescription));
+    }
+
+    @Test
+    public void testNestHost() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getNestHost(), is((TypeDescription) instrumentedType));
+        InstrumentedType transformed = instrumentedType.withNestHost(typeDescription);
+        assertThat(transformed.getNestHost(), is(typeDescription));
+    }
+
+    @Test
+    public void testNestMates() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getNestMembers().size(), is(1));
+        assertThat(instrumentedType.getNestMembers(), hasItems((TypeDescription) instrumentedType));
+        InstrumentedType transformed = instrumentedType.withNestMember(new TypeList.Explicit(typeDescription));
+        assertThat(transformed.getNestHost(), is((TypeDescription) transformed));
+        assertThat(transformed.getNestMembers(), hasItems(transformed, typeDescription));
+    }
+
+    @Test
+    public void testLocalClass() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.isLocalClass(), is(false));
+        TypeDescription transformed = instrumentedType.withLocalClass(true);
+        assertThat(transformed.isLocalClass(), is(true));
+    }
+
+    @Test
+    public void testMemberClass() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.isMemberClass(), is(false));
+        TypeDescription transformed = instrumentedType.withLocalClass(true).withDeclaringType(mock(TypeDescription.class));
+        assertThat(transformed.isLocalClass(), is(true));
+    }
+
+    @Test
+    public void testAnonymousClass() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.isAnonymousClass(), is(false));
+        TypeDescription transformed = instrumentedType.withAnonymousClass(true);
+        assertThat(transformed.isAnonymousClass(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -635,6 +699,90 @@ public class InstrumentedTypeDefaultTest {
     public void testTypeTypeVariableDoubleClassBound() throws Exception {
         makePlainInstrumentedType()
                 .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OBJECT, TypeDefinition.Sort.describe(String.class))))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeclaringTypeArray() throws Exception {
+        makePlainInstrumentedType()
+                .withDeclaringType(TypeDescription.ForLoadedType.of(Object[].class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeclaringTypePrimitive() throws Exception {
+        makePlainInstrumentedType()
+                .withDeclaringType(TypeDescription.ForLoadedType.of(void.class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeclaredTypeArray() throws Exception {
+        makePlainInstrumentedType()
+                .withDeclaredTypes(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object[].class)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDeclaredTypePrimitive() throws Exception {
+        makePlainInstrumentedType()
+                .withDeclaredTypes(new TypeList.Explicit(TypeDescription.ForLoadedType.of(void.class)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEnclosingTypeArray() throws Exception {
+        makePlainInstrumentedType()
+                .withEnclosingType(TypeDescription.ForLoadedType.of(Object[].class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testEnclosingTypePrimitive() throws Exception {
+        makePlainInstrumentedType()
+                .withEnclosingType(TypeDescription.ForLoadedType.of(void.class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStandaloneLocalClass() throws Exception {
+        makePlainInstrumentedType()
+                .withLocalClass(true)
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStandaloneAnonymousClass() throws Exception {
+        makePlainInstrumentedType()
+                .withAnonymousClass(true)
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestHostArray() throws Exception {
+        makePlainInstrumentedType()
+                .withNestHost(TypeDescription.ForLoadedType.of(Object[].class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestHostPrimitive() throws Exception {
+        makePlainInstrumentedType()
+                .withNestHost(TypeDescription.ForLoadedType.of(void.class))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestMemberArray() throws Exception {
+        makePlainInstrumentedType()
+                .withNestMember(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object[].class)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestMemberPrimitive() throws Exception {
+        makePlainInstrumentedType()
+                .withNestMember(new TypeList.Explicit(TypeDescription.ForLoadedType.of(void.class)))
                 .validated();
     }
 
@@ -1271,7 +1419,6 @@ public class InstrumentedTypeDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
-                false,
                 false,
                 false,
                 TargetType.DESCRIPTION,
