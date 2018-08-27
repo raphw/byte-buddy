@@ -3928,7 +3928,7 @@ public interface TypeWriter<T> {
                                 readerFlags);
                         super.visit(classFileVersionNumber,
                                 instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
-                                        | retainedDeprecationModifiers(modifiers)
+                                        | resolveDeprecationModifiers(modifiers)
                                         // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
                                         | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousClass()) ? Opcodes.ACC_FINAL : 0),
                                 instrumentedType.getInternalName(),
@@ -4020,7 +4020,7 @@ public interface TypeWriter<T> {
                      */
                     protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, int modifiers, String genericSignature) {
                         FieldDescription instrumentedField = record.getField();
-                        FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers() | retainedDeprecationModifiers(modifiers),
+                        FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                 instrumentedField.getInternalName(),
                                 instrumentedField.getDescriptor(),
                                 TypeDescription.AbstractBase.RAW_TYPES
@@ -4070,7 +4070,7 @@ public interface TypeWriter<T> {
                     protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, String genericSignature) {
                         MethodPool.Record record = methodPool.target(methodDescription);
                         if (!record.getSort().isDefined()) {
-                            return super.visitMethod(methodDescription.getActualModifiers() | retainedDeprecationModifiers(modifiers),
+                            return super.visitMethod(methodDescription.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                     methodDescription.getInternalName(),
                                     methodDescription.getDescriptor(),
                                     TypeDescription.AbstractBase.RAW_TYPES
@@ -4081,7 +4081,7 @@ public interface TypeWriter<T> {
                         MethodDescription implementedMethod = record.getMethod();
                         MethodVisitor methodVisitor = super.visitMethod(ModifierContributor.Resolver
                                         .of(Collections.singleton(record.getVisibility()))
-                                        .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())) | retainedDeprecationModifiers(modifiers),
+                                        .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())) | resolveDeprecationModifiers(modifiers),
                                 implementedMethod.getInternalName(),
                                 implementedMethod.getDescriptor(),
                                 TypeDescription.AbstractBase.RAW_TYPES
@@ -4096,7 +4096,7 @@ public interface TypeWriter<T> {
                             MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(implementedMethod.asDefined());
                             if (resolution.isRebased()) {
                                 MethodVisitor rebasedMethodVisitor = super.visitMethod(resolution.getResolvedMethod().getActualModifiers()
-                                                | retainedDeprecationModifiers(modifiers),
+                                                | resolveDeprecationModifiers(modifiers),
                                         resolution.getResolvedMethod().getInternalName(),
                                         resolution.getResolvedMethod().getDescriptor(),
                                         TypeDescription.AbstractBase.RAW_TYPES
@@ -4166,10 +4166,10 @@ public interface TypeWriter<T> {
                      * @param modifiers The original modifiers.
                      * @return {@link Opcodes#ACC_DEPRECATED} if the supplied modifiers imply deprecation.
                      */
-                    private int retainedDeprecationModifiers(int modifiers) {
+                    private int resolveDeprecationModifiers(int modifiers) {
                         return retainDeprecationModifiers && (modifiers & Opcodes.ACC_DEPRECATED) != 0
                                 ? Opcodes.ACC_DEPRECATED
-                                : 0;
+                                : ModifierContributor.EMPTY_MASK;
                     }
 
                     /**
