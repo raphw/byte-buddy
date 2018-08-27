@@ -213,6 +213,34 @@ public class MethodCallTest {
     }
 
     @Test
+    public void testInvokeOnMethodCall() throws Exception {
+        DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(String.class.getMethod("toUpperCase"))
+                        .onMethodCall(MethodCall.invoke(named("bar"))))
+                .make()
+                .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallChaining instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foobar(), is("BAR"));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(MethodCallChaining.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeOnIncompatibleMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(Integer.class.getMethod("toString"))
+                        .onMethodCall(MethodCall.invoke(named("bar"))))
+                .make();
+    }
+
+    @Test
     public void testSuperConstructorInvocationWithoutArguments() throws Exception {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
@@ -673,6 +701,41 @@ public class MethodCallTest {
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithThis.class)));
         assertThat(instance, instanceOf(MethodCallWithOwnType.class));
         assertThat(instance.foo(null), CoreMatchers.<Class<?>>is(loaded.getLoaded()));
+    }
+
+    @Test
+    public void testInvokeWithMethodCall() throws Exception {
+        DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("bar"))))
+                .make()
+                .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        MethodCallChaining instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod("foobar"), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(instance.foobar(), is("foobar"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticInvokeWithMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .defineMethod("staticFoobar", String.class, Ownership.STATIC)
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("bar"))))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeWithIncompatibleMethodCall() throws Exception {
+        new ByteBuddy()
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(named("foo")).withMethodCall(MethodCall.invoke(named("someInt"))))
+                .make();
     }
 
     @Test
@@ -1150,6 +1213,23 @@ public class MethodCallTest {
 
         public Class<?> foo(Class<?> value) {
             return value;
+        }
+    }
+
+    public static abstract class MethodCallChaining {
+
+        public String foo(String bar) {
+            return "foo" + bar;
+        }
+
+        public String bar() {
+            return "bar";
+        }
+
+        public abstract String foobar();
+
+        public int someInt() {
+            return 0xCAFEBABE;
         }
     }
 
