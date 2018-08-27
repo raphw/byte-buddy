@@ -1116,52 +1116,77 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testDeclaringType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
-            @Override
-            public String getSimpleName() {
-                return "Bar";
-            }
-        };
-        Class<?> outer = new ByteBuddy()
-                .subclass(Object.class)
-                .declaredTypes(sample)
+    public void testTopLevelType() throws Exception {
+        Class<?> type = createPlainWithoutValidation()
+                .topLevelType()
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        Class<?> type = createPlain()
-                .innerTypeOf(outer)
-                .name(sample.getName())
-                .make()
-                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
-                .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
+        assertThat(type.getEnclosingClass(), nullValue(Class.class));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
         assertThat(type.isAnonymousClass(), is(false));
         assertThat(type.isLocalClass(), is(false));
         assertThat(type.isMemberClass(), is(false));
     }
 
     @Test
-    public void testDeclaringAnonymousType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+    public void testDeclaringMemberType() throws Exception {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
             @Override
             public String getSimpleName() {
-                return "Bar";
+                return "Qux";
             }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
+                .name("foo.Bar")
                 .declaredTypes(sample)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
-        Class<?> type = createPlain()
-                .anonymousClassOf(outer)
+        Class<?> type = createPlainWithoutValidation()
                 .name(sample.getName())
+                .innerTypeOf(outer).asMemberType()
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
         assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
+        assertThat(type.isAnonymousClass(), is(false));
+        assertThat(type.isLocalClass(), is(false));
+        assertThat(type.isMemberClass(), is(true));
+    }
+
+    @Test
+    public void testDeclaringAnonymousType() throws Exception {
+        // Older JVMs derive the anonymous class property from a naming convention.
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+            @Override
+            public String getSimpleName() {
+                return "";
+            }
+        };
+        Class<?> outer = new ByteBuddy()
+                .subclass(Object.class)
+                .name("foo.Bar")
+                .declaredTypes(sample)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> type = createPlainWithoutValidation()
+                .name(sample.getName())
+                .innerTypeOf(outer).asAnonymousType()
+                .make()
+                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
         assertThat(type.isAnonymousClass(), is(true));
         assertThat(type.isLocalClass(), is(false));
         assertThat(type.isMemberClass(), is(false));
@@ -1169,86 +1194,93 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testDeclaringLocalType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
             @Override
             public String getSimpleName() {
-                return "Bar";
+                return "Qux";
             }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
-                .declaredTypes(sample)
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
-                .getLoaded();
-        Class<?> type = createPlain()
-                .localTypeOf(outer)
-                .name(sample.getName())
-                .make()
-                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
-                .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
-        assertThat(type.isAnonymousClass(), is(false));
-        assertThat(type.isLocalClass(), is(true));
-        assertThat(type.isMemberClass(), is(false));
-    }
-
-    @Test
-    public void testEnclosingType() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
-            @Override
-            public String getSimpleName() {
-                return "Bar";
-            }
-
-            @Override
-            public boolean isGenerified() {
-                return false;
-            }
-        };
-        Class<?> outer = new ByteBuddy()
-                .subclass(Object.class)
+                .name("foo.Bar")
                 .declaredTypes(sample)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
         Class<?> type = createPlainWithoutValidation()
-                .enclosedBy(outer)
-                .innerTypeOf(outer) // TODO
-                .name(sample.getName())
-                .make()
-                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
-                .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
-    }
-
-    @Test
-    public void testEnclosingMethod() throws Exception {
-        TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
-            @Override
-            public String getSimpleName() {
-                return "Bar";
-            }
-
-            @Override
-            public boolean isGenerified() {
-                return false;
-            }
-        };
-        Class<?> outer = new ByteBuddy()
-                .subclass(Object.class)
-                .declaredTypes(sample)
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
-                .getLoaded();
-        Class<?> type = createPlainWithoutValidation()
-                .enclosedBy(outer.getConstructor())
                 .innerTypeOf(outer)
                 .name(sample.getName())
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
         assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
+        assertThat(type.isAnonymousClass(), is(false));
+        assertThat(type.isLocalClass(), is(true));
+        assertThat(type.isMemberClass(), is(false));
+    }
+
+    @Test
+    public void testDeclaringAnonymousTypeForMethod() throws Exception {
+        // Older JVMs derive the anonymous class property from a naming convention.
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+            @Override
+            public String getSimpleName() {
+                return "";
+            }
+        };
+        Class<?> outer = new ByteBuddy()
+                .subclass(Object.class)
+                .name("foo.Bar")
+                .declaredTypes(sample)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> type = createPlainWithoutValidation()
+                .name(sample.getName())
+                .innerTypeOf(outer.getConstructor()).asAnonymousType()
+                .make()
+                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), is((Object) outer.getConstructor()));
+        assertThat(type.isAnonymousClass(), is(true));
+        assertThat(type.isLocalClass(), is(false));
+        assertThat(type.isMemberClass(), is(false));
+    }
+
+    @Test
+    public void testDeclaringLocalTypeForMethod() throws Exception {
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+            @Override
+            public String getSimpleName() {
+                return "Qux";
+            }
+        };
+        Class<?> outer = new ByteBuddy()
+                .subclass(Object.class)
+                .name("foo.Bar")
+                .declaredTypes(sample)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> type = createPlainWithoutValidation()
+                .innerTypeOf(outer.getConstructor())
+                .name(sample.getName())
+                .make()
+                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), is((Object) outer.getConstructor()));
+        assertThat(type.isAnonymousClass(), is(false));
+        assertThat(type.isLocalClass(), is(true));
+        assertThat(type.isMemberClass(), is(false));
     }
 
     @Test
@@ -1257,6 +1289,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         TypeDescription sample = new TypeDescription.Latent("foo.Bar", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT);
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
+                .name("foo.Qux")
                 .nestMembers(sample)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())

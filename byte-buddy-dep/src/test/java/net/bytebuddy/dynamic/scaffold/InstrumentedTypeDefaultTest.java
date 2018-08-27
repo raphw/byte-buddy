@@ -731,6 +731,13 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testDeclaredTypesDuplicate() throws Exception {
+        makePlainInstrumentedType()
+                .withDeclaredTypes(new TypeList.Explicit(TypeDescription.OBJECT, TypeDescription.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testEnclosingTypeArray() throws Exception {
         makePlainInstrumentedType()
                 .withEnclosingType(TypeDescription.ForLoadedType.of(Object[].class))
@@ -773,6 +780,13 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testNestHostForeignPackage() throws Exception {
+        makePlainInstrumentedType()
+                .withNestHost(TypeDescription.OBJECT)
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testNestMemberArray() throws Exception {
         makePlainInstrumentedType()
                 .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(Object[].class)))
@@ -783,6 +797,21 @@ public class InstrumentedTypeDefaultTest {
     public void testNestMemberPrimitive() throws Exception {
         makePlainInstrumentedType()
                 .withNestMembers(new TypeList.Explicit(TypeDescription.ForLoadedType.of(void.class)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestMemberDuplicate() throws Exception {
+        makePlainInstrumentedType()
+                .withName("java.lang.Test")
+                .withNestMembers(new TypeList.Explicit(TypeDescription.OBJECT, TypeDescription.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNestMemberForeignPackage() throws Exception {
+        makePlainInstrumentedType()
+                .withNestMembers(new TypeList.Explicit(TypeDescription.OBJECT))
                 .validated();
     }
 

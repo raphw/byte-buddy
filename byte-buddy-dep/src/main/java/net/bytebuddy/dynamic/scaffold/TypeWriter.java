@@ -3976,8 +3976,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                    if (!internalName.equals(instrumentedType.getInternalName())) {
-                        declaredTypes.remove(internalName);
+                    if (!internalName.equals(instrumentedType.getInternalName()) && (declaredTypes.remove(internalName) != null || innerName == null)) {
                         super.visitInnerClass(internalName, outerName, innerName, modifiers);
                     }
                 }
@@ -3985,8 +3984,7 @@ public interface TypeWriter<T> {
                 @Override
                 @SuppressWarnings("deprecation")
                 public void visitNestMemberExperimental(String nestMember) {
-                    if (instrumentedType.isNestHost()) {
-                        nestMembers.remove(nestMember);
+                    if (instrumentedType.isNestHost() && nestMembers.remove(nestMember)) {
                         super.visitNestMemberExperimental(nestMember);
                     }
                 }
@@ -4012,9 +4010,7 @@ public interface TypeWriter<T> {
                     TypeDescription declaringType = instrumentedType.getDeclaringType();
                     if (declaringType != null) {
                         super.visitInnerClass(instrumentedType.getInternalName(),
-                                instrumentedType.isLocalClass() || instrumentedType.isMemberClass()
-                                        ? declaringType.getInternalName()
-                                        : NO_REFERENCE,
+                                declaringType.getInternalName(),
                                 instrumentedType.isAnonymousClass()
                                         ? NO_REFERENCE
                                         : instrumentedType.getSimpleName(),
@@ -4350,7 +4346,7 @@ public interface TypeWriter<T> {
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 if (!instrumentedType.isNestHost()) {
-                    classVisitor.visitNestHostExperimental(instrumentedType.getInternalName());
+                    classVisitor.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
                 }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -4387,9 +4383,7 @@ public interface TypeWriter<T> {
                 TypeDescription declaringType = instrumentedType.getDeclaringType();
                 if (declaringType != null) {
                     classVisitor.visitInnerClass(instrumentedType.getInternalName(),
-                            instrumentedType.isLocalClass() || instrumentedType.isMemberClass()
-                                    ? declaringType.getInternalName()
-                                    : NO_REFERENCE,
+                            declaringType.getInternalName(),
                             instrumentedType.isAnonymousClass()
                                     ? NO_REFERENCE
                                     : instrumentedType.getSimpleName(),

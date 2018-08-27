@@ -244,50 +244,308 @@ public interface DynamicType {
          */
         Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors);
 
+        /**
+         * <p>
+         * Defines this type as a top-level type that is not declared by another type or enclosed by another member.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @return A new builder that is equal to this builder but without any declaration of a a declared or enclosed type.
+         */
         Builder<T> topLevelType();
 
-        Builder<T> innerTypeOf(Class<?> type);
+        /**
+         * <p>
+         * Defines this type as an inner type of the supplied type.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The type to declare as the built type's outer type.
+         * @return A new builder that is equal to this builder with the supplied type as the built type's outer type.
+         */
+        InnerTypeDefinition.ForType<T> innerTypeOf(Class<?> type);
 
-        Builder<T> innerTypeOf(TypeDescription type);
+        /**
+         * <p>
+         * Defines this type as an inner type of the supplied type.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The type to declare as the built type's outer type.
+         * @return A new builder that is equal to this builder with the supplied type as the built type's outer type.
+         */
+        InnerTypeDefinition.ForType<T> innerTypeOf(TypeDescription type);
 
-        Builder<T> localTypeOf(Class<?> type);
+        /**
+         * <p>
+         * Defines this type as an inner type that was declared within the supplied method.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param method The method to declare as the built type's declaring method.
+         * @return A new builder that is equal to this builder with the supplied method as the built type's declaring method.
+         */
+        InnerTypeDefinition<T> innerTypeOf(Method method);
 
-        Builder<T> localTypeOf(TypeDescription type);
+        /**
+         * <p>
+         * Defines this type as an inner type that was declared within the supplied constructor.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param constructor The constructor to declare as the built type's declaring method.
+         * @return A new builder that is equal to this builder with the supplied method as the built type's declaring constructor.
+         */
+        InnerTypeDefinition<T> innerTypeOf(Constructor<?> constructor);
 
-        Builder<T> anonymousClassOf(Class<?> type);
+        /**
+         * <p>
+         * Defines this type as an inner type that was declared within the supplied method or constructor.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param methodDescription The method or constructor to declare as the built type's declaring method.
+         * @return A new builder that is equal to this builder with the supplied method as the built type's declaring method or constructor.
+         */
+        InnerTypeDefinition<T> innerTypeOf(MethodDescription.InDefinedShape methodDescription);
 
-        Builder<T> anonymousClassOf(TypeDescription type);
-
-        Builder<T> enclosedBy(Class<?> type);
-
-        Builder<T> enclosedBy(TypeDescription type);
-
-        Builder<T> enclosedBy(Method method);
-
-        Builder<T> enclosedBy(Constructor<?> constructor);
-
-        Builder<T> enclosedBy(MethodDescription.InDefinedShape method);
-
+        /**
+         * <p>
+         * Defines this type as an the outer type of the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The types being declared.
+         * @return A new builder that is equal to this builder with the supplied types being declared by the built type.
+         */
         Builder<T> declaredTypes(Class<?>... type);
 
+        /**
+         * <p>
+         * Defines this type as an the outer type of the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The types being declared.
+         * @return A new builder that is equal to this builder with the supplied types being declared by the built type.
+         */
         Builder<T> declaredTypes(TypeDescription... type);
 
+        /**
+         * <p>
+         * Defines this type as an the outer type of the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param types The types being declared.
+         * @return A new builder that is equal to this builder with the supplied types being declared by the built type.
+         */
         Builder<T> declaredTypes(List<? extends Class<?>> types);
 
+        /**
+         * <p>
+         * Defines this type as an the outer type of the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: By changing this type's declaration, any other type will not change its declaration of enclosing members or
+         * declared types about any nesting of a declaration. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param types The types being declared.
+         * @return A new builder that is equal to this builder with the supplied types being declared by the built type.
+         */
         Builder<T> declaredTypes(Collection<? extends TypeDescription> types);
 
+        /**
+         * <p>
+         * Defines this type as self-hosted, i.e. as only being a nest mate of itself.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @return A new builder that is equal to this builder but where the built type is a self-hosted nest mate.
+         */
         Builder<T> noNestMate();
 
+        /**
+         * <p>
+         * Defines this type as a nest member of the supplied type as a nest host.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The nest host.
+         * @return A new builder that is equal to this builder but where the built type is a nest member of the supplied host.
+         */
         Builder<T> nestHost(Class<?> type);
 
+        /**
+         * <p>
+         * Defines this type as a nest member of the supplied type as a nest host.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The nest host.
+         * @return A new builder that is equal to this builder but where the built type is a nest member of the supplied host.
+         */
         Builder<T> nestHost(TypeDescription type);
 
+        /**
+         * <p>
+         * Defines this type as a nest host for the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The nest members.
+         * @return A new builder that is equal to this builder but where the built type is a nest host of the supplied types.
+         */
         Builder<T> nestMembers(Class<?>... type);
 
+        /**
+         * <p>
+         * Defines this type as a nest host for the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param type The nest members.
+         * @return A new builder that is equal to this builder but where the built type is a nest host of the supplied types.
+         */
         Builder<T> nestMembers(TypeDescription... type);
 
+        /**
+         * <p>
+         * Defines this type as a nest host for the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param types The nest members.
+         * @return A new builder that is equal to this builder but where the built type is a nest host of the supplied types.
+         */
         Builder<T> nestMembers(List<? extends Class<?>> types);
 
+        /**
+         * <p>
+         * Defines this type as a nest host for the supplied types.
+         * </p>
+         * <p>
+         * <b>Important</b>: Changing the nest mate hierarchy of a type has no influence on the declaration hierarchy.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Changing nest mate hierarchies always requires changing a member and its host or a host and all its members.
+         * Otherwise, the runtime will not accept further nest mates. It is the responsibility of the user of this API to keep such declarations
+         * consistent among the definitions of connected types.
+         * </p>
+         *
+         * @param types The nest members.
+         * @return A new builder that is equal to this builder but where the built type is a nest host of the supplied types.
+         */
         Builder<T> nestMembers(Collection<? extends TypeDescription> types);
 
         /**
@@ -1006,6 +1264,37 @@ public interface DynamicType {
          * @return An unloaded dynamic type representing the type specified by this builder.
          */
         DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool);
+
+        /**
+         * A builder for defining properties of an inner type.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
+        interface InnerTypeDefinition<S> extends Builder<S> {
+
+            /**
+             * Defines the inner type relationship as an anonymous type. Defining this property might be ignored on some JVMs where
+             * the property is derived from the type's simple name consisting of only digits.
+             *
+             * @return A new builder where the built type is an inner anonymous type.
+             */
+            Builder<S> asAnonymousType();
+
+            /**
+             * A builder for defining properties of an inner type that is declared within another type but not a method or constructor.
+             *
+             * @param <U>
+             */
+            interface ForType<U> extends InnerTypeDefinition<U> {
+
+                /**
+                 * Defines the inner type relationship as a member type.
+                 *
+                 * @return A new builder where the built type is an inner member type.
+                 */
+                Builder<U> asMemberType();
+            }
+        }
 
         /**
          * A builder for a type variable definition.
@@ -2459,18 +2748,18 @@ public interface DynamicType {
             }
 
             @Override
-            public Builder<S> innerTypeOf(Class<?> type) {
+            public InnerTypeDefinition.ForType<S> innerTypeOf(Class<?> type) {
                 return innerTypeOf(TypeDescription.ForLoadedType.of(type));
             }
 
             @Override
-            public Builder<S> localTypeOf(Class<?> type) {
-                return localTypeOf(TypeDescription.ForLoadedType.of(type));
+            public InnerTypeDefinition<S> innerTypeOf(Method method) {
+                return innerTypeOf(new MethodDescription.ForLoadedMethod(method));
             }
 
             @Override
-            public Builder<S> anonymousClassOf(Class<?> type) {
-                return anonymousClassOf(TypeDescription.ForLoadedType.of(type));
+            public InnerTypeDefinition<S> innerTypeOf(Constructor<?> constructor) {
+                return innerTypeOf(new MethodDescription.ForLoadedConstructor(constructor));
             }
 
             @Override
@@ -2486,21 +2775,6 @@ public interface DynamicType {
             @Override
             public Builder<S> declaredTypes(List<? extends Class<?>> type) {
                 return declaredTypes(new TypeList.ForLoadedTypes(type));
-            }
-
-            @Override
-            public Builder<S> enclosedBy(Class<?> type) {
-                return enclosedBy(TypeDescription.ForLoadedType.of(type));
-            }
-
-            @Override
-            public Builder<S> enclosedBy(Method method) {
-                return enclosedBy(new MethodDescription.ForLoadedMethod(method));
-            }
-
-            @Override
-            public Builder<S> enclosedBy(Constructor<?> constructor) {
-                return enclosedBy(new MethodDescription.ForLoadedConstructor(constructor));
             }
 
             @Override
@@ -2833,33 +3107,18 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> innerTypeOf(TypeDescription type) {
+                public InnerTypeDefinition.ForType<U> innerTypeOf(TypeDescription type) {
                     return materialize().innerTypeOf(type);
                 }
 
                 @Override
-                public Builder<U> localTypeOf(TypeDescription type) {
-                    return materialize().localTypeOf(type);
-                }
-
-                @Override
-                public Builder<U> anonymousClassOf(TypeDescription type) {
-                    return materialize().anonymousClassOf(type);
+                public InnerTypeDefinition<U> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
+                    return materialize().innerTypeOf(methodDescription);
                 }
 
                 @Override
                 public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
                     return materialize().declaredTypes(types);
-                }
-
-                @Override
-                public Builder<U> enclosedBy(TypeDescription type) {
-                    return materialize().enclosedBy(type);
-                }
-
-                @Override
-                public Builder<U> enclosedBy(MethodDescription.InDefinedShape method) {
-                    return materialize().enclosedBy(method);
                 }
 
                 @Override
@@ -3221,98 +3480,18 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> innerTypeOf(TypeDescription type) {
-                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(false).withLocalClass(false),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            classWriterStrategy,
-                            ignoredMethods);
+                public InnerTypeDefinition.ForType<U> innerTypeOf(TypeDescription type) {
+                    return new InnerTypeDefinitionForTypeAdapter(type);
                 }
 
                 @Override
-                public Builder<U> localTypeOf(TypeDescription type) {
-                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(false).withLocalClass(true),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            classWriterStrategy,
-                            ignoredMethods);
-                }
-
-                @Override
-                public Builder<U> anonymousClassOf(TypeDescription type) {
-                    return materialize(instrumentedType.withDeclaringType(type).withAnonymousClass(true).withLocalClass(false),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            classWriterStrategy,
-                            ignoredMethods);
+                public InnerTypeDefinition<U> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
+                    return new InnerTypeDefinitionForMethodAdapter(methodDescription);
                 }
 
                 @Override
                 public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
                     return materialize(instrumentedType.withDeclaredTypes(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            classWriterStrategy,
-                            ignoredMethods);
-                }
-
-                @Override
-                public Builder<U> enclosedBy(TypeDescription type) {
-                    return materialize(instrumentedType.withEnclosingType(type),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            classWriterStrategy,
-                            ignoredMethods);
-                }
-
-                @Override
-                public Builder<U> enclosedBy(MethodDescription.InDefinedShape method) {
-                    return materialize(instrumentedType.withEnclosingMethod(method),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,
@@ -3474,6 +3653,158 @@ public interface DynamicType {
                                                           TypeValidation typeValidation,
                                                           ClassWriterStrategy classWriterStrategy,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods);
+
+                /**
+                 * An adapter for applying an inner type definition for an outer type.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                protected class InnerTypeDefinitionForTypeAdapter extends Builder.AbstractBase.Delegator<U> implements InnerTypeDefinition.ForType<U> {
+
+                    /**
+                     * A description of the type that is the defined outer type.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new adapter for an inner type definition for an outer type.
+                     *
+                     * @param typeDescription A description of the type that is the defined outer type.
+                     */
+                    protected InnerTypeDefinitionForTypeAdapter(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public Builder<U> asAnonymousType() {
+                        return Adapter.this.materialize(instrumentedType
+                                        .withDeclaringType(typeDescription)
+                                        .withEnclosingType(typeDescription)
+                                        .withAnonymousClass(true)
+                                        .withLocalClass(false),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                classWriterStrategy,
+                                ignoredMethods);
+                    }
+
+                    @Override
+                    public Builder<U> asMemberType() {
+                        return Adapter.this.materialize(instrumentedType
+                                        .withDeclaringType(typeDescription)
+                                        .withEnclosingType(TypeDescription.UNDEFINED)
+                                        .withAnonymousClass(false)
+                                        .withLocalClass(false),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                classWriterStrategy,
+                                ignoredMethods);
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Adapter.this.materialize(instrumentedType
+                                        .withDeclaringType(typeDescription)
+                                        .withEnclosingType(typeDescription)
+                                        .withAnonymousClass(false)
+                                        .withLocalClass(true),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                classWriterStrategy,
+                                ignoredMethods);
+                    }
+                }
+
+                /**
+                 * An adapter for applying an inner type definition for an outer method or constructor.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                protected class InnerTypeDefinitionForMethodAdapter extends Builder.AbstractBase.Delegator<U> implements InnerTypeDefinition<U> {
+
+                    /**
+                     * A description of the declaring method or constructor.
+                     */
+                    private final MethodDescription.InDefinedShape methodDescription;
+
+                    /**
+                     * Creates a new adapter for defining a type that is declared within a method or constructor.
+                     *
+                     * @param methodDescription A description of the declaring method or constructor.
+                     */
+                    protected InnerTypeDefinitionForMethodAdapter(MethodDescription.InDefinedShape methodDescription) {
+                        this.methodDescription = methodDescription;
+                    }
+
+                    @Override
+                    public Builder<U> asAnonymousType() {
+                        return Adapter.this.materialize(instrumentedType
+                                        .withDeclaringType(methodDescription.getDeclaringType())
+                                        .withEnclosingMethod(methodDescription)
+                                        .withAnonymousClass(true)
+                                        .withLocalClass(false),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                classWriterStrategy,
+                                ignoredMethods);
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Adapter.this.materialize(instrumentedType
+                                        .withDeclaringType(methodDescription.getDeclaringType())
+                                        .withEnclosingMethod(methodDescription)
+                                        .withAnonymousClass(false)
+                                        .withLocalClass(false),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                classWriterStrategy,
+                                ignoredMethods);
+                    }
+                }
 
                 /**
                  * An adapter for defining a new type variable for the instrumented type.

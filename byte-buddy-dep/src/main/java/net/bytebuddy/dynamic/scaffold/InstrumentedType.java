@@ -664,7 +664,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public WithFlexibleName  withNestHost(TypeDescription nestHost) {
+        public WithFlexibleName withNestHost(TypeDescription nestHost) {
             return new Default(name,
                     modifiers,
                     superClass,
@@ -745,7 +745,7 @@ public interface InstrumentedType extends TypeDescription {
                     loadedTypeInitializer,
                     declaringType,
                     enclosingMethod,
-                    TypeDescription.UNDEFINED,
+                    enclosingMethod.getDeclaringType(),
                     declaredTypes,
                     anonymousClass,
                     localClass,
@@ -1123,32 +1123,46 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Type variable " + typeVariable + " for " + this + " does not define at least one bound");
                 }
             }
+            TypeDescription enclosingType = getEnclosingType();
+            if (enclosingType != null && (enclosingType.isArray() || enclosingType.isPrimitive())) {
+                throw new IllegalStateException("Cannot define array type or primitive type " + enclosingType + " + as enclosing type for " + this);
+            }
+            MethodDescription.InDefinedShape enclosingMethod = getEnclosingMethod();
+            if (enclosingMethod != null && enclosingMethod.isTypeInitializer()) {
+                throw new IllegalStateException("Cannot enclose type declaration in class initializer " + enclosingMethod);
+            }
             TypeDescription declaringType = getDeclaringType();
             if (declaringType != null) {
                 if (declaringType.isPrimitive() || declaringType.isArray()) {
                     throw new IllegalStateException("Cannot define array type or primitive type " + declaringType + " as declaring type for " + this);
                 }
-            } else if (isLocalClass() || isAnonymousClass()) {
+            } else if (enclosingType == null && enclosingMethod == null && (isLocalClass() || isAnonymousClass())) {
                 throw new IllegalStateException("Cannot define an anonymous or local class without a declaring type for " + this);
             }
+            Set<TypeDescription> declaredTypes = new HashSet<TypeDescription>();
             for (TypeDescription declaredType : getDeclaredTypes()) {
                 if (declaredType.isArray() || declaredType.isPrimitive()) {
                     throw new IllegalStateException("Cannot define array type or primitive type " + declaredType + " + as declared type for " + this);
+                } else if (!declaredTypes.add(declaredType)) {
+                    throw new IllegalStateException("Duplicate definition of declared type " + declaredType);
                 }
-            }
-            TypeDescription enclosingType = getEnclosingType();
-            if (enclosingType != null && (enclosingType.isArray() || enclosingType.isPrimitive())) {
-                throw new IllegalStateException("Cannot define array type or primitive type " + enclosingType + " + as enclosing type for " + this);
             }
             TypeDescription nestHost = getNestHost();
             if (nestHost.equals(this)) {
+                Set<TypeDescription> nestMembers = new HashSet<TypeDescription>();
                 for (TypeDescription nestMember : getNestMembers()) {
                     if (nestMember.isArray() || nestMember.isPrimitive()) {
                         throw new IllegalStateException("Cannot define array type or primitive type " + nestMember + " + as nest member of " + this);
+                    } else if (!nestMember.isSamePackage(this)) {
+                        throw new IllegalStateException("Cannot define nest member " + nestMember + " + within different package then " + this);
+                    } else if (!nestMembers.add(nestMember)) {
+                        throw new IllegalStateException("Duplicate definition of nest member " + nestMember);
                     }
                 }
             } else if (nestHost.isArray() || nestHost.isPrimitive()) {
                 throw new IllegalStateException("Cannot define array type or primitive type " + nestHost + " + as nest host for " + this);
+            } else if (!nestHost.isSamePackage(this)) {
+                throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
