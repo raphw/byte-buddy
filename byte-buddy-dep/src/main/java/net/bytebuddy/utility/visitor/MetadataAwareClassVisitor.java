@@ -224,6 +224,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param descriptor   The field type's descriptor.
      * @param signature    The field's generic signature or {@code null} if the field is not generic.
      * @param defaultValue The field's default value or {@code null} if no such value exists.
+     * @return A field visitor to visit the field or {@code null} to ignore it.
      */
     protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
         return super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
@@ -245,6 +246,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * @param descriptor   The field type's descriptor.
      * @param signature    The method's generic signature or {@code null} if the method is not generic.
      * @param exception    The method's declared exceptions or {@code null} if no exceptions are declared.
+     * @return A method visitor to visit the method or {@code null} to ignore it.
      */
     protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
         return super.visitMethod(modifiers, internalName, descriptor, signature, exception);
