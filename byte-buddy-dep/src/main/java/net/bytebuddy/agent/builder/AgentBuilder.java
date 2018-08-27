@@ -289,6 +289,7 @@ public interface AgentBuilder {
      * </p>
      * <p>
      * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE_FROZEN}
+     * (unless it is configured as {@link TypeStrategy.Default#DECORATE} where this strategy is retained)
      * as well as configuring the underlying {@link ByteBuddy} instance to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled}.
      * Using this strategy also configures Byte Buddy to create frozen instrumented types and discards any explicit configuration.
      * </p>
@@ -1931,7 +1932,37 @@ public interface AgentBuilder {
                             .redefine(typeDescription, classFileLocator)
                             .ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }
-            };
+            },
+
+            /**
+             * <p>
+             * A definition handler that performs a decoration of declared methods only. Using this type strategy
+             * implies the limitations that are described by {@link ByteBuddy#decorate(TypeDescription, ClassFileLocator)}.
+             * This type strategy can be useful when only applying {@link AsmVisitorWrapper}s without attempting to change
+             * the class file layout..
+             * </p>
+             * <p>
+             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
+             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
+             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
+             * Using this strategy also configures Byte Buddy to create frozen instrumented types and discards any explicit configuration.
+             * </p>
+             * <p>
+             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
+             * </p>
+             */
+            DECORATE {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodNameTransformer methodNameTransformer,
+                                                      ClassLoader classLoader,
+                                                      JavaModule module,
+                                                      ProtectionDomain protectionDomain) {
+                    return byteBuddy.decorate(typeDescription, classFileLocator);
+                }
+            }
         }
 
         /**
@@ -8368,7 +8399,9 @@ public interface AgentBuilder {
                     listener,
                     circularityLock,
                     poolStrategy,
-                    TypeStrategy.Default.REDEFINE_FROZEN,
+                    typeStrategy == TypeStrategy.Default.DECORATE
+                            ? TypeStrategy.Default.DECORATE
+                            : TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,

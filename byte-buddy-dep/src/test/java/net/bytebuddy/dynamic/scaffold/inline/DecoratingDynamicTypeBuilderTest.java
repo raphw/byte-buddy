@@ -16,8 +16,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.annotation.Annotation;
 
-import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -31,7 +30,7 @@ public class DecoratingDynamicTypeBuilderTest {
         Object instance = new ByteBuddy()
                 .decorate(Foo.class)
                 .annotateType(new Annotation[0])
-                .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(any()))
+                .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods()
                         .method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
                             @Override

@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -150,6 +151,30 @@ public class AgentBuilderDefaultApplicationRedefineTest {
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     @IntegrationRule.Enforce
+    public void testRetransformationDecorated() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(simpleTypeLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .ignore(none())
+                .with(AgentBuilder.TypeStrategy.Default.DECORATE)
+                .disableClassFormatChanges()
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(descriptionStrategy)
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(simpleTypeLoader)).transform(new BarTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = simpleTypeLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationOptionalType() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -179,6 +204,22 @@ public class AgentBuilderDefaultApplicationRedefineTest {
                                                 ClassLoader classLoader,
                                                 JavaModule module) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
+        }
+    }
+
+    private static class BarTransformer implements AgentBuilder.Transformer {
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
+            return builder.visit(Advice.to(BarTransformer.class).on(named(FOO)));
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return(readOnly = false) String value) {
+            value = BAR;
         }
     }
 }

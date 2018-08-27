@@ -32,6 +32,8 @@ import net.bytebuddy.pool.TypePool;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.not;
+
 /**
  * A type builder that decorates a type by allowing for the application of attribute changes and ASM visitor wrappers.
  *
@@ -345,14 +347,13 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
 
     @Override
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
-        return TypeWriter.Default.<T>forDecoration(
-                instrumentedType,
+        return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
                 methodGraphCompiler
                         .compile(instrumentedType)
                         .listNodes()
                         .asMethodList()
-                        .filter(ignoredMethods.resolve(instrumentedType)),
+                        .filter(not(ignoredMethods.resolve(instrumentedType))),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 annotationValueFilterFactory,
