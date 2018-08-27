@@ -618,10 +618,11 @@ public class MethodCall implements Implementation.Composable {
          * Resolves the method to be invoked.
          *
          * @param instrumentedType   The instrumented type.
+         * @param targetType         The type the method is called on.
          * @param instrumentedMethod The method being instrumented.
          * @return The method to invoke.
          */
-        MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+        MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod);
 
         /**
          * A method locator that simply returns the intercepted method.
@@ -634,7 +635,7 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
         }
@@ -660,7 +661,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
                 return methodDescription;
             }
         }
@@ -693,8 +694,8 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                MethodList<?> candidates = methodGraphCompiler.compile(instrumentedType).listNodes().asMethodList().filter(matcher);
+            public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
+                MethodList<?> candidates = methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher);
                 if (candidates.size() == 1) {
                     return candidates.getOnly();
                 } else {
@@ -1424,7 +1425,8 @@ public class MethodCall implements Implementation.Composable {
 
                 @Override
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, instrumentedMethod);
+                    TypeDescription targetType = methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod);
+                    MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, targetType, instrumentedMethod);
 
                     return Collections.<ArgumentLoader>singletonList(new ForMethodCall(implementationTarget, methodCall, methodDescription, instrumentedMethod));
                 }
@@ -1556,6 +1558,19 @@ public class MethodCall implements Implementation.Composable {
                                   Assigner.Typing typing);
 
         /**
+         * Resolves the method call's target.
+         *
+         * Example
+         * {@code MethodCall.invoke(named("foo")).onField("bar")} -> TypeDescription of field "bar".
+         * {@code MethodCall.invoke(named("foo")).onArgument(0)} -> TypeDescription of argument 0.
+         *
+         * @param instrumentedType The instrumented type.
+         * @param instrumentedMethod The instrumented method.
+         * @return method call's target
+         */
+        TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+
+        /**
          * A target handler that invokes a method either on the instance of the instrumented
          * type or as a static method.
          */
@@ -1591,6 +1606,11 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                return instrumentedType;
+            }
+
+            @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1615,6 +1635,12 @@ public class MethodCall implements Implementation.Composable {
                                              Assigner.Typing typing) {
                 return new StackManipulation.Compound(TypeCreation.of(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
+
+            @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                return instrumentedType;
+            }
+
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
@@ -1676,6 +1702,11 @@ public class MethodCall implements Implementation.Composable {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()).read(),
                         stackManipulation
                 );
+            }
+
+            @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                return fieldType.asErasure();
             }
 
             @Override
@@ -1743,6 +1774,17 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
+                if (!resolution.isResolved()) {
+                    throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
+                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
+                    throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
+                }
+                return resolution.getField().getType().asErasure();
+            }
+
+            @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1787,6 +1829,14 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                if (instrumentedMethod.getParameters().size() < index) {
+                    throw new IllegalArgumentException(instrumentedMethod + " does not have a parameter with index " + index);
+                }
+                return instrumentedMethod.getParameters().get(index).getType().asErasure();
+            }
+
+            @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1819,13 +1869,20 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, instrumentedMethod);
+                TypeDescription targetType = methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod);
+                MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType, targetType, instrumentedMethod);
                 StackManipulation stackManipulation = assigner.assign(methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + methodDescription.getReturnType());
                 }
 
                 return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false), stackManipulation);
+            }
+
+            @Override
+            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                TypeDescription targetType = methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod);
+                return methodCall.methodLocator.resolve(instrumentedType, targetType, instrumentedMethod).getReturnType().asErasure();
             }
 
             @Override
@@ -2165,7 +2222,7 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Invokes the given method by a Java 8default method invocation on the instance of the instrumented type.
+         * Invokes the given method by a Java 8 default method invocation on the instance of the instrumented type.
          *
          * @return A method call where the given method is invoked as a super method invocation.
          */
@@ -2189,7 +2246,8 @@ public class MethodCall implements Implementation.Composable {
      * @return The method call's stack manipulation.
      */
     protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, boolean terminate) {
-        MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
+        TypeDescription targetType = targetHandler.resolveTarget(implementationTarget.getInstrumentedType(), instrumentedMethod);
+        MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), targetType, instrumentedMethod);
         if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
             throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + implementationTarget.getInstrumentedType());
         }

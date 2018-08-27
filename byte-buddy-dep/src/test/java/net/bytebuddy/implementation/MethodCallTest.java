@@ -19,6 +19,7 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -176,6 +177,23 @@ public class MethodCallTest {
         assertThat(instance, instanceOf(ArgumentCall.class));
     }
 
+    @Test
+    public void testInvokeOnArgumentUsingMatcher() throws Exception {
+        DynamicType.Loaded<ArgumentCall> loaded = new ByteBuddy()
+                .subclass(ArgumentCall.class)
+                .method(named("foo"))
+                .intercept(MethodCall.invoke(named("toUpperCase").and(takesArguments(0))).onMethodCall(MethodCall.invoke(named("foo")).onArgument(0)))
+                .make()
+                .load(ArgumentCall.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        ArgumentCall instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foo(new ArgumentCall.Target("foo")), is("FOO"));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(ArgumentCall.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnArgumentNonAssignable() throws Exception {
         new ByteBuddy()
@@ -230,6 +248,24 @@ public class MethodCallTest {
         assertThat(instance, instanceOf(MethodCallChaining.class));
     }
 
+    @Test
+    public void testInvokeOnMethodCallUsingMatcher() throws Exception {
+        DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
+                 .subclass(MethodCallChaining.class)
+                 .method(named("foobar"))
+                 .intercept(MethodCall.invoke(named("toUpperCase").and(takesArguments(0)))
+                        .onMethodCall(MethodCall.invoke(named("bar"))))
+                 .make()
+                 .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallChaining instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foobar(), is("BAR"));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(MethodCallChaining.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnIncompatibleMethodCall() throws Exception {
         new ByteBuddy()
@@ -238,6 +274,25 @@ public class MethodCallTest {
                 .intercept(MethodCall.invoke(Integer.class.getMethod("toString"))
                         .onMethodCall(MethodCall.invoke(named("bar"))))
                 .make();
+    }
+
+    @Test
+    public void testOnFieldUsingMatcher() throws Exception {
+        DynamicType.Loaded<MethodCallOnField> loaded = new ByteBuddy()
+                .subclass(MethodCallOnField.class)
+                .method(named("foo"))
+                .intercept(MethodCall.invoke(named("trim")).onField("foo"))
+                .make()
+                .load(MethodCallOnField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallOnField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.foo = " abc ";
+        assertThat(instance, instanceOf(MethodCallOnField.class));
+        assertThat(instance.foo(), is("abc"));
     }
 
     @Test
@@ -255,6 +310,18 @@ public class MethodCallTest {
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Object.class)));
         assertThat(instance, instanceOf(Object.class));
+    }
+
+    @Test
+    @Ignore
+    public void testSuperConstructorInvocationUsingMatcher() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod("callConstructor", Object.class)
+                // Can't find method because of MethodGraph default compiler, file line 508: isVirtual().and(...)
+                // isVirtual excludes constructors from the search
+                .intercept(MethodCall.invoke(isConstructor()).onSuper())
+                .make();
     }
 
     @Test
@@ -1184,6 +1251,15 @@ public class MethodCallTest {
 
         public String foo(String value) {
             return value;
+        }
+    }
+
+    public static class MethodCallOnField {
+
+        public String foo;
+
+        public String foo() {
+            return foo;
         }
     }
 
