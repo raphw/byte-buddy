@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -1296,6 +1297,25 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
         Class<?> type = createPlainWithoutValidation()
+                .visit(new AsmVisitorWrapper.AbstractBase() {
+
+                    @Override
+                    public ClassVisitor wrap(TypeDescription instrumentedType,
+                                             ClassVisitor classVisitor,
+                                             Implementation.Context implementationContext,
+                                             TypePool typePool,
+                                             FieldList<FieldDescription.InDefinedShape> fields,
+                                             MethodList<?> methods,
+                                             int writerFlags,
+                                             int readerFlags) {
+                        return new ClassVisitor(OpenedClassReader.ASM_API, classVisitor) {
+                            @Override
+                            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                                super.visit(ClassFileVersion.JAVA_V11.getMinorMajorVersion(), access, name, signature, superName, interfaces);
+                            }
+                        };
+                    }
+                })
                 .nestHost(outer)
                 .name(sample.getName())
                 .make()
