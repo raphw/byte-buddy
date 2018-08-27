@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. August 2018: version 1.8.18
+
+- Add API for defining inner types and nest mate groups.
+- Add decoration transformer for more efficient application of ASM visitors.
+- Allow chaining of `MethodCall`s.
+- Prohibit illegal constructor invocation from `MethodCall`s.
+
 ### 6. August 2018: version 1.8.17
 
 - Fix class loader injection using `putBoolean`.
