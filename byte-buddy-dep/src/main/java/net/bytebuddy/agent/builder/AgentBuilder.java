@@ -5834,7 +5834,7 @@ public interface AgentBuilder {
                 /**
                  * A job that resubmits any matched type that previously failed during transformation.
                  */
-                protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter implements Runnable {
+                protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter {
 
                     /**
                      * The resubmission scheduler to use.
@@ -5891,6 +5891,8 @@ public interface AgentBuilder {
                      */
                     private volatile ResubmissionScheduler.Cancelable cancelable;
 
+                    private volatile LeakPrevention job;
+
                     /**
                      * Creates a new resubmission job.
                      *
@@ -5927,10 +5929,10 @@ public interface AgentBuilder {
                         this.types = types;
                     }
 
-
                     @Override
                     public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-                        cancelable = resubmissionScheduler.schedule(this);
+                        job = new LeakPrevention(this);
+                        cancelable = resubmissionScheduler.schedule(job);
                     }
 
                     @Override
@@ -5939,13 +5941,23 @@ public interface AgentBuilder {
                         if (cancelable != null) {
                             cancelable.cancel();
                         }
+                        job.resubmissionInstallationListener = null;
                     }
 
+                    private static final class LeakPrevention implements Runnable {
+                      
+                      private volatile ResubmissionInstallationListener resubmissionInstallationListener;
+
+                      public LeakPrevention(ResubmissionInstallationListener resubmissionInstallationListener) {
+                        this.resubmissionInstallationListener = resubmissionInstallationListener;
+                      }
+                    
                     @Override
                     public void run() {
-                        boolean release = circularityLock.acquire();
+                      ResubmissionInstallationListener ril = this.resubmissionInstallationListener; 
+                        boolean release = ril.circularityLock.acquire();
                         try {
-                            Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
+                            Iterator<Map.Entry<StorageKey, Set<String>>> entries = ril.types.entrySet().iterator();
                             List<Class<?>> types = new ArrayList<Class<?>>();
                             while (!Thread.interrupted() && entries.hasNext()) {
                                 Map.Entry<StorageKey, Set<String>> entry = entries.next();
@@ -5956,7 +5968,7 @@ public interface AgentBuilder {
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             try {
-                                                if (instrumentation.isModifiableClass(type) && matcher.matches(TypeDescription.ForLoadedType.of(type),
+                                                if (ril.instrumentation.isModifiableClass(type) && ril.matcher.matches(TypeDescription.ForLoadedType.of(type),
                                                         type.getClassLoader(),
                                                         JavaModule.ofType(type),
                                                         type,
@@ -5965,13 +5977,13 @@ public interface AgentBuilder {
                                                 }
                                             } catch (Throwable throwable) {
                                                 try {
-                                                    listener.onError(TypeDescription.ForLoadedType.getName(type),
+                                                    ril.listener.onError(TypeDescription.ForLoadedType.getName(type),
                                                             type.getClassLoader(),
                                                             JavaModule.ofType(type),
                                                             AgentBuilder.Listener.LOADED,
                                                             throwable);
                                                 } finally {
-                                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                    ril.listener.onComplete(TypeDescription.ForLoadedType.getName(type),
                                                             type.getClassLoader(),
                                                             JavaModule.ofType(type),
                                                             AgentBuilder.Listener.LOADED);
@@ -5988,21 +6000,22 @@ public interface AgentBuilder {
                                 }
                             }
                             if (!types.isEmpty()) {
-                                RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                                RedefinitionStrategy.Collector collector = ril.redefinitionStrategy.make();
                                 collector.include(types);
-                                collector.apply(instrumentation,
-                                        circularityLock,
-                                        locationStrategy,
-                                        listener,
-                                        redefinitionBatchAllocator,
-                                        redefinitionBatchListener,
+                                collector.apply(ril.instrumentation,
+                                        ril.circularityLock,
+                                        ril.locationStrategy,
+                                        ril.listener,
+                                        ril.redefinitionBatchAllocator,
+                                        ril.redefinitionBatchListener,
                                         BatchAllocator.FIRST_BATCH);
                             }
                         } finally {
                             if (release) {
-                                circularityLock.release();
+                                ril.circularityLock.release();
                             }
                         }
+                    }
                     }
                 }
 
