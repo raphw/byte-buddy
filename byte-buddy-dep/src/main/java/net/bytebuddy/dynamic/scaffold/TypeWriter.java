@@ -3934,7 +3934,7 @@ public interface TypeWriter<T> {
                                 methods,
                                 writerFlags,
                                 readerFlags);
-                        super.visit(classFileVersionNumber,
+                        cv.visit(classFileVersionNumber,
                                 instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
                                         | resolveDeprecationModifiers(modifiers)
                                         // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
@@ -3950,34 +3950,34 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void visitNestHostExperimental(String nestHost) {
+                    protected void onVisitNestHost(String nestHost) {
                         onNestHost();
-                    }
-
-                    @Override
-                    public void visitOuterClass(String owner, String name, String descriptor) {
-                        onOuterType();
                     }
 
                     @Override
                     @SuppressWarnings("deprecation")
                     protected void onNestHost() {
                         if (!instrumentedType.isNestHost()) {
-                            super.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                            cv.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
                         }
+                    }
+
+                    @Override
+                    protected void onVisitOuterClass(String owner, String name, String descriptor) {
+                        onOuterType();
                     }
 
                     @Override
                     protected void onOuterType() {
                         MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                         if (enclosingMethod != null) {
-                            super.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
+                            cv.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
                                     enclosingMethod.getInternalName(),
                                     enclosingMethod.getDescriptor());
                         } else {
                             TypeDescription enclosingType = instrumentedType.getEnclosingType();
                             if (enclosingType != null) {
-                                super.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                                cv.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
                             }
                         }
                     }
@@ -3988,21 +3988,21 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                    protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
-                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                 : IGNORE_ANNOTATION;
                     }
 
                     @Override
-                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
-                                ? super.visitAnnotation(descriptor, visible)
+                                ? cv.visitAnnotation(descriptor, visible)
                                 : IGNORE_ANNOTATION;
                     }
 
                     @Override
-                    public FieldVisitor visitField(int modifiers,
+                    protected FieldVisitor onVisitField(int modifiers,
                                                    String internalName,
                                                    String descriptor,
                                                    String genericSignature,
@@ -4014,7 +4014,7 @@ public interface TypeWriter<T> {
                                 return redefine(record, defaultValue, modifiers, genericSignature);
                             }
                         }
-                        return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
+                        return cv.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
                     }
 
                     /**
@@ -4028,7 +4028,7 @@ public interface TypeWriter<T> {
                      */
                     protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, int modifiers, String genericSignature) {
                         FieldDescription instrumentedField = record.getField();
-                        FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers() | resolveDeprecationModifiers(modifiers),
+                        FieldVisitor fieldVisitor = cv.visitField(instrumentedField.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                 instrumentedField.getInternalName(),
                                 instrumentedField.getDescriptor(),
                                 TypeDescription.AbstractBase.RAW_TYPES
@@ -4041,13 +4041,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public MethodVisitor visitMethod(int modifiers,
+                    protected MethodVisitor onVisitMethod(int modifiers,
                                                      String internalName,
                                                      String descriptor,
                                                      String genericSignature,
                                                      String[] exceptionName) {
                         if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                            MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
+                            MethodVisitor methodVisitor = cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
                             return methodVisitor == null
                                     ? IGNORE_METHOD
                                     : (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
@@ -4060,7 +4060,7 @@ public interface TypeWriter<T> {
                         } else {
                             MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                             return methodDescription == null
-                                    ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
+                                    ? cv.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
                                     : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, modifiers, genericSignature);
                         }
                     }
@@ -4078,7 +4078,7 @@ public interface TypeWriter<T> {
                     protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, String genericSignature) {
                         MethodPool.Record record = methodPool.target(methodDescription);
                         if (!record.getSort().isDefined()) {
-                            return super.visitMethod(methodDescription.getActualModifiers() | resolveDeprecationModifiers(modifiers),
+                            return cv.visitMethod(methodDescription.getActualModifiers() | resolveDeprecationModifiers(modifiers),
                                     methodDescription.getInternalName(),
                                     methodDescription.getDescriptor(),
                                     TypeDescription.AbstractBase.RAW_TYPES
@@ -4087,7 +4087,7 @@ public interface TypeWriter<T> {
                                     methodDescription.getExceptionTypes().asErasures().toInternalNames());
                         }
                         MethodDescription implementedMethod = record.getMethod();
-                        MethodVisitor methodVisitor = super.visitMethod(ModifierContributor.Resolver
+                        MethodVisitor methodVisitor = cv.visitMethod(ModifierContributor.Resolver
                                         .of(Collections.singleton(record.getVisibility()))
                                         .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())) | resolveDeprecationModifiers(modifiers),
                                 implementedMethod.getInternalName(),
@@ -4122,25 +4122,22 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                    protected void onVisitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                         if (!internalName.equals(instrumentedType.getInternalName()) && (declaredTypes.remove(internalName) != null || innerName == null)) {
-                            super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                            cv.visitInnerClass(internalName, outerName, innerName, modifiers);
                         }
                     }
 
                     @Override
                     @SuppressWarnings("deprecation")
-                    public void visitNestMemberExperimental(String nestMember) {
+                    protected void onVisitNestMember(String nestMember) {
                         if (instrumentedType.isNestHost() && nestMembers.remove(nestMember)) {
-                            super.visitNestMemberExperimental(nestMember);
+                            cv.visitNestMemberExperimental(nestMember);
                         }
                     }
 
                     @Override
-                    public void visitEnd() {
-                        considerTriggerNestHost();
-                        considerTriggerOuterClass();
-                        considerTriggerAfterAttributes();
+                    protected void onVisitEnd() {
                         for (FieldDescription fieldDescription : declarableFields.values()) {
                             fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
                         }
@@ -4149,21 +4146,21 @@ public interface TypeWriter<T> {
                         }
                         initializationHandler.complete(cv, implementationContext);
                         for (TypeDescription typeDescription : declaredTypes.values()) {
-                            super.visitInnerClass(typeDescription.getInternalName(),
+                            cv.visitInnerClass(typeDescription.getInternalName(),
                                     instrumentedType.getInternalName(),
                                     typeDescription.getSimpleName(),
                                     typeDescription.getModifiers());
                         }
                         TypeDescription declaringType = instrumentedType.getDeclaringType();
                         if (declaringType != null) {
-                            super.visitInnerClass(instrumentedType.getInternalName(),
+                            cv.visitInnerClass(instrumentedType.getInternalName(),
                                     declaringType.getInternalName(),
                                     instrumentedType.isAnonymousClass()
                                             ? NO_REFERENCE
                                             : instrumentedType.getSimpleName(),
                                     instrumentedType.getModifiers());
                         }
-                        super.visitEnd();
+                        cv.visitEnd();
                     }
 
                     /**
@@ -4556,7 +4553,7 @@ public interface TypeWriter<T> {
                                 methods,
                                 writerFlags,
                                 readerFlags);
-                        super.visit(classFileVersionNumber, modifiers, internalName, genericSignature, superClassInternalName, interfaceTypeInternalName);
+                        cv.visit(classFileVersionNumber, modifiers, internalName, genericSignature, superClassInternalName, interfaceTypeInternalName);
                     }
 
                     @Override
@@ -4575,9 +4572,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void visitEnd() {
+                    protected void onVisitEnd() {
                         implementationContext.drain(this, cv, annotationValueFilterFactory);
-                        super.visitEnd();
+                        cv.visitEnd();
                     }
 
                     @Override

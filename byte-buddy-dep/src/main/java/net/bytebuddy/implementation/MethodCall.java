@@ -1388,7 +1388,7 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot access non-static " + methodDescription + " from " + instrumentedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        methodCall.toStackManipulation(implementationTarget, instrumentedMethod),
+                        methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false),
                         assigner.assign(methodDescription.getReturnType(), target.getType(), typing)
                 );
                 if (!stackManipulation.isValid()) {
@@ -1539,7 +1539,6 @@ public class MethodCall implements Implementation.Composable {
 
         /**
          * Creates a stack manipulation that represents the method's invocation.
-         *
          *
          * @param implementationTarget The implementation target.
          * @param invokedMethod        The method to be invoked.
@@ -1826,7 +1825,7 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + methodDescription.getReturnType());
                 }
 
-                return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod), stackManipulation);
+                return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false), stackManipulation);
             }
 
             @Override
@@ -2182,28 +2181,6 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * Creates a stack manipulation of this method call and leaves it's return value on the stack.
-     *
-     * @param implementationTarget The implementation target.
-     * @param instrumentedMethod   The instrumented method.
-     * @return The method call's stack manipulation.
-     */
-    protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
-        return toStackManipulation(implementationTarget, instrumentedMethod, false);
-    }
-
-    /**
-     * Creates a stack manipulation of this method call and removes the return value from the stack.
-     *
-     * @param implementationTarget The implementation target.
-     * @param instrumentedMethod   The instrumented method.
-     * @return The method call's stack manipulation.
-     */
-    protected StackManipulation toTerminatedStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod) {
-        return toStackManipulation(implementationTarget, instrumentedMethod, true);
-    }
-
-    /**
      * Creates a stack manipulation of this method call.
      *
      * @param implementationTarget The implementation target.
@@ -2211,9 +2188,7 @@ public class MethodCall implements Implementation.Composable {
      * @param terminate            Determines whether the {@link MethodCall#terminationHandler} should be called.
      * @return The method call's stack manipulation.
      */
-    private StackManipulation toStackManipulation(Target implementationTarget,
-                                                  MethodDescription instrumentedMethod,
-                                                  boolean terminate) {
+    protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, boolean terminate) {
         MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
         if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
             throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + implementationTarget.getInstrumentedType());
@@ -2264,9 +2239,9 @@ public class MethodCall implements Implementation.Composable {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            StackManipulation.Size size = toTerminatedStackManipulation(implementationTarget, instrumentedMethod)
-                                                  .apply(methodVisitor, implementationContext);
-            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
+            return new Size(toStackManipulation(implementationTarget,
+                    instrumentedMethod,
+                    true).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 }

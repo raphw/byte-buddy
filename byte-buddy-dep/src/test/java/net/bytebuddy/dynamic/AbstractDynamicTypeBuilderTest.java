@@ -1301,6 +1301,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
+        assertThat(Class.class.getMethod("getNestHost").invoke(outer), is((Object) outer));
+        assertThat(Class.class.getMethod("getNestMembers").invoke(outer), is((Object) new Class<?>[]{outer, type}));
         assertThat(Class.class.getMethod("getNestHost").invoke(type), is((Object) outer));
         assertThat(Class.class.getMethod("getNestMembers").invoke(type), is((Object) new Class<?>[]{outer, type}));
     }

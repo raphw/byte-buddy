@@ -53,7 +53,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * Considers triggering a nest host visitation.
      */
-    protected void considerTriggerNestHost() {
+    private void considerTriggerNestHost() {
         if (triggerNestHost) {
             triggerNestHost = false;
             onNestHost();
@@ -63,7 +63,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * Considers triggering an outer class visitation.
      */
-    protected void considerTriggerOuterClass() {
+    private void considerTriggerOuterClass() {
         if (triggerOuterClass) {
             triggerOuterClass = false;
             onOuterType();
@@ -73,7 +73,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     /**
      * Considers triggering the after attribute visitation.
      */
-    protected void considerTriggerAfterAttributes() {
+    private void considerTriggerAfterAttributes() {
         if (triggerAttributes) {
             triggerAttributes = false;
             onAfterAttributes();
@@ -82,77 +82,186 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void visitNestHostExperimental(String nestHost) {
+    public final void visitNestHostExperimental(String nestHost) {
         triggerNestHost = false;
+        onVisitNestHost(nestHost);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitNestHostExperimental(String)}.
+     *
+     * @param nestHost The internal name of the nest host.
+     */
+    @SuppressWarnings("deprecation")
+    protected void onVisitNestHost(String nestHost) {
         super.visitNestHostExperimental(nestHost);
     }
 
     @Override
-    public void visitOuterClass(String owner, String name, String descriptor) {
+    public final void visitOuterClass(String owner, String name, String descriptor) {
         considerTriggerNestHost();
         triggerOuterClass = false;
+        onVisitOuterClass(owner, name, descriptor);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitOuterClass(String, String, String)}.
+     *
+     * @param owner      The outer class's internal name.
+     * @param name       The outer method's name or {@code null} if it does not exist.
+     * @param descriptor The outer method's descriptor or {@code null} if it does not exist.
+     */
+    protected void onVisitOuterClass(String owner, String name, String descriptor) {
         super.visitOuterClass(owner, name, descriptor);
     }
 
     @Override
-    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+    public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        return onVisitAnnotation(descriptor, visible);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitAnnotation(String, boolean)}.
+     *
+     * @param descriptor The annotation type's descriptor.
+     * @param visible    {@code true} if the annotation is visible at runtime.
+     * @return An annotation visitor or {@code null} if the annotation should be ignored.
+     */
+    protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
         return super.visitAnnotation(descriptor, visible);
     }
 
     @Override
-    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+    public final AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        return onVisitTypeAnnotation(typeReference, typePath, descriptor, visible);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitTypeAnnotation(int, TypePath, String, boolean)}.
+     *
+     * @param typeReference The type reference of the type annotation.
+     * @param typePath      The type path of the type annotation.
+     * @param descriptor    The descriptor of the annotation type.
+     * @param visible       {@code true} if the annotation is visible at runtime.
+     * @return An annotation visitor or {@code null} if the annotation should be ignored.
+     */
+    protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         return super.visitTypeAnnotation(typeReference, typePath, descriptor, visible);
     }
 
     @Override
-    public void visitAttribute(Attribute attribute) {
+    public final void visitAttribute(Attribute attribute) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        onVisitAttribute(attribute);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitAttribute(Attribute)}.
+     *
+     * @param attribute The attribute to visit.
+     */
+    protected void onVisitAttribute(Attribute attribute) {
         super.visitAttribute(attribute);
     }
 
     @Override
     @SuppressWarnings("deprecation")
-    public void visitNestMemberExperimental(String nestMember) {
+    public final void visitNestMemberExperimental(String nestMember) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        onVisitNestMember(nestMember);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitNestMemberExperimental(String)}.
+     *
+     * @param nestMember The internal name of the nest member.
+     */
+    @SuppressWarnings("deprecation")
+    protected void onVisitNestMember(String nestMember) {
         super.visitNestMemberExperimental(nestMember);
     }
 
     @Override
-    public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
+    public final void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        onVisitInnerClass(name, outerName, innerName, modifiers);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitInnerClass(String, String, String, int)}.
+     *
+     * @param name      The internal name of the inner class.
+     * @param outerName The internal name of the outer class.
+     * @param innerName The inner class's simple name or {@code null} for an anonymous class.
+     * @param modifiers The inner class's source code modifiers.
+     */
+    protected void onVisitInnerClass(String name, String outerName, String innerName, int modifiers) {
         super.visitInnerClass(name, outerName, innerName, modifiers);
     }
 
     @Override
-    public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
+    public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        return onVisitField(modifiers, internalName, descriptor, signature, defaultValue);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitField(int, String, String, String, Object)}.
+     *
+     * @param modifiers    The field's modifiers.
+     * @param internalName The field's internal name.
+     * @param descriptor   The field type's descriptor.
+     * @param signature    The field's generic signature or {@code null} if the field is not generic.
+     * @param defaultValue The field's default value or {@code null} if no such value exists.
+     */
+    protected FieldVisitor onVisitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
         return super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
     }
 
     @Override
-    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+    public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        return onVisitMethod(modifiers, internalName, descriptor, signature, exception);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitMethod(int, String, String, String, String[])}.
+     *
+     * @param modifiers    The method's modifiers.
+     * @param internalName The method's internal name.
+     * @param descriptor   The field type's descriptor.
+     * @param signature    The method's generic signature or {@code null} if the method is not generic.
+     * @param exception    The method's declared exceptions or {@code null} if no exceptions are declared.
+     */
+    protected MethodVisitor onVisitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
         return super.visitMethod(modifiers, internalName, descriptor, signature, exception);
     }
 
     @Override
-    public void visitEnd() {
+    public final void visitEnd() {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        onVisitEnd();
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitEnd()}.
+     */
+    protected void onVisitEnd() {
         super.visitEnd();
     }
 }
