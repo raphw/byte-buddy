@@ -860,9 +860,16 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
      * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
      * when implementing a Java agent that only applies ASM-based code changes.
+     * </p>
+     * <p>
+     * <b>Important</b>: Only use this mode to improve performance in a narrowly defined transformation. Using other features as those mentioned
+     * might result in an unexpected outcome of the transformation or error. Using decoration also requires the configuration of an
+     * {@link Implementation.Context.Factory} that does not attempt any type transformation.
+     * </p>
      *
      * @param type The type to decorate.
      * @param <T>  The loaded type of the decorated type.
@@ -872,11 +879,17 @@ public class ByteBuddy {
         return decorate(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
-
     /**
+     * <p>
      * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
      * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
      * when implementing a Java agent that only applies ASM-based code changes.
+     * </p>
+     * <p>
+     * <b>Important</b>: Only use this mode to improve performance in a narrowly defined transformation. Using other features as those mentioned
+     * might result in an unexpected outcome of the transformation or error. Using decoration also requires the configuration of an
+     * {@link Implementation.Context.Factory} that does not attempt any type transformation.
+     * </p>
      *
      * @param type             The type to decorate.
      * @param classFileLocator The class file locator to use.
@@ -887,11 +900,17 @@ public class ByteBuddy {
         return decorate(TypeDescription.ForLoadedType.of(type), classFileLocator);
     }
 
-
     /**
+     * <p>
      * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
      * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
      * when implementing a Java agent that only applies ASM-based code changes.
+     * </p>
+     * <p>
+     * <b>Important</b>: Only use this mode to improve performance in a narrowly defined transformation. Using other features as those mentioned
+     * might result in an unexpected outcome of the transformation or error. Using decoration also requires the configuration of an
+     * {@link Implementation.Context.Factory} that does not attempt any type transformation.
+     * </p>
      *
      * @param type             The type to decorate.
      * @param classFileLocator The class file locator to use.

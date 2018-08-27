@@ -4425,7 +4425,7 @@ public interface TypeWriter<T> {
                             classFileVersion,
                             FieldPool.Disabled.INSTANCE,
                             auxiliaryTypes,
-                            new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                            new LazyFieldList(instrumentedType),
                             methods,
                             new MethodList.Empty<MethodDescription>(),
                             LoadedTypeInitializer.NoOp.INSTANCE,
@@ -4453,6 +4453,36 @@ public interface TypeWriter<T> {
                         throw new UnsupportedOperationException("Cannot apply a type initializer for a decoration");
                     }
                     return new DecorationClassVisitor(classVisitor, contextRegistry, writerFlags, readerFlags);
+                }
+
+                /**
+                 * A field list that only reads fields lazy to avoid an eager lookup since fields are often not required.
+                 */
+                protected static class LazyFieldList extends FieldList.AbstractBase<FieldDescription.InDefinedShape> {
+
+                    /**
+                     * The instrumented type.
+                     */
+                    private final TypeDescription instrumentedType;
+
+                    /**
+                     * Creates a lazy field list.
+                     *
+                     * @param instrumentedType The instrumented type.
+                     */
+                    protected LazyFieldList(TypeDescription instrumentedType) {
+                        this.instrumentedType = instrumentedType;
+                    }
+
+                    @Override
+                    public FieldDescription.InDefinedShape get(int index) {
+                        return instrumentedType.getDeclaredFields().get(index);
+                    }
+
+                    @Override
+                    public int size() {
+                        return instrumentedType.getDeclaredFields().size();
+                    }
                 }
 
                 /**
@@ -4544,7 +4574,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                        throw new UnsupportedOperationException("Cannot apply an a drain for " + implementationContext + " during a decoration");
+                        /* do nothing */
                     }
                 }
             }
