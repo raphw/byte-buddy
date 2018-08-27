@@ -17,6 +17,8 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 
+import java.util.List;
+
 /**
  * An abstract base implementation of a dynamic type builder that alters an existing type.
  *
@@ -52,6 +54,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param auxiliaryTypes               A list of explicitly defined auxiliary types.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
      */
@@ -69,6 +72,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                                                  TypeValidation typeValidation,
                                                  ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods,
+                                                 List<? extends DynamicType> auxiliaryTypes,
                                                  TypeDescription originalType,
                                                  ClassFileLocator classFileLocator) {
         super(instrumentedType,
@@ -84,7 +88,8 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                 methodGraphCompiler,
                 typeValidation,
                 classWriterStrategy,
-                ignoredMethods);
+                ignoredMethods,
+                auxiliaryTypes);
         this.originalType = originalType;
         this.classFileLocator = classFileLocator;
     }

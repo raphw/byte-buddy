@@ -53,6 +53,7 @@ import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
@@ -1302,6 +1303,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded();
         assertThat(Class.class.getMethod("getNestHost").invoke(type), is((Object) outer));
         assertThat(Class.class.getMethod("getNestMembers").invoke(type), is((Object) new Class<?>[]{outer, type}));
+    }
+
+    @Test
+    public void testAuxiliaryTypes() throws Exception {
+        Map<TypeDescription, byte[]> auxiliaryTypes = createPlain()
+                .require(TypeDescription.VOID, new byte[]{1, 2, 3})
+                .make()
+                .getAuxiliaryTypes();
+        assertThat(auxiliaryTypes.size(), is(1));
+        assertThat(auxiliaryTypes.get(TypeDescription.VOID).length, is(3));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

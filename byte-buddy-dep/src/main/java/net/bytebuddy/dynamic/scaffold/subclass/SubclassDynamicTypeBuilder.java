@@ -17,6 +17,9 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 
+import java.util.Collections;
+import java.util.List;
+
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
@@ -72,6 +75,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                Collections.<DynamicType>emptyList(),
                 constructorStrategy);
     }
 
@@ -93,6 +97,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
+     * @param auxiliaryTypes               A list of explicitly required auxiliary types.
      */
     protected SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                          FieldRegistry fieldRegistry,
@@ -108,6 +113,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          TypeValidation typeValidation,
                                          ClassWriterStrategy classWriterStrategy,
                                          LatentMatcher<? super MethodDescription> ignoredMethods,
+                                         List<? extends DynamicType> auxiliaryTypes,
                                          ConstructorStrategy constructorStrategy) {
         super(instrumentedType,
                 fieldRegistry,
@@ -122,7 +128,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 methodGraphCompiler,
                 typeValidation,
                 classWriterStrategy,
-                ignoredMethods);
+                ignoredMethods,
+                auxiliaryTypes);
         this.constructorStrategy = constructorStrategy;
     }
 
@@ -140,7 +147,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
                                                  ClassWriterStrategy classWriterStrategy,
-                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods,
+                                                 List<? extends DynamicType> auxiliaryTypes) {
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
@@ -155,6 +163,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 constructorStrategy);
     }
 
@@ -170,6 +179,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion);
         return TypeWriter.Default.<T>forCreation(methodRegistry,
+                auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,

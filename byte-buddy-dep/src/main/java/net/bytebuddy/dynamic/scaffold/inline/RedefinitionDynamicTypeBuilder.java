@@ -16,6 +16,9 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * A type builder that redefines an instrumented type.
  *
@@ -67,6 +70,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                Collections.<DynamicType>emptyList(),
                 originalType,
                 classFileLocator);
     }
@@ -88,6 +92,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param auxiliaryTypes               A list of explicitly required auxiliary types.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
      */
@@ -105,6 +110,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                                              TypeValidation typeValidation,
                                              ClassWriterStrategy classWriterStrategy,
                                              LatentMatcher<? super MethodDescription> ignoredMethods,
+                                             List<? extends DynamicType> auxiliaryTypes,
                                              TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
         super(instrumentedType,
@@ -121,6 +127,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 originalType,
                 classFileLocator);
     }
@@ -139,7 +146,8 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
                                                  ClassWriterStrategy classWriterStrategy,
-                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods,
+                                                 List<? extends DynamicType> auxiliaryTypes) {
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
@@ -154,6 +162,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 originalType,
                 classFileLocator);
     }
@@ -165,6 +174,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
         return TypeWriter.Default.<T>forRedefinition(methodRegistry,
+                auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,

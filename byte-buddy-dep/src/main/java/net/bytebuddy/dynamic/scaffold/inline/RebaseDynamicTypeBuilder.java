@@ -19,7 +19,9 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -83,6 +85,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                Collections.<DynamicType>emptyList(),
                 originalType,
                 classFileLocator,
                 methodNameTransformer);
@@ -105,6 +108,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param auxiliaryTypes               A list of explicitly required auxiliary types.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
      * @param methodNameTransformer        The method rebase resolver to use for determining the name of a rebased method.
@@ -123,6 +127,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                                        TypeValidation typeValidation,
                                        ClassWriterStrategy classWriterStrategy,
                                        LatentMatcher<? super MethodDescription> ignoredMethods,
+                                       List<? extends DynamicType> auxiliaryTypes,
                                        TypeDescription originalType,
                                        ClassFileLocator classFileLocator,
                                        MethodNameTransformer methodNameTransformer) {
@@ -140,6 +145,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 originalType,
                 classFileLocator);
         this.methodNameTransformer = methodNameTransformer;
@@ -159,7 +165,8 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
                                                  ClassWriterStrategy classWriterStrategy,
-                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods,
+                                                 List<? extends DynamicType> auxiliaryTypes) {
         return new RebaseDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
@@ -174,6 +181,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 originalType,
                 classFileLocator,
                 methodNameTransformer);
@@ -193,6 +201,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
         return TypeWriter.Default.<T>forRebasing(methodRegistry,
+                auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,

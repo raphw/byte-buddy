@@ -682,6 +682,41 @@ public interface DynamicType {
         Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer);
 
         /**
+         * Explicitly requires another dynamic type for the creation of this type.
+         *
+         * @param type      The type to require.
+         * @param binaryRepresentation The type's binary representation.
+         * @return A new builder that is equal to this builder but which explicitly requires the supplied type.
+         */
+        Builder<T> require(TypeDescription type, byte[] binaryRepresentation);
+
+        /**
+         * Explicitly requires another dynamic type for the creation of this type.
+         *
+         * @param type       The type to require.
+         * @param binaryRepresentation  The type's binary representation.
+         * @param typeInitializer The type's loaded type initializer.
+         * @return A new builder that is equal to this builder but which explicitly requires the supplied type.
+         */
+        Builder<T> require(TypeDescription type, byte[] binaryRepresentation, LoadedTypeInitializer typeInitializer);
+
+        /**
+         * Explicitly requires other dynamic types for the creation of this type.
+         *
+         * @param auxiliaryType The required dynamic types.
+         * @return A new builder that is equal to this builder but which explicitly requires the supplied types.
+         */
+        Builder<T> require(DynamicType... auxiliaryType);
+
+        /**
+         * Explicitly requires other dynamic types for the creation of this type.
+         *
+         * @param auxiliaryTypes The required dynamic types.
+         * @return A new builder that is equal to this builder but which explicitly requires the supplied types.
+         */
+        Builder<T> require(Collection<DynamicType> auxiliaryTypes);
+
+        /**
          * Defines the supplied type variable without any bounds as a type variable of the instrumented type.
          *
          * @param symbol The type variable's symbol.
@@ -3055,6 +3090,21 @@ public interface DynamicType {
             }
 
             @Override
+            public Builder<S> require(TypeDescription type, byte[] binaryRepresentation) {
+                return require(type, binaryRepresentation, LoadedTypeInitializer.NoOp.INSTANCE);
+            }
+
+            @Override
+            public Builder<S> require(TypeDescription type, byte[] binaryRepresentation, LoadedTypeInitializer typeInitializer) {
+                return require(new Default(type, binaryRepresentation, typeInitializer, Collections.<DynamicType>emptyList()));
+            }
+
+            @Override
+            public Builder<S> require(DynamicType... auxiliaryType) {
+                return require(Arrays.asList(auxiliaryType));
+            }
+
+            @Override
             public Unloaded<S> make(TypePool typePool) {
                 return make(TypeResolutionStrategy.Passive.INSTANCE, typePool);
             }
@@ -3187,6 +3237,11 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
+                    return materialize().require(auxiliaryTypes);
+                }
+
+                @Override
                 public DynamicType.Unloaded<U> make() {
                     return materialize().make();
                 }
@@ -3293,6 +3348,11 @@ public interface DynamicType {
                 protected final LatentMatcher<? super MethodDescription> ignoredMethods;
 
                 /**
+                 * A list of explicitly defined auxiliary types.
+                 */
+                protected final List<? extends DynamicType> auxiliaryTypes;
+
+                /**
                  * Creates a new default type writer for creating a new type that is not based on an existing class file.
                  *
                  * @param instrumentedType             The instrumented type to be created.
@@ -3309,6 +3369,7 @@ public interface DynamicType {
                  * @param typeValidation               Determines if a type should be explicitly validated.
                  * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+                 * @param auxiliaryTypes               A list of explicitly defined auxiliary types.
                  */
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                                   FieldRegistry fieldRegistry,
@@ -3323,7 +3384,8 @@ public interface DynamicType {
                                   MethodGraph.Compiler methodGraphCompiler,
                                   TypeValidation typeValidation,
                                   ClassWriterStrategy classWriterStrategy,
-                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
+                                  LatentMatcher<? super MethodDescription> ignoredMethods,
+                                  List<? extends DynamicType> auxiliaryTypes) {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
                     this.methodRegistry = methodRegistry;
@@ -3338,6 +3400,7 @@ public interface DynamicType {
                     this.typeValidation = typeValidation;
                     this.classWriterStrategy = classWriterStrategy;
                     this.ignoredMethods = ignoredMethods;
+                    this.auxiliaryTypes = auxiliaryTypes;
                 }
 
                 @Override
@@ -3386,7 +3449,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
+                            new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3404,7 +3468,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3422,7 +3487,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3440,7 +3506,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3458,7 +3525,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3476,7 +3544,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3504,7 +3573,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3522,7 +3592,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3540,7 +3611,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3563,7 +3635,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3581,7 +3654,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3599,7 +3673,8 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
                 }
 
                 @Override
@@ -3617,7 +3692,27 @@ public interface DynamicType {
                             methodGraphCompiler,
                             typeValidation,
                             classWriterStrategy,
-                            ignoredMethods);
+                            ignoredMethods,
+                            auxiliaryTypes);
+                }
+
+                @Override
+                public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
+                    return materialize(instrumentedType,
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods,
+                            CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)));
                 }
 
                 /**
@@ -3637,6 +3732,7 @@ public interface DynamicType {
                  * @param typeValidation               The type validation state.
                  * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+                 * @param auxiliaryTypes               A list of explicitly required auxiliary types.
                  * @return A type builder that represents the supplied arguments.
                  */
                 protected abstract Builder<U> materialize(InstrumentedType.WithFlexibleName instrumentedType,
@@ -3652,7 +3748,8 @@ public interface DynamicType {
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           TypeValidation typeValidation,
                                                           ClassWriterStrategy classWriterStrategy,
-                                                          LatentMatcher<? super MethodDescription> ignoredMethods);
+                                                          LatentMatcher<? super MethodDescription> ignoredMethods,
+                                                          List<? extends DynamicType> auxiliaryTypes);
 
                 /**
                  * An adapter for applying an inner type definition for an outer type.
@@ -3693,7 +3790,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override
@@ -3715,7 +3813,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override
@@ -3737,7 +3836,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
                 }
 
@@ -3780,7 +3880,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override
@@ -3802,7 +3903,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
                 }
 
@@ -3848,7 +3950,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
                 }
 
@@ -3914,7 +4017,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override
@@ -3984,7 +4088,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override
@@ -4308,7 +4413,8 @@ public interface DynamicType {
                                     methodGraphCompiler,
                                     typeValidation,
                                     classWriterStrategy,
-                                    ignoredMethods);
+                                    ignoredMethods,
+                                    auxiliaryTypes);
                         }
                     }
                 }
@@ -4429,7 +4535,8 @@ public interface DynamicType {
                                     methodGraphCompiler,
                                     typeValidation,
                                     classWriterStrategy,
-                                    ignoredMethods);
+                                    ignoredMethods,
+                                    auxiliaryTypes);
                         }
                     }
                 }
@@ -4469,7 +4576,8 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 classWriterStrategy,
-                                ignoredMethods);
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
 
                     @Override

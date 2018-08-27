@@ -1500,6 +1500,7 @@ public interface TypeWriter<T> {
          * Creates a type writer for creating a new type.
          *
          * @param methodRegistry               The compiled method registry to use.
+         * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
@@ -1515,6 +1516,7 @@ public interface TypeWriter<T> {
          * @return A suitable type writer.
          */
         public static <U> TypeWriter<U> forCreation(MethodRegistry.Compiled methodRegistry,
+                                                    List<? extends DynamicType> auxiliaryTypes,
                                                     FieldPool fieldPool,
                                                     TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
@@ -1530,7 +1532,7 @@ public interface TypeWriter<T> {
                     classFileVersion,
                     fieldPool,
                     methodRegistry,
-                    Collections.<DynamicType>emptyList(),
+                    auxiliaryTypes,
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
@@ -1551,6 +1553,7 @@ public interface TypeWriter<T> {
          * Creates a type writer for redefining a type.
          *
          * @param methodRegistry               The compiled method registry to use.
+         * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
@@ -1568,6 +1571,7 @@ public interface TypeWriter<T> {
          * @return A suitable type writer.
          */
         public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Prepared methodRegistry,
+                                                        List<? extends DynamicType> auxiliaryTypes,
                                                         FieldPool fieldPool,
                                                         TypeAttributeAppender typeAttributeAppender,
                                                         AsmVisitorWrapper asmVisitorWrapper,
@@ -1584,7 +1588,7 @@ public interface TypeWriter<T> {
             return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
-                    Collections.<DynamicType>emptyList(),
+                    auxiliaryTypes,
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
@@ -1610,6 +1614,7 @@ public interface TypeWriter<T> {
          * Creates a type writer for rebasing a type.
          *
          * @param methodRegistry               The compiled method registry to use.
+         * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
@@ -1628,6 +1633,7 @@ public interface TypeWriter<T> {
          * @return A suitable type writer.
          */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Prepared methodRegistry,
+                                                    List<? extends DynamicType> auxiliaryTypes,
                                                     FieldPool fieldPool,
                                                     TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
@@ -1645,7 +1651,7 @@ public interface TypeWriter<T> {
             return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
-                    methodRebaseResolver.getAuxiliaryTypes(),
+                    CompoundList.of(auxiliaryTypes, methodRebaseResolver.getAuxiliaryTypes()),
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
@@ -1672,6 +1678,7 @@ public interface TypeWriter<T> {
          *
          * @param instrumentedType             The instrumented type.
          * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param methods                      The methods to instrument.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
@@ -1688,6 +1695,7 @@ public interface TypeWriter<T> {
          */
         public static <U> TypeWriter<U> forDecoration(TypeDescription instrumentedType,
                                                       ClassFileVersion classFileVersion,
+                                                      List<? extends DynamicType> auxiliaryTypes,
                                                       MethodList<?> methods,
                                                       TypeAttributeAppender typeAttributeAppender,
                                                       AsmVisitorWrapper asmVisitorWrapper,
@@ -1701,7 +1709,7 @@ public interface TypeWriter<T> {
                                                       ClassFileLocator classFileLocator) {
             return new ForInlining.WithDecorationOnly<U>(instrumentedType,
                     classFileVersion,
-                    Collections.<DynamicType>emptyList(),
+                    auxiliaryTypes,
                     methods,
                     typeAttributeAppender,
                     asmVisitorWrapper,
@@ -2968,7 +2976,7 @@ public interface TypeWriter<T> {
             protected ForInlining(TypeDescription instrumentedType,
                                   ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
-                                  List<DynamicType> auxiliaryTypes,
+                                  List<? extends DynamicType> auxiliaryTypes,
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
@@ -3128,7 +3136,7 @@ public interface TypeWriter<T> {
                 protected WithFullProcessing(TypeDescription instrumentedType,
                                              ClassFileVersion classFileVersion,
                                              FieldPool fieldPool,
-                                             List<DynamicType> auxiliaryTypes,
+                                             List<? extends DynamicType> auxiliaryTypes,
                                              FieldList<FieldDescription.InDefinedShape> fields,
                                              MethodList<?> methods, MethodList<?> instrumentedMethods,
                                              LoadedTypeInitializer loadedTypeInitializer,
@@ -4409,7 +4417,7 @@ public interface TypeWriter<T> {
                  */
                 protected WithDecorationOnly(TypeDescription instrumentedType,
                                              ClassFileVersion classFileVersion,
-                                             List<DynamicType> auxiliaryTypes,
+                                             List<? extends DynamicType> auxiliaryTypes,
                                              MethodList<?> methods,
                                              TypeAttributeAppender typeAttributeAppender,
                                              AsmVisitorWrapper asmVisitorWrapper,

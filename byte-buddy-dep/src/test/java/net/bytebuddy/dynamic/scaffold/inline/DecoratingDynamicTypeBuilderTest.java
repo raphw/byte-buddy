@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.annotation.Annotation;
+import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -58,6 +59,17 @@ public class DecoratingDynamicTypeBuilderTest {
                 .getConstructor()
                 .newInstance();
         assertThat(instance.getClass().getMethod(FOO).invoke(instance), is((Object) BAR));
+    }
+
+    @Test
+    public void testAuxiliaryTypes() throws Exception {
+        Map<TypeDescription, byte[]> auxiliaryTypes = new ByteBuddy()
+                .decorate(Foo.class)
+                .require(TypeDescription.VOID, new byte[]{1, 2, 3})
+                .make()
+                .getAuxiliaryTypes();
+        assertThat(auxiliaryTypes.size(), is(1));
+        assertThat(auxiliaryTypes.get(TypeDescription.VOID).length, is(3));
     }
 
     @Test(expected = UnsupportedOperationException.class)

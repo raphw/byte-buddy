@@ -28,9 +28,12 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.CompoundList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
@@ -103,6 +106,11 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
     /**
+     * A list of explicitly required auxiliary types.
+     */
+    private final List<DynamicType> auxiliaryTypes;
+
+    /**
      * The class file locator for locating the original type's class file.
      */
     private final ClassFileLocator classFileLocator;
@@ -145,6 +153,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                Collections.<DynamicType>emptyList(),
                 classFileLocator);
     }
 
@@ -163,6 +172,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param auxiliaryTypes               A list of explicitly required auxiliary types.
      * @param classFileLocator             The class file locator for locating the original type's class file.
      */
     protected DecoratingDynamicTypeBuilder(TypeDescription instrumentedType,
@@ -177,6 +187,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                                            TypeValidation typeValidation,
                                            ClassWriterStrategy classWriterStrategy,
                                            LatentMatcher<? super MethodDescription> ignoredMethods,
+                                           List<DynamicType> auxiliaryTypes,
                                            ClassFileLocator classFileLocator) {
         this.instrumentedType = instrumentedType;
         this.typeAttributeAppender = typeAttributeAppender;
@@ -190,6 +201,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         this.typeValidation = typeValidation;
         this.classWriterStrategy = classWriterStrategy;
         this.ignoredMethods = ignoredMethods;
+        this.auxiliaryTypes = auxiliaryTypes;
         this.classFileLocator = classFileLocator;
     }
 
@@ -207,6 +219,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 classFileLocator);
     }
 
@@ -264,6 +277,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 ignoredMethods,
+                auxiliaryTypes,
                 classFileLocator);
     }
 
@@ -322,6 +336,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typeValidation,
                 classWriterStrategy,
                 new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
+                auxiliaryTypes,
                 classFileLocator);
     }
 
@@ -341,6 +356,24 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     }
 
     @Override
+    public DynamicType.Builder<T> require(Collection<DynamicType> auxiliaryTypes) {
+        return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
+                new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
+                asmVisitorWrapper,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                typeValidation,
+                classWriterStrategy,
+                ignoredMethods,
+                CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)),
+                classFileLocator);
+    }
+
+    @Override
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.Empty.INSTANCE);
     }
@@ -349,6 +382,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
+                auxiliaryTypes,
                 methodGraphCompiler
                         .compile(instrumentedType)
                         .listNodes()
