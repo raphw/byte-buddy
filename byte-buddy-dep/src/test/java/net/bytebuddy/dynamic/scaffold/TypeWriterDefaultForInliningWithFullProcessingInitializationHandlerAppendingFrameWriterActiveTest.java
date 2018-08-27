@@ -11,7 +11,7 @@ import org.objectweb.asm.Opcodes;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWriterActiveTest {
+public class TypeWriterDefaultForInliningWithFullProcessingInitializationHandlerAppendingFrameWriterActiveTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -19,7 +19,8 @@ public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWrit
     @Mock
     private MethodVisitor methodVisitor;
 
-    private TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter frameWriter = new TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Active();
+    private TypeWriter.Default.ForInlining.WithFullProcessing.InitializationHandler.Appending.FrameWriter frameWriter =
+            new TypeWriter.Default.ForInlining.WithFullProcessing.InitializationHandler.Appending.FrameWriter.Active();
 
     @Test
     public void testNoFrame() throws Exception {

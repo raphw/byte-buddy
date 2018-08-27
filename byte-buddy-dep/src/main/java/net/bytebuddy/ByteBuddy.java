@@ -15,6 +15,7 @@ import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.dynamic.scaffold.inline.DecoratingDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
@@ -709,6 +710,9 @@ public class ByteBuddy {
      * @return A type builder for redefining the provided type.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription type, ClassFileLocator classFileLocator) {
+        if (type.isArray() || type.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot redefine array or primitive type: " + type);
+        }
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedTypeFactory.represent(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
@@ -811,6 +815,9 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription type, ClassFileLocator classFileLocator, MethodNameTransformer methodNameTransformer) {
+        if (type.isArray() || type.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot rebase array or primitive type: " + type);
+        }
         return new RebaseDynamicTypeBuilder<T>(instrumentedTypeFactory.represent(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
@@ -850,6 +857,62 @@ public class ByteBuddy {
      */
     public DynamicType.Builder<?> rebase(PackageDescription aPackage, ClassFileLocator classFileLocator) {
         return rebase(new TypeDescription.ForPackageDescription(aPackage), classFileLocator);
+    }
+
+    /**
+     * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
+     * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
+     * when implementing a Java agent that only applies ASM-based code changes.
+     *
+     * @param type The type to decorate.
+     * @param <T>  The loaded type of the decorated type.
+     * @return A type builder for decorating the provided type.
+     */
+    public <T> DynamicType.Builder<T> decorate(Class<T> type) {
+        return decorate(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+    }
+
+
+    /**
+     * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
+     * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
+     * when implementing a Java agent that only applies ASM-based code changes.
+     *
+     * @param type             The type to decorate.
+     * @param classFileLocator The class file locator to use.
+     * @param <T>              The loaded type of the decorated type.
+     * @return A type builder for decorating the provided type.
+     */
+    public <T> DynamicType.Builder<T> decorate(Class<T> type, ClassFileLocator classFileLocator) {
+        return decorate(TypeDescription.ForLoadedType.of(type), classFileLocator);
+    }
+
+
+    /**
+     * Decorates a type with {@link net.bytebuddy.asm.AsmVisitorWrapper} and allows adding attributes and annotations. A decoration does
+     * not allow for any standard transformations but can be used as a performance optimization compared to a redefinition, especially
+     * when implementing a Java agent that only applies ASM-based code changes.
+     *
+     * @param type             The type to decorate.
+     * @param classFileLocator The class file locator to use.
+     * @param <T>              The loaded type of the decorated type.
+     * @return A type builder for decorating the provided type.
+     */
+    public <T> DynamicType.Builder<T> decorate(TypeDescription type, ClassFileLocator classFileLocator) {
+        if (type.isArray() || type.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot decorate array or primitive type: " + type);
+        }
+        return new DecoratingDynamicTypeBuilder<T>(type,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                typeValidation,
+                classWriterStrategy,
+                ignoredMethods,
+                classFileLocator);
     }
 
     /**

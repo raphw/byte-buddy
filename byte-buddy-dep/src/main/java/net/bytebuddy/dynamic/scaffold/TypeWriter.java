@@ -280,6 +280,22 @@ public interface TypeWriter<T> {
                 }
             }
         }
+
+        /**
+         * A field pool that does not allow any look ups.
+         */
+        enum Disabled implements FieldPool {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Record target(FieldDescription fieldDescription) {
+                throw new IllegalStateException("Cannot look up field from disabld pool");
+            }
+        }
     }
 
     /**
@@ -1405,7 +1421,6 @@ public interface TypeWriter<T> {
          */
         protected final Implementation.Context.Factory implementationContextFactory;
 
-
         /**
          * Determines if a type should be explicitly validated.
          */
@@ -1566,11 +1581,9 @@ public interface TypeWriter<T> {
                                                         TypePool typePool,
                                                         TypeDescription originalType,
                                                         ClassFileLocator classFileLocator) {
-            return new ForInlining<U>(methodRegistry.getInstrumentedType(),
+            return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
-                    methodRegistry,
-                    SubclassImplementationTarget.Factory.LEVEL_TYPE,
                     Collections.<DynamicType>emptyList(),
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
@@ -1588,6 +1601,8 @@ public interface TypeWriter<T> {
                     typePool,
                     originalType,
                     classFileLocator,
+                    methodRegistry,
+                    SubclassImplementationTarget.Factory.LEVEL_TYPE,
                     MethodRebaseResolver.Disabled.INSTANCE);
         }
 
@@ -1627,11 +1642,9 @@ public interface TypeWriter<T> {
                                                     TypeDescription originalType,
                                                     ClassFileLocator classFileLocator,
                                                     MethodRebaseResolver methodRebaseResolver) {
-            return new ForInlining<U>(methodRegistry.getInstrumentedType(),
+            return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
-                    methodRegistry,
-                    new RebaseImplementationTarget.Factory(methodRebaseResolver),
                     methodRebaseResolver.getAuxiliaryTypes(),
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
@@ -1649,7 +1662,57 @@ public interface TypeWriter<T> {
                     typePool,
                     originalType,
                     classFileLocator,
+                    methodRegistry,
+                    new RebaseImplementationTarget.Factory(methodRebaseResolver),
                     methodRebaseResolver);
+        }
+
+        /**
+         * Creates a type writer for decorating a type.
+         *
+         * @param instrumentedType             The instrumented type.
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param methods                      The methods to instrument.
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.
+         * @param annotationRetention          The annotation retention to apply.
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param implementationContextFactory The implementation context factory to apply.
+         * @param typeValidation               Determines if a type should be explicitly validated.
+         * @param classWriterStrategy          The class writer strategy to use.
+         * @param typePool                     The type pool to use for computing stack map frames, if required.
+         * @param classFileLocator             The class file locator for locating the original type's class file.
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
+         * @return A suitable type writer.
+         */
+        public static <U> TypeWriter<U> forDecoration(TypeDescription instrumentedType,
+                                                      ClassFileVersion classFileVersion,
+                                                      MethodList<?> methods,
+                                                      TypeAttributeAppender typeAttributeAppender,
+                                                      AsmVisitorWrapper asmVisitorWrapper,
+                                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                      AnnotationRetention annotationRetention,
+                                                      AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                      Implementation.Context.Factory implementationContextFactory,
+                                                      TypeValidation typeValidation,
+                                                      ClassWriterStrategy classWriterStrategy,
+                                                      TypePool typePool,
+                                                      ClassFileLocator classFileLocator) {
+            return new ForInlining.WithDecorationOnly<U>(instrumentedType,
+                    classFileVersion,
+                    Collections.<DynamicType>emptyList(),
+                    methods,
+                    typeAttributeAppender,
+                    asmVisitorWrapper,
+                    annotationValueFilterFactory,
+                    annotationRetention,
+                    auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
+                    typeValidation,
+                    classWriterStrategy,
+                    typePool,
+                    classFileLocator);
         }
 
         @Override
@@ -2851,7 +2914,7 @@ public interface TypeWriter<T> {
          * @param <U> The best known loaded type for the dynamically created type.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        public static class ForInlining<U> extends Default<U> {
+        public abstract static class ForInlining<U> extends Default<U> {
 
             /**
              * Indicates that a field should be ignored.
@@ -2869,41 +2932,24 @@ public interface TypeWriter<T> {
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
             /**
-             * The method registry to use.
+             * The original type's description.
              */
-            private final MethodRegistry.Prepared methodRegistry;
-
-            /**
-             * The implementation target factory to use.
-             */
-            private final Implementation.Target.Factory implementationTargetFactory;
-
-            /**
-             * The original type that is being redefined or rebased.
-             */
-            private final TypeDescription originalType;
+            protected final TypeDescription originalType;
 
             /**
              * The class file locator for locating the original type's class file.
              */
-            private final ClassFileLocator classFileLocator;
+            protected final ClassFileLocator classFileLocator;
 
             /**
-             * The method rebase resolver to use for rebasing methods.
-             */
-            private final MethodRebaseResolver methodRebaseResolver;
-
-            /**
-             * Creates a new default type writer for creating a new type that is not based on an existing class file.
+             * Creates a new inlining type writer.
              *
              * @param instrumentedType             The instrumented type to be created.
-             * @param classFileVersion             The class file version to define auxiliary types in.
+             * @param classFileVersion             The class file specified by the user.
              * @param fieldPool                    The field pool to use.
-             * @param methodRegistry               The method registry to use.
-             * @param implementationTargetFactory  The implementation target factory to use.
-             * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+             * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
              * @param fields                       The instrumented type's declared fields.
-             * @param methods                      The instrumented type's declared or virtually inherited methods.
+             * @param methods                      The instrumented type's declared and virtually inherited methods.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -2916,16 +2962,13 @@ public interface TypeWriter<T> {
              * @param typeValidation               Determines if a type should be explicitly validated.
              * @param classWriterStrategy          The class writer strategy to use.
              * @param typePool                     The type pool to use for computing stack map frames, if required.
-             * @param originalType                 The original type that is being redefined or rebased.
+             * @param originalType                 The original type's description.
              * @param classFileLocator             The class file locator for locating the original type's class file.
-             * @param methodRebaseResolver         The method rebase resolver to use for rebasing methods.
              */
             protected ForInlining(TypeDescription instrumentedType,
                                   ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
-                                  MethodRegistry.Prepared methodRegistry,
-                                  Implementation.Target.Factory implementationTargetFactory,
-                                  List<DynamicType> explicitAuxiliaryTypes,
+                                  List<DynamicType> auxiliaryTypes,
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
@@ -2941,12 +2984,11 @@ public interface TypeWriter<T> {
                                   ClassWriterStrategy classWriterStrategy,
                                   TypePool typePool,
                                   TypeDescription originalType,
-                                  ClassFileLocator classFileLocator,
-                                  MethodRebaseResolver methodRebaseResolver) {
+                                  ClassFileLocator classFileLocator) {
                 super(instrumentedType,
                         classFileVersion,
                         fieldPool,
-                        explicitAuxiliaryTypes,
+                        auxiliaryTypes,
                         fields,
                         methods,
                         instrumentedMethods,
@@ -2961,11 +3003,8 @@ public interface TypeWriter<T> {
                         typeValidation,
                         classWriterStrategy,
                         typePool);
-                this.methodRegistry = methodRegistry;
-                this.implementationTargetFactory = implementationTargetFactory;
                 this.originalType = originalType;
                 this.classFileLocator = classFileLocator;
-                this.methodRebaseResolver = methodRebaseResolver;
             }
 
             @Override
@@ -2999,614 +3038,11 @@ public interface TypeWriter<T> {
              * @param readerFlags     The reader flags being used.
              * @return A class visitor which is capable of applying the changes.
              */
-            private ClassVisitor writeTo(ClassVisitor classVisitor,
-                                         TypeInitializer typeInitializer,
-                                         ContextRegistry contextRegistry,
-                                         int writerFlags,
-                                         int readerFlags) {
-                classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
-                return originalType.getName().equals(instrumentedType.getName())
-                        ? classVisitor
-                        : new OpenedClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
-            }
-
-            /**
-             * An initialization handler is responsible for handling the creation of the type initializer.
-             */
-            protected interface InitializationHandler {
-
-                /**
-                 * Invoked upon completion of writing the instrumented type.
-                 *
-                 * @param classVisitor          The class visitor to write any methods to.
-                 * @param implementationContext The implementation context to use.
-                 */
-                void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext);
-
-                /**
-                 * An initialization handler that creates a new type initializer.
-                 */
-                class Creating extends TypeInitializer.Drain.Default implements InitializationHandler {
-
-                    /**
-                     * Creates a new creating initialization handler.
-                     *
-                     * @param instrumentedType             The instrumented type.
-                     * @param methodPool                   The method pool to use.
-                     * @param annotationValueFilterFactory The annotation value filter factory to use.
-                     */
-                    protected Creating(TypeDescription instrumentedType,
-                                       MethodPool methodPool,
-                                       AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                        super(instrumentedType, methodPool, annotationValueFilterFactory);
-                    }
-
-                    @Override
-                    public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                        implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                    }
-                }
-
-                /**
-                 * An initialization handler that appends code to a previously visited type initializer.
-                 */
-                abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
-
-                    /**
-                     * The instrumented type.
-                     */
-                    protected final TypeDescription instrumentedType;
-
-                    /**
-                     * The method pool record for the type initializer.
-                     */
-                    protected final MethodPool.Record record;
-
-                    /**
-                     * The used annotation value filter factory.
-                     */
-                    protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
-
-                    /**
-                     * The frame writer to use.
-                     */
-                    protected final FrameWriter frameWriter;
-
-                    /**
-                     * The currently recorded stack size.
-                     */
-                    protected int stackSize;
-
-                    /**
-                     * The currently recorded local variable length.
-                     */
-                    protected int localVariableLength;
-
-                    /**
-                     * Creates a new appending initialization handler.
-                     *
-                     * @param methodVisitor                The underlying method visitor.
-                     * @param instrumentedType             The instrumented type.
-                     * @param record                       The method pool record for the type initializer.
-                     * @param annotationValueFilterFactory The used annotation value filter factory.
-                     * @param requireFrames                {@code true} if the visitor is required to add frames.
-                     * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                     */
-                    protected Appending(MethodVisitor methodVisitor,
-                                        TypeDescription instrumentedType,
-                                        MethodPool.Record record,
-                                        AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                        boolean requireFrames,
-                                        boolean expandFrames) {
-                        super(OpenedClassReader.ASM_API, methodVisitor);
-                        this.instrumentedType = instrumentedType;
-                        this.record = record;
-                        this.annotationValueFilterFactory = annotationValueFilterFactory;
-                        if (!requireFrames) {
-                            frameWriter = FrameWriter.NoOp.INSTANCE;
-                        } else if (expandFrames) {
-                            frameWriter = FrameWriter.Expanding.INSTANCE;
-                        } else {
-                            frameWriter = new FrameWriter.Active();
-                        }
-                    }
-
-                    /**
-                     * Resolves an initialization handler.
-                     *
-                     * @param enabled                      {@code true} if the implementation context is enabled, i.e. any {@link TypeInitializer} might be active.
-                     * @param methodVisitor                The delegation method visitor.
-                     * @param instrumentedType             The instrumented type.
-                     * @param methodPool                   The method pool to use.
-                     * @param annotationValueFilterFactory The annotation value filter factory to use.
-                     * @param requireFrames                {@code true} if frames must be computed.
-                     * @param expandFrames                 {@code true} if frames must be expanded.
-                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
-                     */
-                    protected static InitializationHandler of(boolean enabled,
-                                                              MethodVisitor methodVisitor,
-                                                              TypeDescription instrumentedType,
-                                                              MethodPool methodPool,
-                                                              AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                              boolean requireFrames,
-                                                              boolean expandFrames) {
-                        return enabled
-                                ? withDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames)
-                                : withoutDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames);
-                    }
-
-                    /**
-                     * Resolves an initialization handler with a drain.
-                     *
-                     * @param methodVisitor                The delegation method visitor.
-                     * @param instrumentedType             The instrumented type.
-                     * @param methodPool                   The method pool to use.
-                     * @param annotationValueFilterFactory The annotation value filter factory to use.
-                     * @param requireFrames                {@code true} if frames must be computed.
-                     * @param expandFrames                 {@code true} if frames must be expanded.
-                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
-                     */
-                    private static WithDrain withDrain(MethodVisitor methodVisitor,
-                                                       TypeDescription instrumentedType,
-                                                       MethodPool methodPool,
-                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                       boolean requireFrames,
-                                                       boolean expandFrames) {
-                        MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
-                        return record.getSort().isImplemented()
-                                ? new WithDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
-                                : new WithDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                    }
-
-                    /**
-                     * Resolves an initialization handler without a drain.
-                     *
-                     * @param methodVisitor                The delegation method visitor.
-                     * @param instrumentedType             The instrumented type.
-                     * @param methodPool                   The method pool to use.
-                     * @param annotationValueFilterFactory The annotation value filter factory to use.
-                     * @param requireFrames                {@code true} if frames must be computed.
-                     * @param expandFrames                 {@code true} if frames must be expanded.
-                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
-                     */
-                    private static WithoutDrain withoutDrain(MethodVisitor methodVisitor,
-                                                             TypeDescription instrumentedType,
-                                                             MethodPool methodPool,
-                                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                             boolean requireFrames,
-                                                             boolean expandFrames) {
-                        MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
-                        return record.getSort().isImplemented()
-                                ? new WithoutDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
-                                : new WithoutDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory);
-                    }
-
-                    @Override
-                    public void visitCode() {
-                        record.applyAttributes(mv, annotationValueFilterFactory);
-                        super.visitCode();
-                        onStart();
-                    }
-
-                    /**
-                     * Invoked after the user code was visited.
-                     */
-                    protected abstract void onStart();
-
-                    @Override
-                    public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
-                        super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
-                        frameWriter.onFrame(type, localVariableLength);
-                    }
-
-                    @Override
-                    public void visitMaxs(int stackSize, int localVariableLength) {
-                        this.stackSize = stackSize;
-                        this.localVariableLength = localVariableLength;
-                    }
-
-                    @Override
-                    public void visitEnd() {
-                        onEnd();
-                    }
-
-                    /**
-                     * Invoked after the user code was completed.
-                     */
-                    protected abstract void onEnd();
-
-                    @Override
-                    public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                        ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
-                        stackSize = Math.max(stackSize, size.getOperandStackSize());
-                        localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                        onComplete(implementationContext);
-                    }
-
-                    /**
-                     * Invoked upon completion of writing the type initializer.
-                     *
-                     * @param implementationContext The implementation context to use.
-                     */
-                    protected abstract void onComplete(Implementation.Context implementationContext);
-
-                    @Override
-                    public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                        implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                        mv.visitMaxs(stackSize, localVariableLength);
-                        mv.visitEnd();
-                    }
-
-                    /**
-                     * A frame writer is responsible for adding empty frames on jump instructions.
-                     */
-                    protected interface FrameWriter {
-
-                        /**
-                         * An empty array.
-                         */
-                        Object[] EMPTY = new Object[0];
-
-                        /**
-                         * Informs this frame writer of an observed frame.
-                         *
-                         * @param type                The frame type.
-                         * @param localVariableLength The length of the local variables array.
-                         */
-                        void onFrame(int type, int localVariableLength);
-
-                        /**
-                         * Emits an empty frame.
-                         *
-                         * @param methodVisitor The method visitor to write the frame to.
-                         */
-                        void emitFrame(MethodVisitor methodVisitor);
-
-                        /**
-                         * A non-operational frame writer.
-                         */
-                        enum NoOp implements FrameWriter {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public void onFrame(int type, int localVariableLength) {
-                                /* do nothing */
-                            }
-
-                            @Override
-                            public void emitFrame(MethodVisitor methodVisitor) {
-                                /* do nothing */
-                            }
-                        }
-
-                        /**
-                         * A frame writer that creates an expanded frame.
-                         */
-                        enum Expanding implements FrameWriter {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public void onFrame(int type, int localVariableLength) {
-                                /* do nothing */
-                            }
-
-                            @Override
-                            public void emitFrame(MethodVisitor methodVisitor) {
-                                methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                            }
-                        }
-
-                        /**
-                         * An active frame writer that creates the most efficient frame.
-                         */
-                        class Active implements FrameWriter {
-
-                            /**
-                             * The current length of the current local variable array.
-                             */
-                            private int currentLocalVariableLength;
-
-                            @Override
-                            public void onFrame(int type, int localVariableLength) {
-                                switch (type) {
-                                    case Opcodes.F_SAME:
-                                    case Opcodes.F_SAME1:
-                                        break;
-                                    case Opcodes.F_APPEND:
-                                        currentLocalVariableLength += localVariableLength;
-                                        break;
-                                    case Opcodes.F_CHOP:
-                                        currentLocalVariableLength -= localVariableLength;
-                                        break;
-                                    case Opcodes.F_NEW:
-                                    case Opcodes.F_FULL:
-                                        currentLocalVariableLength = localVariableLength;
-                                        break;
-                                    default:
-                                        throw new IllegalStateException("Unexpected frame type: " + type);
-                                }
-                            }
-
-                            @Override
-                            public void emitFrame(MethodVisitor methodVisitor) {
-                                if (currentLocalVariableLength == 0) {
-                                    methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                                } else if (currentLocalVariableLength > 3) {
-                                    methodVisitor.visitFrame(Opcodes.F_FULL, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                                } else {
-                                    methodVisitor.visitFrame(Opcodes.F_CHOP, currentLocalVariableLength, EMPTY, EMPTY.length, EMPTY);
-                                }
-                                currentLocalVariableLength = 0;
-                            }
-                        }
-                    }
-
-                    /**
-                     * An initialization handler that appends code to a previously visited type initializer without allowing active
-                     * {@link TypeInitializer} registrations.
-                     */
-                    protected abstract static class WithoutDrain extends Appending {
-
-                        /**
-                         * Creates a new appending initialization handler without a drain.
-                         *
-                         * @param methodVisitor                The underlying method visitor.
-                         * @param instrumentedType             The instrumented type.
-                         * @param record                       The method pool record for the type initializer.
-                         * @param annotationValueFilterFactory The used annotation value filter factory.
-                         * @param requireFrames                {@code true} if the visitor is required to add frames.
-                         * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                         */
-                        protected WithoutDrain(MethodVisitor methodVisitor,
-                                               TypeDescription instrumentedType,
-                                               MethodPool.Record record,
-                                               AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                               boolean requireFrames,
-                                               boolean expandFrames) {
-                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                        }
-
-                        @Override
-                        protected void onStart() {
-                            /* do nothing */
-                        }
-
-                        @Override
-                        protected void onEnd() {
-                            /* do nothing */
-                        }
-
-                        /**
-                         * An initialization handler that appends code to a previously visited type initializer without allowing active
-                         * {@link TypeInitializer} registrations and without an active record.
-                         */
-                        protected static class WithoutActiveRecord extends WithoutDrain {
-
-                            /**
-                             * Creates a new appending initialization handler without a drain and without an active record.
-                             *
-                             * @param methodVisitor                The underlying method visitor.
-                             * @param instrumentedType             The instrumented type.
-                             * @param record                       The method pool record for the type initializer.
-                             * @param annotationValueFilterFactory The used annotation value filter factory.
-                             */
-                            protected WithoutActiveRecord(MethodVisitor methodVisitor,
-                                                          TypeDescription instrumentedType,
-                                                          MethodPool.Record record,
-                                                          AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, false, false);
-                            }
-
-                            @Override
-                            protected void onComplete(Implementation.Context implementationContext) {
-                                /* do nothing */
-                            }
-                        }
-
-                        /**
-                         * An initialization handler that appends code to a previously visited type initializer without allowing active
-                         * {@link TypeInitializer} registrations and with an active record.
-                         */
-                        protected static class WithActiveRecord extends WithoutDrain {
-
-                            /**
-                             * The label that indicates the beginning of the active record.
-                             */
-                            private final Label label;
-
-                            /**
-                             * Creates a new appending initialization handler without a drain and with an active record.
-                             *
-                             * @param methodVisitor                The underlying method visitor.
-                             * @param instrumentedType             The instrumented type.
-                             * @param record                       The method pool record for the type initializer.
-                             * @param annotationValueFilterFactory The used annotation value filter factory.
-                             * @param requireFrames                {@code true} if the visitor is required to add frames.
-                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                             */
-                            protected WithActiveRecord(MethodVisitor methodVisitor,
-                                                       TypeDescription instrumentedType,
-                                                       MethodPool.Record record,
-                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                       boolean requireFrames,
-                                                       boolean expandFrames) {
-                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                                label = new Label();
-                            }
-
-                            @Override
-                            public void visitInsn(int opcode) {
-                                if (opcode == Opcodes.RETURN) {
-                                    mv.visitJumpInsn(Opcodes.GOTO, label);
-                                } else {
-                                    super.visitInsn(opcode);
-                                }
-                            }
-
-                            @Override
-                            protected void onComplete(Implementation.Context implementationContext) {
-                                mv.visitLabel(label);
-                                frameWriter.emitFrame(mv);
-                                ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
-                                stackSize = Math.max(stackSize, size.getOperandStackSize());
-                                localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                            }
-
-                        }
-                    }
-
-                    /**
-                     * An initialization handler that appends code to a previously visited type initializer with allowing active
-                     * {@link TypeInitializer} registrations.
-                     */
-                    protected abstract static class WithDrain extends Appending {
-
-                        /**
-                         * A label marking the beginning of the appended code.
-                         */
-                        protected final Label appended;
-
-                        /**
-                         * A label marking the beginning og the original type initializer's code.
-                         */
-                        protected final Label original;
-
-                        /**
-                         * Creates a new appending initialization handler with a drain.
-                         *
-                         * @param methodVisitor                The underlying method visitor.
-                         * @param instrumentedType             The instrumented type.
-                         * @param record                       The method pool record for the type initializer.
-                         * @param annotationValueFilterFactory The used annotation value filter factory.
-                         * @param requireFrames                {@code true} if the visitor is required to add frames.
-                         * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                         */
-                        protected WithDrain(MethodVisitor methodVisitor,
-                                            TypeDescription instrumentedType,
-                                            MethodPool.Record record,
-                                            AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                            boolean requireFrames,
-                                            boolean expandFrames) {
-                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                            appended = new Label();
-                            original = new Label();
-                        }
-
-                        @Override
-                        protected void onStart() {
-                            mv.visitJumpInsn(Opcodes.GOTO, appended);
-                            mv.visitLabel(original);
-                            frameWriter.emitFrame(mv);
-                        }
-
-                        @Override
-                        protected void onEnd() {
-                            mv.visitLabel(appended);
-                            frameWriter.emitFrame(mv);
-                        }
-
-                        @Override
-                        protected void onComplete(Implementation.Context implementationContext) {
-                            mv.visitJumpInsn(Opcodes.GOTO, original);
-                            afterComplete(implementationContext);
-                        }
-
-                        /**
-                         * Invoked after completion of writing the type initializer.
-                         *
-                         * @param implementationContext The implementation context to use.
-                         */
-                        protected abstract void afterComplete(Implementation.Context implementationContext);
-
-                        /**
-                         * A code appending initialization handler with a drain that does not apply an explicit record.
-                         */
-                        protected static class WithoutActiveRecord extends WithDrain {
-
-                            /**
-                             * Creates a new appending initialization handler with a drain and without an active record.
-                             *
-                             * @param methodVisitor                The underlying method visitor.
-                             * @param instrumentedType             The instrumented type.
-                             * @param record                       The method pool record for the type initializer.
-                             * @param annotationValueFilterFactory The used annotation value filter factory.
-                             * @param requireFrames                {@code true} if the visitor is required to add frames.
-                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                             */
-                            protected WithoutActiveRecord(MethodVisitor methodVisitor,
-                                                          TypeDescription instrumentedType,
-                                                          MethodPool.Record record,
-                                                          AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                          boolean requireFrames,
-                                                          boolean expandFrames) {
-                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                            }
-
-                            @Override
-                            protected void afterComplete(Implementation.Context implementationContext) {
-                                /* do nothing */
-                            }
-                        }
-
-                        /**
-                         * A code appending initialization handler with a drain that applies an explicit record.
-                         */
-                        protected static class WithActiveRecord extends WithDrain {
-
-                            /**
-                             * A label indicating the beginning of the record's code.
-                             */
-                            private final Label label;
-
-                            /**
-                             * Creates a new appending initialization handler with a drain and with an active record.
-                             *
-                             * @param methodVisitor                The underlying method visitor.
-                             * @param instrumentedType             The instrumented type.
-                             * @param record                       The method pool record for the type initializer.
-                             * @param annotationValueFilterFactory The used annotation value filter factory.
-                             * @param requireFrames                {@code true} if the visitor is required to add frames.
-                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                             */
-                            protected WithActiveRecord(MethodVisitor methodVisitor,
-                                                       TypeDescription instrumentedType,
-                                                       MethodPool.Record record,
-                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                       boolean requireFrames,
-                                                       boolean expandFrames) {
-                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                                label = new Label();
-                            }
-
-                            @Override
-                            public void visitInsn(int opcode) {
-                                if (opcode == Opcodes.RETURN) {
-                                    mv.visitJumpInsn(Opcodes.GOTO, label);
-                                } else {
-                                    super.visitInsn(opcode);
-                                }
-                            }
-
-                            @Override
-                            protected void afterComplete(Implementation.Context implementationContext) {
-                                mv.visitLabel(label);
-                                frameWriter.emitFrame(mv);
-                                ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
-                                stackSize = Math.max(stackSize, size.getOperandStackSize());
-                                localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                            }
-                        }
-                    }
-                }
-            }
+            protected abstract ClassVisitor writeTo(ClassVisitor classVisitor,
+                                                    TypeInitializer typeInitializer,
+                                                    ContextRegistry contextRegistry,
+                                                    int writerFlags,
+                                                    int readerFlags);
 
             /**
              * A context registry allows to extract auxiliary types from a lazily created implementation context.
@@ -3640,604 +3076,1475 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A {@link ClassRemapper} that uses the Byte Buddy-defined API version.
+             * A default type writer that reprocesses a type completely.
+             *
+             * @param <V> The best known loaded type for the dynamically created type.
              */
-            protected static class OpenedClassRemapper extends ClassRemapper {
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class WithFullProcessing<V> extends ForInlining<V> {
 
                 /**
-                 * Creates a new opened class remapper.
-                 *
-                 * @param classVisitor The class visitor to wrap
-                 * @param remapper     The remapper to apply.
+                 * The method registry to use.
                  */
-                protected OpenedClassRemapper(ClassVisitor classVisitor, Remapper remapper) {
-                    super(OpenedClassReader.ASM_API, classVisitor, remapper);
+                private final MethodRegistry.Prepared methodRegistry;
+
+                /**
+                 * The implementation target factory to use.
+                 */
+                private final Implementation.Target.Factory implementationTargetFactory;
+
+                /**
+                 * The method rebase resolver to use for rebasing methods.
+                 */
+                private final MethodRebaseResolver methodRebaseResolver;
+
+                /**
+                 * Creates a new inlining type writer that fully reprocesses a type.
+                 *
+                 * @param instrumentedType             The instrumented type to be created.
+                 * @param classFileVersion             The class file specified by the user.
+                 * @param fieldPool                    The field pool to use.
+                 * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
+                 * @param fields                       The instrumented type's declared fields.
+                 * @param methods                      The instrumented type's declared and virtually inherited methods.
+                 * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+                 * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
+                 * @param typeInitializer              The type initializer to include in the created type's type initializer.
+                 * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+                 * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+                 * @param annotationValueFilterFactory The annotation value filter factory to apply.
+                 * @param annotationRetention          The annotation retention to apply.
+                 * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+                 * @param implementationContextFactory The implementation context factory to apply.
+                 * @param typeValidation               Determines if a type should be explicitly validated.
+                 * @param classWriterStrategy          The class writer strategy to use.
+                 * @param typePool                     The type pool to use for computing stack map frames, if required.
+                 * @param originalType                 The original type's description.
+                 * @param classFileLocator             The class file locator for locating the original type's class file.
+                 * @param methodRegistry               The method registry to use.
+                 * @param implementationTargetFactory  The implementation target factory to use.
+                 * @param methodRebaseResolver         The method rebase resolver to use for rebasing methods.
+                 */
+                protected WithFullProcessing(TypeDescription instrumentedType,
+                                             ClassFileVersion classFileVersion,
+                                             FieldPool fieldPool,
+                                             List<DynamicType> auxiliaryTypes,
+                                             FieldList<FieldDescription.InDefinedShape> fields,
+                                             MethodList<?> methods, MethodList<?> instrumentedMethods,
+                                             LoadedTypeInitializer loadedTypeInitializer,
+                                             TypeInitializer typeInitializer,
+                                             TypeAttributeAppender typeAttributeAppender,
+                                             AsmVisitorWrapper asmVisitorWrapper,
+                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                             AnnotationRetention annotationRetention,
+                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                             Implementation.Context.Factory implementationContextFactory,
+                                             TypeValidation typeValidation,
+                                             ClassWriterStrategy classWriterStrategy,
+                                             TypePool typePool,
+                                             TypeDescription originalType,
+                                             ClassFileLocator classFileLocator,
+                                             MethodRegistry.Prepared methodRegistry,
+                                             Implementation.Target.Factory implementationTargetFactory,
+                                             MethodRebaseResolver methodRebaseResolver) {
+                    super(instrumentedType,
+                            classFileVersion,
+                            fieldPool,
+                            auxiliaryTypes,
+                            fields,
+                            methods,
+                            instrumentedMethods,
+                            loadedTypeInitializer,
+                            typeInitializer,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            auxiliaryTypeNamingStrategy,
+                            implementationContextFactory,
+                            typeValidation,
+                            classWriterStrategy,
+                            typePool,
+                            originalType,
+                            classFileLocator);
+                    this.methodRegistry = methodRegistry;
+                    this.implementationTargetFactory = implementationTargetFactory;
+                    this.methodRebaseResolver = methodRebaseResolver;
+                }
+
+                @Override
+                protected ClassVisitor writeTo(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry, int writerFlags, int readerFlags) {
+                    classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
+                    return originalType.getName().equals(instrumentedType.getName())
+                            ? classVisitor
+                            : new OpenedClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
+                }
+
+                /**
+                 * A {@link ClassRemapper} that uses the Byte Buddy-defined API version.
+                 */
+                protected static class OpenedClassRemapper extends ClassRemapper {
+
+                    /**
+                     * Creates a new opened class remapper.
+                     *
+                     * @param classVisitor The class visitor to wrap
+                     * @param remapper     The remapper to apply.
+                     */
+                    protected OpenedClassRemapper(ClassVisitor classVisitor, Remapper remapper) {
+                        super(OpenedClassReader.ASM_API, classVisitor, remapper);
+                    }
+                }
+
+                /**
+                 * An initialization handler is responsible for handling the creation of the type initializer.
+                 */
+                protected interface InitializationHandler {
+
+                    /**
+                     * Invoked upon completion of writing the instrumented type.
+                     *
+                     * @param classVisitor          The class visitor to write any methods to.
+                     * @param implementationContext The implementation context to use.
+                     */
+                    void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext);
+
+                    /**
+                     * An initialization handler that creates a new type initializer.
+                     */
+                    class Creating extends TypeInitializer.Drain.Default implements InitializationHandler {
+
+                        /**
+                         * Creates a new creating initialization handler.
+                         *
+                         * @param instrumentedType             The instrumented type.
+                         * @param methodPool                   The method pool to use.
+                         * @param annotationValueFilterFactory The annotation value filter factory to use.
+                         */
+                        protected Creating(TypeDescription instrumentedType,
+                                           MethodPool methodPool,
+                                           AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                            super(instrumentedType, methodPool, annotationValueFilterFactory);
+                        }
+
+                        @Override
+                        public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                            implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                        }
+                    }
+
+                    /**
+                     * An initialization handler that appends code to a previously visited type initializer.
+                     */
+                    abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
+
+                        /**
+                         * The instrumented type.
+                         */
+                        protected final TypeDescription instrumentedType;
+
+                        /**
+                         * The method pool record for the type initializer.
+                         */
+                        protected final MethodPool.Record record;
+
+                        /**
+                         * The used annotation value filter factory.
+                         */
+                        protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
+
+                        /**
+                         * The frame writer to use.
+                         */
+                        protected final FrameWriter frameWriter;
+
+                        /**
+                         * The currently recorded stack size.
+                         */
+                        protected int stackSize;
+
+                        /**
+                         * The currently recorded local variable length.
+                         */
+                        protected int localVariableLength;
+
+                        /**
+                         * Creates a new appending initialization handler.
+                         *
+                         * @param methodVisitor                The underlying method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param record                       The method pool record for the type initializer.
+                         * @param annotationValueFilterFactory The used annotation value filter factory.
+                         * @param requireFrames                {@code true} if the visitor is required to add frames.
+                         * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                         */
+                        protected Appending(MethodVisitor methodVisitor,
+                                            TypeDescription instrumentedType,
+                                            MethodPool.Record record,
+                                            AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                            boolean requireFrames,
+                                            boolean expandFrames) {
+                            super(OpenedClassReader.ASM_API, methodVisitor);
+                            this.instrumentedType = instrumentedType;
+                            this.record = record;
+                            this.annotationValueFilterFactory = annotationValueFilterFactory;
+                            if (!requireFrames) {
+                                frameWriter = FrameWriter.NoOp.INSTANCE;
+                            } else if (expandFrames) {
+                                frameWriter = FrameWriter.Expanding.INSTANCE;
+                            } else {
+                                frameWriter = new FrameWriter.Active();
+                            }
+                        }
+
+                        /**
+                         * Resolves an initialization handler.
+                         *
+                         * @param enabled                      {@code true} if the implementation context is enabled, i.e. any {@link TypeInitializer} might be active.
+                         * @param methodVisitor                The delegation method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param methodPool                   The method pool to use.
+                         * @param annotationValueFilterFactory The annotation value filter factory to use.
+                         * @param requireFrames                {@code true} if frames must be computed.
+                         * @param expandFrames                 {@code true} if frames must be expanded.
+                         * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
+                         */
+                        protected static InitializationHandler of(boolean enabled,
+                                                                  MethodVisitor methodVisitor,
+                                                                  TypeDescription instrumentedType,
+                                                                  MethodPool methodPool,
+                                                                  AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                                  boolean requireFrames,
+                                                                  boolean expandFrames) {
+                            return enabled
+                                    ? withDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames)
+                                    : withoutDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames);
+                        }
+
+                        /**
+                         * Resolves an initialization handler with a drain.
+                         *
+                         * @param methodVisitor                The delegation method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param methodPool                   The method pool to use.
+                         * @param annotationValueFilterFactory The annotation value filter factory to use.
+                         * @param requireFrames                {@code true} if frames must be computed.
+                         * @param expandFrames                 {@code true} if frames must be expanded.
+                         * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
+                         */
+                        private static WithDrain withDrain(MethodVisitor methodVisitor,
+                                                           TypeDescription instrumentedType,
+                                                           MethodPool methodPool,
+                                                           AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                           boolean requireFrames,
+                                                           boolean expandFrames) {
+                            MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                            return record.getSort().isImplemented()
+                                    ? new WithDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                    : new WithDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                        }
+
+                        /**
+                         * Resolves an initialization handler without a drain.
+                         *
+                         * @param methodVisitor                The delegation method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param methodPool                   The method pool to use.
+                         * @param annotationValueFilterFactory The annotation value filter factory to use.
+                         * @param requireFrames                {@code true} if frames must be computed.
+                         * @param expandFrames                 {@code true} if frames must be expanded.
+                         * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
+                         */
+                        private static WithoutDrain withoutDrain(MethodVisitor methodVisitor,
+                                                                 TypeDescription instrumentedType,
+                                                                 MethodPool methodPool,
+                                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                                 boolean requireFrames,
+                                                                 boolean expandFrames) {
+                            MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                            return record.getSort().isImplemented()
+                                    ? new WithoutDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                    : new WithoutDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory);
+                        }
+
+                        @Override
+                        public void visitCode() {
+                            record.applyAttributes(mv, annotationValueFilterFactory);
+                            super.visitCode();
+                            onStart();
+                        }
+
+                        /**
+                         * Invoked after the user code was visited.
+                         */
+                        protected abstract void onStart();
+
+                        @Override
+                        public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                            super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+                            frameWriter.onFrame(type, localVariableLength);
+                        }
+
+                        @Override
+                        public void visitMaxs(int stackSize, int localVariableLength) {
+                            this.stackSize = stackSize;
+                            this.localVariableLength = localVariableLength;
+                        }
+
+                        @Override
+                        public void visitEnd() {
+                            onEnd();
+                        }
+
+                        /**
+                         * Invoked after the user code was completed.
+                         */
+                        protected abstract void onEnd();
+
+                        @Override
+                        public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
+                            ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                            stackSize = Math.max(stackSize, size.getOperandStackSize());
+                            localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                            onComplete(implementationContext);
+                        }
+
+                        /**
+                         * Invoked upon completion of writing the type initializer.
+                         *
+                         * @param implementationContext The implementation context to use.
+                         */
+                        protected abstract void onComplete(Implementation.Context implementationContext);
+
+                        @Override
+                        public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                            implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                            mv.visitMaxs(stackSize, localVariableLength);
+                            mv.visitEnd();
+                        }
+
+                        /**
+                         * A frame writer is responsible for adding empty frames on jump instructions.
+                         */
+                        protected interface FrameWriter {
+
+                            /**
+                             * An empty array.
+                             */
+                            Object[] EMPTY = new Object[0];
+
+                            /**
+                             * Informs this frame writer of an observed frame.
+                             *
+                             * @param type                The frame type.
+                             * @param localVariableLength The length of the local variables array.
+                             */
+                            void onFrame(int type, int localVariableLength);
+
+                            /**
+                             * Emits an empty frame.
+                             *
+                             * @param methodVisitor The method visitor to write the frame to.
+                             */
+                            void emitFrame(MethodVisitor methodVisitor);
+
+                            /**
+                             * A non-operational frame writer.
+                             */
+                            enum NoOp implements FrameWriter {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public void onFrame(int type, int localVariableLength) {
+                                    /* do nothing */
+                                }
+
+                                @Override
+                                public void emitFrame(MethodVisitor methodVisitor) {
+                                    /* do nothing */
+                                }
+                            }
+
+                            /**
+                             * A frame writer that creates an expanded frame.
+                             */
+                            enum Expanding implements FrameWriter {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public void onFrame(int type, int localVariableLength) {
+                                    /* do nothing */
+                                }
+
+                                @Override
+                                public void emitFrame(MethodVisitor methodVisitor) {
+                                    methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                }
+                            }
+
+                            /**
+                             * An active frame writer that creates the most efficient frame.
+                             */
+                            class Active implements FrameWriter {
+
+                                /**
+                                 * The current length of the current local variable array.
+                                 */
+                                private int currentLocalVariableLength;
+
+                                @Override
+                                public void onFrame(int type, int localVariableLength) {
+                                    switch (type) {
+                                        case Opcodes.F_SAME:
+                                        case Opcodes.F_SAME1:
+                                            break;
+                                        case Opcodes.F_APPEND:
+                                            currentLocalVariableLength += localVariableLength;
+                                            break;
+                                        case Opcodes.F_CHOP:
+                                            currentLocalVariableLength -= localVariableLength;
+                                            break;
+                                        case Opcodes.F_NEW:
+                                        case Opcodes.F_FULL:
+                                            currentLocalVariableLength = localVariableLength;
+                                            break;
+                                        default:
+                                            throw new IllegalStateException("Unexpected frame type: " + type);
+                                    }
+                                }
+
+                                @Override
+                                public void emitFrame(MethodVisitor methodVisitor) {
+                                    if (currentLocalVariableLength == 0) {
+                                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                    } else if (currentLocalVariableLength > 3) {
+                                        methodVisitor.visitFrame(Opcodes.F_FULL, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                    } else {
+                                        methodVisitor.visitFrame(Opcodes.F_CHOP, currentLocalVariableLength, EMPTY, EMPTY.length, EMPTY);
+                                    }
+                                    currentLocalVariableLength = 0;
+                                }
+                            }
+                        }
+
+                        /**
+                         * An initialization handler that appends code to a previously visited type initializer without allowing active
+                         * {@link TypeInitializer} registrations.
+                         */
+                        protected abstract static class WithoutDrain extends Appending {
+
+                            /**
+                             * Creates a new appending initialization handler without a drain.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             * @param requireFrames                {@code true} if the visitor is required to add frames.
+                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                             */
+                            protected WithoutDrain(MethodVisitor methodVisitor,
+                                                   TypeDescription instrumentedType,
+                                                   MethodPool.Record record,
+                                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                   boolean requireFrames,
+                                                   boolean expandFrames) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                            }
+
+                            @Override
+                            protected void onStart() {
+                                /* do nothing */
+                            }
+
+                            @Override
+                            protected void onEnd() {
+                                /* do nothing */
+                            }
+
+                            /**
+                             * An initialization handler that appends code to a previously visited type initializer without allowing active
+                             * {@link TypeInitializer} registrations and without an active record.
+                             */
+                            protected static class WithoutActiveRecord extends WithoutDrain {
+
+                                /**
+                                 * Creates a new appending initialization handler without a drain and without an active record.
+                                 *
+                                 * @param methodVisitor                The underlying method visitor.
+                                 * @param instrumentedType             The instrumented type.
+                                 * @param record                       The method pool record for the type initializer.
+                                 * @param annotationValueFilterFactory The used annotation value filter factory.
+                                 */
+                                protected WithoutActiveRecord(MethodVisitor methodVisitor,
+                                                              TypeDescription instrumentedType,
+                                                              MethodPool.Record record,
+                                                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                    super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, false, false);
+                                }
+
+                                @Override
+                                protected void onComplete(Implementation.Context implementationContext) {
+                                    /* do nothing */
+                                }
+                            }
+
+                            /**
+                             * An initialization handler that appends code to a previously visited type initializer without allowing active
+                             * {@link TypeInitializer} registrations and with an active record.
+                             */
+                            protected static class WithActiveRecord extends WithoutDrain {
+
+                                /**
+                                 * The label that indicates the beginning of the active record.
+                                 */
+                                private final Label label;
+
+                                /**
+                                 * Creates a new appending initialization handler without a drain and with an active record.
+                                 *
+                                 * @param methodVisitor                The underlying method visitor.
+                                 * @param instrumentedType             The instrumented type.
+                                 * @param record                       The method pool record for the type initializer.
+                                 * @param annotationValueFilterFactory The used annotation value filter factory.
+                                 * @param requireFrames                {@code true} if the visitor is required to add frames.
+                                 * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                                 */
+                                protected WithActiveRecord(MethodVisitor methodVisitor,
+                                                           TypeDescription instrumentedType,
+                                                           MethodPool.Record record,
+                                                           AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                           boolean requireFrames,
+                                                           boolean expandFrames) {
+                                    super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                    label = new Label();
+                                }
+
+                                @Override
+                                public void visitInsn(int opcode) {
+                                    if (opcode == Opcodes.RETURN) {
+                                        mv.visitJumpInsn(Opcodes.GOTO, label);
+                                    } else {
+                                        super.visitInsn(opcode);
+                                    }
+                                }
+
+                                @Override
+                                protected void onComplete(Implementation.Context implementationContext) {
+                                    mv.visitLabel(label);
+                                    frameWriter.emitFrame(mv);
+                                    ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
+                                    stackSize = Math.max(stackSize, size.getOperandStackSize());
+                                    localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                                }
+
+                            }
+                        }
+
+                        /**
+                         * An initialization handler that appends code to a previously visited type initializer with allowing active
+                         * {@link TypeInitializer} registrations.
+                         */
+                        protected abstract static class WithDrain extends Appending {
+
+                            /**
+                             * A label marking the beginning of the appended code.
+                             */
+                            protected final Label appended;
+
+                            /**
+                             * A label marking the beginning og the original type initializer's code.
+                             */
+                            protected final Label original;
+
+                            /**
+                             * Creates a new appending initialization handler with a drain.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             * @param requireFrames                {@code true} if the visitor is required to add frames.
+                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                             */
+                            protected WithDrain(MethodVisitor methodVisitor,
+                                                TypeDescription instrumentedType,
+                                                MethodPool.Record record,
+                                                AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                boolean requireFrames,
+                                                boolean expandFrames) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                appended = new Label();
+                                original = new Label();
+                            }
+
+                            @Override
+                            protected void onStart() {
+                                mv.visitJumpInsn(Opcodes.GOTO, appended);
+                                mv.visitLabel(original);
+                                frameWriter.emitFrame(mv);
+                            }
+
+                            @Override
+                            protected void onEnd() {
+                                mv.visitLabel(appended);
+                                frameWriter.emitFrame(mv);
+                            }
+
+                            @Override
+                            protected void onComplete(Implementation.Context implementationContext) {
+                                mv.visitJumpInsn(Opcodes.GOTO, original);
+                                afterComplete(implementationContext);
+                            }
+
+                            /**
+                             * Invoked after completion of writing the type initializer.
+                             *
+                             * @param implementationContext The implementation context to use.
+                             */
+                            protected abstract void afterComplete(Implementation.Context implementationContext);
+
+                            /**
+                             * A code appending initialization handler with a drain that does not apply an explicit record.
+                             */
+                            protected static class WithoutActiveRecord extends WithDrain {
+
+                                /**
+                                 * Creates a new appending initialization handler with a drain and without an active record.
+                                 *
+                                 * @param methodVisitor                The underlying method visitor.
+                                 * @param instrumentedType             The instrumented type.
+                                 * @param record                       The method pool record for the type initializer.
+                                 * @param annotationValueFilterFactory The used annotation value filter factory.
+                                 * @param requireFrames                {@code true} if the visitor is required to add frames.
+                                 * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                                 */
+                                protected WithoutActiveRecord(MethodVisitor methodVisitor,
+                                                              TypeDescription instrumentedType,
+                                                              MethodPool.Record record,
+                                                              AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                              boolean requireFrames,
+                                                              boolean expandFrames) {
+                                    super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                }
+
+                                @Override
+                                protected void afterComplete(Implementation.Context implementationContext) {
+                                    /* do nothing */
+                                }
+                            }
+
+                            /**
+                             * A code appending initialization handler with a drain that applies an explicit record.
+                             */
+                            protected static class WithActiveRecord extends WithDrain {
+
+                                /**
+                                 * A label indicating the beginning of the record's code.
+                                 */
+                                private final Label label;
+
+                                /**
+                                 * Creates a new appending initialization handler with a drain and with an active record.
+                                 *
+                                 * @param methodVisitor                The underlying method visitor.
+                                 * @param instrumentedType             The instrumented type.
+                                 * @param record                       The method pool record for the type initializer.
+                                 * @param annotationValueFilterFactory The used annotation value filter factory.
+                                 * @param requireFrames                {@code true} if the visitor is required to add frames.
+                                 * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                                 */
+                                protected WithActiveRecord(MethodVisitor methodVisitor,
+                                                           TypeDescription instrumentedType,
+                                                           MethodPool.Record record,
+                                                           AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                           boolean requireFrames,
+                                                           boolean expandFrames) {
+                                    super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                    label = new Label();
+                                }
+
+                                @Override
+                                public void visitInsn(int opcode) {
+                                    if (opcode == Opcodes.RETURN) {
+                                        mv.visitJumpInsn(Opcodes.GOTO, label);
+                                    } else {
+                                        super.visitInsn(opcode);
+                                    }
+                                }
+
+                                @Override
+                                protected void afterComplete(Implementation.Context implementationContext) {
+                                    mv.visitLabel(label);
+                                    frameWriter.emitFrame(mv);
+                                    ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
+                                    stackSize = Math.max(stackSize, size.getOperandStackSize());
+                                    localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * A class visitor which is capable of applying a redefinition of an existing class file.
+                 */
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
+                protected class RedefinitionClassVisitor extends MetadataAwareClassVisitor {
+
+                    /**
+                     * The type initializer to apply.
+                     */
+                    private final TypeInitializer typeInitializer;
+
+                    /**
+                     * A context registry to register the lazily created implementation context to.
+                     */
+                    private final ContextRegistry contextRegistry;
+
+                    /**
+                     * The writer flags being used.
+                     */
+                    private final int writerFlags;
+
+                    /**
+                     * The reader flags being used.
+                     */
+                    private final int readerFlags;
+
+                    /**
+                     * A mapping of fields to write by their names.
+                     */
+                    private final LinkedHashMap<String, FieldDescription> declarableFields;
+
+                    /**
+                     * A mapping of methods to write by a concatenation of internal name and descriptor.
+                     */
+                    private final LinkedHashMap<String, MethodDescription> declarableMethods;
+
+                    /**
+                     * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty.
+                     */
+                    private final Set<String> nestMembers;
+
+                    /**
+                     * A mapping of the internal names of all declared types to their description.
+                     */
+                    private final LinkedHashMap<String, TypeDescription> declaredTypes;
+
+                    /**
+                     * The method pool to use or {@code null} if the pool was not yet initialized.
+                     */
+                    private MethodPool methodPool;
+
+                    /**
+                     * The initialization handler to use or {@code null} if the handler was not yet initialized.
+                     */
+                    private InitializationHandler initializationHandler;
+
+                    /**
+                     * The implementation context for this class creation or {@code null} if it was not yet created.
+                     */
+                    private Implementation.Context.ExtractableView implementationContext;
+
+                    /**
+                     * {@code true} if the modifiers for deprecation should be retained.
+                     */
+                    private boolean retainDeprecationModifiers;
+
+                    /**
+                     * Creates a class visitor which is capable of redefining an existent class on the fly.
+                     *
+                     * @param classVisitor    The underlying class visitor to which writes are delegated.
+                     * @param typeInitializer The type initializer to apply.
+                     * @param contextRegistry A context registry to register the lazily created implementation context to.
+                     * @param writerFlags     The writer flags being used.
+                     * @param readerFlags     The reader flags being used.
+                     */
+                    protected RedefinitionClassVisitor(ClassVisitor classVisitor,
+                                                       TypeInitializer typeInitializer,
+                                                       ContextRegistry contextRegistry,
+                                                       int writerFlags,
+                                                       int readerFlags) {
+                        super(OpenedClassReader.ASM_API, classVisitor);
+                        this.typeInitializer = typeInitializer;
+                        this.contextRegistry = contextRegistry;
+                        this.writerFlags = writerFlags;
+                        this.readerFlags = readerFlags;
+                        declarableFields = new LinkedHashMap<String, FieldDescription>();
+                        for (FieldDescription fieldDescription : fields) {
+                            declarableFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
+                        }
+                        declarableMethods = new LinkedHashMap<String, MethodDescription>();
+                        for (MethodDescription methodDescription : instrumentedMethods) {
+                            declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+                        }
+                        if (instrumentedType.isNestHost()) {
+                            nestMembers = new LinkedHashSet<String>();
+                            for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
+                                nestMembers.add(typeDescription.getInternalName());
+                            }
+                        } else {
+                            nestMembers = Collections.emptySet();
+                        }
+                        declaredTypes = new LinkedHashMap<String, TypeDescription>();
+                        for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
+                            declaredTypes.put(typeDescription.getInternalName(), typeDescription);
+                        }
+                    }
+
+                    @Override
+                    public void visit(int classFileVersionNumber,
+                                      int modifiers,
+                                      String internalName,
+                                      String genericSignature,
+                                      String superClassInternalName,
+                                      String[] interfaceTypeInternalName) {
+                        ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
+                        methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
+                        initializationHandler = new InitializationHandler.Creating(instrumentedType, methodPool, annotationValueFilterFactory);
+                        implementationContext = implementationContextFactory.make(instrumentedType,
+                                auxiliaryTypeNamingStrategy,
+                                typeInitializer,
+                                classFileVersion,
+                                WithFullProcessing.this.classFileVersion);
+                        retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
+                        contextRegistry.setImplementationContext(implementationContext);
+                        cv = asmVisitorWrapper.wrap(instrumentedType,
+                                cv,
+                                implementationContext,
+                                typePool,
+                                fields,
+                                methods,
+                                writerFlags,
+                                readerFlags);
+                        super.visit(classFileVersionNumber,
+                                instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
+                                        | retainedDeprecationModifiers(modifiers)
+                                        // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
+                                        | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousClass()) ? Opcodes.ACC_FINAL : 0),
+                                instrumentedType.getInternalName(),
+                                TypeDescription.AbstractBase.RAW_TYPES
+                                        ? genericSignature
+                                        : instrumentedType.getGenericSignature(),
+                                instrumentedType.getSuperClass() == null
+                                        ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_REFERENCE)
+                                        : instrumentedType.getSuperClass().asErasure().getInternalName(),
+                                instrumentedType.getInterfaces().asErasures().toInternalNames());
+                    }
+
+                    @Override
+                    public void visitNestHostExperimental(String nestHost) {
+                        onNestHost();
+                    }
+
+                    @Override
+                    public void visitOuterClass(String owner, String name, String descriptor) {
+                        onOuterType();
+                    }
+
+                    @Override
+                    @SuppressWarnings("deprecation")
+                    protected void onNestHost() {
+                        if (!instrumentedType.isNestHost()) {
+                            super.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                        }
+                    }
+
+                    @Override
+                    protected void onOuterType() {
+                        MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
+                        if (enclosingMethod != null) {
+                            super.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
+                                    enclosingMethod.getInternalName(),
+                                    enclosingMethod.getDescriptor());
+                        } else {
+                            TypeDescription enclosingType = instrumentedType.getEnclosingType();
+                            if (enclosingType != null) {
+                                super.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                            }
+                        }
+                    }
+
+                    @Override
+                    protected void onAfterAttributes() {
+                        typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitAnnotation(descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public FieldVisitor visitField(int modifiers,
+                                                   String internalName,
+                                                   String descriptor,
+                                                   String genericSignature,
+                                                   Object defaultValue) {
+                        FieldDescription fieldDescription = declarableFields.remove(internalName + descriptor);
+                        if (fieldDescription != null) {
+                            FieldPool.Record record = fieldPool.target(fieldDescription);
+                            if (!record.isImplicit()) {
+                                return redefine(record, defaultValue, modifiers, genericSignature);
+                            }
+                        }
+                        return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
+                    }
+
+                    /**
+                     * Redefines a field using the given explicit field pool record and default value.
+                     *
+                     * @param record           The field pool value to apply during visitation of the existing field.
+                     * @param defaultValue     The default value to write onto the field which might be {@code null}.
+                     * @param modifiers        The original modifiers of the transformed field.
+                     * @param genericSignature The field's original generic signature which can be {@code null}.
+                     * @return A field visitor for visiting the existing field definition.
+                     */
+                    protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, int modifiers, String genericSignature) {
+                        FieldDescription instrumentedField = record.getField();
+                        FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers() | retainedDeprecationModifiers(modifiers),
+                                instrumentedField.getInternalName(),
+                                instrumentedField.getDescriptor(),
+                                TypeDescription.AbstractBase.RAW_TYPES
+                                        ? genericSignature
+                                        : instrumentedField.getGenericSignature(),
+                                record.resolveDefault(defaultValue));
+                        return fieldVisitor == null
+                                ? IGNORE_FIELD
+                                : new AttributeObtainingFieldVisitor(fieldVisitor, record);
+                    }
+
+                    @Override
+                    public MethodVisitor visitMethod(int modifiers,
+                                                     String internalName,
+                                                     String descriptor,
+                                                     String genericSignature,
+                                                     String[] exceptionName) {
+                        if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
+                            MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
+                            return methodVisitor == null
+                                    ? IGNORE_METHOD
+                                    : (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
+                                    methodVisitor,
+                                    instrumentedType,
+                                    methodPool,
+                                    annotationValueFilterFactory,
+                                    (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
+                                    (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
+                        } else {
+                            MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
+                            return methodDescription == null
+                                    ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
+                                    : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, modifiers, genericSignature);
+                        }
+                    }
+
+                    /**
+                     * Redefines a given method if this is required by looking up a potential implementation from the
+                     * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool}.
+                     *
+                     * @param methodDescription The method being considered for redefinition.
+                     * @param abstractOrigin    {@code true} if the original method is abstract, i.e. there is no implementation to preserve.
+                     * @param modifiers         The original modifiers of the transformed method.
+                     * @param genericSignature  The method's original generic signature which can be {@code null}.
+                     * @return A method visitor which is capable of consuming the original method.
+                     */
+                    protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, String genericSignature) {
+                        MethodPool.Record record = methodPool.target(methodDescription);
+                        if (!record.getSort().isDefined()) {
+                            return super.visitMethod(methodDescription.getActualModifiers() | retainedDeprecationModifiers(modifiers),
+                                    methodDescription.getInternalName(),
+                                    methodDescription.getDescriptor(),
+                                    TypeDescription.AbstractBase.RAW_TYPES
+                                            ? genericSignature
+                                            : methodDescription.getGenericSignature(),
+                                    methodDescription.getExceptionTypes().asErasures().toInternalNames());
+                        }
+                        MethodDescription implementedMethod = record.getMethod();
+                        MethodVisitor methodVisitor = super.visitMethod(ModifierContributor.Resolver
+                                        .of(Collections.singleton(record.getVisibility()))
+                                        .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())) | retainedDeprecationModifiers(modifiers),
+                                implementedMethod.getInternalName(),
+                                implementedMethod.getDescriptor(),
+                                TypeDescription.AbstractBase.RAW_TYPES
+                                        ? genericSignature
+                                        : implementedMethod.getGenericSignature(),
+                                implementedMethod.getExceptionTypes().asErasures().toInternalNames());
+                        if (methodVisitor == null) {
+                            return IGNORE_METHOD;
+                        } else if (abstractOrigin) {
+                            return new AttributeObtainingMethodVisitor(methodVisitor, record);
+                        } else if (methodDescription.isNative()) {
+                            MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(implementedMethod.asDefined());
+                            if (resolution.isRebased()) {
+                                MethodVisitor rebasedMethodVisitor = super.visitMethod(resolution.getResolvedMethod().getActualModifiers()
+                                                | retainedDeprecationModifiers(modifiers),
+                                        resolution.getResolvedMethod().getInternalName(),
+                                        resolution.getResolvedMethod().getDescriptor(),
+                                        TypeDescription.AbstractBase.RAW_TYPES
+                                                ? genericSignature
+                                                : implementedMethod.getGenericSignature(),
+                                        resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
+                                if (rebasedMethodVisitor != null) {
+                                    rebasedMethodVisitor.visitEnd();
+                                }
+                            }
+                            return new AttributeObtainingMethodVisitor(methodVisitor, record);
+                        } else {
+                            return new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
+                        }
+                    }
+
+                    @Override
+                    public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                        if (!internalName.equals(instrumentedType.getInternalName()) && (declaredTypes.remove(internalName) != null || innerName == null)) {
+                            super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                        }
+                    }
+
+                    @Override
+                    @SuppressWarnings("deprecation")
+                    public void visitNestMemberExperimental(String nestMember) {
+                        if (instrumentedType.isNestHost() && nestMembers.remove(nestMember)) {
+                            super.visitNestMemberExperimental(nestMember);
+                        }
+                    }
+
+                    @Override
+                    public void visitEnd() {
+                        considerTriggerNestHost();
+                        considerTriggerOuterClass();
+                        considerTriggerAfterAttributes();
+                        for (FieldDescription fieldDescription : declarableFields.values()) {
+                            fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
+                        }
+                        for (MethodDescription methodDescription : declarableMethods.values()) {
+                            methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        }
+                        initializationHandler.complete(cv, implementationContext);
+                        for (TypeDescription typeDescription : declaredTypes.values()) {
+                            super.visitInnerClass(typeDescription.getInternalName(),
+                                    instrumentedType.getInternalName(),
+                                    typeDescription.getSimpleName(),
+                                    typeDescription.getModifiers());
+                        }
+                        TypeDescription declaringType = instrumentedType.getDeclaringType();
+                        if (declaringType != null) {
+                            super.visitInnerClass(instrumentedType.getInternalName(),
+                                    declaringType.getInternalName(),
+                                    instrumentedType.isAnonymousClass()
+                                            ? NO_REFERENCE
+                                            : instrumentedType.getSimpleName(),
+                                    instrumentedType.getModifiers());
+                        }
+                        super.visitEnd();
+                    }
+
+                    /**
+                     * Returns {@link Opcodes#ACC_DEPRECATED} if the current class file version only represents deprecated methods using modifiers
+                     * that are not exposed in the type description API what is true for class files before Java 5 and if the supplied modifiers indicate
+                     * deprecation.
+                     *
+                     * @param modifiers The original modifiers.
+                     * @return {@link Opcodes#ACC_DEPRECATED} if the supplied modifiers imply deprecation.
+                     */
+                    private int retainedDeprecationModifiers(int modifiers) {
+                        return retainDeprecationModifiers && (modifiers & Opcodes.ACC_DEPRECATED) != 0
+                                ? Opcodes.ACC_DEPRECATED
+                                : 0;
+                    }
+
+                    /**
+                     * A field visitor that obtains all attributes and annotations of a field that is found in the
+                     * class file but that discards all code.
+                     */
+                    protected class AttributeObtainingFieldVisitor extends FieldVisitor {
+
+                        /**
+                         * The field pool record to apply onto the field visitor.
+                         */
+                        private final FieldPool.Record record;
+
+                        /**
+                         * Creates a new attribute obtaining field visitor.
+                         *
+                         * @param fieldVisitor The field visitor to delegate to.
+                         * @param record       The field pool record to apply onto the field visitor.
+                         */
+                        protected AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
+                            super(OpenedClassReader.ASM_API, fieldVisitor);
+                            this.record = record;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitAnnotation(descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitEnd() {
+                            record.apply(fv, annotationValueFilterFactory);
+                            super.visitEnd();
+                        }
+                    }
+
+                    /**
+                     * A method visitor that preserves the code of a method in the class file by copying it into a rebased
+                     * method while copying all attributes and annotations to the actual method.
+                     */
+                    protected class CodePreservingMethodVisitor extends MethodVisitor {
+
+                        /**
+                         * The method visitor of the actual method.
+                         */
+                        private final MethodVisitor actualMethodVisitor;
+
+                        /**
+                         * The method pool entry to apply.
+                         */
+                        private final MethodPool.Record record;
+
+                        /**
+                         * The resolution of a potential rebased method.
+                         */
+                        private final MethodRebaseResolver.Resolution resolution;
+
+                        /**
+                         * Creates a new code preserving method visitor.
+                         *
+                         * @param actualMethodVisitor The method visitor of the actual method.
+                         * @param record              The method pool entry to apply.
+                         * @param resolution          The resolution of the method rebase resolver in use.
+                         */
+                        protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
+                                                              MethodPool.Record record,
+                                                              MethodRebaseResolver.Resolution resolution) {
+                            super(OpenedClassReader.ASM_API, actualMethodVisitor);
+                            this.actualMethodVisitor = actualMethodVisitor;
+                            this.record = record;
+                            this.resolution = resolution;
+                            record.applyHead(actualMethodVisitor);
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotationDefault() {
+                            return IGNORE_ANNOTATION; // Annotation types can never be rebased.
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitAnnotation(descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitAnnotableParameterCount(int count, boolean visible) {
+                            if (annotationRetention.isEnabled()) {
+                                super.visitAnnotableParameterCount(count, visible);
+                            }
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitParameterAnnotation(index, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitCode() {
+                            record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
+                            actualMethodVisitor.visitEnd();
+                            mv = resolution.isRebased()
+                                    ? cv.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
+                                    resolution.getResolvedMethod().getInternalName(),
+                                    resolution.getResolvedMethod().getDescriptor(),
+                                    resolution.getResolvedMethod().getGenericSignature(),
+                                    resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames())
+                                    : IGNORE_METHOD;
+                            super.visitCode();
+                        }
+
+                        @Override
+                        public void visitMaxs(int stackSize, int localVariableLength) {
+                            super.visitMaxs(stackSize, Math.max(localVariableLength, resolution.getResolvedMethod().getStackSize()));
+                        }
+                    }
+
+                    /**
+                     * A method visitor that obtains all attributes and annotations of a method that is found in the
+                     * class file but that discards all code.
+                     */
+                    protected class AttributeObtainingMethodVisitor extends MethodVisitor {
+
+                        /**
+                         * The method visitor to which the actual method is to be written to.
+                         */
+                        private final MethodVisitor actualMethodVisitor;
+
+                        /**
+                         * The method pool entry to apply.
+                         */
+                        private final MethodPool.Record record;
+
+                        /**
+                         * Creates a new attribute obtaining method visitor.
+                         *
+                         * @param actualMethodVisitor The method visitor of the actual method.
+                         * @param record              The method pool entry to apply.
+                         */
+                        protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
+                            super(OpenedClassReader.ASM_API, actualMethodVisitor);
+                            this.actualMethodVisitor = actualMethodVisitor;
+                            this.record = record;
+                            record.applyHead(actualMethodVisitor);
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotationDefault() {
+                            return IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitAnnotation(descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitAnnotableParameterCount(int count, boolean visible) {
+                            if (annotationRetention.isEnabled()) {
+                                super.visitAnnotableParameterCount(count, visible);
+                            }
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitParameterAnnotation(index, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitCode() {
+                            mv = IGNORE_METHOD;
+                        }
+
+                        @Override
+                        public void visitEnd() {
+                            record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
+                            actualMethodVisitor.visitEnd();
+                        }
+                    }
                 }
             }
 
             /**
-             * A class visitor which is capable of applying a redefinition of an existing class file.
+             * A default type writer that only applies a type decoration.
+             *
+             * @param <V> The best known loaded type for the dynamically created type.
              */
-            @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
-            protected class RedefinitionClassVisitor extends MetadataAwareClassVisitor {
+            protected static class WithDecorationOnly<V> extends ForInlining<V> {
 
                 /**
-                 * The type initializer to apply.
-                 */
-                private final TypeInitializer typeInitializer;
-
-                /**
-                 * A context registry to register the lazily created implementation context to.
-                 */
-                private final ContextRegistry contextRegistry;
-
-                /**
-                 * The writer flags being used.
-                 */
-                private final int writerFlags;
-
-                /**
-                 * The reader flags being used.
-                 */
-                private final int readerFlags;
-
-                /**
-                 * A mapping of fields to write by their names.
-                 */
-                private final LinkedHashMap<String, FieldDescription> declarableFields;
-
-                /**
-                 * A mapping of methods to write by a concatenation of internal name and descriptor.
-                 */
-                private final LinkedHashMap<String, MethodDescription> declarableMethods;
-
-                /**
-                 * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty.
-                 */
-                private final Set<String> nestMembers;
-
-                /**
-                 * A mapping of the internal names of all declared types to their description.
-                 */
-                private final LinkedHashMap<String, TypeDescription> declaredTypes;
-
-                /**
-                 * The method pool to use or {@code null} if the pool was not yet initialized.
-                 */
-                private MethodPool methodPool;
-
-                /**
-                 * The initialization handler to use or {@code null} if the handler was not yet initialized.
-                 */
-                private InitializationHandler initializationHandler;
-
-                /**
-                 * The implementation context for this class creation or {@code null} if it was not yet created.
-                 */
-                private Implementation.Context.ExtractableView implementationContext;
-
-                /**
-                 * {@code true} if the modifiers for deprecation should be retained.
-                 */
-                private boolean retainDeprecationModifiers;
-
-                /**
-                 * Creates a class visitor which is capable of redefining an existent class on the fly.
+                 * Creates a new inlining type writer that only applies a decoration.
                  *
-                 * @param classVisitor    The underlying class visitor to which writes are delegated.
-                 * @param typeInitializer The type initializer to apply.
-                 * @param contextRegistry A context registry to register the lazily created implementation context to.
-                 * @param writerFlags     The writer flags being used.
-                 * @param readerFlags     The reader flags being used.
+                 * @param instrumentedType             The instrumented type to be created.
+                 * @param classFileVersion             The class file specified by the user.
+                 * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
+                 * @param methods                      The instrumented type's declared and virtually inherited methods.
+                 * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+                 * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+                 * @param annotationValueFilterFactory The annotation value filter factory to apply.
+                 * @param annotationRetention          The annotation retention to apply.
+                 * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+                 * @param implementationContextFactory The implementation context factory to apply.
+                 * @param typeValidation               Determines if a type should be explicitly validated.
+                 * @param classWriterStrategy          The class writer strategy to use.
+                 * @param typePool                     The type pool to use for computing stack map frames, if required.
+                 * @param classFileLocator             The class file locator for locating the original type's class file.
                  */
-                protected RedefinitionClassVisitor(ClassVisitor classVisitor,
-                                                   TypeInitializer typeInitializer,
-                                                   ContextRegistry contextRegistry,
-                                                   int writerFlags,
-                                                   int readerFlags) {
-                    super(OpenedClassReader.ASM_API, classVisitor);
-                    this.typeInitializer = typeInitializer;
-                    this.contextRegistry = contextRegistry;
-                    this.writerFlags = writerFlags;
-                    this.readerFlags = readerFlags;
-                    declarableFields = new LinkedHashMap<String, FieldDescription>();
-                    for (FieldDescription fieldDescription : fields) {
-                        declarableFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
-                    }
-                    declarableMethods = new LinkedHashMap<String, MethodDescription>();
-                    for (MethodDescription methodDescription : instrumentedMethods) {
-                        declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
-                    }
-                    if (instrumentedType.isNestHost()) {
-                        nestMembers = new LinkedHashSet<String>();
-                        for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
-                            nestMembers.add(typeDescription.getInternalName());
-                        }
-                    } else {
-                        nestMembers = Collections.emptySet();
-                    }
-                    declaredTypes = new LinkedHashMap<String, TypeDescription>();
-                    for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
-                        declaredTypes.put(typeDescription.getInternalName(), typeDescription);
-                    }
-                }
-
-                @Override
-                public void visit(int classFileVersionNumber,
-                                  int modifiers,
-                                  String internalName,
-                                  String genericSignature,
-                                  String superClassInternalName,
-                                  String[] interfaceTypeInternalName) {
-                    ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
-                    methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
-                    initializationHandler = new InitializationHandler.Creating(instrumentedType, methodPool, annotationValueFilterFactory);
-                    implementationContext = implementationContextFactory.make(instrumentedType,
-                            auxiliaryTypeNamingStrategy,
-                            typeInitializer,
+                protected WithDecorationOnly(TypeDescription instrumentedType,
+                                             ClassFileVersion classFileVersion,
+                                             List<DynamicType> auxiliaryTypes,
+                                             MethodList<?> methods,
+                                             TypeAttributeAppender typeAttributeAppender,
+                                             AsmVisitorWrapper asmVisitorWrapper,
+                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                             AnnotationRetention annotationRetention,
+                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                             Implementation.Context.Factory implementationContextFactory,
+                                             TypeValidation typeValidation,
+                                             ClassWriterStrategy classWriterStrategy,
+                                             TypePool typePool,
+                                             ClassFileLocator classFileLocator) {
+                    super(instrumentedType,
                             classFileVersion,
-                            ForInlining.this.classFileVersion);
-                    retainDeprecationModifiers = classFileVersion.isLessThan(ClassFileVersion.JAVA_V5);
-                    contextRegistry.setImplementationContext(implementationContext);
-                    cv = asmVisitorWrapper.wrap(instrumentedType,
-                            cv,
-                            implementationContext,
-                            typePool,
-                            fields,
+                            FieldPool.Disabled.INSTANCE,
+                            auxiliaryTypes,
+                            new FieldList.Empty<FieldDescription.InDefinedShape>(),
                             methods,
-                            writerFlags,
-                            readerFlags);
-                    super.visit(classFileVersionNumber,
-                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
-                                    | retainedDeprecationModifiers(modifiers)
-                                    // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
-                                    | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousClass()) ? Opcodes.ACC_FINAL : 0),
-                            instrumentedType.getInternalName(),
-                            TypeDescription.AbstractBase.RAW_TYPES
-                                    ? genericSignature
-                                    : instrumentedType.getGenericSignature(),
-                            instrumentedType.getSuperClass() == null
-                                    ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_REFERENCE)
-                                    : instrumentedType.getSuperClass().asErasure().getInternalName(),
-                            instrumentedType.getInterfaces().asErasures().toInternalNames());
+                            new MethodList.Empty<MethodDescription>(),
+                            LoadedTypeInitializer.NoOp.INSTANCE,
+                            TypeInitializer.None.INSTANCE,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            auxiliaryTypeNamingStrategy,
+                            implementationContextFactory,
+                            typeValidation,
+                            classWriterStrategy,
+                            typePool,
+                            instrumentedType,
+                            classFileLocator);
                 }
 
                 @Override
-                public void visitNestHostExperimental(String nestHost) {
-                    onNestHost();
-                }
-
-                @Override
-                public void visitOuterClass(String owner, String name, String descriptor) {
-                    onOuterType();
-                }
-
-                @Override
-                @SuppressWarnings("deprecation")
-                protected void onNestHost() {
-                    if (!instrumentedType.isNestHost()) {
-                        super.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                protected ClassVisitor writeTo(ClassVisitor classVisitor,
+                                               TypeInitializer typeInitializer,
+                                               ContextRegistry contextRegistry,
+                                               int writerFlags,
+                                               int readerFlags) {
+                    if (typeInitializer.isDefined()) {
+                        throw new UnsupportedOperationException("Cannot apply a type initializer for a decoration");
                     }
-                }
-
-                @Override
-                protected void onOuterType() {
-                    MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
-                    if (enclosingMethod != null) {
-                        super.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
-                                enclosingMethod.getInternalName(),
-                                enclosingMethod.getDescriptor());
-                    } else {
-                        TypeDescription enclosingType = instrumentedType.getEnclosingType();
-                        if (enclosingType != null) {
-                            super.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
-                        }
-                    }
-                }
-
-                @Override
-                protected void onAfterAttributes() {
-                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
-                }
-
-                @Override
-                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                    return annotationRetention.isEnabled()
-                            ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
-                            : IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return annotationRetention.isEnabled()
-                            ? super.visitAnnotation(descriptor, visible)
-                            : IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public FieldVisitor visitField(int modifiers,
-                                               String internalName,
-                                               String descriptor,
-                                               String genericSignature,
-                                               Object defaultValue) {
-                    FieldDescription fieldDescription = declarableFields.remove(internalName + descriptor);
-                    if (fieldDescription != null) {
-                        FieldPool.Record record = fieldPool.target(fieldDescription);
-                        if (!record.isImplicit()) {
-                            return redefine(record, defaultValue, modifiers, genericSignature);
-                        }
-                    }
-                    return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
+                    return new DecorationClassVisitor(classVisitor, contextRegistry, writerFlags, readerFlags);
                 }
 
                 /**
-                 * Redefines a field using the given explicit field pool record and default value.
-                 *
-                 * @param record           The field pool value to apply during visitation of the existing field.
-                 * @param defaultValue     The default value to write onto the field which might be {@code null}.
-                 * @param modifiers        The original modifiers of the transformed field.
-                 * @param genericSignature The field's original generic signature which can be {@code null}.
-                 * @return A field visitor for visiting the existing field definition.
+                 * A class visitor that decorates an existing type.
                  */
-                protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue, int modifiers, String genericSignature) {
-                    FieldDescription instrumentedField = record.getField();
-                    FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers() | retainedDeprecationModifiers(modifiers),
-                            instrumentedField.getInternalName(),
-                            instrumentedField.getDescriptor(),
-                            TypeDescription.AbstractBase.RAW_TYPES
-                                    ? genericSignature
-                                    : instrumentedField.getGenericSignature(),
-                            record.resolveDefault(defaultValue));
-                    return fieldVisitor == null
-                            ? IGNORE_FIELD
-                            : new AttributeObtainingFieldVisitor(fieldVisitor, record);
-                }
-
-                @Override
-                public MethodVisitor visitMethod(int modifiers,
-                                                 String internalName,
-                                                 String descriptor,
-                                                 String genericSignature,
-                                                 String[] exceptionName) {
-                    if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
-                        return methodVisitor == null
-                                ? IGNORE_METHOD
-                                : (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
-                                methodVisitor,
-                                instrumentedType,
-                                methodPool,
-                                annotationValueFilterFactory,
-                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
-                                (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
-                    } else {
-                        MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
-                        return methodDescription == null
-                                ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
-                                : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0, modifiers, genericSignature);
-                    }
-                }
-
-                /**
-                 * Redefines a given method if this is required by looking up a potential implementation from the
-                 * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool}.
-                 *
-                 * @param methodDescription The method being considered for redefinition.
-                 * @param abstractOrigin    {@code true} if the original method is abstract, i.e. there is no implementation to preserve.
-                 * @param modifiers         The original modifiers of the transformed method.
-                 * @param genericSignature  The method's original generic signature which can be {@code null}.
-                 * @return A method visitor which is capable of consuming the original method.
-                 */
-                protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin, int modifiers, String genericSignature) {
-                    MethodPool.Record record = methodPool.target(methodDescription);
-                    if (!record.getSort().isDefined()) {
-                        return super.visitMethod(methodDescription.getActualModifiers() | retainedDeprecationModifiers(modifiers),
-                                methodDescription.getInternalName(),
-                                methodDescription.getDescriptor(),
-                                TypeDescription.AbstractBase.RAW_TYPES
-                                        ? genericSignature
-                                        : methodDescription.getGenericSignature(),
-                                methodDescription.getExceptionTypes().asErasures().toInternalNames());
-                    }
-                    MethodDescription implementedMethod = record.getMethod();
-                    MethodVisitor methodVisitor = super.visitMethod(ModifierContributor.Resolver
-                                    .of(Collections.singleton(record.getVisibility()))
-                                    .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())) | retainedDeprecationModifiers(modifiers),
-                            implementedMethod.getInternalName(),
-                            implementedMethod.getDescriptor(),
-                            TypeDescription.AbstractBase.RAW_TYPES
-                                    ? genericSignature
-                                    : implementedMethod.getGenericSignature(),
-                            implementedMethod.getExceptionTypes().asErasures().toInternalNames());
-                    if (methodVisitor == null) {
-                        return IGNORE_METHOD;
-                    } else if (abstractOrigin) {
-                        return new AttributeObtainingMethodVisitor(methodVisitor, record);
-                    } else if (methodDescription.isNative()) {
-                        MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(implementedMethod.asDefined());
-                        if (resolution.isRebased()) {
-                            MethodVisitor rebasedMethodVisitor = super.visitMethod(resolution.getResolvedMethod().getActualModifiers()
-                                            | retainedDeprecationModifiers(modifiers),
-                                    resolution.getResolvedMethod().getInternalName(),
-                                    resolution.getResolvedMethod().getDescriptor(),
-                                    TypeDescription.AbstractBase.RAW_TYPES
-                                            ? genericSignature
-                                            : implementedMethod.getGenericSignature(),
-                                    resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
-                            if (rebasedMethodVisitor != null) {
-                                rebasedMethodVisitor.visitEnd();
-                            }
-                        }
-                        return new AttributeObtainingMethodVisitor(methodVisitor, record);
-                    } else {
-                        return new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
-                    }
-                }
-
-                @Override
-                public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                    if (!internalName.equals(instrumentedType.getInternalName()) && (declaredTypes.remove(internalName) != null || innerName == null)) {
-                        super.visitInnerClass(internalName, outerName, innerName, modifiers);
-                    }
-                }
-
-                @Override
-                @SuppressWarnings("deprecation")
-                public void visitNestMemberExperimental(String nestMember) {
-                    if (instrumentedType.isNestHost() && nestMembers.remove(nestMember)) {
-                        super.visitNestMemberExperimental(nestMember);
-                    }
-                }
-
-                @Override
-                public void visitEnd() {
-                    considerTriggerNestHost();
-                    considerTriggerOuterClass();
-                    considerTriggerAfterAttributes();
-                    for (FieldDescription fieldDescription : declarableFields.values()) {
-                        fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
-                    }
-                    for (MethodDescription methodDescription : declarableMethods.values()) {
-                        methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
-                    }
-                    initializationHandler.complete(cv, implementationContext);
-                    for (TypeDescription typeDescription : declaredTypes.values()) {
-                        super.visitInnerClass(typeDescription.getInternalName(),
-                                instrumentedType.getInternalName(),
-                                typeDescription.getSimpleName(),
-                                typeDescription.getModifiers());
-                    }
-                    TypeDescription declaringType = instrumentedType.getDeclaringType();
-                    if (declaringType != null) {
-                        super.visitInnerClass(instrumentedType.getInternalName(),
-                                declaringType.getInternalName(),
-                                instrumentedType.isAnonymousClass()
-                                        ? NO_REFERENCE
-                                        : instrumentedType.getSimpleName(),
-                                instrumentedType.getModifiers());
-                    }
-                    super.visitEnd();
-                }
-
-                /**
-                 * Returns {@link Opcodes#ACC_DEPRECATED} if the current class file version only represents deprecated methods using modifiers
-                 * that are not exposed in the type description API what is true for class files before Java 5 and if the supplied modifiers indicate
-                 * deprecation.
-                 *
-                 * @param modifiers The original modifiers.
-                 * @return {@link Opcodes#ACC_DEPRECATED} if the supplied modifiers imply deprecation.
-                 */
-                private int retainedDeprecationModifiers(int modifiers) {
-                    return retainDeprecationModifiers && (modifiers & Opcodes.ACC_DEPRECATED) != 0
-                            ? Opcodes.ACC_DEPRECATED
-                            : 0;
-                }
-
-                /**
-                 * A field visitor that obtains all attributes and annotations of a field that is found in the
-                 * class file but that discards all code.
-                 */
-                protected class AttributeObtainingFieldVisitor extends FieldVisitor {
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
+                protected class DecorationClassVisitor extends MetadataAwareClassVisitor implements TypeInitializer.Drain {
 
                     /**
-                     * The field pool record to apply onto the field visitor.
+                     * A context registry to register the lazily created implementation context to.
                      */
-                    private final FieldPool.Record record;
+                    private final ContextRegistry contextRegistry;
 
                     /**
-                     * Creates a new attribute obtaining field visitor.
+                     * The writer flags being used.
+                     */
+                    private final int writerFlags;
+
+                    /**
+                     * The reader flags being used.
+                     */
+                    private final int readerFlags;
+
+                    /**
+                     * The implementation context to use or {@code null} if the context is not yet initialized.
+                     */
+                    private Implementation.Context.ExtractableView implementationContext;
+
+                    /**
+                     * Creates a class visitor which is capable of decorating an existent class on the fly.
                      *
-                     * @param fieldVisitor The field visitor to delegate to.
-                     * @param record       The field pool record to apply onto the field visitor.
+                     * @param classVisitor    The underlying class visitor to which writes are delegated.
+                     * @param contextRegistry A context registry to register the lazily created implementation context to.
+                     * @param writerFlags     The writer flags being used.
+                     * @param readerFlags     The reader flags being used.
                      */
-                    protected AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
-                        super(OpenedClassReader.ASM_API, fieldVisitor);
-                        this.record = record;
+                    protected DecorationClassVisitor(ClassVisitor classVisitor, ContextRegistry contextRegistry, int writerFlags, int readerFlags) {
+                        super(OpenedClassReader.ASM_API, classVisitor);
+                        this.contextRegistry = contextRegistry;
+                        this.writerFlags = writerFlags;
+                        this.readerFlags = readerFlags;
                     }
 
                     @Override
-                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
-                                : IGNORE_ANNOTATION;
+                    public void visit(int classFileVersionNumber,
+                                      int modifiers,
+                                      String internalName,
+                                      String genericSignature,
+                                      String superClassInternalName,
+                                      String[] interfaceTypeInternalName) {
+                        ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
+                        implementationContext = implementationContextFactory.make(instrumentedType,
+                                auxiliaryTypeNamingStrategy,
+                                typeInitializer,
+                                classFileVersion,
+                                WithDecorationOnly.this.classFileVersion);
+                        contextRegistry.setImplementationContext(implementationContext);
+                        cv = asmVisitorWrapper.wrap(instrumentedType,
+                                cv,
+                                implementationContext,
+                                typePool,
+                                fields,
+                                methods,
+                                writerFlags,
+                                readerFlags);
+                        super.visit(classFileVersionNumber, modifiers, internalName, genericSignature, superClassInternalName, interfaceTypeInternalName);
                     }
 
                     @Override
-                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitAnnotation(descriptor, visible)
-                                : IGNORE_ANNOTATION;
+                    protected void onNestHost() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    protected void onOuterType() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    protected void onAfterAttributes() {
+                        typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     }
 
                     @Override
                     public void visitEnd() {
-                        record.apply(fv, annotationValueFilterFactory);
+                        implementationContext.drain(this, cv, annotationValueFilterFactory);
                         super.visitEnd();
                     }
-                }
-
-                /**
-                 * A method visitor that preserves the code of a method in the class file by copying it into a rebased
-                 * method while copying all attributes and annotations to the actual method.
-                 */
-                protected class CodePreservingMethodVisitor extends MethodVisitor {
-
-                    /**
-                     * The method visitor of the actual method.
-                     */
-                    private final MethodVisitor actualMethodVisitor;
-
-                    /**
-                     * The method pool entry to apply.
-                     */
-                    private final MethodPool.Record record;
-
-                    /**
-                     * The resolution of a potential rebased method.
-                     */
-                    private final MethodRebaseResolver.Resolution resolution;
-
-                    /**
-                     * Creates a new code preserving method visitor.
-                     *
-                     * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param record              The method pool entry to apply.
-                     * @param resolution          The resolution of the method rebase resolver in use.
-                     */
-                    protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
-                                                          MethodPool.Record record,
-                                                          MethodRebaseResolver.Resolution resolution) {
-                        super(OpenedClassReader.ASM_API, actualMethodVisitor);
-                        this.actualMethodVisitor = actualMethodVisitor;
-                        this.record = record;
-                        this.resolution = resolution;
-                        record.applyHead(actualMethodVisitor);
-                    }
 
                     @Override
-                    public AnnotationVisitor visitAnnotationDefault() {
-                        return IGNORE_ANNOTATION; // Annotation types can never be rebased.
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitAnnotation(descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public void visitAnnotableParameterCount(int count, boolean visible) {
-                        if (annotationRetention.isEnabled()) {
-                            super.visitAnnotableParameterCount(count, visible);
-                        }
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitParameterAnnotation(index, descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public void visitCode() {
-                        record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
-                        actualMethodVisitor.visitEnd();
-                        mv = resolution.isRebased()
-                                ? cv.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
-                                resolution.getResolvedMethod().getInternalName(),
-                                resolution.getResolvedMethod().getDescriptor(),
-                                resolution.getResolvedMethod().getGenericSignature(),
-                                resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames())
-                                : IGNORE_METHOD;
-                        super.visitCode();
-                    }
-
-                    @Override
-                    public void visitMaxs(int stackSize, int localVariableLength) {
-                        super.visitMaxs(stackSize, Math.max(localVariableLength, resolution.getResolvedMethod().getStackSize()));
-                    }
-                }
-
-                /**
-                 * A method visitor that obtains all attributes and annotations of a method that is found in the
-                 * class file but that discards all code.
-                 */
-                protected class AttributeObtainingMethodVisitor extends MethodVisitor {
-
-                    /**
-                     * The method visitor to which the actual method is to be written to.
-                     */
-                    private final MethodVisitor actualMethodVisitor;
-
-                    /**
-                     * The method pool entry to apply.
-                     */
-                    private final MethodPool.Record record;
-
-                    /**
-                     * Creates a new attribute obtaining method visitor.
-                     *
-                     * @param actualMethodVisitor The method visitor of the actual method.
-                     * @param record              The method pool entry to apply.
-                     */
-                    protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
-                        super(OpenedClassReader.ASM_API, actualMethodVisitor);
-                        this.actualMethodVisitor = actualMethodVisitor;
-                        this.record = record;
-                        record.applyHead(actualMethodVisitor);
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitAnnotationDefault() {
-                        return IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitAnnotation(descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public void visitAnnotableParameterCount(int count, boolean visible) {
-                        if (annotationRetention.isEnabled()) {
-                            super.visitAnnotableParameterCount(count, visible);
-                        }
-                    }
-
-                    @Override
-                    public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
-                                ? super.visitParameterAnnotation(index, descriptor, visible)
-                                : IGNORE_ANNOTATION;
-                    }
-
-                    @Override
-                    public void visitCode() {
-                        mv = IGNORE_METHOD;
-                    }
-
-                    @Override
-                    public void visitEnd() {
-                        record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
-                        actualMethodVisitor.visitEnd();
+                    public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
+                        throw new UnsupportedOperationException("Cannot apply an a drain for " + implementationContext + " during a decoration");
                     }
                 }
             }
