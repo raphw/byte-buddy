@@ -252,12 +252,12 @@ public class MethodCallTest {
     @Test
     public void testInvokeOnMethodCallUsingMatcher() throws Exception {
         DynamicType.Loaded<MethodCallChaining> loaded = new ByteBuddy()
-                 .subclass(MethodCallChaining.class)
-                 .method(named("foobar"))
-                 .intercept(MethodCall.invoke(named("toUpperCase").and(takesArguments(0)))
+                .subclass(MethodCallChaining.class)
+                .method(named("foobar"))
+                .intercept(MethodCall.invoke(named("toUpperCase").and(takesArguments(0)))
                         .onMethodCall(MethodCall.invoke(named("bar"))))
-                 .make()
-                 .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+                .make()
+                .load(MethodCallChaining.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -283,7 +283,8 @@ public class MethodCallTest {
                 .subclass(Object.class)
                 .invokable(isTypeInitializer())
                 .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
-                    .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class))).with(""))
+                        .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class)))
+                        .with(""))
                 .make()
                 .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -299,7 +300,8 @@ public class MethodCallTest {
                 .subclass(Object.class)
                 .defineMethod("foo", void.class)
                 .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
-                    .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class))).with("fooCall"))
+                        .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class)))
+                        .with("fooCall"))
                 .make()
                 .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
