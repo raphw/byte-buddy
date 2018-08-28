@@ -4567,6 +4567,20 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    protected AnnotationVisitor onVisitAnnotation(String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? cv.visitAnnotation(descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
                     protected void onAfterAttributes() {
                         typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     }
