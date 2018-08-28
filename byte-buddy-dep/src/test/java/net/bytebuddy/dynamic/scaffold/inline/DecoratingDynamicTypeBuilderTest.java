@@ -2,11 +2,13 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
@@ -14,7 +16,8 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
 
-import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -30,7 +33,7 @@ public class DecoratingDynamicTypeBuilderTest {
     public void testDecoration() throws Exception {
         Object instance = new ByteBuddy()
                 .decorate(Foo.class)
-                .annotateType(new Annotation[0])
+                .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
                 .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods()
                         .method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
@@ -59,6 +62,46 @@ public class DecoratingDynamicTypeBuilderTest {
                 .getConstructor()
                 .newInstance();
         assertThat(instance.getClass().getMethod(FOO).invoke(instance), is((Object) BAR));
+        assertThat(instance.getClass().isAnnotationPresent(Bar.class), is(true));
+        assertThat(instance.getClass().isAnnotationPresent(Qux.class), is(true));
+    }
+
+    @Test
+    public void testDecorationWithoutRetention() throws Exception {
+        Object instance = new ByteBuddy()
+                .with(AnnotationRetention.DISABLED)
+                .decorate(Foo.class)
+                .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
+                .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
+                        .method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
+                            @Override
+                            public MethodVisitor wrap(TypeDescription instrumentedType,
+                                                      MethodDescription instrumentedMethod,
+                                                      MethodVisitor methodVisitor,
+                                                      Implementation.Context implementationContext,
+                                                      TypePool typePool,
+                                                      int writerFlags,
+                                                      int readerFlags) {
+                                return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
+                                    @Override
+                                    public void visitLdcInsn(Object value) {
+                                        if (FOO.equals(value)) {
+                                            value = BAR;
+                                        }
+                                        super.visitLdcInsn(value);
+                                    }
+                                };
+                            }
+                        }))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getConstructor()
+                .newInstance();
+        assertThat(instance.getClass().getMethod(FOO).invoke(instance), is((Object) BAR));
+        assertThat(instance.getClass().isAnnotationPresent(Bar.class), is(true));
+        assertThat(instance.getClass().isAnnotationPresent(Qux.class), is(true));
     }
 
     @Test
@@ -162,10 +205,21 @@ public class DecoratingDynamicTypeBuilderTest {
         new ByteBuddy().decorate(Foo.class).initializer(mock(LoadedTypeInitializer.class));
     }
 
+    @Bar
     public static class Foo {
 
         public String foo() {
             return FOO;
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Bar {
+        /* empty */
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Qux {
+        /* empty */
     }
 }
