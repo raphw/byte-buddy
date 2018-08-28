@@ -18,9 +18,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.AbstractList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Description of the parameter of a Java method or constructor.
@@ -430,20 +428,23 @@ public interface ParameterDescription extends AnnotationSource,
         protected static class OfMethod extends ForLoadedParameter<Method> {
 
             /**
+             * Lazy cache of method annotations. Avoids costly calls to {@link Method#getParameterAnnotations()}.
+             */
+            protected static final Map<Method, Annotation[][]> ANNOTATION_CACHE = new WeakHashMap<Method, Annotation[][]>();
+
+            /**
              * Cached list of annotations. Avoids costly calls to {@link Method#getParameterAnnotations()}.
              */
-            protected final AnnotationList cachedAnnotations;
+            protected AnnotationList cachedAnnotations;
 
             /**
              * Creates a new description for a loaded method.
              *
              * @param method The method for which a parameter is represented.
              * @param index  The index of the parameter.
-             * @param annotations The cached annotations of the parameter.
              */
-            protected OfMethod(Method method, int index, Annotation[] annotations) {
+            protected OfMethod(Method method, int index) {
                 super(method, index);
-                this.cachedAnnotations = new AnnotationList.ForLoadedAnnotations(annotations);
             }
 
             @Override
@@ -464,6 +465,12 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
+                if (cachedAnnotations == null) {
+                    if (!ANNOTATION_CACHE.containsKey(executable)) {
+                        ANNOTATION_CACHE.put(executable, executable.getParameterAnnotations());
+                    }
+                    cachedAnnotations = new AnnotationList.ForLoadedAnnotations(ANNOTATION_CACHE.get(executable)[index]);
+                }
                 return cachedAnnotations;
             }
         }
@@ -476,7 +483,7 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * Cached list of annotations. Avoids costly calls to {@link Method#getParameterAnnotations()}.
              */
-            protected final AnnotationList cachedAnnotations;
+            protected AnnotationList cachedAnnotations;
 
             /**
              * Creates a new description for a loaded constructor.
@@ -486,16 +493,6 @@ public interface ParameterDescription extends AnnotationSource,
              */
             protected OfConstructor(Constructor<?> constructor, int index) {
                 super(constructor, index);
-
-                Annotation[][] annotation = executable.getParameterAnnotations();
-                MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
-                if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
-                    cachedAnnotations = index == 0
-                        ? new AnnotationList.Empty()
-                        : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
-                } else {
-                    cachedAnnotations = new AnnotationList.ForLoadedAnnotations(annotation[index]);
-                }
             }
 
             @Override
@@ -516,6 +513,17 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
+                if (cachedAnnotations == null) {
+                    Annotation[][] annotation = executable.getParameterAnnotations();
+                    MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
+                    if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
+                        cachedAnnotations = index == 0
+                            ? new AnnotationList.Empty()
+                            : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
+                    } else {
+                        cachedAnnotations = new AnnotationList.ForLoadedAnnotations(annotation[index]);
+                    }
+                }
                 return cachedAnnotations;
             }
         }
