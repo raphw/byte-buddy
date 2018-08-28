@@ -7,6 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -274,6 +275,38 @@ public class MethodCallTest {
                 .intercept(MethodCall.invoke(Integer.class.getMethod("toString"))
                         .onMethodCall(MethodCall.invoke(named("bar"))))
                 .make();
+    }
+
+    @Test
+    public void testStaticOnStaticFieldFromAnotherClass() throws Exception {
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .invokable(isTypeInitializer())
+                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                    .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class))).with(""))
+                .make()
+                .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance, instanceOf(Object.class));
+    }
+
+    @Test
+    public void testOnStaticFieldFromAnotherClass() throws Exception {
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod("foo", void.class)
+                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                    .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class))).with("fooCall"))
+                .make()
+                .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance, instanceOf(Object.class));
     }
 
     @Test
