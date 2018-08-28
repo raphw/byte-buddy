@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. August 2018: version 1.8.19
+
+- Fix annotation handling in decorator strategy.
+- Several minor bug fixes for `MethodCall`.
+- Fix shading for signature remapper.
+
 ### 27. August 2018: version 1.8.18
 
 - Add API for defining inner types and nest mate groups.
