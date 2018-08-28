@@ -142,7 +142,9 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                                         LatentMatcher<? super MethodDescription> ignoredMethods,
                                         ClassFileLocator classFileLocator) {
         this(instrumentedType,
-                TypeAttributeAppender.ForInstrumentedType.INSTANCE,
+                annotationRetention.isEnabled()
+                        ? new TypeAttributeAppender.ForInstrumentedType.Differentiating(instrumentedType)
+                        : TypeAttributeAppender.ForInstrumentedType.INSTANCE,
                 AsmVisitorWrapper.NoOp.INSTANCE,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
@@ -325,7 +327,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     @SuppressWarnings("unchecked")
     public DynamicType.Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
-                new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
+                typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
@@ -358,7 +360,7 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     @Override
     public DynamicType.Builder<T> require(Collection<DynamicType> auxiliaryTypes) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
-                new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
+                typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
