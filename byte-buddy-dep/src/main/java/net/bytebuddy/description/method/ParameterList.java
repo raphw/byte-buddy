@@ -315,9 +315,14 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 super(method);
             }
 
+            /**
+             * Cached array of annotations of parameters. Avoids costly calls to {@link Method#getParameterAnnotations()}.
+             */
+            private Annotation[][] parameterAnnotations = executable.getParameterAnnotations();
+
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index);
+                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index, parameterAnnotations[index]);
             }
         }
 

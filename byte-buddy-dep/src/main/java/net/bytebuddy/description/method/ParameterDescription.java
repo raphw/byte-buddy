@@ -430,13 +430,20 @@ public interface ParameterDescription extends AnnotationSource,
         protected static class OfMethod extends ForLoadedParameter<Method> {
 
             /**
+             * Cached list of annotations. Avoids costly calls to {@link Method#getParameterAnnotations()}.
+             */
+            protected final AnnotationList cachedAnnotations;
+
+            /**
              * Creates a new description for a loaded method.
              *
              * @param method The method for which a parameter is represented.
              * @param index  The index of the parameter.
+             * @param annotations The cached annotations of the parameter.
              */
-            protected OfMethod(Method method, int index) {
+            protected OfMethod(Method method, int index, Annotation[] annotations) {
                 super(method, index);
+                this.cachedAnnotations = new AnnotationList.ForLoadedAnnotations(annotations);
             }
 
             @Override
@@ -457,7 +464,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
+                return cachedAnnotations;
             }
         }
 
@@ -467,6 +474,11 @@ public interface ParameterDescription extends AnnotationSource,
         protected static class OfConstructor extends ForLoadedParameter<Constructor<?>> {
 
             /**
+             * Cached list of annotations. Avoids costly calls to {@link Method#getParameterAnnotations()}.
+             */
+            protected final AnnotationList cachedAnnotations;
+
+            /**
              * Creates a new description for a loaded constructor.
              *
              * @param constructor The constructor for which a parameter is represented.
@@ -474,6 +486,16 @@ public interface ParameterDescription extends AnnotationSource,
              */
             protected OfConstructor(Constructor<?> constructor, int index) {
                 super(constructor, index);
+
+                Annotation[][] annotation = executable.getParameterAnnotations();
+                MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
+                if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
+                    cachedAnnotations = index == 0
+                        ? new AnnotationList.Empty()
+                        : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
+                } else {
+                    cachedAnnotations = new AnnotationList.ForLoadedAnnotations(annotation[index]);
+                }
             }
 
             @Override
@@ -494,15 +516,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                Annotation[][] annotation = executable.getParameterAnnotations();
-                MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
-                if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
-                    return index == 0
-                            ? new AnnotationList.Empty()
-                            : new AnnotationList.ForLoadedAnnotations(annotation[index - 1]);
-                } else {
-                    return new AnnotationList.ForLoadedAnnotations(annotation[index]);
-                }
+                return cachedAnnotations;
             }
         }
 
