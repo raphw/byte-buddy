@@ -1428,7 +1428,7 @@ public class MethodCall implements Implementation.Composable {
                     return Collections.<ArgumentLoader>singletonList(new ForMethodCall(implementationTarget,
                             methodCall,
                             methodCall.methodLocator.resolve(instrumentedType,
-                                    methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod),
+                                    methodCall.targetHandler.resolve(instrumentedType, instrumentedMethod),
                                     instrumentedMethod),
                             instrumentedMethod));
                 }
@@ -1561,16 +1561,12 @@ public class MethodCall implements Implementation.Composable {
 
         /**
          * Resolves the method call's target.
-         * <p>
-         * Example
-         * {@code MethodCall.invoke(named("foo")).onField("bar")} -> TypeDescription of field "bar".
-         * {@code MethodCall.invoke(named("foo")).onArgument(0)} -> TypeDescription of argument 0.
          *
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
          * @return method call's target
          */
-        TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+        TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
         /**
          * A target handler that invokes a method either on the instance of the instrumented
@@ -1608,7 +1604,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedType;
             }
 
@@ -1639,7 +1635,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedType;
             }
 
@@ -1707,7 +1703,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return fieldType.asErasure();
             }
 
@@ -1777,7 +1773,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
@@ -1832,7 +1828,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 if (instrumentedMethod.getParameters().size() < index) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not have a parameter with index " + index);
                 }
@@ -1873,7 +1869,7 @@ public class MethodCall implements Implementation.Composable {
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 MethodDescription methodDescription = methodCall.methodLocator.resolve(instrumentedType,
-                        methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod),
+                        methodCall.targetHandler.resolve(instrumentedType, instrumentedMethod),
                         instrumentedMethod);
                 StackManipulation stackManipulation = assigner.assign(methodDescription.getReturnType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                 if (!stackManipulation.isValid()) {
@@ -1884,9 +1880,9 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public TypeDescription resolveTarget(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return methodCall.methodLocator.resolve(instrumentedType,
-                        methodCall.targetHandler.resolveTarget(instrumentedType, instrumentedMethod),
+                        methodCall.targetHandler.resolve(instrumentedType, instrumentedMethod),
                         instrumentedMethod).getReturnType().asErasure();
             }
 
@@ -2252,7 +2248,7 @@ public class MethodCall implements Implementation.Composable {
      */
     protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, boolean terminate) {
         MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(),
-                targetHandler.resolveTarget(implementationTarget.getInstrumentedType(), instrumentedMethod),
+                targetHandler.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod),
                 instrumentedMethod);
         if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
             throw new IllegalStateException("Cannot invoke " + invokedMethod + " from " + implementationTarget.getInstrumentedType());

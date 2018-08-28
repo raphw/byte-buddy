@@ -1318,7 +1318,7 @@ public interface DynamicType {
             /**
              * A builder for defining properties of an inner type that is declared within another type but not a method or constructor.
              *
-             * @param <U>
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
             interface ForType<U> extends InnerTypeDefinition<U> {
 
