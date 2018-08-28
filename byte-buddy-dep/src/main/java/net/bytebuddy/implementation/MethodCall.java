@@ -1770,9 +1770,10 @@ public class MethodCall implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + resolution.getField());
                 }
-                return new StackManipulation.Compound(invokedMethod.isStatic()
+                return new StackManipulation.Compound(invokedMethod.isStatic() || resolution.getField().isStatic()
                         ? StackManipulation.Trivial.INSTANCE
-                        : MethodVariableAccess.loadThis(), FieldAccess.forField(resolution.getField()).read(), stackManipulation);
+                        : MethodVariableAccess.loadThis(),
+                        FieldAccess.forField(resolution.getField()).read(), stackManipulation);
             }
 
             @Override
