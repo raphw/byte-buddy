@@ -197,7 +197,7 @@ class HardcodedFrameworkImpl implements Framework {
     Of course, this implementation is not of much use. By the <code>secure</code> method's signature we suggested
     that the method can provide security for any type but in reality, we will throw an exception once we encounter
     something else then the known <code>Service</code>. Also, this would require our security library to know
-    about about this particular <code>Service</code> type when the library is compiled. Obviously, this is not a
+    about this particular <code>Service</code> type when the library is compiled. Obviously, this is not a
     feasible solution for implementing the framework. So how can we solve this problem? Well, since this is a
     tutorial on a code generation library you will have guessed the answer: We create a subclass on demand
     and at runtime when the <code>Service</code> class first becomes known to our security framework by the
@@ -616,7 +616,7 @@ new ByteBuddy().rebase(Foo.class)
         We simply create a new <code>ClassLoader</code> which is explicitly told about the existence of a
         particular dynamically created class. Because Java class loaders are organized in hierarchies, we define this
         class loader as the child of a given class loader that already exists in the running Java application. This way,
-        all types of the running Java program are visible to the dynamic type that was loaded with new new
+        all types of the running Java program are visible to the dynamic type that was loaded with new
         <code>ClassLoader</code>.
     </span></li>
     <li><span>
@@ -647,7 +647,7 @@ new ByteBuddy().rebase(Foo.class)
         both classes represent an identical class implementation. This rule for equality holds however also for Java
         packages. This means that a class <code>example.Foo</code> is not able to access package-private
         methods of another class <code>example.Bar</code> if both classes were not loaded with the same class loader.
-        Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overriden package-private methods
+        Also, if <code>example.Bar</code> extended <code>example.Foo</code>, any overridden package-private methods
         would become inoperative but would delegate to the original implementations.
     </span></li>
     <li><span>
@@ -1008,7 +1008,7 @@ String toString = new ByteBuddy()
     The line we added to our code contains two instructions in Byte Buddy's domain specific language. The first
     instruction is <code>method</code> which allows us to select any number of methods that we want to override.
     This selection is applied by handing over a <code>ElementMatcher</code> which serves as a predicate to decide
-    for each overridable method if it should be overriden or not. Byte Buddy comes with a lot of predefined method
+    for each overridable method if it should be overridden or not. Byte Buddy comes with a lot of predefined method
     matchers which are collected in the <code>ElementMatchers</code> class. Normally, you would import this class
     statically such that the resulting code reads more naturally. Such a static import was also assumed for the
     above example where we used the <code>named</code> method matcher which selects methods by their exact names.
@@ -1086,11 +1086,11 @@ Foo dynamicFoo = new ByteBuddy()
         Similarly, the <code>foo()</code> method is first matched against
         <code>named("foo").and(takesArguments(1))</code> first where the missing argument results in an unsuccessful
         matching. After this, the <code>named("foo")</code> matcher determines a positive match such that the
-        <code>foo()</code> method is overriden to return <code>Two!</code>.
+        <code>foo()</code> method is overridden to return <code>Two!</code>.
     </span></li>
     <li><span>
         The <code>foo(Object)</code> is immediately matched by the <code>named("foo").and(takesArguments(1))</code>
-        matcher such that the overriden implementation returns <code>Three!</code>.
+        matcher such that the overridden implementation returns <code>Three!</code>.
     </span></li>
 </ul>
 
@@ -1098,7 +1098,7 @@ Foo dynamicFoo = new ByteBuddy()
     Because of this organization, you should always register more specific method matchers last. Otherwise, any less
     specific method matcher that is registered afterwards might prevent rules that you defined before from being
     applied. Note that the <code>ByteBuddy</code> configuration allows to define an <code>ignoreMethod</code>
-    property. Methods that are successfully matched against this method matcher are never overriden. By default,
+    property. Methods that are successfully matched against this method matcher are never overridden. By default,
     Byte Buddy does not override any synthetic methods.
 </p>
 
@@ -1113,7 +1113,7 @@ Foo dynamicFoo = new ByteBuddy()
 
 <p>
     With <code>defineField</code>, Byte Buddy allows to define fields for a given type. In Java, fields are never
-    overriden but can only be <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>. For this reason,
+    overridden but can only be <a href="http://en.wikipedia.org/wiki/Variable_shadowing">shadowed</a>. For this reason,
     no field matching or the like is available.
 </p>
 
@@ -1316,7 +1316,7 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         intercepted method is currently invoked. If the annotated parameter is not assignable to an instance of
         the dynamic type, the current method is not considered as a candidate for being bound to the source method.
         Note that calling any methods on this instance will result in calling a potentially instrumented method
-        implementation. For calling overriden implementations, you need to use the <code>@Super</code> annotation
+        implementation. For calling overridden implementations, you need to use the <code>@Super</code> annotation
         which is discussed below. A typical reason for using the <code>@This</code> annotation to gain access to an
         instance's fields.
     </span></li>
@@ -1384,7 +1384,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 
 <p>
     From the above example, it is obvious that the super method is called by injecting some instance of a
-    <code>Callable</code> into the <code>LoggerInterceptor</code> which invokes the original, non-overriden
+    <code>Callable</code> into the <code>LoggerInterceptor</code> which invokes the original, non-overridden
     implementation of <code>MemoryDatabase#load(String)</code> from its <code>call</code> method. This helper
     class is called an <code>AuxiliaryType</code> within Byte Buddy's terminology. Auxiliary types are created
     on demand by Byte Buddy and are directly accessible from the <code>DynamicType</code> interface after a
