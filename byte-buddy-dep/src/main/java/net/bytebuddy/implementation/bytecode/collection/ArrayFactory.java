@@ -70,28 +70,26 @@ public class ArrayFactory implements CollectionFactory {
      * @return A suitable array creator.
      */
     private static ArrayCreator makeArrayCreatorFor(TypeDefinition componentType) {
-        if (componentType.isPrimitive()) {
-            if (componentType.represents(boolean.class)) {
-                return ArrayCreator.ForPrimitiveType.BOOLEAN;
-            } else if (componentType.represents(byte.class)) {
-                return ArrayCreator.ForPrimitiveType.BYTE;
-            } else if (componentType.represents(short.class)) {
-                return ArrayCreator.ForPrimitiveType.SHORT;
-            } else if (componentType.represents(char.class)) {
-                return ArrayCreator.ForPrimitiveType.CHARACTER;
-            } else if (componentType.represents(int.class)) {
-                return ArrayCreator.ForPrimitiveType.INTEGER;
-            } else if (componentType.represents(long.class)) {
-                return ArrayCreator.ForPrimitiveType.LONG;
-            } else if (componentType.represents(float.class)) {
-                return ArrayCreator.ForPrimitiveType.FLOAT;
-            } else if (componentType.represents(double.class)) {
-                return ArrayCreator.ForPrimitiveType.DOUBLE;
-            } else {
-                throw new IllegalArgumentException("Cannot create array of type " + componentType);
-            }
-        } else {
+        if (!componentType.isPrimitive()) {
             return new ArrayCreator.ForReferenceType(componentType.asErasure());
+        } else if (componentType.represents(boolean.class)) {
+            return ArrayCreator.ForPrimitiveType.BOOLEAN;
+        } else if (componentType.represents(byte.class)) {
+            return ArrayCreator.ForPrimitiveType.BYTE;
+        } else if (componentType.represents(short.class)) {
+            return ArrayCreator.ForPrimitiveType.SHORT;
+        } else if (componentType.represents(char.class)) {
+            return ArrayCreator.ForPrimitiveType.CHARACTER;
+        } else if (componentType.represents(int.class)) {
+            return ArrayCreator.ForPrimitiveType.INTEGER;
+        } else if (componentType.represents(long.class)) {
+            return ArrayCreator.ForPrimitiveType.LONG;
+        } else if (componentType.represents(float.class)) {
+            return ArrayCreator.ForPrimitiveType.FLOAT;
+        } else if (componentType.represents(double.class)) {
+            return ArrayCreator.ForPrimitiveType.DOUBLE;
+        } else {
+            throw new IllegalArgumentException("Cannot create array of type " + componentType);
         }
     }
 

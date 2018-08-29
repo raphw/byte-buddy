@@ -93,7 +93,9 @@ public enum ArrayAccess {
      * @return An array accessor for the given type.
      */
     public static ArrayAccess of(TypeDefinition componentType) {
-        if (componentType.represents(boolean.class) || componentType.represents(byte.class)) {
+        if (!componentType.isPrimitive()) {
+            return REFERENCE;
+        } else if (componentType.represents(boolean.class) || componentType.represents(byte.class)) {
             return BYTE;
         } else if (componentType.represents(short.class)) {
             return SHORT;
@@ -107,10 +109,8 @@ public enum ArrayAccess {
             return FLOAT;
         } else if (componentType.represents(double.class)) {
             return DOUBLE;
-        } else if (componentType.represents(void.class)) {
-            throw new IllegalArgumentException("void is no legal array type");
         } else {
-            return REFERENCE;
+            throw new IllegalArgumentException("Not a legal array type: " + componentType);
         }
     }
 
