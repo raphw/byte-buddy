@@ -38,14 +38,19 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
      * Creates a plugin for caching method return values.
      */
     public CachedReturnPlugin() {
-        super(declaresMethod(isAnnotatedWith(CacheReturn.class)));
+        super(declaresMethod(isAnnotatedWith(Enhance.class)));
         randomString = new RandomString();
     }
 
     @Override
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
-        for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods().filter(isAnnotatedWith(CacheReturn.class))) {
-            String name = methodDescription.getDeclaredAnnotations().ofType(CacheReturn.class).loadSilent().value();
+        for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods().filter(isAnnotatedWith(Enhance.class))) {
+            if (methodDescription.isAbstract()) {
+                throw new IllegalStateException("Cannot cache the value of an abstract method: " + methodDescription);
+            } else if (!methodDescription.getParameters().isEmpty()) {
+                throw new IllegalStateException("Cannot cache the value of a method with parameters: " + methodDescription);
+            }
+            String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent().value();
             if (name.isEmpty()) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
             }
@@ -69,7 +74,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
             } else if (methodDescription.getReturnType().represents(double.class)) {
                 advice = DoubleAdvice.class;
             } else {
-                throw new IllegalStateException(methodDescription + " is void and cannot cache a return value");
+                throw new IllegalStateException("Cannot cache a method that returns void: " + methodDescription);
             }
             builder = builder
                     .defineField(name, methodDescription.getReturnType().asErasure(), methodDescription.isStatic()
@@ -91,7 +96,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
     @Documented
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface CacheReturn {
+    public @interface Enhance {
 
         /**
          * The fields name or an empty string if the name should be generated randomly.

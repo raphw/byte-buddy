@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -889,6 +890,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor);
         }
@@ -949,6 +951,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(constructor.getDeclaredAnnotations());
         }
@@ -1000,6 +1003,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(method);
         }
@@ -1072,6 +1076,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(method.getDeclaredAnnotations());
         }

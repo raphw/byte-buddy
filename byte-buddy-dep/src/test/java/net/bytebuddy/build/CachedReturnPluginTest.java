@@ -73,7 +73,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public boolean foo() {
             if (executed) {
                 throw new AssertionError();
@@ -87,7 +87,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public byte foo() {
             if (executed) {
                 throw new AssertionError();
@@ -101,7 +101,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public short foo() {
             if (executed) {
                 throw new AssertionError();
@@ -115,7 +115,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public char foo() {
             if (executed) {
                 throw new AssertionError();
@@ -129,7 +129,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public int foo() {
             if (executed) {
                 throw new AssertionError();
@@ -143,7 +143,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public long foo() {
             if (executed) {
                 throw new AssertionError();
@@ -157,7 +157,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public float foo() {
             if (executed) {
                 throw new AssertionError();
@@ -171,7 +171,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public double foo() {
             if (executed) {
                 throw new AssertionError();
@@ -185,7 +185,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public String foo() {
             if (executed) {
                 throw new AssertionError();
@@ -199,7 +199,7 @@ public class CachedReturnPluginTest {
 
         private static boolean executed;
 
-        @CachedReturnPlugin.CacheReturn
+        @CachedReturnPlugin.Enhance
         public static String foo() {
             if (executed) {
                 throw new AssertionError();
@@ -213,7 +213,7 @@ public class CachedReturnPluginTest {
 
         private boolean executed;
 
-        @CachedReturnPlugin.CacheReturn(FOO)
+        @CachedReturnPlugin.Enhance(FOO)
         public String foo() {
             if (executed) {
                 throw new AssertionError();
