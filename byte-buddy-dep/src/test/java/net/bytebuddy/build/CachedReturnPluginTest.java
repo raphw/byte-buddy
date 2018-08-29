@@ -1,0 +1,225 @@
+package net.bytebuddy.build;
+
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.Collection;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@RunWith(Parameterized.class)
+public class CachedReturnPluginTest {
+
+    private static final String FOO = "foo";
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {BooleanSample.class, true},
+                {ByteSample.class, (byte) 42},
+                {ShortSample.class, (short) 42},
+                {CharacterSample.class, (char) 42},
+                {IntegerSample.class, 42},
+                {LongSample.class, 42L},
+                {FloatSample.class, 42f},
+                {DoubleSample.class, 42d},
+                {ReferenceSample.class, FOO},
+                {ReferenceStaticSample.class, FOO},
+                {ReferenceNamedSample.class, FOO}
+        });
+    }
+
+    private final Class<?> type;
+
+    private final Object value;
+
+    public CachedReturnPluginTest(Class<?> type, Object value) {
+        this.type = type;
+        this.value = value;
+    }
+
+    private Plugin plugin;
+
+    @Before
+    public void setUp() throws Exception {
+        plugin = new CachedReturnPlugin();
+    }
+
+    @Test
+    public void testMatches() throws Exception {
+        assertThat(plugin.matches(TypeDescription.ForLoadedType.of(type)), is(true));
+    }
+
+    @Test
+    public void testCachedValue() throws Exception {
+        Class<?> transformed = plugin.apply(new ByteBuddy().redefine(type), TypeDescription.ForLoadedType.of(type))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(transformed.getDeclaredFields().length, is(2));
+        Object instance = transformed.getConstructor().newInstance();
+        assertThat(transformed.getMethod(FOO).invoke(instance), is(value));
+        assertThat(transformed.getMethod(FOO).invoke(instance), is(value));
+    }
+
+    public static class BooleanSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public boolean foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return true;
+        }
+    }
+
+    public static class ByteSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public byte foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42;
+        }
+    }
+
+    public static class ShortSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public short foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42;
+        }
+    }
+
+    public static class CharacterSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public char foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42;
+        }
+    }
+
+    public static class IntegerSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public int foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42;
+        }
+    }
+
+    public static class LongSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public long foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42;
+        }
+    }
+
+    public static class FloatSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public float foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42f;
+        }
+    }
+
+    public static class DoubleSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public double foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return 42d;
+        }
+    }
+
+    public static class ReferenceSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public String foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return FOO;
+        }
+    }
+
+    public static class ReferenceStaticSample {
+
+        private static boolean executed;
+
+        @CachedReturnPlugin.CacheReturn
+        public static String foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return FOO;
+        }
+    }
+
+    public static class ReferenceNamedSample {
+
+        private boolean executed;
+
+        @CachedReturnPlugin.CacheReturn(FOO)
+        public String foo() {
+            if (executed) {
+                throw new AssertionError();
+            }
+            executed = true;
+            return FOO;
+        }
+    }
+}
