@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. August 2018: version 1.8.20
+
+- Fix decoration to include non-virtual methods.
+- Add build plugin for caching the return value of a method.
+
 ### 28. August 2018: version 1.8.19
 
 - Fix annotation handling in decorator strategy.
