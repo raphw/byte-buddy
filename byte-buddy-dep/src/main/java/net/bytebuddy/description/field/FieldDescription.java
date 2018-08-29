@@ -1,5 +1,6 @@
 package net.bytebuddy.description.field;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -216,6 +217,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(field.getDeclaredAnnotations());
         }
