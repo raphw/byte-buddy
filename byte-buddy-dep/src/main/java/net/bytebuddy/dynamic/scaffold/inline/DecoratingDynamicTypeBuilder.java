@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 
 /**
@@ -385,11 +386,10 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,
                 auxiliaryTypes,
-                methodGraphCompiler
-                        .compile(instrumentedType)
+                CompoundList.of(methodGraphCompiler.compile(instrumentedType)
                         .listNodes()
                         .asMethodList()
-                        .filter(not(ignoredMethods.resolve(instrumentedType))),
+                        .filter(not(ignoredMethods.resolve(instrumentedType))), instrumentedType.getDeclaredMethods().filter(not(isVirtual()))),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 annotationValueFilterFactory,

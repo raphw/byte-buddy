@@ -35,27 +35,26 @@ public class DecoratingDynamicTypeBuilderTest {
                 .decorate(Foo.class)
                 .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
                 .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
-                        .method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
+                    @Override
+                    public MethodVisitor wrap(TypeDescription instrumentedType,
+                                              MethodDescription instrumentedMethod,
+                                              MethodVisitor methodVisitor,
+                                              Implementation.Context implementationContext,
+                                              TypePool typePool,
+                                              int writerFlags,
+                                              int readerFlags) {
+                        return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
                             @Override
-                            public MethodVisitor wrap(TypeDescription instrumentedType,
-                                                      MethodDescription instrumentedMethod,
-                                                      MethodVisitor methodVisitor,
-                                                      Implementation.Context implementationContext,
-                                                      TypePool typePool,
-                                                      int writerFlags,
-                                                      int readerFlags) {
-                                return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
-                                    @Override
-                                    public void visitLdcInsn(Object value) {
-                                        if (FOO.equals(value)) {
-                                            value = BAR;
-                                        }
-                                        super.visitLdcInsn(value);
-                                    }
-                                };
+                            public void visitLdcInsn(Object value) {
+                                if (FOO.equals(value)) {
+                                    value = BAR;
+                                }
+                                super.visitLdcInsn(value);
                             }
-                        }))
+                        };
+                    }
+                }))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
@@ -67,7 +66,43 @@ public class DecoratingDynamicTypeBuilderTest {
     }
 
     @Test
-    public void testDecorationWithoutRetention() throws Exception {
+    public void testDecorationNonVirtualMember() throws Exception {
+        Object instance = new ByteBuddy()
+                .decorate(Foo.class)
+                .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
+                .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(BAR), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
+                    @Override
+                    public MethodVisitor wrap(TypeDescription instrumentedType,
+                                              MethodDescription instrumentedMethod,
+                                              MethodVisitor methodVisitor,
+                                              Implementation.Context implementationContext,
+                                              TypePool typePool,
+                                              int writerFlags,
+                                              int readerFlags) {
+                        return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
+                            @Override
+                            public void visitLdcInsn(Object value) {
+                                if (FOO.equals(value)) {
+                                    value = BAR;
+                                }
+                                super.visitLdcInsn(value);
+                            }
+                        };
+                    }
+                }))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getConstructor()
+                .newInstance();
+        assertThat(instance.getClass().getMethod(BAR).invoke(null), is((Object) BAR));
+        assertThat(instance.getClass().isAnnotationPresent(Bar.class), is(true));
+        assertThat(instance.getClass().isAnnotationPresent(Qux.class), is(true));
+    }
+
+    @Test
+    public void testDecorationWithoutAnnotationRetention() throws Exception {
         Object instance = new ByteBuddy()
                 .with(AnnotationRetention.DISABLED)
                 .decorate(Foo.class)
@@ -209,6 +244,10 @@ public class DecoratingDynamicTypeBuilderTest {
     public static class Foo {
 
         public String foo() {
+            return FOO;
+        }
+
+        public static String bar() {
             return FOO;
         }
     }
