@@ -60,7 +60,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.8.15</version>
+            <version>1.8.20</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

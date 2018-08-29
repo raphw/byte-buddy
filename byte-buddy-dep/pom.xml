@@ -86,7 +86,7 @@
             <plugin>
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
-                <version>1.8.15</version>
+                <version>1.8.20</version>
                 <executions>
                     <execution>
                         <phase>compile</phase>
@@ -101,8 +101,14 @@
                                 <transformation>
                                     <groupId>net.bytebuddy</groupId>
                                     <artifactId>byte-buddy</artifactId>
-                                    <version>1.8.15</version>
+                                    <version>1.8.20</version>
                                     <plugin>net.bytebuddy.build.HashCodeAndEqualsPlugin$WithNonNullableFields</plugin>
+                                </transformation>
+                                <transformation>
+                                    <groupId>net.bytebuddy</groupId>
+                                    <artifactId>byte-buddy</artifactId>
+                                    <version>1.8.20</version>
+                                    <plugin>net.bytebuddy.build.CachedReturnPlugin</plugin>
                                 </transformation>
                             </transformations>
                         </configuration>

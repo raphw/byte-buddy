@@ -204,14 +204,21 @@ public interface ParameterDescription extends AnnotationSource,
         protected final int index;
 
         /**
+         * The parameter annotation source to query.
+         */
+        protected final ParameterAnnotationSource parameterAnnotationSource;
+
+        /**
          * Creates a new description for a loaded parameter.
          *
-         * @param executable The {@code java.lang.reflect.Executable} for which the parameter types are described.
-         * @param index      The parameter's index.
+         * @param executable                The {@code java.lang.reflect.Executable} for which the parameter types are described.
+         * @param index                     The parameter's index.
+         * @param parameterAnnotationSource The parameter annotation source to query.
          */
-        protected ForLoadedParameter(T executable, int index) {
+        protected ForLoadedParameter(T executable, int index, ParameterAnnotationSource parameterAnnotationSource) {
             this.executable = executable;
             this.index = index;
+            this.parameterAnnotationSource = parameterAnnotationSource;
         }
 
         @Override
@@ -239,6 +246,71 @@ public interface ParameterDescription extends AnnotationSource,
             // Rational: If a parameter is not named despite the information being attached,
             // it is synthetic, i.e. it has non-default modifiers.
             return isNamed() || getModifiers() != EMPTY_MASK;
+        }
+
+        /**
+         * A source for querying parameter annotations.
+         */
+        public interface ParameterAnnotationSource {
+
+            /**
+             * Returns the parameter annotations represented by this source.
+             *
+             * @return The parameter annotations as an array indexed by parameter index.
+             */
+            Annotation[][] getParameterAnnotations();
+
+            /**
+             * A source for a loaded constructor.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForLoadedConstructor implements ParameterAnnotationSource {
+
+                /**
+                 * The constructor to query for annotations.
+                 */
+                private final Constructor<?> constructor;
+
+                /**
+                 * Creates a new parameter annotation source for a constructor.
+                 *
+                 * @param constructor The constructor to query for annotations.
+                 */
+                public ForLoadedConstructor(Constructor<?> constructor) {
+                    this.constructor = constructor;
+                }
+
+                @Override
+                public Annotation[][] getParameterAnnotations() {
+                    return constructor.getParameterAnnotations();
+                }
+            }
+
+            /**
+             * A source for a loaded method.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForLoadedMethod implements ParameterAnnotationSource {
+
+                /**
+                 * The method to query for annotations.
+                 */
+                private final Method method;
+
+                /**
+                 * Creates a new parameter annpotation source for a method.
+                 *
+                 * @param method The method to query for annotations.
+                 */
+                public ForLoadedMethod(Method method) {
+                    this.method = method;
+                }
+
+                @Override
+                public Annotation[][] getParameterAnnotations() {
+                    return method.getParameterAnnotations();
+                }
+            }
         }
 
         /**
@@ -432,11 +504,12 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * Creates a new description for a loaded method.
              *
-             * @param method The method for which a parameter is represented.
-             * @param index  The index of the parameter.
+             * @param method                    The method for which a parameter is represented.
+             * @param index                     The index of the parameter.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfMethod(Method method, int index) {
-                super(method, index);
+            protected OfMethod(Method method, int index, ParameterAnnotationSource parameterAnnotationSource) {
+                super(method, index, parameterAnnotationSource);
             }
 
             @Override
@@ -457,7 +530,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotationSource.getParameterAnnotations()[index]);
             }
         }
 
@@ -469,11 +542,12 @@ public interface ParameterDescription extends AnnotationSource,
             /**
              * Creates a new description for a loaded constructor.
              *
-             * @param constructor The constructor for which a parameter is represented.
-             * @param index       The index of the parameter.
+             * @param constructor               The constructor for which a parameter is represented.
+             * @param index                     The index of the parameter.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfConstructor(Constructor<?> constructor, int index) {
-                super(constructor, index);
+            protected OfConstructor(Constructor<?> constructor, int index, ParameterAnnotationSource parameterAnnotationSource) {
+                super(constructor, index, parameterAnnotationSource);
             }
 
             @Override
@@ -494,7 +568,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by Findbugs")
             public AnnotationList getDeclaredAnnotations() {
-                Annotation[][] annotation = executable.getParameterAnnotations();
+                Annotation[][] annotation = parameterAnnotationSource.getParameterAnnotations();
                 MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
                 if (annotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
                     return index == 0
@@ -528,23 +602,23 @@ public interface ParameterDescription extends AnnotationSource,
             private final Class<?>[] parameterType;
 
             /**
-             * The annotations of the represented method's parameters.
+             * The parameter annotation source to query.
              */
-            private final Annotation[][] parameterAnnotation;
+            private final ParameterAnnotationSource parameterAnnotationSource;
 
             /**
              * Creates a legacy representation of a method's parameter.
              *
-             * @param method              The method that declares this parameter.
-             * @param index               The index of this parameter.
-             * @param parameterType       The type erasures of the represented method.
-             * @param parameterAnnotation The annotations of the represented method's parameters.
+             * @param method                    The method that declares this parameter.
+             * @param index                     The index of this parameter.
+             * @param parameterType             The type erasures of the represented method.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfLegacyVmMethod(Method method, int index, Class<?>[] parameterType, Annotation[][] parameterAnnotation) {
+            protected OfLegacyVmMethod(Method method, int index, Class<?>[] parameterType, ParameterAnnotationSource parameterAnnotationSource) {
                 this.method = method;
                 this.index = index;
                 this.parameterType = parameterType;
-                this.parameterAnnotation = parameterAnnotation;
+                this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
             @Override
@@ -577,7 +651,7 @@ public interface ParameterDescription extends AnnotationSource,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index]);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotationSource.getParameterAnnotations()[index]);
             }
         }
 
@@ -603,23 +677,23 @@ public interface ParameterDescription extends AnnotationSource,
             private final Class<?>[] parameterType;
 
             /**
-             * The annotations of this parameter.
+             * The parameter annotation source to query.
              */
-            private final Annotation[][] parameterAnnotation;
+            private final ParameterAnnotationSource parameterAnnotationSource;
 
             /**
              * Creates a legacy representation of a method's parameter.
              *
-             * @param constructor         The constructor that declares this parameter.
-             * @param index               The index of this parameter.
-             * @param parameterType       The type erasures of the represented method.
-             * @param parameterAnnotation An array of all parameter annotations of the represented method.
+             * @param constructor               The constructor that declares this parameter.
+             * @param index                     The index of this parameter.
+             * @param parameterType             The type erasures of the represented method.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?>[] parameterType, Annotation[][] parameterAnnotation) {
+            protected OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?>[] parameterType, ParameterAnnotationSource parameterAnnotationSource) {
                 this.constructor = constructor;
                 this.index = index;
                 this.parameterType = parameterType;
-                this.parameterAnnotation = parameterAnnotation;
+                this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
             @Override
@@ -653,6 +727,7 @@ public interface ParameterDescription extends AnnotationSource,
             @Override
             public AnnotationList getDeclaredAnnotations() {
                 MethodDescription.InDefinedShape declaringMethod = getDeclaringMethod();
+                Annotation[][] parameterAnnotation = parameterAnnotationSource.getParameterAnnotations();
                 if (parameterAnnotation.length != declaringMethod.getParameters().size() && declaringMethod.getDeclaringType().isInnerClass()) {
                     return index == 0
                             ? new AnnotationList.Empty()

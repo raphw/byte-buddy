@@ -863,7 +863,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * An implementation of a method description for a loaded constructor.
      */
-    class ForLoadedConstructor extends InDefinedShape.AbstractBase {
+    class ForLoadedConstructor extends InDefinedShape.AbstractBase implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
 
         /**
          * The loaded constructor that is represented by this instance.
@@ -892,7 +892,7 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-            return ParameterList.ForLoadedExecutable.of(constructor);
+            return ParameterList.ForLoadedExecutable.of(constructor, this);
         }
 
         @Override
@@ -917,7 +917,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean represents(Constructor<?> constructor) {
-            return this.constructor.equals(constructor) || equals(new ForLoadedConstructor(constructor));
+            return this.constructor.equals(constructor) || equals(new MethodDescription.ForLoadedConstructor(constructor));
         }
 
         @Override
@@ -968,12 +968,18 @@ public interface MethodDescription extends TypeVariableSource,
                     ? super.getReceiverType()
                     : receiverType;
         }
+
+        @Override
+        @CachedReturnPlugin.Enhance("parameterAnnotations")
+        public Annotation[][] getParameterAnnotations() {
+            return constructor.getParameterAnnotations();
+        }
     }
 
     /**
      * An implementation of a method description for a loaded method.
      */
-    class ForLoadedMethod extends InDefinedShape.AbstractBase {
+    class ForLoadedMethod extends InDefinedShape.AbstractBase implements ParameterDescription.ForLoadedParameter.ParameterAnnotationSource {
 
         /**
          * The loaded method that is represented by this instance.
@@ -1005,7 +1011,7 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-            return ParameterList.ForLoadedExecutable.of(method);
+            return ParameterList.ForLoadedExecutable.of(method, this);
         }
 
         @Override
@@ -1033,7 +1039,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean represents(Method method) {
-            return this.method.equals(method) || equals(new ForLoadedMethod(method));
+            return this.method.equals(method) || equals(new MethodDescription.ForLoadedMethod(method));
         }
 
         @Override
@@ -1106,6 +1112,12 @@ public interface MethodDescription extends TypeVariableSource,
             return receiverType == null
                     ? super.getReceiverType()
                     : receiverType;
+        }
+
+        @Override
+        @CachedReturnPlugin.Enhance("parameterAnnotations")
+        public Annotation[][] getParameterAnnotations() {
+            return method.getParameterAnnotations();
         }
     }
 

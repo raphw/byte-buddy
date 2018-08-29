@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -124,12 +123,19 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         protected final T executable;
 
         /**
+         * The parameter annotation source to query.
+         */
+        protected final ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource;
+
+        /**
          * Creates a new description for a loaded executable.
          *
-         * @param executable The executable for which a parameter list is represented.
+         * @param executable                The executable for which a parameter list is represented.
+         * @param parameterAnnotationSource The parameter annotation source to query.
          */
-        protected ForLoadedExecutable(T executable) {
+        protected ForLoadedExecutable(T executable, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
             this.executable = executable;
+            this.parameterAnnotationSource = parameterAnnotationSource;
         }
 
         /**
@@ -139,7 +145,19 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @return A list describing the constructor's parameters.
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor) {
-            return DISPATCHER.describe(constructor);
+            return of(constructor, new ParameterDescription.ForLoadedParameter.ParameterAnnotationSource.ForLoadedConstructor(constructor));
+        }
+
+        /**
+         * Creates a new list that describes the parameters of the given {@link Constructor}.
+         *
+         * @param constructor               The constructor for which the parameters should be described.
+         * @param parameterAnnotationSource The parameter annotation source to query.
+         * @return A list describing the constructor's parameters.
+         */
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor,
+                                                                            ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+            return DISPATCHER.describe(constructor, parameterAnnotationSource);
         }
 
         /**
@@ -149,7 +167,19 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @return A list describing the method's parameters.
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
-            return DISPATCHER.describe(method);
+            return of(method, new ParameterDescription.ForLoadedParameter.ParameterAnnotationSource.ForLoadedMethod(method));
+        }
+
+        /**
+         * Creates a new list that describes the parameters of the given {@link Method}.
+         *
+         * @param method                    The method for which the parameters should be described.
+         * @param parameterAnnotationSource The parameter annotation source to query.
+         * @return A list describing the method's parameters.
+         */
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method,
+                                                                            ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+            return DISPATCHER.describe(method, parameterAnnotationSource);
         }
 
         @Override
@@ -173,18 +203,22 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * Describes a {@link Constructor}'s parameters of the given VM.
              *
-             * @param constructor The constructor for which the parameters should be described.
+             * @param constructor               The constructor for which the parameters should be described.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              * @return A list describing the constructor's parameters.
              */
-            ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor);
+            ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
+                                                                        ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource);
 
             /**
              * Describes a {@link Method}'s parameters of the given VM.
              *
-             * @param method The method for which the parameters should be described.
+             * @param method                    The method for which the parameters should be described.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              * @return A list describing the method's parameters.
              */
-            ParameterList<ParameterDescription.InDefinedShape> describe(Method method);
+            ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
+                                                                        ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource);
 
             /**
              * A creation action for a dispatcher.
@@ -223,13 +257,15 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
-                    return new OfLegacyVmConstructor(constructor);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
+                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                    return new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
-                    return new OfLegacyVmMethod(method);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
+                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                    return new OfLegacyVmMethod(method, parameterAnnotationSource);
                 }
             }
 
@@ -270,13 +306,15 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
-                    return new OfConstructor(constructor);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
+                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                    return new OfConstructor(constructor, parameterAnnotationSource);
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
-                    return new OfMethod(method);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
+                                                                                   ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                    return new OfMethod(method, parameterAnnotationSource);
                 }
             }
         }
@@ -289,15 +327,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * Creates a new description of the parameters of a constructor.
              *
-             * @param constructor The constructor that is represented by this instance.
+             * @param constructor               The constructor that is represented by this instance.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfConstructor(Constructor<?> constructor) {
-                super(constructor);
+            protected OfConstructor(Constructor<?> constructor, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                super(constructor, parameterAnnotationSource);
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfConstructor(executable, index);
+                return new ParameterDescription.ForLoadedParameter.OfConstructor(executable, index, parameterAnnotationSource);
             }
         }
 
@@ -309,15 +348,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * Creates a new description of the parameters of a method.
              *
-             * @param method The method that is represented by this instance.
+             * @param method                    The method that is represented by this instance.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfMethod(Method method) {
-                super(method);
+            protected OfMethod(Method method, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
+                super(method, parameterAnnotationSource);
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index);
+                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index, parameterAnnotationSource);
             }
         }
 
@@ -338,24 +378,25 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             private final Class<?>[] parameterType;
 
             /**
-             * An array of all parameter annotations of the represented method.
+             * The parameter annotation source to query.
              */
-            private final Annotation[][] parameterAnnotation;
+            private final ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource;
 
             /**
              * Creates a legacy representation of a constructor's parameters.
              *
-             * @param constructor The constructor to represent.
+             * @param constructor               The constructor to represent.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            public OfLegacyVmConstructor(Constructor<?> constructor) {
+            protected OfLegacyVmConstructor(Constructor<?> constructor, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                 this.constructor = constructor;
                 this.parameterType = constructor.getParameterTypes();
-                this.parameterAnnotation = constructor.getParameterAnnotations();
+                this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType, parameterAnnotation);
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType, parameterAnnotationSource);
             }
 
             @Override
@@ -381,24 +422,25 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             private final Class<?>[] parameterType;
 
             /**
-             * An array of all parameter annotations of the represented method.
+             * The parameter annotation source to query.
              */
-            private final Annotation[][] parameterAnnotation;
+            private final ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource;
 
             /**
              * Creates a legacy representation of a method's parameters.
              *
-             * @param method The method to represent.
+             * @param method                    The method to represent.
+             * @param parameterAnnotationSource The parameter annotation source to query.
              */
-            protected OfLegacyVmMethod(Method method) {
+            protected OfLegacyVmMethod(Method method, ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                 this.method = method;
                 this.parameterType = method.getParameterTypes();
-                this.parameterAnnotation = method.getParameterAnnotations();
+                this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType, parameterAnnotation);
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType, parameterAnnotationSource);
             }
 
             @Override
