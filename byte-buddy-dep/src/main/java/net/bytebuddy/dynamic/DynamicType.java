@@ -684,7 +684,7 @@ public interface DynamicType {
         /**
          * Explicitly requires another dynamic type for the creation of this type.
          *
-         * @param type      The type to require.
+         * @param type                 The type to require.
          * @param binaryRepresentation The type's binary representation.
          * @return A new builder that is equal to this builder but which explicitly requires the supplied type.
          */
@@ -693,9 +693,9 @@ public interface DynamicType {
         /**
          * Explicitly requires another dynamic type for the creation of this type.
          *
-         * @param type       The type to require.
-         * @param binaryRepresentation  The type's binary representation.
-         * @param typeInitializer The type's loaded type initializer.
+         * @param type                 The type to require.
+         * @param binaryRepresentation The type's binary representation.
+         * @param typeInitializer      The type's loaded type initializer.
          * @return A new builder that is equal to this builder but which explicitly requires the supplied type.
          */
         Builder<T> require(TypeDescription type, byte[] binaryRepresentation, LoadedTypeInitializer typeInitializer);
@@ -3555,7 +3555,9 @@ public interface DynamicType {
 
                 @Override
                 public InnerTypeDefinition<U> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
-                    return new InnerTypeDefinitionForMethodAdapter(methodDescription);
+                    return methodDescription.isTypeInitializer()
+                            ? new InnerTypeDefinitionForTypeAdapter(methodDescription.getDeclaringType())
+                            : new InnerTypeDefinitionForMethodAdapter(methodDescription);
                 }
 
                 @Override

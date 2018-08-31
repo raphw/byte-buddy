@@ -1296,6 +1296,88 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testDeclaringTypeForTypeInitilaizer() throws Exception {
+        // Older JVMs derive the anonymous class property from a naming convention.
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+            @Override
+            public String getSimpleName() {
+                return "Qux";
+            }
+
+            @Override
+            public boolean isAnonymousType() {
+                return false;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
+        };
+        Class<?> outer = new ByteBuddy()
+                .subclass(Object.class)
+                .name("foo.Bar")
+                .declaredTypes(sample)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> type = createPlainWithoutValidation()
+                .name(sample.getName())
+                .innerTypeOf(new MethodDescription.Latent.TypeInitializer(TypeDescription.ForLoadedType.of(outer)))
+                .make()
+                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
+        assertThat(type.isAnonymousClass(), is(false));
+        assertThat(type.isLocalClass(), is(true));
+        assertThat(type.isMemberClass(), is(false));
+    }
+
+    @Test
+    public void testDeclaringAnonymousTypeForTypeInitilaizer() throws Exception {
+        // Older JVMs derive the anonymous class property from a naming convention.
+        TypeDescription sample = new TypeDescription.Latent("foo.Bar$1", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
+            @Override
+            public String getSimpleName() {
+                return "";
+            }
+
+            @Override
+            public boolean isAnonymousType() {
+                return true;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
+        };
+        Class<?> outer = new ByteBuddy()
+                .subclass(Object.class)
+                .name("foo.Bar")
+                .declaredTypes(sample)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
+                .getLoaded();
+        Class<?> type = createPlainWithoutValidation()
+                .name(sample.getName())
+                .innerTypeOf(new MethodDescription.Latent.TypeInitializer(TypeDescription.ForLoadedType.of(outer))).asAnonymousType()
+                .make()
+                .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
+                .getLoaded();
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
+        assertThat(type.getEnclosingClass(), is((Object) outer));
+        assertThat(type.getEnclosingMethod(), nullValue(Method.class));
+        assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
+        assertThat(type.isAnonymousClass(), is(true));
+        assertThat(type.isLocalClass(), is(false));
+        assertThat(type.isMemberClass(), is(false));
+    }
+
+    @Test
     public void testDeclaringLocalTypeForMethod() throws Exception {
         TypeDescription sample = new TypeDescription.Latent("foo.Bar$Qux", Opcodes.ACC_PUBLIC, TypeDescription.Generic.OBJECT) {
             @Override
