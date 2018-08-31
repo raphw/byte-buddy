@@ -4154,8 +4154,8 @@ public interface TypeWriter<T> {
                                     typeDescription.getSimpleName(),
                                     typeDescription.getModifiers());
                         }
-                        MethodDescription.InDefinedShape outerMethod = instrumentedType.getEnclosingMethod();
-                        if (outerMethod != null) {
+                        MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
+                        if (enclosingMethod != null) {
                             cv.visitInnerClass(instrumentedType.getInternalName(),
                                     NO_REFERENCE,
                                     instrumentedType.isAnonymousType()
@@ -4163,13 +4163,11 @@ public interface TypeWriter<T> {
                                             : instrumentedType.getSimpleName(),
                                     instrumentedType.getModifiers());
                         } else {
-                            TypeDescription outerType = instrumentedType.getDeclaringType() == null
-                                    ? instrumentedType.getDeclaringType()
-                                    : instrumentedType.getEnclosingType();
-                            if (outerType != null) {
+                            TypeDescription declaringType = instrumentedType.getDeclaringType();
+                            if (declaringType != null) {
                                 cv.visitInnerClass(instrumentedType.getInternalName(),
                                         instrumentedType.isMemberType()
-                                                ? outerType.getInternalName()
+                                                ? declaringType.getInternalName()
                                                 : NO_REFERENCE,
                                         instrumentedType.isAnonymousType()
                                                 ? NO_REFERENCE
@@ -4760,8 +4758,7 @@ public interface TypeWriter<T> {
                             typeDescription.getSimpleName(),
                             typeDescription.getModifiers());
                 }
-                MethodDescription.InDefinedShape outerMethod = instrumentedType.getEnclosingMethod();
-                if (outerMethod != null) {
+                if (enclosingMethod != null) {
                     classVisitor.visitInnerClass(instrumentedType.getInternalName(),
                             NO_REFERENCE,
                             instrumentedType.isAnonymousType()
@@ -4769,13 +4766,11 @@ public interface TypeWriter<T> {
                                     : instrumentedType.getSimpleName(),
                             instrumentedType.getModifiers());
                 } else {
-                    TypeDescription outerType = instrumentedType.getDeclaringType() == null
-                            ? instrumentedType.getDeclaringType()
-                            : instrumentedType.getEnclosingType();
-                    if (outerType != null) {
+                    TypeDescription declaringType = instrumentedType.getDeclaringType();
+                    if (declaringType != null) {
                         classVisitor.visitInnerClass(instrumentedType.getInternalName(),
                                 instrumentedType.isMemberType()
-                                        ? outerType.getInternalName()
+                                        ? declaringType.getInternalName()
                                         : NO_REFERENCE,
                                 instrumentedType.isAnonymousType()
                                         ? NO_REFERENCE

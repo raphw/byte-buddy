@@ -1210,8 +1210,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
         Class<?> type = createPlainWithoutValidation()
-                .innerTypeOf(outer)
                 .name(sample.getName())
+                .innerTypeOf(outer)
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
@@ -1271,8 +1271,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST.opened())
                 .getLoaded();
         Class<?> type = createPlainWithoutValidation()
-                .innerTypeOf(outer.getConstructor())
                 .name(sample.getName())
+                .innerTypeOf(outer.getConstructor())
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
@@ -1316,8 +1316,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                         };
                     }
                 })
-                .nestHost(outer)
                 .name(sample.getName())
+                .nestHost(outer)
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
