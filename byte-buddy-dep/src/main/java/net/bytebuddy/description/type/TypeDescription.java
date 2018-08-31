@@ -7006,7 +7006,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public boolean isMemberType() {
-            return !isLocalType() && getEnclosingType() != null;
+            return !isLocalType() && !isAnonymousType() && getDeclaringType() != null;
         }
 
         @Override

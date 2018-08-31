@@ -60,6 +60,16 @@ public class TypeWriterDeclarationPreservationTest {
 
     @Test
     public void testRedefinition() throws Exception {
+        if (type.isMemberClass() && type.getEnclosingClass() != null && !type.isAnonymousClass()) {
+            System.out.println(type);
+            System.out.println(type.getDeclaringClass());
+            System.out.println(type.getEnclosingMethod());
+            System.out.println(type.getEnclosingConstructor());
+            System.out.println(type.isAnonymousClass());
+            System.out.println(type.isLocalClass());
+            System.out.println(type.isMemberClass());
+            System.out.println("-------------");
+        }
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
         OpenedClassReader.of(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
         new ByteBuddy()
