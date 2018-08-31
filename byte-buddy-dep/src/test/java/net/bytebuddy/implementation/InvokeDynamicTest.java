@@ -16,6 +16,7 @@ import org.junit.rules.MethodRule;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -466,6 +467,19 @@ public class InvokeDynamicTest {
                 .withReference(new Object()).as(String.class);
     }
 
+    @Test
+    public void testLambdaMetaFactory() throws Exception {
+        DynamicType.Loaded<SimpleWithMethod> dynamicType = new ByteBuddy()
+                .subclass(SimpleWithMethod.class)
+                .method(isDeclaredBy(SimpleWithMethod.class).and(named(FOO)))
+                .intercept(InvokeDynamic.lambda(SimpleWithMethod.class.getDeclaredMethod("bar", String.class), Callable.class)
+                        .withMethodArguments())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO).call(), is(FOO));
+    }
+
     @SuppressWarnings("unchecked")
     private Enum<?> makeEnum() throws Exception {
         Class type = Class.forName(SAMPLE_ENUM);
@@ -501,6 +515,17 @@ public class InvokeDynamicTest {
 
         public String foo(String arg) {
             return null;
+        }
+    }
+
+    public static class SimpleWithMethod {
+
+        public Callable<String> foo(String arg) {
+            return null;
+        }
+
+        private static String bar(String arg) {
+            return arg;
         }
     }
 }

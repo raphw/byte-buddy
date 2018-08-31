@@ -2,14 +2,20 @@ package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -34,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -239,6 +246,50 @@ public class InvokeDynamic implements Implementation.Composable {
                 TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
+    }
+
+    public static InvokeDynamic lambda(Method method, Class<?> functionalInterface) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
+    }
+
+    public static InvokeDynamic lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
+        return lambda(methodDescription, functionalInterface, MethodGraph.Compiler.Default.forJavaHierarchy());
+    }
+
+    public static InvokeDynamic lambda(MethodDescription.InDefinedShape methodDescription,
+                                       TypeDescription functionalInterface,
+                                       MethodGraph.Compiler methodGraphCompiler) {
+        if (!functionalInterface.isInterface()) {
+            throw new IllegalArgumentException();
+        }
+        MethodList<?> methods = methodGraphCompiler.compile(functionalInterface)
+                .listNodes()
+                .asMethodList()
+                .filter(isAbstract());
+        if (methods.size() != 1) {
+            throw new IllegalArgumentException();
+        }
+        return bootstrap(new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
+                        Opcodes.ACC_PUBLIC,
+                        TypeDescription.Generic.OBJECT),
+                        "metafactory",
+                        Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                        Collections.<TypeVariableToken>emptyList(),
+                        JavaType.CALL_SITE.getTypeStub().asGenericType(),
+                        Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(TypeDescription.STRING.asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        AnnotationValue.UNDEFINED,
+                        TypeDescription.Generic.UNDEFINED),
+                JavaConstant.MethodType.of(methodDescription),
+                JavaConstant.MethodHandle.of(methodDescription),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                JavaConstant.MethodType.of(methodDescription)).invoke(methods.getOnly().getName(), methods.getOnly().getReturnType().asErasure()).withoutArguments();
     }
 
     /**
