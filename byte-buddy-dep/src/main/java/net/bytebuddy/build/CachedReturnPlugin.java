@@ -1,7 +1,9 @@
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.FieldPersistence;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.SyntheticState;
 import net.bytebuddy.description.modifier.Visibility;
@@ -80,7 +82,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
             builder = builder
                     .defineField(name, methodDescription.getReturnType().asErasure(), methodDescription.isStatic()
                             ? Ownership.STATIC
-                            : Ownership.MEMBER, Visibility.PRIVATE, SyntheticState.SYNTHETIC)
+                            : Ownership.MEMBER, Visibility.PRIVATE, SyntheticState.SYNTHETIC, FieldPersistence.TRANSIENT)
                     .visit(Advice.withCustomMapping()
                             .bind(CacheField.class, new CacheFieldOffsetMapping(name))
                             .to(advice)
@@ -176,6 +178,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "IP_PARAMETER_IS_DEAD_BUT_OVERWRITTEN"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) boolean returned, @CacheField boolean cached) {
             if (returned) {
                 cached = true;
@@ -215,6 +218,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) byte returned, @CacheField byte cached) {
             if (returned == 0) {
                 returned = cached;
@@ -254,6 +258,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) short returned, @CacheField short cached) {
             if (returned == 0) {
                 returned = cached;
@@ -293,6 +298,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) char returned, @CacheField char cached) {
             if (returned == 0) {
                 returned = cached;
@@ -332,6 +338,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) int returned, @CacheField int cached) {
             if (returned == 0) {
                 returned = cached;
@@ -371,6 +378,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) long returned, @CacheField long cached) {
             if (returned == 0L) {
                 returned = cached;
@@ -410,6 +418,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) float returned, @CacheField float cached) {
             if (returned == 0f) {
                 returned = cached;
@@ -449,6 +458,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false) double returned, @CacheField double cached) {
             if (returned == 0d) {
                 returned = cached;
@@ -488,6 +498,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
          * @param cached   The previously cached value or {@code 0} if no previous value exists.
          */
         @Advice.OnMethodExit
+        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
         protected static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object returned, @CacheField Object cached) {
             if (returned == null) {
                 returned = cached;
