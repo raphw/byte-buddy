@@ -44,7 +44,8 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
 
     @Override
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
-        for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods().filter(isAnnotatedWith(Enhance.class))) {
+        for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()
+                .filter(not(isBridge()).<MethodDescription>and(isAnnotatedWith(Enhance.class)))) {
             if (methodDescription.isAbstract()) {
                 throw new IllegalStateException("Cannot cache the value of an abstract method: " + methodDescription);
             } else if (!methodDescription.getParameters().isEmpty()) {

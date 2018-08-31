@@ -55,7 +55,7 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
         }
         while (type.getName().startsWith("net.bytebuddy.")) {
             for (Field field : type.getDeclaredFields()) {
-                if (Modifier.isStatic(field.getModifiers())) {
+                if (Modifier.isStatic(field.getModifiers()) || field.isSynthetic() && !field.getName().equals("this$0")) {
                     continue;
                 }
                 HashCodeAndEqualsPlugin.ValueHandling valueHandling = field.getAnnotation(HashCodeAndEqualsPlugin.ValueHandling.class);
