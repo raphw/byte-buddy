@@ -86,7 +86,7 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
          * @param plugin The plugins to apply.
          */
         public Compound(Plugin... plugin) {
-            this(Arrays.asList(plugin))
+            this(Arrays.asList(plugin));
         }
 
         /**
