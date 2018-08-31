@@ -1140,6 +1140,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
             public String getSimpleName() {
                 return "Qux";
             }
+
+            @Override
+            public boolean isAnonymousType() {
+                return false;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return true;
+            }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
@@ -1171,6 +1181,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
             public String getSimpleName() {
                 return "";
             }
+
+            @Override
+            public boolean isAnonymousType() {
+                return true;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
@@ -1185,7 +1205,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
         assertThat(type.getEnclosingClass(), is((Object) outer));
         assertThat(type.getEnclosingMethod(), nullValue(Method.class));
         assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
@@ -1201,6 +1221,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
             public String getSimpleName() {
                 return "Qux";
             }
+
+            @Override
+            public boolean isAnonymousType() {
+                return false;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
@@ -1215,7 +1245,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
         assertThat(type.getEnclosingClass(), is((Object) outer));
         assertThat(type.getEnclosingMethod(), nullValue(Method.class));
         assertThat(type.getEnclosingConstructor(), nullValue(Constructor.class));
@@ -1232,6 +1262,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
             public String getSimpleName() {
                 return "";
             }
+
+            @Override
+            public boolean isAnonymousType() {
+                return true;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
@@ -1246,7 +1286,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
         assertThat(type.getEnclosingClass(), is((Object) outer));
         assertThat(type.getEnclosingMethod(), nullValue(Method.class));
         assertThat(type.getEnclosingConstructor(), is((Object) outer.getConstructor()));
@@ -1262,6 +1302,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
             public String getSimpleName() {
                 return "Qux";
             }
+
+            @Override
+            public boolean isAnonymousType() {
+                return false;
+            }
+
+            @Override
+            public boolean isMemberType() {
+                return false;
+            }
         };
         Class<?> outer = new ByteBuddy()
                 .subclass(Object.class)
@@ -1276,7 +1326,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load((InjectionClassLoader) outer.getClassLoader(), InjectionClassLoader.Strategy.INSTANCE)
                 .getLoaded();
-        assertThat(type.getDeclaringClass(), is((Object) outer));
+        assertThat(type.getDeclaringClass(), nullValue(Class.class));
         assertThat(type.getEnclosingClass(), is((Object) outer));
         assertThat(type.getEnclosingMethod(), nullValue(Method.class));
         assertThat(type.getEnclosingConstructor(), is((Object) outer.getConstructor()));

@@ -163,7 +163,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     TypeDescription getDeclaringType();
 
     /**
-     * Returns a list of types that are declared by this type excluding anonymous classes.
+     * Returns a list of types that are declared by this type. This list does not normally include anonymous types but might
+     * include additional types if they are explicitly added to an instrumented type.
      *
      * @return A list of types that are declared within this type.
      */
@@ -8032,11 +8033,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public boolean isLocalType() {
             throw new IllegalStateException("Cannot resolve local class property of a latent type description: " + this);
-        }
-
-        @Override
-        public boolean isMemberType() {
-            throw new IllegalStateException("Cannot resolve member class property of a latent type description: " + this);
         }
 
         @Override

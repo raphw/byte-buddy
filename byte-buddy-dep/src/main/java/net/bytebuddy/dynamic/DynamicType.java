@@ -3774,7 +3774,7 @@ public interface DynamicType {
                     @Override
                     public Builder<U> asAnonymousType() {
                         return Adapter.this.materialize(instrumentedType
-                                        .withDeclaringType(typeDescription)
+                                        .withDeclaringType(TypeDescription.UNDEFINED)
                                         .withEnclosingType(typeDescription)
                                         .withAnonymousClass(true)
                                         .withLocalClass(false),

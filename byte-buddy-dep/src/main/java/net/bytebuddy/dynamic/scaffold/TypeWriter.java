@@ -4754,8 +4754,12 @@ public interface TypeWriter<T> {
                 }
                 for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                     classVisitor.visitInnerClass(typeDescription.getInternalName(),
-                            instrumentedType.getInternalName(),
-                            typeDescription.getSimpleName(),
+                            typeDescription.isMemberType()
+                                    ? instrumentedType.getInternalName()
+                                    : NO_REFERENCE,
+                            typeDescription.isAnonymousType()
+                                    ? NO_REFERENCE
+                                    : typeDescription.getSimpleName(),
                             typeDescription.getModifiers());
                 }
                 if (enclosingMethod != null) {
