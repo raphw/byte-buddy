@@ -8,6 +8,7 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.SyntheticState;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.utility.RandomString;
@@ -45,7 +46,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
     }
 
     @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()
                 .filter(not(isBridge()).<MethodDescription>and(isAnnotatedWith(Enhance.class)))) {
             if (methodDescription.isAbstract()) {

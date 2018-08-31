@@ -405,7 +405,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             try {
                 if (plugin.matches(typeDescription)) {
                     try {
-                        builder = plugin.apply(builder, typeDescription);
+                        builder = plugin.apply(builder, typeDescription, classFileLocator);
                         transformed = true;
                     } catch (RuntimeException exception) {
                         if (failFast) {

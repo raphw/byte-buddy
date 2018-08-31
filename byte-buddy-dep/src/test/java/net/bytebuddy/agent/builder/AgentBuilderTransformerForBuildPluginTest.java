@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.JavaModule;
@@ -37,9 +38,9 @@ public class AgentBuilderTransformerForBuildPluginTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testApplication() throws Exception {
-        when(plugin.apply(builder, typeDescription)).thenReturn((DynamicType.Builder) result);
+        when(plugin.apply(eq(builder), eq(typeDescription), any(ClassFileLocator.ForClassLoader.class))).thenReturn((DynamicType.Builder) result);
         assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader, module), is((DynamicType.Builder) result));
-        verify(plugin).apply(builder, typeDescription);
+        verify(plugin).apply(eq(builder), eq(typeDescription), any(ClassFileLocator.ForClassLoader.class));
         verifyNoMoreInteractions(plugin);
     }
 }

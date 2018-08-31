@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.ToStringMethod;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -24,7 +25,7 @@ public class ToStringPlugin implements Plugin {
     }
 
     @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
         if (typeDescription.getDeclaredMethods().filter(isToString()).isEmpty()) {
             builder = builder.method(isToString()).intercept(ToStringMethod.prefixedBy(enhance.prefix().getPrefixResolver())

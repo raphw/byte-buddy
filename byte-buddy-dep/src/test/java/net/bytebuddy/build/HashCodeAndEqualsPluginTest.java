@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
 import org.junit.Test;
@@ -24,7 +25,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhance() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -35,7 +36,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceRedundant() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class))
+                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class), ClassFileLocator.ForClassLoader.of(RedundantSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -46,7 +47,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceIgnore() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class))
+                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class), ClassFileLocator.ForClassLoader.of(IgnoredFieldSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -60,7 +61,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableHashCode() throws Exception {
         new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class), ClassFileLocator.ForClassLoader.of(NonNullableField.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -72,7 +73,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableEquals() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class), ClassFileLocator.ForClassLoader.of(NonNullableField.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -82,7 +83,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginEnhanceNonNullableReversed() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class))
+                .apply(new ByteBuddy().redefine(NonNullableField.class), TypeDescription.ForLoadedType.of(NonNullableField.class), ClassFileLocator.ForClassLoader.of(NonNullableField.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -94,7 +95,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableReversedHashCode() throws Exception {
         new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -106,7 +107,7 @@ public class HashCodeAndEqualsPluginTest {
     @Test(expected = NullPointerException.class)
     public void testPluginEnhanceNonNullableReversedEquals() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

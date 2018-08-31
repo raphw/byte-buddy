@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 
@@ -22,7 +23,7 @@ public class ToStringPluginTest {
     @Test
     public void testPluginEnhance() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class))
+                .apply(new ByteBuddy().redefine(SimpleSample.class), TypeDescription.ForLoadedType.of(SimpleSample.class), ClassFileLocator.ForClassLoader.of(SimpleSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -34,7 +35,7 @@ public class ToStringPluginTest {
     @Test
     public void testPluginEnhanceRedundant() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class))
+                .apply(new ByteBuddy().redefine(RedundantSample.class), TypeDescription.ForLoadedType.of(RedundantSample.class), ClassFileLocator.ForClassLoader.of(RedundantSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -44,7 +45,7 @@ public class ToStringPluginTest {
     @Test
     public void testPluginEnhanceIgnore() throws Exception {
         Class<?> type = new ToStringPlugin()
-                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class))
+                .apply(new ByteBuddy().redefine(IgnoredFieldSample.class), TypeDescription.ForLoadedType.of(IgnoredFieldSample.class), ClassFileLocator.ForClassLoader.of(IgnoredFieldSample.class.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

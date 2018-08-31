@@ -2,6 +2,7 @@ package net.bytebuddy.test;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.FixedValue;
 
@@ -15,7 +16,7 @@ public class SimplePlugin implements Plugin {
     }
 
     @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return builder.method(named("foo")).intercept(FixedValue.value("qux"));
     }
 }

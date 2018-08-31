@@ -1,6 +1,7 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 
@@ -15,11 +16,12 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
     /**
      * Applies this plugin.
      *
-     * @param builder         The builder to use as a basis for the applied transformation.
-     * @param typeDescription The type being transformed.
+     * @param builder          The builder to use as a basis for the applied transformation.
+     * @param typeDescription  The type being transformed.
+     * @param classFileLocator A class file locator that can locate other types in the scope of the project.
      * @return The supplied builder with additional transformations registered.
      */
-    DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription);
+    DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator);
 
     /**
      * An abstract base for a {@link Plugin} that matches types by a given {@link ElementMatcher}.

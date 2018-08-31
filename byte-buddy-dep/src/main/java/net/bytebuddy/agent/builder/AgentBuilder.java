@@ -2063,7 +2063,7 @@ public interface AgentBuilder {
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
                                                     JavaModule module) {
-                return plugin.apply(builder, typeDescription);
+                return plugin.apply(builder, typeDescription, ClassFileLocator.ForClassLoader.of(classLoader));
             }
         }
 

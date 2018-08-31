@@ -51,6 +51,7 @@ public class ByteBuddyPluginTest {
                 "\n" +
                 "import net.bytebuddy.build.Plugin;\n" +
                 "import net.bytebuddy.description.type.TypeDescription;\n" +
+                "import net.bytebuddy.dynamic.ClassFileLocator;\n" +
                 "import net.bytebuddy.dynamic.DynamicType;\n" +
                 "import net.bytebuddy.implementation.FixedValue;\n" +
                 "\n" +
@@ -62,7 +63,7 @@ public class ByteBuddyPluginTest {
                 "        return target.getName().equals(\"net.bytebuddy.test.Sample\");\n" +
                 "    }\n" +
                 "    @Override\n" +
-                "    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {\n" +
+                "    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {\n" +
                 "        return builder.method(named(\"foo\")).intercept(FixedValue.value(\"qux\"));\n" +
                 "    }\n" +
                 "}\n", new File(pluginRoot, "SimplePlugin.java"));

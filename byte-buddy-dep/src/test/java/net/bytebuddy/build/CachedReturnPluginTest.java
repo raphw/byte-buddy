@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +60,7 @@ public class CachedReturnPluginTest {
 
     @Test
     public void testCachedValue() throws Exception {
-        Class<?> transformed = plugin.apply(new ByteBuddy().redefine(type), TypeDescription.ForLoadedType.of(type))
+        Class<?> transformed = plugin.apply(new ByteBuddy().redefine(type), TypeDescription.ForLoadedType.of(type), ClassFileLocator.ForClassLoader.of(type.getClassLoader()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

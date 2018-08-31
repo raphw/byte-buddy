@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.EqualsMethod;
 import net.bytebuddy.implementation.HashCodeMethod;
@@ -28,7 +29,7 @@ public class HashCodeAndEqualsPlugin implements Plugin {
     }
 
     @Override
-    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
             builder = builder.method(isHashCode()).intercept(enhance.invokeSuper()
