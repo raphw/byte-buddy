@@ -6,6 +6,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 
@@ -97,6 +98,27 @@ public interface EntryPoint {
                                                     ClassFileLocator classFileLocator,
                                                     MethodNameTransformer methodNameTransformer) {
                 return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(not(isDeclaredBy(typeDescription)));
+            }
+        },
+
+        /**
+         * An entry point that decorates a type and which only offers limited support for transformation by only allowing
+         * for the application of {@link net.bytebuddy.asm.AsmVisitorWrapper}s while improving performance.
+         */
+        DECORATE {
+            @Override
+            public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
+                return new ByteBuddy(classFileVersion)
+                        .with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE)
+                        .with(Implementation.Context.Disabled.Factory.INSTANCE);
+            }
+
+            @Override
+            public DynamicType.Builder<?> transform(TypeDescription typeDescription,
+                                                    ByteBuddy byteBuddy,
+                                                    ClassFileLocator classFileLocator,
+                                                    MethodNameTransformer methodNameTransformer) {
+                return byteBuddy.decorate(typeDescription, classFileLocator);
             }
         }
     }

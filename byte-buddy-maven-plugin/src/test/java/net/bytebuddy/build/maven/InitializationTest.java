@@ -66,6 +66,14 @@ public class InitializationTest {
     }
 
     @Test
+    public void testDecorate() throws Exception {
+        Initialization initialization = new Initialization();
+        initialization.entryPoint = EntryPoint.Default.DECORATE.name();
+        assertThat(initialization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ, JAR), is((EntryPoint) EntryPoint.Default.DECORATE));
+        verifyZeroInteractions(classLoaderResolver);
+    }
+
+    @Test
     public void testCustom() throws Exception {
         Initialization initialization = new Initialization();
         initialization.entryPoint = Foo.class.getName();
