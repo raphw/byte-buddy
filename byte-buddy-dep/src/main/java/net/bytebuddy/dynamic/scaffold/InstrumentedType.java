@@ -320,8 +320,8 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getEnclosingMethod(),
                             typeDescription.getEnclosingType(),
                             typeDescription.getDeclaredTypes(),
-                            typeDescription.isAnonymousClass(),
-                            typeDescription.isLocalClass(),
+                            typeDescription.isAnonymousType(),
+                            typeDescription.isLocalType(),
                             typeDescription.getNestHost().equals(typeDescription)
                                     ? TargetType.DESCRIPTION
                                     : typeDescription.getNestHost(),
@@ -984,12 +984,12 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public boolean isAnonymousClass() {
+        public boolean isAnonymousType() {
             return anonymousClass;
         }
 
         @Override
-        public boolean isLocalClass() {
+        public boolean isLocalType() {
             return localClass;
         }
 
@@ -1136,7 +1136,7 @@ public interface InstrumentedType extends TypeDescription {
                 if (declaringType.isPrimitive() || declaringType.isArray()) {
                     throw new IllegalStateException("Cannot define array type or primitive type " + declaringType + " as declaring type for " + this);
                 }
-            } else if (enclosingType == null && enclosingMethod == null && (isLocalClass() || isAnonymousClass())) {
+            } else if (enclosingType == null && enclosingMethod == null && (isLocalType() || isAnonymousType())) {
                 throw new IllegalStateException("Cannot define an anonymous or local class without a declaring type for " + this);
             }
             Set<TypeDescription> declaredTypes = new HashSet<TypeDescription>();
@@ -1429,18 +1429,18 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public boolean isAnonymousClass() {
-            return typeDescription.isAnonymousClass();
+        public boolean isAnonymousType() {
+            return typeDescription.isAnonymousType();
         }
 
         @Override
-        public boolean isLocalClass() {
-            return typeDescription.isLocalClass();
+        public boolean isLocalType() {
+            return typeDescription.isLocalType();
         }
 
         @Override
-        public boolean isMemberClass() {
-            return typeDescription.isMemberClass();
+        public boolean isMemberType() {
+            return typeDescription.isMemberType();
         }
 
         @Override

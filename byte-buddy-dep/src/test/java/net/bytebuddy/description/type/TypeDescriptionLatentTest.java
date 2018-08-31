@@ -6,8 +6,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -73,17 +71,17 @@ public class TypeDescriptionLatentTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMemberClass() throws Exception {
-        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isMemberClass();
+        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isMemberType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAnoynmousClass() throws Exception {
-        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isAnonymousClass();
+        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isAnonymousType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLocalClass() throws Exception {
-        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isLocalClass();
+        new TypeDescription.Latent(FOO, MODIFIERS, superClass, interfaceType).isLocalType();
     }
 
     @Test(expected = IllegalStateException.class)

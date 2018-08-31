@@ -215,21 +215,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      *
      * @return {@code true} if this type description represents an anonymous type.
      */
-    boolean isAnonymousClass();
+    boolean isAnonymousType();
 
     /**
      * Checks if this type description represents a local type.
      *
      * @return {@code true} if this type description represents a local type.
      */
-    boolean isLocalClass();
+    boolean isLocalType();
 
     /**
      * Checks if this type description represents a member type.
      *
      * @return {@code true} if this type description represents a member type.
      */
-    boolean isMemberClass();
+    boolean isMemberType();
 
     /**
      * Returns the package of the type described by this instance or {@code null} if the described type does not imply a package.
@@ -7005,8 +7005,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isMemberClass() {
-            return !isLocalClass() && getEnclosingType() != null;
+        public boolean isMemberType() {
+            return !isLocalType() && getEnclosingType() != null;
         }
 
         @Override
@@ -7063,7 +7063,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public String getCanonicalName() {
-                if (isAnonymousClass() || isLocalClass()) {
+                if (isAnonymousType() || isLocalType()) {
                     return NO_NAME;
                 }
                 String internalName = getInternalName();
@@ -7152,18 +7152,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public boolean isAnonymousClass() {
-                    return delegate().isAnonymousClass();
+                public boolean isAnonymousType() {
+                    return delegate().isAnonymousType();
                 }
 
                 @Override
-                public boolean isLocalClass() {
-                    return delegate().isLocalClass();
+                public boolean isLocalType() {
+                    return delegate().isLocalType();
                 }
 
                 @Override
-                public boolean isMemberClass() {
-                    return delegate().isMemberClass();
+                public boolean isMemberType() {
+                    return delegate().isMemberType();
                 }
 
                 @Override
@@ -7438,17 +7438,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isAnonymousClass() {
+        public boolean isAnonymousType() {
             return type.isAnonymousClass();
         }
 
         @Override
-        public boolean isLocalClass() {
+        public boolean isLocalType() {
             return type.isLocalClass();
         }
 
         @Override
-        public boolean isMemberClass() {
+        public boolean isMemberType() {
             return type.isMemberClass();
         }
 
@@ -7848,17 +7848,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isAnonymousClass() {
+        public boolean isAnonymousType() {
             return false;
         }
 
         @Override
-        public boolean isLocalClass() {
+        public boolean isLocalType() {
             return false;
         }
 
         @Override
-        public boolean isMemberClass() {
+        public boolean isMemberType() {
             return false;
         }
 
@@ -8025,17 +8025,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isAnonymousClass() {
+        public boolean isAnonymousType() {
             throw new IllegalStateException("Cannot resolve anonymous type property of a latent type description: " + this);
         }
 
         @Override
-        public boolean isLocalClass() {
+        public boolean isLocalType() {
             throw new IllegalStateException("Cannot resolve local class property of a latent type description: " + this);
         }
 
         @Override
-        public boolean isMemberClass() {
+        public boolean isMemberType() {
             throw new IllegalStateException("Cannot resolve member class property of a latent type description: " + this);
         }
 
@@ -8134,17 +8134,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isAnonymousClass() {
+        public boolean isAnonymousType() {
             return false;
         }
 
         @Override
-        public boolean isLocalClass() {
+        public boolean isLocalType() {
             return false;
         }
 
         @Override
-        public boolean isMemberClass() {
+        public boolean isMemberType() {
             return false;
         }
 
@@ -8346,18 +8346,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isAnonymousClass() {
-            return delegate.isAnonymousClass();
+        public boolean isAnonymousType() {
+            return delegate.isAnonymousType();
         }
 
         @Override
-        public boolean isLocalClass() {
-            return delegate.isLocalClass();
+        public boolean isLocalType() {
+            return delegate.isLocalType();
         }
 
         @Override
-        public boolean isMemberClass() {
-            return delegate.isMemberClass();
+        public boolean isMemberType() {
+            return delegate.isMemberType();
         }
 
         @Override

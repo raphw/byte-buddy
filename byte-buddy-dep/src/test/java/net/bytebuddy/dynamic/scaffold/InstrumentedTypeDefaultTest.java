@@ -449,7 +449,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test
     public void testIsAnonymous() throws Exception {
-        assertThat(makePlainInstrumentedType().isAnonymousClass(), is(false));
+        assertThat(makePlainInstrumentedType().isAnonymousType(), is(false));
     }
 
     @Test
@@ -460,7 +460,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test
     public void testIsMemberClass() throws Exception {
-        assertThat(makePlainInstrumentedType().isMemberClass(), is(false));
+        assertThat(makePlainInstrumentedType().isMemberType(), is(false));
     }
 
     @Test
@@ -567,25 +567,25 @@ public class InstrumentedTypeDefaultTest {
     @Test
     public void testLocalClass() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.isLocalClass(), is(false));
+        assertThat(instrumentedType.isLocalType(), is(false));
         TypeDescription transformed = instrumentedType.withLocalClass(true);
-        assertThat(transformed.isLocalClass(), is(true));
+        assertThat(transformed.isLocalType(), is(true));
     }
 
     @Test
     public void testMemberClass() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.isMemberClass(), is(false));
+        assertThat(instrumentedType.isMemberType(), is(false));
         TypeDescription transformed = instrumentedType.withLocalClass(true).withDeclaringType(mock(TypeDescription.class));
-        assertThat(transformed.isLocalClass(), is(true));
+        assertThat(transformed.isLocalType(), is(true));
     }
 
     @Test
     public void testAnonymousClass() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.isAnonymousClass(), is(false));
+        assertThat(instrumentedType.isAnonymousType(), is(false));
         TypeDescription transformed = instrumentedType.withAnonymousClass(true);
-        assertThat(transformed.isAnonymousClass(), is(true));
+        assertThat(transformed.isAnonymousType(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)

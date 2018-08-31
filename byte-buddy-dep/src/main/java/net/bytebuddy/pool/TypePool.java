@@ -2738,17 +2738,17 @@ public interface TypePool {
             }
 
             @Override
-            public boolean isAnonymousClass() {
+            public boolean isAnonymousType() {
                 return anonymousType;
             }
 
             @Override
-            public boolean isLocalClass() {
+            public boolean isLocalType() {
                 return !anonymousType && typeContainment.isLocalType();
             }
 
             @Override
-            public boolean isMemberClass() {
+            public boolean isMemberType() {
                 return typeContainment.isMemberClass();
             }
 
