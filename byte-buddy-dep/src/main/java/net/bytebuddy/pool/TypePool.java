@@ -6974,7 +6974,7 @@ public interface TypePool {
                             typeContainment = new LazyTypeDescription.TypeContainment.WithinType(outerName, false);
                         }
                     }
-                } else if (outerName != null && innerName != null && internalName.equals(this.internalName + "$" + innerName)) {
+                } else if (outerName != null && innerName != null && outerName.equals(this.internalName)) {
                     declaredTypes.add("L" + internalName + ";");
                 }
             }

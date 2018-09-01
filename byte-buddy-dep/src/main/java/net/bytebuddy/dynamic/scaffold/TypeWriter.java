@@ -4123,10 +4123,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     protected void onVisitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                        if (!internalName.equals(instrumentedType.getInternalName()) && (innerName == null
-                                || outerName == null
-                                || !outerName.equals(instrumentedType.getInternalName())
-                                || declaredTypes.remove(internalName) != null)) {
+                        if (!internalName.equals(instrumentedType.getInternalName()) && (innerName == null || declaredTypes.remove(internalName) != null)) {
                             cv.visitInnerClass(internalName, outerName, innerName, modifiers);
                         }
                     }
@@ -4150,8 +4147,12 @@ public interface TypeWriter<T> {
                         initializationHandler.complete(cv, implementationContext);
                         for (TypeDescription typeDescription : declaredTypes.values()) {
                             cv.visitInnerClass(typeDescription.getInternalName(),
-                                    instrumentedType.getInternalName(),
-                                    typeDescription.getSimpleName(),
+                                    typeDescription.isMemberType()
+                                            ? instrumentedType.getInternalName()
+                                            : NO_REFERENCE,
+                                    typeDescription.isAnonymousType()
+                                            ? NO_REFERENCE
+                                            : typeDescription.getSimpleName(),
                                     typeDescription.getModifiers());
                         }
                         MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();

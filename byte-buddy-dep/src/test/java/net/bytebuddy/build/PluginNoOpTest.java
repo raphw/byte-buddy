@@ -19,7 +19,7 @@ public class PluginNoOpTest {
         plugin = new Plugin.NoOp();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testNoOpApplication() {
         plugin.apply(mock(DynamicType.Builder.class), mock(TypeDescription.class), mock(ClassFileLocator.class));
     }

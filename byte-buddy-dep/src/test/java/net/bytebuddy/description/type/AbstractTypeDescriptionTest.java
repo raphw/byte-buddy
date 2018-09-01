@@ -209,21 +209,21 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testIsMemberClass() throws Exception {
+    public void testIsMemberType() throws Exception {
         for (Class<?> type : standardTypes) {
             assertThat(describe(type).isMemberType(), is(type.isMemberClass()));
         }
     }
 
     @Test
-    public void testIsAnonymousClass() throws Exception {
+    public void testIsAnonymousType() throws Exception {
         for (Class<?> type : standardTypes) {
             assertThat(describe(type).isAnonymousType(), is(type.isAnonymousClass()));
         }
     }
 
     @Test
-    public void testIsLocalClass() throws Exception {
+    public void testIsLocalType() throws Exception {
         for (Class<?> type : standardTypes) {
             assertThat(describe(type).isLocalType(), is(type.isLocalClass()));
         }
@@ -275,6 +275,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             assertThat(describe(type).getDeclaringType(), type.getDeclaringClass() == null
                     ? nullValue(TypeDescription.class)
                     : is((TypeDescription) TypeDescription.ForLoadedType.of(type.getDeclaringClass())));
+        }
+    }
+
+    @Test
+    public void testDeclaredTypes() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getDeclaredTypes(), is((TypeList) new TypeList.ForLoadedTypes(type.getDeclaredClasses())));
         }
     }
 
@@ -510,13 +517,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 hasItems(new AnnotationList.ForLoadedAnnotations(type.getAnnotations())
                         .toArray(new AnnotationDescription[type.getAnnotations().length])));
         assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
-    }
-
-    @Test
-    public void testDeclaredTypes() throws Exception {
-        assertThat(describe(SampleClass.class).getDeclaredTypes().size(), is(0));
-        assertThat(describe(AbstractTypeDescriptionTest.class).getDeclaredTypes(),
-                is((TypeList) new TypeList.ForLoadedTypes(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
     }
 
     @Test
