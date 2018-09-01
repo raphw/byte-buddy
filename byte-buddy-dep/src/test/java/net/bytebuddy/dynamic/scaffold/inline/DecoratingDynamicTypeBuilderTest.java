@@ -176,6 +176,11 @@ public class DecoratingDynamicTypeBuilderTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
+    public void testInnerClassChangeForTopLevel() throws Exception {
+        new ByteBuddy().decorate(Foo.class).topLevelType();
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
     public void testInnerClassChangeForType() throws Exception {
         new ByteBuddy().decorate(Foo.class).innerTypeOf(Object.class);
     }

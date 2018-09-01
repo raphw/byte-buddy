@@ -263,7 +263,8 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an inner type of the supplied type.
+         * Defines this type as an inner type of the supplied type. Without any additional configuration, the type declaration is defined
+         * as a local type.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -281,7 +282,8 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an inner type of the supplied type.
+         * Defines this type as an inner type of the supplied type. Without any additional configuration, the type declaration is
+         * defined as a local type.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -299,7 +301,8 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an inner type that was declared within the supplied method.
+         * Defines this type as an inner type that was declared within the supplied method.  Without any additional configuration, the type
+         * declaration is defined as a local type.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -317,7 +320,8 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an inner type that was declared within the supplied constructor.
+         * Defines this type as an inner type that was declared within the supplied constructor. Without any additional configuration, the type
+         * declaration is defined as a local type.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -335,7 +339,8 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an inner type that was declared within the supplied method or constructor.
+         * Defines this type as an inner type that was declared within the supplied method or constructor. Without any additional configuration,
+         * the type declaration is defined as a local type.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -353,7 +358,9 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an the outer type of the supplied types.
+         * Defines this type as an the outer type of the supplied types. Using this method, it is possible to add inner type declarations
+         * for anonymous or local types which are not normally exposed by type descriptions. Doing so, it is however possible to indicate to
+         * Byte Buddy that the required attributes for such an inner type declaration should be added to a class file.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -371,7 +378,9 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an the outer type of the supplied types.
+         * Defines this type as an the outer type of the supplied types. Using this method, it is possible to add inner type declarations
+         * for anonymous or local types which are not normally exposed by type descriptions. Doing so, it is however possible to indicate to
+         * Byte Buddy that the required attributes for such an inner type declaration should be added to a class file.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -389,7 +398,9 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an the outer type of the supplied types.
+         * Defines this type as an the outer type of the supplied types. Using this method, it is possible to add inner type declarations
+         * for anonymous or local types which are not normally exposed by type descriptions. Doing so, it is however possible to indicate to
+         * Byte Buddy that the required attributes for such an inner type declaration should be added to a class file.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -407,7 +418,9 @@ public interface DynamicType {
 
         /**
          * <p>
-         * Defines this type as an the outer type of the supplied types.
+         * Defines this type as an the outer type of the supplied types. Using this method, it is possible to add inner type declarations
+         * for anonymous or local types which are not normally exposed by type descriptions. Doing so, it is however possible to indicate to
+         * Byte Buddy that the required attributes for such an inner type declaration should be added to a class file.
          * </p>
          * <p>
          * <b>Important</b>: Changing the declaration hierarchy of a type has no influence on the nest mate hierarchy.
@@ -1301,31 +1314,30 @@ public interface DynamicType {
         DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool);
 
         /**
-         * A builder for defining properties of an inner type.
+         * An inner type definition for defining a type that is contained within another type, method or constructor.
          *
          * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
          */
         interface InnerTypeDefinition<S> extends Builder<S> {
 
             /**
-             * Defines the inner type relationship as an anonymous type. Defining this property might be ignored on some JVMs where
-             * the property is derived from the type's simple name consisting of only digits.
+             * Defines this inner type declaration as an anonymous type.
              *
-             * @return A new builder where the built type is an inner anonymous type.
+             * @return A new builder that is equal to this type builder but that defines the previous inner type definition as a anonymous type.
              */
             Builder<S> asAnonymousType();
 
             /**
-             * A builder for defining properties of an inner type that is declared within another type but not a method or constructor.
+             * An inner type definition for defining a type that is contained within another type.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
             interface ForType<U> extends InnerTypeDefinition<U> {
 
                 /**
-                 * Defines the inner type relationship as a member type.
+                 * Defines this inner type declaration as a member type.
                  *
-                 * @return A new builder where the built type is an inner member type.
+                 * @return A new builder that is equal to this type builder but that defines the previous inner type definition as a member type.
                  */
                 Builder<U> asMemberType();
             }
@@ -2778,11 +2790,6 @@ public interface DynamicType {
         abstract class AbstractBase<S> implements Builder<S> {
 
             @Override
-            public Builder<S> topLevelType() {
-                return innerTypeOf(TypeDescription.UNDEFINED);
-            }
-
-            @Override
             public InnerTypeDefinition.ForType<S> innerTypeOf(Class<?> type) {
                 return innerTypeOf(TypeDescription.ForLoadedType.of(type));
             }
@@ -3154,6 +3161,11 @@ public interface DynamicType {
                 @Override
                 public Builder<U> name(String name) {
                     return materialize().name(name);
+                }
+
+                @Override
+                public Builder<U> topLevelType() {
+                    return materialize().topLevelType();
                 }
 
                 @Override
@@ -3549,6 +3561,28 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> topLevelType() {
+                    return Adapter.this.materialize(instrumentedType
+                                    .withDeclaringType(TypeDescription.UNDEFINED)
+                                    .withEnclosingType(TypeDescription.UNDEFINED)
+                                    .withLocalClass(false),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            classWriterStrategy,
+                            ignoredMethods,
+                            auxiliaryTypes);
+                }
+
+                @Override
                 public InnerTypeDefinition.ForType<U> innerTypeOf(TypeDescription type) {
                     return new InnerTypeDefinitionForTypeAdapter(type);
                 }
@@ -3778,8 +3812,7 @@ public interface DynamicType {
                         return Adapter.this.materialize(instrumentedType
                                         .withDeclaringType(TypeDescription.UNDEFINED)
                                         .withEnclosingType(typeDescription)
-                                        .withAnonymousClass(true)
-                                        .withLocalClass(false),
+                                        .withAnonymousClass(true),
                                 fieldRegistry,
                                 methodRegistry,
                                 typeAttributeAppender,
@@ -3800,7 +3833,7 @@ public interface DynamicType {
                     public Builder<U> asMemberType() {
                         return Adapter.this.materialize(instrumentedType
                                         .withDeclaringType(typeDescription)
-                                        .withEnclosingType(TypeDescription.UNDEFINED)
+                                        .withEnclosingType(typeDescription)
                                         .withAnonymousClass(false)
                                         .withLocalClass(false),
                                 fieldRegistry,
@@ -3822,9 +3855,8 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Adapter.this.materialize(instrumentedType
-                                        .withDeclaringType(typeDescription)
+                                        .withDeclaringType(TypeDescription.UNDEFINED)
                                         .withEnclosingType(typeDescription)
-                                        .withAnonymousClass(false)
                                         .withLocalClass(true),
                                 fieldRegistry,
                                 methodRegistry,
@@ -3866,10 +3898,9 @@ public interface DynamicType {
                     @Override
                     public Builder<U> asAnonymousType() {
                         return Adapter.this.materialize(instrumentedType
-                                        .withDeclaringType(methodDescription.getDeclaringType())
+                                        .withDeclaringType(TypeDescription.UNDEFINED)
                                         .withEnclosingMethod(methodDescription)
-                                        .withAnonymousClass(true)
-                                        .withLocalClass(false),
+                                        .withAnonymousClass(true),
                                 fieldRegistry,
                                 methodRegistry,
                                 typeAttributeAppender,
@@ -3889,10 +3920,9 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Adapter.this.materialize(instrumentedType
-                                        .withDeclaringType(methodDescription.getDeclaringType())
+                                        .withDeclaringType(TypeDescription.UNDEFINED)
                                         .withEnclosingMethod(methodDescription)
-                                        .withAnonymousClass(false)
-                                        .withLocalClass(false),
+                                        .withLocalClass(true),
                                 fieldRegistry,
                                 methodRegistry,
                                 typeAttributeAppender,

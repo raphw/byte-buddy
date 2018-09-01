@@ -131,7 +131,8 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withDeclaredTypes(TypeList declaredTypes);
 
     /**
-     * Creates a new instrumented type that indicates that is defined as a local class.
+     * Creates a new instrumented type that indicates that is defined as a local class. Setting this property
+     * resets the anonymous class property.
      *
      * @param localClass {@code true} if the instrumented type is supposed to be treated as a local class.
      * @return A new instrumented type that is treated as a local class.
@@ -139,7 +140,8 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withLocalClass(boolean localClass);
 
     /**
-     * Creates a new instrumented type that indicates that is defined as an anonymous class.
+     * Creates a new instrumented type that indicates that is defined as an anonymous class. Setting this property
+     * resets the local class property.
      *
      * @param anonymousClass {@code true} if the instrumented type is supposed to be treated as an anonymous class.
      * @return A new instrumented type that is treated as an anonymous class.
@@ -886,7 +888,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
-                    anonymousClass,
+                    false,
                     localClass,
                     nestHost,
                     nestMembers);
@@ -909,7 +911,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingType,
                     declaredTypes,
                     anonymousClass,
-                    localClass,
+                    false,
                     nestHost,
                     nestMembers);
         }

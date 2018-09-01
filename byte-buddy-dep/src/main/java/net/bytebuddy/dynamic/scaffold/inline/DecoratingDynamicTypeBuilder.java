@@ -242,6 +242,11 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     }
 
     @Override
+    public DynamicType.Builder<T> topLevelType() {
+        throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
+    }
+
+    @Override
     public InnerTypeDefinition.ForType<T> innerTypeOf(TypeDescription type) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
