@@ -251,6 +251,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface) {
         return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
     }
+
     public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
         return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
     }
@@ -999,54 +1000,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
-                }
-            }
-
-            /**
-             * A target that requests to dynamically invoke a method to substitute for a given method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForMethodDescription implements Target, Target.Resolved {
-
-                /**
-                 * The method that is being substituted.
-                 */
-                private final MethodDescription.InDefinedShape methodDescription;
-
-                /**
-                 * Creates a new target for substituting a given method.
-                 *
-                 * @param methodDescription The method that is being substituted.
-                 */
-                protected ForMethodDescription(MethodDescription.InDefinedShape methodDescription) {
-                    this.methodDescription = methodDescription;
-                }
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
-                    return this;
-                }
-
-                @Override
-                public String getInternalName() {
-                    return methodDescription.getInternalName();
-                }
-
-                @Override
-                public TypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asErasure();
-                }
-
-                @Override
-                public StackManipulation getStackManipulation() {
-                    return MethodVariableAccess.allArgumentsOf(methodDescription).prependThisReference();
-                }
-
-                @Override
-                public List<TypeDescription> getParameterTypes() {
-                    return methodDescription.isStatic()
-                            ? methodDescription.getParameters().asTypeList().asErasures()
-                            : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
                 }
             }
         }
@@ -2325,7 +2278,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
                     List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>();
-                    int index = 0;
+                    int index = 0; // TODO: Check against expected arguments.
                     for (ArgumentProvider argumentProvider : argumentProviders) {
                         ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType, instrumentedMethod, assigner, typing);
                         parameterTypes.addAll(resolved.getLoadedTypes());
@@ -2987,11 +2940,10 @@ public class InvokeDynamic implements Implementation.Composable {
             InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod).resolve(instrumentedType, assigner, typing);
             StackManipulation.Size size = new StackManipulation.Compound(
                     target.getStackManipulation(),
-                    MethodInvocation.invoke(bootstrapMethod)
-                            .dynamic(target.getInternalName(),
-                                    target.getReturnType(),
-                                    target.getParameterTypes(),
-                                    handleArguments),
+                    MethodInvocation.invoke(bootstrapMethod).dynamic(target.getInternalName(),
+                            target.getReturnType(),
+                            target.getParameterTypes(),
+                            handleArguments),
                     terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, typing)
             ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
