@@ -15,12 +15,12 @@ public interface Foo {
 
     String apply(String arg);
 
-    static String imp(String value, String other) {
-        return value + other;
+    static String imp(String value) {
+        return value;
     }
 
     static void main(String[] args) throws Exception {
-        Method target = Foo.class.getMethod("imp", String.class, String.class);
+        Method target = Foo.class.getMethod("imp", String.class);
 
         Factory factory = new ByteBuddy()
                 .subclass(Factory.class)

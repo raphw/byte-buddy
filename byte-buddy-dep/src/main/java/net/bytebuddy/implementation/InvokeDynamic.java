@@ -289,7 +289,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
                         TypeDescription.Generic.UNDEFINED),
-                JavaConstant.MethodType.of(methodDescription),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
                 JavaConstant.MethodHandle.of(methodDescription),
                 JavaConstant.MethodType.of(methods.asDefined().getOnly())).invoke(methods.asDefined().getOnly().getInternalName());
     }
