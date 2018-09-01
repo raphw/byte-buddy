@@ -3974,11 +3974,8 @@ public interface TypeWriter<T> {
                             cv.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
                                     enclosingMethod.getInternalName(),
                                     enclosingMethod.getDescriptor());
-                        } else {
-                            TypeDescription enclosingType = instrumentedType.getEnclosingType();
-                            if (enclosingType != null && (instrumentedType.isLocalType() || instrumentedType.isAnonymousType())) {
-                                cv.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
-                            }
+                        } else if (instrumentedType.isLocalType() || instrumentedType.isAnonymousType()) {
+                            cv.visitOuterClass(instrumentedType.getEnclosingType().getInternalName(), NO_REFERENCE, NO_REFERENCE);
                         }
                     }
 
@@ -4123,8 +4120,20 @@ public interface TypeWriter<T> {
 
                     @Override
                     protected void onVisitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-                        if (!internalName.equals(instrumentedType.getInternalName()) && (innerName == null || declaredTypes.remove(internalName) != null)) {
-                            cv.visitInnerClass(internalName, outerName, innerName, modifiers);
+                        if (!internalName.equals(instrumentedType.getInternalName())) {
+                            TypeDescription declaredType = declaredTypes.remove(internalName);
+                            if (declaredType == null) {
+                                cv.visitInnerClass(internalName, outerName, innerName, modifiers);
+                            } else {
+                                cv.visitInnerClass(internalName,
+                                        declaredType.isMemberType()
+                                                ? instrumentedType.getInternalName()
+                                                : NO_REFERENCE,
+                                        declaredType.isAnonymousType()
+                                                ? NO_REFERENCE
+                                                : declaredType.getSimpleName(),
+                                        declaredType.getModifiers());
+                            }
                         }
                     }
 
@@ -4145,6 +4154,23 @@ public interface TypeWriter<T> {
                             methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
                         }
                         initializationHandler.complete(cv, implementationContext);
+                        TypeDescription declaringType = instrumentedType.getDeclaringType();
+                        if (declaringType != null) {
+                            cv.visitInnerClass(instrumentedType.getInternalName(),
+                                    declaringType.getInternalName(),
+                                    instrumentedType.getSimpleName(),
+                                    instrumentedType.getModifiers());
+                        } else if (instrumentedType.isLocalType()) {
+                            cv.visitInnerClass(instrumentedType.getInternalName(),
+                                    NO_REFERENCE,
+                                    instrumentedType.getSimpleName(),
+                                    instrumentedType.getModifiers());
+                        } else if (instrumentedType.isAnonymousType()) {
+                            cv.visitInnerClass(instrumentedType.getInternalName(),
+                                    NO_REFERENCE,
+                                    NO_REFERENCE,
+                                    instrumentedType.getModifiers());
+                        }
                         for (TypeDescription typeDescription : declaredTypes.values()) {
                             cv.visitInnerClass(typeDescription.getInternalName(),
                                     typeDescription.isMemberType()
@@ -4154,34 +4180,6 @@ public interface TypeWriter<T> {
                                             ? NO_REFERENCE
                                             : typeDescription.getSimpleName(),
                                     typeDescription.getModifiers());
-                        }
-                        MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
-                        if (enclosingMethod != null) {
-                            cv.visitInnerClass(instrumentedType.getInternalName(),
-                                    NO_REFERENCE,
-                                    instrumentedType.isAnonymousType()
-                                            ? NO_REFERENCE
-                                            : instrumentedType.getSimpleName(),
-                                    instrumentedType.getModifiers());
-                        } else {
-                            TypeDescription declaringType = instrumentedType.getDeclaringType();
-                            if (declaringType != null) {
-                                cv.visitInnerClass(instrumentedType.getInternalName(),
-                                        instrumentedType.isMemberType()
-                                                ? declaringType.getInternalName()
-                                                : NO_REFERENCE,
-                                        instrumentedType.isAnonymousType()
-                                                ? NO_REFERENCE
-                                                : instrumentedType.getSimpleName(),
-                                        instrumentedType.getModifiers());
-                            } else if (instrumentedType.isLocalType() || instrumentedType.isAnonymousType()) {
-                                cv.visitInnerClass(instrumentedType.getInternalName(),
-                                        NO_REFERENCE,
-                                        instrumentedType.isAnonymousType()
-                                                ? NO_REFERENCE
-                                                : instrumentedType.getSimpleName(),
-                                        instrumentedType.getModifiers());
-                            }
                         }
                         cv.visitEnd();
                     }
@@ -4732,11 +4730,8 @@ public interface TypeWriter<T> {
                     classVisitor.visitOuterClass(enclosingMethod.getDeclaringType().getInternalName(),
                             enclosingMethod.getInternalName(),
                             enclosingMethod.getDescriptor());
-                } else {
-                    TypeDescription enclosingType = instrumentedType.getEnclosingType();
-                    if (enclosingType != null && (instrumentedType.isLocalType() || instrumentedType.isAnonymousType())) {
-                        classVisitor.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
-                    }
+                } else if (instrumentedType.isLocalType() || instrumentedType.isAnonymousType()) {
+                    classVisitor.visitOuterClass(instrumentedType.getEnclosingType().getInternalName(), NO_REFERENCE, NO_REFERENCE);
                 }
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : fields) {
@@ -4753,6 +4748,23 @@ public interface TypeWriter<T> {
                         classVisitor.visitNestMemberExperimental(typeDescription.getInternalName());
                     }
                 }
+                TypeDescription declaringType = instrumentedType.getDeclaringType();
+                if (declaringType != null) {
+                    classVisitor.visitInnerClass(instrumentedType.getInternalName(),
+                            declaringType.getInternalName(),
+                            instrumentedType.getSimpleName(),
+                            instrumentedType.getModifiers());
+                } else if (instrumentedType.isLocalType()) {
+                    classVisitor.visitInnerClass(instrumentedType.getInternalName(),
+                            NO_REFERENCE,
+                            instrumentedType.getSimpleName(),
+                            instrumentedType.getModifiers());
+                } else if (instrumentedType.isAnonymousType()) {
+                    classVisitor.visitInnerClass(instrumentedType.getInternalName(),
+                            NO_REFERENCE,
+                            NO_REFERENCE,
+                            instrumentedType.getModifiers());
+                }
                 for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                     classVisitor.visitInnerClass(typeDescription.getInternalName(),
                             typeDescription.isMemberType()
@@ -4762,33 +4774,6 @@ public interface TypeWriter<T> {
                                     ? NO_REFERENCE
                                     : typeDescription.getSimpleName(),
                             typeDescription.getModifiers());
-                }
-                if (enclosingMethod != null) {
-                    classVisitor.visitInnerClass(instrumentedType.getInternalName(),
-                            NO_REFERENCE,
-                            instrumentedType.isAnonymousType()
-                                    ? NO_REFERENCE
-                                    : instrumentedType.getSimpleName(),
-                            instrumentedType.getModifiers());
-                } else {
-                    TypeDescription declaringType = instrumentedType.getDeclaringType();
-                    if (declaringType != null) {
-                        classVisitor.visitInnerClass(instrumentedType.getInternalName(),
-                                instrumentedType.isMemberType()
-                                        ? declaringType.getInternalName()
-                                        : NO_REFERENCE,
-                                instrumentedType.isAnonymousType()
-                                        ? NO_REFERENCE
-                                        : instrumentedType.getSimpleName(),
-                                instrumentedType.getModifiers());
-                    } else if (instrumentedType.isLocalType() || instrumentedType.isAnonymousType()) {
-                        classVisitor.visitInnerClass(instrumentedType.getInternalName(),
-                                NO_REFERENCE,
-                                instrumentedType.isAnonymousType()
-                                        ? NO_REFERENCE
-                                        : instrumentedType.getSimpleName(),
-                                instrumentedType.getModifiers());
-                    }
                 }
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
