@@ -4126,7 +4126,8 @@ public interface TypeWriter<T> {
                                 cv.visitInnerClass(internalName, outerName, innerName, modifiers);
                             } else {
                                 cv.visitInnerClass(internalName,
-                                        declaredType.isMemberType()
+                                        // The second condition is added to retain the structure of some Java 6 compiled classes
+                                        declaredType.isMemberType() || outerName != null && innerName == null && declaredType.isAnonymousType()
                                                 ? instrumentedType.getInternalName()
                                                 : NO_REFERENCE,
                                         declaredType.isAnonymousType()
