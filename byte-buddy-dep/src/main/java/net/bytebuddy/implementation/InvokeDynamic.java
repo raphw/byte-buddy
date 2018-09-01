@@ -248,26 +248,29 @@ public class InvokeDynamic implements Implementation.Composable {
                 Assigner.Typing.STATIC);
     }
 
-    public static InvokeDynamic lambda(Method method, Class<?> functionalInterface) {
+    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface) {
         return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
     }
+    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
+    }
 
-    public static InvokeDynamic lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
+    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
         return lambda(methodDescription, functionalInterface, MethodGraph.Compiler.Default.forJavaHierarchy());
     }
 
-    public static InvokeDynamic lambda(MethodDescription.InDefinedShape methodDescription,
-                                       TypeDescription functionalInterface,
-                                       MethodGraph.Compiler methodGraphCompiler) {
+    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription,
+                                               TypeDescription functionalInterface,
+                                               MethodGraph.Compiler methodGraphCompiler) {
         if (!functionalInterface.isInterface()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(functionalInterface + " is not an interface type");
         }
         MethodList<?> methods = methodGraphCompiler.compile(functionalInterface)
                 .listNodes()
                 .asMethodList()
                 .filter(isAbstract());
         if (methods.size() != 1) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(functionalInterface + " does not define exactly one abstract method: " + methods);
         }
         return bootstrap(new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
                         Opcodes.ACC_PUBLIC,
@@ -288,8 +291,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         TypeDescription.Generic.UNDEFINED),
                 JavaConstant.MethodType.of(methodDescription),
                 JavaConstant.MethodHandle.of(methodDescription),
-                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
-                JavaConstant.MethodType.of(methodDescription)).invoke(methods.getOnly().getName(), methods.getOnly().getReturnType().asErasure()).withoutArguments();
+                JavaConstant.MethodType.of(methods.asDefined().getOnly())).invoke(methods.asDefined().getOnly().getInternalName());
     }
 
     /**
