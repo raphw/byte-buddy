@@ -248,18 +248,52 @@ public class InvokeDynamic implements Implementation.Composable {
                 Assigner.Typing.STATIC);
     }
 
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param method              The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @return A builder for creating a lambda expression.
+     */
     public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface) {
         return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
     }
 
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param method              The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A builder for creating a lambda expression.
+     */
     public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
         return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
     }
 
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param methodDescription   The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @return A builder for creating a lambda expression.
+     */
     public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
         return lambda(methodDescription, functionalInterface, MethodGraph.Compiler.Default.forJavaHierarchy());
     }
 
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param methodDescription   The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A builder for creating a lambda expression.
+     */
     public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription,
                                                TypeDescription functionalInterface,
                                                MethodGraph.Compiler methodGraphCompiler) {

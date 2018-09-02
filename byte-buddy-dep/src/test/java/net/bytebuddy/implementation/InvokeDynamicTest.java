@@ -17,6 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -469,15 +470,24 @@ public class InvokeDynamicTest {
 
     @Test
     public void testLambdaMetaFactory() throws Exception {
-        DynamicType.Loaded<SimpleWithMethod> dynamicType = new ByteBuddy()
-                .subclass(SimpleWithMethod.class)
-                .method(isDeclaredBy(SimpleWithMethod.class).and(named(FOO)))
-                .intercept(InvokeDynamic.lambda(SimpleWithMethod.class.getDeclaredMethod("bar", String.class), Callable.class)
-                        .withMethodArguments())
+        DynamicType.Loaded<FunctionalFactory> dynamicType = new ByteBuddy()
+                .subclass(FunctionalFactory.class)
+                .method(isDeclaredBy(FunctionalFactory.class))
+                .intercept(InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Callable.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
-        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO).call(), is(FOO));
+        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().make().call(), is(FOO));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLambdaMetaFactoryNoInterface() throws Exception {
+        InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Object.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLambdaMetaFactoryNoFunctionalInterface() throws Exception {
+        InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), ExecutorService.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -527,5 +537,14 @@ public class InvokeDynamicTest {
         private static String bar(String arg) {
             return arg;
         }
+    }
+
+    public interface FunctionalFactory {
+
+        Callable<String> make();
+    }
+
+    public static String value() {
+        return FOO;
     }
 }
