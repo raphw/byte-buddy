@@ -249,8 +249,16 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
      * the explicit arguments first and the functional interface's method second.
+     * </p>
+     * <p>
+     * <b>Important</b>: Byte Buddy does not validate that the provided arguments are correct considering the required arguments of the bound
+     * functional interface. Binding an incorrect number of arguments or arguments of incompatible types does not create illegal byte code
+     * but yields a runtime error when the call site is first used. This is done to support future extensions or alternative implementations
+     * of the Java virtual machine.
+     * </p>
      *
      * @param method              The method that implements the lambda expression.
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
@@ -261,8 +269,16 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
      * the explicit arguments first and the functional interface's method second.
+     * </p>
+     * <p>
+     * <b>Important</b>: Byte Buddy does not validate that the provided arguments are correct considering the required arguments of the bound
+     * functional interface. Binding an incorrect number of arguments or arguments of incompatible types does not create illegal byte code
+     * but yields a runtime error when the call site is first used. This is done to support future extensions or alternative implementations
+     * of the Java virtual machine.
+     * </p>
      *
      * @param method              The method that implements the lambda expression.
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
@@ -274,8 +290,16 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
      * the explicit arguments first and the functional interface's method second.
+     * </p>
+     * <p>
+     * <b>Important</b>: Byte Buddy does not validate that the provided arguments are correct considering the required arguments of the bound
+     * functional interface. Binding an incorrect number of arguments or arguments of incompatible types does not create illegal byte code
+     * but yields a runtime error when the call site is first used. This is done to support future extensions or alternative implementations
+     * of the Java virtual machine.
+     * </p>
      *
      * @param methodDescription   The method that implements the lambda expression.
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
@@ -286,8 +310,16 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * <p>
      * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
      * the explicit arguments first and the functional interface's method second.
+     * </p>
+     * <p>
+     * <b>Important</b>: Byte Buddy does not validate that the provided arguments are correct considering the required arguments of the bound
+     * functional interface. Binding an incorrect number of arguments or arguments of incompatible types does not create illegal byte code
+     * but yields a runtime error when the call site is first used. This is done to support future extensions or alternative implementations
+     * of the Java virtual machine.
+     * </p>
      *
      * @param methodDescription   The method that implements the lambda expression.
      * @param functionalInterface The functional interface that is an instance of the lambda expression.
@@ -2312,7 +2344,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
                     List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>();
-                    int index = 0; // TODO: Check against expected arguments.
+                    int index = 0;
                     for (ArgumentProvider argumentProvider : argumentProviders) {
                         ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType, instrumentedMethod, assigner, typing);
                         parameterTypes.addAll(resolved.getLoadedTypes());

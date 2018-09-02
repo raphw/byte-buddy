@@ -469,11 +469,38 @@ public class InvokeDynamicTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
     public void testLambdaMetaFactory() throws Exception {
         DynamicType.Loaded<FunctionalFactory> dynamicType = new ByteBuddy()
                 .subclass(FunctionalFactory.class)
                 .method(isDeclaredBy(FunctionalFactory.class))
                 .intercept(InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Callable.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().make().call(), is(FOO));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testLambdaMetaFactoryWithArgument() throws Exception {
+        DynamicType.Loaded<FunctionalFactoryWithValue> dynamicType = new ByteBuddy()
+                .subclass(FunctionalFactoryWithValue.class)
+                .method(isDeclaredBy(FunctionalFactoryWithValue.class))
+                .intercept(InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value", String.class), Callable.class).withArgument(0))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().make(BAR).call(), is(FOO + BAR));
+    }
+
+    @Test(expected = LinkageError.class)
+    @JavaVersionRule.Enforce(8)
+    public void testLambdaMetaFactoryIllegalBinding() throws Exception {
+        DynamicType.Loaded<FunctionalFactory> dynamicType = new ByteBuddy()
+                .subclass(FunctionalFactory.class)
+                .method(isDeclaredBy(FunctionalFactory.class))
+                .intercept(InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Callable.class).withValue(FOO))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
@@ -544,7 +571,16 @@ public class InvokeDynamicTest {
         Callable<String> make();
     }
 
+    public interface FunctionalFactoryWithValue {
+
+        Callable<String> make(String argument);
+    }
+
     public static String value() {
         return FOO;
+    }
+
+    public static String value(String argument) {
+        return FOO + argument;
     }
 }
