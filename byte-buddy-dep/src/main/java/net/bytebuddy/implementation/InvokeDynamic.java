@@ -2,14 +2,20 @@ package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -34,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isAbstract;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -239,6 +246,87 @@ public class InvokeDynamic implements Implementation.Composable {
                 TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
+    }
+
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param method              The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @return A builder for creating a lambda expression.
+     */
+    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface));
+    }
+
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param method              The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A builder for creating a lambda expression.
+     */
+    public static WithImplicitArguments lambda(Method method, Class<?> functionalInterface, MethodGraph.Compiler methodGraphCompiler) {
+        return lambda(new MethodDescription.ForLoadedMethod(method), TypeDescription.ForLoadedType.of(functionalInterface), methodGraphCompiler);
+    }
+
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param methodDescription   The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @return A builder for creating a lambda expression.
+     */
+    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription, TypeDescription functionalInterface) {
+        return lambda(methodDescription, functionalInterface, MethodGraph.Compiler.Default.forJavaHierarchy());
+    }
+
+    /**
+     * Creates a lambda expression using the JVM's lambda meta factory. The method that is implementing the lambda expression is provided
+     * the explicit arguments first and the functional interface's method second.
+     *
+     * @param methodDescription   The method that implements the lambda expression.
+     * @param functionalInterface The functional interface that is an instance of the lambda expression.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A builder for creating a lambda expression.
+     */
+    public static WithImplicitArguments lambda(MethodDescription.InDefinedShape methodDescription,
+                                               TypeDescription functionalInterface,
+                                               MethodGraph.Compiler methodGraphCompiler) {
+        if (!functionalInterface.isInterface()) {
+            throw new IllegalArgumentException(functionalInterface + " is not an interface type");
+        }
+        MethodList<?> methods = methodGraphCompiler.compile(functionalInterface)
+                .listNodes()
+                .asMethodList()
+                .filter(isAbstract());
+        if (methods.size() != 1) {
+            throw new IllegalArgumentException(functionalInterface + " does not define exactly one abstract method: " + methods);
+        }
+        return bootstrap(new MethodDescription.Latent(new TypeDescription.Latent("java.lang.invoke.LambdaMetafactory",
+                        Opcodes.ACC_PUBLIC,
+                        TypeDescription.Generic.OBJECT),
+                        "metafactory",
+                        Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
+                        Collections.<TypeVariableToken>emptyList(),
+                        JavaType.CALL_SITE.getTypeStub().asGenericType(),
+                        Arrays.asList(new ParameterDescription.Token(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(TypeDescription.STRING.asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_HANDLE.getTypeStub().asGenericType()),
+                                new ParameterDescription.Token(JavaType.METHOD_TYPE.getTypeStub().asGenericType())),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        AnnotationValue.UNDEFINED,
+                        TypeDescription.Generic.UNDEFINED),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly()),
+                JavaConstant.MethodHandle.of(methodDescription),
+                JavaConstant.MethodType.of(methods.asDefined().getOnly())).invoke(methods.asDefined().getOnly().getInternalName());
     }
 
     /**
@@ -946,54 +1034,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
-                }
-            }
-
-            /**
-             * A target that requests to dynamically invoke a method to substitute for a given method.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class ForMethodDescription implements Target, Target.Resolved {
-
-                /**
-                 * The method that is being substituted.
-                 */
-                private final MethodDescription.InDefinedShape methodDescription;
-
-                /**
-                 * Creates a new target for substituting a given method.
-                 *
-                 * @param methodDescription The method that is being substituted.
-                 */
-                protected ForMethodDescription(MethodDescription.InDefinedShape methodDescription) {
-                    this.methodDescription = methodDescription;
-                }
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
-                    return this;
-                }
-
-                @Override
-                public String getInternalName() {
-                    return methodDescription.getInternalName();
-                }
-
-                @Override
-                public TypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asErasure();
-                }
-
-                @Override
-                public StackManipulation getStackManipulation() {
-                    return MethodVariableAccess.allArgumentsOf(methodDescription).prependThisReference();
-                }
-
-                @Override
-                public List<TypeDescription> getParameterTypes() {
-                    return methodDescription.isStatic()
-                            ? methodDescription.getParameters().asTypeList().asErasures()
-                            : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
                 }
             }
         }
@@ -2272,7 +2312,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
                     List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>();
-                    int index = 0;
+                    int index = 0; // TODO: Check against expected arguments.
                     for (ArgumentProvider argumentProvider : argumentProviders) {
                         ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType, instrumentedMethod, assigner, typing);
                         parameterTypes.addAll(resolved.getLoadedTypes());
@@ -2934,11 +2974,10 @@ public class InvokeDynamic implements Implementation.Composable {
             InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod).resolve(instrumentedType, assigner, typing);
             StackManipulation.Size size = new StackManipulation.Compound(
                     target.getStackManipulation(),
-                    MethodInvocation.invoke(bootstrapMethod)
-                            .dynamic(target.getInternalName(),
-                                    target.getReturnType(),
-                                    target.getParameterTypes(),
-                                    handleArguments),
+                    MethodInvocation.invoke(bootstrapMethod).dynamic(target.getInternalName(),
+                            target.getReturnType(),
+                            target.getParameterTypes(),
+                            handleArguments),
                     terminationHandler.resolve(instrumentedMethod, target.getReturnType(), assigner, typing)
             ).apply(methodVisitor, implementationContext);
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());

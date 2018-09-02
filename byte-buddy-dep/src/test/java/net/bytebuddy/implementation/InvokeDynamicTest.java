@@ -16,6 +16,8 @@ import org.junit.rules.MethodRule;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -466,6 +468,28 @@ public class InvokeDynamicTest {
                 .withReference(new Object()).as(String.class);
     }
 
+    @Test
+    public void testLambdaMetaFactory() throws Exception {
+        DynamicType.Loaded<FunctionalFactory> dynamicType = new ByteBuddy()
+                .subclass(FunctionalFactory.class)
+                .method(isDeclaredBy(FunctionalFactory.class))
+                .intercept(InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Callable.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
+        assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().make().call(), is(FOO));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLambdaMetaFactoryNoInterface() throws Exception {
+        InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), Object.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testLambdaMetaFactoryNoFunctionalInterface() throws Exception {
+        InvokeDynamic.lambda(InvokeDynamicTest.class.getMethod("value"), ExecutorService.class);
+    }
+
     @SuppressWarnings("unchecked")
     private Enum<?> makeEnum() throws Exception {
         Class type = Class.forName(SAMPLE_ENUM);
@@ -502,5 +526,25 @@ public class InvokeDynamicTest {
         public String foo(String arg) {
             return null;
         }
+    }
+
+    public static class SimpleWithMethod {
+
+        public Callable<String> foo(String arg) {
+            return null;
+        }
+
+        private static String bar(String arg) {
+            return arg;
+        }
+    }
+
+    public interface FunctionalFactory {
+
+        Callable<String> make();
+    }
+
+    public static String value() {
+        return FOO;
     }
 }
