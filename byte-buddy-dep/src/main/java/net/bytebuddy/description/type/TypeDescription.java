@@ -7215,7 +7215,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A type description implementation that represents a loaded type.
      */
-    @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Build plugin does not currently support transient field generation")
     class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
