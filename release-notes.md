@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. September 2018: version 1.8.21
+
+- Added caching for expensive methods of reflection API.
+- Fix treatment of inner class attributes for redefinition and rebasement.
+- Extend build plugin API to achieve better Java agent compatibility.
+- Add convenience API for creating lambda expressions.
+
 ### 29. August 2018: version 1.8.20
 
 - Fix decoration to include non-virtual methods.
