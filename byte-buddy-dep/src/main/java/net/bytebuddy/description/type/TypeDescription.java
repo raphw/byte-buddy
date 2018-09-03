@@ -7215,6 +7215,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A type description implementation that represents a loaded type.
      */
+    @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "Field is only used as a cache store and is implicitly recomputed")
     class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
