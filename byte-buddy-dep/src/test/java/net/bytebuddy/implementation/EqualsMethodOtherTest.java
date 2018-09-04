@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.modifier.Ownership;
@@ -201,6 +200,44 @@ public class EqualsMethodOtherTest {
     }
 
     @Test
+    public void testTypeOrderForStringTypedFields() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .defineField(BAR, String.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated().withNonNullableFields(any()).withStringTypedFieldsFirst())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
+        Object left = loaded.getLoaded().getDeclaredConstructor().newInstance(), right = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        left.getClass().getDeclaredField(BAR).set(left, FOO);
+        right.getClass().getDeclaredField(BAR).set(right, BAR);
+        assertThat(left, not(right));
+    }
+
+    @Test
+    public void testTypeOrderForPrimitiveWrapperTypes() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .defineField(BAR, Integer.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated().withNonNullableFields(any()).withPrimitiveWrapperTypedFieldsFirst())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
+        Object left = loaded.getLoaded().getDeclaredConstructor().newInstance(), right = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        left.getClass().getDeclaredField(BAR).set(left, 42);
+        right.getClass().getDeclaredField(BAR).set(right, 84);
+        assertThat(left, not(right));
+    }
+
+    @Test
     public void testNaturalOrderComparator() {
         Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.NaturalOrderComparator.INSTANCE;
         FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
@@ -264,7 +301,7 @@ public class EqualsMethodOtherTest {
     }
 
     @Test
-    public void testEnumerationTypeComparatorBothEnumeration() {
+    public void testStringTypeComparatorBothEnumeration() {
         Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_ENUMERATION_TYPES;
         FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
         TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
@@ -272,6 +309,83 @@ public class EqualsMethodOtherTest {
         when(right.getType()).thenReturn(rightType);
         when(leftType.isEnum()).thenReturn(true);
         when(rightType.isEnum()).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(0));
+    }
+
+    @Test
+    public void testStringTypeComparatorLeftString() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_STRING_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        when(leftType.represents(String.class)).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(-1));
+    }
+
+    @Test
+    public void testStringTypeComparatorRightString() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_STRING_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        when(rightType.represents(String.class)).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(1));
+    }
+
+    @Test
+    public void testStringTypeComparatorBothString() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_STRING_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        when(leftType.represents(String.class)).thenReturn(true);
+        when(rightType.represents(String.class)).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(0));
+    }
+
+    @Test
+    public void testPrimitiveWrapperTypeComparatorLeftPrimitiveWrapper() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_PRIMITIVE_WRAPPER_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        TypeDescription leftErasure = mock(TypeDescription.class), rightErasure = mock(TypeDescription.class);
+        when(leftType.asErasure()).thenReturn(leftErasure);
+        when(rightType.asErasure()).thenReturn(rightErasure);
+        when(leftErasure.isPrimitiveWrapper()).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(-1));
+    }
+
+    @Test
+    public void testPrimitiveWrapperTypeComparatorRightPrimitiveWrapper() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_PRIMITIVE_WRAPPER_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        TypeDescription leftErasure = mock(TypeDescription.class), rightErasure = mock(TypeDescription.class);
+        when(leftType.asErasure()).thenReturn(leftErasure);
+        when(rightType.asErasure()).thenReturn(rightErasure);
+        when(rightErasure.isPrimitiveWrapper()).thenReturn(true);
+        assertThat(comparator.compare(left, right), is(1));
+    }
+
+    @Test
+    public void testPrimitiveWrapperTypeComparatorBothPrimitiveWrapper() {
+        Comparator<FieldDescription.InDefinedShape> comparator = EqualsMethod.TypePropertyComparator.FOR_PRIMITIVE_WRAPPER_TYPES;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        TypeDescription.Generic leftType = mock(TypeDescription.Generic.class), rightType = mock(TypeDescription.Generic.class);
+        when(left.getType()).thenReturn(leftType);
+        when(right.getType()).thenReturn(rightType);
+        TypeDescription leftErasure = mock(TypeDescription.class), rightErasure = mock(TypeDescription.class);
+        when(leftType.asErasure()).thenReturn(leftErasure);
+        when(rightType.asErasure()).thenReturn(rightErasure);
+        when(leftErasure.isPrimitiveWrapper()).thenReturn(true);
+        when(rightErasure.isPrimitiveWrapper()).thenReturn(true);
         assertThat(comparator.compare(left, right), is(0));
     }
 

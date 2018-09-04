@@ -51,7 +51,11 @@ public class HashCodeAndEqualsPlugin implements Plugin {
                     .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)))
                     .withFieldOrder(AnnotationOrderComparator.INSTANCE);
             if (enhance.simpleComparisonsFirst()) {
-                equalsMethod = equalsMethod.withPrimitiveTypedFieldsFirst().withEnumerationTypedFieldsFirst();
+                equalsMethod = equalsMethod
+                        .withPrimitiveTypedFieldsFirst()
+                        .withEnumerationTypedFieldsFirst()
+                        .withPrimitiveWrapperTypedFieldsFirst()
+                        .withStringTypedFieldsFirst();
             }
             builder = builder.method(isEquals()).intercept(enhance.permitSubclassEquality() ? equalsMethod.withSubclassEquality() : equalsMethod);
         }
@@ -97,11 +101,11 @@ public class HashCodeAndEqualsPlugin implements Plugin {
         InvokeSuper invokeSuper() default InvokeSuper.IF_DECLARED;
 
         /**
-         * Determines if fields with primitive types and then enumeration types should be compared for equality before fields with
-         * other types. Before determining such a field order, the {@link Sorted} property is always considered first if it is defined.
+         * Determines if fields with primitive types, then enumeration types, then primtive wrapper types and then {@link String} types
+         * should be compared for equality before fields with other types. Before determining such a field order,
+         * the {@link Sorted} property is always considered first if it is defined.
          *
-         * @return {@code true} if fields with primitive types and then enumeration types should be compared for equality before fields
-         * with non-primitive types.
+         * @return {@code true} if fields with simple comparison methods should be compared first.
          */
         boolean simpleComparisonsFirst() default true;
 

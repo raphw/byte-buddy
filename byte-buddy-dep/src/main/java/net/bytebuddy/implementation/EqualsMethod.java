@@ -159,6 +159,24 @@ public class EqualsMethod implements Implementation {
     }
 
     /**
+     * Returns a new version of this equals method that compares fields with primitive wrapper types prior to fields with non-primitive wrapper types.
+     *
+     * @return A new version of this equals method that compares primitive wrapper-typed fields before fields with non-primitive wrapper-typed fields.
+     */
+    public EqualsMethod withPrimitiveWrapperTypedFieldsFirst() {
+        return withFieldOrder(TypePropertyComparator.FOR_PRIMITIVE_WRAPPER_TYPES);
+    }
+
+    /**
+     * Returns a new version of this equals method that compares fields with {@link String} types prior to fields with non-{@link String} types.
+     *
+     * @return A new version of this equals method that compares {@link String}-typed fields before fields with non-{@link String}-typed fields.
+     */
+    public EqualsMethod withStringTypedFieldsFirst() {
+        return withFieldOrder(TypePropertyComparator.FOR_STRING_TYPES);
+    }
+
+    /**
      * Applies the supplied comparator to determine an order for fields for being compared. Fields with the highest sort order are compared
      * first. Any previously defined comparators are applied prior to the supplied comparator.
      *
@@ -904,12 +922,32 @@ public class EqualsMethod implements Implementation {
         },
 
         /**
-         * Weights enumeration types before non-enumeration types..
+         * Weights enumeration types before non-enumeration types.
          */
         FOR_ENUMERATION_TYPES {
             @Override
             protected boolean resolve(TypeDefinition typeDefinition) {
                 return typeDefinition.isEnum();
+            }
+        },
+
+        /**
+         * Weights {@link String} types first.
+         */
+        FOR_STRING_TYPES {
+            @Override
+            protected boolean resolve(TypeDefinition typeDefinition) {
+                return typeDefinition.represents(String.class);
+            }
+        },
+
+        /**
+         * Weights primitive wrapper types first.
+         */
+        FOR_PRIMITIVE_WRAPPER_TYPES {
+            @Override
+            protected boolean resolve(TypeDefinition typeDefinition) {
+                return typeDefinition.asErasure().isPrimitiveWrapper();
             }
         };
 
