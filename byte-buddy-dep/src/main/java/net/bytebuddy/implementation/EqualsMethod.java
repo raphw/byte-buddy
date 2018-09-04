@@ -23,6 +23,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.io.Serializable;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -975,7 +976,7 @@ public class EqualsMethod implements Implementation {
      * A compound comparator that compares the values of multiple fields.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class CompoundComparator implements Comparator<FieldDescription.InDefinedShape> {
+    protected static class CompoundComparator implements Comparator<FieldDescription.InDefinedShape>, Serializable {
 
         /**
          * All comparators to be applied in the application order.
