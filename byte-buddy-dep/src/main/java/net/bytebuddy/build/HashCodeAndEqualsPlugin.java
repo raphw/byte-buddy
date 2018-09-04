@@ -13,6 +13,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 
 import java.lang.annotation.*;
+import java.util.Comparator;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -47,7 +48,11 @@ public class HashCodeAndEqualsPlugin implements Plugin {
                             ? ElementMatchers.<FieldDescription>none()
                             : ElementMatchers.<FieldDescription>isSynthetic())
                     .withIgnoredFields(new ValueMatcher(ValueHandling.Sort.IGNORE))
-                    .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)));
+                    .withNonNullableFields(nonNullable(new ValueMatcher(ValueHandling.Sort.REVERSE_NULLABILITY)))
+                    .withFieldOrder(AnnotationOrderComparator.INSTANCE);
+            if (enhance.simpleComparisonsFirst()) {
+                equalsMethod = equalsMethod.withPrimitiveTypedFieldsFirst().withEnumerationTypedFieldsFirst();
+            }
             builder = builder.method(isEquals()).intercept(enhance.permitSubclassEquality() ? equalsMethod.withSubclassEquality() : equalsMethod);
         }
         return builder;
@@ -90,6 +95,15 @@ public class HashCodeAndEqualsPlugin implements Plugin {
          * @return A strategy for determining the base value.
          */
         InvokeSuper invokeSuper() default InvokeSuper.IF_DECLARED;
+
+        /**
+         * Determines if fields with primitive types and then enumeration types should be compared for equality before fields with
+         * other types. Before determining such a field order, the {@link Sorted} property is always considered first if it is defined.
+         *
+         * @return {@code true} if fields with primitive types and then enumeration types should be compared for equality before fields
+         * with non-primitive types.
+         */
+        boolean simpleComparisonsFirst() default true;
 
         /**
          * Determines if synthetic fields should be included in the hash code and equality contract.
@@ -249,6 +263,56 @@ public class HashCodeAndEqualsPlugin implements Plugin {
              * Reverses the nullability of the field, i.e. assumes this field to be non-null or {@code null} if {@link WithNonNullableFields} is used.
              */
             REVERSE_NULLABILITY
+        }
+    }
+
+    /**
+     * Determines the sort order of fields for the equality check when implementing the {@link Object#equals(Object)} method. Any field
+     * that is not annotated is considered with a value of {@link Sorted#DEFAULT} where fields with a higher value are checked for equality
+     * first. This sort order is applied first after which the type order is considered if {@link Enhance#simpleComparisonsFirst()} is considered
+     * as additional sort criteria.
+     */
+    @Documented
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Sorted {
+
+        /**
+         * The default sort weight.
+         */
+        int DEFAULT = 0;
+
+        /**
+         * The value for the sort order where fields with higher values are checked for equality first.
+         *
+         * @return The value for the sort order where fields with higher values are checked for equality first.
+         */
+        int value();
+    }
+
+    /**
+     * A comparator that arranges fields in the order of {@link Sorted}.
+     */
+    protected enum AnnotationOrderComparator implements Comparator<FieldDescription.InDefinedShape> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
+            AnnotationDescription.Loadable<Sorted> leftAnnotation = left.getDeclaredAnnotations().ofType(Sorted.class);
+            AnnotationDescription.Loadable<Sorted> rightAnnotation = right.getDeclaredAnnotations().ofType(Sorted.class);
+            int leftValue = leftAnnotation == null ? Sorted.DEFAULT : leftAnnotation.loadSilent().value();
+            int rightValue = rightAnnotation == null ? Sorted.DEFAULT : rightAnnotation.loadSilent().value();
+            if (leftValue > rightValue) {
+                return -1;
+            } else if (leftValue < rightValue) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
     }
 

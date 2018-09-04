@@ -1,19 +1,28 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
+import net.bytebuddy.implementation.EqualsMethodOtherTest;
+
 import org.junit.Test;
+
+import java.util.Comparator;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class HashCodeAndEqualsPluginTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Test
     public void testPluginMatches() throws Exception {
@@ -115,6 +124,19 @@ public class HashCodeAndEqualsPluginTest {
     }
 
     @Test
+    public void testPluginFieldOrder() throws Exception {
+        Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
+            .apply(new ByteBuddy().redefine(FieldSortOrderSample.class), TypeDescription.ForLoadedType.of(FieldSortOrderSample.class), ClassFileLocator.ForClassLoader.of(FieldSortOrderSample.class.getClassLoader()))
+            .make()
+            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+            .getLoaded();
+        Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
+        type.getDeclaredField(QUX).set(left, FOO);
+        type.getDeclaredField(QUX).set(right, BAR);
+        assertThat(left.equals(right), is(false));
+    }
+
+    @Test
     public void testInvokeSuper() {
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.IF_ANNOTATED.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSample.class)),
                 hasPrototype(EqualsMethod.isolated()));
@@ -134,6 +156,54 @@ public class HashCodeAndEqualsPluginTest {
                 hasPrototype(EqualsMethod.isolated()));
         assertThat(HashCodeAndEqualsPlugin.Enhance.InvokeSuper.NEVER.equalsMethod(TypeDescription.ForLoadedType.of(SimpleSampleSubclass.class)),
                 hasPrototype(EqualsMethod.isolated()));
+    }
+
+    @Test
+    public void testAnnotationComparatorEqualsNoAnnotations() {
+        Comparator<FieldDescription.InDefinedShape> comparator = HashCodeAndEqualsPlugin.AnnotationOrderComparator.INSTANCE;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        when(left.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(right.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        assertThat(comparator.compare(left, right), is(0));
+    }
+
+    @Test
+    public void testAnnotationComparatorEqualsEqualAnnotations() {
+        Comparator<FieldDescription.InDefinedShape> comparator = HashCodeAndEqualsPlugin.AnnotationOrderComparator.INSTANCE;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        when(left.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+        .define("value", 0)
+                .build()));
+        when(right.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+                .define("value", 0)
+                .build()));
+        assertThat(comparator.compare(left, right), is(0));
+    }
+
+    @Test
+    public void testAnnotationComparatorEqualsLeftBiggerAnnotations() {
+        Comparator<FieldDescription.InDefinedShape> comparator = HashCodeAndEqualsPlugin.AnnotationOrderComparator.INSTANCE;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        when(left.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+                .define("value", 42)
+                .build()));
+        when(right.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+                .define("value", 0)
+                .build()));
+        assertThat(comparator.compare(left, right), is(-1));
+    }
+
+    @Test
+    public void testAnnotationComparatorEqualsRightBiggerAnnotations() {
+        Comparator<FieldDescription.InDefinedShape> comparator = HashCodeAndEqualsPlugin.AnnotationOrderComparator.INSTANCE;
+        FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
+        when(left.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+                .define("value", 0)
+                .build()));
+        when(right.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
+                .define("value", 42)
+                .build()));
+        assertThat(comparator.compare(left, right), is(1));
     }
 
     @HashCodeAndEqualsPlugin.Enhance
@@ -191,5 +261,17 @@ public class HashCodeAndEqualsPluginTest {
 
         @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
         public String foo;
+    }
+
+    @HashCodeAndEqualsPlugin.Enhance
+    public static class FieldSortOrderSample {
+
+        public String foo;
+
+        @HashCodeAndEqualsPlugin.Sorted(-1)
+        public String bar;
+
+        @HashCodeAndEqualsPlugin.Sorted(1)
+        public String qux;
     }
 }

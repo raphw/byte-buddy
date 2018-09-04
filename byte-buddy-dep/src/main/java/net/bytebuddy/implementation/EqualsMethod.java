@@ -23,8 +23,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -66,12 +65,17 @@ public class EqualsMethod implements Implementation {
     private final ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable;
 
     /**
+     * The comparator to apply for ordering fields.
+     */
+    private final Comparator<? super FieldDescription.InDefinedShape> comparator;
+
+    /**
      * Creates a new equals method implementation.
      *
      * @param superClassCheck The baseline equality to check.
      */
     protected EqualsMethod(SuperClassCheck superClassCheck) {
-        this(superClassCheck, TypeCompatibilityCheck.EXACT, none(), none());
+        this(superClassCheck, TypeCompatibilityCheck.EXACT, none(), none(), NaturalOrderComparator.INSTANCE);
     }
 
     /**
@@ -81,15 +85,18 @@ public class EqualsMethod implements Implementation {
      * @param typeCompatibilityCheck The instance type compatibility check.
      * @param ignored                A matcher to filter fields that should not be used for a equality resolution.
      * @param nonNullable            A matcher to determine fields of a reference type that cannot be {@code null}.
+     * @param comparator             The comparator to apply for ordering fields.
      */
     private EqualsMethod(SuperClassCheck superClassCheck,
                          TypeCompatibilityCheck typeCompatibilityCheck,
                          ElementMatcher.Junction<? super FieldDescription.InDefinedShape> ignored,
-                         ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable) {
+                         ElementMatcher.Junction<? super FieldDescription.InDefinedShape> nonNullable,
+                         Comparator<? super FieldDescription.InDefinedShape> comparator) {
         this.superClassCheck = superClassCheck;
         this.typeCompatibilityCheck = typeCompatibilityCheck;
         this.ignored = ignored;
         this.nonNullable = nonNullable;
+        this.comparator = comparator;
     }
 
     /**
@@ -118,7 +125,7 @@ public class EqualsMethod implements Implementation {
      * @return A new version of this equals method implementation that also ignores any fields matched by the provided matcher.
      */
     public EqualsMethod withIgnoredFields(ElementMatcher<? super FieldDescription.InDefinedShape> ignored) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable);
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, this.ignored.<FieldDescription.InDefinedShape>or(ignored), nonNullable, comparator);
     }
 
     /**
@@ -130,7 +137,37 @@ public class EqualsMethod implements Implementation {
      * the provided matcher.
      */
     public EqualsMethod withNonNullableFields(ElementMatcher<? super FieldDescription.InDefinedShape> nonNullable) {
-        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable));
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, this.nonNullable.<FieldDescription.InDefinedShape>or(nonNullable), comparator);
+    }
+
+    /**
+     * Returns a new version of this equals method that compares fields with primitive types prior to fields with non-primitive types.
+     *
+     * @return A new version of this equals method that compares primitive-typed fields before fields with non-primitive-typed fields.
+     */
+    public EqualsMethod withPrimitiveTypedFieldsFirst() {
+        return withFieldOrder(TypePropertyComparator.FOR_PRIMITIVE_TYPES);
+    }
+
+    /**
+     * Returns a new version of this equals method that compares fields with enumeration types prior to fields with non-enumeration types.
+     *
+     * @return A new version of this equals method that compares enumeration-typed fields before fields with non-enumeration-typed fields.
+     */
+    public EqualsMethod withEnumerationTypedFieldsFirst() {
+        return withFieldOrder(TypePropertyComparator.FOR_ENUMERATION_TYPES);
+    }
+
+    /**
+     * Applies the supplied comparator to determine an order for fields for being compared. Fields with the highest sort order are compared
+     * first. Any previously defined comparators are applied prior to the supplied comparator.
+     *
+     * @param comparator The comparator to apply.
+     * @return A new version of this equals method that sorts fields in their application order using the supplied comparator.
+     */
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+    public EqualsMethod withFieldOrder(Comparator<? super FieldDescription.InDefinedShape> comparator) {
+        return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, nonNullable, new CompoundComparator(this.comparator, comparator));
     }
 
     /**
@@ -141,7 +178,7 @@ public class EqualsMethod implements Implementation {
      * of the instrumented type instead of requiring an exact match.
      */
     public Implementation withSubclassEquality() {
-        return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable);
+        return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable, comparator);
     }
 
     @Override
@@ -154,13 +191,17 @@ public class EqualsMethod implements Implementation {
         if (implementationTarget.getInstrumentedType().isInterface()) {
             throw new IllegalStateException("Cannot implement meaningful equals method for " + implementationTarget.getInstrumentedType());
         }
+        List<FieldDescription.InDefinedShape> fields = new ArrayList<FieldDescription.InDefinedShape>(implementationTarget.getInstrumentedType()
+                .getDeclaredFields()
+                .filter(not(isStatic().or(ignored))));
+        Collections.sort(fields, comparator);
         return new Appender(implementationTarget.getInstrumentedType(), new StackManipulation.Compound(
                 superClassCheck.resolve(implementationTarget.getInstrumentedType()),
                 MethodVariableAccess.loadThis(),
                 MethodVariableAccess.REFERENCE.loadFrom(1),
                 ConditionalReturn.onIdentity().returningTrue(),
                 typeCompatibilityCheck.resolve(implementationTarget.getInstrumentedType())
-        ), implementationTarget.getInstrumentedType().getDeclaredFields().filter(not(isStatic().or(ignored))), nonNullable);
+        ), fields, nonNullable);
     }
 
     /**
@@ -828,6 +869,115 @@ public class EqualsMethod implements Implementation {
                 methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
             }
             return new Size(-1, 1);
+        }
+    }
+
+    /**
+     * A comparator that retains the natural order.
+     */
+    protected enum NaturalOrderComparator implements Comparator<FieldDescription.InDefinedShape> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
+            return 0;
+        }
+    }
+
+    /**
+     * A comparator that sorts fields by a type property.
+     */
+    protected enum TypePropertyComparator implements Comparator<FieldDescription.InDefinedShape> {
+
+        /**
+         * Weights primitive types before non-primitive types.
+         */
+        FOR_PRIMITIVE_TYPES {
+            @Override
+            protected boolean resolve(TypeDefinition typeDefinition) {
+                return typeDefinition.isPrimitive();
+            }
+        },
+
+        /**
+         * Weights enumeration types before non-enumeration types..
+         */
+        FOR_ENUMERATION_TYPES {
+            @Override
+            protected boolean resolve(TypeDefinition typeDefinition) {
+                return typeDefinition.isEnum();
+            }
+        };
+
+        @Override
+        public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
+            if (resolve(left.getType()) && !resolve(right.getType())) {
+                return -1;
+            } else if (!resolve(left.getType()) && resolve(right.getType())) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+        /**
+         * Resolves a type property.
+         *
+         * @param typeDefinition The type to resolve the property for.
+         * @return {@code true} if the type property is resolved.
+         */
+        protected abstract boolean resolve(TypeDefinition typeDefinition);
+    }
+
+    /**
+     * A compound comparator that compares the values of multiple fields.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    protected static class CompoundComparator implements Comparator<FieldDescription.InDefinedShape> {
+
+        /**
+         * All comparators to be applied in the application order.
+         */
+        private final List<Comparator<? super FieldDescription.InDefinedShape>> comparators;
+
+        /**
+         * Creates a compound comparator.
+         *
+         * @param comparator All comparators to be applied in the application order.
+         */
+        protected CompoundComparator(Comparator<? super FieldDescription.InDefinedShape>... comparator) {
+            this(Arrays.asList(comparator));
+        }
+
+        /**
+         * Creates a compound comparator.
+         *
+         * @param comparators All comparators to be applied in the application order.
+         */
+        protected CompoundComparator(List<? extends Comparator<? super FieldDescription.InDefinedShape>> comparators) {
+            this.comparators = new ArrayList<Comparator<? super FieldDescription.InDefinedShape>>();
+            for (Comparator<? super FieldDescription.InDefinedShape> comparator : comparators) {
+                if (comparator instanceof CompoundComparator) {
+                    this.comparators.addAll(((CompoundComparator) comparator).comparators);
+                } else if (!(comparator instanceof NaturalOrderComparator)) {
+                    this.comparators.add(comparator);
+                }
+            }
+        }
+
+        @Override
+        public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
+            for (Comparator<? super FieldDescription.InDefinedShape> comparator : comparators) {
+                int comparison = comparator.compare(left, right);
+                if (comparison != 0) {
+                    return comparison;
+                }
+            }
+            return 0;
         }
     }
 }
