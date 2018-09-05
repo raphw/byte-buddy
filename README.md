@@ -117,7 +117,7 @@ public class GreetingInterceptor {
 ```
 
 Note that the above `GreetingInterceptor` does not depend on any Byte Buddy type. This is good news because none of the classes
-that by Byte Buddy generates require Byte Buddy on the class path! Given the above `GreetingInterceptor`, we can use Byte Buddy 
+that Byte Buddy generates require Byte Buddy on the class path! Given the above `GreetingInterceptor`, we can use Byte Buddy 
 to implement the Java 8 `java.util.function.Function` interface and its abstract `apply` method:
 
 ```java
