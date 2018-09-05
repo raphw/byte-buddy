@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
@@ -23,7 +24,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-import java.io.Serializable;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -178,7 +178,7 @@ public class EqualsMethod implements Implementation {
     }
 
     /**
-     * Applies the supplied comparator to determine an order for fields for being compared. Fields with the highest sort order are compared
+     * Applies the supplied comparator to determine an order for fields for being compared. Fields with the lowest sort order are compared
      * first. Any previously defined comparators are applied prior to the supplied comparator.
      *
      * @param comparator The comparator to apply.
@@ -976,7 +976,8 @@ public class EqualsMethod implements Implementation {
      * A compound comparator that compares the values of multiple fields.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    protected static class CompoundComparator implements Comparator<FieldDescription.InDefinedShape>, Serializable {
+    @SuppressFBWarnings(value = "SE_COMPARATOR_SHOULD_BE_SERIALIZABLE", justification = "Not used within a serializable instance")
+    protected static class CompoundComparator implements Comparator<FieldDescription.InDefinedShape> {
 
         /**
          * All comparators to be applied in the application order.
