@@ -40,6 +40,7 @@ public class ClassFileLocatorForUrlTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testSuccessfulLocation() throws Exception {
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
         try {
@@ -53,13 +54,17 @@ public class ClassFileLocatorForUrlTest {
         }
         URL url = file.toURI().toURL();
         ClassFileLocator classFileLocator = new ClassFileLocator.ForUrl(Collections.singleton(url));
-        ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
-        assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
-        classFileLocator.close();
+        try {
+            ClassFileLocator.Resolution resolution = classFileLocator.locate(FOO + "." + BAR);
+            assertThat(resolution.isResolved(), is(true));
+            assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
+        } finally {
+            classFileLocator.close();
+        }
     }
 
     @Test
+    @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testJarFileClosable() throws Exception {
         URL url = new URL("http://localhost:123");
         Closeable classFileLocator = new ClassFileLocator.ForUrl(url);
@@ -67,6 +72,7 @@ public class ClassFileLocatorForUrlTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7) // Avoid leak since class loader cannot be closed
     public void testNonSuccessfulLocation() throws Exception {
         JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
         try {

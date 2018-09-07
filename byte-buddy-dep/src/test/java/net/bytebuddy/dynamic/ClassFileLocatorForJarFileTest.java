@@ -4,12 +4,9 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 import org.objectweb.asm.ClassVisitor;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.jar.JarEntry;
@@ -25,9 +22,6 @@ public class ClassFileLocatorForJarFileTest {
     private static final String FOO = "foo", BAR = "bar";
 
     private static final int VALUE = 42;
-
-    @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private File file;
 
