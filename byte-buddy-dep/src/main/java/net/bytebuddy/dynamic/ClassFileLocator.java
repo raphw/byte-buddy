@@ -38,11 +38,11 @@ public interface ClassFileLocator extends Closeable {
     /**
      * Locates the class file for a given type and returns the binary data of the class file.
      *
-     * @param typeName The name of the type to locate a class file representation for.
+     * @param name The name of the type to locate a class file representation for.
      * @return Any binary representation of the type which might be illegal.
      * @throws java.io.IOException If reading a class file causes an error.
      */
-    Resolution locate(String typeName) throws IOException;
+    Resolution locate(String name) throws IOException;
 
     /**
      * Represents a class file as binary data.
@@ -140,8 +140,8 @@ public interface ClassFileLocator extends Closeable {
         INSTANCE;
 
         @Override
-        public Resolution locate(String typeName) {
-            return new Resolution.Illegal(typeName);
+        public Resolution locate(String name) {
+            return new Resolution.Illegal(name);
         }
 
         @Override
@@ -206,10 +206,10 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) {
-            byte[] binaryRepresentation = classFiles.get(typeName);
+        public Resolution locate(String name) {
+            byte[] binaryRepresentation = classFiles.get(name);
             return binaryRepresentation == null
-                    ? new Resolution.Illegal(typeName)
+                    ? new Resolution.Illegal(name)
                     : new Resolution.Explicit(binaryRepresentation);
         }
 
@@ -287,8 +287,8 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            return locate(classLoader, typeName);
+        public Resolution locate(String name) throws IOException {
+            return locate(classLoader, name);
         }
 
         @Override
@@ -361,11 +361,11 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public Resolution locate(String typeName) throws IOException {
+            public Resolution locate(String name) throws IOException {
                 ClassLoader classLoader = get();
                 return classLoader == null
-                        ? new Resolution.Illegal(typeName)
-                        : ForClassLoader.locate(classLoader, typeName);
+                        ? new Resolution.Illegal(name)
+                        : ForClassLoader.locate(classLoader, name);
             }
 
             @Override
@@ -461,8 +461,8 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            return locate(module, typeName);
+        public Resolution locate(String name) throws IOException {
+            return locate(module, name);
         }
 
         /**
@@ -536,11 +536,11 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public Resolution locate(String typeName) throws IOException {
+            public Resolution locate(String name) throws IOException {
                 Object module = get();
                 return module == null
-                        ? new Resolution.Illegal(typeName)
-                        : ForModule.locate(JavaModule.of(module), typeName);
+                        ? new Resolution.Illegal(name)
+                        : ForModule.locate(JavaModule.of(module), name);
             }
 
             @Override
@@ -662,10 +662,10 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+        public Resolution locate(String name) throws IOException {
+            ZipEntry zipEntry = jarFile.getEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (zipEntry == null) {
-                return new Resolution.Illegal(typeName);
+                return new Resolution.Illegal(name);
             } else {
                 InputStream inputStream = jarFile.getInputStream(zipEntry);
                 try {
@@ -842,10 +842,10 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            ZipEntry zipEntry = zipFile.getEntry("classes/" + typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+        public Resolution locate(String name) throws IOException {
+            ZipEntry zipEntry = zipFile.getEntry("classes/" + name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (zipEntry == null) {
-                return new Resolution.Illegal(typeName);
+                return new Resolution.Illegal(name);
             } else {
                 InputStream inputStream = zipFile.getInputStream(zipEntry);
                 try {
@@ -885,8 +885,8 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            File file = new File(folder, typeName.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
+        public Resolution locate(String name) throws IOException {
+            File file = new File(folder, name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (file.exists()) {
                 InputStream inputStream = new FileInputStream(file);
                 try {
@@ -895,12 +895,12 @@ public interface ClassFileLocator extends Closeable {
                     inputStream.close();
                 }
             } else {
-                return new Resolution.Illegal(typeName);
+                return new Resolution.Illegal(name);
             }
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             /* do nothing */
         }
     }
@@ -994,15 +994,15 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) {
+        public Resolution locate(String name) {
             try {
-                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), typeName);
+                ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), name);
                 instrumentation.addTransformer(classFileTransformer, true);
                 try {
-                    instrumentation.retransformClasses(classLoadingDelegate.locate(typeName));
+                    instrumentation.retransformClasses(classLoadingDelegate.locate(name));
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null
-                            ? new Resolution.Illegal(typeName)
+                            ? new Resolution.Illegal(name)
                             : new Resolution.Explicit(binaryRepresentation);
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
@@ -1010,7 +1010,7 @@ public interface ClassFileLocator extends Closeable {
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception ignored) {
-                return new Resolution.Illegal(typeName);
+                return new Resolution.Illegal(name);
             }
         }
 
@@ -1411,14 +1411,14 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
-            int packageIndex = typeName.lastIndexOf('.');
+        public Resolution locate(String name) throws IOException {
+            int packageIndex = name.lastIndexOf('.');
             ClassFileLocator classFileLocator = classFileLocators.get(packageIndex == -1
                     ? NamedElement.EMPTY_NAME
-                    : typeName.substring(0, packageIndex));
+                    : name.substring(0, packageIndex));
             return classFileLocator == null
-                    ? new Resolution.Illegal(typeName)
-                    : classFileLocator.locate(typeName);
+                    ? new Resolution.Illegal(name)
+                    : classFileLocator.locate(name);
         }
 
         @Override
@@ -1471,14 +1471,14 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public Resolution locate(String typeName) throws IOException {
+        public Resolution locate(String name) throws IOException {
             for (ClassFileLocator classFileLocator : classFileLocators) {
-                Resolution resolution = classFileLocator.locate(typeName);
+                Resolution resolution = classFileLocator.locate(name);
                 if (resolution.isResolved()) {
                     return resolution;
                 }
             }
-            return new Resolution.Illegal(typeName);
+            return new Resolution.Illegal(name);
         }
 
         @Override
