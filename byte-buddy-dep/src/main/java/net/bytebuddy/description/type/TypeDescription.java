@@ -5453,6 +5453,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     @Override
+                    @CachedReturnPlugin.Enhance("resolved")
                     protected Generic resolve() {
                         return delegate.resolve().getSuperClass();
                     }
@@ -5502,6 +5503,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     @Override
+                    @CachedReturnPlugin.Enhance("resolved")
                     protected Generic resolve() {
                         return delegate.resolve().getInterfaces().get(index);
                     }
@@ -5632,6 +5634,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     java.lang.reflect.Type superClass = type.getGenericSuperclass();
                     return superClass == null
@@ -5673,6 +5676,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     return Sort.describe(field.getGenericType(), getAnnotationReader());
                 }
@@ -5708,6 +5712,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     return Sort.describe(method.getGenericReturnType(), getAnnotationReader());
                 }
@@ -5758,6 +5763,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("delegate")
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
                     return erasure.length == type.length
@@ -5811,6 +5817,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
                     return erasure.length == type.length
@@ -5883,6 +5890,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     return delegate.accept(visitor);
                 }
@@ -8443,6 +8451,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance("erasure")
             public TypeDescription asErasure() {
                 try {
                     return ForLoadedType.of(classLoadingDelegate.load(delegate.asErasure().getName(), classLoader));
@@ -8457,6 +8466,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance("superClass")
             public Generic getSuperClass() {
                 Generic superClass = delegate.getSuperClass();
                 if (superClass == null) {
@@ -8473,6 +8483,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance("interfaces")
             public TypeList.Generic getInterfaces() {
                 TypeList.Generic interfaces = delegate.getInterfaces();
                 try {

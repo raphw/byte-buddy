@@ -3964,7 +3964,11 @@ public interface TypeWriter<T> {
 
                     @Override
                     protected void onVisitOuterClass(String owner, String name, String descriptor) {
-                        onOuterType();
+                        try { // The Groovy compiler often gets this attribute wrong such that this safety just retains it.
+                            onOuterType();
+                        } catch (Throwable ignored) {
+                            cv.visitOuterClass(owner, name, descriptor);
+                        }
                     }
 
                     @Override

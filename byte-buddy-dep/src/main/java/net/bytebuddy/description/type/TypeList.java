@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -709,6 +710,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
                     return erasure.length == type.length
@@ -796,6 +798,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
                     return erasure.length == type.length
@@ -883,6 +886,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
                     return erasure.length == type.length

@@ -1,6 +1,7 @@
 package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -1248,6 +1249,7 @@ public interface TypePool {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("delegate")
                 protected TypeDescription delegate() {
                     return doResolve(name).resolve();
                 }
@@ -3022,7 +3024,13 @@ public interface TypePool {
 
                     @Override
                     public MethodDescription.InDefinedShape getEnclosingMethod(TypePool typePool) {
-                        return getEnclosingType(typePool).getDeclaredMethods().filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor))).getOnly();
+                        TypeDescription enclosingType = getEnclosingType(typePool);
+                        MethodList<MethodDescription.InDefinedShape> enclosingMethod = enclosingType.getDeclaredMethods()
+                            .filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor)));
+                        if (enclosingMethod.isEmpty()) {
+                            throw new IllegalStateException(methodName + methodDescriptor + " not declared by " + enclosingType);
+                        }
+                        return enclosingMethod.getOnly();
                     }
 
                     @Override
@@ -5940,11 +5948,13 @@ public interface TypePool {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     return genericTypeToken.toGenericType(typePool, typeVariableSource, GenericTypeToken.EMPTY_TYPE_PATH, annotationTokens);
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance("erasure")
                 public TypeDescription asErasure() {
                     return toErasure(typePool, rawTypeDescriptor);
                 }
@@ -7687,6 +7697,7 @@ public interface TypePool {
             }
 
             @Override
+            @CachedReturnPlugin.Enhance("delegate")
             protected TypeDescription delegate() {
                 return typePool.describe(name).resolve();
             }
