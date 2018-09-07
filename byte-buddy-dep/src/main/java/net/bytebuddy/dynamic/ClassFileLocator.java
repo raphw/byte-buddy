@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
@@ -14,6 +15,8 @@ import java.lang.instrument.Instrumentation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -300,12 +303,12 @@ public interface ClassFileLocator extends Closeable {
          * Locates the class file for the supplied type by requesting a resource from the class loader.
          *
          * @param classLoader The class loader to query for the resource.
-         * @param typeName    The name of the type for which to locate a class file.
+         * @param name        The name of the type for which to locate a class file.
          * @return A resolution for the class file.
          * @throws IOException If reading the class file causes an exception.
          */
-        protected static Resolution locate(ClassLoader classLoader, String typeName) throws IOException {
-            InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+        protected static Resolution locate(ClassLoader classLoader, String name) throws IOException {
+            InputStream inputStream = classLoader.getResourceAsStream(name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
                     return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
@@ -313,7 +316,7 @@ public interface ClassFileLocator extends Closeable {
                     inputStream.close();
                 }
             } else {
-                return new Resolution.Illegal(typeName);
+                return new Resolution.Illegal(name);
             }
         }
 
@@ -902,6 +905,75 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() {
             /* do nothing */
+        }
+    }
+
+    /**
+     * A class file locator that reads class files from one or several URLs. The reading is accomplished via using an {@link URLClassLoader}.
+     * Doing so, boot loader resources might be located additionally to those found via the specified URLs.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class ForUrl implements ClassFileLocator {
+
+        /**
+         * The class loader that delegates to the URLs.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a new class file locator for the given URLs.
+         *
+         * @param url The URLs to search for class files.
+         */
+        public ForUrl(URL... url) {
+            classLoader = AccessController.doPrivileged(new ClassLoaderCreationAction(url));
+        }
+
+        /**
+         * Creates a new class file locator for the given URLs.
+         *
+         * @param urls The URLs to search for class files.
+         */
+        public ForUrl(Collection<? extends URL> urls) {
+            this(urls.toArray(new URL[urls.size()]));
+        }
+
+        @Override
+        public Resolution locate(String name) throws IOException {
+            return ForClassLoader.locate(classLoader, name);
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (classLoader instanceof Closeable) {
+                ((Closeable) classLoader).close();
+            }
+        }
+
+        /**
+         * An action to create a class loader with the purpose of locating classes from an URL location.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class ClassLoaderCreationAction implements PrivilegedAction<ClassLoader> {
+
+            /**
+             * The URLs to locate classes from.
+             */
+            private final URL[] url;
+
+            /**
+             * Creates a new class loader creation action.
+             *
+             * @param url The URLs to locate classes from.
+             */
+            protected ClassLoaderCreationAction(URL[] url) {
+                this.url = url;
+            }
+
+            @Override
+            public ClassLoader run() {
+                return new URLClassLoader(url, ClassLoadingStrategy.BOOTSTRAP_LOADER);
+            }
         }
     }
 
