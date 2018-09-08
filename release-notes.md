@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. September 2018: version 1.8.22
+
+- Add guard to `EnclosedMethod` property upon redefinition to avoid error with Groovy which often gets the propery wrong.
+- Add possibility to sort fields in plugin-generated equals method.
+- Add class file locator for URL instances.
+
 ### 3. September 2018: version 1.8.21
 
 - Added caching for expensive methods of reflection API.
