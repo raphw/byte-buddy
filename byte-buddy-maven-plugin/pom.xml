@@ -3,7 +3,7 @@
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
-        <version>1.8.22</version>
+        <version>1.8.23-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
