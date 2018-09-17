@@ -2965,15 +2965,6 @@ public interface TypePool {
                 return !anonymousType && typeContainment.isLocalType();
             }
 
-            // TODO: Is this necessary?
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isMemberType() {
-                return typeContainment.isMemberClass();
-            }
-
             /**
              * {@inheritDoc}
              */
@@ -3138,13 +3129,6 @@ public interface TypePool {
                 boolean isSelfContained();
 
                 /**
-                 * Returns {@code true} if the type is a member type.
-                 *
-                 * @return {@code true} if the type is a member type.
-                 */
-                boolean isMemberClass();
-
-                /**
                  * Returns {@code true} if the type is a local type unless it is an anonymous type.
                  *
                  * @return {@code true} if the type is a local type unless it is an anonymous type
@@ -3180,13 +3164,6 @@ public interface TypePool {
                      */
                     public boolean isSelfContained() {
                         return true;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public boolean isMemberClass() {
-                        return false;
                     }
 
                     /**
@@ -3243,13 +3220,6 @@ public interface TypePool {
                      */
                     public boolean isSelfContained() {
                         return false;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public boolean isMemberClass() {
-                        return !localType;
                     }
 
                     /**
@@ -3318,13 +3288,6 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public boolean isSelfContained() {
-                        return false;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public boolean isMemberClass() {
                         return false;
                     }
 

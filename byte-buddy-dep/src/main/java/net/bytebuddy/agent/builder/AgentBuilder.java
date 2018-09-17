@@ -4500,14 +4500,14 @@ public interface AgentBuilder {
          * </p>
          */
         RETRANSFORMATION(true, true) {
-            /** {@inheritDoc} */
+            @Override
             protected void check(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
                     throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
                 }
             }
 
-            /** {@inheritDoc} */
+            @Override
             protected Collector make() {
                 return new Collector.ForRetransformation();
             }

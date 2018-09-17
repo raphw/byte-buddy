@@ -435,7 +435,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
              */
             public boolean isModifiableClass(Instrumentation instrumentation, Class<?> type) {
                 try {
-                    return (Boolean) isModifiableClass.invoke(instrumentation);
+                    return (Boolean) isModifiableClass.invoke(instrumentation, type);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isModifiableClass", exception);
                 } catch (InvocationTargetException exception) {
