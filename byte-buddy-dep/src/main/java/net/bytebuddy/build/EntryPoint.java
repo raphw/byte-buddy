@@ -50,12 +50,12 @@ public interface EntryPoint {
          * An entry point that rebases a type.
          */
         REBASE {
-            @Override
+            /** {@inheritDoc} */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion);
             }
 
-            @Override
+            /** {@inheritDoc} */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -68,12 +68,12 @@ public interface EntryPoint {
          * An entry point that redefines a type.
          */
         REDEFINE {
-            @Override
+            /** {@inheritDoc} */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion);
             }
 
-            @Override
+            /** {@inheritDoc} */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -87,12 +87,12 @@ public interface EntryPoint {
          * not add any methods or considers intercepting inherited methods.
          */
         REDEFINE_LOCAL {
-            @Override
+            /** {@inheritDoc} */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion).with(Implementation.Context.Disabled.Factory.INSTANCE);
             }
 
-            @Override
+            /** {@inheritDoc} */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,
@@ -106,14 +106,14 @@ public interface EntryPoint {
          * for the application of {@link net.bytebuddy.asm.AsmVisitorWrapper}s while improving performance.
          */
         DECORATE {
-            @Override
+            /** {@inheritDoc} */
             public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
                 return new ByteBuddy(classFileVersion)
                         .with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE)
                         .with(Implementation.Context.Disabled.Factory.INSTANCE);
             }
 
-            @Override
+            /** {@inheritDoc} */
             public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                                     ByteBuddy byteBuddy,
                                                     ClassFileLocator classFileLocator,

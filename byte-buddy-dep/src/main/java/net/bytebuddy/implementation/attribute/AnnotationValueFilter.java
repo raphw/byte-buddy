@@ -59,7 +59,7 @@ public interface AnnotationValueFilter {
          * An annotation value filter where default values are skipped and not included in the class file.
          */
         SKIP_DEFAULTS {
-            @Override
+            /** {@inheritDoc} */
             public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
                 Object defaultValue = methodDescription.getDefaultValue();
                 return defaultValue == null || !defaultValue.equals(annotationDescription.getValue(methodDescription));
@@ -70,23 +70,29 @@ public interface AnnotationValueFilter {
          * An annotation value filter where default values are included in the class file.
          */
         APPEND_DEFAULTS {
-            @Override
+            /** {@inheritDoc} */
             public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
                 return true;
             }
         };
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValueFilter on(TypeDescription instrumentedType) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValueFilter on(FieldDescription fieldDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValueFilter on(MethodDescription methodDescription) {
             return this;
         }

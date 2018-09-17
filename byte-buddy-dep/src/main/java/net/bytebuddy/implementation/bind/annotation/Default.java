@@ -76,12 +76,16 @@ public @interface Default {
             PROXY_TYPE = annotationProperties.filter(named("proxyType")).getOnly();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Default> getHandledType() {
             return Default.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Default> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -124,7 +128,9 @@ public @interface Default {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     return parameterType.asErasure();
                 }
@@ -166,7 +172,9 @@ public @interface Default {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);

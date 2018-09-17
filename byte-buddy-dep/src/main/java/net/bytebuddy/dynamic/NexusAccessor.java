@@ -119,7 +119,9 @@ public class NexusAccessor {
             this.identification = identification;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             try {
                 return new ByteCodeAppender.Simple(new StackManipulation.Compound(
@@ -192,7 +194,9 @@ public class NexusAccessor {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
                 if (Boolean.getBoolean(Nexus.PROPERTY)) {
@@ -249,12 +253,16 @@ public class NexusAccessor {
                 this.clean = clean;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isAlive() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void clean(Reference<? extends ClassLoader> reference) {
                 try {
                     clean.invoke(STATIC_METHOD, reference);
@@ -265,7 +273,9 @@ public class NexusAccessor {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void register(String name,
                                  ClassLoader classLoader,
                                  ReferenceQueue<? super ClassLoader> referenceQueue,
@@ -301,17 +311,23 @@ public class NexusAccessor {
                 this.message = message;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isAlive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void clean(Reference<? extends ClassLoader> reference) {
                 throw new IllegalStateException("Could not initialize Nexus accessor: " + message);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void register(String name,
                                  ClassLoader classLoader,
                                  ReferenceQueue<? super ClassLoader> referenceQueue,

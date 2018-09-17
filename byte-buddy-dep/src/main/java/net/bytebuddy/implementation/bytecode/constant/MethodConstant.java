@@ -90,12 +90,16 @@ public abstract class MethodConstant implements StackManipulation {
         return typeConstants;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         return new Compound(
                 ClassConstant.of(methodDescription.getDeclaringType()),
@@ -155,17 +159,23 @@ public abstract class MethodConstant implements StackManipulation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation cached() {
             return Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
         }
@@ -238,7 +248,9 @@ public abstract class MethodConstant implements StackManipulation {
                     : GET_DECLARED_METHOD;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation cached() {
             return new CachedMethod(this);
         }
@@ -294,7 +306,9 @@ public abstract class MethodConstant implements StackManipulation {
                     : GET_DECLARED_CONSTRUCTOR;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation cached() {
             return new CachedConstructor(this);
         }
@@ -342,12 +356,16 @@ public abstract class MethodConstant implements StackManipulation {
             this.methodName = methodName;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return methodName.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription auxiliaryType = implementationContext.register(PrivilegedMemberLookupAction.of(methodDescription));
             return new Compound(
@@ -365,7 +383,9 @@ public abstract class MethodConstant implements StackManipulation {
             ).apply(methodVisitor, implementationContext);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation cached() {
             return methodDescription.isConstructor()
                     ? new CachedConstructor(this)
@@ -413,12 +433,16 @@ public abstract class MethodConstant implements StackManipulation {
             this.methodConstant = methodConstant;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return methodConstant.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE))
                     .read()
@@ -466,12 +490,16 @@ public abstract class MethodConstant implements StackManipulation {
             this.constructorConstant = constructorConstant;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return constructorConstant.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
                     .read()

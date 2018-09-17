@@ -26,22 +26,18 @@ public class TypePoolDefaultGenericTypeListTest extends AbstractTypeListGenericT
         typePool.clear();
     }
 
-    @Override
     protected Type getFirst() throws Exception {
         return Holder.class.getGenericInterfaces()[0];
     }
 
-    @Override
     protected Type getSecond() throws Exception {
         return Holder.class.getGenericInterfaces()[1];
     }
 
-    @Override
     protected TypeList.Generic asList(List<Type> elements) {
         return typePool.describe(Holder.class.getName()).resolve().getInterfaces().filter(anyOf(elements.toArray(new Type[elements.size()])));
     }
 
-    @Override
     protected TypeDescription.Generic asElement(Type element) {
         return TypeDefinition.Sort.describe(element);
     }

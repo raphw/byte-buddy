@@ -77,7 +77,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.iterator()).then(new Answer<Iterator<TypeDefinition>>() {
-            @Override
             public Iterator<TypeDefinition> answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.<TypeDefinition>singleton(instrumentedType).iterator();
             }

@@ -35,7 +35,6 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         super(AllArguments.class);
     }
 
-    @Override
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -51,7 +50,6 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(secondSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(secondSourceType);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<AllArguments> getSimpleBinder() {
         return AllArguments.Binder.INSTANCE;
     }

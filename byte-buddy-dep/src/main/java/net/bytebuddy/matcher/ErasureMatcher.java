@@ -28,12 +28,16 @@ public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Jun
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.asErasure());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "erasure(" + matcher + ")";
     }

@@ -40,12 +40,16 @@ public interface MethodAttributeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
@@ -101,7 +105,9 @@ public interface MethodAttributeAppender {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodAttributeAppender make(TypeDescription typeDescription) {
                 List<MethodAttributeAppender> methodAttributeAppenders = new ArrayList<MethodAttributeAppender>(factories.size());
                 for (Factory factory : factories) {
@@ -160,12 +166,16 @@ public interface MethodAttributeAppender {
             }
         };
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
             annotationAppender = methodDescription.getReturnType().accept(AnnotationAppender.ForTypeAnnotations.ofMethodReturnType(annotationAppender,
@@ -273,12 +283,16 @@ public interface MethodAttributeAppender {
             return new Factory.Compound(methodAttributeAppenders);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
             for (AnnotationDescription annotation : annotations) {
@@ -312,7 +326,9 @@ public interface MethodAttributeAppender {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
                     return new AnnotationAppender.Target.OnMethod(methodVisitor);
                 }
@@ -338,7 +354,9 @@ public interface MethodAttributeAppender {
                     this.parameterIndex = parameterIndex;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationAppender.Target make(MethodVisitor methodVisitor, MethodDescription methodDescription) {
                     if (parameterIndex >= methodDescription.getParameters().size()) {
                         throw new IllegalArgumentException("Method " + methodDescription + " has less then " + parameterIndex + " parameters");
@@ -369,12 +387,16 @@ public interface MethodAttributeAppender {
             this.receiverType = receiverType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             receiverType.accept(AnnotationAppender.ForTypeAnnotations.ofReceiverType(new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor)), annotationValueFilter));
         }
@@ -419,7 +441,9 @@ public interface MethodAttributeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             for (MethodAttributeAppender methodAttributeAppender : methodAttributeAppenders) {
                 methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);

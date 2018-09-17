@@ -31,17 +31,23 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
         this.mask = mask;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public int getMask() {
         return mask;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public int getRange() {
         return Opcodes.ACC_ENUM;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isDefault() {
         return this == PLAIN;
     }

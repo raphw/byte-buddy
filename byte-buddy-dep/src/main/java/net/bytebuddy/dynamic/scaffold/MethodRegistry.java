@@ -90,17 +90,23 @@ public interface MethodRegistry {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(Implementation.Target implementationTarget) {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender, visibility);
             }
@@ -116,12 +122,16 @@ public interface MethodRegistry {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 throw new IllegalStateException("A visibility bridge handler must not apply any preparations");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(Implementation.Target implementationTarget) {
                 return new Compiled(implementationTarget.getInstrumentedType());
             }
@@ -146,7 +156,9 @@ public interface MethodRegistry {
                     this.instrumentedType = instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
                 }
@@ -189,12 +201,16 @@ public interface MethodRegistry {
                 this.implementation = implementation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return implementation.prepare(instrumentedType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(Implementation.Target implementationTarget) {
                 return new Compiled(implementation.appender(implementationTarget));
             }
@@ -219,7 +235,9 @@ public interface MethodRegistry {
                     this.byteCodeAppender = byteCodeAppender;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription, byteCodeAppender, attributeAppender, visibility);
                 }
@@ -246,17 +264,23 @@ public interface MethodRegistry {
                 this.annotationValue = annotationValue;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(Implementation.Target implementationTarget) {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, annotationValue, attributeAppender);
             }
@@ -381,7 +405,9 @@ public interface MethodRegistry {
             this.entries = entries;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodRegistry prepend(LatentMatcher<? super MethodDescription> matcher,
                                       Handler handler,
                                       MethodAttributeAppender.Factory attributeAppenderFactory,
@@ -389,7 +415,9 @@ public interface MethodRegistry {
             return new Default(CompoundList.of(new Entry(matcher, handler, attributeAppenderFactory, transformer), entries));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodRegistry append(LatentMatcher<? super MethodDescription> matcher,
                                      Handler handler,
                                      MethodAttributeAppender.Factory attributeAppenderFactory,
@@ -397,7 +425,9 @@ public interface MethodRegistry {
             return new Default(CompoundList.of(entries, new Entry(matcher, handler, attributeAppenderFactory, transformer)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
                                                TypeValidation typeValidation,
@@ -569,7 +599,9 @@ public interface MethodRegistry {
                 return handler;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
                 return matcher.resolve(typeDescription);
             }
@@ -635,32 +667,44 @@ public interface MethodRegistry {
                 this.methods = methods;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getInstrumentedType() {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public LoadedTypeInitializer getLoadedTypeInitializer() {
                 return loadedTypeInitializer;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<?> getMethods() {
                 return methods;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<?> getInstrumentedMethods() {
                 return new MethodList.Explicit<MethodDescription>(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory, ClassFileVersion classFileVersion) {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>();
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>();
@@ -886,32 +930,44 @@ public interface MethodRegistry {
                 this.supportsBridges = supportsBridges;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getInstrumentedType() {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public LoadedTypeInitializer getLoadedTypeInitializer() {
                 return loadedTypeInitializer;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<?> getMethods() {
                 return methods;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<?> getInstrumentedMethods() {
                 return new MethodList.Explicit<MethodDescription>(new ArrayList<MethodDescription>(implementations.keySet())).filter(not(isTypeInitializer()));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null

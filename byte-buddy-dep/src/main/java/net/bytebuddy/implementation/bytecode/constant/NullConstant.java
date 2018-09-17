@@ -30,12 +30,16 @@ public enum NullConstant implements StackManipulation {
         this.size = size.toIncreasingSize();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
         return size;

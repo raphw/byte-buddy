@@ -24,12 +24,16 @@ public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         this.value = value;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return value.equals(target);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "is(" + value + ")";
     }

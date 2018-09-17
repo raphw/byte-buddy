@@ -165,6 +165,14 @@ public class Nexus extends WeakReference<ClassLoader> {
     }
 
     @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + classLoaderHashCode;
+        result = 31 * result + identification;
+        return result;
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) {
             return true;
@@ -176,14 +184,6 @@ public class Nexus extends WeakReference<ClassLoader> {
                 && identification == nexus.identification
                 && name.equals(nexus.name)
                 && get() == nexus.get();
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + classLoaderHashCode;
-        result = 31 * result + identification;
-        return result;
     }
 
     @Override

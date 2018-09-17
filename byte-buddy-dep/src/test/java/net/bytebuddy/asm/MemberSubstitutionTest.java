@@ -561,7 +561,6 @@ public class MemberSubstitutionTest {
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
         assertThat(type.getDeclaredMethod(BAR, Callable.class).invoke(instance, new Callable<String>() {
-            @Override
             public String call() {
                 return FOO;
             }
@@ -799,7 +798,6 @@ public class MemberSubstitutionTest {
 
         public static class Extension extends VirtualMethodCallSubstitutionSample {
 
-            @Override
             public int foo() {
                 return 2;
             }

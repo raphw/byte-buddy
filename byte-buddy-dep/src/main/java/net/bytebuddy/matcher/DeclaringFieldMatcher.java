@@ -27,12 +27,16 @@ public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatc
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getDeclaredFields());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "declaresFields(" + matcher + ")";
     }

@@ -2,14 +2,8 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.annotation.AnnotationList;
-import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -31,15 +25,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForInliningTest {
 
@@ -47,32 +37,26 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
 
     private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
-    @Override
     protected DynamicType.Builder<?> createPlain() {
         return create(Foo.class);
     }
 
-    @Override
     protected DynamicType.Builder<?> createDisabledContext() {
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).rebase(Foo.class);
     }
 
-    @Override
     protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
         return new ByteBuddy().with(AnnotationRetention.DISABLED).rebase(annotatedClass);
     }
 
-    @Override
     protected DynamicType.Builder<?> create(Class<?> type) {
         return new ByteBuddy().rebase(type);
     }
 
-    @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().rebase(typeDescription, classFileLocator);
     }
 
-    @Override
     protected DynamicType.Builder<?> createPlainWithoutValidation() {
         return new ByteBuddy().with(TypeValidation.DISABLED).redefine(Foo.class);
     }

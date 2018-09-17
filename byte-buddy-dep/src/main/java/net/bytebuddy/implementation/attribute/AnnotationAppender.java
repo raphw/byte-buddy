@@ -86,12 +86,16 @@ public interface AnnotationAppender {
                 this.classVisitor = classVisitor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return classVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return classVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -117,12 +121,16 @@ public interface AnnotationAppender {
                 this.methodVisitor = methodVisitor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -155,12 +163,16 @@ public interface AnnotationAppender {
                 this.parameterIndex = parameterIndex;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return methodVisitor.visitParameterAnnotation(parameterIndex, annotationTypeDescriptor, visible);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -186,12 +198,16 @@ public interface AnnotationAppender {
                 this.fieldVisitor = fieldVisitor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
                 return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
@@ -263,7 +279,9 @@ public interface AnnotationAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter) {
             switch (annotationDescription.getRetention()) {
                 case RUNTIME:
@@ -291,7 +309,9 @@ public interface AnnotationAppender {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, annotationValueFilter);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter, int typeReference, String typePath) {
             switch (annotationDescription.getRetention()) {
                 case RUNTIME:
@@ -566,7 +586,9 @@ public interface AnnotationAppender {
             return annotationAppender;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender onGenericArray(TypeDescription.Generic genericArray) {
             return genericArray.getComponentType().accept(new ForTypeAnnotations(apply(genericArray, typePath),
                     annotationValueFilter,
@@ -574,7 +596,9 @@ public interface AnnotationAppender {
                     typePath + COMPONENT_TYPE_PATH));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender onWildcard(TypeDescription.Generic wildcard) {
             TypeList.Generic lowerBounds = wildcard.getLowerBounds();
             return (lowerBounds.isEmpty()
@@ -582,7 +606,9 @@ public interface AnnotationAppender {
                     : lowerBounds.getOnly()).accept(new ForTypeAnnotations(apply(wildcard, typePath), annotationValueFilter, typeReference, typePath + WILDCARD_TYPE_PATH));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender onParameterizedType(TypeDescription.Generic parameterizedType) {
             StringBuilder typePath = new StringBuilder(this.typePath);
             for (int index = 0; index < parameterizedType.asErasure().getInnerClassCount(); index++) {
@@ -606,12 +632,16 @@ public interface AnnotationAppender {
             return annotationAppender;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender onTypeVariable(TypeDescription.Generic typeVariable) {
             return apply(typeVariable, typePath);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationAppender onNonGenericType(TypeDescription.Generic typeDescription) {
             StringBuilder typePath = new StringBuilder(this.typePath);
             for (int index = 0; index < typeDescription.asErasure().getInnerClassCount(); index++) {

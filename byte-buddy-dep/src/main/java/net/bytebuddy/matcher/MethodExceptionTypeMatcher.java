@@ -26,12 +26,16 @@ public class MethodExceptionTypeMatcher<T extends MethodDescription> extends Ele
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getExceptionTypes());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "exceptions(" + matcher + ")";
     }

@@ -64,17 +64,23 @@ public interface MethodRebaseResolver {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution resolve(MethodDescription.InDefinedShape methodDescription) {
             return new Resolution.Preserved(methodDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public List<DynamicType> getAuxiliaryTypes() {
             return Collections.emptyList();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
             return Collections.emptyMap();
         }
@@ -130,17 +136,23 @@ public interface MethodRebaseResolver {
                 this.methodDescription = methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isRebased() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation getAdditionalArguments() {
                 throw new IllegalStateException("Cannot process additional arguments for non-rebased method: " + methodDescription);
             }
@@ -180,17 +192,23 @@ public interface MethodRebaseResolver {
                 return new ForRebasedMethod(new RebasedMethod(instrumentedType, methodDescription, methodNameTransformer));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isRebased() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation getAdditionalArguments() {
                 return StackManipulation.Trivial.INSTANCE;
             }
@@ -228,42 +246,58 @@ public interface MethodRebaseResolver {
                     this.methodNameTransformer = methodNameTransformer;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getReturnType() {
                     return methodDescription.getReturnType().asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return Opcodes.ACC_SYNTHETIC
                             | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : EMPTY_MASK)
@@ -271,7 +305,9 @@ public interface MethodRebaseResolver {
                             | (instrumentedType.isInterface() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getInternalName() {
                     return methodNameTransformer.transform(methodDescription);
                 }
@@ -309,17 +345,23 @@ public interface MethodRebaseResolver {
                 return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isRebased() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape getResolvedMethod() {
                 return methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation getAdditionalArguments() {
                 return NullConstant.INSTANCE;
             }
@@ -350,47 +392,65 @@ public interface MethodRebaseResolver {
                     this.placeholderType = placeholderType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getReturnType() {
                     return TypeDescription.Generic.VOID;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, CompoundList.of(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return methodDescription.getDeclaringType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getInternalName() {
                     return MethodDescription.CONSTRUCTOR_INTERNAL_NAME;
                 }
@@ -463,7 +523,9 @@ public interface MethodRebaseResolver {
                     : new Default(resolutions, Collections.singletonList(placeholderType));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution resolve(MethodDescription.InDefinedShape methodDescription) {
             Resolution resolution = resolutions.get(methodDescription);
             return resolution == null
@@ -471,12 +533,16 @@ public interface MethodRebaseResolver {
                     : resolution;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public List<DynamicType> getAuxiliaryTypes() {
             return dynamicTypes;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
             Map<MethodDescription.SignatureToken, Resolution> tokenMap = new HashMap<MethodDescription.SignatureToken, Resolution>();
             for (Map.Entry<MethodDescription.InDefinedShape, Resolution> entry : resolutions.entrySet()) {

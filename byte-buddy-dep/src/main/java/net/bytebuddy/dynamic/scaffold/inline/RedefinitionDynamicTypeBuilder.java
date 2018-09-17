@@ -167,7 +167,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 classFileLocator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,

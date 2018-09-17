@@ -176,12 +176,16 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         return wrapperType.asGenericType();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                 wrapperType.asErasure().getInternalName(),
@@ -250,7 +254,9 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             this.primitiveUnboxingDelegate = primitiveUnboxingDelegate;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation assignUnboxedTo(TypeDescription.Generic targetType, Assigner assigner, Assigner.Typing typing) {
             return new Compound(
                     primitiveUnboxingDelegate,
@@ -298,7 +304,9 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             this.originalType = originalType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation assignUnboxedTo(TypeDescription.Generic target, Assigner assigner, Assigner.Typing typing) {
             PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(target);
             return new Compound(

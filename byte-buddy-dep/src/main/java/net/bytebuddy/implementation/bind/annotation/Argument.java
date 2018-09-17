@@ -135,12 +135,16 @@ public @interface Argument {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Argument> getHandledType() {
             return Argument.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Argument> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

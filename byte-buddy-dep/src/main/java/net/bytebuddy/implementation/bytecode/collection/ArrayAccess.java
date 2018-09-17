@@ -158,12 +158,16 @@ public enum ArrayAccess {
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Loader implements StackManipulation {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(loadOpcode);
             return stackSize.toIncreasingSize().aggregate(new Size(-2, 0));
@@ -176,12 +180,16 @@ public enum ArrayAccess {
     @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
     protected class Putter implements StackManipulation {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(storeOpcode);
             return stackSize.toDecreasingSize().aggregate(new Size(-2, 0));

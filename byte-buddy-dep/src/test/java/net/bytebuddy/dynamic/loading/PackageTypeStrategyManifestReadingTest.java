@@ -78,7 +78,6 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getMainAttributes().put(Attributes.Name.IMPLEMENTATION_VENDOR, QUX + BAZ);
         manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.FALSE.toString());
         when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
-            @Override
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -119,7 +118,6 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.IMPLEMENTATION_VENDOR, QUX + BAZ);
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.SEALED, Boolean.FALSE.toString());
         when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
-            @Override
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -147,7 +145,6 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.TRUE.toString());
         when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
-            @Override
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -171,7 +168,6 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getEntries().put(FOO + "/" + BAR + "/", new Attributes());
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.SEALED, Boolean.TRUE.toString());
         when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
-            @Override
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);

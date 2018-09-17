@@ -61,7 +61,9 @@ public class TransformationAction implements Action<Task> {
         this.task = task;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void execute(Task task) {
         try {
             processOutputDirectory(this.task.getDestinationDir(), this.task.getClasspath());

@@ -17,7 +17,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 

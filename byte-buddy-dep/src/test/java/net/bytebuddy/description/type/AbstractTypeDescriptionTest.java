@@ -795,7 +795,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             V extends ArrayList<? super ArrayList<V>>,
             W extends Callable<W[]>> extends ArrayList<T> implements Callable<T> {
 
-        @Override
         public T call() throws Exception {
             return null;
         }

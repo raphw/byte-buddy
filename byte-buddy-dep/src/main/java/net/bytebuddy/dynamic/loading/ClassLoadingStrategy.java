@@ -121,27 +121,37 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             this.dispatcher = dispatcher;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return dispatcher.load(classLoader, types);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
             return dispatcher.with(protectionDomain);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
             return dispatcher.with(packageDefinitionStrategy);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Configurable<ClassLoader> allowExistingTypes() {
             return dispatcher.allowExistingTypes();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Configurable<ClassLoader> opened() {
             return dispatcher.opened();
         }
@@ -197,7 +207,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                 this.forbidExisting = forbidExisting;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 return new ClassInjector.UsingReflection(classLoader,
                         protectionDomain,
@@ -205,22 +217,30 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                         forbidExisting).inject(types);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> opened() {
                 return this;
             }
@@ -313,29 +333,39 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                 this.sealed = sealed;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 return childFirst
                         ? ByteArrayClassLoader.ChildFirst.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed)
                         : ByteArrayClassLoader.load(classLoader, types, protectionDomain, persistenceHandler, packageDefinitionStrategy, forbidExisting, sealed);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, sealed);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, false, sealed);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Configurable<ClassLoader> opened() {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting, false);
             }
@@ -414,7 +444,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             return new UsingLookup(ClassInjector.UsingLookup.of(lookup));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return classInjector.inject(types);
         }
@@ -448,7 +480,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             this.folder = folder;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             ClassInjector classInjector = classLoader == null
                     ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
@@ -490,7 +524,9 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             this.protectionDomain = protectionDomain;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
         }

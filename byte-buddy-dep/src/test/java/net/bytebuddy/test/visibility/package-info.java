@@ -1,1 +1,2 @@
-@PackageAnnotation package net.bytebuddy.test.visibility;
+@PackageAnnotation
+package net.bytebuddy.test.visibility;

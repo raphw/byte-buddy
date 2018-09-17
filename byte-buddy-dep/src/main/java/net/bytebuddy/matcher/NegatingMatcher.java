@@ -24,12 +24,16 @@ public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return !matcher.matches(target);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "not(" + matcher + ')';
     }

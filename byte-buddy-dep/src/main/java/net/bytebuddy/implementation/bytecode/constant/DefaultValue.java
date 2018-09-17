@@ -80,12 +80,16 @@ public enum DefaultValue implements StackManipulation {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return stackManipulation.isValid();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         return stackManipulation.apply(methodVisitor, implementationContext);
     }

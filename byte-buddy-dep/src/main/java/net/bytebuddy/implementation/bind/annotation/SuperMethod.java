@@ -70,12 +70,16 @@ public @interface SuperMethod {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<SuperMethod> getHandledType() {
             return SuperMethod.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(final AnnotationDescription.Loadable<SuperMethod> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -138,12 +142,16 @@ public @interface SuperMethod {
                 this.privileged = privileged;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return specialMethodInvocation.isValid();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 StackManipulation methodConstant = privileged
                         ? MethodConstant.ofPrivileged(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC))

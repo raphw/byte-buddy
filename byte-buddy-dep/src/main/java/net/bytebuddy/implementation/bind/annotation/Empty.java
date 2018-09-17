@@ -32,12 +32,16 @@ public @interface Empty {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Empty> getHandledType() {
             return Empty.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Empty> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

@@ -346,7 +346,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 any(MethodList.class),
                 anyInt(),
                 anyInt())).then(new Answer<ClassVisitor>() {
-            @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return new ClassVisitor(OpenedClassReader.ASM_API, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
@@ -386,7 +385,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(createPlain()
                 .defineField(FOO, String.class, Ownership.STATIC, Visibility.PUBLIC)
                 .initializer(new ByteCodeAppender() {
-                    @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new Size(new StackManipulation.Compound(
                                 new TextConstant(FOO),
@@ -437,7 +435,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .typeVariable(FOO)
                 .typeVariable(BAR, String.class)
                 .transform(named(BAR), new Transformer<TypeVariableToken>() {
-                    @Override
                     public TypeVariableToken transform(TypeDescription instrumentedType, TypeVariableToken target) {
                         return new TypeVariableToken(target.getSymbol(), Collections.singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Integer.class)));
                     }
@@ -1473,7 +1470,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlainWithoutValidation()
                 .visit(new AsmVisitorWrapper.AbstractBase() {
 
-                    @Override
                     public ClassVisitor wrap(TypeDescription instrumentedType,
                                              ClassVisitor classVisitor,
                                              Implementation.Context implementationContext,
@@ -1556,7 +1552,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static class PreparedField implements Implementation {
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
@@ -1564,7 +1559,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build())));
         }
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
         }
@@ -1572,7 +1566,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static class PreparedMethod implements Implementation {
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
@@ -1586,7 +1579,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     TypeDescription.Generic.UNDEFINED));
         }
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE);
         }

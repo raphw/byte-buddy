@@ -197,7 +197,6 @@ public class InvocationHandlerAdapterTest {
             methods = new ArrayList<Method>();
         }
 
-        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             methods.add(method);
             assertThat(args.length, is(1));
@@ -208,14 +207,14 @@ public class InvocationHandlerAdapterTest {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && marker.equals(((Foo) other).marker);
+        public int hashCode() {
+            return marker.hashCode();
         }
 
         @Override
-        public int hashCode() {
-            return marker.hashCode();
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && marker.equals(((Foo) other).marker);
         }
     }
 
@@ -229,7 +228,6 @@ public class InvocationHandlerAdapterTest {
 
     private static class Qux implements InvocationHandler {
 
-        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             return ((Integer) args[0]) * 2L;
         }

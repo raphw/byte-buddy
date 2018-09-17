@@ -10,12 +10,10 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 
 public class IllegalEntryPoint implements EntryPoint {
 
-    @Override
     public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
         throw new RuntimeException();
     }
 
-    @Override
     public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                             ByteBuddy byteBuddy,
                                             ClassFileLocator classFileLocator,

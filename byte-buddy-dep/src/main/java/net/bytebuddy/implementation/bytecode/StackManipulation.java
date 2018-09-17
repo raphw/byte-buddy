@@ -39,12 +39,16 @@ public interface StackManipulation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             throw new IllegalStateException("An illegal stack manipulation must not be applied");
         }
@@ -60,12 +64,16 @@ public interface StackManipulation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return StackSize.ZERO.toIncreasingSize();
         }
@@ -181,7 +189,9 @@ public interface StackManipulation {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             for (StackManipulation stackManipulation : stackManipulations) {
                 if (!stackManipulation.isValid()) {
@@ -191,7 +201,9 @@ public interface StackManipulation {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             Size size = new Size(0, 0);
             for (StackManipulation stackManipulation : stackManipulations) {

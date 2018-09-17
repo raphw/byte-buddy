@@ -26,12 +26,16 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         this.mode = mode;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return (mode.getModifiers() & target.getModifiers()) != 0;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return mode.getDescription();
     }
@@ -170,7 +174,9 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
             return modifiers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String toString() {
             return "ModifierMatcher.Mode." + name();
         }

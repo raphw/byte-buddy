@@ -27,7 +27,9 @@ public class SetAccessibleAction<T extends AccessibleObject> implements Privileg
         this.accessibleObject = accessibleObject;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public T run() {
         accessibleObject.setAccessible(true);
         return accessibleObject;

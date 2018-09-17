@@ -39,12 +39,16 @@ public @interface StubValue {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<StubValue> getHandledType() {
             return StubValue.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StubValue> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

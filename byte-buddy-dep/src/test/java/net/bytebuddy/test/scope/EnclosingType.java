@@ -122,7 +122,7 @@ public class EnclosingType {
     }
 
     private Class<?> local() {
-        class Baz{
+        class Baz {
             /* empty */
         }
         return Baz.class;

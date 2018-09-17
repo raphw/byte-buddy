@@ -14,7 +14,6 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
     @Mock
     private TypeDescription leftType, rightType;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

@@ -23,7 +23,6 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
     @Mock
     private ParameterDescription weakTargetParameter, dominantTargetParameter;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

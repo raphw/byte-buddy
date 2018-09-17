@@ -32,12 +32,16 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
     @HashCodeAndEqualsPlugin.Enhance
     class NoOp implements Plugin {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             throw new IllegalStateException("Cannot apply non-operational plugin");
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(TypeDescription target) {
             return false;
         }
@@ -63,7 +67,9 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
             this.matcher = matcher;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(TypeDescription target) {
             return matcher.matches(target);
         }
@@ -105,7 +111,9 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             for (Plugin plugin : plugins) {
                 if (plugin.matches(typeDescription)) {
@@ -115,7 +123,9 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
             return builder;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(TypeDescription target) {
             for (Plugin plugin : plugins) {
                 if (plugin.matches(target)) {

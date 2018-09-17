@@ -1866,7 +1866,6 @@ public class AdviceTest {
 
         public Object foo;
 
-        @Override
         public String foo() {
             return null;
         }

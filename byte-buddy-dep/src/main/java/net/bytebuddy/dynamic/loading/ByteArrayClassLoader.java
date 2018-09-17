@@ -323,7 +323,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         byte[] binaryRepresentation = persistenceHandler.lookup(name, typeDefinitions);
         if (binaryRepresentation == null) {
@@ -341,12 +343,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     protected URL findResource(String name) {
         return persistenceHandler.url(name, typeDefinitions);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     protected Enumeration<URL> findResources(String name) {
         URL url = persistenceHandler.url(name, typeDefinitions);
         return url == null
@@ -402,7 +408,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Initializable run() {
                 try {
@@ -434,12 +442,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
                 return classLoader;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public SynchronizationStrategy initialize() {
                 return this;
             }
@@ -465,7 +477,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.method = method;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
                 try {
                     return method.invoke(classLoader, name);
@@ -476,7 +490,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicitly user responsibility")
             public SynchronizationStrategy initialize() {
                 try {
@@ -522,12 +538,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.invokeWithArguments = invokeWithArguments;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public SynchronizationStrategy initialize() {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Object getClassLoadingLock(ByteArrayClassLoader classLoader, String name) {
                 try {
                     return invokeWithArguments.invoke(bindTo.invoke(methodHandle, classLoader), (Object) new Object[]{name});
@@ -567,7 +587,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             this.binaryRepresentation = binaryRepresentation;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<?> run() {
             int packageIndex = name.lastIndexOf('.');
             if (packageIndex != -1) {
@@ -617,7 +639,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public PackageLookupStrategy run() {
                 if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
@@ -642,7 +666,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Package apply(ByteArrayClassLoader classLoader, String name) {
                 return classLoader.doGetPackage(name);
             }
@@ -668,7 +694,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.getDefinedPackage = getDefinedPackage;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Package apply(ByteArrayClassLoader classLoader, String name) {
                 try {
                     return (Package) getDefinedPackage.invoke(classLoader, name);
@@ -833,7 +861,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.binaryRepresentation = binaryRepresentation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public URL run() {
                 try {
                     return new URL(URL_SCHEMA,
@@ -868,7 +898,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     this.binaryRepresentation = binaryRepresentation;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 protected URLConnection openConnection(URL url) {
                     return new ByteArrayUrlConnection(url, new ByteArrayInputStream(binaryRepresentation));
                 }
@@ -894,12 +926,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                         this.inputStream = inputStream;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void connect() {
                         connected = true;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public InputStream getInputStream() {
                         connect(); // Mimics the semantics of an actual URL connection.
                         return inputStream;
@@ -1109,7 +1145,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             return result;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
                 Class<?> type = findLoadedClass(name);
@@ -1131,7 +1169,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public URL getResource(String name) {
             URL url = persistenceHandler.url(name, typeDefinitions);
             // If a class resource is defined by this class loader but it is not defined in a manifest manner,
@@ -1142,7 +1182,9 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     : super.getResource(name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Enumeration<URL> getResources(String name) throws IOException {
             URL url = persistenceHandler.url(name, typeDefinitions);
             return url == null
@@ -1197,12 +1239,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.enumeration = enumeration;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean hasMoreElements() {
                 return nextElement != null && enumeration.hasMoreElements();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public URL nextElement() {
                 if (nextElement != null && enumeration.hasMoreElements()) {
                     try {
@@ -1227,12 +1273,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasMoreElements() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public URL nextElement() {
             throw new NoSuchElementException();
         }
@@ -1257,12 +1307,16 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             this.element = element;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasMoreElements() {
             return element != null;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public URL nextElement() {
             if (element == null) {
                 throw new NoSuchElementException();

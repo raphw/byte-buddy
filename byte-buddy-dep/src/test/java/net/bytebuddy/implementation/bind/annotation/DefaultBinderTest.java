@@ -31,7 +31,6 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         super(Default.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -41,7 +40,6 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         when(interfaces.asErasures()).thenReturn(rawInterfaces);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Default> getSimpleBinder() {
         return Default.Binder.INSTANCE;
     }

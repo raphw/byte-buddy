@@ -9,7 +9,9 @@ import org.gradle.api.tasks.compile.AbstractCompile;
  */
 public class ByteBuddyPlugin implements Plugin<Project> {
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void apply(Project project) {
         project.getTasks().withType(AbstractCompile.class, PostCompilationAction.of(project));
     }

@@ -226,7 +226,6 @@ public class AnnotationAppenderDefaultTest {
         @SuppressWarnings("all")
         class Instance implements Foo {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Foo.class;
             }
@@ -239,7 +238,6 @@ public class AnnotationAppenderDefaultTest {
         @SuppressWarnings("all")
         class Instance implements FooSourceCodeRetention {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return FooSourceCodeRetention.class;
             }
@@ -252,7 +250,6 @@ public class AnnotationAppenderDefaultTest {
         @SuppressWarnings("all")
         class Instance implements FooByteCodeRetention {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return FooByteCodeRetention.class;
             }
@@ -264,7 +261,6 @@ public class AnnotationAppenderDefaultTest {
         @SuppressWarnings("all")
         class Instance implements FooNoRetention {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return FooNoRetention.class;
             }
@@ -285,12 +281,10 @@ public class AnnotationAppenderDefaultTest {
                 this.value = value;
             }
 
-            @Override
             public String value() {
                 return value;
             }
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Qux.class;
             }
@@ -335,32 +329,26 @@ public class AnnotationAppenderDefaultTest {
                 this.type = type;
             }
 
-            @Override
             public String value() {
                 return value;
             }
 
-            @Override
             public int[] array() {
                 return array;
             }
 
-            @Override
             public Foo annotation() {
                 return annotation;
             }
 
-            @Override
             public Enum enumeration() {
                 return enumeration;
             }
 
-            @Override
             public Class<?> type() {
                 return type;
             }
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Baz.class;
             }

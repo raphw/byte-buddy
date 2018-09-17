@@ -31,12 +31,16 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
         this.mode = mode;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(String target) {
         return mode.matches(value, target);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return mode.getDescription() + '(' + value + ')';
     }

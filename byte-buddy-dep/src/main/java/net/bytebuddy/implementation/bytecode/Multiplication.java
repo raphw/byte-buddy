@@ -50,12 +50,16 @@ public enum Multiplication implements StackManipulation {
         this.stackSize = stackSize;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(opcode);
         return stackSize.toDecreasingSize();

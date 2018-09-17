@@ -28,7 +28,7 @@ public interface FieldRegistry {
      * @param matcher                       The matcher to identify any field that this definition concerns.
      * @param fieldAttributeAppenderFactory The field attribute appender factory to apply on any matched field.
      * @param defaultValue                  The default value to write to the field or {@code null} if no default value is to be set for the field.
-     * @param transformer              The field transformer to apply to any matched field.
+     * @param transformer                   The field transformer to apply to any matched field.
      * @return An adapted version of this method registry.
      */
     FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
@@ -59,7 +59,9 @@ public interface FieldRegistry {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Record target(FieldDescription fieldDescription) {
                 return new Record.ForImplicitField(fieldDescription);
             }
@@ -93,7 +95,9 @@ public interface FieldRegistry {
             this.entries = entries;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
                                      FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                      Object defaultValue,
@@ -104,7 +108,9 @@ public interface FieldRegistry {
             return new Default(entries);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
             List<Compiled.Entry> entries = new ArrayList<Compiled.Entry>(this.entries.size());
             Map<FieldAttributeAppender.Factory, FieldAttributeAppender> fieldAttributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
@@ -151,7 +157,7 @@ public interface FieldRegistry {
              * @param matcher                       The matcher to identify any field that this definition concerns.
              * @param fieldAttributeAppenderFactory The field attribute appender factory to apply on any matched field.
              * @param defaultValue                  The default value to write to the field or {@code null} if no default value is to be set for the field.
-             * @param transformer              The field transformer to apply to any matched field.
+             * @param transformer                   The field transformer to apply to any matched field.
              */
             protected Entry(LatentMatcher<? super FieldDescription> matcher,
                             FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
@@ -190,7 +196,9 @@ public interface FieldRegistry {
                 return transformer;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
                 return matcher.resolve(typeDescription);
             }
@@ -223,7 +231,9 @@ public interface FieldRegistry {
                 this.entries = entries;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Record target(FieldDescription fieldDescription) {
                 for (Entry entry : entries) {
                     if (entry.matches(fieldDescription)) {
@@ -265,7 +275,7 @@ public interface FieldRegistry {
                  * @param matcher                The matcher to identify any field that this definition concerns.
                  * @param fieldAttributeAppender The field attribute appender to apply on any matched field.
                  * @param defaultValue           The default value to write to the field or {@code null} if no default value is to be set for the field.
-                 * @param transformer       The field transformer to apply to any matched field.
+                 * @param transformer            The field transformer to apply to any matched field.
                  */
                 protected Entry(ElementMatcher<? super FieldDescription> matcher,
                                 FieldAttributeAppender fieldAttributeAppender,
@@ -288,7 +298,9 @@ public interface FieldRegistry {
                     return new Record.ForExplicitField(fieldAttributeAppender, defaultValue, transformer.transform(instrumentedType, fieldDescription));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean matches(FieldDescription target) {
                     return matcher.matches(target);
                 }

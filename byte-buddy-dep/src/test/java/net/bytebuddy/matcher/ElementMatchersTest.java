@@ -32,12 +32,11 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isToString;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class ElementMatchersTest {
@@ -1338,7 +1337,6 @@ public class ElementMatchersTest {
 
         public static class Extension extends GenericType<Void> {
 
-            @Override
             public void foo(Void t) {
                 /* empty */
             }
@@ -1377,7 +1375,7 @@ public class ElementMatchersTest {
     private static class CloneMethods {
 
         @Override
-        public CloneMethods clone() throws CloneNotSupportedException {
+        public CloneMethods clone() {
             return new CloneMethods();
         }
 

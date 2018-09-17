@@ -28,12 +28,16 @@ public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends Ele
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.asTypeList());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasTypes(" + matcher + ")";
     }

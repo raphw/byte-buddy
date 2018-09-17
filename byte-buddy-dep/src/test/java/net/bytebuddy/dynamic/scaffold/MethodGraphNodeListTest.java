@@ -32,22 +32,18 @@ public class MethodGraphNodeListTest extends AbstractFilterableListTest<MethodGr
         secondNode = new MethodGraph.Node.Simple(second);
     }
 
-    @Override
     protected MethodGraph.Node getFirst() throws Exception {
         return firstNode;
     }
 
-    @Override
     protected MethodGraph.Node getSecond() throws Exception {
         return secondNode;
     }
 
-    @Override
     protected MethodGraph.NodeList asList(List<MethodGraph.Node> elements) {
         return new MethodGraph.NodeList(elements);
     }
 
-    @Override
     protected MethodGraph.Node asElement(MethodGraph.Node element) {
         return element;
     }

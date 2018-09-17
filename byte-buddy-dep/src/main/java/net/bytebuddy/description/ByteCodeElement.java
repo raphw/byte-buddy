@@ -168,12 +168,16 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
                 return new TokenList<S>(values);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S get(int index) {
                 return tokens.get(index);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int size() {
                 return tokens.size();
             }

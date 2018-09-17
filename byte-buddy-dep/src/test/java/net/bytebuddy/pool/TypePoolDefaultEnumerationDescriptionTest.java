@@ -23,7 +23,6 @@ public class TypePoolDefaultEnumerationDescriptionTest extends AbstractEnumerati
         typePool.clear();
     }
 
-    @Override
     protected EnumerationDescription describe(Enum<?> enumeration,
                                               Class<?> carrierType,
                                               MethodDescription.InDefinedShape annotationMethod) {

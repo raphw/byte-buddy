@@ -7,12 +7,10 @@ import net.bytebuddy.dynamic.DynamicType;
 
 public class IllegalPlugin implements Plugin {
 
-    @Override
     public boolean matches(TypeDescription target) {
         throw new RuntimeException();
     }
 
-    @Override
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         throw new RuntimeException();
     }

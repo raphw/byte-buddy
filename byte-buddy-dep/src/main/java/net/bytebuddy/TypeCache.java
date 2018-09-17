@@ -320,7 +320,9 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             super(sort);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<?> find(ClassLoader classLoader, S key) {
             try {
                 return super.find(classLoader, key);
@@ -329,7 +331,9 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<?> insert(ClassLoader classLoader, S key, Class<?> type) {
             try {
                 return super.insert(classLoader, key, type);
@@ -338,7 +342,9 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<?> findOrInsert(ClassLoader classLoader, S key, Callable<Class<?>> builder) {
             try {
                 return super.findOrInsert(classLoader, key, builder);
@@ -347,7 +353,9 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<?> findOrInsert(ClassLoader classLoader, S key, Callable<Class<?>> builder, Object monitor) {
             try {
                 return super.findOrInsert(classLoader, key, builder, monitor);
@@ -400,6 +408,11 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
+        public int hashCode() {
+            return types.hashCode();
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -408,11 +421,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             }
             SimpleKey simpleKey = (SimpleKey) other;
             return types.equals(simpleKey.types);
-        }
-
-        @Override
-        public int hashCode() {
-            return types.hashCode();
         }
     }
 }

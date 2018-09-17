@@ -88,7 +88,9 @@ public interface TypeInitializer extends ByteCodeAppender {
                 this.annotationValueFilterFactory = annotationValueFilterFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
                 typeInitializer.wrap(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).apply(classVisitor,
                         implementationContext,
@@ -107,22 +109,30 @@ public interface TypeInitializer extends ByteCodeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDefined() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer expandWith(ByteCodeAppender byteCodeAppenderFactory) {
             return new TypeInitializer.Simple(byteCodeAppenderFactory);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record) {
             return record;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             return new Size(0, 0);
         }
@@ -148,22 +158,30 @@ public interface TypeInitializer extends ByteCodeAppender {
             this.byteCodeAppender = byteCodeAppender;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDefined() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
             return new TypeInitializer.Simple(new Compound(this.byteCodeAppender, byteCodeAppender));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record) {
             return record.prepend(byteCodeAppender);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
         }

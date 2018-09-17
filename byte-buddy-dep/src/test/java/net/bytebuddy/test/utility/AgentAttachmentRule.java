@@ -24,7 +24,6 @@ public class AgentAttachmentRule implements MethodRule {
         available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt().isAvailable();
     }
 
-    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
@@ -62,7 +61,6 @@ public class AgentAttachmentRule implements MethodRule {
             this.reason = reason;
         }
 
-        @Override
         public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: " + reason);
         }

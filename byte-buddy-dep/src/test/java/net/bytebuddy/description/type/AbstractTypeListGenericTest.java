@@ -3,11 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeListGenericTest<U> extends AbstractFilterableListTest<TypeDescription.Generic, TypeList.Generic, U> {

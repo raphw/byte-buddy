@@ -120,7 +120,9 @@ public class ClassLoaderResolver implements Closeable {
         return new URLClassLoader(urls.toArray(new URL[urls.size()]), ByteBuddy.class.getClassLoader());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void close() throws IOException {
         for (ClassLoader classLoader : classLoaders.values()) {
             if (classLoader instanceof Closeable) { // URLClassLoaders are only closeable since Java 1.7.

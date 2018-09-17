@@ -115,12 +115,16 @@ public @interface AllArguments {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<AllArguments> getHandledType() {
             return AllArguments.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<AllArguments> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

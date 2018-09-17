@@ -39,12 +39,16 @@ public class TypeCreation implements StackManipulation {
         return new TypeCreation(typeDescription);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.NEW, typeDescription.getInternalName());
         return new Size(1, 1);

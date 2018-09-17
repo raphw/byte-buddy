@@ -1,12 +1,9 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
 
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.isBridge;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -131,7 +128,7 @@ public class TypeDescriptionGenericOfNonGenericTypeForReifiedErasureTest {
         List<?> bar();
     }
 
-    private static class Qux<T extends Number> extends Foo<T> implements Bar<T>{
+    private static class Qux<T extends Number> extends Foo<T> implements Bar<T> {
 
         T foo;
 

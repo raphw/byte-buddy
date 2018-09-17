@@ -26,7 +26,6 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         super(Super.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -38,7 +37,6 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(targetType.asErasure()).thenReturn(targetType);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Super> getSimpleBinder() {
         return Super.Binder.INSTANCE;
     }

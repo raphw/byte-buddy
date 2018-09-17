@@ -45,7 +45,6 @@ public class ArrayFactoryPrimitiveTest extends AbstractArrayFactoryTest {
         testCreationUsing(primitiveType, storeOpcode);
     }
 
-    @Override
     protected void verifyArrayCreation(MethodVisitor methodVisitor) {
         verify(methodVisitor).visitIntInsn(Opcodes.NEWARRAY, createOpcode);
     }

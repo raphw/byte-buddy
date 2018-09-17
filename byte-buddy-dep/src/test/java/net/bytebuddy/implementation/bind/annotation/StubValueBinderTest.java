@@ -22,14 +22,12 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
         super(StubValue.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
         when(genericType.asErasure()).thenReturn(type);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<StubValue> getSimpleBinder() {
         return StubValue.Binder.INSTANCE;
     }

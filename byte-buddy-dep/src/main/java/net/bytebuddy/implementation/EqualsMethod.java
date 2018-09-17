@@ -200,12 +200,16 @@ public class EqualsMethod implements Implementation {
         return new EqualsMethod(superClassCheck, TypeCompatibilityCheck.SUBCLASS, ignored, nonNullable, comparator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         if (implementationTarget.getInstrumentedType().isInterface()) {
             throw new IllegalStateException("Cannot implement meaningful equals method for " + implementationTarget.getInstrumentedType());
@@ -354,17 +358,23 @@ public class EqualsMethod implements Implementation {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation before() {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation after() {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getRequiredVariablePadding() {
                 return StackSize.ZERO.getSize();
             }
@@ -419,17 +429,23 @@ public class EqualsMethod implements Implementation {
                 endOfBlock = new Label();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation before() {
                 return new UsingJump.BeforeInstruction();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation after() {
                 return new UsingJump.AfterInstruction();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getRequiredVariablePadding() {
                 return 2;
             }
@@ -440,12 +456,16 @@ public class EqualsMethod implements Implementation {
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class BeforeInstruction implements StackManipulation {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isValid() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                     methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + 1);
@@ -465,12 +485,16 @@ public class EqualsMethod implements Implementation {
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class AfterInstruction implements StackManipulation {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isValid() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfBlock);
                     methodVisitor.visitLabel(secondValueNull);
@@ -503,7 +527,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code long} value.
          */
         LONG {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitInsn(Opcodes.LCMP);
                 return new Size(-2, 0);
@@ -514,7 +538,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code float} value.
          */
         FLOAT {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitInsn(Opcodes.FCMPL);
                 return new Size(-1, 0);
@@ -525,7 +549,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code double} value.
          */
         DOUBLE {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitInsn(Opcodes.DCMPL);
                 return new Size(-2, 0);
@@ -536,7 +560,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code boolean[]} value.
          */
         BOOLEAN_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([Z[Z)Z", false);
                 return new Size(-1, 0);
@@ -547,7 +571,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code byte[]} value.
          */
         BYTE_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([B[B)Z", false);
                 return new Size(-1, 0);
@@ -558,7 +582,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code short[]} value.
          */
         SHORT_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([S[S)Z", false);
                 return new Size(-1, 0);
@@ -569,7 +593,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code char[]} value.
          */
         CHARACTER_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([C[C)Z", false);
                 return new Size(-1, 0);
@@ -580,7 +604,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for an {@code int[]} value.
          */
         INTEGER_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([I[I)Z", false);
                 return new Size(-1, 0);
@@ -591,7 +615,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code long[]} value.
          */
         LONG_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([J[J)Z", false);
                 return new Size(-1, 0);
@@ -602,7 +626,7 @@ public class EqualsMethod implements Implementation {
          * A comparator for a {@code float[]} value.
          */
         FLOAT_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([F[F)Z", false);
                 return new Size(-1, 0);
@@ -613,7 +637,7 @@ public class EqualsMethod implements Implementation {
          * A transformer for a {@code double[]} value.
          */
         DOUBLE_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([D[D)Z", false);
                 return new Size(-1, 0);
@@ -624,7 +648,7 @@ public class EqualsMethod implements Implementation {
          * A transformer for a reference array value.
          */
         REFERENCE_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "equals", "([Ljava/lang/Object;[Ljava/lang/Object;)Z", false);
                 return new Size(-1, 0);
@@ -635,7 +659,7 @@ public class EqualsMethod implements Implementation {
          * A transformer for a nested reference array value.
          */
         NESTED_ARRAY {
-            @Override
+            /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "deepEquals", "([Ljava/lang/Object;[Ljava/lang/Object;)Z", false);
                 return new Size(-1, 0);
@@ -686,7 +710,9 @@ public class EqualsMethod implements Implementation {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
@@ -736,7 +762,9 @@ public class EqualsMethod implements Implementation {
             this.nonNullable = nonNullable;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             if (instrumentedMethod.isStatic()) {
                 throw new IllegalStateException("Hash code method must not be static: " + instrumentedMethod);
@@ -872,12 +900,16 @@ public class EqualsMethod implements Implementation {
             return new ConditionalReturn(jumpCondition, Opcodes.ICONST_1);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
             Label label = new Label();
             methodVisitor.visitJumpInsn(jumpCondition, label);
@@ -901,7 +933,9 @@ public class EqualsMethod implements Implementation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             return 0;
         }
@@ -952,7 +986,9 @@ public class EqualsMethod implements Implementation {
             }
         };
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             if (resolve(left.getType()) && !resolve(right.getType())) {
                 return -1;
@@ -1009,7 +1045,9 @@ public class EqualsMethod implements Implementation {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             for (Comparator<? super FieldDescription.InDefinedShape> comparator : comparators) {
                 int comparison = comparator.compare(left, right);

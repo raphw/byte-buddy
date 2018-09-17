@@ -19,6 +19,7 @@ public abstract class TypeAnnotationOtherSamples<T> {
     }
 
     static class Qux {
+
         class Baz {
             /* empty */
         }

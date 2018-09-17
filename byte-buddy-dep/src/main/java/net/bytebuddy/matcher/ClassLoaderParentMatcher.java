@@ -24,7 +24,9 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
         this.classLoader = classLoader;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         ClassLoader current = classLoader;
         while (current != null) {
@@ -36,7 +38,9 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
         return target == null;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isParentOf(" + classLoader + ')';
     }

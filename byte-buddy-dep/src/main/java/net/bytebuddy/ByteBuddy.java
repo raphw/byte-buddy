@@ -1252,7 +1252,9 @@ public class ByteBuddy {
             this.values = values;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             for (String value : values) {
                 instrumentedType = instrumentedType.withField(new FieldDescription.Token(value,
@@ -1266,7 +1268,9 @@ public class ByteBuddy {
                     .withInitializer(new InitializationAppender(values));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new ValuesMethodAppender(implementationTarget.getInstrumentedType());
         }
@@ -1291,7 +1295,9 @@ public class ByteBuddy {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
                 MethodDescription cloneMethod = TypeDescription.Generic.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
@@ -1324,7 +1330,9 @@ public class ByteBuddy {
                 this.values = values;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 TypeDescription instrumentedType = instrumentedMethod.getDeclaringType().asErasure();
                 MethodDescription enumConstructor = instrumentedType.getDeclaredMethods()

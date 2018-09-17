@@ -8,7 +8,6 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
@@ -140,7 +139,6 @@ public class MethodDelegationSuperTest {
 
     public static class Foo implements Qux {
 
-        @Override
         public Object qux() {
             return FOO;
         }
@@ -172,7 +170,6 @@ public class MethodDelegationSuperTest {
 
     public abstract static class FooBarQuxBaz implements Qux {
 
-        @Override
         public abstract Object qux();
     }
 
@@ -185,7 +182,6 @@ public class MethodDelegationSuperTest {
 
     public static class Bar extends GenericBase<String> {
 
-        @Override
         public String qux(String value) {
             return super.qux(value);
         }

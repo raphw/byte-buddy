@@ -78,10 +78,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     TypeDescription UNDEFINED = null;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     FieldList<FieldDescription.InDefinedShape> getDeclaredFields();
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     MethodList<MethodDescription.InDefinedShape> getDeclaredMethods();
 
     /**
@@ -156,10 +160,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     boolean isInHierarchyWith(TypeDescription typeDescription);
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     TypeDescription getComponentType();
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     TypeDescription getDeclaringType();
 
     /**
@@ -507,13 +515,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         String getSymbol();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         Generic getComponentType();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         FieldList<FieldDescription.InGenericShape> getDeclaredFields();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         MethodList<MethodDescription.InGenericShape> getDeclaredMethods();
 
         /**
@@ -582,27 +596,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     return genericArray;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     return wildcard;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     return parameterizedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onTypeVariable(Generic typeVariable) {
                     return typeVariable;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription;
                 }
@@ -618,27 +642,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     return genericArray.asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     throw new IllegalArgumentException("Cannot erase a wildcard type: " + wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     return parameterizedType.asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onTypeVariable(Generic typeVariable) {
                     return typeVariable.asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.asRawType();
                 }
@@ -654,17 +688,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), Empty.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), Empty.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
@@ -675,12 +715,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             Empty.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onTypeVariable(Generic typeVariable) {
                     return new NonAnnotatedTypeVariable(typeVariable);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Empty.INSTANCE)
@@ -706,22 +750,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.typeVariable = typeVariable;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeList.Generic getUpperBounds() {
                         return typeVariable.getUpperBounds();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeVariableSource getTypeVariableSource() {
                         return typeVariable.getTypeVariableSource();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public String getSymbol() {
                         return typeVariable.getSymbol();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return new AnnotationList.Empty();
                     }
@@ -740,27 +792,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher onGenericArray(Generic genericArray) {
                     return new Dispatcher.ForGenericArray(genericArray);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher onWildcard(Generic wildcard) {
                     throw new IllegalArgumentException("A wildcard is not a first level type: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher onParameterizedType(Generic parameterizedType) {
                     return new Dispatcher.ForParameterizedType(parameterizedType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher onTypeVariable(Generic typeVariable) {
                     return new Dispatcher.ForTypeVariable(typeVariable);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher onNonGenericType(Generic typeDescription) {
                     return new Dispatcher.ForNonGenericType(typeDescription.asErasure());
                 }
@@ -783,7 +845,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     abstract class AbstractBase implements Dispatcher, Visitor<Boolean> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public boolean isAssignableFrom(Generic typeDescription) {
                             return typeDescription.accept(this);
                         }
@@ -809,19 +873,25 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.typeDescription = typeDescription;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onGenericArray(Generic genericArray) {
                             return typeDescription.isArray()
                                     ? genericArray.getComponentType().accept(new ForNonGenericType(typeDescription.getComponentType()))
                                     : typeDescription.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(typeDescription.asGenericType());
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onWildcard(Generic wildcard) {
                             throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onParameterizedType(Generic parameterizedType) {
                             if (typeDescription.equals(parameterizedType.asErasure())) {
                                 return true;
@@ -838,7 +908,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return typeDescription.represents(Object.class);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onTypeVariable(Generic typeVariable) {
                             for (Generic upperBound : typeVariable.getUpperBounds()) {
                                 if (isAssignableFrom(upperBound)) {
@@ -848,7 +920,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return this.typeDescription.isAssignableFrom(typeDescription.asErasure());
                         }
@@ -874,22 +948,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.typeVariable = typeVariable;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onGenericArray(Generic genericArray) {
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onWildcard(Generic wildcard) {
                             throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onParameterizedType(Generic parameterizedType) {
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onTypeVariable(Generic typeVariable) {
                             if (typeVariable.equals(this.typeVariable)) {
                                 return true;
@@ -902,7 +984,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return false;
                         }
@@ -928,17 +1012,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.parameterizedType = parameterizedType;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onGenericArray(Generic genericArray) {
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onWildcard(Generic wildcard) {
                             throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onParameterizedType(Generic parameterizedType) {
                             if (this.parameterizedType.asErasure().equals(parameterizedType.asErasure())) {
                                 Generic fromOwner = this.parameterizedType.getOwnerType(), toOwner = parameterizedType.getOwnerType();
@@ -969,7 +1059,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onTypeVariable(Generic typeVariable) {
                             for (Generic upperBound : typeVariable.getUpperBounds()) {
                                 if (isAssignableFrom(upperBound)) {
@@ -979,7 +1071,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onNonGenericType(Generic typeDescription) {
                             if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
                                 return true;
@@ -1006,12 +1100,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                              */
                             INSTANCE;
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Dispatcher onGenericArray(Generic genericArray) {
                                 return new InvariantBinding(genericArray);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Dispatcher onWildcard(Generic wildcard) {
                                 TypeList.Generic lowerBounds = wildcard.getLowerBounds();
                                 return lowerBounds.isEmpty()
@@ -1019,17 +1117,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                         : new ContravariantBinding(lowerBounds.getOnly());
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Dispatcher onParameterizedType(Generic parameterizedType) {
                                 return new InvariantBinding(parameterizedType);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Dispatcher onTypeVariable(Generic typeVariable) {
                                 return new InvariantBinding(typeVariable);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Dispatcher onNonGenericType(Generic typeDescription) {
                                 return new InvariantBinding(typeDescription);
                             }
@@ -1054,7 +1158,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     this.typeDescription = typeDescription;
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public boolean isAssignableFrom(Generic typeDescription) {
                                     return typeDescription.equals(this.typeDescription);
                                 }
@@ -1080,7 +1186,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     this.upperBound = upperBound;
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public boolean isAssignableFrom(Generic typeDescription) {
                                     if (typeDescription.getSort().isWildcard()) {
                                         return typeDescription.getLowerBounds().isEmpty() && upperBound.accept(Assigner.INSTANCE)
@@ -1111,7 +1219,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     this.lowerBound = lowerBound;
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public boolean isAssignableFrom(Generic typeDescription) {
                                     if (typeDescription.getSort().isWildcard()) {
                                         TypeList.Generic lowerBounds = typeDescription.getLowerBounds();
@@ -1144,27 +1254,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.genericArray = genericArray;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onGenericArray(Generic genericArray) {
                             return this.genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(genericArray.getComponentType());
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onWildcard(Generic wildcard) {
                             throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onParameterizedType(Generic parameterizedType) {
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onTypeVariable(Generic typeVariable) {
                             return false;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return typeDescription.isArray()
                                     && genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(typeDescription.getComponentType());
@@ -1182,12 +1302,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A validator for checking a type's non-null super class.
                  */
                 SUPER_CLASS(false, false, false, false) {
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return super.onNonGenericType(typeDescription) && !typeDescription.isInterface();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onParameterizedType(Generic parameterizedType) {
                         return !parameterizedType.isInterface();
                     }
@@ -1197,12 +1317,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A validator for an interface type.
                  */
                 INTERFACE(false, false, false, false) {
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return super.onNonGenericType(typeDescription) && typeDescription.isInterface();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onParameterizedType(Generic parameterizedType) {
                         return parameterizedType.isInterface();
                     }
@@ -1232,12 +1352,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A validator for a method exception type.
                  */
                 EXCEPTION(false, false, true, false) {
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onParameterizedType(Generic parameterizedType) {
                         return false;
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onTypeVariable(Generic typeVariable) {
                         for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                             if (bound.accept(this)) {
@@ -1247,7 +1367,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return false;
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return typeDescription.asErasure().isAssignableTo(Throwable.class);
                     }
@@ -1293,27 +1413,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.acceptsVoid = acceptsVoid;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Boolean onGenericArray(Generic genericArray) {
                     return acceptsArray;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Boolean onWildcard(Generic wildcard) {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Boolean onParameterizedType(Generic parameterizedType) {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Boolean onTypeVariable(Generic typeVariable) {
                     return acceptsVariable;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Boolean onNonGenericType(Generic typeDescription) {
                     return (acceptsArray || !typeDescription.isArray())
                             && (acceptsPrimitive || !typeDescription.isPrimitive())
@@ -1373,12 +1503,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return true;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Boolean onGenericArray(Generic genericArray) {
                         return isValid(genericArray) && genericArray.getComponentType().accept(this);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Boolean onWildcard(Generic wildcard) {
                         if (!isValid(wildcard)) {
                             return false;
@@ -1389,7 +1523,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 : lowerBounds).getOnly().accept(this);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Boolean onParameterizedType(Generic parameterizedType) {
                         if (!isValid(parameterizedType)) {
                             return false;
@@ -1406,12 +1542,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return true;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Boolean onTypeVariable(Generic typeVariable) {
                         return isValid(typeVariable);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return isValid(typeDescription) && (!typeDescription.isArray() || typeDescription.getComponentType().accept(this));
                     }
@@ -1444,7 +1584,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * visiting a potential raw type.
                  */
                 INITIATING {
-                    @Override
+                    /** {@inheritDoc} */
                     public Generic onParameterizedType(Generic parameterizedType) {
                         return parameterizedType;
                     }
@@ -1455,28 +1595,36 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * should only be applied when a type was inherited from a reified type.
                  */
                 INHERITING {
-                    @Override
+                    /** {@inheritDoc} */
                     public Generic onParameterizedType(Generic parameterizedType) {
                         return new OfParameterizedType.ForReifiedType(parameterizedType);
                     }
                 };
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     throw new IllegalArgumentException("Cannot reify a generic array: " + genericArray);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     throw new IllegalArgumentException("Cannot reify a wildcard: " + wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onTypeVariable(Generic typeVariable) {
                     throw new IllegalArgumentException("Cannot reify a type variable: " + typeVariable);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     TypeDescription erasure = typeDescription.asErasure();
                     return erasure.isGenerified()
@@ -1510,18 +1658,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.signatureVisitor = signatureVisitor;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public SignatureVisitor onGenericArray(Generic genericArray) {
                     genericArray.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
                     return signatureVisitor;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public SignatureVisitor onWildcard(Generic wildcard) {
                     throw new IllegalStateException("Unexpected wildcard: " + wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public SignatureVisitor onParameterizedType(Generic parameterizedType) {
                     onOwnableType(parameterizedType);
                     signatureVisitor.visitEnd();
@@ -1546,13 +1700,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public SignatureVisitor onTypeVariable(Generic typeVariable) {
                     signatureVisitor.visitTypeVariable(typeVariable.getSymbol());
                     return signatureVisitor;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public SignatureVisitor onNonGenericType(Generic typeDescription) {
                     if (typeDescription.isArray()) {
                         typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
@@ -1579,7 +1737,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         super(signatureVisitor);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public SignatureVisitor onWildcard(Generic wildcard) {
                         TypeList.Generic upperBounds = wildcard.getUpperBounds(), lowerBounds = wildcard.getLowerBounds();
                         if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
@@ -1592,25 +1752,33 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return signatureVisitor;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public SignatureVisitor onGenericArray(Generic genericArray) {
                         genericArray.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                         return signatureVisitor;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public SignatureVisitor onParameterizedType(Generic parameterizedType) {
                         parameterizedType.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                         return signatureVisitor;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public SignatureVisitor onTypeVariable(Generic typeVariable) {
                         typeVariable.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                         return signatureVisitor;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public SignatureVisitor onNonGenericType(Generic typeDescription) {
                         typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                         return signatureVisitor;
@@ -1624,7 +1792,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             abstract class Substitutor implements Visitor<Generic> {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     Generic ownerType = parameterizedType.getOwnerType();
                     List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
@@ -1639,17 +1809,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             parameterizedType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription)
@@ -1669,7 +1845,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public abstract static class WithoutTypeSubstitution extends Substitutor {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onNonGenericType(Generic typeDescription) {
                         return typeDescription;
                     }
@@ -1758,7 +1936,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return new ForAttachment(typeDescription, typeDescription);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onTypeVariable(Generic typeVariable) {
                         Generic attachedVariable = typeVariableSource.findVariable(typeVariable.getSymbol());
                         if (attachedVariable == null) {
@@ -1808,7 +1988,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return new ForDetachment(is(typeDefinition));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onTypeVariable(Generic typeVariable) {
                         return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable);
                     }
@@ -1841,7 +2023,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.parameterizedType = parameterizedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onTypeVariable(Generic typeVariable) {
                         return typeVariable.getTypeVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
                     }
@@ -1867,7 +2051,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.typeVariable = typeVariable;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Generic onType(TypeDescription typeDescription) {
                             // A type variable might be undeclared due to breaking inner class semantics or due to incorrect scoping by a compiler.
                             Generic typeArgument = parameterizedType.findBindingOf(typeVariable);
@@ -1876,7 +2062,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     : typeArgument;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
                             return new RetainedMethodTypeVariable(typeVariable);
                         }
@@ -1901,22 +2089,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.typeVariable = typeVariable;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeList.Generic getUpperBounds() {
                             return typeVariable.getUpperBounds().accept(ForTypeVariableBinding.this);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeVariableSource getTypeVariableSource() {
                             return typeVariable.getTypeVariableSource();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public String getSymbol() {
                             return typeVariable.getSymbol();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotationList getDeclaredAnnotations() {
                             return typeVariable.getDeclaredAnnotations();
                         }
@@ -1950,7 +2146,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 : typeDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic onTypeVariable(Generic typeVariable) {
                         return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable);
                     }
@@ -1977,33 +2175,43 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.declaringType = declaringType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onGenericArray(Generic genericArray) {
                     return declaringType.isGenerified()
                             ? new Generic.OfNonGenericType.Latent(genericArray.asErasure(), genericArray)
                             : genericArray;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onWildcard(Generic wildcard) {
                     throw new IllegalStateException("Did not expect wildcard on top-level: " + wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onParameterizedType(Generic parameterizedType) {
                     return declaringType.isGenerified()
                             ? new Generic.OfNonGenericType.Latent(parameterizedType.asErasure(), parameterizedType)
                             : parameterizedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onTypeVariable(Generic typeVariable) {
                     return declaringType.isGenerified()
                             ? new Generic.OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable)
                             : typeVariable;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription;
                 }
@@ -2046,22 +2254,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.typeVariableTokens = typeVariableTokens;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription onGenericArray(Generic genericArray) {
                     return TargetType.resolve(genericArray.asErasure(), declaringType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription onWildcard(Generic wildcard) {
                     throw new IllegalStateException("A wildcard cannot be a top-level type: " + wildcard);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription onParameterizedType(Generic parameterizedType) {
                     return TargetType.resolve(parameterizedType.asErasure(), declaringType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription onTypeVariable(Generic typeVariable) {
                     for (TypeVariableToken typeVariableToken : typeVariableTokens) {
                         if (typeVariable.getSymbol().equals(typeVariableToken.getSymbol())) {
@@ -2071,7 +2287,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return TargetType.resolve(declaringType.findVariable(typeVariable.getSymbol()).asErasure(), declaringType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription onNonGenericType(Generic typeDescription) {
                     return TargetType.resolve(typeDescription.asErasure(), declaringType);
                 }
@@ -2262,7 +2480,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Dispatcher run() {
                         try {
                             return new ForJava8CapableVm(Class.class.getMethod("getAnnotatedSuperclass"),
@@ -2291,47 +2511,65 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveSuperClassType(Class<?> type) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveFieldType(Field field) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveReturnType(Method method) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
                         return NoOp.INSTANCE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic resolveReceiverType(AccessibleObject executable) {
                         return UNDEFINED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic resolve(AnnotatedElement annotatedType) {
                         throw new IllegalStateException("Loaded annotated type cannot be represented on this VM");
                     }
@@ -2413,42 +2651,58 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.getType = getType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
                         return new AnnotatedTypeVariableType(typeVariable);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveSuperClassType(Class<?> type) {
                         return new AnnotatedSuperClass(type);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
                         return new AnnotatedInterfaceType(type, index);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveFieldType(Field field) {
                         return new AnnotatedFieldType(field);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveReturnType(Method method) {
                         return new AnnotatedReturnType(method);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
                         return new AnnotatedParameterizedType(executable, index);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
                         return new AnnotatedExceptionType(executable, index);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic resolveReceiverType(AccessibleObject executable) {
                         try {
                             return resolve((AnnotatedElement) getAnnotatedReceiverType.invoke(executable, NO_ARGUMENTS));
@@ -2459,7 +2713,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic resolve(AnnotatedElement annotatedType) {
                         try {
                             return annotatedType == null
@@ -2492,7 +2748,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.annotatedElement = annotatedElement;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             return annotatedElement;
                         }
@@ -2518,12 +2776,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.typeVariable = typeVariable;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             return (AnnotatedElement) typeVariable;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotationReader ofTypeVariableBoundType(int index) {
                             return new ForTypeVariableBoundType.OfFormalTypeVariable(typeVariable, index);
                         }
@@ -2549,7 +2811,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.type = type;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) getAnnotatedSuperclass.invoke(type, NO_ARGUMENTS);
@@ -2588,7 +2852,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.index = index;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedInterfaces.invoke(type), index);
@@ -2620,7 +2886,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.field = field;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) getAnnotatedType.invoke(field, NO_ARGUMENTS);
@@ -2652,7 +2920,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.method = method;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) getAnnotatedReturnType.invoke(method, NO_ARGUMENTS);
@@ -2691,7 +2961,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.index = index;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable, NO_ARGUMENTS), index);
@@ -2730,7 +3002,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             this.index = index;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotatedElement resolve() {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable, NO_ARGUMENTS), index);
@@ -2754,67 +3028,93 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotatedElement resolve() {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList asList() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofWildcardUpperBoundType(int index) {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofWildcardLowerBoundType(int index) {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofTypeVariableBoundType(int index) {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofTypeArgument(int index) {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofOwnerType() {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofOuterClass() {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofComponentType() {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
                     throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
                     throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Annotation[] getAnnotations() {
                     throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Annotation[] getDeclaredAnnotations() {
                     return new Annotation[0];
                 }
@@ -2830,42 +3130,58 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 protected static final Object[] NO_ARGUMENTS = new Object[0];
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofWildcardUpperBoundType(int index) {
                     return new ForWildcardUpperBoundType(this, index);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofWildcardLowerBoundType(int index) {
                     return new ForWildcardLowerBoundType(this, index);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofTypeVariableBoundType(int index) {
                     return new ForTypeVariableBoundType(this, index);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofTypeArgument(int index) {
                     return new ForTypeArgument(this, index);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofOwnerType() {
                     return ForOwnerType.of(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofOuterClass() {
                     return ForOwnerType.of(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationReader ofComponentType() {
                     return new ForComponentType(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList asList() {
                     return new AnnotationList.ForLoadedAnnotations(resolve().getDeclaredAnnotations());
                 }
@@ -2911,7 +3227,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotatedElement resolve() {
                         return resolve(annotationReader.resolve());
                     }
@@ -3083,7 +3401,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.index = index;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotatedElement resolve() {
                         try {
                             return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable, NO_ARGUMENTS), index);
@@ -3228,22 +3548,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         abstract class AbstractBase extends ModifierReviewable.AbstractBase implements Generic {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return asErasure().getModifiers();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic asGenericType() {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic asRawType() {
                 return asErasure().asGenericType();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return equals(Sort.describe(type));
             }
@@ -3261,12 +3589,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         abstract class OfNonGenericType extends AbstractBase {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return Sort.NON_GENERIC;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getSuperClass() {
                 TypeDescription erasure = asErasure();
                 Generic superClass = erasure.getSuperClass();
@@ -3278,7 +3610,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         : new Generic.LazyProjection.WithResolvedErasure(superClass, new Visitor.ForRawType(erasure), Empty.INSTANCE);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getInterfaces() {
                 TypeDescription erasure = asErasure();
                 if (TypeDescription.AbstractBase.RAW_TYPES) {
@@ -3287,7 +3621,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(erasure.getInterfaces(), new Visitor.ForRawType(erasure));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 TypeDescription erasure = asErasure();
                 return new FieldList.TypeSubstituting(this, erasure.getDeclaredFields(), TypeDescription.AbstractBase.RAW_TYPES
@@ -3295,7 +3631,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         : new Visitor.ForRawType(erasure));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 TypeDescription erasure = asErasure();
                 return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), TypeDescription.AbstractBase.RAW_TYPES
@@ -3303,72 +3641,100 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         : new Visitor.ForRawType(erasure));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A non-generic type does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 throw new IllegalStateException("A non-generic type does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return visitor.onNonGenericType(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return asErasure().getTypeName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 throw new IllegalStateException("A non-generic type does not imply upper type bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getLowerBounds() {
                 throw new IllegalStateException("A non-generic type does not imply lower type bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A non-generic type does not imply a type variable source: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSymbol() {
                 throw new IllegalStateException("A non-generic type does not imply a symbol: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return asErasure().getStackSize();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return asErasure().getActualName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return asErasure().isArray();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return asErasure().isPrimitive();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return asErasure().represents(type);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
             }
@@ -3472,12 +3838,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return TypeDescription.ForLoadedType.of(type);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     Class<?> declaringClass = this.type.getDeclaringClass();
                     return declaringClass == null
@@ -3485,7 +3855,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new ForLoadedType(declaringClass, annotationReader.ofOuterClass());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     Class<?> componentType = type.getComponentType();
                     return componentType == null
@@ -3493,12 +3865,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new ForLoadedType(componentType, annotationReader.ofComponentType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     return this.type == type || super.represents(type);
                 }
@@ -3525,12 +3901,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -3538,7 +3918,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : declaringType.asGenericType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -3546,7 +3928,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : componentType.asGenericType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
@@ -3610,12 +3994,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     return declaringType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -3623,12 +4011,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : componentType.asGenericType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return typeDescription;
                 }
@@ -3666,7 +4058,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new ForErasure(typeDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     Generic superClass = typeDescription.getSuperClass();
                     return superClass == null
@@ -3674,27 +4068,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new LazyProjection.WithResolvedErasure(superClass, Visitor.Reifying.INHERITING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(typeDescription.getInterfaces(), Visitor.Reifying.INHERITING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                     return new FieldList.TypeSubstituting(this, typeDescription.getDeclaredFields(), Visitor.TypeErasing.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                     return new MethodList.TypeSubstituting(this, typeDescription.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -3702,7 +4106,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : of(declaringType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
@@ -3710,7 +4116,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : of(componentType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
@@ -3723,112 +4131,159 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         abstract class OfGenericArray extends AbstractBase {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return getComponentType().getSort().isNonGeneric()
                         ? Sort.NON_GENERIC
                         : Sort.GENERIC_ARRAY;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription asErasure() {
                 return ArrayProjection.of(getComponentType().asErasure(), 1);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getSuperClass() {
                 return TypeDescription.Generic.OBJECT;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getInterfaces() {
                 return ARRAY_INTERFACES;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 return new FieldList.Empty<FieldDescription.InGenericShape>();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 return new MethodList.Empty<MethodDescription.InGenericShape>();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 throw new IllegalStateException("A generic array type does not imply upper type bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getLowerBounds() {
                 throw new IllegalStateException("A generic array type does not imply lower type bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A generic array type does not imply a type variable source: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A generic array type does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 throw new IllegalStateException("A generic array type does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getOwnerType() {
                 return Generic.UNDEFINED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSymbol() {
                 throw new IllegalStateException("A generic array type does not imply a symbol: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return getSort().isNonGeneric()
                         ? asErasure().getTypeName()
                         : toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return getSort().isNonGeneric()
                         ? asErasure().getActualName()
                         : toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return getSort().isNonGeneric()
                         ? visitor.onNonGenericType(this)
                         : visitor.onGenericArray(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return StackSize.SINGLE;
+            }
+
+            @Override
+            public int hashCode() {
+                return getSort().isNonGeneric()
+                        ? asErasure().hashCode()
+                        : getComponentType().hashCode();
             }
 
             @Override
@@ -3844,13 +4299,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
                 Generic typeDescription = (Generic) other;
                 return typeDescription.getSort().isGenericArray() && getComponentType().equals(typeDescription.getComponentType());
-            }
-
-            @Override
-            public int hashCode() {
-                return getSort().isNonGeneric()
-                        ? asErasure().hashCode()
-                        : getComponentType().hashCode();
             }
 
             @Override
@@ -3895,17 +4343,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationReader = annotationReader;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     return genericArrayType == type || super.represents(type);
                 }
@@ -3937,12 +4391,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     return componentType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
@@ -3959,102 +4417,142 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public static final String SYMBOL = "?";
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return Sort.WILDCARD;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription asErasure() {
                 throw new IllegalStateException("A wildcard does not represent an erasable type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getSuperClass() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getInterfaces() {
                 throw new IllegalStateException("A wildcard does not imply an interface type definition: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 throw new IllegalStateException("A wildcard does not imply field definitions: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 throw new IllegalStateException("A wildcard does not imply method definitions: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 throw new IllegalStateException("A wildcard does not imply a component type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A wildcard does not imply a type variable source: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A wildcard does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 throw new IllegalStateException("A wildcard does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getOwnerType() {
                 throw new IllegalStateException("A wildcard does not imply an owner type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSymbol() {
                 throw new IllegalStateException("A wildcard does not imply a symbol: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return equals(Sort.describe(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return visitor.onWildcard(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 throw new IllegalStateException("A wildcard does not imply an operand stack size: " + this);
             }
@@ -4135,22 +4633,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationReader = annotationReader;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getUpperBounds() {
                     return new WildcardUpperBoundTypeList(wildcardType.getUpperBounds(), annotationReader);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getLowerBounds() {
                     return new WildcardLowerBoundTypeList(wildcardType.getLowerBounds(), annotationReader);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     return wildcardType == type || super.represents(type);
                 }
@@ -4181,12 +4687,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.annotationReader = annotationReader;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic get(int index) {
                         return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBoundType(index));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return upperBound.length;
                     }
@@ -4218,12 +4728,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.annotationReader = annotationReader;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic get(int index) {
                         return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBoundType(index));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return lowerBound.length;
                     }
@@ -4295,17 +4809,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound), annotationSource);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getUpperBounds() {
                     return new TypeList.Generic.Explicit(upperBounds);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getLowerBounds() {
                     return new TypeList.Generic.Explicit(lowerBounds);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
@@ -4317,12 +4837,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         abstract class OfParameterizedType extends AbstractBase {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return Sort.PARAMETERIZED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
@@ -4330,22 +4854,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         : new LazyProjection.WithResolvedErasure(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getInterfaces() {
                 return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(asErasure().getInterfaces(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 Generic typeDescription = this;
                 do {
@@ -4360,67 +4892,93 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return Generic.UNDEFINED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 throw new IllegalStateException("A parameterized type does not imply upper bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getLowerBounds() {
                 throw new IllegalStateException("A parameterized type does not imply lower bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 throw new IllegalStateException("A parameterized type does not imply a component type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A parameterized type does not imply a type variable source: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSymbol() {
                 throw new IllegalStateException("A parameterized type does not imply a symbol: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return equals(Sort.describe(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return visitor.onParameterizedType(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return StackSize.SINGLE;
             }
@@ -4567,12 +5125,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationReader = annotationReader;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeArguments() {
                     return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -4580,17 +5142,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : Sort.describe(ownerType, annotationReader.ofOwnerType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return TypeDescription.ForLoadedType.of((Class<?>) parameterizedType.getRawType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     return parameterizedType == type || super.represents(type);
                 }
@@ -4621,13 +5189,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.annotationReader = annotationReader;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic get(int index) {
                         // Obfuscators sometimes render parameterized type arguments as null values.
                         return Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return argumentType.length;
                     }
@@ -4677,22 +5249,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return rawType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     return ownerType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeArguments() {
                     return new TypeList.Generic.Explicit(parameters);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
@@ -4719,7 +5299,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.parameterizedType = parameterizedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     Generic superClass = super.getSuperClass();
                     return superClass == null
@@ -4727,27 +5309,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new LazyProjection.WithResolvedErasure(superClass, Visitor.Reifying.INHERITING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(super.getInterfaces(), Visitor.Reifying.INHERITING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                     return new FieldList.TypeSubstituting(this, super.getDeclaredFields(), Visitor.TypeErasing.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                     return new MethodList.TypeSubstituting(this, super.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeArguments() {
                     return new TypeList.Generic.ForDetachedTypes(parameterizedType.getTypeArguments(), Visitor.TypeErasing.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     Generic ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
@@ -4755,12 +5347,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : ownerType.accept(Visitor.Reifying.INHERITING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return parameterizedType.asErasure();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
@@ -4797,17 +5393,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : new OfNonGenericType.ForErasure(typeDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeArguments() {
                     return new TypeList.Generic.ForDetachedTypes(typeDescription.getTypeVariables(), Visitor.AnnotationStripper.INSTANCE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
@@ -4815,7 +5417,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : of(declaringType);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
@@ -4827,12 +5431,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         abstract class OfTypeVariable extends AbstractBase {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return Sort.VARIABLE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription asErasure() {
                 TypeList.Generic upperBounds = getUpperBounds();
                 return upperBounds.isEmpty()
@@ -4840,87 +5448,121 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         : upperBounds.get(0).asErasure();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getInterfaces() {
                 throw new IllegalStateException("A type variable does not imply an interface type definition: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 throw new IllegalStateException("A type variable does not imply field definitions: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 throw new IllegalStateException("A type variable does not imply method definitions: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 throw new IllegalStateException("A type variable does not imply a component type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A type variable does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 throw new IllegalStateException("A type variable does not imply type arguments: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getLowerBounds() {
                 throw new IllegalStateException("A type variable does not imply lower bounds: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getOwnerType() {
                 throw new IllegalStateException("A type variable does not imply an owner type: " + this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return toString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return getSymbol();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return visitor.onTypeVariable(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return StackSize.SINGLE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return equals(Sort.describe(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
@@ -4974,112 +5616,156 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Sort getSort() {
                     return Sort.VARIABLE_SYMBOLIC;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getSymbol() {
                     return symbol;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     throw new IllegalStateException("A symbolic type variable does not imply an erasure: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getUpperBounds() {
                     throw new IllegalStateException("A symbolic type variable does not imply an upper type bound: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableSource getTypeVariableSource() {
                     throw new IllegalStateException("A symbolic type variable does not imply a variable source: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     throw new IllegalStateException("A symbolic type variable does not imply an interface type definition: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                     throw new IllegalStateException("A symbolic type variable does not imply field definitions: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                     throw new IllegalStateException("A symbolic type variable does not imply method definitions: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     throw new IllegalStateException("A symbolic type variable does not imply a component type: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeArguments() {
                     throw new IllegalStateException("A symbolic type variable does not imply type arguments: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic findBindingOf(Generic typeVariable) {
                     throw new IllegalStateException("A symbolic type variable does not imply type arguments: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getLowerBounds() {
                     throw new IllegalStateException("A symbolic type variable does not imply lower bounds: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getOwnerType() {
                     throw new IllegalStateException("A symbolic type variable does not imply an owner type: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getTypeName() {
                     return toString();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getActualName() {
                     return getSymbol();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public <T> T accept(Visitor<T> visitor) {
                     return visitor.onTypeVariable(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackSize getStackSize() {
                     return StackSize.SINGLE;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isArray() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isPrimitive() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     if (type == null) {
                         throw new NullPointerException();
@@ -5087,7 +5773,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterator<TypeDefinition> iterator() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
@@ -5149,7 +5837,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationReader = annotationReader;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableSource getTypeVariableSource() {
                     GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
                     if (genericDeclaration instanceof Class) {
@@ -5163,22 +5853,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getUpperBounds() {
                     return new TypeVariableBoundList(typeVariable.getBounds(), annotationReader);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getSymbol() {
                     return typeVariable.getName();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean represents(java.lang.reflect.Type type) {
                     return typeVariable == type || super.represents(type);
                 }
@@ -5209,12 +5907,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.annotationReader = annotationReader;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic get(int index) {
                         return Sort.describe(bound[index], annotationReader.ofTypeVariableBoundType(index));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return bound.length;
                     }
@@ -5247,22 +5949,30 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getUpperBounds() {
                     return typeVariable.getUpperBounds();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableSource getTypeVariableSource() {
                     return typeVariable.getTypeVariableSource();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getSymbol() {
                     return typeVariable.getSymbol();
                 }
@@ -5283,92 +5993,128 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             protected abstract Generic resolve();
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Sort getSort() {
                 return resolve().getSort();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 return resolve().getDeclaredFields();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 return resolve().getDeclaredMethods();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 return resolve().getUpperBounds();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getLowerBounds() {
                 return resolve().getLowerBounds();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 return resolve().getComponentType();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 return resolve().getTypeArguments();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 return resolve().findBindingOf(typeVariable);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource getTypeVariableSource() {
                 return resolve().getTypeVariableSource();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic getOwnerType() {
                 return resolve().getOwnerType();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getTypeName() {
                 return resolve().getTypeName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSymbol() {
                 return resolve().getSymbol();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getActualName() {
                 return resolve().getActualName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T> T accept(Visitor<T> visitor) {
                 return resolve().accept(visitor);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return asErasure().getStackSize();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return asErasure().isArray();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return asErasure().isPrimitive();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(java.lang.reflect.Type type) {
                 return resolve().represents(type);
             }
@@ -5396,17 +6142,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public abstract static class WithLazyNavigation extends LazyProjection {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     return LazySuperClass.of(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     return LazyInterfaceList.of(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterator<TypeDefinition> iterator() {
                     return new TypeDefinition.SuperClassIterator(this);
                 }
@@ -5442,12 +6194,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 : new LazySuperClass(delegate);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return resolve().getDeclaredAnnotations();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription asErasure() {
                         return delegate.asErasure().getSuperClass().asErasure();
                     }
@@ -5492,12 +6248,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.rawInterface = rawInterface;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return resolve().getDeclaredAnnotations();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription asErasure() {
                         return rawInterface.asErasure();
                     }
@@ -5545,12 +6305,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return new LazyInterfaceList(delegate, delegate.asErasure().getInterfaces());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Generic get(int index) {
                         return new LazyInterfaceType(delegate, index, rawInterfaces.get(index));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return rawInterfaces.size();
                     }
@@ -5568,7 +6332,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     protected abstract AnnotationReader getAnnotationReader();
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return getAnnotationReader().asList();
                     }
@@ -5580,17 +6346,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public abstract static class WithEagerNavigation extends LazyProjection {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     return resolve().getSuperClass();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     return resolve().getInterfaces();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterator<TypeDefinition> iterator() {
                     return resolve().iterator();
                 }
@@ -5607,7 +6379,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      */
                     protected abstract AnnotationReader getAnnotationReader();
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return getAnnotationReader().asList();
                     }
@@ -5633,7 +6407,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.type = type;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @CachedReturnPlugin.Enhance("resolved")
                 protected Generic resolve() {
                     java.lang.reflect.Type superClass = type.getGenericSuperclass();
@@ -5642,7 +6418,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : Sort.describe(superClass, getAnnotationReader());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     Class<?> superClass = type.getSuperclass();
                     return superClass == null
@@ -5681,7 +6459,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return Sort.describe(field.getGenericType(), getAnnotationReader());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return ForLoadedType.of(field.getType());
                 }
@@ -5717,7 +6497,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return Sort.describe(method.getGenericReturnType(), getAnnotationReader());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return ForLoadedType.of(method.getReturnType());
                 }
@@ -5771,7 +6553,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
@@ -5825,7 +6609,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             : OfNonGenericType.ForLoadedType.of(erasure[index]);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return TypeDescription.ForLoadedType.of(erasure[index]);
                 }
@@ -5879,12 +6665,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.annotationSource = annotationSource;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationSource.getDeclaredAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription asErasure() {
                     return delegate.asErasure();
                 }
@@ -6632,57 +7422,79 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAssignableFrom(Class<?> type) {
             return isAssignableFrom(ForLoadedType.of(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAssignableFrom(TypeDescription typeDescription) {
             return isAssignable(this, typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAssignableTo(Class<?> type) {
             return isAssignableTo(ForLoadedType.of(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAssignableTo(TypeDescription typeDescription) {
             return isAssignable(typeDescription, this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInHierarchyWith(Class<?> type) {
             return isAssignableTo(type) || isAssignableFrom(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInHierarchyWith(TypeDescription typeDescription) {
             return isAssignableTo(typeDescription) || isAssignableFrom(typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription asErasure() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic asGenericType() {
             return new Generic.OfNonGenericType.ForErasure(this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Sort getSort() {
             return Sort.NON_GENERIC;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInstance(Object value) {
             return isAssignableFrom(value.getClass());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationValue(Object value) {
             if ((represents(Class.class) && value instanceof TypeDescription)
                     || (value instanceof AnnotationDescription && ((AnnotationDescription) value).getAnnotationType().equals(this))
@@ -6726,12 +7538,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return getName().replace('.', '/');
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getActualModifiers(boolean superFlag) {
             int actualModifiers = getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
                     ? Opcodes.ACC_DEPRECATED
@@ -6746,7 +7562,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getGenericSignature() {
             try {
                 SignatureWriter signatureWriter = new SignatureWriter();
@@ -6779,7 +7597,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSamePackage(TypeDescription typeDescription) {
             PackageDescription thisPackage = getPackage(), otherPackage = typeDescription.getPackage();
             return thisPackage == null || otherPackage == null
@@ -6787,21 +7607,27 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : thisPackage.equals(otherPackage);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPrimitive() || (isArray()
                     ? getComponentType().isVisibleTo(typeDescription)
                     : isPublic() || isProtected() || isSamePackage(typeDescription)/* || equals(typeDescription.asErasure()) */);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return isPrimitive() || (isArray()
                     ? getComponentType().isVisibleTo(typeDescription)
                     : isPublic() || isSamePackage(typeDescription)/* || equals(typeDescription.asErasure()) */);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getInheritedAnnotations() {
             Generic superClass = getSuperClass();
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
@@ -6816,7 +7642,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getActualName() {
             if (isArray()) {
                 TypeDescription typeDescription = this;
@@ -6836,7 +7664,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPrimitiveWrapper() {
             return represents(Boolean.class)
                     || represents(Byte.class)
@@ -6848,7 +7678,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     || represents(Double.class);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationReturnType() {
             return isPrimitive()
                     || represents(String.class)
@@ -6858,7 +7690,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationReturnType());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationValue() {
             return isPrimitive()
                     || represents(String.class)
@@ -6868,18 +7702,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     || (isArray() && !getComponentType().isArray() && getComponentType().isAnnotationValue());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "EC_UNRELATED_CLASS_AND_INTERFACE", justification = "Fits equality contract for type definitions")
         public boolean represents(java.lang.reflect.Type type) {
             return equals(Sort.describe(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getTypeName() {
             return getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeVariableSource getEnclosingSource() {
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
@@ -6887,17 +7727,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : enclosingMethod;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onType(this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPackageType() {
             return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isGenerified() {
             if (!getTypeVariables().isEmpty()) {
                 return true;
@@ -6908,7 +7754,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return declaringType != null && declaringType.isGenerified();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getInnerClassCount() {
             if (isStatic()) {
                 return 0;
@@ -6919,17 +7767,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : declaringType.getInnerClassCount() + 1;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInnerClass() {
             return !isStatic() && isNestedClass();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isNestedClass() {
             return getDeclaringType() != null;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription asBoxed() {
             if (represents(boolean.class)) {
                 return ForLoadedType.of(Boolean.class);
@@ -6952,7 +7806,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription asUnboxed() {
             if (represents(Boolean.class)) {
                 return ForLoadedType.of(boolean.class);
@@ -6975,7 +7831,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object getDefaultValue() {
             if (represents(boolean.class)) {
                 return false;
@@ -6998,29 +7856,44 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isNestHost() {
             return equals(getNestHost());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isNestMateOf(Class<?> type) {
             return isNestMateOf(ForLoadedType.of(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isNestMateOf(TypeDescription typeDescription) {
             return getNestHost().equals(typeDescription.getNestHost());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isMemberType() {
             return !isLocalType() && !isAnonymousType() && getDeclaringType() != null;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
+        }
+
+        @Override
+        public int hashCode() {
+            return getName().hashCode();
         }
 
         @Override
@@ -7035,11 +7908,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public int hashCode() {
-            return getName().hashCode();
-        }
-
-        @Override
         public String toString() {
             return (isPrimitive() ? "" : (isInterface() ? "interface" : "class") + " ") + getName();
         }
@@ -7050,27 +7918,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public abstract static class OfSimpleType extends TypeDescription.AbstractBase {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isPrimitive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isArray() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getComponentType() {
                 return TypeDescription.UNDEFINED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getDescriptor() {
                 return "L" + getInternalName() + ";";
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getCanonicalName() {
                 if (isAnonymousType() || isLocalType()) {
                     return NO_NAME;
@@ -7084,7 +7962,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSimpleName() {
                 String internalName = getInternalName();
                 TypeDescription enclosingType = getEnclosingType();
@@ -7103,7 +7983,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return internalName.substring(simpleNameIndex);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackSize getStackSize() {
                 return StackSize.SINGLE;
             }
@@ -7120,77 +8002,100 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 protected abstract TypeDescription delegate();
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getSuperClass() {
                     return delegate().getSuperClass();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getInterfaces() {
                     return delegate().getInterfaces();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
                     return delegate().getDeclaredFields();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
                     return delegate().getDeclaredMethods();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return delegate().getDeclaringType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDescription.InDefinedShape getEnclosingMethod() {
                     return delegate().getEnclosingMethod();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getEnclosingType() {
                     return delegate().getEnclosingType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList getDeclaredTypes() {
                     return delegate().getDeclaredTypes();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAnonymousType() {
                     return delegate().isAnonymousType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isLocalType() {
                     return delegate().isLocalType();
                 }
 
-                @Override
-                public boolean isMemberType() {
-                    return delegate().isMemberType();
-                }
-
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public PackageDescription getPackage() {
                     return delegate().getPackage();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return delegate().getDeclaredAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return delegate().getTypeVariables();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return delegate().getModifiers();
                 }
@@ -7207,12 +8112,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return delegate().getActualModifiers(superFlag);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getNestHost() {
                     return delegate().getNestHost();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList getNestMembers() {
                     return delegate().getNestMembers();
                 }
@@ -7349,7 +8258,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return type == this.type || super.represents(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getComponentType() {
             Class<?> componentType = type.getComponentType();
             return componentType == null
@@ -7357,12 +8268,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : ForLoadedType.of(componentType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isArray() {
             return type.isArray();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPrimitive() {
             return type.isPrimitive();
         }
@@ -7372,7 +8287,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return type.isAnnotation();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             if (RAW_TYPES) {
                 return type.getSuperclass() == null
@@ -7384,7 +8301,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : new Generic.LazyProjection.ForLoadedSuperClass(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             if (RAW_TYPES) {
                 return isArray()
@@ -7396,7 +8315,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : new TypeList.Generic.OfLoadedInterfaceTypes(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
@@ -7404,7 +8325,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : ForLoadedType.of(declaringType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             Method enclosingMethod = type.getEnclosingMethod();
             Constructor<?> enclosingConstructor = type.getEnclosingConstructor();
@@ -7417,7 +8340,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null
@@ -7425,12 +8350,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : ForLoadedType.of(enclosingType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return new TypeList.ForLoadedTypes(type.getDeclaredClasses());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getSimpleName() {
             String simpleName = type.getSimpleName();
             int anonymousLoaderIndex = simpleName.indexOf('/');
@@ -7447,12 +8376,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return type.isAnonymousClass();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return type.isLocalClass();
         }
@@ -7462,19 +8395,25 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return type.isMemberClass();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("declaredFields")
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.ForLoadedFields(type.getDeclaredFields());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("declaredMethods")
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.ForLoadedMethods(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             if (type.isArray() || type.isPrimitive()) {
                 return PackageDescription.UNDEFINED;
@@ -7492,17 +8431,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackSize getStackSize() {
             return StackSize.of(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return getName(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getCanonicalName() {
             String canonicalName = type.getCanonicalName();
             if (canonicalName == null) {
@@ -7522,7 +8467,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             String name = type.getName();
             int anonymousLoaderIndex = name.indexOf('/');
@@ -7531,12 +8478,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : "L" + name.substring(0, anonymousLoaderIndex).replace('.', '/') + ";";
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return type.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             if (RAW_TYPES) {
                 return new TypeList.Generic.Empty();
@@ -7544,23 +8495,31 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic asGenericType() {
             return Generic.OfNonGenericType.ForLoadedType.of(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return TypeDescription.ForLoadedType.of(DISPATCHER.getNestHost(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return new TypeList.ForLoadedTypes(DISPATCHER.getNestMembers(type));
         }
@@ -7620,7 +8579,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher run() {
                     try {
                         return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
@@ -7642,17 +8603,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> getNestHost(Class<?> type) {
                     return type;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?>[] getNestMembers(Class<?> type) {
                     return new Class<?>[]{type};
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
                     return type == candidate;
                 }
@@ -7691,7 +8658,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     this.isNestmateOf = isNestmateOf;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> getNestHost(Class<?> type) {
                     try {
                         return (Class<?>) getNestHost.invoke(type);
@@ -7702,7 +8671,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?>[] getNestMembers(Class<?> type) {
                     try {
                         return (Class<?>[]) getNestMembers.invoke(type);
@@ -7713,7 +8684,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
                     try {
                         return (Boolean) isNestmateOf.invoke(type, candidate);
@@ -7793,49 +8766,67 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : new ArrayProjection(componentType, arity);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isArray() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getComponentType() {
             return arity == 1
                     ? componentType
                     : new ArrayProjection(componentType, arity - 1);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPrimitive() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return ARRAY_INTERFACES;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return new TypeList.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getSimpleName() {
             StringBuilder stringBuilder = new StringBuilder(componentType.getSimpleName());
             for (int i = 0; i < arity; i++) {
@@ -7844,7 +8835,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return stringBuilder.toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getCanonicalName() {
             String canonicalName = componentType.getCanonicalName();
             if (canonicalName == null) {
@@ -7857,12 +8850,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return stringBuilder.toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return false;
         }
@@ -7872,37 +8869,51 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.Empty<FieldDescription.InDefinedShape>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.Empty<MethodDescription.InDefinedShape>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackSize getStackSize() {
             return StackSize.SINGLE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getInheritedAnnotations() {
             return new AnnotationList.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             return PackageDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             String descriptor = componentType.getDescriptor();
             StringBuilder stringBuilder = new StringBuilder(descriptor.length() + arity);
@@ -7916,7 +8927,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return stringBuilder.toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < arity; i++) {
@@ -7925,27 +8938,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return stringBuilder.append(componentType.getDescriptor()).toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return (getComponentType().getModifiers() & ~ARRAY_EXCLUDED) | ARRAY_IMPLIED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return new TypeList.Generic.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return new TypeList.Explicit(this);
         }
@@ -8009,52 +9032,72 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             this.interfaces = interfaces;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             return superClass;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return new TypeList.Generic.Explicit(interfaces);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             throw new IllegalStateException("Cannot resolve enclosing method of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             throw new IllegalStateException("Cannot resolve enclosing type of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             throw new IllegalStateException("Cannot resolve inner types of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             throw new IllegalStateException("Cannot resolve anonymous type property of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             throw new IllegalStateException("Cannot resolve local class property of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             throw new IllegalStateException("Cannot resolve declared fields of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             throw new IllegalStateException("Cannot resolve declared methods of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             String name = getName();
             int index = name.lastIndexOf('.');
@@ -8063,37 +9106,51 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : name.substring(0, index));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             throw new IllegalStateException("Cannot resolve declared annotations of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             throw new IllegalStateException("Cannot resolve declared type of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return modifiers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return name;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             throw new IllegalStateException("Cannot resolve type variables of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             throw new IllegalStateException("Cannot resolve nest host of a latent type description: " + this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             throw new IllegalStateException("Cannot resolve nest mates of a latent type description: " + this);
         }
@@ -8118,92 +9175,121 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             this.packageDescription = packageDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return new TypeList.Generic.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return MethodDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             return TypeDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return false;
         }
 
-        @Override
-        public boolean isMemberType() {
-            return false;
-        }
-
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return new TypeList.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.Empty<FieldDescription.InDefinedShape>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.Empty<MethodDescription.InDefinedShape>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             return packageDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return packageDescription.getDeclaredAnnotations();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return TypeDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return new TypeList.Generic.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return PackageDescription.PACKAGE_MODIFIERS;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return new TypeList.Explicit(this);
         }
@@ -8252,32 +9338,44 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             this.classLoadingDelegate = classLoadingDelegate;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return delegate.getDeclaredAnnotations();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return delegate.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return delegate.getTypeVariables();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             return delegate.getDescriptor();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return delegate.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             Generic superClass = delegate.getSuperClass();
             return superClass == null
@@ -8285,97 +9383,128 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     : new ClassLoadingTypeProjection(superClass, classLoader, classLoadingDelegate);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader, classLoadingDelegate);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return delegate.getDeclaredFields();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return delegate.getDeclaredMethods();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackSize getStackSize() {
             return delegate.getStackSize();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isArray() {
             return delegate.isArray();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPrimitive() {
             return delegate.isPrimitive();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getComponentType() {
             return delegate.getComponentType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return delegate.getDeclaringType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return delegate.getDeclaredTypes();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return delegate.getEnclosingMethod();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             return delegate.getEnclosingType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getSimpleName() {
             return delegate.getSimpleName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getCanonicalName() {
             return delegate.getCanonicalName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return delegate.isAnonymousType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return delegate.isLocalType();
         }
 
-        @Override
-        public boolean isMemberType() {
-            return delegate.isMemberType();
-        }
-
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             return delegate.getPackage();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return delegate.getNestHost();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return delegate.getNestMembers();
         }
@@ -8405,7 +9534,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, false, classLoader);
                 }
@@ -8445,12 +9576,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 this.classLoadingDelegate = classLoadingDelegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationList getDeclaredAnnotations() {
                 return delegate.getDeclaredAnnotations();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @CachedReturnPlugin.Enhance("erasure")
             public TypeDescription asErasure() {
                 try {
@@ -8465,7 +9600,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return delegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @CachedReturnPlugin.Enhance("superClass")
             public Generic getSuperClass() {
                 Generic superClass = delegate.getSuperClass();
@@ -8482,7 +9619,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @CachedReturnPlugin.Enhance("interfaces")
             public TypeList.Generic getInterfaces() {
                 TypeList.Generic interfaces = delegate.getInterfaces();
@@ -8495,7 +9634,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
             }
@@ -8534,12 +9675,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 this.classLoadingDelegate = classLoadingDelegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Generic get(int index) {
                 return new ClassLoadingTypeProjection(delegate.get(index), classLoader, classLoadingDelegate);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int size() {
                 return delegate.size();
             }

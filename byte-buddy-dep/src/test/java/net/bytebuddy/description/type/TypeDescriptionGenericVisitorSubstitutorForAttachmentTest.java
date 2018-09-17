@@ -2,14 +2,13 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
 

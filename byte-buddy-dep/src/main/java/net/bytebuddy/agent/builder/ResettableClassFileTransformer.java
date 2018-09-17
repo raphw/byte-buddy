@@ -156,10 +156,10 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * {@link AgentBuilder#disableClassFormatChanges()}.
      * </p>
      *
-     * @param instrumentation               The instrumentation instance from which to deregister the transformer.
-     * @param redefinitionStrategy          The redefinition to apply.
-     * @param redefinitionBatchAllocator    The batch allocator to use.
-     * @param redefinitionListener          The redefinition listener to apply.
+     * @param instrumentation            The instrumentation instance from which to deregister the transformer.
+     * @param redefinitionStrategy       The redefinition to apply.
+     * @param redefinitionBatchAllocator The batch allocator to use.
+     * @param redefinitionListener       The redefinition listener to apply.
      * @return {@code true} if a reset was applied and this transformer was not previously removed.
      */
     boolean reset(Instrumentation instrumentation,
@@ -202,14 +202,18 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      */
     abstract class AbstractBase implements ResettableClassFileTransformer {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation, AgentBuilder.RedefinitionStrategy redefinitionStrategy) {
             return reset(instrumentation,
                     redefinitionStrategy,
                     AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
@@ -219,7 +223,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy) {
@@ -229,7 +235,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
@@ -241,7 +249,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     AgentBuilder.RedefinitionStrategy.Listener.NoOp.INSTANCE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -253,7 +263,9 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                     redefinitionListener);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean reset(Instrumentation instrumentation,
                              AgentBuilder.RedefinitionStrategy redefinitionStrategy,
                              AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,

@@ -10,12 +10,16 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 @HashCodeAndEqualsPlugin.Enhance
 public class NullMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return target == null;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isNull()";
     }

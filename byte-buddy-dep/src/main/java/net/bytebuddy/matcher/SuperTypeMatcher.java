@@ -25,12 +25,16 @@ public class SuperTypeMatcher<T extends TypeDescription> extends ElementMatcher.
         this.typeDescription = typeDescription;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return target.isAssignableFrom(typeDescription);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isSuperTypeOf(" + typeDescription + ')';
     }

@@ -452,7 +452,6 @@ public class MethodDelegationFieldProxyTest {
 
         protected String foo = QUX;
 
-        @Override
         public void swap() {
             /* do nothing */
         }

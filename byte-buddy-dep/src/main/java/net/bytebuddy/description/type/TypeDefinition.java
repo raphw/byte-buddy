@@ -279,12 +279,16 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
             nextClass = initialType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasNext() {
             return nextClass != null;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDefinition next() {
             if (!hasNext()) {
                 throw new NoSuchElementException("End of type hierarchy");
@@ -296,7 +300,9 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void remove() {
             throw new UnsupportedOperationException("remove");
         }

@@ -29,7 +29,9 @@ public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinitio
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
@@ -38,7 +40,9 @@ public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinitio
         return matcher.matches(typeDescriptions);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "erasures(" + matcher + ')';
     }

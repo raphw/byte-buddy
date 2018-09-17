@@ -54,7 +54,9 @@ public interface MethodNameTransformer {
             this.suffix = suffix;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String transform(MethodDescription methodDescription) {
             return methodDescription.getInternalName() + "$" + suffix;
         }
@@ -92,7 +94,9 @@ public interface MethodNameTransformer {
             this.prefix = prefix;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String transform(MethodDescription methodDescription) {
             return prefix + methodDescription.getInternalName();
         }

@@ -40,9 +40,16 @@ public interface EnumerationDescription extends NamedElement {
      */
     abstract class AbstractBase implements EnumerationDescription {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getActualName() {
             return getValue();
+        }
+
+        @Override
+        public int hashCode() {
+            return getValue().hashCode() + 31 * getEnumerationType().hashCode();
         }
 
         @Override
@@ -54,11 +61,6 @@ public interface EnumerationDescription extends NamedElement {
             }
             EnumerationDescription enumerationDescription = (EnumerationDescription) other;
             return getEnumerationType().equals(enumerationDescription.getEnumerationType()) && getValue().equals(enumerationDescription.getValue());
-        }
-
-        @Override
-        public int hashCode() {
-            return getValue().hashCode() + 31 * getEnumerationType().hashCode();
         }
 
         @Override
@@ -100,17 +102,23 @@ public interface EnumerationDescription extends NamedElement {
             return result;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getValue() {
             return value.name();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnumerationType() {
             return TypeDescription.ForLoadedType.of(value.getDeclaringClass());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public <T extends Enum<T>> T load(Class<T> type) {
             return value.getDeclaringClass() == type
@@ -145,17 +153,23 @@ public interface EnumerationDescription extends NamedElement {
             this.value = value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getValue() {
             return value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnumerationType() {
             return enumerationType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <T extends Enum<T>> T load(Class<T> type) {
             if (!enumerationType.represents(type)) {
                 throw new IllegalArgumentException(type + " does not represent " + enumerationType);

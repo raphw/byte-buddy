@@ -91,12 +91,16 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource onType(TypeDescription typeDescription) {
                 return typeDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableSource onMethod(MethodDescription.InDefinedShape methodDescription) {
                 return methodDescription;
             }
@@ -108,7 +112,9 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      */
     abstract class AbstractBase extends ModifierReviewable.AbstractBase implements TypeVariableSource {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic findVariable(String symbol) {
             TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
             if (typeVariables.isEmpty()) {

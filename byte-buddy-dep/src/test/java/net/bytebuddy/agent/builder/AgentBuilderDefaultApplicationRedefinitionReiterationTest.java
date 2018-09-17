@@ -128,7 +128,6 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
             this.x += x;
         }
 
-        @Override
         public String toString() {
             return x;
         }

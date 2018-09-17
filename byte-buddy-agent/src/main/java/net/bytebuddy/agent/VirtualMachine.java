@@ -6,7 +6,6 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -47,9 +46,9 @@ public interface VirtualMachine {
     abstract class ForHotSpot implements VirtualMachine {
 
         /**
-         * The UTF-8 charset.
+         * The UTF-8 charset name.
          */
-        private static final Charset UTF_8 = Charset.forName("UTF-8");
+        private static final String UTF_8 = "UTF-8";
 
         /**
          * The protocol version to use for communication.
@@ -90,7 +89,9 @@ public interface VirtualMachine {
             this.processId = processId;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgent(String jarFile, String argument) throws IOException {
             connect();
             write(PROTOCOL_VERSION.getBytes(UTF_8));
@@ -263,7 +264,9 @@ public interface VirtualMachine {
                 return new OnUnix(processId, AFUNIXSocket.newInstance(), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME", justification = "This is a Unix-specific implementation")
             protected void connect() throws IOException {
                 File socketFile = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
@@ -321,17 +324,23 @@ public interface VirtualMachine {
                 ((AFUNIXSocket) socket).connect(new AFUNIXSocketAddress(socketFile));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int read(byte[] buffer) throws IOException {
                 return ((AFUNIXSocket) this.socket).getInputStream().read(buffer);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void write(byte[] buffer) throws IOException {
                 ((AFUNIXSocket) this.socket).getOutputStream().write(buffer);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void detach() throws IOException {
                 ((AFUNIXSocket) this.socket).close();
             }

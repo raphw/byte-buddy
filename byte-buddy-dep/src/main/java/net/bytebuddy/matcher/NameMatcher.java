@@ -32,12 +32,16 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getActualName());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "name(" + matcher + ")";
     }

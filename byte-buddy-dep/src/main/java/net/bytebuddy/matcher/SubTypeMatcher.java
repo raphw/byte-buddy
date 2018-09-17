@@ -25,12 +25,16 @@ public class SubTypeMatcher<T extends TypeDescription> extends ElementMatcher.Ju
         this.typeDescription = typeDescription;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return target.isAssignableTo(typeDescription);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isSubTypeOf(" + typeDescription + ')';
     }

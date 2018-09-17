@@ -5,22 +5,18 @@ import java.util.List;
 
 public class AnnotationListForLoadedAnnotationsTest extends AbstractAnnotationListTest<Annotation> {
 
-    @Override
     protected Annotation getFirst() throws Exception {
         return Holder.class.getAnnotation(Foo.class);
     }
 
-    @Override
     protected Annotation getSecond() throws Exception {
         return Holder.class.getAnnotation(Bar.class);
     }
 
-    @Override
     protected AnnotationList asList(List<Annotation> elements) {
         return new AnnotationList.ForLoadedAnnotations(elements);
     }
 
-    @Override
     protected AnnotationDescription asElement(Annotation element) {
         return new AnnotationDescription.ForLoadedAnnotation<Annotation>(element);
     }

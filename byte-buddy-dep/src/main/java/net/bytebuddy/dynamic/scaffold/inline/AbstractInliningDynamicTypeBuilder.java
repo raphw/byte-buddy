@@ -94,7 +94,9 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
         this.classFileLocator = classFileLocator;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.Default.of(classFileLocator));
     }

@@ -90,7 +90,9 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Resolution resolve(MethodDescription source,
                               MethodDelegationBinder.MethodBinding left,
                               MethodDelegationBinder.MethodBinding right) {
@@ -249,6 +251,11 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
         }
 
         @Override
+        public int hashCode() {
+            return parameterIndex;
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -257,11 +264,6 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
             }
             ParameterIndexToken parameterIndexToken = (ParameterIndexToken) other;
             return parameterIndex == parameterIndexToken.parameterIndex;
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterIndex;
         }
     }
 }

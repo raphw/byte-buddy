@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 
 public class ClassUnsafeInjectionAvailableRule implements MethodRule {
 
-    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         return !ClassInjector.UsingUnsafe.isAvailable() && method.getAnnotation(Enforce.class) != null
                 ? new NoOpStatement()
@@ -25,7 +24,6 @@ public class ClassUnsafeInjectionAvailableRule implements MethodRule {
 
     private static class NoOpStatement extends Statement {
 
-        @Override
         public void evaluate() {
             Logger.getLogger("net.bytebuddy").info("Ignored test case that can only be executed if class file injection via sun.misc.Unsafe is available");
         }

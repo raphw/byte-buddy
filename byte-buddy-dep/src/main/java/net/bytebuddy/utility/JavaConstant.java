@@ -236,7 +236,9 @@ public interface JavaConstant {
             return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameterTypes()) {
@@ -245,9 +247,18 @@ public interface JavaConstant {
             return Type.getMethodType(stringBuilder.append(')').append(getReturnType().getDescriptor()).toString());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getType() {
             return JavaType.METHOD_TYPE.getTypeStub();
+        }
+
+        @Override
+        public int hashCode() {
+            int result = returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
         }
 
         @Override
@@ -261,13 +272,6 @@ public interface JavaConstant {
             MethodType methodType = (MethodType) other;
             return parameterTypes.equals(methodType.parameterTypes) && returnType.equals(methodType.returnType);
 
-        }
-
-        @Override
-        public int hashCode() {
-            int result = returnType.hashCode();
-            result = 31 * result + parameterTypes.hashCode();
-            return result;
         }
 
         /**
@@ -301,7 +305,9 @@ public interface JavaConstant {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Dispatcher run() {
                     try {
@@ -345,7 +351,9 @@ public interface JavaConstant {
                     this.parameterArray = parameterArray;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> returnType(Object methodType) {
                     try {
                         return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
@@ -356,7 +364,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?>[] parameterArray(Object methodType) {
                     try {
                         return (Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS);
@@ -378,12 +388,16 @@ public interface JavaConstant {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> returnType(Object methodType) {
                     throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?>[] parameterArray(Object methodType) {
                     throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
                 }
@@ -597,7 +611,9 @@ public interface JavaConstant {
                     Collections.singletonList(fieldDescription.getType().asErasure()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameterTypes()) {
@@ -607,7 +623,9 @@ public interface JavaConstant {
             return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor, getOwnerType().isInterface());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getType() {
             return JavaType.METHOD_HANDLE.getTypeStub();
         }
@@ -671,6 +689,16 @@ public interface JavaConstant {
         }
 
         @Override
+        public int hashCode() {
+            int result = handleType.hashCode();
+            result = 31 * result + ownerType.hashCode();
+            result = 31 * result + name.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -683,16 +711,6 @@ public interface JavaConstant {
                     && ownerType.equals(methodHandle.ownerType)
                     && parameterTypes.equals(methodHandle.parameterTypes)
                     && returnType.equals(methodHandle.returnType);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = handleType.hashCode();
-            result = 31 * result + ownerType.hashCode();
-            result = 31 * result + name.hashCode();
-            result = 31 * result + returnType.hashCode();
-            result = 31 * result + parameterTypes.hashCode();
-            return result;
         }
 
         /**
@@ -805,7 +823,9 @@ public interface JavaConstant {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
                     try {
@@ -917,7 +937,9 @@ public interface JavaConstant {
                     this.lookupClass = lookupClass;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object publicLookup() {
                     try {
                         return publicLookup.invoke(null, NO_ARGUMENTS);
@@ -928,7 +950,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object getMethodType(Object methodHandleInfo) {
                     try {
                         return getMethodType.invoke(methodHandleInfo, NO_ARGUMENTS);
@@ -939,7 +963,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getReferenceKind(Object methodHandleInfo) {
                     try {
                         return (Integer) getReferenceKind.invoke(methodHandleInfo, NO_ARGUMENTS);
@@ -950,7 +976,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> getDeclaringClass(Object methodHandleInfo) {
                     try {
                         return (Class<?>) getDeclaringClass.invoke(methodHandleInfo, NO_ARGUMENTS);
@@ -961,7 +989,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getName(Object methodHandleInfo) {
                     try {
                         return (String) getName.invoke(methodHandleInfo, NO_ARGUMENTS);
@@ -972,7 +1002,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> returnType(Object methodType) {
                     try {
                         return (Class<?>) returnType.invoke(methodType, NO_ARGUMENTS);
@@ -983,7 +1015,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<? extends Class<?>> parameterArray(Object methodType) {
                     try {
                         return Arrays.asList((Class<?>[]) parameterArray.invoke(methodType, NO_ARGUMENTS));
@@ -994,7 +1028,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> lookupType(Object lookup) {
                     try {
                         return (Class<?>) lookupClass.invoke(lookup, NO_ARGUMENTS);
@@ -1044,7 +1080,9 @@ public interface JavaConstant {
                     this.revealDirect = revealDirect;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object reveal(Object lookup, Object methodHandle) {
                     try {
                         return revealDirect.invoke(lookup, methodHandle);
@@ -1055,7 +1093,9 @@ public interface JavaConstant {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
                     return this;
                 }
@@ -1098,12 +1138,16 @@ public interface JavaConstant {
                     this.methodInfo = methodInfo;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
                     return AccessController.doPrivileged(this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher run() {
                     // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
                     // By always setting accessibility, the security manager is always triggered if this operation was illegal.
@@ -1115,7 +1159,9 @@ public interface JavaConstant {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object reveal(Object lookup, Object methodHandle) {
                     try {
                         return methodInfo.newInstance(methodHandle);
@@ -1139,17 +1185,23 @@ public interface JavaConstant {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object publicLookup() {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> lookupType(Object lookup) {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
@@ -1704,7 +1756,7 @@ public interface JavaConstant {
          * @return A dynamic constant that represents the bootstrapped method's or constructor's result.
          */
         public static Dynamic bootstrap(String name, MethodDescription.InDefinedShape bootstrapMethod, List<?> rawArguments) {
-            if (name.isEmpty() || name.contains(".")) {
+            if (name.length() == 0 || name.contains(".")) {
                 throw new IllegalArgumentException("Not a valid field name: " + name);
             }
             List<Object> arguments = new ArrayList<Object>(rawArguments.size());
@@ -1784,12 +1836,16 @@ public interface JavaConstant {
                     value.getBootstrapMethodArguments()), typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object asConstantPoolValue() {
             return value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getType() {
             return typeDescription;
         }

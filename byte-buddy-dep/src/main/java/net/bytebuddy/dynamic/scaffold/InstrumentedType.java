@@ -193,52 +193,84 @@ public interface InstrumentedType extends TypeDescription {
      */
     interface WithFlexibleName extends InstrumentedType {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withField(FieldDescription.Token token);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withMethod(MethodDescription.Token token);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withModifiers(int modifiers);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withNestHost(TypeDescription nestHost);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withNestMembers(TypeList nestMembers);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withEnclosingType(TypeDescription enclosingType);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withDeclaringType(TypeDescription declaringType);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withDeclaredTypes(TypeList declaredTypes);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withLocalClass(boolean localClass);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withAnonymousClass(boolean anonymousClass);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withTypeVariable(TypeVariableToken typeVariable);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender);
 
         /**
@@ -306,7 +338,7 @@ public interface InstrumentedType extends TypeDescription {
              * A factory for an instrumented type that allows to modify represented types.
              */
             MODIFIABLE {
-                @Override
+                /** {@inheritDoc} */
                 public InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
                     return new InstrumentedType.Default(typeDescription.getName(),
                             typeDescription.getModifiers(),
@@ -335,13 +367,15 @@ public interface InstrumentedType extends TypeDescription {
              * A factory for an instrumented type that does not allow to modify represented types.
              */
             FROZEN {
-                @Override
+                /** {@inheritDoc} */
                 public InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
                     return new Frozen(typeDescription, LoadedTypeInitializer.NoOp.INSTANCE);
                 }
             };
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass) {
                 return new InstrumentedType.Default(name,
                         modifiers,
@@ -555,7 +589,9 @@ public interface InstrumentedType extends TypeDescription {
             return Factory.Default.MODIFIABLE.subclass(name, modifiers, superClass);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,
                     modifiers,
@@ -577,7 +613,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(this.name,
                     modifiers,
@@ -599,7 +637,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
                     modifiers,
@@ -621,7 +661,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             return new Default(name,
                     modifiers,
@@ -643,7 +685,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             return new Default(name,
                     modifiers,
@@ -665,7 +709,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withNestHost(TypeDescription nestHost) {
             return new Default(name,
                     modifiers,
@@ -689,7 +735,9 @@ public interface InstrumentedType extends TypeDescription {
                     Collections.<TypeDescription>emptyList());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withNestMembers(TypeList nestMembers) {
             return new Default(name,
                     modifiers,
@@ -711,7 +759,9 @@ public interface InstrumentedType extends TypeDescription {
                     CompoundList.of(this.nestMembers, nestMembers));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
             return new Default(name,
                     modifiers,
@@ -733,7 +783,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
             return new Default(name,
                     modifiers,
@@ -755,7 +807,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
             return new Default(name,
                     modifiers,
@@ -777,7 +831,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withDeclaredTypes(TypeList declaredTypes) {
             return new Default(name,
                     modifiers,
@@ -799,7 +855,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
@@ -821,7 +879,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
@@ -843,7 +903,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withTypeVariables(ElementMatcher<? super Generic> matcher, Transformer<TypeVariableToken> transformer) {
             List<TypeVariableToken> typeVariables = new ArrayList<TypeVariableToken>(this.typeVariables.size());
             int index = 0;
@@ -872,7 +934,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withLocalClass(boolean localClass) {
             return new Default(name,
                     modifiers,
@@ -894,7 +958,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             return new Default(name,
                     modifiers,
@@ -916,7 +982,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
@@ -938,7 +1006,9 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
@@ -960,42 +1030,58 @@ public interface InstrumentedType extends TypeDescription {
                     nestMembers);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public LoadedTypeInitializer getLoadedTypeInitializer() {
             return loadedTypeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer getTypeInitializer() {
             return typeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return enclosingMethod;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             return enclosingType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return new TypeList.Explicit(declaredTypes);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return anonymousClass;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return localClass;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             int packageIndex = name.lastIndexOf('.');
             return new PackageDescription.Simple(packageIndex == -1
@@ -1003,66 +1089,90 @@ public interface InstrumentedType extends TypeDescription {
                     : name.substring(0, packageIndex));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Explicit(annotationDescriptions);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             return superClass == null
                     ? Generic.UNDEFINED
                     : new Generic.LazyProjection.WithResolvedErasure(superClass, Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(interfaceTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.ForTokens(this, fieldTokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.ForTokens(this, methodTokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return modifiers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return name;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return nestHost.represents(TargetType.class)
                     ? this
                     : nestHost;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return new TypeList.Explicit(CompoundList.of(this, nestMembers));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription validated() {
             if (!isValidIdentifier(getName().split("\\."))) {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
@@ -1350,7 +1460,7 @@ public interface InstrumentedType extends TypeDescription {
          * @return {@code true} if the given identifier is valid.
          */
         private static boolean isValidIdentifier(String identifier) {
-            if (KEYWORDS.contains(identifier) || identifier.isEmpty() || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
+            if (KEYWORDS.contains(identifier) || identifier.length() == 0 || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
                 return false;
             } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
                 return true;
@@ -1390,209 +1500,284 @@ public interface InstrumentedType extends TypeDescription {
             this.loadedTypeInitializer = loadedTypeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return typeDescription.getDeclaredAnnotations();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return typeDescription.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return typeDescription.getTypeVariables();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return typeDescription.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Generic getSuperClass() {
             return typeDescription.getSuperClass();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getInterfaces() {
             return typeDescription.getInterfaces();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return typeDescription.getDeclaredFields();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return typeDescription.getDeclaredMethods();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnonymousType() {
             return typeDescription.isAnonymousType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isLocalType() {
             return typeDescription.isLocalType();
         }
 
-        @Override
-        public boolean isMemberType() {
-            return typeDescription.isMemberType();
-        }
-
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PackageDescription getPackage() {
             return typeDescription.getPackage();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getEnclosingType() {
             return typeDescription.getEnclosingType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return typeDescription.getDeclaringType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getDeclaredTypes() {
             return typeDescription.getDeclaredTypes();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape getEnclosingMethod() {
             return typeDescription.getEnclosingMethod();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getGenericSignature() {
             // Embrace use of native generic signature by direct delegation.
             return typeDescription.getGenericSignature();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getActualModifiers(boolean superFlag) {
             // Embrace use of native actual modifiers by direct delegation.
             return typeDescription.getActualModifiers(superFlag);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getNestHost() {
             return typeDescription.getNestHost();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList getNestMembers() {
             return typeDescription.getNestMembers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withField(FieldDescription.Token token) {
             throw new IllegalStateException("Cannot define field for frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             throw new IllegalStateException("Cannot define method for frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withModifiers(int modifiers) {
             throw new IllegalStateException("Cannot change modifiers for frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             throw new IllegalStateException("Cannot add interfaces for frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             throw new IllegalStateException("Cannot define type variable for frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             throw new IllegalStateException("Cannot add annotation to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withNestHost(TypeDescription nestHost) {
             throw new IllegalStateException("Cannot set nest host of frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withNestMembers(TypeList nestMembers) {
             throw new IllegalStateException("Cannot add nest members to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withEnclosingType(TypeDescription enclosingType) {
             throw new IllegalStateException("Cannot set enclosing type of frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withEnclosingMethod(MethodDescription.InDefinedShape enclosingMethod) {
             throw new IllegalStateException("Cannot set enclosing method of frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withDeclaringType(TypeDescription declaringType) {
             throw new IllegalStateException("Cannot add declaring type to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withDeclaredTypes(TypeList declaredTypes) {
             throw new IllegalStateException("Cannot add declared types to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withLocalClass(boolean localClass) {
             throw new IllegalStateException("Cannot define local class state to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             throw new IllegalStateException("Cannot define anonymous class state to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Frozen(typeDescription, new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             throw new IllegalStateException("Cannot add initializer to frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withName(String name) {
             throw new IllegalStateException("Cannot change name of frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withTypeVariables(ElementMatcher<? super Generic> matcher, Transformer<TypeVariableToken> transformer) {
             throw new IllegalStateException("Cannot add type variables of frozen type: " + typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public LoadedTypeInitializer getLoadedTypeInitializer() {
             return loadedTypeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer getTypeInitializer() {
             return TypeInitializer.None.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription validated() {
             return typeDescription;
         }

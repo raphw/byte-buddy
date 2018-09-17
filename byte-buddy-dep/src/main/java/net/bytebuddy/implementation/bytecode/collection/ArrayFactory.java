@@ -93,12 +93,16 @@ public class ArrayFactory implements CollectionFactory {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public StackManipulation withValues(List<? extends StackManipulation> stackManipulations) {
         return new ArrayStackManipulation(stackManipulations);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public TypeDescription.Generic getComponentType() {
         return componentType;
     }
@@ -188,18 +192,24 @@ public class ArrayFactory implements CollectionFactory {
                 this.storageOpcode = storageOpcode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitIntInsn(Opcodes.NEWARRAY, creationOpcode);
                 return ARRAY_CREATION_SIZE_CHANGE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getStorageOpcode() {
                 return storageOpcode;
             }
@@ -225,18 +235,24 @@ public class ArrayFactory implements CollectionFactory {
                 this.internalTypeName = referenceType.getInternalName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
                 return ARRAY_CREATION_SIZE_CHANGE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getStorageOpcode() {
                 return Opcodes.AASTORE;
             }
@@ -263,7 +279,9 @@ public class ArrayFactory implements CollectionFactory {
             this.stackManipulations = stackManipulations;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             for (StackManipulation stackManipulation : stackManipulations) {
                 if (!stackManipulation.isValid()) {
@@ -273,7 +291,9 @@ public class ArrayFactory implements CollectionFactory {
             return arrayCreator.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             Size size = IntegerConstant.forValue(stackManipulations.size()).apply(methodVisitor, implementationContext);
             // The array's construction does not alter the stack's size.

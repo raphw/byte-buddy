@@ -580,17 +580,23 @@ public class ByteBuddyAgent {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> getVirtualMachineType() {
                     throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ExternalAttachment getExternalAttachment() {
                     throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
@@ -702,12 +708,16 @@ public class ByteBuddyAgent {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> getVirtualMachineType() {
                     return virtualMachineType;
                 }
@@ -733,7 +743,9 @@ public class ByteBuddyAgent {
                         this.classPath = classPath;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExternalAttachment getExternalAttachment() {
                         return new ExternalAttachment(virtualMachineType.getName(), classPath);
                     }
@@ -753,7 +765,9 @@ public class ByteBuddyAgent {
                         super(virtualMachineType);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExternalAttachment getExternalAttachment() {
                         throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                     }
@@ -771,7 +785,9 @@ public class ByteBuddyAgent {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Accessor attempt() {
                 return Accessor.Simple.of(ClassLoader.getSystemClassLoader());
             }
@@ -788,7 +804,9 @@ public class ByteBuddyAgent {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Accessor attempt() {
                 return Accessor.Simple.ofJ9();
             }
@@ -837,7 +855,9 @@ public class ByteBuddyAgent {
                 this.toolsJarPath = toolsJarPath;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
             public Accessor attempt() {
                 File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY), toolsJarPath);
@@ -861,7 +881,9 @@ public class ByteBuddyAgent {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Accessor attempt() {
                 try {
                     return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.ForHotSpot.OnUnix.assertAvailability());
@@ -908,7 +930,9 @@ public class ByteBuddyAgent {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Accessor attempt() {
                 for (AttachmentProvider attachmentProvider : attachmentProviders) {
                     Accessor accessor = attachmentProvider.attempt();
@@ -955,7 +979,9 @@ public class ByteBuddyAgent {
                 dispatcher = ForJava9CapableVm.make();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String resolve() {
                 return dispatcher.resolve();
             }
@@ -970,7 +996,9 @@ public class ByteBuddyAgent {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve() {
                     String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
                     int processIdIndex = runtimeName.indexOf('@');
@@ -1024,7 +1052,9 @@ public class ByteBuddyAgent {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve() {
                     try {
                         return pid.invoke(current.invoke(STATIC_MEMBER)).toString();
@@ -1158,7 +1188,9 @@ public class ByteBuddyAgent {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public File resolve() throws IOException {
                 try {
                     File agentJar = trySelfResolve();
@@ -1190,7 +1222,9 @@ public class ByteBuddyAgent {
                 this.agent = agent;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public File resolve() {
                 return agent;
             }
@@ -1225,7 +1259,9 @@ public class ByteBuddyAgent {
              */
             private static final String JDK_ALLOW_SELF_ATTACH = "jdk.attach.allowAttachSelf";
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public AttachmentTypeEvaluator run() {
                 try {
@@ -1251,7 +1287,9 @@ public class ByteBuddyAgent {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean requiresExternalAttachment(String processId) {
                 return false;
             }
@@ -1283,7 +1321,9 @@ public class ByteBuddyAgent {
                 this.pid = pid;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean requiresExternalAttachment(String processId) {
                 try {
                     return pid.invoke(current.invoke(STATIC_MEMBER)).toString().equals(processId);

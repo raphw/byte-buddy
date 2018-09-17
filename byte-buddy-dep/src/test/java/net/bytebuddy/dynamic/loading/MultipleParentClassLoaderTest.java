@@ -200,12 +200,10 @@ public class MultipleParentClassLoaderTest {
             this.element = element;
         }
 
-        @Override
         public boolean hasMoreElements() {
             return element != null;
         }
 
-        @Override
         public URL nextElement() {
             if (!hasMoreElements()) {
                 throw new AssertionError();

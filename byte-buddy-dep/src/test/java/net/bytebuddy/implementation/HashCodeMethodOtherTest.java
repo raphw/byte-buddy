@@ -116,7 +116,6 @@ public class HashCodeMethodOtherTest {
 
     public static class HashCodeBase {
 
-        @Override
         public int hashCode() {
             return 42;
         }

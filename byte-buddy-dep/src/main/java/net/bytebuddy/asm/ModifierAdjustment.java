@@ -297,7 +297,9 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
                 ModifierContributor.Resolver.of(modifierContributors)), methodAdjustments));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ModifierAdjustingClassVisitor wrap(TypeDescription instrumentedType,
                                               ClassVisitor classVisitor,
                                               Implementation.Context implementationContext,
@@ -352,7 +354,9 @@ public class ModifierAdjustment extends AsmVisitorWrapper.AbstractBase {
             this.resolver = resolver;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(T target) {
             return matcher.matches(target);
         }

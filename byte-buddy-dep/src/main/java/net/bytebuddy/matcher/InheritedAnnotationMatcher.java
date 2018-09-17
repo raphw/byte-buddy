@@ -26,12 +26,16 @@ public class InheritedAnnotationMatcher<T extends TypeDescription> extends Eleme
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getInheritedAnnotations());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "inheritsAnnotations(" + matcher + ")";
     }

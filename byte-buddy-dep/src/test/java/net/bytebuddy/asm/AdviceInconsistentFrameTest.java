@@ -420,17 +420,14 @@ public class AdviceInconsistentFrameTest {
 
     public static class TooShortMethod implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitFrame(Opcodes.F_FULL, 0, new Object[0], 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
@@ -441,17 +438,14 @@ public class AdviceInconsistentFrameTest {
 
     public static class DropImplicitMethod implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitFrame(Opcodes.F_CHOP, 1, new Object[0], 0, null);
             methodVisitor.visitLdcInsn(BAR);
@@ -462,17 +456,14 @@ public class AdviceInconsistentFrameTest {
 
     public static class InconsistentThisReferenceMethod implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);
@@ -483,17 +474,14 @@ public class AdviceInconsistentFrameTest {
 
     public static class InconsistentParameterReferenceMethod implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitFrame(Opcodes.F_FULL, 1, new Object[]{TypeDescription.OBJECT.getInternalName()}, 0, new Object[0]);
             methodVisitor.visitLdcInsn(BAR);

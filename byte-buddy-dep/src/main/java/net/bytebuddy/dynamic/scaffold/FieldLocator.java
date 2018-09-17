@@ -61,12 +61,16 @@ public interface FieldLocator {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isResolved() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription getField() {
                 throw new IllegalStateException("Could not locate field");
             }
@@ -92,12 +96,16 @@ public interface FieldLocator {
                 this.fieldDescription = fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isResolved() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription getField() {
                 return fieldDescription;
             }
@@ -128,17 +136,23 @@ public interface FieldLocator {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldLocator make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) {
             return Resolution.Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name, TypeDescription type) {
             return Resolution.Illegal.INSTANCE;
         }
@@ -164,7 +178,9 @@ public interface FieldLocator {
             this.accessingType = accessingType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) {
             FieldList<?> candidates = locate(named(name).and(isVisibleTo(accessingType)));
             return candidates.size() == 1
@@ -172,7 +188,9 @@ public interface FieldLocator {
                     : Resolution.Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name, TypeDescription type) {
             FieldList<?> candidates = locate(named(name).and(fieldType(type)).and(isVisibleTo(accessingType)));
             return candidates.size() == 1
@@ -245,7 +263,9 @@ public interface FieldLocator {
                 this.typeDescription = typeDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForExactType(this.typeDescription, typeDescription);
             }
@@ -304,7 +324,9 @@ public interface FieldLocator {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForClassHierarchy(typeDescription);
             }
@@ -340,7 +362,9 @@ public interface FieldLocator {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForTopLevelType(typeDescription);
             }

@@ -62,17 +62,23 @@ public interface TypeResolutionStrategy {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolved resolve() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer injectedInto(TypeInitializer typeInitializer) {
             return typeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
                                                                                  S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
@@ -112,7 +118,9 @@ public interface TypeResolutionStrategy {
             this.nexusAccessor = nexusAccessor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
         public TypeResolutionStrategy.Resolved resolve() {
             return new Resolved(nexusAccessor, new Random().nextInt());
@@ -145,12 +153,16 @@ public interface TypeResolutionStrategy {
                 this.identification = identification;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeInitializer injectedInto(TypeInitializer typeInitializer) {
                 return typeInitializer.expandWith(new NexusAccessor.InitializationAppender(identification));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
                                                                                      S classLoader,
                                                                                      ClassLoadingStrategy<? super S> classLoadingStrategy) {
@@ -179,17 +191,23 @@ public interface TypeResolutionStrategy {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolved resolve() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer injectedInto(TypeInitializer typeInitializer) {
             return typeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
                                                                                  S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
@@ -207,17 +225,23 @@ public interface TypeResolutionStrategy {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolved resolve() {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeInitializer injectedInto(TypeInitializer typeInitializer) {
             return typeInitializer;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
                                                                                  S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {

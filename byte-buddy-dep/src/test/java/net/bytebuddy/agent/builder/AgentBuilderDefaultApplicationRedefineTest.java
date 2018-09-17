@@ -198,7 +198,6 @@ public class AgentBuilderDefaultApplicationRedefineTest {
 
     private static class FooTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -209,7 +208,6 @@ public class AgentBuilderDefaultApplicationRedefineTest {
 
     private static class BarTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,

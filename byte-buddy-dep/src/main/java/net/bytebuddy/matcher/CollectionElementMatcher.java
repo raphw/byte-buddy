@@ -34,7 +34,9 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(Iterable<? extends T> target) {
         Iterator<? extends T> iterator = target.iterator();
         for (int index = 0; index < this.index; index++) {
@@ -47,7 +49,9 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
         return iterator.hasNext() && matcher.matches(iterator.next());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "with(" + index + " matches " + matcher + ")";
     }

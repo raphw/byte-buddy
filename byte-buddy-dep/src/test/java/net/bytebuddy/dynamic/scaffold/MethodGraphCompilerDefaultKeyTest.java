@@ -100,7 +100,7 @@ public class MethodGraphCompilerDefaultKeyTest {
 
         private final Set<SampleKey> identifiers;
 
-        public PseudoKey(String internalName, Set<SampleKey> identifiers) {
+        protected PseudoKey(String internalName, Set<SampleKey> identifiers) {
             super(internalName, -1);
             this.identifiers = identifiers;
         }

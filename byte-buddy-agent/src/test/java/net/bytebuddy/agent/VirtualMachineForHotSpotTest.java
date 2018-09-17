@@ -92,17 +92,14 @@ public class VirtualMachineForHotSpotTest {
             this.read = read;
         }
 
-        @Override
         public void detach() {
             /* empty */
         }
 
-        @Override
         protected void connect() {
             /* empty */
         }
 
-        @Override
         protected int read(byte[] buffer) {
             if (index == read.length) {
                 return -1;
@@ -112,7 +109,6 @@ public class VirtualMachineForHotSpotTest {
             return read.length;
         }
 
-        @Override
         protected void write(byte[] buffer) {
             /* empty */
         }

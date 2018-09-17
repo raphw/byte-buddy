@@ -27,12 +27,16 @@ public class JavaConstantValue implements StackManipulation {
         this.javaConstant = javaConstant;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
         return StackSize.SINGLE.toIncreasingSize();

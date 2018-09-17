@@ -2,7 +2,6 @@ package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -42,7 +41,6 @@ public class ByteBuddyAgentInstallationTest {
     public void testAgentInstallationOtherClassLoader() throws Exception {
         resetField();
         assertThat(new ClassLoader(null) {
-            @Override
             protected Class<?> findClass(String name) throws ClassNotFoundException {
                 InputStream in = getResourceAsStream(name.replace('.', '/') + ".class");
                 if (in == null) {
@@ -62,7 +60,6 @@ public class ByteBuddyAgentInstallationTest {
                 return defineClass(name, binaryRepresentation, 0, binaryRepresentation.length);
             }
 
-            @Override
             public InputStream getResourceAsStream(String name) {
                 return ByteBuddyAgentInstallationTest.class.getClassLoader().getResourceAsStream(name);
             }

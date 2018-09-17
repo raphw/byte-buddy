@@ -25,12 +25,16 @@ public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getDescriptor());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasDescriptor(" + matcher + ")";
     }

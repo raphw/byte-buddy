@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
 import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;

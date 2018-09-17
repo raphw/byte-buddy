@@ -226,7 +226,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         AnnotationDescription equalFirst = mock(AnnotationDescription.class);
         when(equalFirst.getAnnotationType()).thenReturn(TypeDescription.ForLoadedType.of(first.annotationType()));
         when(equalFirst.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
@@ -236,7 +235,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         AnnotationDescription equalSecond = mock(AnnotationDescription.class);
         when(equalSecond.getAnnotationType()).thenReturn(TypeDescription.ForLoadedType.of(first.annotationType()));
         when(equalSecond.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(second).getValue(method);
@@ -246,7 +244,6 @@ public abstract class AbstractAnnotationDescriptionTest {
         AnnotationDescription equalFirstTypeOnly = mock(AnnotationDescription.class);
         when(equalFirstTypeOnly.getAnnotationType()).thenReturn(TypeDescription.ForLoadedType.of(Other.class));
         when(equalFirstTypeOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 MethodDescription.InDefinedShape method = (MethodDescription.InDefinedShape) invocation.getArguments()[0];
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
@@ -715,7 +712,6 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private static class AnnotationValueBreaker extends AsmVisitorWrapper.AbstractBase {
 
-        @Override
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,

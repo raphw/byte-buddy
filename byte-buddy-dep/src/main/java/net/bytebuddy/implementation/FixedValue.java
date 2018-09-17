@@ -246,17 +246,23 @@ public abstract class FixedValue implements Implementation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             if (instrumentedMethod.getReturnType().isPrimitive()) {
                 throw new IllegalStateException("Cannot return null from " + instrumentedMethod);
@@ -290,17 +296,23 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForOriginType(assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getOriginType().asErasure());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
@@ -325,7 +337,9 @@ public abstract class FixedValue implements Implementation {
                 this.originType = originType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForOriginType.this.apply(methodVisitor,
                         implementationContext,
@@ -358,17 +372,23 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForThisValue(assigner, typing);
         }
@@ -393,7 +413,9 @@ public abstract class FixedValue implements Implementation {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 if (instrumentedMethod.isStatic() || !instrumentedType.isAssignableTo(instrumentedMethod.getReturnType().asErasure())) {
                     throw new IllegalStateException("Cannot return 'this' from " + instrumentedMethod);
@@ -439,7 +461,9 @@ public abstract class FixedValue implements Implementation {
             this.index = index;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             if (instrumentedMethod.getParameters().size() <= index) {
                 throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + index);
@@ -456,17 +480,23 @@ public abstract class FixedValue implements Implementation {
             return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForArgument(assigner, typing, index);
         }
@@ -527,22 +557,30 @@ public abstract class FixedValue implements Implementation {
             this.loadedType = loadedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForPoolValue(assigner, typing, valueLoadInstruction, loadedType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType.asGenericType(), valueLoadInstruction);
         }
@@ -611,12 +649,16 @@ public abstract class FixedValue implements Implementation {
             fieldType = TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(value.getClass());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForValue(assigner, typing, fieldName, value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName,
@@ -625,7 +667,9 @@ public abstract class FixedValue implements Implementation {
                     .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new StaticFieldByteCodeAppender(implementationTarget.getInstrumentedType());
         }
@@ -650,7 +694,9 @@ public abstract class FixedValue implements Implementation {
                 fieldGetAccess = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).read();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForValue.this.apply(methodVisitor, implementationContext, instrumentedMethod, fieldType, fieldGetAccess);
             }

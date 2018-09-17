@@ -38,7 +38,7 @@ public interface ClassWriterStrategy {
          * A class writer strategy that retains the original class's constant pool if applicable.
          */
         CONSTANT_POOL_RETAINING {
-            @Override
+            /** {@inheritDoc} */
             public ClassWriter resolve(int flags, TypePool typePool, ClassReader classReader) {
                 return new FrameComputingClassWriter(classReader, flags, typePool);
             }
@@ -48,13 +48,15 @@ public interface ClassWriterStrategy {
          * A class writer strategy that discards the original class's constant pool if applicable.
          */
         CONSTANT_POOL_DISCARDING {
-            @Override
+            /** {@inheritDoc} */
             public ClassWriter resolve(int flags, TypePool typePool, ClassReader classReader) {
                 return resolve(flags, typePool);
             }
         };
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ClassWriter resolve(int flags, TypePool typePool) {
             return new FrameComputingClassWriter(flags, typePool);
         }
@@ -94,7 +96,9 @@ public interface ClassWriterStrategy {
             this.typePool = typePool;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         protected String getCommonSuperClass(String leftTypeName, String rightTypeName) {
             TypeDescription leftType = typePool.describe(leftTypeName.replace('/', '.')).resolve();
             TypeDescription rightType = typePool.describe(rightTypeName.replace('/', '.')).resolve();

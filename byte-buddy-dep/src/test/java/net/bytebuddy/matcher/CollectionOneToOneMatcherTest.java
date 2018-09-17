@@ -75,7 +75,6 @@ public class CollectionOneToOneMatcherTest extends AbstractElementMatcherTest<Co
     }
 
     @Test
-    @Override
     @SuppressWarnings("unchecked")
     public void testStringRepresentation() throws Exception {
         assertThat(new CollectionOneToOneMatcher<Object>(Arrays.asList(firstMatcher, secondMatcher)).toString(), is(startsWith + "(" + firstMatcher + ", " + secondMatcher + ")"));

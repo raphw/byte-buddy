@@ -94,7 +94,9 @@ public class TypeProxy implements AuxiliaryType {
         this.serializableProxy = serializableProxy;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
@@ -139,12 +141,16 @@ public class TypeProxy implements AuxiliaryType {
                     Throw.INSTANCE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return implementation.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return implementation.apply(methodVisitor, implementationContext);
         }
@@ -162,12 +168,16 @@ public class TypeProxy implements AuxiliaryType {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
@@ -259,7 +269,9 @@ public class TypeProxy implements AuxiliaryType {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         REFLECTION_FACTORY_INTERNAL_NAME,
@@ -325,7 +337,7 @@ public class TypeProxy implements AuxiliaryType {
              * Invokes the super method of the instrumented method.
              */
             SUPER_METHOD {
-                @Override
+                /** {@inheritDoc} */
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
@@ -337,7 +349,7 @@ public class TypeProxy implements AuxiliaryType {
              * Invokes the default method of the instrumented method if it exists and is not ambiguous.
              */
             DEFAULT_METHOD {
-                @Override
+                /** {@inheritDoc} */
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
@@ -401,12 +413,16 @@ public class TypeProxy implements AuxiliaryType {
             this.serializableProxy = serializableProxy;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription proxyType = implementationContext
                     .register(new TypeProxy(proxiedType,
@@ -478,12 +494,16 @@ public class TypeProxy implements AuxiliaryType {
             this.serializableProxy = serializableProxy;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription proxyType = implementationContext.register(new TypeProxy(proxiedType,
                     implementationTarget,
@@ -536,12 +556,16 @@ public class TypeProxy implements AuxiliaryType {
             this.serializableProxy = serializableProxy;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription proxyType = implementationContext.register(new TypeProxy(proxiedType,
                     implementationTarget,
@@ -579,14 +603,18 @@ public class TypeProxy implements AuxiliaryType {
             this.methodAccessorFactory = methodAccessorFactory;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_VOLATILE,
                     implementationTarget.getInstrumentedType().asGenericType()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
@@ -611,7 +639,9 @@ public class TypeProxy implements AuxiliaryType {
                 fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).read();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 SpecialMethodInvocation specialMethodInvocation = invocationFactory.invoke(implementationTarget, proxiedType, instrumentedMethod);
                 StackManipulation.Size size = (specialMethodInvocation.isValid()
@@ -649,12 +679,16 @@ public class TypeProxy implements AuxiliaryType {
                     this.specialMethodInvocation = specialMethodInvocation;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isValid() {
                     return specialMethodInvocation.isValid();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     MethodDescription.InDefinedShape proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
                     return new StackManipulation.Compound(

@@ -79,7 +79,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      */
     abstract class AbstractBase extends FilterableList.AbstractBase<AnnotationDescription, AnnotationList> implements AnnotationList {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().represents(annotationType)) {
@@ -89,7 +91,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationPresent(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().equals(annotationType)) {
@@ -99,7 +103,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotation : this) {
@@ -110,7 +116,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription ofType(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().equals(annotationType)) {
@@ -120,7 +128,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return AnnotationDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
             List<AnnotationDescription> inherited = new ArrayList<AnnotationDescription>(size());
             for (AnnotationDescription annotation : this) {
@@ -131,7 +141,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return wrap(inherited);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
             List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(size());
             for (AnnotationDescription annotation : this) {
@@ -142,7 +154,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return wrap(annotationDescriptions);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList asTypeList() {
             List<TypeDescription> annotationTypes = new ArrayList<TypeDescription>(size());
             for (AnnotationDescription annotation : this) {
@@ -199,12 +213,16 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return result;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription get(int index) {
             return AnnotationDescription.ForLoadedAnnotation.of(annotations.get(index));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return annotations.size();
         }
@@ -252,12 +270,16 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return result;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription get(int index) {
             return annotationDescriptions.get(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return annotationDescriptions.size();
         }
@@ -282,38 +304,52 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
             return result;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotationPresent(TypeDescription annotationType) {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription ofType(TypeDescription annotationType) {
             return AnnotationDescription.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList inherited(Set<? extends TypeDescription> ignoredTypes) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList asTypeList() {
             return new TypeList.Empty();
         }

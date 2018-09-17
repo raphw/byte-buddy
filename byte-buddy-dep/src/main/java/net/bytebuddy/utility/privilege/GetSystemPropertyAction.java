@@ -24,7 +24,9 @@ public class GetSystemPropertyAction implements PrivilegedAction<String> {
         this.key = key;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String run() {
         return System.getProperty(key);
     }

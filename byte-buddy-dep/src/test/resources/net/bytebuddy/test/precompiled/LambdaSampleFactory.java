@@ -34,7 +34,11 @@ public class LambdaSampleFactory {
         return (Callable<String> & Serializable) () -> foo;
     }
 
-    public Runnable returnTypeTransforming() { return this::nonCapturing; }
+    public Runnable returnTypeTransforming() {
+        return this::nonCapturing;
+    }
 
-    public Callable<Object> instanceReturning() { return Object::new; }
+    public Callable<Object> instanceReturning() {
+        return Object::new;
+    }
 }

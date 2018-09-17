@@ -167,12 +167,16 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 constructorStrategy);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.ClassLoading.ofClassPath()); // Mimics the default behavior of ASM for least surprise.
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Compiled methodRegistry = constructorStrategy
                 .inject(instrumentedType, this.methodRegistry)
@@ -228,7 +232,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             this.ignoredMethods = ignoredMethods;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
             // Casting is required by JDK 6.
             return (ElementMatcher<? super MethodDescription>) isVirtual().and(not(isFinal()))

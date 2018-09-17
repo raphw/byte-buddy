@@ -38,7 +38,6 @@ public class ArrayFactoryReferenceTest extends AbstractArrayFactoryTest {
         testCreationUsing(type, Opcodes.AASTORE);
     }
 
-    @Override
     protected void verifyArrayCreation(MethodVisitor methodVisitor) {
         verify(methodVisitor).visitTypeInsn(Opcodes.ANEWARRAY, internalTypeName);
     }

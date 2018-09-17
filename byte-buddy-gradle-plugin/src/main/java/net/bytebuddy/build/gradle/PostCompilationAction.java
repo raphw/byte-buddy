@@ -40,7 +40,9 @@ public class PostCompilationAction implements Action<AbstractCompile> {
         return new PostCompilationAction(project, project.getExtensions().create("byteBuddy", ByteBuddyExtension.class, project));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void execute(AbstractCompile task) {
         if (byteBuddyExtension.implies(task)) {
             task.doLast(new TransformationAction(project, byteBuddyExtension, task));

@@ -2,7 +2,6 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Before;
 
@@ -12,7 +11,6 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
 
     private ClassLoader classLoader;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -20,7 +18,6 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
                 ClassFileExtraction.of(Sample.class, SampleDefault.class, Other.class, SampleEnumeration.class, ExplicitTarget.class));
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
         try {

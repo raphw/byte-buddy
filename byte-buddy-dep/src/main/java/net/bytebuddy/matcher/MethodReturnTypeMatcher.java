@@ -26,12 +26,16 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getReturnType());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "returns(" + matcher + ")";
     }

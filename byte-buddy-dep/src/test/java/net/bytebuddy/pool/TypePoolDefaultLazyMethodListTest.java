@@ -25,22 +25,18 @@ public class TypePoolDefaultLazyMethodListTest extends AbstractMethodListTest<Me
         typePool.clear();
     }
 
-    @Override
     protected Method getFirst() throws Exception {
         return Foo.class.getDeclaredMethod("foo");
     }
 
-    @Override
     protected Method getSecond() throws Exception {
         return Foo.class.getDeclaredMethod("bar");
     }
 
-    @Override
     protected MethodList<MethodDescription.InDefinedShape> asList(List<Method> elements) {
         return typePool.describe(Foo.class.getName()).resolve().getDeclaredMethods().filter(anyOf(elements.toArray(new Method[elements.size()])));
     }
 
-    @Override
     protected MethodDescription.InDefinedShape asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element);
     }

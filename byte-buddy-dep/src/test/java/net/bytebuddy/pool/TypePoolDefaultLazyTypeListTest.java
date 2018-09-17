@@ -24,22 +24,18 @@ public class TypePoolDefaultLazyTypeListTest extends AbstractTypeListTest<Class<
         typePool.clear();
     }
 
-    @Override
     protected Class<?> getFirst() throws Exception {
         return Foo.class;
     }
 
-    @Override
     protected Class<?> getSecond() throws Exception {
         return Bar.class;
     }
 
-    @Override
     protected TypeList asList(List<Class<?>> elements) {
         return typePool.describe(Holder.class.getName()).resolve().getInterfaces().asErasures().filter(anyOf(elements.toArray(new Class<?>[elements.size()])));
     }
 
-    @Override
     protected TypeDescription asElement(Class<?> element) {
         return TypeDescription.ForLoadedType.of(element);
     }

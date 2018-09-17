@@ -841,7 +841,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     private static class FooTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -866,7 +865,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class BarTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -895,7 +893,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class QuxTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -924,7 +921,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class QuxBazTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -954,7 +950,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class ConstructorTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -971,7 +966,6 @@ public class AgentBuilderDefaultApplicationTest {
             this.methodName = methodName;
         }
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -982,7 +976,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class BarAdviceTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
@@ -993,7 +986,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     public static class QuxAdviceTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,

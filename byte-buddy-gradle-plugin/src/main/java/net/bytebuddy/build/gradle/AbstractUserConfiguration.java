@@ -59,7 +59,9 @@ public class AbstractUserConfiguration {
             this.files = files;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Iterator<File> iterator() {
             return new PrefixIterator(file, files.iterator());
         }
@@ -96,12 +98,16 @@ public class AbstractUserConfiguration {
                 first = true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean hasNext() {
                 return first || files.hasNext();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public File next() {
                 if (first) {
                     first = false;
@@ -111,7 +117,9 @@ public class AbstractUserConfiguration {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void remove() {
                 throw new UnsupportedOperationException("Cannot remove file from iterator");
             }

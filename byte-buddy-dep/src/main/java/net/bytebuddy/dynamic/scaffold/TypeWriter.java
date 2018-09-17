@@ -164,27 +164,37 @@ public interface TypeWriter<T> {
                     this.fieldDescription = fieldDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isImplicit() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDescription getField() {
                     return fieldDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldAttributeAppender getFieldAppender() {
                     throw new IllegalStateException("An implicit field record does not expose a field appender: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object resolveDefault(Object defaultValue) {
                     throw new IllegalStateException("An implicit field record does not expose a default value: " + this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getActualModifiers(),
                             fieldDescription.getInternalName(),
@@ -199,7 +209,9 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     throw new IllegalStateException("An implicit field record is not intended for partial application: " + this);
                 }
@@ -239,29 +251,39 @@ public interface TypeWriter<T> {
                     this.fieldDescription = fieldDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isImplicit() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDescription getField() {
                     return fieldDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldAttributeAppender getFieldAppender() {
                     return attributeAppender;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object resolveDefault(Object defaultValue) {
                     return this.defaultValue == null
                             ? defaultValue
                             : this.defaultValue;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getActualModifiers(),
                             fieldDescription.getInternalName(),
@@ -274,7 +296,9 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     attributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
                 }
@@ -291,7 +315,9 @@ public interface TypeWriter<T> {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Record target(FieldDescription fieldDescription) {
                 throw new IllegalStateException("Cannot look up field from disabld pool");
             }
@@ -474,47 +500,65 @@ public interface TypeWriter<T> {
                     this.methodDescription = methodDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     throw new IllegalStateException("Cannot apply body for non-implemented method on " + methodDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     throw new IllegalStateException("Cannot apply code for non-implemented method on " + methodDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyHead(MethodVisitor methodVisitor) {
                     throw new IllegalStateException("Cannot apply head for non-implemented method on " + methodDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDescription getMethod() {
                     return methodDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Visibility getVisibility() {
                     return methodDescription.getVisibility();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Sort getSort() {
                     return Sort.SKIPPED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
                     return new ForDefinedMethod.WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender,
                             new ByteCodeAppender.Simple(DefaultValue.of(methodDescription.getReturnType()), MethodReturn.of(methodDescription.getReturnType()))));
@@ -526,7 +570,9 @@ public interface TypeWriter<T> {
              */
             abstract class ForDefinedMethod implements Record {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getActualModifiers(getSort().isImplemented(), getVisibility()),
                             getMethod().getInternalName(),
@@ -600,27 +646,37 @@ public interface TypeWriter<T> {
                         this.visibility = visibility;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return Sort.IMPLEMENTED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Visibility getVisibility() {
                         return visibility;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyHead(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         applyAttributes(methodVisitor, annotationValueFilterFactory);
                         methodVisitor.visitCode();
@@ -628,17 +684,23 @@ public interface TypeWriter<T> {
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilterFactory.on(methodDescription));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                         return byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         return new WithBody(methodDescription,
                                 new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
@@ -681,42 +743,58 @@ public interface TypeWriter<T> {
                         this.visibility = visibility;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return Sort.DEFINED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Visibility getVisibility() {
                         return visibility;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyHead(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         applyAttributes(methodVisitor, annotationValueFilterFactory);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilterFactory.on(methodDescription));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                         throw new IllegalStateException("Cannot apply code for abstract method on " + methodDescription);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code for abstract method on " + methodDescription);
                     }
@@ -758,22 +836,30 @@ public interface TypeWriter<T> {
                         this.methodAttributeAppender = methodAttributeAppender;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return Sort.DEFINED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Visibility getVisibility() {
                         return methodDescription.getVisibility();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyHead(MethodVisitor methodVisitor) {
                         if (!methodDescription.isDefaultValue(annotationValue)) {
                             throw new IllegalStateException("Cannot set " + annotationValue + " as default for " + methodDescription);
@@ -786,22 +872,30 @@ public interface TypeWriter<T> {
                         annotationVisitor.visitEnd();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilterFactory.on(methodDescription));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         throw new IllegalStateException("Cannot apply attributes for default value on " + methodDescription);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                         throw new IllegalStateException("Cannot apply code for default value on " + methodDescription);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code for default value on " + methodDescription);
                     }
@@ -880,22 +974,30 @@ public interface TypeWriter<T> {
                                 attributeAppender);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDescription getMethod() {
                         return visibilityBridge;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return Sort.IMPLEMENTED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Visibility getVisibility() {
                         return bridgeTarget.getVisibility();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         return new ForDefinedMethod.WithBody(visibilityBridge,
                                 new ByteCodeAppender.Compound(this, byteCodeAppender),
@@ -903,12 +1005,16 @@ public interface TypeWriter<T> {
                                 bridgeTarget.getVisibility());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyHead(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         applyAttributes(methodVisitor, annotationValueFilterFactory);
                         methodVisitor.visitCode();
@@ -916,17 +1022,23 @@ public interface TypeWriter<T> {
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                         attributeAppender.apply(methodVisitor, visibilityBridge, annotationValueFilterFactory.on(visibilityBridge));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                         return apply(methodVisitor, implementationContext, visibilityBridge);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
@@ -961,47 +1073,65 @@ public interface TypeWriter<T> {
                             this.bridgeTarget = bridgeTarget;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeDescription getDeclaringType() {
                             return instrumentedType;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                             return new ParameterList.Explicit.ForTypes(this, bridgeTarget.getParameters().asTypeList().asRawTypes());
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeDescription.Generic getReturnType() {
                             return bridgeTarget.getReturnType().asRawType();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeList.Generic getExceptionTypes() {
                             return bridgeTarget.getExceptionTypes().asRawTypes();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotationValue<?, ?> getDefaultValue() {
                             return AnnotationValue.UNDEFINED;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeList.Generic getTypeVariables() {
                             return new TypeList.Generic.Empty();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public AnnotationList getDeclaredAnnotations() {
                             return bridgeTarget.getDeclaredAnnotations();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public int getModifiers() {
                             return (bridgeTarget.getModifiers() | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE) & ~Opcodes.ACC_NATIVE;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public String getInternalName() {
                             return bridgeTarget.getName();
                         }
@@ -1089,27 +1219,37 @@ public interface TypeWriter<T> {
                             : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, compatibleBridgeTypes, attributeAppender);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Sort getSort() {
                     return delegate.getSort();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDescription getMethod() {
                     return bridgeTarget;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Visibility getVisibility() {
                     return delegate.getVisibility();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
                     return new AccessBridgeWrapper(delegate.prepend(byteCodeAppender), instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void apply(ClassVisitor classVisitor,
                                   Implementation.Context implementationContext,
                                   AnnotationValueFilter.Factory annotationValueFilterFactory) {
@@ -1139,24 +1279,32 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyHead(MethodVisitor methodVisitor) {
                     delegate.applyHead(methodVisitor);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyBody(MethodVisitor methodVisitor,
                                       Implementation.Context implementationContext,
                                       AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     delegate.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     delegate.applyAttributes(methodVisitor, annotationValueFilterFactory);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     return delegate.applyCode(methodVisitor, implementationContext);
                 }
@@ -1194,47 +1342,65 @@ public interface TypeWriter<T> {
                         this.instrumentedType = instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription getDeclaringType() {
                         return instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                         return new ParameterList.Explicit.ForTypes(this, bridgeType.getParameterTypes());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription.Generic getReturnType() {
                         return bridgeType.getReturnType().asGenericType();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeList.Generic getExceptionTypes() {
                         return bridgeTarget.getExceptionTypes().accept(TypeDescription.Generic.Visitor.TypeErasing.INSTANCE);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return AnnotationValue.UNDEFINED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeList.Generic getTypeVariables() {
                         return new TypeList.Generic.Empty();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return new AnnotationList.Empty();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int getModifiers() {
                         return (bridgeTarget.getModifiers() | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC) & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public String getInternalName() {
                         return bridgeTarget.getInternalName();
                     }
@@ -1266,47 +1432,65 @@ public interface TypeWriter<T> {
                         this.instrumentedType = instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription getDeclaringType() {
                         return instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                         return new ParameterList.ForTokens(this, bridgeTarget.getParameters().asTokenList(is(instrumentedType)));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription.Generic getReturnType() {
                         return bridgeTarget.getReturnType();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeList.Generic getExceptionTypes() {
                         return bridgeTarget.getExceptionTypes();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationValue<?, ?> getDefaultValue() {
                         return bridgeTarget.getDefaultValue();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeList.Generic getTypeVariables() {
                         return bridgeTarget.getTypeVariables();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotationList getDeclaredAnnotations() {
                         return bridgeTarget.getDeclaredAnnotations();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int getModifiers() {
                         return bridgeTarget.getModifiers();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public String getInternalName() {
                         return bridgeTarget.getInternalName();
                     }
@@ -1723,7 +1907,9 @@ public interface TypeWriter<T> {
                     classFileLocator);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
@@ -2123,17 +2309,23 @@ public interface TypeWriter<T> {
                         this.manifestType = manifestType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2148,57 +2340,79 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         throw new IllegalStateException("Cannot define default value for '" + name + "' for non-annotation type");
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         /* do nothing */
                     }
@@ -2214,12 +2428,16 @@ public interface TypeWriter<T> {
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         throw new IllegalStateException("Cannot define a field for a package description type");
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2232,52 +2450,72 @@ public interface TypeWriter<T> {
                         throw new IllegalStateException("Cannot define a method for a package description type");
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         /* do nothing, implicit by forbidding methods */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         if (modifier != PackageDescription.PACKAGE_MODIFIERS) {
                             throw new IllegalStateException("A package description type must define " + PackageDescription.PACKAGE_MODIFIERS + " as modifier");
@@ -2286,12 +2524,16 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         /* do nothing */
                     }
@@ -2326,14 +2568,18 @@ public interface TypeWriter<T> {
                         this.classic = classic;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         if (!isStatic || !isPublic || !isFinal) {
                             throw new IllegalStateException("Cannot only define public, static, final field '" + name + "' for interface type");
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2356,62 +2602,86 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         throw new IllegalStateException("Cannot define default value for '" + name + "' for non-annotation type");
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         /* do nothing */
                     }
@@ -2446,14 +2716,18 @@ public interface TypeWriter<T> {
                         this.classic = classic;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         if (!isStatic || !isPublic || !isFinal) {
                             throw new IllegalStateException("Cannot only define public, static, final field '" + name + "' for interface type");
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2474,64 +2748,88 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifier & Opcodes.ACC_INTERFACE) == 0) {
                             throw new IllegalStateException("Cannot define annotation type without interface modifier");
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         /* do nothing */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         /* do nothing */
                     }
@@ -2557,7 +2855,9 @@ public interface TypeWriter<T> {
                         this.classFileVersion = classFileVersion;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifiers, boolean definesInterfaces, boolean isGeneric) {
                         if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define annotation type for class file version " + classFileVersion);
@@ -2566,14 +2866,18 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define generic field '" + name + "' for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2590,75 +2894,97 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write annotations for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type annotations for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         /* do nothing, implicitly checked by type assertion */
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V8)) {
                             throw new IllegalStateException("Cannot invoke default method for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method handle to constant pool for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write invoke dynamic instruction for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         if (classFileVersion.isGreaterThan(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write subroutine for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
                             throw new IllegalStateException("Cannot write dynamic constant for class file version " + classFileVersion);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
                             throw new IllegalStateException("Cannot define nest mate for class file version " + classFileVersion);
@@ -2693,21 +3019,27 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         for (Constraint constraint : constraints) {
                             constraint.assertType(modifier, definesInterfaces, isGeneric);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
                         for (Constraint constraint : constraints) {
                             constraint.assertField(name, isPublic, isStatic, isFinal, isGeneric);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethod(String name,
                                              boolean isAbstract,
                                              boolean isPublic,
@@ -2730,77 +3062,99 @@ public interface TypeWriter<T> {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultValue(String name) {
                         for (Constraint constraint : constraints) {
                             constraint.assertDefaultValue(name);
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDefaultMethodCall() {
                         for (Constraint constraint : constraints) {
                             constraint.assertDefaultMethodCall();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertAnnotation() {
                         for (Constraint constraint : constraints) {
                             constraint.assertAnnotation();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeAnnotation() {
                         for (Constraint constraint : constraints) {
                             constraint.assertTypeAnnotation();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertTypeInConstantPool() {
                         for (Constraint constraint : constraints) {
                             constraint.assertTypeInConstantPool();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertMethodTypeInConstantPool() {
                         for (Constraint constraint : constraints) {
                             constraint.assertMethodTypeInConstantPool();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertHandleInConstantPool() {
                         for (Constraint constraint : constraints) {
                             constraint.assertHandleInConstantPool();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertInvokeDynamic() {
                         for (Constraint constraint : constraints) {
                             constraint.assertInvokeDynamic();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertSubRoutine() {
                         for (Constraint constraint : constraints) {
                             constraint.assertSubRoutine();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertDynamicValueInConstantPool() {
                         for (Constraint constraint : constraints) {
                             constraint.assertDynamicValueInConstantPool();
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void assertNestMate() {
                         for (Constraint constraint : constraints) {
                             constraint.assertNestMate();
@@ -2866,9 +3220,9 @@ public interface TypeWriter<T> {
                 @Override
                 @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
                 @SuppressWarnings("deprecation")
-                public void visitLdcInsn(Object constant) {
-                    if (constant instanceof Type) {
-                        Type type = (Type) constant;
+                public void visitLdcInsn(Object value) {
+                    if (value instanceof Type) {
+                        Type type = (Type) value;
                         switch (type.getSort()) {
                             case Type.OBJECT:
                             case Type.ARRAY:
@@ -2878,12 +3232,12 @@ public interface TypeWriter<T> {
                                 constraint.assertMethodTypeInConstantPool();
                                 break;
                         }
-                    } else if (constant instanceof Handle) {
+                    } else if (value instanceof Handle) {
                         constraint.assertHandleInConstantPool();
-                    } else if (constant instanceof ConstantDynamic) {
+                    } else if (value instanceof ConstantDynamic) {
                         constraint.assertDynamicValueInConstantPool();
                     }
-                    super.visitLdcInsn(constant);
+                    super.visitLdcInsn(value);
                 }
 
                 @Override
@@ -3180,7 +3534,9 @@ public interface TypeWriter<T> {
                     this.methodRebaseResolver = methodRebaseResolver;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 protected ClassVisitor writeTo(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry, int writerFlags, int readerFlags) {
                     classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
                     return originalType.getName().equals(instrumentedType.getName())
@@ -3235,7 +3591,9 @@ public interface TypeWriter<T> {
                             super(instrumentedType, methodPool, annotationValueFilterFactory);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                             implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
                         }
@@ -3400,16 +3758,11 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        public void visitEnd() {
-                            onEnd();
-                        }
+                        public abstract void visitEnd();
 
                         /**
-                         * Invoked after the user code was completed.
+                         * {@inheritDoc}
                          */
-                        protected abstract void onEnd();
-
-                        @Override
                         public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
                             ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
                             stackSize = Math.max(stackSize, size.getOperandStackSize());
@@ -3424,7 +3777,9 @@ public interface TypeWriter<T> {
                          */
                         protected abstract void onComplete(Implementation.Context implementationContext);
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                             implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
                             mv.visitMaxs(stackSize, localVariableLength);
@@ -3466,12 +3821,16 @@ public interface TypeWriter<T> {
                                  */
                                 INSTANCE;
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void onFrame(int type, int localVariableLength) {
                                     /* do nothing */
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void emitFrame(MethodVisitor methodVisitor) {
                                     /* do nothing */
                                 }
@@ -3487,12 +3846,16 @@ public interface TypeWriter<T> {
                                  */
                                 INSTANCE;
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void onFrame(int type, int localVariableLength) {
                                     /* do nothing */
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void emitFrame(MethodVisitor methodVisitor) {
                                     methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                                 }
@@ -3508,7 +3871,9 @@ public interface TypeWriter<T> {
                                  */
                                 private int currentLocalVariableLength;
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void onFrame(int type, int localVariableLength) {
                                     switch (type) {
                                         case Opcodes.F_SAME:
@@ -3529,7 +3894,9 @@ public interface TypeWriter<T> {
                                     }
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public void emitFrame(MethodVisitor methodVisitor) {
                                     if (currentLocalVariableLength == 0) {
                                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
@@ -3574,7 +3941,7 @@ public interface TypeWriter<T> {
                             }
 
                             @Override
-                            protected void onEnd() {
+                            public void visitEnd() {
                                 /* do nothing */
                             }
 
@@ -3702,7 +4069,7 @@ public interface TypeWriter<T> {
                             }
 
                             @Override
-                            protected void onEnd() {
+                            public void visitEnd() {
                                 mv.visitLabel(appended);
                                 frameWriter.emitFrame(mv);
                             }
@@ -3710,7 +4077,7 @@ public interface TypeWriter<T> {
                             @Override
                             protected void onComplete(Implementation.Context implementationContext) {
                                 mv.visitJumpInsn(Opcodes.GOTO, original);
-                                afterComplete(implementationContext);
+                                onAfterComplete(implementationContext);
                             }
 
                             /**
@@ -3718,7 +4085,7 @@ public interface TypeWriter<T> {
                              *
                              * @param implementationContext The implementation context to use.
                              */
-                            protected abstract void afterComplete(Implementation.Context implementationContext);
+                            protected abstract void onAfterComplete(Implementation.Context implementationContext);
 
                             /**
                              * A code appending initialization handler with a drain that does not apply an explicit record.
@@ -3745,7 +4112,7 @@ public interface TypeWriter<T> {
                                 }
 
                                 @Override
-                                protected void afterComplete(Implementation.Context implementationContext) {
+                                protected void onAfterComplete(Implementation.Context implementationContext) {
                                     /* do nothing */
                                 }
                             }
@@ -3790,7 +4157,7 @@ public interface TypeWriter<T> {
                                 }
 
                                 @Override
-                                protected void afterComplete(Implementation.Context implementationContext) {
+                                protected void onAfterComplete(Implementation.Context implementationContext) {
                                     mv.visitLabel(label);
                                     frameWriter.emitFrame(mv);
                                     ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
@@ -4474,7 +4841,9 @@ public interface TypeWriter<T> {
                             classFileLocator);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 protected ClassVisitor writeTo(ClassVisitor classVisitor,
                                                TypeInitializer typeInitializer,
                                                ContextRegistry contextRegistry,
@@ -4505,12 +4874,16 @@ public interface TypeWriter<T> {
                         this.instrumentedType = instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldDescription.InDefinedShape get(int index) {
                         return instrumentedType.getDeclaredFields().get(index);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int size() {
                         return instrumentedType.getDeclaredFields().size();
                     }
@@ -4617,7 +4990,9 @@ public interface TypeWriter<T> {
                         cv.visitEnd();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
                         /* do nothing */
                     }
@@ -4849,7 +5224,9 @@ public interface TypeWriter<T> {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Void run() throws Exception {
                 OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName()
                         + (original ? "-original." : ".")

@@ -17,10 +17,10 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.util.Collections;
 
-import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -81,7 +81,6 @@ public class ByteBuddyExtensionTest {
     @Test
     public void testTransformation() throws Exception {
         when(project.configure(any(Transformation.class), eq(closure))).then(new Answer<Transformation>() {
-            @Override
             public Transformation answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return invocationOnMock.getArgument(0);
             }
@@ -94,7 +93,6 @@ public class ByteBuddyExtensionTest {
     @Test
     public void testInitialization() throws Exception {
         when(project.configure(any(Initialization.class), eq(closure))).then(new Answer<Initialization>() {
-            @Override
             public Initialization answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return invocationOnMock.getArgument(0);
             }
@@ -113,7 +111,6 @@ public class ByteBuddyExtensionTest {
     @Test(expected = GradleException.class)
     public void testInitializationDuplicate() throws Exception {
         when(project.configure(any(Initialization.class), eq(closure))).then(new Answer<Initialization>() {
-            @Override
             public Initialization answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return invocationOnMock.getArgument(0);
             }

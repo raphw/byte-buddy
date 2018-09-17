@@ -61,7 +61,9 @@ public class MultipleParentClassLoader extends ClassLoader {
         this.parents = parents;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         for (ClassLoader parent : parents) {
             try {
@@ -77,7 +79,9 @@ public class MultipleParentClassLoader extends ClassLoader {
         return super.loadClass(name, resolve);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public URL getResource(String name) {
         for (ClassLoader parent : parents) {
             URL url = parent.getResource(name);
@@ -88,7 +92,9 @@ public class MultipleParentClassLoader extends ClassLoader {
         return super.getResource(name);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Enumeration<URL> getResources(String name) throws IOException {
         List<Enumeration<URL>> enumerations = new ArrayList<Enumeration<URL>>(parents.size() + 1);
         for (ClassLoader parent : parents) {
@@ -127,7 +133,9 @@ public class MultipleParentClassLoader extends ClassLoader {
             this.enumerations = enumerations;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasMoreElements() {
             if (currentEnumeration != null && currentEnumeration.hasMoreElements()) {
                 return true;
@@ -139,7 +147,9 @@ public class MultipleParentClassLoader extends ClassLoader {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Null reference is impossible due to element check")
         public URL nextElement() {
             if (hasMoreElements()) {

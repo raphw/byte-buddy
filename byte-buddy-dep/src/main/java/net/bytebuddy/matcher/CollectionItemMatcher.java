@@ -25,7 +25,9 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(Iterable<? extends T> target) {
         for (T value : target) {
             if (matcher.matches(value)) {
@@ -35,7 +37,9 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
         return false;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "whereOne(" + matcher + ")";
     }

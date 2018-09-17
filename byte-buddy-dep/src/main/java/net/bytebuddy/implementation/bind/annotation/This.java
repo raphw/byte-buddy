@@ -46,12 +46,16 @@ public @interface This {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<This> getHandledType() {
             return This.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<This> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

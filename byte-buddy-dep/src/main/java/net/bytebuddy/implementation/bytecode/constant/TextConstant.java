@@ -26,12 +26,16 @@ public class TextConstant implements StackManipulation {
         this.text = text;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(text);
         return StackSize.SINGLE.toIncreasingSize();

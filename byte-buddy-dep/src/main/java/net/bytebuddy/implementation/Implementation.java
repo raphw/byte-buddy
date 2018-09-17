@@ -118,22 +118,30 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 throw new IllegalStateException("Cannot implement an undefined method");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription getMethodDescription() {
                 throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getTypeDescription() {
                 throw new IllegalStateException("An illegal special method invocation must not be applied");
             }
@@ -144,7 +152,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
          */
         abstract class AbstractBase implements SpecialMethodInvocation {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
@@ -217,17 +227,23 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         : SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription getMethodDescription() {
                 return methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getTypeDescription() {
                 return typeDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 return stackManipulation.apply(methodVisitor, implementationContext);
             }
@@ -346,12 +362,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 this.defaultMethodInvocation = defaultMethodInvocation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getInstrumentedType() {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token) {
                 SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
                 for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures()) {
@@ -367,12 +387,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return specialMethodInvocation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token, TypeDescription targetType) {
                 return defaultMethodInvocation.apply(methodGraph.getInterfaceGraph(targetType).locate(token), targetType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token) {
                 SpecialMethodInvocation specialMethodInvocation = invokeSuper(token);
                 return specialMethodInvocation.isValid()
@@ -536,12 +560,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     this.classFileVersion = classFileVersion;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getInstrumentedType() {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassFileVersion getClassFileVersion() {
                     return classFileVersion;
                 }
@@ -587,42 +615,58 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 super(instrumentedType, classFileVersion);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isEnabled() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public List<DynamicType> getAuxiliaryTypes() {
                 return Collections.emptyList();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void drain(TypeInitializer.Drain drain, ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 drain.apply(classVisitor, TypeInitializer.None.INSTANCE, this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 throw new IllegalStateException("Registration of auxiliary types was disabled: " + auxiliaryType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerAccessorFor(SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
                 throw new IllegalStateException("Registration of method accessors was disabled: " + specialMethodInvocation.getMethodDescription());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
                 throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
                 throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 throw new IllegalStateException("Field values caching was disabled: " + fieldType);
             }
@@ -637,7 +681,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
@@ -750,12 +796,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 fieldCacheCanAppendEntries = true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isEnabled() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerAccessorFor(SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
                 DelegationRecord record = registeredAccessorMethods.get(specialMethodInvocation);
                 record = record == null
@@ -765,7 +815,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return record.getMethod();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
                 DelegationRecord record = registeredGetters.get(fieldDescription);
                 record = record == null
@@ -775,7 +827,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return record.getMethod();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
                 DelegationRecord record = registeredSetters.get(fieldDescription);
                 record = record == null
@@ -785,7 +839,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return record.getMethod();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
@@ -795,12 +851,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return dynamicType.getTypeDescription();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public List<DynamicType> getAuxiliaryTypes() {
                 return new ArrayList<DynamicType>(auxiliaryTypes.values());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 FieldCacheEntry fieldCacheEntry = new FieldCacheEntry(fieldValue, fieldType);
                 FieldDescription.InDefinedShape fieldCache = registeredFieldCacheEntries.get(fieldCacheEntry);
@@ -818,7 +878,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return fieldCache;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void drain(TypeInitializer.Drain drain,
                               ClassVisitor classVisitor,
                               AnnotationValueFilter.Factory annotationValueFilterFactory) {
@@ -881,29 +943,39 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     name = FIELD_CACHE_PREFIX + "$" + suffix + "$" + RandomString.hashOf(hashCode);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getType() {
                     return fieldType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return Opcodes.ACC_SYNTHETIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | (instrumentedType.isInterface()
                             ? Opcodes.ACC_PUBLIC
                             : Opcodes.ACC_PRIVATE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getName() {
                     return name;
                 }
@@ -955,14 +1027,25 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return fieldType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isValid() {
                     return fieldValue.isValid();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     return fieldValue.apply(methodVisitor, implementationContext);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = fieldValue.hashCode();
+                    result = 31 * result + fieldType.hashCode();
+                    return result;
                 }
 
                 @Override
@@ -975,13 +1058,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     FieldCacheEntry fieldCacheEntry = (FieldCacheEntry) other;
                     return fieldValue.equals(fieldCacheEntry.fieldValue) && fieldType.equals(fieldCacheEntry.fieldType);
                 }
-
-                @Override
-                public int hashCode() {
-                    int result = fieldValue.hashCode();
-                    result = 31 * result + fieldType.hashCode();
-                    return result;
-                }
             }
 
             /**
@@ -989,7 +1065,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             protected abstract static class AbstractPropertyAccessorMethod extends MethodDescription.InDefinedShape.AbstractBase {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return Opcodes.ACC_SYNTHETIC | getBaseModifiers() | (getDeclaringType().isInterface()
                             ? Opcodes.ACC_PUBLIC
@@ -1037,49 +1115,65 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     name = methodDescription.getInternalName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getReturnType() {
                     return methodDescription.getReturnType().asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
 
                 @Override
-                public int getBaseModifiers() {
+                protected int getBaseModifiers() {
                     return methodDescription.isStatic()
                             ? Opcodes.ACC_STATIC
                             : EMPTY_MASK;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getInternalName() {
                     return name;
                 }
@@ -1118,37 +1212,51 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     name = fieldDescription.getName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getReturnType() {
                     return fieldDescription.getType().asRawType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getExceptionTypes() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
@@ -1160,7 +1268,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             : EMPTY_MASK;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getInternalName() {
                     return name;
                 }
@@ -1199,37 +1309,51 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     name = fieldDescription.getName() + "$" + ACCESSOR_METHOD_SUFFIX + "$" + suffix;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getReturnType() {
                     return TypeDescription.Generic.VOID;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                     return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getExceptionTypes() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationValue<?, ?> getDefaultValue() {
                     return AnnotationValue.UNDEFINED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeList.Generic getTypeVariables() {
                     return new TypeList.Generic.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Empty();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getDeclaringType() {
                     return instrumentedType;
                 }
@@ -1241,7 +1365,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             : EMPTY_MASK;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getInternalName() {
                     return name;
                 }
@@ -1282,44 +1408,60 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 protected abstract DelegationRecord with(AccessType accessType);
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDescription.InDefinedShape getMethod() {
                     return methodDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Sort getSort() {
                     return Sort.IMPLEMENTED;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Visibility getVisibility() {
                     return visibility;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyHead(MethodVisitor methodVisitor) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyBody(MethodVisitor methodVisitor, Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     methodVisitor.visitCode();
                     Size size = applyCode(methodVisitor, implementationContext);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size applyCode(MethodVisitor methodVisitor, Context implementationContext) {
                     return apply(methodVisitor, implementationContext, getMethod());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeWriter.MethodPool.Record prepend(ByteCodeAppender byteCodeAppender) {
                     throw new UnsupportedOperationException("Cannot prepend code to a delegation for " + methodDescription);
                 }
@@ -1373,7 +1515,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return new AccessorMethodDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), accessorMethodInvocation);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
@@ -1424,7 +1568,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return new FieldGetterDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), fieldDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
@@ -1477,7 +1623,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return new FieldSetterDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), fieldDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
@@ -1498,7 +1646,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
@@ -1555,7 +1705,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             for (Implementation implementation : implementations) {
                 instrumentedType = implementation.prepare(instrumentedType);
@@ -1563,7 +1715,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[implementations.size()];
             int index = 0;
@@ -1631,7 +1785,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 for (Implementation implementation : implementations) {
                     instrumentedType = implementation.prepare(instrumentedType);
@@ -1639,7 +1795,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return composable.prepare(instrumentedType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ByteCodeAppender appender(Target implementationTarget) {
                 ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[implementations.size() + 1];
                 int index = 0;
@@ -1650,12 +1808,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return new ByteCodeAppender.Compound(byteCodeAppender);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Implementation andThen(Implementation implementation) {
                 return new Compound(CompoundList.of(implementations, composable.andThen(implementation)));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Implementation.Composable andThen(Implementation.Composable implementation) {
                 return new Compound.Composable(implementations, composable.andThen(implementation));
             }
@@ -1692,12 +1854,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
             byteCodeAppender = new ByteCodeAppender.Simple(stackManipulation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return byteCodeAppender;
         }

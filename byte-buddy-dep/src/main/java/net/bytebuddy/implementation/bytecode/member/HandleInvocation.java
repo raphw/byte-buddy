@@ -37,12 +37,16 @@ public class HandleInvocation implements StackManipulation {
         this.methodType = methodType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, METHOD_HANDLE_NAME, INVOKE_EXACT, methodType.getDescriptor(), false);
         int size = methodType.getReturnType().getStackSize().getSize() - methodType.getParameterTypes().getStackSize();

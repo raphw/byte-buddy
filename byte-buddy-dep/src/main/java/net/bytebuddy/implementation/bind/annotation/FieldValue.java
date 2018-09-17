@@ -97,12 +97,16 @@ public @interface FieldValue {
             this.delegate = delegate;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<FieldValue> getHandledType() {
             return delegate.getHandledType();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<FieldValue> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -117,9 +121,21 @@ public @interface FieldValue {
          */
         protected static class Delegate extends ForFieldBinding<FieldValue> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Class<FieldValue> getHandledType() {
                 return FieldValue.class;
+            }
+
+            @Override
+            protected String fieldName(AnnotationDescription.Loadable<FieldValue> annotation) {
+                return annotation.getValue(FIELD_NAME).resolve(String.class);
+            }
+
+            @Override
+            protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldValue> annotation) {
+                return annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
             }
 
             @Override
@@ -139,16 +155,6 @@ public @interface FieldValue {
                 return stackManipulation.isValid()
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-            }
-
-            @Override
-            protected String fieldName(AnnotationDescription.Loadable<FieldValue> annotation) {
-                return annotation.getValue(FIELD_NAME).resolve(String.class);
-            }
-
-            @Override
-            protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldValue> annotation) {
-                return annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
             }
         }
     }

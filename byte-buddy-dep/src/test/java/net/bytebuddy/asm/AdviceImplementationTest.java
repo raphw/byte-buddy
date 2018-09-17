@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.StubMethod;
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class AdviceImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testAbstractMethod() throws Exception {
-        new ByteBuddy()
+        new ByteBuddy(ClassFileVersion.of(Foo.class))
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Foo.class))
@@ -25,7 +26,7 @@ public class AdviceImplementationTest {
 
     @Test
     public void testActualMethod() throws Exception {
-        assertThat(new ByteBuddy()
+        assertThat(new ByteBuddy(ClassFileVersion.of(Bar.class))
                 .subclass(Bar.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Bar.class))
@@ -39,7 +40,7 @@ public class AdviceImplementationTest {
 
     @Test
     public void testExplicitWrap() throws Exception {
-        assertThat(new ByteBuddy()
+        assertThat(new ByteBuddy(ClassFileVersion.of(Qux.class))
                 .subclass(Qux.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Qux.class).wrap(StubMethod.INSTANCE))
@@ -53,7 +54,7 @@ public class AdviceImplementationTest {
 
     @Test
     public void testExplicitWrapMultiple() throws Exception {
-        Class<?> type = new ByteBuddy()
+        Class<?> type = new ByteBuddy(ClassFileVersion.of(Baz.class))
                 .redefine(Baz.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Baz.class).wrap(Advice.to(Baz.class).wrap(StubMethod.INSTANCE)))

@@ -31,7 +31,6 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         super(Argument.class);
     }
 
-    @Override
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -44,7 +43,6 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(genericTargetType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(targetType);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Argument> getSimpleBinder() {
         return Argument.Binder.INSTANCE;
     }

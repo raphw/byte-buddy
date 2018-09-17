@@ -20,7 +20,9 @@ public enum NoOpClassFileTransformer implements ClassFileTransformer {
      */
     private static final byte[] NO_TRANSFORMATION = null;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Array is guaranteed to be null")
     public byte[] transform(ClassLoader loader,
                             String className,

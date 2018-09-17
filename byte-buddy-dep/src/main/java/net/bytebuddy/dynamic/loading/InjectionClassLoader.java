@@ -87,7 +87,9 @@ public abstract class InjectionClassLoader extends ClassLoader {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(InjectionClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot add types to bootstrap class loader: " + types);

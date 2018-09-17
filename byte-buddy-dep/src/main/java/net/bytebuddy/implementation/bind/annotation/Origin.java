@@ -98,12 +98,16 @@ public @interface Origin {
             return origin.cache() ? methodConstant.cached() : methodConstant;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Origin> getHandledType() {
             return Origin.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Origin> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

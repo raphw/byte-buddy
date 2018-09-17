@@ -394,7 +394,9 @@ public interface AnnotationValue<T, S> {
          */
         abstract class AbstractBase<W> implements Loaded<W> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <X> X resolve(Class<? extends X> type) {
                 return type.cast(resolve());
             }
@@ -409,12 +411,16 @@ public interface AnnotationValue<T, S> {
      */
     abstract class AbstractBase<U, V> implements AnnotationValue<U, V> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <W> W resolve(Class<? extends W> type) {
             return type.cast(resolve());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Loaded<V> loadSilent(ClassLoader classLoader) {
             try {
                 return load(classLoader);
@@ -682,24 +688,28 @@ public interface AnnotationValue<T, S> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public U resolve() {
             return value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
             return new Loaded<U>(value, propertyDelegate);
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve());
+        public int hashCode() {
+            return propertyDelegate.hashCode(value);
         }
 
         @Override
-        public int hashCode() {
-            return propertyDelegate.hashCode(value);
+        public boolean equals(Object other) {
+            return this == other || other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -755,7 +765,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code boolean} value.
                  */
                 BOOLEAN {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Boolean) value);
                     }
@@ -765,7 +775,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code byte} value.
                  */
                 BYTE {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Byte) value);
                     }
@@ -775,7 +785,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code short} value.
                  */
                 SHORT {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Short) value);
                     }
@@ -785,7 +795,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code char} value.
                  */
                 CHARACTER {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Character) value);
                     }
@@ -795,7 +805,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code int} value.
                  */
                 INTEGER {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Integer) value);
                     }
@@ -805,7 +815,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code long} value.
                  */
                 LONG {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Long) value);
                     }
@@ -815,7 +825,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code float} value.
                  */
                 FLOAT {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Float) value);
                     }
@@ -825,7 +835,7 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@code double} value.
                  */
                 DOUBLE {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((Double) value);
                     }
@@ -835,23 +845,29 @@ public interface AnnotationValue<T, S> {
                  * A property delegate for a {@link String} value.
                  */
                 STRING {
-                    @Override
+                    /** {@inheritDoc} */
                     public String toString(Object value) {
                         return RenderingDispatcher.CURRENT.toSourceString((String) value);
                     }
                 };
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public <S> S copy(S value) {
                     return value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int hashCode(Object value) {
                     return value.hashCode();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean equals(Object self, Object other) {
                     return self.equals(other);
                 }
@@ -871,12 +887,12 @@ public interface AnnotationValue<T, S> {
                         return ((boolean[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((boolean[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof boolean[] && Arrays.equals((boolean[]) self, (boolean[]) other);
                     }
@@ -896,12 +912,12 @@ public interface AnnotationValue<T, S> {
                         return ((byte[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((byte[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof byte[] && Arrays.equals((byte[]) self, (byte[]) other);
                     }
@@ -921,12 +937,12 @@ public interface AnnotationValue<T, S> {
                         return ((short[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((short[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof short[] && Arrays.equals((short[]) self, (short[]) other);
                     }
@@ -946,12 +962,12 @@ public interface AnnotationValue<T, S> {
                         return ((char[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((char[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof char[] && Arrays.equals((char[]) self, (char[]) other);
                     }
@@ -971,12 +987,12 @@ public interface AnnotationValue<T, S> {
                         return ((int[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((int[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof int[] && Arrays.equals((int[]) self, (int[]) other);
                     }
@@ -996,12 +1012,12 @@ public interface AnnotationValue<T, S> {
                         return ((long[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((long[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof long[] && Arrays.equals((long[]) self, (long[]) other);
                     }
@@ -1021,12 +1037,12 @@ public interface AnnotationValue<T, S> {
                         return ((float[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((float[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof float[] && Arrays.equals((float[]) self, (float[]) other);
                     }
@@ -1046,12 +1062,12 @@ public interface AnnotationValue<T, S> {
                         return ((double[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((double[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof double[] && Arrays.equals((double[]) self, (double[]) other);
                     }
@@ -1071,12 +1087,12 @@ public interface AnnotationValue<T, S> {
                         return ((String[]) value).clone();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public int hashCode(Object value) {
                         return Arrays.hashCode((String[]) value);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public boolean equals(Object self, Object other) {
                         return other instanceof String[] && Arrays.equals((String[]) self, (String[]) other);
                     }
@@ -1087,7 +1103,9 @@ public interface AnnotationValue<T, S> {
                     }
                 };
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressWarnings("unchecked")
                 public <S> S copy(S value) {
                     return (S) doCopy(value);
@@ -1101,7 +1119,9 @@ public interface AnnotationValue<T, S> {
                  */
                 protected abstract Object doCopy(Object value);
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String toString(Object value) {
                     List<String> elements = new ArrayList<String>(Array.getLength(value));
                     for (int index = 0; index < Array.getLength(value); index++) {
@@ -1149,17 +1169,23 @@ public interface AnnotationValue<T, S> {
                 this.propertyDelegate = propertyDelegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.RESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public V resolve() {
                 return propertyDelegate.copy(value);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return propertyDelegate.equals(this.value, value);
             }
@@ -1221,12 +1247,16 @@ public interface AnnotationValue<T, S> {
             return new ForAnnotationDescription<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription resolve() {
             return annotationDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
             @SuppressWarnings("unchecked")
             Class<U> annotationType = (Class<U>) Class.forName(annotationDescription.getAnnotationType().getName(), false, classLoader);
@@ -1234,13 +1264,13 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
+        public int hashCode() {
+            return annotationDescription.hashCode();
         }
 
         @Override
-        public int hashCode() {
-            return annotationDescription.hashCode();
+        public boolean equals(Object other) {
+            return this == other || other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1269,19 +1299,30 @@ public interface AnnotationValue<T, S> {
                 this.annotation = annotation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.RESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public V resolve() {
                 return annotation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return annotation.equals(value);
+            }
+
+            @Override
+            public int hashCode() {
+                return annotation.hashCode();
             }
 
             @Override
@@ -1293,11 +1334,6 @@ public interface AnnotationValue<T, S> {
                 }
                 AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
                 return annotationValue.getState().isResolved() && annotation.equals(annotationValue.resolve());
-            }
-
-            @Override
-            public int hashCode() {
-                return annotation.hashCode();
             }
 
             @Override
@@ -1333,17 +1369,23 @@ public interface AnnotationValue<T, S> {
                 this.incompatibleType = incompatibleType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.UNRESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Annotation resolve() {
                 throw new IncompatibleClassChangeError("Not an annotation type: " + incompatibleType.toString());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return false;
             }
@@ -1384,12 +1426,16 @@ public interface AnnotationValue<T, S> {
             return new ForEnumerationDescription<V>(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public EnumerationDescription resolve() {
             return enumerationDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
             @SuppressWarnings("unchecked")
             Class<U> enumerationType = (Class<U>) Class.forName(enumerationDescription.getEnumerationType().getName(), false, classLoader);
@@ -1397,13 +1443,13 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
+        public int hashCode() {
+            return enumerationDescription.hashCode();
         }
 
         @Override
-        public int hashCode() {
-            return enumerationDescription.hashCode();
+        public boolean equals(Object other) {
+            return this == other || other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1432,19 +1478,30 @@ public interface AnnotationValue<T, S> {
                 this.enumeration = enumeration;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.RESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public V resolve() {
                 return enumeration;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return enumeration.equals(value);
+            }
+
+            @Override
+            public int hashCode() {
+                return enumeration.hashCode();
             }
 
             @Override
@@ -1456,11 +1513,6 @@ public interface AnnotationValue<T, S> {
                 }
                 AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
                 return annotationValue.getState().isResolved() && enumeration.equals(annotationValue.resolve());
-            }
-
-            @Override
-            public int hashCode() {
-                return enumeration.hashCode();
             }
 
             @Override
@@ -1503,17 +1555,23 @@ public interface AnnotationValue<T, S> {
                 this.value = value;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.UNRESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Enum<?> resolve() {
                 throw new EnumConstantNotPresentException(enumType, value);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return false;
             }
@@ -1547,17 +1605,23 @@ public interface AnnotationValue<T, S> {
                 this.type = type;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.UNRESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Enum<?> resolve() {
                 throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return false;
             }
@@ -1603,25 +1667,29 @@ public interface AnnotationValue<T, S> {
             return new ForTypeDescription<V>(typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription resolve() {
             return typeDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
             return new Loaded<U>((U) Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader));
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve());
+        public int hashCode() {
+            return typeDescription.hashCode();
         }
 
         @Override
-        public int hashCode() {
-            return typeDescription.hashCode();
+        public boolean equals(Object other) {
+            return this == other || other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve());
         }
 
         @Override
@@ -1650,19 +1718,30 @@ public interface AnnotationValue<T, S> {
                 this.type = type;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.RESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public U resolve() {
                 return type;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return type.equals(value);
+            }
+
+            @Override
+            public int hashCode() {
+                return type.hashCode();
             }
 
             @Override
@@ -1674,11 +1753,6 @@ public interface AnnotationValue<T, S> {
                 }
                 AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
                 return annotationValue.getState().isResolved() && type.equals(annotationValue.resolve());
-            }
-
-            @Override
-            public int hashCode() {
-                return type.hashCode();
             }
 
             @Override
@@ -1783,7 +1857,9 @@ public interface AnnotationValue<T, S> {
             return new ForDescriptionArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public U[] resolve() {
             @SuppressWarnings("unchecked")
             U[] resolved = (U[]) Array.newInstance(unloadedComponentType, values.size());
@@ -1794,7 +1870,9 @@ public interface AnnotationValue<T, S> {
             return resolved;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) throws ClassNotFoundException {
             List<AnnotationValue.Loaded<?>> values = new ArrayList<AnnotationValue.Loaded<?>>(this.values.size());
@@ -1802,6 +1880,15 @@ public interface AnnotationValue<T, S> {
                 values.add(value.load(classLoader));
             }
             return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            for (AnnotationValue<?, ?> value : values) {
+                result = 31 * result + value.hashCode();
+            }
+            return result;
         }
 
         @Override
@@ -1828,15 +1915,6 @@ public interface AnnotationValue<T, S> {
                 }
             }
             return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = 1;
-            for (AnnotationValue<?, ?> value : values) {
-                result = 31 * result + value.hashCode();
-            }
-            return result;
         }
 
         @Override
@@ -1872,7 +1950,9 @@ public interface AnnotationValue<T, S> {
                 this.values = values;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 for (AnnotationValue.Loaded<?> value : values) {
                     if (!value.getState().isResolved()) {
@@ -1882,7 +1962,9 @@ public interface AnnotationValue<T, S> {
                 return State.RESOLVED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public W[] resolve() {
                 @SuppressWarnings("unchecked")
                 W[] array = (W[]) Array.newInstance(componentType, values.size());
@@ -1893,7 +1975,9 @@ public interface AnnotationValue<T, S> {
                 return array;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 if (!(value instanceof Object[])) return false;
                 if (value.getClass().getComponentType() != componentType) return false;
@@ -1907,6 +1991,15 @@ public interface AnnotationValue<T, S> {
                     }
                 }
                 return true;
+            }
+
+            @Override
+            public int hashCode() {
+                int result = 1;
+                for (AnnotationValue.Loaded<?> value : values) {
+                    result = 31 * result + value.hashCode();
+                }
+                return result;
             }
 
             @Override
@@ -1936,15 +2029,6 @@ public interface AnnotationValue<T, S> {
                     }
                 }
                 return true;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = 1;
-                for (AnnotationValue.Loaded<?> value : values) {
-                    result = 31 * result + value.hashCode();
-                }
-                return result;
             }
 
             @Override

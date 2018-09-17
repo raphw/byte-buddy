@@ -51,7 +51,7 @@ public class AgentBuilderRedefinitionStrategyDiscoveryStrategyTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testReiterationNoRemoval() throws Exception {
-        when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[] {Void.class});
+        when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{Void.class});
         AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Reiterating.INSTANCE.resolve(instrumentation).iterator().remove();
     }
 

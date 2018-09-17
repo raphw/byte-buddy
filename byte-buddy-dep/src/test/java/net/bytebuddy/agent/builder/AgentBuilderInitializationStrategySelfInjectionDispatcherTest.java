@@ -75,7 +75,6 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(instrumented.getName()).thenReturn(Qux.class.getName());
         when(classInjector.inject(any(Map.class))).then(new Answer<Map<TypeDescription, Class<?>>>() {
-            @Override
             public Map<TypeDescription, Class<?>> answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
                 for (TypeDescription typeDescription : ((Map<TypeDescription, byte[]>) invocationOnMock.getArguments()[0]).keySet()) {

@@ -1634,7 +1634,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method for the supplied property.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(String property) {
-        return isSetter().and(property.isEmpty()
+        return isSetter().and(property.length() == 0
                 ? named("set")
                 : named("set" + Character.toUpperCase(property.charAt(0)) + property.substring(1)));
     }
@@ -1725,7 +1725,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any getter method for the supplied property.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(String property) {
-        return isGetter().and(property.isEmpty()
+        return isGetter().and(property.length() == 0
                 ? named("get").or(named("is"))
                 : named("get" + Character.toUpperCase(property.charAt(0)) + property.substring(1)).or(named("is" + Character.toUpperCase(property.charAt(0)) + property.substring(1))));
     }

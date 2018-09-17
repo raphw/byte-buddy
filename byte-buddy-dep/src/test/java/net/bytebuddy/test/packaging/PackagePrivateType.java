@@ -17,7 +17,7 @@ public class PackagePrivateType {
         /* empty */
     }
 
-    static class ExceptionType extends Exception{
+    static class ExceptionType extends Exception {
         /* empty */
     }
 }

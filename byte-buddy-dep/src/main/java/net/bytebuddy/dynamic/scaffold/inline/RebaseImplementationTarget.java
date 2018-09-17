@@ -62,7 +62,9 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         return new RebaseImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), methodRebaseResolver.asTokenMap());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
         MethodRebaseResolver.Resolution resolution = rebaseableMethods.get(token);
         return resolution == null
@@ -94,7 +96,9 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                 : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public TypeDescription getOriginType() {
         return instrumentedType;
     }
@@ -152,17 +156,23 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                     : Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription getMethodDescription() {
             return methodDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getTypeDescription() {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return stackManipulation.apply(methodVisitor, implementationContext);
         }
@@ -188,7 +198,9 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
             this.methodRebaseResolver = methodRebaseResolver;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return RebaseImplementationTarget.of(instrumentedType, methodGraph, classFileVersion, methodRebaseResolver);
         }

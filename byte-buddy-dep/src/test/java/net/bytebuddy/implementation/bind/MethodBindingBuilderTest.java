@@ -161,15 +161,15 @@ public class MethodBindingBuilderTest {
         }
 
         @Override
+        public int hashCode() {
+            return identifier.hashCode();
+        }
+
+        @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && identifier.equals(((Key) other).identifier);
 
-        }
-
-        @Override
-        public int hashCode() {
-            return identifier.hashCode();
         }
     }
 }

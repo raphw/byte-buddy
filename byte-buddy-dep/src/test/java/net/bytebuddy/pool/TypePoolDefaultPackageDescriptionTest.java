@@ -19,7 +19,6 @@ public class TypePoolDefaultPackageDescriptionTest extends AbstractPackageDescri
         typePool.clear();
     }
 
-    @Override
     protected PackageDescription describe(Class<?> type) {
         return typePool.describe(type.getName()).resolve().getPackage();
     }

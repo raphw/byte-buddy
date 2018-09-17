@@ -15,7 +15,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public abstract class AbstractAttributeAppenderTest {
 
@@ -59,7 +60,6 @@ public abstract class AbstractAttributeAppenderTest {
 
         class Instance implements Qux {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Qux.class;
             }
@@ -71,7 +71,6 @@ public abstract class AbstractAttributeAppenderTest {
 
         class Instance implements Baz {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Baz.class;
             }
@@ -83,7 +82,6 @@ public abstract class AbstractAttributeAppenderTest {
 
         class Instance implements QuxBaz {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return QuxBaz.class;
             }

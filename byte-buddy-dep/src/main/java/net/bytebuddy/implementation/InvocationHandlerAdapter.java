@@ -302,7 +302,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             return new ForInstance(fieldName, cached, PRIVILEGED, assigner, invocationHandler);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType
                     .withField(new FieldDescription.Token(fieldName,
@@ -311,7 +313,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                     .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, invocationHandler));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
@@ -336,7 +340,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForInstance.this.apply(methodVisitor,
                         implementationContext,
@@ -390,12 +396,16 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             return new ForField(fieldName, cached, PRIVILEGED, assigner, fieldLocatorFactory);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             FieldLocator.Resolution resolution = fieldLocatorFactory.make(implementationTarget.getInstrumentedType()).locate(fieldName);
             if (!resolution.isResolved()) {
@@ -426,7 +436,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 this.fieldDescription = fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForField.this.apply(methodVisitor,
                         implementationContext,

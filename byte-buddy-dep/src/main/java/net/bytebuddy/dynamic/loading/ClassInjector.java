@@ -151,7 +151,9 @@ public interface ClassInjector {
             return new UsingReflection(ClassLoader.getSystemClassLoader());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Dispatcher dispatcher = DISPATCHER.initialize();
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
@@ -307,22 +309,30 @@ public interface ClassInjector {
                         this.message = message;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public boolean isAvailable() {
                         return false;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Dispatcher initialize() {
                         return this;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         return classLoader;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Class<?> findClass(ClassLoader classLoader, String name) {
                         try {
                             return classLoader.loadClass(name);
@@ -331,17 +341,23 @@ public interface ClassInjector {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                         throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Package getPackage(ClassLoader classLoader, String name) {
                         throw new UnsupportedOperationException("Cannot get package using reflection: " + message);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Package definePackage(ClassLoader classLoader,
                                                  String name,
                                                  String specificationTitle,
@@ -366,7 +382,9 @@ public interface ClassInjector {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
                     try {
@@ -473,12 +491,16 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
                     try {
@@ -500,7 +522,9 @@ public interface ClassInjector {
                  */
                 protected abstract void onInitialization();
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> findClass(ClassLoader classLoader, String name) {
                     try {
                         return (Class<?>) findLoadedClass.invoke(classLoader, name);
@@ -511,7 +535,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
@@ -522,7 +548,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package getPackage(ClassLoader classLoader, String name) {
                     try {
                         return (Package) getPackage.invoke(classLoader, name);
@@ -533,7 +561,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
                                              String specificationTitle,
@@ -589,7 +619,9 @@ public interface ClassInjector {
                         this.getClassLoadingLock = getClassLoadingLock;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         try {
                             return getClassLoadingLock.invoke(classLoader, name);
@@ -627,7 +659,9 @@ public interface ClassInjector {
                         super(findLoadedClass, defineClass, getPackage, definePackage);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         return classLoader;
                     }
@@ -767,12 +801,16 @@ public interface ClassInjector {
                             type.getMethod("getClassLoadingLock", ClassLoader.class, String.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {
@@ -781,7 +819,9 @@ public interface ClassInjector {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                     try {
                         return getClassLoadingLock.invoke(accessor, classLoader, name);
@@ -792,7 +832,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> findClass(ClassLoader classLoader, String name) {
                     try {
                         return (Class<?>) findLoadedClass.invoke(accessor, classLoader, name);
@@ -803,7 +845,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(accessor, classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
@@ -814,7 +858,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package getPackage(ClassLoader classLoader, String name) {
                     try {
                         return (Package) getPackage.invoke(accessor, classLoader, name);
@@ -825,7 +871,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
                                              String specificationTitle,
@@ -958,12 +1006,16 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {
@@ -972,7 +1024,9 @@ public interface ClassInjector {
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> findClass(ClassLoader classLoader, String name) {
                     try {
                         return (Class<?>) findLoadedClass.invoke(classLoader, name);
@@ -983,7 +1037,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
@@ -994,7 +1050,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package getPackage(ClassLoader classLoader, String name) {
                     try {
                         return (Package) getPackage.invoke(classLoader, name);
@@ -1005,7 +1063,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
                                              String specificationTitle,
@@ -1061,7 +1121,9 @@ public interface ClassInjector {
                         this.getClassLoadingLock = getClassLoadingLock;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         try {
                             return getClassLoadingLock.invoke(classLoader, name);
@@ -1093,7 +1155,9 @@ public interface ClassInjector {
                         super(findLoadedClass, defineClass, getPackage, definePackage);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         return classLoader;
                     }
@@ -1120,12 +1184,16 @@ public interface ClassInjector {
                     this.exception = exception;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                     return classLoader;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> findClass(ClassLoader classLoader, String name) {
                     try {
                         return classLoader.loadClass(name);
@@ -1134,17 +1202,23 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Cannot define class using reflection", exception);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package getPackage(ClassLoader classLoader, String name) {
                     throw new UnsupportedOperationException("Cannot get package using reflection", exception);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Package definePackage(ClassLoader classLoader,
                                              String name,
                                              String specificationTitle,
@@ -1240,7 +1314,9 @@ public interface ClassInjector {
             return new UsingLookup(DISPATCHER.resolve(lookup, type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
             for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
@@ -1317,7 +1393,9 @@ public interface ClassInjector {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Dispatcher run() {
                     try {
@@ -1343,32 +1421,44 @@ public interface ClassInjector {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAlive() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> lookupType(Object lookup) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int lookupModes(Object lookup) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object dropLookupMode(Object lookup, int mode) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object resolve(Object lookup, Class<?> type) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(Object lookup, byte[] binaryRepresentation) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
@@ -1427,12 +1517,16 @@ public interface ClassInjector {
                     this.dropLookupMode = dropLookupMode;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAlive() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> lookupType(Object lookup) {
                     try {
                         return (Class<?>) lookupClass.invoke(lookup, NO_ARGUMENTS);
@@ -1443,7 +1537,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int lookupModes(Object lookup) {
                     try {
                         return (Integer) lookupModes.invoke(lookup, NO_ARGUMENTS);
@@ -1454,7 +1550,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object dropLookupMode(Object lookup, int mode) {
                     try {
                         return dropLookupMode.invoke(lookup, mode);
@@ -1465,7 +1563,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Object resolve(Object lookup, Class<?> type) {
                     try {
                         return privateLookupIn.invoke(null, type, lookup);
@@ -1476,7 +1576,9 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(Object lookup, byte[] binaryRepresentation) {
                     try {
                         return (Class<?>) defineClass.invoke(lookup, (Object) binaryRepresentation);
@@ -1570,7 +1672,9 @@ public interface ClassInjector {
             return new UsingUnsafe(ClassLoader.getSystemClassLoader());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             Dispatcher dispatcher = DISPATCHER.initialize();
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
@@ -1634,7 +1738,9 @@ public interface ClassInjector {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
                     try {
@@ -1679,19 +1785,25 @@ public interface ClassInjector {
                     this.defineClass = defineClass;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 public Dispatcher initialize() {
                     theUnsafe.setAccessible(true);
                     return this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
                         return (Class<?>) defineClass.invoke(theUnsafe.get(null),
@@ -1729,14 +1841,18 @@ public interface ClassInjector {
                     this.message = message;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAvailable() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher initialize() {
-                    throw new IllegalStateException("Could not find sun.misc.Unsafe");
+                    throw new IllegalStateException("Could not find sun.misc.Unsafe: " + message);
                 }
             }
         }
@@ -1758,6 +1874,11 @@ public interface ClassInjector {
          * The class file extension.
          */
         private static final String CLASS_FILE_EXTENSION = ".class";
+
+        /**
+         * A dispatcher for interacting with the instrumentation API.
+         */
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The instrumentation to use for appending to the class path or the boot path.
@@ -1792,6 +1913,15 @@ public interface ClassInjector {
         }
 
         /**
+         * Returns {@code true} if this class injector is available on this VM.
+         *
+         * @return {@code true} if this class injector is available on this VM.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAlive();
+        }
+
+        /**
          * Creates an instrumentation-based class injector.
          *
          * @param folder          The folder to be used for storing jar files.
@@ -1809,7 +1939,9 @@ public interface ClassInjector {
             this.randomString = randomString;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             File jarFile = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
@@ -1839,6 +1971,151 @@ public interface ClassInjector {
         }
 
         /**
+         * A dispatcher to interact with the instrumentation API.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Returns {@code true} if this dispatcher is alive.
+             *
+             * @return {@code true} if this dispatcher is alive.
+             */
+            boolean isAlive();
+
+            /**
+             * Appends a jar file to the bootstrap class loader.
+             *
+             * @param instrumentation The instrumentation instance to interact with.
+             * @param jarFile         The jar file to append.
+             */
+            void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile);
+
+            /**
+             * Appends a jar file to the system class loader.
+             *
+             * @param instrumentation The instrumentation instance to interact with.
+             * @param jarFile         The jar file to append.
+             */
+            void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile);
+
+            /**
+             * An action to create a dispatcher for interacting with the instrumentation API.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Dispatcher run() {
+                    try {
+                        return new ForJava6CapableVm(Instrumentation.class.getMethod("appendToBootstrapClassLoaderSearch", JarFile.class),
+                                Instrumentation.class.getMethod("appendToSystemClassLoaderSearch", JarFile.class));
+                    } catch (NoSuchMethodException ignored) {
+                        return ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher for a legacy VM that is not capable of appending jar files.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isAlive() {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
+                    throw new IllegalStateException("The current JVM does not support appending to the bootstrap loader");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
+                    throw new IllegalStateException("The current JVM does not support appending to the system class loader");
+                }
+            }
+
+            /**
+             * A dispatcher for a VM that is capable of appending to the boot and system class loader.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForJava6CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code Instrumentation#appendToBootstrapClassLoaderSearch} method.
+                 */
+                private final Method appendToBootstrapClassLoaderSearch;
+
+                /**
+                 * The {@code Instrumentation#appendToSystemClassLoaderSearch} method.
+                 */
+                private final Method appendToSystemClassLoaderSearch;
+
+                /**
+                 * Creates a new dispatcher for a Java 6 compatible VM.
+                 *
+                 * @param appendToBootstrapClassLoaderSearch The {@code Instrumentation#appendToBootstrapClassLoaderSearch} method.
+                 * @param appendToSystemClassLoaderSearch    The {@code Instrumentation#appendToSystemClassLoaderSearch} method.
+                 */
+                protected ForJava6CapableVm(Method appendToBootstrapClassLoaderSearch, Method appendToSystemClassLoaderSearch) {
+                    this.appendToBootstrapClassLoaderSearch = appendToBootstrapClassLoaderSearch;
+                    this.appendToSystemClassLoaderSearch = appendToSystemClassLoaderSearch;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isAlive() {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
+                    try {
+                        appendToBootstrapClassLoaderSearch.invoke(instrumentation, jarFile);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#appendToBootstrapClassLoaderSearch", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#appendToBootstrapClassLoaderSearch", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
+                    try {
+                        appendToSystemClassLoaderSearch.invoke(instrumentation, jarFile);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch", exception.getCause());
+                    }
+                }
+            }
+        }
+
+        /**
          * A representation of the target to which Java classes should be appended to.
          */
         public enum Target {
@@ -1849,7 +2126,7 @@ public interface ClassInjector {
             BOOTSTRAP {
                 @Override
                 protected void inject(Instrumentation instrumentation, JarFile jarFile) {
-                    instrumentation.appendToBootstrapClassLoaderSearch(jarFile);
+                    DISPATCHER.appendToBootstrapClassLoaderSearch(instrumentation, jarFile);
                 }
             },
 
@@ -1859,7 +2136,7 @@ public interface ClassInjector {
             SYSTEM {
                 @Override
                 protected void inject(Instrumentation instrumentation, JarFile jarFile) {
-                    instrumentation.appendToSystemClassLoaderSearch(jarFile);
+                    DISPATCHER.appendToSystemClassLoaderSearch(instrumentation, jarFile);
                 }
             };
 

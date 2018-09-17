@@ -16,7 +16,6 @@ public class TypeAttributeAppenderForInstrumentedTypeDifferentiatingTest extends
     @Mock
     private TypeDescription.Generic pseudoType;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

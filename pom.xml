@@ -50,7 +50,7 @@
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <code.level>1.6</code.level>
+        <bytecode.target>1.5</bytecode.target>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.javadoc>http://asm.ow2.io/javadoc</asm.javadoc>
         <version.asm>6.2.1</version.asm>
@@ -249,8 +249,8 @@
                     <version>${version.plugin.compiler}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <source>${code.level}</source>
-                        <target>${code.level}</target>
+                        <source>1.5</source>
+                        <target>${bytecode.target}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
                     </configuration>
                 </plugin>
@@ -294,9 +294,24 @@
     </distributionManagement>
 
     <profiles>
-        <!-- Fallback for Java 6 JDK to use older, compatible versions of plugins. -->
+        <!-- Runs the build with compatibility for Java 5 JVMs. -->
         <profile>
-            <id>java6-versions</id>
+          <id>java5-compatibility</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+            <jdk>1.5</jdk>
+          </activation>
+          <properties>
+            <version.plugin.bundle>2.5.4</version.plugin.bundle>
+            <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+            <version.plugin.compiler>3.6.2</version.plugin.compiler>
+            <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+            <spotbugs.skip>true</spotbugs.skip>
+          </properties>
+        </profile>
+      <!-- Runs the build with compatibility for Java 6 JVMs. -->
+        <profile>
+            <id>java6-compatibility</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
                 <jdk>1.6</jdk>
@@ -309,19 +324,29 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-        <!-- Fallback for Java 7 JDK to use older, compatible versions of plugins. -->
+        <!-- Runs the build with compatibility for Java 7 JVMs. -->
         <profile>
-            <id>java7-versions</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>1.7</jdk>
-            </activation>
-            <properties>
-                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-                <spotbugs.skip>true</spotbugs.skip>
-            </properties>
+          <id>java7-compatibility</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+            <jdk>1.7</jdk>
+          </activation>
+          <properties>
+            <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+            <spotbugs.skip>true</spotbugs.skip>
+          </properties>
         </profile>
-        <!-- Runs the build with a target version for Java 7 -->
+        <!-- Builds using a byte code target for Java 6. -->
+        <profile>
+          <id>java6</id>
+          <activation>
+            <activeByDefault>false</activeByDefault>
+          </activation>
+          <properties>
+            <bytecode.target>1.6</bytecode.target>
+          </properties>
+        </profile>
+      <!-- Builds using a byte code target for Java 7. -->
         <profile>
             <id>java7</id>
             <activation>
@@ -329,10 +354,9 @@
             </activation>
             <properties>
                 <code.level>1.7</code.level>
-                <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-        <!-- Runs the build with a target version for Java 8 -->
+      <!-- Builds using a byte code target for Java 8. -->
         <profile>
             <id>java8</id>
             <activation>
@@ -342,7 +366,7 @@
                 <code.level>1.8</code.level>
             </properties>
         </profile>
-        <!-- Runs the build with a target version for Java 9 -->
+      <!-- Builds using a byte code target for Java 9. -->
         <profile>
             <id>java9</id>
             <activation>
@@ -352,7 +376,7 @@
                 <code.level>9</code.level>
             </properties>
         </profile>
-        <!-- Runs the build with a target version for Java 10 -->
+      <!-- Builds using a byte code target for Java 10. -->
         <profile>
             <id>java10</id>
             <activation>
@@ -363,7 +387,7 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-        <!-- Runs the build with a target version for Java 11 -->
+      <!-- Builds using a byte code target for Java 11. -->
         <profile>
             <id>java11</id>
             <activation>
@@ -494,15 +518,15 @@
                         <version>${version.plugin.animal-sniffer}</version>
                         <executions>
                             <execution>
-                                <phase>validate</phase>
+                                <phase>test</phase>
                                 <goals>
                                     <goal>check</goal>
                                 </goals>
                                 <configuration>
                                     <signature>
                                         <groupId>org.codehaus.mojo.signature</groupId>
-                                        <artifactId>java16</artifactId>
-                                        <version>1.1</version>
+                                        <artifactId>java15</artifactId>
+                                        <version>1.0</version>
                                     </signature>
                                 </configuration>
                             </execution>

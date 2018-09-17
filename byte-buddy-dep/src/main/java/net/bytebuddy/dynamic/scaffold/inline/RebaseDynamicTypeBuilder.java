@@ -187,7 +187,9 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 methodNameTransformer);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
@@ -249,7 +251,9 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
             return new RebaseableMatcher(new HashSet<MethodDescription.Token>(instrumentedMethods.asTokenList(is(instrumentedType))));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(MethodDescription.Token target) {
             return tokens.contains(target);
         }

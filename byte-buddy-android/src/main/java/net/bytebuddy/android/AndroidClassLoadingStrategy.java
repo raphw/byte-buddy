@@ -103,7 +103,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         randomString = new RandomString();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         DexProcessor.Conversion conversion = dexProcessor.create();
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
@@ -236,7 +238,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 this.dexCompilerOptions = dexCompilerOptions;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DexProcessor.Conversion create() {
                 return new Conversion(new DexFile(dexFileOptions));
             }
@@ -266,7 +270,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     this.dexFile = dexFile;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void register(String name, byte[] binaryRepresentation) {
                     DirectClassFile directClassFile = new DirectClassFile(binaryRepresentation, name.replace('.', '/') + CLASS_FILE_EXTENSION, NON_STRICT);
                     directClassFile.setAttributeFactory(new StdAttributeFactory());
@@ -277,30 +283,11 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                             new DexFile(dexFileOptions)));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void drainTo(OutputStream outputStream) throws IOException {
                     dexFile.writeTo(outputStream, NO_PRINT_OUTPUT, NOT_VERBOSE);
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private ForSdkCompiler getOuter() {
-                    return ForSdkCompiler.this;
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && ForSdkCompiler.this.equals(((Conversion) other).getOuter())
-                            && dexFile.equals(((Conversion) other).dexFile);
-                }
-
-                @Override // HE: Remove when Lombok support for getOuter is added.
-                public int hashCode() {
-                    return dexFile.hashCode() + 31 * ForSdkCompiler.this.hashCode();
                 }
             }
         }
@@ -333,7 +320,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             super(privateDirectory, dexProcessor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Android discourages the use of access controllers")
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) {
             ClassLoader dexClassLoader = new DexClassLoader(jar.getAbsolutePath(), privateDirectory.getAbsolutePath(), EMPTY_LIBRARY_PATH, classLoader);
@@ -394,7 +383,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             super(privateDirectory, dexProcessor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader on Android");
@@ -402,7 +393,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             return super.load(classLoader, types);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
             dalvik.system.DexFile dexFile = DISPATCHER.loadDex(privateDirectory, jar, classLoader, randomString);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
@@ -465,7 +458,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  */
                 private static final String EXTENSION = ".data";
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
                                                      ClassLoader classLoader,
@@ -475,7 +470,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                             NO_FLAGS);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
                     return dexFile.loadClass(typeDescription.getName(), classLoader);
                 }
@@ -505,7 +502,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     this.addDexPath = addDexPath;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public dalvik.system.DexFile loadDex(File privateDirectory,
                                                      File jar,
                                                      ClassLoader classLoader,
@@ -528,7 +527,9 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> loadClass(dalvik.system.DexFile dexFile, ClassLoader classLoader, TypeDescription typeDescription) {
                     try {
                         return Class.forName(typeDescription.getName(), false, classLoader);

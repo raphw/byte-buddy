@@ -22,12 +22,9 @@ import java.lang.instrument.Instrumentation;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.none;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static net.bytebuddy.matcher.ElementMatchers.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
@@ -113,7 +110,6 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
 
     private static class ConstantTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,

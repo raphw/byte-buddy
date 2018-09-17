@@ -25,7 +25,6 @@ public class JavaVersionRule implements MethodRule {
         hotSpot = System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot");
     }
 
-    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
@@ -66,7 +65,6 @@ public class JavaVersionRule implements MethodRule {
             this.sort = sort;
         }
 
-        @Override
         public void evaluate() throws Throwable {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version of " + sort + " " + requiredVersion);
         }
@@ -80,7 +78,6 @@ public class JavaVersionRule implements MethodRule {
             this.restrictedVersion = restrictedVersion;
         }
 
-        @Override
         public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
         }

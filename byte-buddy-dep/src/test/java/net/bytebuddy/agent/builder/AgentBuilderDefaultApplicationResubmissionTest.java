@@ -67,12 +67,10 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                     .with(AgentBuilder.LocationStrategy.NoOp.INSTANCE)
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                     .withResubmission(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler() {
-                        @Override
                         public boolean isAlive() {
                             return true;
                         }
 
-                        @Override
                         public Cancelable schedule(final Runnable job) {
                             return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
                         }
@@ -106,7 +104,6 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
 
     private static class SampleTransformer implements AgentBuilder.Transformer {
 
-        @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }

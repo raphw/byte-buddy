@@ -14,7 +14,6 @@ public class ParameterLengthResolverTest extends AbstractAmbiguityResolverTest {
     @Mock
     private ParameterList<?> leftList, rightList;
 
-    @Override
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {

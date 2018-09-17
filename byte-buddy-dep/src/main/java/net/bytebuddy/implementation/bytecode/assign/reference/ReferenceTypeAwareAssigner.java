@@ -16,7 +16,9 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
         if (source.isPrimitive() || target.isPrimitive()) {
             return source.equals(target)

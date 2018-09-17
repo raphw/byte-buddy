@@ -6,17 +6,14 @@ import java.util.List;
 
 public class ParameterListForLoadedParameterTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, Method> {
 
-    @Override
     protected Method getFirst() throws Exception {
         return Foo.class.getDeclaredMethod("foo", Void.class);
     }
 
-    @Override
     protected Method getSecond() throws Exception {
         return Foo.class.getDeclaredMethod("bar", Void.class);
     }
 
-    @Override
     protected ParameterList<ParameterDescription.InDefinedShape> asList(List<Method> elements) {
         List<ParameterDescription.InDefinedShape> parameters = new ArrayList<ParameterDescription.InDefinedShape>(elements.size());
         for (Method method : elements) {
@@ -25,7 +22,6 @@ public class ParameterListForLoadedParameterTest extends AbstractParameterListTe
         return new ParameterList.Explicit<ParameterDescription.InDefinedShape>(parameters);
     }
 
-    @Override
     protected ParameterDescription.InDefinedShape asElement(Method element) {
         return new MethodDescription.ForLoadedMethod(element).getParameters().getOnly();
     }

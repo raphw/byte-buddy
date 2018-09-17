@@ -31,7 +31,9 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         this.fallback = fallback;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         try {
             return matcher.matches(target);
@@ -40,7 +42,9 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "failSafe(try(" + matcher + ") or " + fallback + ")";
     }

@@ -125,7 +125,9 @@ public interface ByteCodeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
@@ -167,7 +169,9 @@ public interface ByteCodeAppender {
             this.stackManipulation = new StackManipulation.Compound(stackManipulations);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {

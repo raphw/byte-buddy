@@ -31,7 +31,6 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         super(SuperCall.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -41,7 +40,6 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> getSimpleBinder() {
         return SuperCall.Binder.INSTANCE;
     }

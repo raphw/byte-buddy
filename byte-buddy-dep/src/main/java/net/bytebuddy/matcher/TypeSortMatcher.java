@@ -25,12 +25,16 @@ public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Ju
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getSort());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "ofSort(" + matcher + ')';
     }

@@ -83,7 +83,7 @@ public class AbstractUserConfiguration {
      * @param groupId    The current project's build id.
      * @param artifactId The current project's artifact id.
      * @param version    The current project's version.
-     * @param packaging    The current project's packaging
+     * @param packaging  The current project's packaging
      * @return The resolved Maven coordinate.
      */
     public MavenCoordinate asCoordinate(String groupId, String artifactId, String version, String packaging) {

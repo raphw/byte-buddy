@@ -36,7 +36,6 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         super(DefaultCall.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -50,7 +49,6 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(secondInterface.asGenericType()).thenReturn(secondGenericInterface);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> getSimpleBinder() {
         return DefaultCall.Binder.INSTANCE;
     }

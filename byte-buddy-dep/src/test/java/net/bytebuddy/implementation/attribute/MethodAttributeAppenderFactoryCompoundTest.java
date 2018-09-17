@@ -4,9 +4,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderFactoryCompoundTest extends AbstractMethodAttributeAppenderTest {
@@ -17,7 +14,6 @@ public class MethodAttributeAppenderFactoryCompoundTest extends AbstractMethodAt
     @Mock
     private MethodAttributeAppender first, second;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

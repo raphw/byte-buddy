@@ -14,7 +14,6 @@ public class FieldAttributeAppenderFactoryCompoundTest extends AbstractFieldAttr
     @Mock
     private FieldAttributeAppender first, second;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

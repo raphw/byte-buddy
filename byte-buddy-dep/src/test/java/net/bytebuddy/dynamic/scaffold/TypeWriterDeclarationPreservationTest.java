@@ -102,6 +102,15 @@ public class TypeWriterDeclarationPreservationTest {
         }
 
         @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + (outerName != null ? outerName.hashCode() : 0);
+            result = 31 * result + (innerName != null ? innerName.hashCode() : 0);
+            result = 31 * result + modifiers;
+            return result;
+        }
+
+        @Override
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
@@ -110,15 +119,6 @@ public class TypeWriterDeclarationPreservationTest {
             if (!name.equals(that.name)) return false;
             if (outerName != null ? !outerName.equals(that.outerName) : that.outerName != null) return false;
             return innerName != null ? innerName.equals(that.innerName) : that.innerName == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name.hashCode();
-            result = 31 * result + (outerName != null ? outerName.hashCode() : 0);
-            result = 31 * result + (innerName != null ? innerName.hashCode() : 0);
-            result = 31 * result + modifiers;
-            return result;
         }
 
         @Override
@@ -143,6 +143,14 @@ public class TypeWriterDeclarationPreservationTest {
         }
 
         @Override
+        public int hashCode() {
+            int result = type.hashCode();
+            result = 31 * result + (methodName != null ? methodName.hashCode() : 0);
+            result = 31 * result + (methodDescriptor != null ? methodDescriptor.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
@@ -150,14 +158,6 @@ public class TypeWriterDeclarationPreservationTest {
             if (!type.equals(that.type)) return false;
             if (methodName != null ? !methodName.equals(that.methodName) : that.methodName != null) return false;
             return methodDescriptor != null ? methodDescriptor.equals(that.methodDescriptor) : that.methodDescriptor == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = type.hashCode();
-            result = 31 * result + (methodName != null ? methodName.hashCode() : 0);
-            result = 31 * result + (methodDescriptor != null ? methodDescriptor.hashCode() : 0);
-            return result;
         }
 
         @Override
@@ -261,7 +261,6 @@ public class TypeWriterDeclarationPreservationTest {
                 outerClassAttribute = typeModifierExtractor.outerClassAttribute;
             }
 
-            @Override
             public ClassVisitor wrap(TypeDescription instrumentedType,
                                      ClassVisitor classVisitor,
                                      Implementation.Context implementationContext,

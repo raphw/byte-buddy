@@ -30,7 +30,6 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
         super(Pipe.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -39,7 +38,6 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
         binder = new Pipe.Binder(targetMethod);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> getSimpleBinder() {
         return binder;
     }

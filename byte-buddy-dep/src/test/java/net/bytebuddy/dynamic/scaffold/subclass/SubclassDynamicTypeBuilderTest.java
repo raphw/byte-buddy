@@ -64,12 +64,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    @Override
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().subclass(Object.class);
     }
 
-    @Override
     protected DynamicType.Builder<?> createPlainWithoutValidation() {
         return new ByteBuddy().with(TypeValidation.DISABLED).subclass(Object.class);
     }

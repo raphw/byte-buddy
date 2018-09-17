@@ -31,32 +31,26 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
 
     private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
-    @Override
     protected DynamicType.Builder<?> create(Class<?> type) {
         return new ByteBuddy().redefine(type);
     }
 
-    @Override
     protected DynamicType.Builder<?> createDisabledContext() {
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).redefine(Foo.class);
     }
 
-    @Override
     protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
         return new ByteBuddy().with(AnnotationRetention.DISABLED).redefine(annotatedClass);
     }
 
-    @Override
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().redefine(Foo.class);
     }
 
-    @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
 
-    @Override
     protected DynamicType.Builder<?> createPlainWithoutValidation() {
         return new ByteBuddy().with(TypeValidation.DISABLED).redefine(Foo.class);
     }

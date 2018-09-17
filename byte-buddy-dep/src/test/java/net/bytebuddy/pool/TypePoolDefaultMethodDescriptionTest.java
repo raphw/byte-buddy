@@ -5,8 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -30,21 +28,18 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
         typePool.clear();
     }
 
-    @Override
     protected MethodDescription.InDefinedShape describe(Method method) {
         return typePool.describe(method.getDeclaringClass().getName())
                 .resolve()
                 .getDeclaredMethods().filter(is(method)).getOnly();
     }
 
-    @Override
     protected MethodDescription.InDefinedShape describe(Constructor<?> constructor) {
         return typePool.describe(constructor.getDeclaringClass().getName())
                 .resolve()
                 .getDeclaredMethods().filter(is(constructor)).getOnly();
     }
 
-    @Override
     protected boolean canReadDebugInformation() {
         return true;
     }

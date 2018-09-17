@@ -5,7 +5,6 @@ import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.test.*;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -28,7 +27,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -91,7 +89,6 @@ public class TransformationActionTest {
         when(transformation.getClassPath(any(File.class), any(Iterable.class))).thenReturn((Iterable) Collections.emptySet());
         when(parent.getClasspath()).thenReturn(fileCollection);
         when(fileCollection.iterator()).then(new Answer<Iterator<File>>() {
-            @Override
             public Iterator<File> answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(target).iterator();
             }

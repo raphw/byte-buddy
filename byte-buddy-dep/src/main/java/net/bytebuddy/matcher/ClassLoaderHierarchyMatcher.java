@@ -25,7 +25,9 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         ClassLoader current = target;
         while (current != null) {
@@ -37,7 +39,9 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
         return matcher.matches(null);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasChild(" + matcher + ')';
     }

@@ -130,7 +130,9 @@ public class MethodCallProxy implements AuxiliaryType {
         return FIELD_NAME_PREFIX + index;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
@@ -199,12 +201,16 @@ public class MethodCallProxy implements AuxiliaryType {
             this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodGraph.Linked compile(TypeDescription typeDescription) {
             return compile(typeDescription, typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return methodGraph;
         }
@@ -232,12 +238,16 @@ public class MethodCallProxy implements AuxiliaryType {
             objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
@@ -262,7 +272,9 @@ public class MethodCallProxy implements AuxiliaryType {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
@@ -313,12 +325,16 @@ public class MethodCallProxy implements AuxiliaryType {
             this.assigner = assigner;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
         }
@@ -343,7 +359,9 @@ public class MethodCallProxy implements AuxiliaryType {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor,
                               Context implementationContext,
                               MethodDescription instrumentedMethod) {
@@ -397,12 +415,16 @@ public class MethodCallProxy implements AuxiliaryType {
             this.serializable = serializable;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             TypeDescription auxiliaryType = implementationContext
                     .register(new MethodCallProxy(specialMethodInvocation, serializable));

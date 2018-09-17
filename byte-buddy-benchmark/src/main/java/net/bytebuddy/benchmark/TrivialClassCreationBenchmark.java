@@ -107,7 +107,6 @@ public class TrivialClassCreationBenchmark {
     @Benchmark
     public Class<?> benchmarkJavassist() {
         ProxyFactory proxyFactory = new ProxyFactory() {
-            @Override
             protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }

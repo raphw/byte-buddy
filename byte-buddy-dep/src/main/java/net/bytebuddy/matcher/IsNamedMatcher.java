@@ -11,12 +11,16 @@ import net.bytebuddy.description.NamedElement;
 @HashCodeAndEqualsPlugin.Enhance
 public class IsNamedMatcher<T extends NamedElement.WithOptionalName> extends ElementMatcher.Junction.AbstractBase<T> {
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return target.isNamed();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isNamed()";
     }

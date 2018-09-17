@@ -13,7 +13,9 @@ public enum ParameterLengthResolver implements MethodDelegationBinder.AmbiguityR
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Resolution resolve(MethodDescription source,
                               MethodDelegationBinder.MethodBinding left,
                               MethodDelegationBinder.MethodBinding right) {

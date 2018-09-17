@@ -439,11 +439,9 @@ public class ClassByExtensionBenchmark {
         enhancer.setClassLoader(newClassLoader());
         enhancer.setSuperclass(baseClass);
         CallbackHelper callbackHelper = new CallbackHelper(baseClass, new Class[0]) {
-            @Override
             protected Object getCallback(Method method) {
                 if (method.getDeclaringClass() == baseClass) {
                     return new MethodInterceptor() {
-                        @Override
                         public Object intercept(Object object,
                                                 Method method,
                                                 Object[] arguments,
@@ -470,7 +468,6 @@ public class ClassByExtensionBenchmark {
     @Benchmark
     public ExampleClass benchmarkJavassist() throws Exception {
         ProxyFactory proxyFactory = new ProxyFactory() {
-            @Override
             protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }

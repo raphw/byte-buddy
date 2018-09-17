@@ -12,8 +12,10 @@ import net.bytebuddy.utility.StreamDrainer;
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -87,12 +89,16 @@ public interface ClassFileLocator extends Closeable {
                 this.typeName = typeName;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isResolved() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public byte[] resolve() {
                 throw new IllegalStateException("Could not locate class file for " + typeName);
             }
@@ -119,12 +125,16 @@ public interface ClassFileLocator extends Closeable {
                 this.binaryRepresentation = binaryRepresentation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isResolved() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             public byte[] resolve() {
                 return binaryRepresentation;
@@ -142,12 +152,16 @@ public interface ClassFileLocator extends Closeable {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) {
             return new Resolution.Illegal(name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() {
             /* do nothing */
         }
@@ -208,7 +222,9 @@ public interface ClassFileLocator extends Closeable {
             return new Simple(classFiles);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) {
             byte[] binaryRepresentation = classFiles.get(name);
             return binaryRepresentation == null
@@ -216,7 +232,9 @@ public interface ClassFileLocator extends Closeable {
                     : new Resolution.Explicit(binaryRepresentation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() {
             /* do nothing */
         }
@@ -289,12 +307,16 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             return locate(classLoader, name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             /* do nothing */
         }
@@ -363,7 +385,9 @@ public interface ClassFileLocator extends Closeable {
                         : new WeaklyReferenced(classLoader);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolution locate(String name) throws IOException {
                 ClassLoader classLoader = get();
                 return classLoader == null
@@ -371,8 +395,10 @@ public interface ClassFileLocator extends Closeable {
                         : ForClassLoader.locate(classLoader, name);
             }
 
-            @Override
-            public void close() throws IOException {
+            /**
+             * {@inheritDoc}
+             */
+            public void close() {
                 /* do nothing */
             }
 
@@ -463,7 +489,9 @@ public interface ClassFileLocator extends Closeable {
                     : ForClassLoader.of(module.getClassLoader());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             return locate(module, name);
         }
@@ -489,7 +517,9 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() {
             /* do nothing */
         }
@@ -538,7 +568,9 @@ public interface ClassFileLocator extends Closeable {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolution locate(String name) throws IOException {
                 Object module = get();
                 return module == null
@@ -546,17 +578,23 @@ public interface ClassFileLocator extends Closeable {
                         : ForModule.locate(JavaModule.of(module), name);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void close() {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int hashCode() {
                 return hashCode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean equals(Object other) {
                 if (this == other) {
                     return true;
@@ -664,7 +702,9 @@ public interface ClassFileLocator extends Closeable {
             return of(runtimeJar);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             ZipEntry zipEntry = jarFile.getEntry(name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (zipEntry == null) {
@@ -679,7 +719,9 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             jarFile.close();
         }
@@ -844,7 +886,9 @@ public interface ClassFileLocator extends Closeable {
             return new ForModuleFile(new ZipFile(file));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             ZipEntry zipEntry = zipFile.getEntry("classes/" + name.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (zipEntry == null) {
@@ -859,7 +903,9 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             zipFile.close();
         }
@@ -887,7 +933,9 @@ public interface ClassFileLocator extends Closeable {
             this.folder = folder;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             File file = new File(folder, name.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (file.exists()) {
@@ -902,7 +950,9 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() {
             /* do nothing */
         }
@@ -938,12 +988,16 @@ public interface ClassFileLocator extends Closeable {
             this(urls.toArray(new URL[urls.size()]));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             return ForClassLoader.locate(classLoader, name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             if (classLoader instanceof Closeable) {
                 ((Closeable) classLoader).close();
@@ -970,7 +1024,9 @@ public interface ClassFileLocator extends Closeable {
                 this.url = url;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassLoader run() {
                 return new URLClassLoader(url, ClassLoadingStrategy.BOOTSTRAP_LOADER);
             }
@@ -1001,6 +1057,11 @@ public interface ClassFileLocator extends Closeable {
         private static final Object STATIC_MEMBER = null;
 
         /**
+         * A dispatcher for interacting with the instrumentation API.
+         */
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
          * The instrumentation instance to use for looking up the binary format of a type.
          */
         private final Instrumentation instrumentation;
@@ -1027,7 +1088,7 @@ public interface ClassFileLocator extends Closeable {
          * @param classLoadingDelegate The delegate responsible for class loading.
          */
         public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
-            if (!instrumentation.isRetransformClassesSupported()) {
+            if (!DISPATCHER.isRetransformClassesSupported(instrumentation)) {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
             this.instrumentation = instrumentation;
@@ -1065,13 +1126,15 @@ public interface ClassFileLocator extends Closeable {
             return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) {
             try {
                 ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), name);
-                instrumentation.addTransformer(classFileTransformer, true);
+                DISPATCHER.addTransformer(instrumentation, classFileTransformer, true);
                 try {
-                    instrumentation.retransformClasses(classLoadingDelegate.locate(name));
+                    DISPATCHER.retransformClasses(instrumentation, new Class<?>[]{classLoadingDelegate.locate(name)});
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null
                             ? new Resolution.Illegal(name)
@@ -1086,9 +1149,178 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
-        public void close() throws IOException {
+        /**
+         * {@inheritDoc}
+         */
+        public void close() {
             /* do nothing */
+        }
+
+        /**
+         * A dispatcher to interact with the {@link Instrumentation} API.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Invokes the {@code Instrumentation#isRetransformClassesSupported} method.
+             *
+             * @param instrumentation The instrumentation instance to invoke the method on.
+             * @return {@code true} if the supplied instrumentation instance supports retransformation.
+             */
+            boolean isRetransformClassesSupported(Instrumentation instrumentation);
+
+            /**
+             * Registers a transformer.
+             *
+             * @param instrumentation      The instrumentation instance to invoke the method on.
+             * @param classFileTransformer The class file transformer to register.
+             * @param canRetransform       {@code true} if the class file transformer should be invoked upon a retransformation.
+             */
+            void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform);
+
+            /**
+             * Retransforms the supplied classes.
+             *
+             * @param instrumentation The instrumentation instance to invoke the method on.
+             * @param type            The types to retransform.
+             * @throws UnmodifiableClassException If any of the supplied types are unmodifiable.
+             */
+            void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException;
+
+            /**
+             * An action to create a {@link Dispatcher}.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Dispatcher run() {
+                    try {
+                        return new ForJava6CapableVm(Instrumentation.class.getMethod("isRetransformClassesSupported"),
+                                Instrumentation.class.getMethod("addTransformer", ClassFileTransformer.class, boolean.class),
+                                Instrumentation.class.getMethod("retransformClasses", Class[].class));
+                    } catch (NoSuchMethodException ignored) {
+                        return ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher for a VM that does not support retransformation.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
+                    throw new IllegalStateException("The current VM does not support class retransformation");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) {
+                    throw new IllegalStateException("The current VM does not support class retransformation");
+                }
+            }
+
+            /**
+             * A dispatcher for a Java 6 capable VM.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForJava6CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code Instrumentation#isRetransformClassesSupported} method.
+                 */
+                private final Method isRetransformClassesSupported;
+
+                /**
+                 * The {@code Instrumentation#addTransformer} method.
+                 */
+                private final Method addTransformer;
+
+                /**
+                 * The {@code Instrumentation#retransformClasses} method.
+                 */
+                private final Method retransformClasses;
+
+                /**
+                 * Creates a dispatcher for a Java 6 capable VM.
+                 *
+                 * @param isRetransformClassesSupported The {@code Instrumentation#isRetransformClassesSupported} method.
+                 * @param addTransformer                The {@code Instrumentation#addTransformer} method.
+                 * @param retransformClasses            The {@code Instrumentation#retransformClasses} method.
+                 */
+                protected ForJava6CapableVm(Method isRetransformClassesSupported, Method addTransformer, Method retransformClasses) {
+                    this.isRetransformClassesSupported = isRetransformClassesSupported;
+                    this.addTransformer = addTransformer;
+                    this.retransformClasses = retransformClasses;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
+                    try {
+                        return (Boolean) isRetransformClassesSupported.invoke(instrumentation);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
+                    try {
+                        addTransformer.invoke(instrumentation, classFileTransformer, canRetransform);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#addTransformer", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#addTransformer", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException {
+                    try {
+                        retransformClasses.invoke(instrumentation, (Object) type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#retransformClasses", exception);
+                    } catch (InvocationTargetException exception) {
+                        Throwable cause = exception.getCause();
+                        if (cause instanceof UnmodifiableClassException) {
+                            throw (UnmodifiableClassException) cause;
+                        } else {
+                            throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#retransformClasses", cause);
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -1144,12 +1376,16 @@ public interface ClassFileLocator extends Closeable {
                             : new Default(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     return classLoader.loadClass(name);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassLoader getClassLoader() {
                     return classLoader;
                 }
@@ -1195,7 +1431,9 @@ public interface ClassFileLocator extends Closeable {
                     return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressWarnings("unchecked")
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Vector<Class<?>> classes;
@@ -1249,7 +1487,9 @@ public interface ClassFileLocator extends Closeable {
                          */
                         INSTANCE;
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Initializable run() {
                             try {
                                 return new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
@@ -1279,12 +1519,16 @@ public interface ClassFileLocator extends Closeable {
                             this.field = field;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Dispatcher initialize() {
                             return AccessController.doPrivileged(this);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         @SuppressWarnings("unchecked")
                         public Vector<Class<?>> extract(ClassLoader classLoader) {
                             try {
@@ -1294,7 +1538,9 @@ public interface ClassFileLocator extends Closeable {
                             }
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Dispatcher run() {
                             field.setAccessible(true);
                             return this;
@@ -1321,7 +1567,9 @@ public interface ClassFileLocator extends Closeable {
                             this.message = message;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Dispatcher initialize() {
                             throw new IllegalStateException("Could not locate classes vector: " + message);
                         }
@@ -1384,7 +1632,9 @@ public interface ClassFileLocator extends Closeable {
                     return new Explicit(type.getClassLoader(), Collections.singleton(type));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Class<?> type = types.get(name);
                     return type == null
@@ -1392,7 +1642,9 @@ public interface ClassFileLocator extends Closeable {
                             : type;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassLoader getClassLoader() {
                     return fallbackDelegate.getClassLoader();
                 }
@@ -1436,7 +1688,9 @@ public interface ClassFileLocator extends Closeable {
                 this.typeName = typeName;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
             public byte[] transform(ClassLoader classLoader,
                                     String internalName,
@@ -1482,7 +1736,9 @@ public interface ClassFileLocator extends Closeable {
             this.classFileLocators = classFileLocators;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             int packageIndex = name.lastIndexOf('.');
             ClassFileLocator classFileLocator = classFileLocators.get(packageIndex == -1
@@ -1493,7 +1749,9 @@ public interface ClassFileLocator extends Closeable {
                     : classFileLocator.locate(name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             for (ClassFileLocator classFileLocator : classFileLocators.values()) {
                 classFileLocator.close();
@@ -1542,7 +1800,9 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Resolution locate(String name) throws IOException {
             for (ClassFileLocator classFileLocator : classFileLocators) {
                 Resolution resolution = classFileLocator.locate(name);
@@ -1553,7 +1813,9 @@ public interface ClassFileLocator extends Closeable {
             return new Resolution.Illegal(name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void close() throws IOException {
             for (ClassFileLocator classFileLocator : classFileLocators) {
                 classFileLocator.close();

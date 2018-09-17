@@ -34,7 +34,6 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         super(FieldValue.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -44,7 +43,6 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         when(fieldType.asErasure()).thenReturn(rawFieldType);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldValue> getSimpleBinder() {
         return FieldValue.Binder.INSTANCE;
     }

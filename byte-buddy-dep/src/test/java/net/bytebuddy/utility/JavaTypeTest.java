@@ -30,6 +30,7 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getInterfaces().size(), is(0));
     }
+
     @Test
     public void testMethodHandles() throws Exception {
         assertThat(JavaType.METHOD_HANDLES.getTypeStub().getName(), is("java.lang.invoke.MethodHandles"));

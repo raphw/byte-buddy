@@ -174,7 +174,9 @@ public interface ConstructorStrategy {
             }
         };
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
             List<MethodDescription.Token> tokens = doExtractConstructors(instrumentedType), stripped = new ArrayList<MethodDescription.Token>(tokens.size());
             for (MethodDescription.Token token : tokens) {
@@ -209,7 +211,9 @@ public interface ConstructorStrategy {
          */
         protected abstract List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry) {
             return doInject(methodRegistry, MethodAttributeAppender.NoOp.INSTANCE);
         }
@@ -269,12 +273,16 @@ public interface ConstructorStrategy {
                 this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 return delegate.extractConstructors(instrumentedType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry) {
                 return delegate.doInject(methodRegistry, methodAttributeAppenderFactory);
             }
@@ -334,7 +342,9 @@ public interface ConstructorStrategy {
             this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
             if (instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor()).isEmpty()) {
                 throw new IllegalStateException("Cannot define default constructor for class without super class constructor");
@@ -342,7 +352,9 @@ public interface ConstructorStrategy {
             return Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry) {
             MethodList<?> candidates = instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(elementMatcher));
             if (candidates.isEmpty()) {

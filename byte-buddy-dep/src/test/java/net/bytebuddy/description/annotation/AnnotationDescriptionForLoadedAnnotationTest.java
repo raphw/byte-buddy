@@ -15,7 +15,6 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
 
     private static final String FOO = "foo";
 
-    @Override
     protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
         return AnnotationDescription.ForLoadedAnnotation.of(annotation);
     }
@@ -49,12 +48,10 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
 
             INSTANCE;
 
-            @Override
             public String value() {
                 throw new RuntimeException();
             }
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return PrivateAnnotation.class;
             }

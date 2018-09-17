@@ -27,7 +27,9 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
         this.size = size;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE", justification = "Iteration required to count size of an iterable")
     public boolean matches(T target) {
         if (target instanceof Collection) {
@@ -41,7 +43,9 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "ofSize(" + size + ')';
     }

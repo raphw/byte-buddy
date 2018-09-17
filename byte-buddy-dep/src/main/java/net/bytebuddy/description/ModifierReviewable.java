@@ -293,114 +293,158 @@ public interface ModifierReviewable {
      */
     abstract class AbstractBase implements ForTypeDefinition, ForFieldDescription, ForMethodDescription, ForParameterDescription {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAbstract() {
             return matchesMask(Opcodes.ACC_ABSTRACT);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isFinal() {
             return matchesMask(Opcodes.ACC_FINAL);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isStatic() {
             return matchesMask(Opcodes.ACC_STATIC);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPublic() {
             return matchesMask(Opcodes.ACC_PUBLIC);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isProtected() {
             return matchesMask(Opcodes.ACC_PROTECTED);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPackagePrivate() {
             return !isPublic() && !isProtected() && !isPrivate();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isPrivate() {
             return matchesMask(Opcodes.ACC_PRIVATE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isNative() {
             return matchesMask(Opcodes.ACC_NATIVE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSynchronized() {
             return matchesMask(Opcodes.ACC_SYNCHRONIZED);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isStrict() {
             return matchesMask(Opcodes.ACC_STRICT);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isMandated() {
             return matchesMask(Opcodes.ACC_MANDATED);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSynthetic() {
             return matchesMask(Opcodes.ACC_SYNTHETIC);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isBridge() {
             return matchesMask(Opcodes.ACC_BRIDGE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDeprecated() {
             return matchesMask(Opcodes.ACC_DEPRECATED);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAnnotation() {
             return matchesMask(Opcodes.ACC_ANNOTATION);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isEnum() {
             return matchesMask(Opcodes.ACC_ENUM);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInterface() {
             return matchesMask(Opcodes.ACC_INTERFACE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isTransient() {
             return matchesMask(Opcodes.ACC_TRANSIENT);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isVolatile() {
             return matchesMask(Opcodes.ACC_VOLATILE);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isVarArgs() {
             return matchesMask(Opcodes.ACC_VARARGS);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public SyntheticState getSyntheticState() {
             return isSynthetic()
                     ? SyntheticState.SYNTHETIC
                     : SyntheticState.PLAIN;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Visibility getVisibility() {
             int modifiers = getModifiers();
             switch (modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) {
@@ -417,21 +461,27 @@ public interface ModifierReviewable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Ownership getOwnership() {
             return isStatic()
                     ? Ownership.STATIC
                     : Ownership.MEMBER;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public EnumerationState getEnumerationState() {
             return isEnum()
                     ? EnumerationState.ENUMERATION
                     : EnumerationState.PLAIN;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeManifestation getTypeManifestation() {
             int modifiers = getModifiers();
             switch (modifiers & (Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_FINAL)) {
@@ -450,7 +500,9 @@ public interface ModifierReviewable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldManifestation getFieldManifestation() {
             int modifiers = getModifiers();
             switch (modifiers & (Opcodes.ACC_VOLATILE | Opcodes.ACC_FINAL)) {
@@ -465,7 +517,9 @@ public interface ModifierReviewable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldPersistence getFieldPersistence() {
             int modifiers = getModifiers();
             switch (modifiers & Opcodes.ACC_TRANSIENT) {
@@ -478,14 +532,18 @@ public interface ModifierReviewable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public SynchronizationState getSynchronizationState() {
             return isSynchronized()
                     ? SynchronizationState.SYNCHRONIZED
                     : SynchronizationState.PLAIN;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodManifestation getMethodManifestation() {
             int modifiers = getModifiers();
             switch (modifiers & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE)) {
@@ -508,21 +566,27 @@ public interface ModifierReviewable {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodStrictness getMethodStrictness() {
             return isStrict()
                     ? MethodStrictness.STRICT
                     : MethodStrictness.PLAIN;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterManifestation getParameterManifestation() {
             return isFinal()
                     ? ParameterManifestation.FINAL
                     : ParameterManifestation.PLAIN;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ProvisioningState getProvisioningState() {
             return isMandated()
                     ? ProvisioningState.MANDATED

@@ -208,7 +208,9 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
         this.classFileLocator = classFileLocator;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> visit(AsmVisitorWrapper asmVisitorWrapper) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
                 typeAttributeAppender,
@@ -226,52 +228,72 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 classFileLocator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> name(String name) {
         throw new UnsupportedOperationException("Cannot change name of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> modifiers(int modifiers) {
         throw new UnsupportedOperationException("Cannot change modifiers of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
         throw new UnsupportedOperationException("Cannot change modifiers of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> topLevelType() {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InnerTypeDefinition.ForType<T> innerTypeOf(TypeDescription type) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InnerTypeDefinition<T> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> declaredTypes(Collection<? extends TypeDescription> types) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> nestHost(TypeDescription type) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> nestMembers(Collection<? extends TypeDescription> types) {
         throw new UnsupportedOperationException("Cannot change type declaration of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> attribute(TypeAttributeAppender typeAttributeAppender) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
                 new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
@@ -289,47 +311,65 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 classFileLocator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> annotateType(Collection<? extends AnnotationDescription> annotations) {
         return attribute(new TypeAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> interfaceTypes) {
         throw new UnsupportedOperationException("Cannot implement interface for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> initializer(ByteCodeAppender byteCodeAppender) {
         throw new UnsupportedOperationException("Cannot add initializer of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer) {
         throw new UnsupportedOperationException("Cannot add initializer of decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public TypeVariableDefinition<T> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
         throw new UnsupportedOperationException("Cannot add type variable to decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer) {
         throw new UnsupportedOperationException("Cannot transform decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, int modifiers) {
         throw new UnsupportedOperationException("Cannot define field for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher) {
         throw new UnsupportedOperationException("Cannot change field for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     public DynamicType.Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
@@ -348,22 +388,30 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 classFileLocator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, int modifiers) {
         throw new UnsupportedOperationException("Cannot define method for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(int modifiers) {
         throw new UnsupportedOperationException("Cannot define constructor for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher) {
         throw new UnsupportedOperationException("Cannot intercept method for decorated type: " + instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> require(Collection<DynamicType> auxiliaryTypes) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
                 typeAttributeAppender,
@@ -381,12 +429,16 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 classFileLocator);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
         return make(typeResolutionStrategy, TypePool.Empty.INSTANCE);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         return TypeWriter.Default.<T>forDecoration(instrumentedType,
                 classFileVersion,

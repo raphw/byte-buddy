@@ -181,92 +181,74 @@ public class ClassByImplementationBenchmark {
     @Benchmark
     public ExampleInterface baseline() {
         return new ExampleInterface() {
-            @Override
             public boolean method(boolean arg) {
                 return false;
             }
 
-            @Override
             public byte method(byte arg) {
                 return 0;
             }
 
-            @Override
             public short method(short arg) {
                 return 0;
             }
 
-            @Override
             public int method(int arg) {
                 return 0;
             }
 
-            @Override
             public char method(char arg) {
                 return 0;
             }
 
-            @Override
             public long method(long arg) {
                 return 0;
             }
 
-            @Override
             public float method(float arg) {
                 return 0;
             }
 
-            @Override
             public double method(double arg) {
                 return 0;
             }
 
-            @Override
             public Object method(Object arg) {
                 return null;
             }
 
-            @Override
             public boolean[] method(boolean arg1, boolean arg2, boolean arg3) {
                 return null;
             }
 
-            @Override
             public byte[] method(byte arg1, byte arg2, byte arg3) {
                 return null;
             }
 
-            @Override
             public short[] method(short arg1, short arg2, short arg3) {
                 return null;
             }
 
-            @Override
             public int[] method(int arg1, int arg2, int arg3) {
                 return null;
             }
 
-            @Override
             public char[] method(char arg1, char arg2, char arg3) {
                 return null;
             }
 
-            @Override
             public long[] method(long arg1, long arg2, long arg3) {
                 return null;
             }
 
-            @Override
             public float[] method(float arg1, float arg2, float arg3) {
                 return null;
             }
 
-            @Override
             public double[] method(double arg1, double arg2, double arg3) {
                 return null;
             }
 
-            @Override
             public Object[] method(Object arg1, Object arg2, Object arg3) {
                 return null;
             }
@@ -326,11 +308,9 @@ public class ClassByImplementationBenchmark {
         enhancer.setClassLoader(newClassLoader());
         enhancer.setSuperclass(baseClass);
         CallbackHelper callbackHelper = new CallbackHelper(Object.class, new Class[]{baseClass}) {
-            @Override
             protected Object getCallback(Method method) {
                 if (method.getDeclaringClass() == baseClass) {
                     return new FixedValue() {
-                        @Override
                         public Object loadObject() {
                             return null;
                         }
@@ -354,7 +334,6 @@ public class ClassByImplementationBenchmark {
     @Benchmark
     public ExampleInterface benchmarkJavassist() throws Exception {
         ProxyFactory proxyFactory = new ProxyFactory() {
-            @Override
             protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }
@@ -413,8 +392,7 @@ public class ClassByImplementationBenchmark {
         return (ExampleInterface) Proxy.newProxyInstance(newClassLoader(),
                 new Class<?>[]{baseClass},
                 new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    public Object invoke(Object proxy, Method method, Object[] args) {
                         Class<?> returnType = method.getReturnType();
                         if (returnType.isPrimitive()) {
                             if (returnType == boolean.class) {

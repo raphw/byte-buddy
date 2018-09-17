@@ -209,12 +209,16 @@ public @interface Super {
             PROXY_TYPE = annotationProperties.filter(named("proxyType")).getOnly();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Super> getHandledType() {
             return Super.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Super> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -262,7 +266,9 @@ public @interface Super {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     return instrumentedType;
                 }
@@ -278,7 +284,9 @@ public @interface Super {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     TypeDescription erasure = parameterType.asErasure();
                     return erasure.equals(instrumentedType)
@@ -325,7 +333,9 @@ public @interface Super {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);

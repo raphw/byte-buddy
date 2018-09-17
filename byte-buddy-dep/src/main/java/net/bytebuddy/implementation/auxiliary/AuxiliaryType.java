@@ -81,7 +81,9 @@ public interface AuxiliaryType {
                 randomString = new RandomString();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String name(TypeDescription instrumentedType) {
                 return instrumentedType.getName() + "$" + suffix + "$" + randomString.nextString();
             }

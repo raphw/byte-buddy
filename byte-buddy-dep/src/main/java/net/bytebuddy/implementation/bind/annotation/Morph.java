@@ -179,12 +179,16 @@ public @interface Morph {
             return methodDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<Morph> getHandledType() {
             return Morph.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<Morph> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -239,7 +243,9 @@ public @interface Morph {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
@@ -266,7 +272,9 @@ public @interface Morph {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
@@ -335,7 +343,9 @@ public @interface Morph {
                 this.serializableProxy = serializableProxy;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType make(String auxiliaryTypeName,
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
@@ -356,12 +366,16 @@ public @interface Morph {
                         .make();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 TypeDescription forwardingType = implementationContext.register(this);
                 return new Compound(
@@ -398,12 +412,16 @@ public @interface Morph {
                             .getOnly();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
                 }
@@ -429,14 +447,18 @@ public @interface Morph {
                     this.instrumentedType = instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType.withField(new FieldDescription.Token(RedirectionProxy.FIELD_NAME,
                             Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
                             this.instrumentedType.asGenericType()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget);
                 }
@@ -464,7 +486,9 @@ public @interface Morph {
                                 .getOnly();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor,
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
@@ -507,12 +531,16 @@ public @interface Morph {
                     this.assigner = assigner;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget);
                 }
@@ -537,7 +565,9 @@ public @interface Morph {
                         typeDescription = implementationTarget.getInstrumentedType();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor,
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {

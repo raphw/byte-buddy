@@ -55,7 +55,6 @@ public class TypePoolDefaultHierarchyTest {
         when(resolution.isResolved()).thenReturn(false);
         when(classFileLocator.locate(FOO)).thenReturn(new ClassFileLocator.Resolution.Explicit(ClassFileExtraction.extract(Foo.class)));
         when(cacheProvider.register(eq(FOO), any(TypePool.Resolution.class))).then(new Answer<TypePool.Resolution>() {
-            @Override
             public TypePool.Resolution answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return (TypePool.Resolution) invocationOnMock.getArguments()[1];
             }

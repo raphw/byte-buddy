@@ -31,17 +31,23 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public int mergeWriter(int flags) {
         return flags;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public int mergeReader(int flags) {
         return flags;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ClassVisitor wrap(TypeDescription instrumentedType,
                              ClassVisitor classVisitor,
                              Implementation.Context implementationContext,
@@ -118,9 +124,9 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
 
             @Override
             @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
-            public void visitLdcInsn(Object constant) {
-                if (constant instanceof Type) {
-                    Type type = (Type) constant;
+            public void visitLdcInsn(Object value) {
+                if (value instanceof Type) {
+                    Type type = (Type) value;
                     switch (type.getSort()) {
                         case Type.OBJECT:
                         case Type.ARRAY:
@@ -129,7 +135,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
                             return;
                     }
                 }
-                super.visitLdcInsn(constant);
+                super.visitLdcInsn(value);
             }
         }
     }

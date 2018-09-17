@@ -36,7 +36,6 @@ public class DecoratingDynamicTypeBuilderTest {
                 .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
                 .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
-                    @Override
                     public MethodVisitor wrap(TypeDescription instrumentedType,
                                               MethodDescription instrumentedMethod,
                                               MethodVisitor methodVisitor,
@@ -45,7 +44,6 @@ public class DecoratingDynamicTypeBuilderTest {
                                               int writerFlags,
                                               int readerFlags) {
                         return new MethodVisitor(OpenedClassReader.ASM_API, methodVisitor) {
-                            @Override
                             public void visitLdcInsn(Object value) {
                                 if (FOO.equals(value)) {
                                     value = BAR;
@@ -72,7 +70,6 @@ public class DecoratingDynamicTypeBuilderTest {
                 .annotateType(AnnotationDescription.Builder.ofType(Qux.class).build())
                 .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(BAR), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
-                    @Override
                     public MethodVisitor wrap(TypeDescription instrumentedType,
                                               MethodDescription instrumentedMethod,
                                               MethodVisitor methodVisitor,
@@ -110,7 +107,6 @@ public class DecoratingDynamicTypeBuilderTest {
                 .ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(none()))
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods()
                         .method(named(FOO), new AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper() {
-                            @Override
                             public MethodVisitor wrap(TypeDescription instrumentedType,
                                                       MethodDescription instrumentedMethod,
                                                       MethodVisitor methodVisitor,

@@ -26,12 +26,16 @@ public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getType());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "ofType(" + matcher + ")";
     }

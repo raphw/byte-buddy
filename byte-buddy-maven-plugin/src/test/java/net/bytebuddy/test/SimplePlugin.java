@@ -10,12 +10,10 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class SimplePlugin implements Plugin {
 
-    @Override
     public boolean matches(TypeDescription target) {
         return target.getName().equals("foo.Bar");
     }
 
-    @Override
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return builder.method(named("foo")).intercept(FixedValue.value("qux"));
     }

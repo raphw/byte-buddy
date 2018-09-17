@@ -24,9 +24,9 @@ public interface Assigner {
     /**
      * @param source The original type that is to be transformed into the {@code targetType}.
      * @param target The target type into which the {@code sourceType} is to be converted.
-     * @param typing     A hint whether the assignment should consider the runtime type of the source type,
-     *                   i.e. if type down or cross castings are allowed. If this hint is set, this is
-     *                   also an indication that {@code void} to non-{@code void} assignments are permitted.
+     * @param typing A hint whether the assignment should consider the runtime type of the source type,
+     *               i.e. if type down or cross castings are allowed. If this hint is set, this is
+     *               also an indication that {@code void} to non-{@code void} assignments are permitted.
      * @return A stack manipulation that transforms the {@code sourceType} into the {@code targetType} if this
      * is possible. An illegal stack manipulation otherwise.
      */
@@ -93,7 +93,7 @@ public interface Assigner {
          * An type assigner that only considers equal generic types to be assignable.
          */
         GENERIC {
-            @Override
+            /** {@inheritDoc} */
             public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
                 return source.equals(target)
                         ? StackManipulation.Trivial.INSTANCE
@@ -105,7 +105,7 @@ public interface Assigner {
          * A type assigner that considers two generic types to be equal if their erasure is equal.
          */
         ERASURE {
-            @Override
+            /** {@inheritDoc} */
             public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
                 return source.asErasure().equals(target.asErasure())
                         ? StackManipulation.Trivial.INSTANCE
@@ -124,7 +124,9 @@ public interface Assigner {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
             return StackManipulation.Illegal.INSTANCE;
         }

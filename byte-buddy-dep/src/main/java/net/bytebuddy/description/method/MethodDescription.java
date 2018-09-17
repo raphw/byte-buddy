@@ -295,10 +295,14 @@ public interface MethodDescription extends TypeVariableSource,
      */
     interface InGenericShape extends MethodDescription {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         TypeDescription.Generic getDeclaringType();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         ParameterList<ParameterDescription.InGenericShape> getParameters();
     }
 
@@ -307,10 +311,14 @@ public interface MethodDescription extends TypeVariableSource,
      */
     interface InDefinedShape extends MethodDescription {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         TypeDescription getDeclaringType();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         ParameterList<ParameterDescription.InDefinedShape> getParameters();
 
         /**
@@ -318,12 +326,16 @@ public interface MethodDescription extends TypeVariableSource,
          */
         abstract class AbstractBase extends MethodDescription.AbstractBase implements InDefinedShape {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InDefinedShape asDefined() {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription.Generic getReceiverType() {
                 if (isStatic()) {
                     return TypeDescription.Generic.UNDEFINED;
@@ -360,51 +372,69 @@ public interface MethodDescription extends TypeVariableSource,
                 | Modifier.SYNCHRONIZED
                 | Modifier.NATIVE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getStackSize() {
             return getParameters().asTypeList().getStackSize() + (isStatic() ? 0 : 1);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isMethod() {
             return !isConstructor() && !isTypeInitializer();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstructor() {
             return CONSTRUCTOR_INTERNAL_NAME.equals(getInternalName());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isTypeInitializer() {
             return TYPE_INITIALIZER_INTERNAL_NAME.equals(getInternalName());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Method method) {
             return equals(new ForLoadedMethod(method));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Constructor<?> constructor) {
             return equals(new ForLoadedConstructor(constructor));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return isMethod()
                     ? getInternalName()
                     : getDeclaringType().asErasure().getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getActualName() {
             return isMethod()
                     ? getName()
                     : EMPTY_NAME;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             StringBuilder descriptor = new StringBuilder().append('(');
             for (TypeDescription parameterType : getParameters().asTypeList().asErasures()) {
@@ -413,7 +443,9 @@ public interface MethodDescription extends TypeVariableSource,
             return descriptor.append(')').append(getReturnType().asErasure().getDescriptor()).toString();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getGenericSignature() {
             try {
                 SignatureWriter signatureWriter = new SignatureWriter();
@@ -451,26 +483,34 @@ public interface MethodDescription extends TypeVariableSource,
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getActualModifiers() {
             return getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
                     ? Opcodes.ACC_DEPRECATED
                     : EMPTY_MASK);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getActualModifiers(boolean manifest) {
             return manifest
                     ? getActualModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
                     : getActualModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getActualModifiers(boolean manifest, Visibility visibility) {
             return ModifierContributor.Resolver.of(Collections.singleton(getVisibility().expandTo(visibility))).resolve(getActualModifiers(manifest));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
                     && (isPublic()
@@ -479,7 +519,9 @@ public interface MethodDescription extends TypeVariableSource,
                     || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
                     && (isPublic()
@@ -488,17 +530,23 @@ public interface MethodDescription extends TypeVariableSource,
                     || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isVirtual() {
             return !(isConstructor() || isPrivate() || isStatic() || isTypeInitializer());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDefaultMethod() {
             return !isAbstract() && !isBridge() && getDeclaringType().isInterface();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSpecializableFor(TypeDescription targetType) {
             if (isStatic()) { // Static private methods are never specializable, check static property first
                 return false;
@@ -509,12 +557,16 @@ public interface MethodDescription extends TypeVariableSource,
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <T> T getDefaultValue(Class<T> type) {
             return type.cast(getDefaultValue());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInvokableOn(TypeDescription typeDescription) {
             return !isStatic()
                     && !isTypeInitializer()
@@ -601,7 +653,9 @@ public interface MethodDescription extends TypeVariableSource,
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInvokeBootstrap() {
             TypeDescription returnType = getReturnType().asErasure();
             if ((isMethod() && (!isStatic()
@@ -612,12 +666,16 @@ public interface MethodDescription extends TypeVariableSource,
             return isBootstrap(JavaType.METHOD_TYPE.getTypeStub());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInvokeBootstrap(List<?> arguments) {
             return isInvokeBootstrap() && isBootstrap(arguments);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstantBootstrap() {
             ParameterList<?> parameters = getParameters();
             return !parameters.isEmpty()
@@ -625,12 +683,16 @@ public interface MethodDescription extends TypeVariableSource,
                     && isBootstrap(TypeDescription.CLASS);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstantBootstrap(List<?> arguments) {
             return isConstantBootstrap() && isBootstrap(arguments);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDefaultValue() {
             return !isConstructor()
                     && !isStatic()
@@ -638,7 +700,9 @@ public interface MethodDescription extends TypeVariableSource,
                     && getParameters().isEmpty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDefaultValue(AnnotationValue<?, ?> annotationValue) {
             if (!isDefaultValue()) {
                 return false;
@@ -703,24 +767,32 @@ public interface MethodDescription extends TypeVariableSource,
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeVariableSource getEnclosingSource() {
             return isStatic()
                     ? TypeVariableSource.UNDEFINED
                     : getDeclaringType().asErasure();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onMethod(this.asDefined());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isGenerified() {
             return !getTypeVariables().isEmpty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             TypeDescription.Generic receiverType = getReceiverType();
             return new MethodDescription.Token(getInternalName(),
@@ -736,17 +808,23 @@ public interface MethodDescription extends TypeVariableSource,
                             : receiverType.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public SignatureToken asSignatureToken() {
             return new SignatureToken(getInternalName(), getReturnType().asErasure(), getParameters().asTypeList().asErasures());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeToken asTypeToken() {
             return new TypeToken(getReturnType().asErasure(), getParameters().asTypeList().asErasures());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isBridgeCompatible(TypeToken typeToken) {
             List<TypeDescription> types = getParameters().asTypeList().asErasures(), bridgeTypes = typeToken.getParameterTypes();
             if (types.size() != bridgeTypes.size()) {
@@ -759,6 +837,14 @@ public interface MethodDescription extends TypeVariableSource,
             }
             TypeDescription returnType = getReturnType().asErasure(), bridgeReturnType = typeToken.getReturnType();
             return returnType.equals(bridgeReturnType) || (!returnType.isPrimitive() && !bridgeReturnType.isPrimitive());
+        }
+
+        @Override
+        public int hashCode() {
+            int hashCode = 17 + getDeclaringType().hashCode();
+            hashCode = 31 * hashCode + getInternalName().hashCode();
+            hashCode = 31 * hashCode + getReturnType().asErasure().hashCode();
+            return 31 * hashCode + getParameters().asTypeList().asErasures().hashCode();
         }
 
         @Override
@@ -775,15 +861,9 @@ public interface MethodDescription extends TypeVariableSource,
                     && getParameters().asTypeList().asErasures().equals(methodDescription.getParameters().asTypeList().asErasures());
         }
 
-        @Override
-        public int hashCode() {
-            int hashCode = 17 + getDeclaringType().hashCode();
-            hashCode = 31 * hashCode + getInternalName().hashCode();
-            hashCode = 31 * hashCode + getReturnType().asErasure().hashCode();
-            return 31 * hashCode + getParameters().asTypeList().asErasures().hashCode();
-        }
-
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String toGenericString() {
             StringBuilder stringBuilder = new StringBuilder();
             int modifiers = getModifiers() & SOURCE_MODIFIERS;
@@ -879,89 +959,123 @@ public interface MethodDescription extends TypeVariableSource,
             this.constructor = constructor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(constructor.getDeclaringClass());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReturnType() {
             return TypeDescription.Generic.VOID;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(constructor, this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getExceptionTypes() {
             return new TypeList.Generic.OfConstructorExceptionTypes(constructor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstructor() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isTypeInitializer() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Method method) {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Constructor<?> constructor) {
             return this.constructor.equals(constructor) || equals(new MethodDescription.ForLoadedConstructor(constructor));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return constructor.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return constructor.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSynthetic() {
             return constructor.isSynthetic();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return CONSTRUCTOR_INTERNAL_NAME;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             return Type.getConstructorDescriptor(constructor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<?, ?> getDefaultValue() {
             return AnnotationValue.UNDEFINED;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(constructor.getDeclaredAnnotations());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(constructor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReceiverType() {
             TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(constructor);
             return receiverType == null
@@ -969,7 +1083,9 @@ public interface MethodDescription extends TypeVariableSource,
                     : receiverType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("parameterAnnotations")
         public Annotation[][] getParameterAnnotations() {
             return constructor.getParameterAnnotations();
@@ -995,12 +1111,16 @@ public interface MethodDescription extends TypeVariableSource,
             this.method = method;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(method.getDeclaringClass());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReturnType() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
                 return TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(method.getReturnType());
@@ -1008,13 +1128,17 @@ public interface MethodDescription extends TypeVariableSource,
             return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(method);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("parameters")
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return ParameterList.ForLoadedExecutable.of(method, this);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getExceptionTypes() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
                 return new TypeList.Generic.ForLoadedTypes(method.getExceptionTypes());
@@ -1022,52 +1146,72 @@ public interface MethodDescription extends TypeVariableSource,
             return new TypeList.Generic.OfMethodExceptionTypes(method);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstructor() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isTypeInitializer() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isBridge() {
             return method.isBridge();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Method method) {
             return this.method.equals(method) || equals(new MethodDescription.ForLoadedMethod(method));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean represents(Constructor<?> constructor) {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return method.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return method.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isSynthetic() {
             return method.isSynthetic();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return method.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getDescriptor() {
             return Type.getMethodDescriptor(method);
         }
@@ -1081,13 +1225,17 @@ public interface MethodDescription extends TypeVariableSource,
             return method;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("declaredAnnotations")
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(method.getDeclaredAnnotations());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<?, ?> getDefaultValue() {
             Object value = method.getDefaultValue();
             return value == null
@@ -1095,7 +1243,9 @@ public interface MethodDescription extends TypeVariableSource,
                     : AnnotationDescription.ForLoadedAnnotation.asValue(value, method.getReturnType());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
                 return new TypeList.Generic.Empty();
@@ -1103,7 +1253,9 @@ public interface MethodDescription extends TypeVariableSource,
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReceiverType() {
             if (TypeDescription.AbstractBase.RAW_TYPES) {
                 return super.getReceiverType();
@@ -1114,7 +1266,9 @@ public interface MethodDescription extends TypeVariableSource,
                     : receiverType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @CachedReturnPlugin.Enhance("parameterAnnotations")
         public Annotation[][] getParameterAnnotations() {
             return method.getParameterAnnotations();
@@ -1232,52 +1386,72 @@ public interface MethodDescription extends TypeVariableSource,
             this.receiverType = receiverType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReturnType() {
             return returnType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
             return new ParameterList.ForTokens(this, parameterTokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getExceptionTypes() {
             return TypeList.Generic.ForDetachedTypes.attach(this, exceptionTypes);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Explicit(declaredAnnotations);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return internalName;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getDeclaringType() {
             return declaringType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return modifiers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReceiverType() {
             return receiverType == null
                     ? super.getReceiverType()
@@ -1303,47 +1477,65 @@ public interface MethodDescription extends TypeVariableSource,
                 this.typeDescription = typeDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription.Generic getReturnType() {
                 return TypeDescription.Generic.VOID;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
                 return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getExceptionTypes() {
                 return new TypeList.Generic.Empty();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationValue<?, ?> getDefaultValue() {
                 return AnnotationValue.UNDEFINED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeVariables() {
                 return new TypeList.Generic.Empty();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.Empty();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getDeclaringType() {
                 return typeDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return TYPE_INITIALIZER_MODIFIER;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getInternalName() {
                 return MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME;
             }
@@ -1385,32 +1577,44 @@ public interface MethodDescription extends TypeVariableSource,
             this.visitor = visitor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReturnType() {
             return methodDescription.getReturnType().accept(visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getTypeVariables() {
             return methodDescription.getTypeVariables().accept(visitor).filter(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterList<ParameterDescription.InGenericShape> getParameters() {
             return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic getExceptionTypes() {
             return new TypeList.Generic.ForDetachedTypes(methodDescription.getExceptionTypes(), visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<?, ?> getDefaultValue() {
             return methodDescription.getDefaultValue();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getReceiverType() {
             TypeDescription.Generic receiverType = methodDescription.getReceiverType();
             return receiverType == null
@@ -1418,42 +1622,58 @@ public interface MethodDescription extends TypeVariableSource,
                     : receiverType.accept(visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return methodDescription.getDeclaredAnnotations();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription.Generic getDeclaringType() {
             return declaringType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int getModifiers() {
             return methodDescription.getModifiers();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return methodDescription.getInternalName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InDefinedShape asDefined() {
             return methodDescription.asDefined();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isConstructor() {
             return methodDescription.isConstructor();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isMethod() {
             return methodDescription.isMethod();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isTypeInitializer() {
             return methodDescription.isTypeInitializer();
         }
@@ -1665,7 +1885,9 @@ public interface MethodDescription extends TypeVariableSource,
             return receiverType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             return new Token(name,
                     modifiers,
@@ -1696,6 +1918,20 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + modifiers;
+            result = 31 * result + typeVariableTokens.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTokens.hashCode();
+            result = 31 * result + exceptionTypes.hashCode();
+            result = 31 * result + annotations.hashCode();
+            result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+            result = 31 * result + (receiverType != null ? receiverType.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -1712,20 +1948,6 @@ public interface MethodDescription extends TypeVariableSource,
                     && annotations.equals(token.annotations)
                     && (defaultValue != null ? defaultValue.equals(token.defaultValue) : token.defaultValue == null)
                     && (receiverType != null ? receiverType.equals(token.receiverType) : token.receiverType == null);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name.hashCode();
-            result = 31 * result + modifiers;
-            result = 31 * result + typeVariableTokens.hashCode();
-            result = 31 * result + returnType.hashCode();
-            result = 31 * result + parameterTokens.hashCode();
-            result = 31 * result + exceptionTypes.hashCode();
-            result = 31 * result + annotations.hashCode();
-            result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
-            result = 31 * result + (receiverType != null ? receiverType.hashCode() : 0);
-            return result;
         }
 
         @Override

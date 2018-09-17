@@ -167,7 +167,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.remoteProjectRepositories}", required = true, readonly = true)
     protected List<RemoteRepository> remoteRepositories;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
             getLog().info("Not applying instrumentation as a result of plugin configuration.");

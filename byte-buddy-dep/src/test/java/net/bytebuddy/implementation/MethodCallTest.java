@@ -1401,13 +1401,11 @@ public class MethodCallTest {
 
     public static class Traceable extends CallTraceable implements Runnable, Callable<String> {
 
-        @Override
         public String call() throws Exception {
             register(FOO);
             return FOO;
         }
 
-        @Override
         public void run() {
             register(FOO);
         }

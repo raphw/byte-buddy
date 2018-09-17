@@ -67,12 +67,16 @@ public @interface SuperCall {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<SuperCall> getHandledType() {
             return SuperCall.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<SuperCall> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,

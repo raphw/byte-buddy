@@ -45,7 +45,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
         randomString = new RandomString();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()
                 .filter(not(isBridge()).<MethodDescription>and(isAnnotatedWith(Enhance.class)))) {
@@ -55,7 +57,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                 throw new IllegalStateException("Cannot cache the value of a method with parameters: " + methodDescription);
             }
             String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent().value();
-            if (name.isEmpty()) {
+            if (name.length() == 0) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
             }
             Class<?> advice;
@@ -139,7 +141,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
             this.name = name;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Target resolve(TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
                               Assigner assigner,

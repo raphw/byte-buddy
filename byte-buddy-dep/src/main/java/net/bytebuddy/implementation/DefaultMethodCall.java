@@ -126,12 +126,16 @@ public class DefaultMethodCall implements Implementation {
         return new DefaultMethodCall(Collections.<TypeDescription>emptyList());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return new Appender(implementationTarget, filterRelevant(implementationTarget.getInstrumentedType()));
     }
@@ -189,7 +193,9 @@ public class DefaultMethodCall implements Implementation {
             nonPrioritizedInterfaces.removeAll(prioritizedInterfaces);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation defaultMethodInvocation = locateDefault(instrumentedMethod);
             if (!defaultMethodInvocation.isValid()) {

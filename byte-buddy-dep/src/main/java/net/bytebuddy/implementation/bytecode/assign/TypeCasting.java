@@ -43,12 +43,16 @@ public class TypeCasting implements StackManipulation {
         return new TypeCasting(typeDefinition.asErasure());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, typeDescription.getInternalName());
         return StackSize.ZERO.toIncreasingSize();

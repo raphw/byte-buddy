@@ -11,12 +11,10 @@ public class IllegalTransformPlugin implements Plugin {
         throw new RuntimeException();
     }
 
-    @Override
     public boolean matches(TypeDescription target) {
         throw new AssertionError();
     }
 
-    @Override
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         throw new AssertionError();
     }

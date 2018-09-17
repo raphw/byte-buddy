@@ -38,17 +38,23 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
      */
     abstract class AbstractBase implements PackageDescription {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getInternalName() {
             return getName().replace('.', '/');
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getActualName() {
             return getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean contains(TypeDescription typeDescription) {
             return this.equals(typeDescription.getPackage());
         }
@@ -88,12 +94,16 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
             this.name = name;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return name;
         }
@@ -119,12 +129,16 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
             this.aPackage = aPackage;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(aPackage.getDeclaredAnnotations());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String getName() {
             return aPackage.getName();
         }

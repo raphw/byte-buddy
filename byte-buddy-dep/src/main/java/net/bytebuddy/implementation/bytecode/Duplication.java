@@ -107,12 +107,16 @@ public enum Duplication implements StackManipulation {
      */
     public abstract StackManipulation flipOver(TypeDefinition typeDefinition);
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(opcode);
         return size;
@@ -129,17 +133,17 @@ public enum Duplication implements StackManipulation {
         SINGLE_SINGLE(Opcodes.DUP_X1, StackSize.SINGLE),
 
         /**
-         *  A flip instruction that flips a double-sized element over a single-size element.
+         * A flip instruction that flips a double-sized element over a single-size element.
          */
         SINGLE_DOUBLE(Opcodes.DUP_X2, StackSize.SINGLE),
 
         /**
-         *  A flip instruction that flips a single-sized element over a double-size element.
+         * A flip instruction that flips a single-sized element over a double-size element.
          */
         DOUBLE_SINGLE(Opcodes.DUP2_X1, StackSize.DOUBLE),
 
         /**
-         *  A flip instruction that flips a double-sized element over another double-size element.
+         * A flip instruction that flips a double-sized element over another double-size element.
          */
         DOUBLE_DOUBLE(Opcodes.DUP2_X2, StackSize.DOUBLE);
 
@@ -164,12 +168,16 @@ public enum Duplication implements StackManipulation {
             this.stackSize = stackSize;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(opcode);
             return stackSize.toIncreasingSize();

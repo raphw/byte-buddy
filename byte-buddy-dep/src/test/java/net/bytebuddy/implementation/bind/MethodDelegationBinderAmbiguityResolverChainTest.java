@@ -15,7 +15,6 @@ public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAm
 
     private MethodDelegationBinder.AmbiguityResolver chain;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

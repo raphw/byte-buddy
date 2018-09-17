@@ -26,27 +26,37 @@ public enum StubMethod implements Implementation.Composable, ByteCodeAppender {
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return this;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation andThen(Implementation implementation) {
         return implementation;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Composable andThen(Composable implementation) {
         return implementation;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor,
                       Context implementationContext,
                       MethodDescription instrumentedMethod) {

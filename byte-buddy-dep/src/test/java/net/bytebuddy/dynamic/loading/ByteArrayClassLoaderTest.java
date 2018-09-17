@@ -91,7 +91,6 @@ public class ByteArrayClassLoaderTest {
                 Mockito.any(Class.class),
                 Mockito.any(ProtectionDomain.class),
                 Mockito.any(byte[].class))).thenAnswer(new Answer<byte[]>() {
-            @Override
             public byte[] answer(InvocationOnMock invocation) throws Throwable {
                 return (byte[]) invocation.getArguments()[4];
             }

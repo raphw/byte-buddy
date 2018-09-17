@@ -256,7 +256,9 @@ public @interface FieldProxy {
             this.fieldResolverFactory = fieldResolverFactory;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<FieldProxy> getHandledType() {
             return FieldProxy.class;
         }
@@ -373,7 +375,9 @@ public @interface FieldProxy {
                         this.setterMethod = setterMethod;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldResolver resolve(TypeDescription parameterType, FieldDescription fieldDescription) {
                         if (parameterType.equals(proxyType)) {
                             return new ForGetterSetterPair(proxyType, getterMethod, setterMethod);
@@ -410,7 +414,9 @@ public @interface FieldProxy {
                         this.setterMethod = setterMethod;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldResolver resolve(TypeDescription parameterType, FieldDescription fieldDescription) {
                         if (parameterType.equals(getterMethod.getDeclaringType())) {
                             return new ForGetter(getterMethod);
@@ -435,17 +441,23 @@ public @interface FieldProxy {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getProxyType() {
                     throw new IllegalStateException("Cannot read type for unresolved field resolver");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
@@ -474,17 +486,23 @@ public @interface FieldProxy {
                     this.getterMethod = getterMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getProxyType() {
                     return getterMethod.getDeclaringType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
@@ -513,17 +531,23 @@ public @interface FieldProxy {
                     this.setterMethod = setterMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getProxyType() {
                     return setterMethod.getDeclaringType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
@@ -568,17 +592,23 @@ public @interface FieldProxy {
                     this.setterMethod = setterMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription getProxyType() {
                     return proxyType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
@@ -614,12 +644,16 @@ public @interface FieldProxy {
                 objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
             }
@@ -646,14 +680,18 @@ public @interface FieldProxy {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType.withField(new FieldDescription.Token(AccessorProxy.FIELD_NAME,
                         Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
                         this.instrumentedType.asGenericType()));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
             }
@@ -682,7 +720,9 @@ public @interface FieldProxy {
                             .getOnly();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor,
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
@@ -734,12 +774,16 @@ public @interface FieldProxy {
                 this.methodAccessorFactory = methodAccessorFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
             }
@@ -764,7 +808,9 @@ public @interface FieldProxy {
                     typeDescription = implementationTarget.getInstrumentedType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor,
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
@@ -820,12 +866,16 @@ public @interface FieldProxy {
                 this.methodAccessorFactory = methodAccessorFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
             }
@@ -850,7 +900,9 @@ public @interface FieldProxy {
                     typeDescription = implementationTarget.getInstrumentedType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Size apply(MethodVisitor methodVisitor,
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
@@ -928,7 +980,9 @@ public @interface FieldProxy {
                 this.serializableProxy = serializableProxy;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType make(String auxiliaryTypeName,
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
@@ -946,12 +1000,16 @@ public @interface FieldProxy {
                                 : new InstanceFieldConstructor(instrumentedType)), fieldDescription, assigner, methodAccessorFactory).make();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 TypeDescription auxiliaryType = implementationContext.register(this);
                 return new Compound(

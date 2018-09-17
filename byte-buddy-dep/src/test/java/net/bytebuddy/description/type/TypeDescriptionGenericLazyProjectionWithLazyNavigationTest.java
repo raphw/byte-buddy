@@ -62,12 +62,10 @@ public class TypeDescriptionGenericLazyProjectionWithLazyNavigationTest {
             this.typeDescription = typeDescription;
         }
 
-        @Override
         public AnnotationList getDeclaredAnnotations() {
             throw new AssertionError();
         }
 
-        @Override
         public TypeDescription asErasure() {
             return typeDescription;
         }

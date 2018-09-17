@@ -731,34 +731,46 @@ public interface AgentBuilder {
          */
         abstract class AbstractBase<S extends Matchable<S>> implements Matchable<S> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S and(ElementMatcher<? super TypeDescription> typeMatcher) {
                 return and(typeMatcher, any());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 return and(typeMatcher, classLoaderMatcher, any());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S and(ElementMatcher<? super TypeDescription> typeMatcher,
                          ElementMatcher<? super ClassLoader> classLoaderMatcher,
                          ElementMatcher<? super JavaModule> moduleMatcher) {
                 return and(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S or(ElementMatcher<? super TypeDescription> typeMatcher) {
                 return or(typeMatcher, any());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 return or(typeMatcher, classLoaderMatcher, any());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S or(ElementMatcher<? super TypeDescription> typeMatcher,
                         ElementMatcher<? super ClassLoader> classLoaderMatcher,
                         ElementMatcher<? super JavaModule> moduleMatcher) {
@@ -957,7 +969,9 @@ public interface AgentBuilder {
                 this.matches = matches;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -996,7 +1010,9 @@ public interface AgentBuilder {
                 this.unloaded = unloaded;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1017,7 +1033,9 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1071,7 +1089,9 @@ public interface AgentBuilder {
                 this.right = right;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1109,7 +1129,9 @@ public interface AgentBuilder {
                 this.right = right;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1140,7 +1162,9 @@ public interface AgentBuilder {
                 this.matcher = matcher;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1214,7 +1238,9 @@ public interface AgentBuilder {
                 this.moduleMatcher = moduleMatcher;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
                                    JavaModule module,
@@ -1297,27 +1323,37 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
@@ -1328,27 +1364,37 @@ public interface AgentBuilder {
          */
         abstract class Adapter implements Listener {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 /* do nothing */
             }
@@ -1416,22 +1462,30 @@ public interface AgentBuilder {
                 return new WithErrorsOnly(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " DISCOVERY %s [%s, %s, loaded=%b]%n", typeName, classLoader, module, loaded);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 printStream.printf(PREFIX + " TRANSFORM %s [%s, %s, loaded=%b]%n", typeDescription.getName(), classLoader, module, loaded);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " IGNORE %s [%s, %s, loaded=%b]%n", typeDescription.getName(), classLoader, module, loaded);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 synchronized (printStream) {
                     printStream.printf(PREFIX + " ERROR %s [%s, %s, loaded=%b]%n", typeName, classLoader, module, loaded);
@@ -1439,7 +1493,9 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 printStream.printf(PREFIX + " COMPLETE %s [%s, %s, loaded=%b]%n", typeName, classLoader, module, loaded);
             }
@@ -1472,35 +1528,45 @@ public interface AgentBuilder {
                 this.delegate = delegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 if (matcher.matches(typeName)) {
                     delegate.onDiscovery(typeName, classLoader, module, loaded);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 if (matcher.matches(typeDescription.getName())) {
                     delegate.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 if (matcher.matches(typeDescription.getName())) {
                     delegate.onIgnored(typeDescription, classLoader, module, loaded);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 if (matcher.matches(typeName)) {
                     delegate.onError(typeName, classLoader, module, loaded, throwable);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 if (matcher.matches(typeName)) {
                     delegate.onComplete(typeName, classLoader, module, loaded);
@@ -1670,35 +1736,45 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onDiscovery(typeName, classLoader, module, loaded);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 for (Listener listener : listeners) {
                     listener.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onIgnored(typeDescription, classLoader, module, loaded);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 for (Listener listener : listeners) {
                     listener.onError(typeName, classLoader, module, loaded, throwable);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
                 for (Listener listener : listeners) {
                     listener.onComplete(typeName, classLoader, module, loaded);
@@ -1737,12 +1813,16 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean acquire() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void release() {
                 /* do nothing */
             }
@@ -1759,7 +1839,9 @@ public interface AgentBuilder {
              */
             private static final Boolean NOT_ACQUIRED = null;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean acquire() {
                 if (get() == NOT_ACQUIRED) {
                     set(true);
@@ -1769,7 +1851,9 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void release() {
                 set(NOT_ACQUIRED);
             }
@@ -1815,7 +1899,9 @@ public interface AgentBuilder {
                 this.timeUnit = timeUnit;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean acquire() {
                 try {
                     return time == 0
@@ -1826,7 +1912,9 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void release() {
                 lock.unlock();
             }
@@ -1867,7 +1955,7 @@ public interface AgentBuilder {
              * A definition handler that performs a rebasing for all types.
              */
             REBASE {
-                @Override
+                /** {@inheritDoc} */
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
@@ -1893,7 +1981,7 @@ public interface AgentBuilder {
              * </p>
              */
             REDEFINE {
-                @Override
+                /** {@inheritDoc} */
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
@@ -1920,7 +2008,7 @@ public interface AgentBuilder {
              * </p>
              */
             REDEFINE_FROZEN {
-                @Override
+                /** {@inheritDoc} */
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
@@ -1952,7 +2040,7 @@ public interface AgentBuilder {
              * </p>
              */
             DECORATE {
-                @Override
+                /** {@inheritDoc} */
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
@@ -1985,7 +2073,9 @@ public interface AgentBuilder {
                 this.entryPoint = entryPoint;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                   ByteBuddy byteBuddy,
                                                   ClassFileLocator classFileLocator,
@@ -2029,7 +2119,9 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
@@ -2058,7 +2150,9 @@ public interface AgentBuilder {
                 this.plugin = plugin;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
@@ -2161,7 +2255,9 @@ public interface AgentBuilder {
                 this.entries = entries;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
@@ -2462,7 +2558,9 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
                                                     TypeDescription typeDescription,
                                                     ClassLoader classLoader,
@@ -2530,7 +2628,9 @@ public interface AgentBuilder {
                 this.readerMode = readerMode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
@@ -2577,7 +2677,9 @@ public interface AgentBuilder {
                 this.readerMode = readerMode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
@@ -2625,7 +2727,9 @@ public interface AgentBuilder {
                 this.readerMode = readerMode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
@@ -2659,7 +2763,9 @@ public interface AgentBuilder {
                 this.readerMode = readerMode;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode);
             }
@@ -2800,17 +2906,23 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Dispatcher dispatcher() {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                 return builder;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
                 /* do nothing */
             }
@@ -2828,17 +2940,23 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Dispatcher dispatcher() {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                 return builder;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
@@ -2878,7 +2996,9 @@ public interface AgentBuilder {
                 this.nexusAccessor = nexusAccessor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoiding synchronization without security concerns")
             public InitializationStrategy.Dispatcher dispatcher() {
                 return dispatcher(new Random().nextInt());
@@ -2919,7 +3039,9 @@ public interface AgentBuilder {
                     this.identification = identification;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
                     return builder.initializer(new NexusAccessor.InitializationAppender(identification));
                 }
@@ -2969,7 +3091,9 @@ public interface AgentBuilder {
                         this.classInjector = classInjector;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void onLoad(Class<?> type) {
                         for (Map.Entry<TypeDescription, Class<?>> auxiliary : classInjector.inject(rawAuxiliaryTypes).entrySet()) {
                             loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
@@ -2977,7 +3101,9 @@ public interface AgentBuilder {
                         loadedTypeInitializers.get(instrumentedType).onLoad(type);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public boolean isAlive() {
                         return true;
                     }
@@ -3027,7 +3153,9 @@ public interface AgentBuilder {
                         super(nexusAccessor, identification);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer;
@@ -3101,7 +3229,9 @@ public interface AgentBuilder {
                         super(nexusAccessor, identification);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
@@ -3153,7 +3283,9 @@ public interface AgentBuilder {
                         super(nexusAccessor, identification);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
@@ -3214,7 +3346,7 @@ public interface AgentBuilder {
              * @see FallbackStrategy.ByThrowableType#ofOptionalTypes()
              */
             HYBRID(true) {
-                @Override
+                /** {@inheritDoc} */
                 public TypeDescription apply(String typeName,
                                              Class<?> type,
                                              TypePool typePool,
@@ -3241,7 +3373,7 @@ public interface AgentBuilder {
              * </p>
              */
             POOL_ONLY(false) {
-                @Override
+                /** {@inheritDoc} */
                 public TypeDescription apply(String typeName,
                                              Class<?> type,
                                              TypePool typePool,
@@ -3265,7 +3397,7 @@ public interface AgentBuilder {
              * </p>
              */
             POOL_FIRST(false) {
-                @Override
+                /** {@inheritDoc} */
                 public TypeDescription apply(String typeName,
                                              Class<?> type,
                                              TypePool typePool,
@@ -3305,7 +3437,9 @@ public interface AgentBuilder {
                 return new SuperTypeLoading(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isLoadedFirst() {
                 return loadedFirst;
             }
@@ -3352,12 +3486,16 @@ public interface AgentBuilder {
                 this.delegate = delegate;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isLoadedFirst() {
                 return delegate.isLoadedFirst();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription apply(String typeName,
                                          Class<?> type,
                                          TypePool typePool,
@@ -3390,7 +3528,9 @@ public interface AgentBuilder {
                     this.circularityLock = circularityLock;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                     circularityLock.release();
                     try {
@@ -3455,12 +3595,16 @@ public interface AgentBuilder {
                     this.executorService = executorService;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isLoadedFirst() {
                     return delegate.isLoadedFirst();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription apply(String typeName,
                                              Class<?> type,
                                              TypePool typePool,
@@ -3493,7 +3637,9 @@ public interface AgentBuilder {
                         this.executorService = executorService;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                         boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
                         AtomicBoolean signal = new AtomicBoolean(holdsLock);
@@ -3539,7 +3685,9 @@ public interface AgentBuilder {
                             this.classLoader = classLoader;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Class<?> call() throws ClassNotFoundException {
                             return Class.forName(name, false, classLoader);
                         }
@@ -3578,7 +3726,9 @@ public interface AgentBuilder {
                             this.signal = signal;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Class<?> call() throws ClassNotFoundException {
                             synchronized (classLoader) {
                                 try {
@@ -3619,7 +3769,9 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return ClassFileLocator.NoOp.INSTANCE;
             }
@@ -3634,7 +3786,7 @@ public interface AgentBuilder {
              * A location strategy that keeps a strong reference to the class loader the created class file locator represents.
              */
             STRONG {
-                @Override
+                /** {@inheritDoc} */
                 public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                     return ClassFileLocator.ForClassLoader.of(classLoader);
                 }
@@ -3645,7 +3797,7 @@ public interface AgentBuilder {
              * As a consequence, any returned class file locator stops working once the represented class loader is garbage collected.
              */
             WEAK {
-                @Override
+                /** {@inheritDoc} */
                 public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                     return ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader);
                 }
@@ -3721,7 +3873,9 @@ public interface AgentBuilder {
                 this.classFileLocator = classFileLocator;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return classFileLocator;
             }
@@ -3763,7 +3917,9 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(locationStrategies.size());
                 for (LocationStrategy locationStrategy : locationStrategies) {
@@ -3821,7 +3977,9 @@ public interface AgentBuilder {
                 this.enabled = enabled;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isFallback(Class<?> type, Throwable throwable) {
                 return enabled;
             }
@@ -3867,7 +4025,9 @@ public interface AgentBuilder {
                 return new ByThrowableType(LinkageError.class, TypeNotPresentException.class);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isFallback(Class<?> type, Throwable throwable) {
                 for (Class<? extends Throwable> aType : types) {
                     if (aType.isInstance(throwable)) {
@@ -3935,22 +4095,30 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 return throwable;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
@@ -3966,22 +4134,30 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 return SUPPRESS_ERROR;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
@@ -3992,22 +4168,30 @@ public interface AgentBuilder {
          */
         abstract class Adapter implements InstallationListener {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 return throwable;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
@@ -4056,17 +4240,23 @@ public interface AgentBuilder {
                 return new StreamWriting(System.err);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 printStream.printf(PREFIX + " BEFORE_INSTALL %s on %s%n", classFileTransformer, instrumentation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 printStream.printf(PREFIX + " INSTALL %s on %s%n", classFileTransformer, instrumentation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 synchronized (printStream) {
                     printStream.printf(PREFIX + " ERROR %s on %s%n", classFileTransformer, instrumentation);
@@ -4075,7 +4265,9 @@ public interface AgentBuilder {
                 return throwable;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 printStream.printf(PREFIX + " RESET %s on %s%n", classFileTransformer, instrumentation);
             }
@@ -4117,21 +4309,27 @@ public interface AgentBuilder {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 for (InstallationListener installationListener : installationListeners) {
                     installationListener.onBeforeInstall(instrumentation, classFileTransformer);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 for (InstallationListener installationListener : installationListeners) {
                     installationListener.onInstall(instrumentation, classFileTransformer);
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 for (InstallationListener installationListener : installationListeners) {
                     if (throwable == SUPPRESS_ERROR) {
@@ -4142,7 +4340,9 @@ public interface AgentBuilder {
                 return throwable;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 for (InstallationListener installationListener : installationListeners) {
                     installationListener.onReset(instrumentation, classFileTransformer);
@@ -4177,7 +4377,7 @@ public interface AgentBuilder {
              * A class file buffer strategy that retains the original class file buffer.
              */
             RETAINING {
-                @Override
+                /** {@inheritDoc} */
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
                                                 ClassLoader classLoader,
@@ -4196,7 +4396,7 @@ public interface AgentBuilder {
              * </p>
              */
             DISCARDING {
-                @Override
+                /** {@inheritDoc} */
                 public ClassFileLocator resolve(String name,
                                                 byte[] binaryRepresentation,
                                                 ClassLoader classLoader,
@@ -4300,14 +4500,14 @@ public interface AgentBuilder {
          * </p>
          */
         RETRANSFORMATION(true, true) {
-            @Override
+            /** {@inheritDoc} */
             protected void check(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
                     throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
                 }
             }
 
-            @Override
+            /** {@inheritDoc} */
             protected Collector make() {
                 return new Collector.ForRetransformation();
             }
@@ -4478,7 +4678,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     return types.isEmpty()
                             ? Collections.<List<Class<?>>>emptySet()
@@ -4522,7 +4724,9 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     List<List<Class<?>>> batches = new ArrayList<List<Class<?>>>();
                     for (int index = 0; index < types.size(); index += size) {
@@ -4598,7 +4802,9 @@ public interface AgentBuilder {
                     return Slicing.withinRange(minimum, maximum, this);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     Map<ElementMatcher<? super TypeDescription>, List<Class<?>>> matched = new LinkedHashMap<ElementMatcher<? super TypeDescription>, List<Class<?>>>();
                     List<Class<?>> unmatched = new ArrayList<Class<?>>();
@@ -4701,7 +4907,9 @@ public interface AgentBuilder {
                     return new Slicing(minimum, maximum, batchAllocator);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     return new SlicingIterable(minimum, maximum, batchAllocator.batch(types));
                 }
@@ -4739,7 +4947,9 @@ public interface AgentBuilder {
                         this.iterable = iterable;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Iterator<List<Class<?>>> iterator() {
                         return new SlicingIterator(minimum, maximum, iterable.iterator());
                     }
@@ -4783,12 +4993,16 @@ public interface AgentBuilder {
                             buffer = new ArrayList<Class<?>>();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public boolean hasNext() {
                             return !buffer.isEmpty() || iterator.hasNext();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public List<Class<?>> next() {
                             if (buffer.isEmpty()) {
                                 buffer = iterator.next();
@@ -4811,7 +5025,9 @@ public interface AgentBuilder {
                             }
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
                         }
@@ -4852,7 +5068,9 @@ public interface AgentBuilder {
                     return new Partitioning(parts);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     if (types.isEmpty()) {
                         return Collections.emptyList();
@@ -4918,17 +5136,23 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     return Collections.emptyList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
@@ -4944,19 +5168,25 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     if (index > 0) {
                         Thread.yield();
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     return Collections.emptyList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
@@ -4971,12 +5201,12 @@ public interface AgentBuilder {
                  * A listener that fails the retransformation upon the first failed retransformation of a batch.
                  */
                 FAIL_FAST {
-                    @Override
+                    /** {@inheritDoc} */
                     public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                         throw new IllegalStateException("Could not transform any of " + batch, throwable);
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                         /* do nothing */
                     }
@@ -4986,12 +5216,12 @@ public interface AgentBuilder {
                  * A listener that fails the retransformation after all batches were executed if any error occurred.
                  */
                 FAIL_LAST {
-                    @Override
+                    /** {@inheritDoc} */
                     public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                         return Collections.emptyList();
                     }
 
-                    @Override
+                    /** {@inheritDoc} */
                     public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                         if (!failures.isEmpty()) {
                             throw new IllegalStateException("Could not transform any of " + failures);
@@ -4999,7 +5229,9 @@ public interface AgentBuilder {
                     }
                 };
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     /* do nothing */
                 }
@@ -5011,17 +5243,23 @@ public interface AgentBuilder {
             @HashCodeAndEqualsPlugin.Enhance
             abstract class Adapter implements Listener {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     /* do nothing */
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     return Collections.emptyList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
@@ -5160,12 +5398,16 @@ public interface AgentBuilder {
                     return new StreamWriting(System.err);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE BATCH #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     synchronized (printStream) {
                         printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE ERROR #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
@@ -5174,7 +5416,9 @@ public interface AgentBuilder {
                     return Collections.emptyList();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
                 }
@@ -5216,14 +5460,18 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     for (Listener listener : listeners) {
                         listener.onBatch(index, batch, types);
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     List<Iterable<? extends List<Class<?>>>> reattempts = new ArrayList<Iterable<? extends List<Class<?>>>>();
                     for (Listener listener : listeners) {
@@ -5232,7 +5480,9 @@ public interface AgentBuilder {
                     return new CompoundIterable(reattempts);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     for (Listener listener : listeners) {
                         listener.onComplete(amount, types, failures);
@@ -5259,7 +5509,9 @@ public interface AgentBuilder {
                         this.iterables = iterables;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Iterator<List<Class<?>>> iterator() {
                         return new CompoundIterator(new ArrayList<Iterable<? extends List<Class<?>>>>(iterables));
                     }
@@ -5289,12 +5541,16 @@ public interface AgentBuilder {
                             forward();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public boolean hasNext() {
                             return current != null && current.hasNext();
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public List<Class<?>> next() {
                             try {
                                 if (current != null) {
@@ -5316,7 +5572,9 @@ public interface AgentBuilder {
                             }
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
                         }
@@ -5349,7 +5607,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
                     return Collections.<Iterable<Class<?>>>singleton(Arrays.<Class<?>>asList(instrumentation.getAllLoadedClasses()));
                 }
@@ -5367,7 +5627,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
                     return new ReiteratingIterable(instrumentation);
                 }
@@ -5392,7 +5654,9 @@ public interface AgentBuilder {
                         this.instrumentation = instrumentation;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Iterator<Iterable<Class<?>>> iterator() {
                         return new ReiteratingIterator(instrumentation);
                     }
@@ -5428,7 +5692,9 @@ public interface AgentBuilder {
                         processed = new HashSet<Class<?>>();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public boolean hasNext() {
                         if (types == null) {
                             types = new ArrayList<Class<?>>();
@@ -5441,7 +5707,9 @@ public interface AgentBuilder {
                         return !types.isEmpty();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Iterable<Class<?>> next() {
                         if (hasNext()) {
                             try {
@@ -5454,7 +5722,9 @@ public interface AgentBuilder {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void remove() {
                         throw new UnsupportedOperationException("remove");
                     }
@@ -5490,7 +5760,9 @@ public interface AgentBuilder {
                     this.types = types;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Iterable<Iterable<Class<?>>> resolve(Instrumentation instrumentation) {
                     return Collections.<Iterable<Class<?>>>singleton(types);
                 }
@@ -5537,7 +5809,9 @@ public interface AgentBuilder {
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void cancel() {
                         /* do nothing */
                     }
@@ -5563,7 +5837,9 @@ public interface AgentBuilder {
                         this.future = future;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void cancel() {
                         future.cancel(true);
                     }
@@ -5580,12 +5856,16 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAlive() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Cancelable schedule(Runnable job) {
                     return Cancelable.NoOp.INSTANCE;
                 }
@@ -5625,12 +5905,16 @@ public interface AgentBuilder {
                     this.timeUnit = timeUnit;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAlive() {
                     return !scheduledExecutorService.isShutdown();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Cancelable schedule(Runnable job) {
                     return new Cancelable.ForFuture(scheduledExecutorService.scheduleAtFixedRate(job, time, time, timeUnit));
                 }
@@ -5670,12 +5954,16 @@ public interface AgentBuilder {
                     this.timeUnit = timeUnit;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isAlive() {
                     return !scheduledExecutorService.isShutdown();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Cancelable schedule(Runnable job) {
                     return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, time, time, timeUnit));
                 }
@@ -5721,7 +6009,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Installation apply(Instrumentation instrumentation,
                                           LocationStrategy locationStrategy,
                                           AgentBuilder.Listener listener,
@@ -5762,7 +6052,9 @@ public interface AgentBuilder {
                     this.matcher = matcher;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Installation apply(Instrumentation instrumentation,
                                           LocationStrategy locationStrategy,
                                           AgentBuilder.Listener listener,
@@ -5814,19 +6106,65 @@ public interface AgentBuilder {
                         this.types = types;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is intended for avoiding unnecessary weak reference")
                     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                         if (!loaded && matcher.matches(throwable)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
                             if (types == null) {
-                                types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+                                types = new ConcurrentHashSet<String>();
                                 Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
                                 if (previous != null) {
                                     types = previous;
                                 }
                             }
                             types.add(typeName);
+                        }
+                    }
+
+                    /**
+                     * A set projection for a {@link ConcurrentHashMap}.
+                     *
+                     * @param <T> The element type of the set projection.
+                     */
+                    protected static class ConcurrentHashSet<T> extends AbstractSet<T> {
+
+                        /**
+                         * The delegate map.
+                         */
+                        private final ConcurrentMap<T, Boolean> delegate;
+
+                        /**
+                         * Creates a concurrent hash set.
+                         */
+                        protected ConcurrentHashSet() {
+                            delegate = new ConcurrentHashMap<T, Boolean>();
+                        }
+
+                        @Override
+                        public boolean add(T value) {
+                            return delegate.put(value, Boolean.TRUE) == null;
+                        }
+
+                        @Override
+                        public boolean remove(Object value) {
+                            return delegate.remove(value) != null;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Iterator<T> iterator() {
+                            return delegate.keySet().iterator();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public int size() {
+                            return delegate.size();
                         }
                     }
                 }
@@ -5941,7 +6279,9 @@ public interface AgentBuilder {
                         }
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void run() {
                         boolean release = circularityLock.acquire();
                         try {
@@ -6032,6 +6372,11 @@ public interface AgentBuilder {
                     }
 
                     @Override
+                    public int hashCode() {
+                        return hashCode;
+                    }
+
+                    @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
                     public boolean equals(Object other) {
                         if (this == other) {
@@ -6044,11 +6389,6 @@ public interface AgentBuilder {
                         } else {
                             return false;
                         }
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return hashCode;
                     }
                 }
 
@@ -6082,6 +6422,11 @@ public interface AgentBuilder {
                     }
 
                     @Override
+                    public int hashCode() {
+                        return hashCode;
+                    }
+
+                    @Override
                     @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
                     public boolean equals(Object other) {
                         if (this == other) {
@@ -6095,11 +6440,6 @@ public interface AgentBuilder {
                         } else {
                             return false;
                         }
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return hashCode;
                     }
                 }
             }
@@ -6303,7 +6643,7 @@ public interface AgentBuilder {
                 /**
                  * The backlog of iterators to apply.
                  */
-                private final Deque<Iterator<? extends List<Class<?>>>> backlog;
+                private final LinkedList<Iterator<? extends List<Class<?>>>> backlog;
 
                 /**
                  * Creates a new prependable iterator.
@@ -6312,7 +6652,7 @@ public interface AgentBuilder {
                  */
                 protected PrependableIterator(Iterable<? extends List<Class<?>>> origin) {
                     current = origin.iterator();
-                    backlog = new ArrayDeque<Iterator<? extends List<Class<?>>>>();
+                    backlog = new LinkedList<Iterator<? extends List<Class<?>>>>();
                 }
 
                 /**
@@ -6330,12 +6670,16 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean hasNext() {
                     return current.hasNext();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<Class<?>> next() {
                     try {
                         return current.next();
@@ -6346,7 +6690,9 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public void remove() {
                     throw new UnsupportedOperationException("remove");
                 }
@@ -6714,12 +7060,16 @@ public interface AgentBuilder {
                     objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget.getInstrumentedType().getDeclaredFields());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -6744,7 +7094,9 @@ public interface AgentBuilder {
                         this.declaredFields = declaredFields;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(declaredFields.size() * 3);
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
@@ -6772,12 +7124,16 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget.getInstrumentedType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -6802,7 +7158,9 @@ public interface AgentBuilder {
                         this.instrumentedType = instrumentedType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         return new Size(new StackManipulation.Compound(
                                 TypeCreation.of(instrumentedType),
@@ -6842,7 +7200,9 @@ public interface AgentBuilder {
                     this.specializedLambdaMethod = specializedLambdaMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(targetMethod.getOwnerType()
                             .getDeclaredMethods()
@@ -6854,7 +7214,9 @@ public interface AgentBuilder {
                             implementationTarget.getInstrumentedType().getDeclaredFields());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -6895,7 +7257,9 @@ public interface AgentBuilder {
                         this.declaredFields = declaredFields;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         StackManipulation preparation = targetMethod.isConstructor()
                                 ? new StackManipulation.Compound(TypeCreation.of(targetMethod.getDeclaringType().asErasure()), Duplication.SINGLE)
@@ -6988,7 +7352,9 @@ public interface AgentBuilder {
                     this.specializedMethod = specializedMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     TypeDescription serializedLambda;
                     try {
@@ -7020,7 +7386,9 @@ public interface AgentBuilder {
                     ));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -7053,14 +7421,18 @@ public interface AgentBuilder {
                     this.lambdaMethod = lambdaMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget.invokeSuper(new MethodDescription.SignatureToken(lambdaMethodName,
                             lambdaMethod.getReturnType(),
                             lambdaMethod.getParameterTypes())));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -7085,7 +7457,9 @@ public interface AgentBuilder {
                         this.bridgeTargetInvocation = bridgeTargetInvocation;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         return new Compound(new Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod)
@@ -7147,7 +7521,9 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
@@ -7353,7 +7729,9 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
@@ -7943,7 +8321,9 @@ public interface AgentBuilder {
             return agentBuilder;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
                     listener,
@@ -7968,7 +8348,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
                     new Listener.Compound(this.listener, listener),
@@ -7993,7 +8375,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(CircularityLock circularityLock) {
             return new Default(byteBuddy,
                     listener,
@@ -8018,7 +8402,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8043,7 +8429,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(PoolStrategy poolStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8068,7 +8456,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(LocationStrategy locationStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8093,7 +8483,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
                     listener,
@@ -8118,7 +8510,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
                     listener,
@@ -8143,7 +8537,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
             return new Redefining(byteBuddy,
                     listener,
@@ -8168,7 +8564,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8193,7 +8591,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8218,7 +8618,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8243,7 +8645,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(FallbackStrategy fallbackStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8268,7 +8672,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(ClassFileBufferStrategy classFileBufferStrategy) {
             return new Default(byteBuddy,
                     listener,
@@ -8293,7 +8699,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder with(InstallationListener installationListener) {
             return new Default(byteBuddy,
                     listener,
@@ -8318,7 +8726,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
                     listener,
@@ -8343,7 +8753,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder enableUnsafeBootstrapInjection() {
             return new Default(byteBuddy,
                     listener,
@@ -8368,7 +8780,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
                     listener,
@@ -8393,7 +8807,9 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
                     listener,
@@ -8420,85 +8836,115 @@ public interface AgentBuilder {
                     transformation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type) {
             return JavaModule.isSupported()
                     ? with(Listener.ModuleReadEdgeCompleting.of(instrumentation, false, type))
                     : this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, JavaModule... module) {
             return assureReadEdgeTo(instrumentation, Arrays.asList(module));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
             return with(new Listener.ModuleReadEdgeCompleting(instrumentation, false, new HashSet<JavaModule>(modules)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Class<?>... type) {
             return JavaModule.isSupported()
                     ? with(Listener.ModuleReadEdgeCompleting.of(instrumentation, true, type))
                     : this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, JavaModule... module) {
             return assureReadEdgeFromAndTo(instrumentation, Arrays.asList(module));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
             return with(new Listener.ModuleReadEdgeCompleting(instrumentation, true, new HashSet<JavaModule>(modules)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Identified.Narrowable type(RawMatcher matcher) {
             return new Transforming(matcher, Transformer.NoOp.INSTANCE, false);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
             return type(typeMatcher, any());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
             return type(typeMatcher, classLoaderMatcher, any());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
                                           ElementMatcher<? super ClassLoader> classLoaderMatcher,
                                           ElementMatcher<? super JavaModule> moduleMatcher) {
             return type(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, not(supportsModules()).or(moduleMatcher)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher) {
             return ignore(typeMatcher, any());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
             return ignore(typeMatcher, classLoaderMatcher, any());
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
                               ElementMatcher<? super ClassLoader> classLoaderMatcher,
                               ElementMatcher<? super JavaModule> moduleMatcher) {
             return ignore(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, not(supportsModules()).or(moduleMatcher)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Ignored ignore(RawMatcher rawMatcher) {
             return new Ignoring(rawMatcher);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ResettableClassFileTransformer makeRaw() {
             return makeRaw(listener, InstallationListener.NoOp.INSTANCE);
         }
@@ -8529,7 +8975,9 @@ public interface AgentBuilder {
                     circularityLock);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
             if (!circularityLock.acquire()) {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
@@ -8581,7 +9029,9 @@ public interface AgentBuilder {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
             try {
                 return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
@@ -8618,7 +9068,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
                 }
@@ -8634,12 +9086,16 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     return new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String toString() {
                     return "AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe." + name();
                 }
@@ -8672,7 +9128,9 @@ public interface AgentBuilder {
                     this.instrumentation = instrumentation;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     return ClassInjector.UsingInstrumentation.of(folder,
                             ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
@@ -8718,17 +9176,23 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodNameTransformer resolve() {
                     return MethodNameTransformer.Suffixing.withRandomSuffix();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isEnabled(Instrumentation instrumentation) {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getPrefix() {
                     throw new IllegalStateException("A disabled native method strategy does not define a method name prefix");
                 }
@@ -8767,12 +9231,16 @@ public interface AgentBuilder {
                     return new ForPrefix(prefix);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodNameTransformer resolve() {
                     return new MethodNameTransformer.Prefixing(prefix);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isEnabled(Instrumentation instrumentation) {
                     if (!instrumentation.isNativeMethodPrefixSupported()) {
                         throw new IllegalArgumentException("A prefix for native methods is not supported: " + instrumentation);
@@ -8780,7 +9248,9 @@ public interface AgentBuilder {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getPrefix() {
                     return prefix;
                 }
@@ -8962,22 +9432,30 @@ public interface AgentBuilder {
                         this.loaded = loaded;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return Sort.UNDEFINED;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Resolution asDecoratorOf(Resolution resolution) {
                         return resolution;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Resolution prepend(Decoratable resolution) {
                         return resolution;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public byte[] apply(InitializationStrategy initializationStrategy,
                                         ClassFileLocator classFileLocator,
                                         TypeStrategy typeStrategy,
@@ -9002,7 +9480,9 @@ public interface AgentBuilder {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
@@ -9011,7 +9491,9 @@ public interface AgentBuilder {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
                                           JavaModule module,
@@ -9057,7 +9539,9 @@ public interface AgentBuilder {
                     this.decorator = decorator;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
@@ -9066,7 +9550,9 @@ public interface AgentBuilder {
                     return rawMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Transformation.Resolution resolve(TypeDescription typeDescription,
                                                          ClassLoader classLoader,
                                                          JavaModule module,
@@ -9155,24 +9641,32 @@ public interface AgentBuilder {
                         this.decorator = decorator;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Sort getSort() {
                         return decorator
                                 ? Sort.DECORATOR
                                 : Sort.TERMINAL;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Transformation.Resolution asDecoratorOf(Transformation.Resolution resolution) {
                         return resolution.prepend(this);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Transformation.Resolution prepend(Decoratable resolution) {
                         return resolution.append(transformer);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Transformation.Resolution append(Transformer transformer) {
                         return new Resolution(typeDescription,
                                 classLoader,
@@ -9184,7 +9678,9 @@ public interface AgentBuilder {
                                 decorator);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public byte[] apply(InitializationStrategy initializationStrategy,
                                         ClassFileLocator classFileLocator,
                                         TypeStrategy typeStrategy,
@@ -9244,7 +9740,9 @@ public interface AgentBuilder {
                             this.protectionDomain = protectionDomain;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ClassInjector resolve() {
                             return classLoader == null
                                     ? bootstrapInjectionStrategy.make(protectionDomain)
@@ -9290,7 +9788,9 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
@@ -9304,7 +9804,9 @@ public interface AgentBuilder {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
                                           JavaModule module,
@@ -9489,7 +9991,9 @@ public interface AgentBuilder {
                 accessControlContext = AccessController.getContext();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public byte[] transform(ClassLoader classLoader,
                                     String internalTypeName,
                                     Class<?> classBeingRedefined,
@@ -9647,7 +10151,9 @@ public interface AgentBuilder {
                         : transformation.resolve(typeDescription, classLoader, module, classBeingRedefined, loaded, protectionDomain, typePool);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public synchronized boolean reset(Instrumentation instrumentation,
                                               RedefinitionStrategy redefinitionStrategy,
                                               RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -9729,7 +10235,9 @@ public interface AgentBuilder {
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                     public Factory run() {
                         try {
@@ -9794,7 +10302,9 @@ public interface AgentBuilder {
                         this.executingTransformer = executingTransformer;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ResettableClassFileTransformer make(ByteBuddy byteBuddy,
                                                                Listener listener,
                                                                PoolStrategy poolStrategy,
@@ -9848,7 +10358,9 @@ public interface AgentBuilder {
                      */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ResettableClassFileTransformer make(ByteBuddy byteBuddy,
                                                                Listener listener,
                                                                PoolStrategy poolStrategy,
@@ -9937,7 +10449,9 @@ public interface AgentBuilder {
                     this.binaryRepresentation = binaryRepresentation;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public byte[] run() {
                     return transform(JavaModule.UNSUPPORTED,
                             classLoader,
@@ -10009,7 +10523,9 @@ public interface AgentBuilder {
                     this.binaryRepresentation = binaryRepresentation;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public byte[] run() {
                     return transform(JavaModule.of(rawModule),
                             classLoader,
@@ -10035,142 +10551,198 @@ public interface AgentBuilder {
              */
             protected abstract AgentBuilder materialize();
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(ByteBuddy byteBuddy) {
                 return materialize().with(byteBuddy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(Listener listener) {
                 return materialize().with(listener);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(CircularityLock circularityLock) {
                 return materialize().with(circularityLock);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(TypeStrategy typeStrategy) {
                 return materialize().with(typeStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(PoolStrategy poolStrategy) {
                 return materialize().with(poolStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(LocationStrategy locationStrategy) {
                 return materialize().with(locationStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(InitializationStrategy initializationStrategy) {
                 return materialize().with(initializationStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
                 return materialize().with(redefinitionStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
                 return materialize().with(lambdaInstrumentationStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
                 return materialize().with(descriptionStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(FallbackStrategy fallbackStrategy) {
                 return materialize().with(fallbackStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(ClassFileBufferStrategy classFileBufferStrategy) {
                 return materialize().with(classFileBufferStrategy);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder with(InstallationListener installationListener) {
                 return materialize().with(installationListener);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
                 return materialize().enableBootstrapInjection(instrumentation, folder);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder enableUnsafeBootstrapInjection() {
                 return materialize().enableUnsafeBootstrapInjection();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder disableBootstrapInjection() {
                 return materialize().disableBootstrapInjection();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder enableNativeMethodPrefix(String prefix) {
                 return materialize().enableNativeMethodPrefix(prefix);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder disableNativeMethodPrefix() {
                 return materialize().disableNativeMethodPrefix();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder disableClassFormatChanges() {
                 return materialize().disableClassFormatChanges();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type) {
                 return materialize().assureReadEdgeTo(instrumentation, type);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, JavaModule... module) {
                 return materialize().assureReadEdgeTo(instrumentation, module);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
                 return materialize().assureReadEdgeTo(instrumentation, modules);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Class<?>... type) {
                 return materialize().assureReadEdgeFromAndTo(instrumentation, type);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, JavaModule... module) {
                 return materialize().assureReadEdgeFromAndTo(instrumentation, module);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
                 return materialize().assureReadEdgeFromAndTo(instrumentation, modules);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
                 return materialize().type(typeMatcher);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 return materialize().type(typeMatcher, classLoaderMatcher);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
                                               ElementMatcher<? super ClassLoader> classLoaderMatcher,
                                               ElementMatcher<? super JavaModule> moduleMatcher) {
@@ -10178,44 +10750,60 @@ public interface AgentBuilder {
             }
 
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Identified.Narrowable type(RawMatcher matcher) {
                 return materialize().type(matcher);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
                 return materialize().ignore(ignoredTypes);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
                 return materialize().ignore(ignoredTypes, ignoredClassLoaders);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
                                   ElementMatcher<? super ClassLoader> classLoaderMatcher,
                                   ElementMatcher<? super JavaModule> moduleMatcher) {
                 return materialize().ignore(typeMatcher, classLoaderMatcher, moduleMatcher);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored ignore(RawMatcher rawMatcher) {
                 return materialize().ignore(rawMatcher);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
                 return materialize().installOn(instrumentation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
             }
@@ -10266,12 +10854,16 @@ public interface AgentBuilder {
                         transformation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored and(RawMatcher rawMatcher) {
                 return new Ignoring(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Ignored or(RawMatcher rawMatcher) {
                 return new Ignoring(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher));
             }
@@ -10352,9 +10944,10 @@ public interface AgentBuilder {
                         transformation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public WithImplicitDiscoveryStrategy with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
-
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot set redefinition batch allocator when redefinition is disabled");
                 }
@@ -10381,12 +10974,16 @@ public interface AgentBuilder {
                         transformation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public RedefinitionListenable redefineOnly(Class<?>... type) {
                 return with(new RedefinitionStrategy.DiscoveryStrategy.Explicit(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public RedefinitionListenable with(RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy) {
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot set redefinition discovery strategy when redefinition is disabled");
@@ -10414,7 +11011,9 @@ public interface AgentBuilder {
                         transformation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener) {
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot set redefinition listener when redefinition is disabled");
@@ -10442,12 +11041,16 @@ public interface AgentBuilder {
                         transformation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler) {
                 return withResubmission(resubmissionScheduler, any());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot enable redefinition resubmission when redefinition is disabled");
@@ -10537,22 +11140,30 @@ public interface AgentBuilder {
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Identified.Extendable transform(Transformer transformer) {
                 return new Transforming(rawMatcher, new Transformer.Compound(this.transformer, transformer), decorator);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder asDecorator() {
                 return new Transforming(rawMatcher, transformer, true);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Narrowable and(RawMatcher rawMatcher) {
                 return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformer, decorator);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Narrowable or(RawMatcher rawMatcher) {
                 return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer, decorator);
             }

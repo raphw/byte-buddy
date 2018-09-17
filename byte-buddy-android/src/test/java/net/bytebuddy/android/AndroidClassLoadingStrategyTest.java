@@ -114,7 +114,6 @@ public class AndroidClassLoadingStrategyTest {
             super(privateDirectory, dexProcessor);
         }
 
-        @Override
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
             throw new AssertionError();
         }
@@ -122,7 +121,6 @@ public class AndroidClassLoadingStrategyTest {
 
     private static class StubbedClassLoaderDexCompilation implements AndroidClassLoadingStrategy.DexProcessor {
 
-        @Override
         public Conversion create() {
             return new AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler(new DexOptions(), new CfOptions()).create();
         }

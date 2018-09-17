@@ -2037,7 +2037,6 @@ public class AdviceTypeTest {
 
     private static class SerializationAssertion extends AsmVisitorWrapper.AbstractBase {
 
-        @Override
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,

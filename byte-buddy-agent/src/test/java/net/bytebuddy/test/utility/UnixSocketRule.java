@@ -26,7 +26,6 @@ public class UnixSocketRule implements MethodRule {
         this.enabled = enabled;
     }
 
-    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         return enabled || method.getAnnotation(Enforce.class) == null
                 ? base
@@ -41,9 +40,8 @@ public class UnixSocketRule implements MethodRule {
 
     private static class NoOpStatement extends Statement {
 
-        @Override
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring use Unix sockets on this VM");
+            Logger.getLogger("net.bytebuddy").warning("Ignoring Unix sockets on this machine");
         }
     }
 }

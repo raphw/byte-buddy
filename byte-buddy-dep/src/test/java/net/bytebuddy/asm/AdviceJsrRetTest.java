@@ -51,17 +51,14 @@ public class AdviceJsrRetTest {
 
     private static class JsrRetMethod implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             Label target = new Label();
             methodVisitor.visitJumpInsn(Opcodes.JSR, target);

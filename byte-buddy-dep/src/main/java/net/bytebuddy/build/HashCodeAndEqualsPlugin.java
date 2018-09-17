@@ -24,12 +24,16 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 @HashCodeAndEqualsPlugin.Enhance
 public class HashCodeAndEqualsPlugin implements Plugin {
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(TypeDescription target) {
         return target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
@@ -78,7 +82,9 @@ public class HashCodeAndEqualsPlugin implements Plugin {
     @HashCodeAndEqualsPlugin.Enhance
     public static class WithNonNullableFields extends HashCodeAndEqualsPlugin {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         protected ElementMatcher<FieldDescription> nonNullable(ElementMatcher<FieldDescription> matcher) {
             return not(matcher);
         }
@@ -304,7 +310,9 @@ public class HashCodeAndEqualsPlugin implements Plugin {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             AnnotationDescription.Loadable<Sorted> leftAnnotation = left.getDeclaredAnnotations().ofType(Sorted.class);
             AnnotationDescription.Loadable<Sorted> rightAnnotation = right.getDeclaredAnnotations().ofType(Sorted.class);
@@ -340,7 +348,9 @@ public class HashCodeAndEqualsPlugin implements Plugin {
             this.sort = sort;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean matches(FieldDescription target) {
             AnnotationDescription.Loadable<ValueHandling> annotation = target.getDeclaredAnnotations().ofType(ValueHandling.class);
             return annotation != null && annotation.loadSilent().value() == sort;

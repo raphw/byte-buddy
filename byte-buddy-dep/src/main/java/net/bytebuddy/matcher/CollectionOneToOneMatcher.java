@@ -32,7 +32,9 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
         this.matchers = matchers;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(Iterable<? extends T> target) {
         if ((target instanceof Collection) && ((Collection<?>) target).size() != matchers.size()) {
             return false;
@@ -46,7 +48,9 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("containing(");
         boolean first = true;

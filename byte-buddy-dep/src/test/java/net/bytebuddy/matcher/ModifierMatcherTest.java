@@ -70,7 +70,6 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
     }
 
     @Test
-    @Override
     public void testStringRepresentation() throws Exception {
         assertThat(new ModifierMatcher<ModifierReviewable>(mode).toString(), is(mode.getDescription()));
     }

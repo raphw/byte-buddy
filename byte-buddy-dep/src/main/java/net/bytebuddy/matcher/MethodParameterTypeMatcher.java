@@ -26,12 +26,16 @@ public class MethodParameterTypeMatcher<T extends ParameterDescription> extends 
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getType());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasType(" + matcher + ")";
     }

@@ -22,7 +22,6 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         super(This.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -30,7 +29,6 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<This> getSimpleBinder() {
         return This.Binder.INSTANCE;
     }

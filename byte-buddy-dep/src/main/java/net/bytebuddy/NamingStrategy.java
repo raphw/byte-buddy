@@ -44,7 +44,9 @@ public interface NamingStrategy {
      */
     abstract class AbstractBase implements NamingStrategy {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String subclass(TypeDescription.Generic superClass) {
             return name(superClass.asErasure());
         }
@@ -57,12 +59,16 @@ public interface NamingStrategy {
          */
         protected abstract String name(TypeDescription superClass);
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String redefine(TypeDescription typeDescription) {
             return typeDescription.getName();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String rebase(TypeDescription typeDescription) {
             return typeDescription.getName();
         }
@@ -205,7 +211,9 @@ public interface NamingStrategy {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve(TypeDescription typeDescription) {
                     return typeDescription.getName();
                 }
@@ -231,7 +239,9 @@ public interface NamingStrategy {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve(TypeDescription typeDescription) {
                     return this.typeDescription.getName();
                 }
@@ -257,7 +267,9 @@ public interface NamingStrategy {
                     this.name = name;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve(TypeDescription typeDescription) {
                     return name;
                 }

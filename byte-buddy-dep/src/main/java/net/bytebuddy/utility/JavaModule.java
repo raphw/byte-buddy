@@ -76,12 +76,16 @@ public class JavaModule implements NamedElement.WithOptionalName {
         return DISPATCHER.isAlive();
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isNamed() {
         return DISPATCHER.isNamed(module);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String getActualName() {
         return DISPATCHER.getName(module);
     }
@@ -135,6 +139,11 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     @Override
+    public int hashCode() {
+        return module.hashCode();
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) {
             return true;
@@ -143,11 +152,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
         }
         JavaModule javaModule = (JavaModule) other;
         return module.equals(javaModule.module);
-    }
-
-    @Override
-    public int hashCode() {
-        return module.hashCode();
     }
 
     @Override
@@ -236,7 +240,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
                 try {
@@ -336,12 +342,16 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 this.redefineModule = redefineModule;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isAlive() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public JavaModule moduleOf(Class<?> type) {
                 try {
                     return new JavaModule(getModule.invoke(type, NO_ARGUMENTS));
@@ -352,7 +362,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InputStream getResourceAsStream(Object module, String name) {
                 try {
                     return (InputStream) getResourceAsStream.invoke(module, name);
@@ -363,7 +375,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassLoader getClassLoader(Object module) {
                 try {
                     return (ClassLoader) getClassLoader.invoke(module, NO_ARGUMENTS);
@@ -374,7 +388,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isNamed(Object module) {
                 try {
                     return (Boolean) isNamed.invoke(module, NO_ARGUMENTS);
@@ -385,7 +401,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getName(Object module) {
                 try {
                     return (String) getName.invoke(module, NO_ARGUMENTS);
@@ -396,7 +414,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean canRead(Object source, Object target) {
                 try {
                     return (Boolean) canRead.invoke(source, target);
@@ -407,7 +427,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 try {
                     if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
@@ -443,42 +465,58 @@ public class JavaModule implements NamedElement.WithOptionalName {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isAlive() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public JavaModule moduleOf(Class<?> type) {
                 return UNSUPPORTED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassLoader getClassLoader(Object module) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isNamed(Object module) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getName(Object module) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InputStream getResourceAsStream(Object module, String name) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean canRead(Object source, Object target) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 throw new IllegalStateException("Current VM does not support modules");
             }

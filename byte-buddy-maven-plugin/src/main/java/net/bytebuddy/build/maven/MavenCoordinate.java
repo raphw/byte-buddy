@@ -34,7 +34,7 @@ public class MavenCoordinate {
      * @param groupId    The project's group id.
      * @param artifactId The project's artifact id.
      * @param version    The project's version.
-     * @param packaging    The project's packaging
+     * @param packaging  The project's packaging
      */
     protected MavenCoordinate(String groupId, String artifactId, String version, String packaging) {
         this.groupId = groupId;

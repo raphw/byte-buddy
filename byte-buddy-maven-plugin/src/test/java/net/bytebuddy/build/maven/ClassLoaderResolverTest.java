@@ -66,8 +66,7 @@ public class ClassLoaderResolverTest {
                 Collections.<String, String>emptyMap(),
                 new File(FOO + "/" + BAR)), QUX + BAZ));
         when(root.accept(any(DependencyVisitor.class))).then(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Void answer(InvocationOnMock invocationOnMock) {
                 DependencyVisitor dependencyVisitor = invocationOnMock.getArgument(0);
                 dependencyVisitor.visitEnter(child);
                 dependencyVisitor.visitLeave(child);

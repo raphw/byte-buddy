@@ -19,12 +19,16 @@ import static net.bytebuddy.matcher.ElementMatchers.isToString;
 @HashCodeAndEqualsPlugin.Enhance
 public class ToStringPlugin implements Plugin {
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(TypeDescription target) {
         return target.getDeclaredAnnotations().isAnnotationPresent(Enhance.class);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
         if (typeDescription.getDeclaredMethods().filter(isToString()).isEmpty()) {

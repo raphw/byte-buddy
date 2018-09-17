@@ -861,7 +861,9 @@ public class InvokeDynamic implements Implementation.Composable {
                 typing);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -872,7 +874,9 @@ public class InvokeDynamic implements Implementation.Composable {
                 implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Composable andThen(Composable implementation) {
         return new Implementation.Compound.Composable(new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -883,12 +887,16 @@ public class InvokeDynamic implements Implementation.Composable {
                 implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return invocationProvider.prepare(instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return new Appender(implementationTarget.getInstrumentedType());
     }
@@ -1047,22 +1055,30 @@ public class InvokeDynamic implements Implementation.Composable {
                         this.parameterTypes = parameterTypes;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public StackManipulation getStackManipulation() {
                         return stackManipulation;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription getReturnType() {
                         return returnType;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public String getInternalName() {
                         return internalName;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
@@ -1109,7 +1125,9 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             instrumentedMethod.isStatic()
@@ -1117,7 +1135,9 @@ public class InvokeDynamic implements Implementation.Composable {
                                     : CompoundList.of(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1133,13 +1153,17 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                             instrumentedMethod.getParameters().asTypeList().asErasures());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1319,13 +1343,17 @@ public class InvokeDynamic implements Implementation.Composable {
                         this.stackManipulation = stackManipulation;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                         return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
                                 assigner.assign(primitiveType.asGenericType(), wrapperType.asGenericType(), typing)), wrapperType);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public InstrumentedType prepare(InstrumentedType instrumentedType) {
                         return instrumentedType;
                     }
@@ -1389,12 +1417,16 @@ public class InvokeDynamic implements Implementation.Composable {
                         this.loadedTypes = loadedTypes;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public StackManipulation getLoadInstruction() {
                         return stackManipulation;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public List<TypeDescription> getLoadedTypes() {
                         return loadedTypes;
                     }
@@ -1421,7 +1453,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot get this instance from static method: " + instrumentedMethod);
@@ -1431,7 +1465,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     return new Resolved.Simple(MethodVariableAccess.loadThis(), typeDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1486,7 +1522,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     return new ForInstance(value, TypeDescription.ForLoadedType.of(value.getClass()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
                     StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), fieldType.asGenericType(), typing);
@@ -1497,7 +1535,9 @@ public class InvokeDynamic implements Implementation.Composable {
                             stackManipulation), fieldDescription.getType().asErasure());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
                             .withField(new FieldDescription.Token(name,
@@ -1534,7 +1574,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.fieldLocatorFactory = fieldLocatorFactory;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
                     if (!resolution.isResolved()) {
@@ -1563,7 +1605,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     return new Resolved.Simple(access, type.asErasure());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1591,7 +1635,9 @@ public class InvokeDynamic implements Implementation.Composable {
                         this.typeDescription = typeDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     protected Resolved doResolve(StackManipulation access, TypeDescription.Generic typeDescription, Assigner assigner, Assigner.Typing typing) {
                         StackManipulation stackManipulation = assigner.assign(typeDescription, this.typeDescription.asGenericType(), typing);
                         if (!stackManipulation.isValid()) {
@@ -1622,7 +1668,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.index = index;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (index >= parameters.size()) {
@@ -1644,7 +1692,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     return new Resolved.Simple(access, type.asErasure());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1671,7 +1721,9 @@ public class InvokeDynamic implements Implementation.Composable {
                         this.typeDescription = typeDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     protected Resolved doResolve(StackManipulation access, TypeDescription.Generic type, Assigner assigner, Assigner.Typing typing) {
                         StackManipulation stackManipulation = assigner.assign(type, typeDescription.asGenericType(), typing);
                         if (!stackManipulation.isValid()) {
@@ -1702,12 +1754,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(boolean.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1733,12 +1789,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(byte.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1764,12 +1824,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(short.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1795,12 +1859,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(char.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1826,12 +1894,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(IntegerConstant.forValue(value), TypeDescription.ForLoadedType.of(int.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1857,12 +1929,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(LongConstant.forValue(value), TypeDescription.ForLoadedType.of(long.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1888,12 +1964,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(FloatConstant.forValue(value), TypeDescription.ForLoadedType.of(float.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1919,12 +1999,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(DoubleConstant.forValue(value), TypeDescription.ForLoadedType.of(double.class));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1950,12 +2034,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.value = value;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(new TextConstant(value), TypeDescription.STRING);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -1981,12 +2069,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(ClassConstant.of(typeDescription), TypeDescription.CLASS);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -2012,12 +2104,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.enumerationDescription = enumerationDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(FieldAccess.forEnumeration(enumerationDescription), enumerationDescription.getEnumerationType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -2043,12 +2139,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(NullConstant.INSTANCE, typeDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -2074,12 +2174,16 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.javaConstant = javaConstant;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     return new Resolved.Simple(new JavaConstantValue(javaConstant), javaConstant.getType());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -2109,7 +2213,9 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve(MethodDescription methodDescription) {
                     return methodDescription.getInternalName();
                 }
@@ -2135,7 +2241,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.internalName = internalName;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String resolve(MethodDescription methodDescription) {
                     return internalName;
                 }
@@ -2165,7 +2273,9 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return methodDescription.getReturnType().asErasure();
                 }
@@ -2191,7 +2301,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return typeDescription;
                 }
@@ -2245,7 +2357,9 @@ public class InvokeDynamic implements Implementation.Composable {
                 this.argumentProviders = argumentProviders;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Target make(MethodDescription methodDescription) {
                 return new Target(nameProvider.resolve(methodDescription),
                         returnTypeProvider.resolve(methodDescription),
@@ -2253,42 +2367,54 @@ public class InvokeDynamic implements Implementation.Composable {
                         methodDescription);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InvocationProvider appendArguments(List<ArgumentProvider> argumentProviders) {
                 return new Default(nameProvider,
                         returnTypeProvider,
                         CompoundList.of(this.argumentProviders, argumentProviders));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InvocationProvider appendArgument(ArgumentProvider argumentProvider) {
                 return new Default(nameProvider,
                         returnTypeProvider,
                         CompoundList.of(this.argumentProviders, argumentProvider));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InvocationProvider withoutArguments() {
                 return new Default(nameProvider,
                         returnTypeProvider,
                         Collections.<ArgumentProvider>emptyList());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InvocationProvider withNameProvider(NameProvider nameProvider) {
                 return new Default(nameProvider,
                         returnTypeProvider,
                         argumentProviders);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InvocationProvider withReturnTypeProvider(ReturnTypeProvider returnTypeProvider) {
                 return new Default(nameProvider,
                         returnTypeProvider,
                         argumentProviders);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 for (ArgumentProvider argumentProvider : argumentProviders) {
                     instrumentedType = argumentProvider.prepare(instrumentedType);
@@ -2340,7 +2466,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     this.instrumentedMethod = instrumentedMethod;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
                     List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>();
@@ -2437,152 +2565,212 @@ public class InvokeDynamic implements Implementation.Composable {
          */
         protected abstract InvokeDynamic materialize();
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withBooleanValue(boolean... value) {
             return materialize().withBooleanValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withByteValue(byte... value) {
             return materialize().withByteValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withShortValue(short... value) {
             return materialize().withShortValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withCharacterValue(char... value) {
             return materialize().withCharacterValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withIntegerValue(int... value) {
             return materialize().withIntegerValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withLongValue(long... value) {
             return materialize().withLongValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withFloatValue(float... value) {
             return materialize().withFloatValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withDoubleValue(double... value) {
             return materialize().withDoubleValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withValue(Object... value) {
             return materialize().withValue(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithImplicitType withReference(Object value) {
             return materialize().withReference(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withReference(Object... value) {
             return materialize().withReference(value);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withType(TypeDescription... typeDescription) {
             return materialize().withType(typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withInstance(JavaConstant... javaConstant) {
             return materialize().withInstance(javaConstant);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withNullValue(Class<?>... type) {
             return materialize().withNullValue(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withNullValue(TypeDescription... typeDescription) {
             return materialize().withNullValue(typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withArgument(int... index) {
             return materialize().withArgument(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithImplicitType withArgument(int index) {
             return materialize().withArgument(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withThis(Class<?>... type) {
             return materialize().withThis(type);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withThis(TypeDescription... typeDescription) {
             return materialize().withThis(typeDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withMethodArguments() {
             return materialize().withMethodArguments();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withImplicitAndMethodArguments() {
             return materialize().withImplicitAndMethodArguments();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withField(String... fieldName) {
             return materialize().withField(fieldName);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withEnumeration(EnumerationDescription... enumerationDescription) {
             return materialize().withEnumeration(enumerationDescription);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InvokeDynamic withField(FieldLocator.Factory fieldLocatorFactory, String... name) {
             return materialize().withField(fieldLocatorFactory, name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithImplicitType withField(String name) {
             return materialize().withField(name);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithImplicitType withField(String name, FieldLocator.Factory fieldLocatorFactory) {
             return materialize().withField(name, fieldLocatorFactory);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
             return materialize().withAssigner(assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation andThen(Implementation implementation) {
             return materialize().andThen(implementation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return materialize().prepare(instrumentedType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return materialize().appender(implementationTarget);
         }
@@ -2637,7 +2825,9 @@ public class InvokeDynamic implements Implementation.Composable {
             return withoutArguments();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public WithImplicitArguments withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
@@ -3001,7 +3191,9 @@ public class InvokeDynamic implements Implementation.Composable {
             this.instrumentedType = instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             InvocationProvider.Target.Resolved target = invocationProvider.make(instrumentedMethod).resolve(instrumentedType, assigner, typing);
             StackManipulation.Size size = new StackManipulation.Compound(

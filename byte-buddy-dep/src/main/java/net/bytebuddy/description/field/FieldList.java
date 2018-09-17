@@ -40,7 +40,9 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      */
     abstract class AbstractBase<S extends FieldDescription> extends FilterableList.AbstractBase<S, FieldList<S>> implements FieldList<S> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
             for (FieldDescription fieldDescription : this) {
@@ -49,7 +51,9 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(tokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldList<FieldDescription.InDefinedShape> asDefined() {
             List<FieldDescription.InDefinedShape> declaredForms = new ArrayList<FieldDescription.InDefinedShape>(size());
             for (FieldDescription fieldDescription : this) {
@@ -92,12 +96,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
             this.fields = fields;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldDescription.InDefinedShape get(int index) {
             return new FieldDescription.ForLoadedField(fields.get(index));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return fields.size();
         }
@@ -134,12 +142,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
             this.fieldDescriptions = fieldDescriptions;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public S get(int index) {
             return fieldDescriptions.get(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return fieldDescriptions.size();
         }
@@ -181,12 +193,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
             this.tokens = tokens;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldDescription.InDefinedShape get(int index) {
             return new FieldDescription.Latent(declaringType, tokens.get(index));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return tokens.size();
         }
@@ -227,12 +243,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
             this.visitor = visitor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldDescription.InGenericShape get(int index) {
             return new FieldDescription.TypeSubstituting(declaringType, fieldDescriptions.get(index), visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return fieldDescriptions.size();
         }
@@ -245,12 +265,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      */
     class Empty<S extends FieldDescription> extends FilterableList.Empty<S, FieldList<S>> implements FieldList<S> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public FieldList<FieldDescription.InDefinedShape> asDefined() {
             return (FieldList<FieldDescription.InDefinedShape>) this;

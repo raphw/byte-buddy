@@ -18,7 +18,6 @@ public class IntegrationRule implements MethodRule {
         integration = Boolean.getBoolean(PROPERTY_KEY);
     }
 
-    @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         return !integration && method.getAnnotation(Enforce.class) != null
                 ? new NoOpStatement()
@@ -32,7 +31,6 @@ public class IntegrationRule implements MethodRule {
 
     private static class NoOpStatement extends Statement {
 
-        @Override
         public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignored test case that is only to be run on the CI server due to long runtime");
         }

@@ -196,7 +196,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodVisitor wrap(TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
                               MethodVisitor methodVisitor,
@@ -647,7 +649,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                 return typePool;
             }
@@ -673,7 +677,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 this.typePool = typePool;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                 return this.typePool;
             }
@@ -725,7 +731,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return new ForClassFileLocator(ClassFileLocator.ForClassLoader.of(classLoader));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypePool resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
                 return new TypePool.Default(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode, typePool);
             }
@@ -791,12 +799,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation apply(TypeDescription instrumentedType,
                                                ByteCodeElement target,
                                                TypeList.Generic arguments,
@@ -815,12 +827,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation apply(TypeDescription instrumentedType,
                                                ByteCodeElement target,
                                                TypeList.Generic arguments,
@@ -853,12 +869,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     this.fieldDescription = fieldDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation apply(TypeDescription instrumentedType,
                                                ByteCodeElement target,
                                                TypeList.Generic arguments,
@@ -912,12 +932,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     this.methodDescription = methodDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isResolved() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation apply(TypeDescription instrumentedType,
                                                ByteCodeElement target,
                                                TypeList.Generic arguments,
@@ -1015,12 +1039,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 return Resolver.Unresolved.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
                 return Resolver.Unresolved.INSTANCE;
             }
@@ -1137,14 +1165,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 this.resolver = resolver;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 return (writeAccess ? matchFieldWrite : matchFieldRead) && fieldMatcher.matches(fieldDescription)
                         ? resolver
                         : Resolver.Unresolved.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
                 return invocationType.matches(includeVirtualCalls, includeSuperCalls) && methodMatcher.matches(methodDescription)
                         ? resolver
@@ -1188,7 +1220,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(FieldDescription.InDefinedShape fieldDescription, boolean writeAccess) {
                 for (Substitution substitution : substitutions) {
                     Resolver resolver = substitution.resolve(fieldDescription, writeAccess);
@@ -1199,7 +1233,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 return Resolver.Unresolved.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Resolver resolve(MethodDescription methodDescription, InvocationType invocationType) {
                 for (Substitution substitution : substitutions) {
                     Resolver resolver = substitution.resolve(methodDescription, invocationType);

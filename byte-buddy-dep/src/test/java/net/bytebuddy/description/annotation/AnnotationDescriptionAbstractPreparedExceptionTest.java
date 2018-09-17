@@ -15,22 +15,18 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
 
     private static class PseudoDescription extends AnnotationDescription.AbstractBase.ForPrepared<Annotation> {
 
-        @Override
         public Annotation load() throws ClassNotFoundException {
             throw new ClassNotFoundException();
         }
 
-        @Override
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
         public TypeDescription getAnnotationType() {
             throw new UnsupportedOperationException();
         }
 
-        @Override
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
             throw new UnsupportedOperationException();
         }

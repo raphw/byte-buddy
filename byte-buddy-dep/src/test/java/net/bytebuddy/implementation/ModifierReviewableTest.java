@@ -102,7 +102,6 @@ public class ModifierReviewableTest {
             this.modifiers = modifiers;
         }
 
-        @Override
         public int getModifiers() {
             return modifiers;
         }

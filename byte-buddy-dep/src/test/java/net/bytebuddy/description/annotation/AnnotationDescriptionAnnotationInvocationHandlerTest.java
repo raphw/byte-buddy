@@ -260,12 +260,10 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     private static class FooWithException implements Foo {
 
-        @Override
         public String foo() {
             throw new RuntimeException();
         }
 
-        @Override
         public Class<? extends Annotation> annotationType() {
             return Foo.class;
         }
@@ -279,17 +277,14 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
             this.value = value;
         }
 
-        @Override
         public String foo() {
             return value;
         }
 
-        @Override
         public Class<? extends Annotation> annotationType() {
             return Foo.class;
         }
 
-        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             return method.invoke(this, args);
         }
@@ -297,7 +292,6 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     private static class Other implements Annotation {
 
-        @Override
         public Class<? extends Annotation> annotationType() {
             return Annotation.class;
         }

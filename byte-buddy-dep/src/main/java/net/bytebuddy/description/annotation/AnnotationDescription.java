@@ -237,7 +237,9 @@ public interface AnnotationDescription {
             return type;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object invoke(Object proxy, Method method, Object[] argument) {
             if (method.getDeclaringClass() != annotationType) {
                 if (method.getName().equals(HASH_CODE)) {
@@ -338,6 +340,16 @@ public interface AnnotationDescription {
         }
 
         @Override
+        public int hashCode() {
+            int result = annotationType.hashCode();
+            result = 31 * result + values.hashCode();
+            for (Map.Entry<Method, ?> entry : values.entrySet()) {
+                result = 31 * result + entry.getValue().hashCode();
+            }
+            return result;
+        }
+
+        @Override
         public boolean equals(Object other) {
             if (this == other) {
                 return true;
@@ -354,16 +366,6 @@ public interface AnnotationDescription {
                 }
             }
             return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = annotationType.hashCode();
-            result = 31 * result + values.hashCode();
-            for (Map.Entry<Method, ?> entry : values.entrySet()) {
-                result = 31 * result + entry.getValue().hashCode();
-            }
-            return result;
         }
 
         /**
@@ -403,27 +405,37 @@ public interface AnnotationDescription {
                 return new MissingValue((Class<? extends Annotation>) method.getDeclaringClass(), method.getName());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public State getState() {
                 return State.UNDEFINED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean represents(Object value) {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Loaded<Void> load(ClassLoader classLoader) {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Loaded<Void> loadSilent(ClassLoader classLoader) {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Void resolve() {
                 throw new IncompleteAnnotationException(annotationType, property);
             }
@@ -445,7 +457,9 @@ public interface AnnotationDescription {
                 ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
                 ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE};
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public RetentionPolicy getRetention() {
             AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
             return retention == null
@@ -453,7 +467,9 @@ public interface AnnotationDescription {
                     : retention.loadSilent().value();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Set<ElementType> getElementTypes() {
             AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
             return new HashSet<ElementType>(Arrays.asList(target == null
@@ -461,14 +477,27 @@ public interface AnnotationDescription {
                     : target.loadSilent().value()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isInherited() {
             return getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Inherited.class);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isDocumented() {
             return getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Documented.class);
+        }
+
+        @Override
+        public int hashCode() {
+            int hashCode = 0;
+            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
+                hashCode += 31 * getValue(methodDescription).hashCode();
+            }
+            return hashCode;
         }
 
         @Override
@@ -489,15 +518,6 @@ public interface AnnotationDescription {
                 }
             }
             return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int hashCode = 0;
-            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
-                hashCode += 31 * getValue(methodDescription).hashCode();
-            }
-            return hashCode;
         }
 
         @Override
@@ -523,7 +543,9 @@ public interface AnnotationDescription {
          */
         public abstract static class ForPrepared<S extends Annotation> extends AbstractBase implements Loadable<S> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S loadSilent() {
                 try {
                     return load();
@@ -585,7 +607,9 @@ public interface AnnotationDescription {
             return new ForLoadedAnnotation<U>(annotation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public S load() throws ClassNotFoundException {
             return annotationType == annotation.annotationType()
                     ? annotation
@@ -657,7 +681,9 @@ public interface AnnotationDescription {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("deprecation")
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
@@ -683,7 +709,9 @@ public interface AnnotationDescription {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
             if (!annotation.annotationType().getName().equals(annotationType.getName())) {
@@ -694,7 +722,9 @@ public interface AnnotationDescription {
                     : new ForLoadedAnnotation<T>((T) annotation, annotationType);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getAnnotationType() {
             return TypeDescription.ForLoadedType.of(annotation.annotationType());
         }
@@ -726,7 +756,9 @@ public interface AnnotationDescription {
             this.annotationValues = annotationValues;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             AnnotationValue<?, ?> value = annotationValues.get(property.getName());
             if (value != null) {
@@ -739,12 +771,16 @@ public interface AnnotationDescription {
             throw new IllegalArgumentException("No value defined for: " + property);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getAnnotationType() {
             return annotationType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
             if (!this.annotationType.represents(annotationType)) {
                 throw new IllegalArgumentException(annotationType + " does not represent " + this.annotationType);
@@ -773,22 +809,30 @@ public interface AnnotationDescription {
                 this.annotationType = annotationType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public S load() throws ClassNotFoundException {
                 return AnnotationDescription.AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, annotationValues);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
                 return Latent.this.getValue(property);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription getAnnotationType() {
                 return TypeDescription.ForLoadedType.of(annotationType);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
                 return Latent.this.prepare(annotationType);
             }

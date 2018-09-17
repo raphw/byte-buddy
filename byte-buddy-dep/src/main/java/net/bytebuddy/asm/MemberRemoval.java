@@ -108,7 +108,9 @@ public class MemberRemoval extends AsmVisitorWrapper.AbstractBase {
         return new MemberRemoval(fieldMatcher, methodMatcher.or(matcher));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ClassVisitor wrap(TypeDescription instrumentedType,
                              ClassVisitor classVisitor,
                              Implementation.Context implementationContext,

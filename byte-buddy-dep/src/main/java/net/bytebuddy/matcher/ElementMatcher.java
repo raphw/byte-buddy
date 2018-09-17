@@ -60,12 +60,16 @@ public interface ElementMatcher<T> {
          */
         abstract class AbstractBase<V> implements Junction<V> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <U extends V> Junction<U> and(ElementMatcher<? super U> other) {
                 return new Conjunction<U>(this, other);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <U extends V> Junction<U> or(ElementMatcher<? super U> other) {
                 return new Disjunction<U>(this, other);
             }
@@ -96,12 +100,16 @@ public interface ElementMatcher<T> {
                 this.right = right;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(W target) {
                 return left.matches(target) && right.matches(target);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String toString() {
                 return "(" + left + " and " + right + ')';
             }
@@ -132,12 +140,16 @@ public interface ElementMatcher<T> {
                 this.right = right;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(W target) {
                 return left.matches(target) || right.matches(target);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String toString() {
                 return "(" + left + " or " + right + ')';
             }

@@ -14,7 +14,7 @@ public enum Removal implements StackManipulation {
      * A removal of no value. This corresponds a no-op instruction.
      */
     ZERO(StackSize.ZERO, Opcodes.NOP) {
-        @Override
+        /** {@inheritDoc} */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return new Size(0, 0);
         }
@@ -70,12 +70,16 @@ public enum Removal implements StackManipulation {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitInsn(opcode);
         return size;

@@ -573,7 +573,9 @@ public class MethodCall implements Implementation.Composable {
                 typing);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation andThen(Implementation implementation) {
         return new Implementation.Compound(new MethodCall(methodLocator,
                 targetHandler,
@@ -584,7 +586,9 @@ public class MethodCall implements Implementation.Composable {
                 typing), implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Composable andThen(Composable implementation) {
         return new Implementation.Compound.Composable(new MethodCall(methodLocator,
                 targetHandler,
@@ -595,7 +599,9 @@ public class MethodCall implements Implementation.Composable {
                 typing), implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         for (ArgumentLoader.Factory argumentLoader : argumentLoaders) {
             instrumentedType = argumentLoader.prepare(instrumentedType);
@@ -603,7 +609,9 @@ public class MethodCall implements Implementation.Composable {
         return targetHandler.prepare(instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return new Appender(implementationTarget);
     }
@@ -634,7 +642,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
@@ -660,7 +670,9 @@ public class MethodCall implements Implementation.Composable {
                 this.methodDescription = methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
                 return methodDescription;
             }
@@ -693,7 +705,9 @@ public class MethodCall implements Implementation.Composable {
                 this.methodGraphCompiler = methodGraphCompiler;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
                 MethodList<?> candidates = methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher);
                 if (candidates.size() == 1) {
@@ -756,12 +770,16 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 if (target.getType().isPrimitive()) {
                     throw new IllegalStateException("Cannot assign null to " + target);
@@ -769,7 +787,9 @@ public class MethodCall implements Implementation.Composable {
                 return NullConstant.INSTANCE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -795,7 +815,9 @@ public class MethodCall implements Implementation.Composable {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.loadThis(),
@@ -816,12 +838,16 @@ public class MethodCall implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException(instrumentedMethod + " is static and cannot supply an invoker instance");
@@ -851,7 +877,9 @@ public class MethodCall implements Implementation.Composable {
                 this.instrumentedType = instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(instrumentedType),
@@ -872,12 +900,16 @@ public class MethodCall implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
                 }
@@ -911,7 +943,9 @@ public class MethodCall implements Implementation.Composable {
                 this.instrumentedMethod = instrumentedMethod;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
@@ -933,12 +967,16 @@ public class MethodCall implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
                     for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
@@ -968,12 +1006,16 @@ public class MethodCall implements Implementation.Composable {
                     this.index = index;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (index >= instrumentedMethod.getParameters().size()) {
                         throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index);
@@ -1003,7 +1045,9 @@ public class MethodCall implements Implementation.Composable {
                 this.parameters = parameters;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 TypeDescription.Generic componentType;
                 if (target.getType().represents(Object.class)) {
@@ -1038,12 +1082,16 @@ public class MethodCall implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters()));
                 }
@@ -1077,7 +1125,9 @@ public class MethodCall implements Implementation.Composable {
                 this.index = index;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.load(parameterDescription),
@@ -1118,12 +1168,16 @@ public class MethodCall implements Implementation.Composable {
                     this.arrayIndex = arrayIndex;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.getParameters().size() <= index) {
                         throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
@@ -1154,12 +1208,16 @@ public class MethodCall implements Implementation.Composable {
                     this.index = index;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.getParameters().size() <= index) {
                         throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
@@ -1195,7 +1253,9 @@ public class MethodCall implements Implementation.Composable {
                 this.fieldDescription = fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FieldAccess.forField(fieldDescription).read(),
@@ -1238,7 +1298,9 @@ public class MethodCall implements Implementation.Composable {
                     name = FIELD_PREFIX + "$" + RandomString.make();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
                             .withField(new FieldDescription.Token(name,
@@ -1247,7 +1309,9 @@ public class MethodCall implements Implementation.Composable {
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
                 }
@@ -1281,7 +1345,9 @@ public class MethodCall implements Implementation.Composable {
                 this.instrumentedMethod = instrumentedMethod;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
@@ -1326,12 +1392,16 @@ public class MethodCall implements Implementation.Composable {
                     this.fieldLocatorFactory = fieldLocatorFactory;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                     if (!resolution.isResolved()) {
@@ -1383,7 +1453,9 @@ public class MethodCall implements Implementation.Composable {
                 this.implementationTarget = implementationTarget;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 if (!methodDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot access non-static " + methodDescription + " from " + instrumentedMethod);
@@ -1418,12 +1490,16 @@ public class MethodCall implements Implementation.Composable {
                     this.methodCall = methodCall;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForMethodCall(implementationTarget,
                             methodCall,
@@ -1514,17 +1590,23 @@ public class MethodCall implements Implementation.Composable {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public List<ArgumentLoader> make(Target implementationTarget, TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation assignment = assigner.assign(typeDefinition.asGenericType(), target.getType(), typing);
                 if (!assignment.isValid()) {
@@ -1579,7 +1661,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1603,12 +1687,16 @@ public class MethodCall implements Implementation.Composable {
                 );
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1624,7 +1712,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1634,13 +1724,17 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(TypeCreation.of(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedType;
             }
 
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1685,7 +1779,9 @@ public class MethodCall implements Implementation.Composable {
                 name = FIELD_PREFIX + "$" + RandomString.make();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1702,12 +1798,16 @@ public class MethodCall implements Implementation.Composable {
                 );
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return fieldType.asErasure();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
                         .withField(new FieldDescription.Token(name,
@@ -1745,7 +1845,9 @@ public class MethodCall implements Implementation.Composable {
                 this.fieldLocatorFactory = fieldLocatorFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1772,7 +1874,9 @@ public class MethodCall implements Implementation.Composable {
                         FieldAccess.forField(resolution.getField()).read(), stackManipulation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                 if (!resolution.isResolved()) {
@@ -1783,7 +1887,9 @@ public class MethodCall implements Implementation.Composable {
                 return resolution.getField().getType().asErasure();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1809,7 +1915,9 @@ public class MethodCall implements Implementation.Composable {
                 this.index = index;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1827,7 +1935,9 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), stackManipulation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 if (instrumentedMethod.getParameters().size() < index) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not have a parameter with index " + index);
@@ -1835,7 +1945,9 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedMethod.getParameters().get(index).getType().asErasure();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1861,7 +1973,9 @@ public class MethodCall implements Implementation.Composable {
                 this.methodCall = methodCall;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(Target implementationTarget,
                                              MethodDescription invokedMethod,
                                              MethodDescription instrumentedMethod,
@@ -1879,14 +1993,18 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false), stackManipulation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return methodCall.methodLocator.resolve(instrumentedType,
                         methodCall.targetHandler.resolve(instrumentedType, instrumentedMethod),
                         instrumentedMethod).getReturnType().asErasure();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
@@ -1919,7 +2037,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (invokedMethod.isVirtual() && !invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
@@ -1959,7 +2079,9 @@ public class MethodCall implements Implementation.Composable {
                 this(TypeDescription.ForLoadedType.of(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (!invokedMethod.isVirtual()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
@@ -1981,7 +2103,9 @@ public class MethodCall implements Implementation.Composable {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                     if (!invokedMethod.isVirtual()) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
@@ -2001,7 +2125,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (implementationTarget.getInstrumentedType().getSuperClass() == null) {
                     throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getInstrumentedType());
@@ -2026,7 +2152,9 @@ public class MethodCall implements Implementation.Composable {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (!invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " as default method of " + implementationTarget.getInstrumentedType());
@@ -2297,7 +2425,9 @@ public class MethodCall implements Implementation.Composable {
             this.implementationTarget = implementationTarget;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             return new Size(toStackManipulation(implementationTarget,
                     instrumentedMethod,

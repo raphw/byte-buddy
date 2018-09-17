@@ -13,14 +13,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.Comparator;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
-import static net.bytebuddy.matcher.ElementMatchers.isEquals;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class EqualsMethodOtherTest {
 
@@ -164,13 +161,13 @@ public class EqualsMethodOtherTest {
     @Test
     public void testTypeOrderForPrimitiveTypedFields() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
-            .subclass(Object.class)
-            .defineField(FOO, Object.class, Visibility.PUBLIC)
-            .defineField(BAR, int.class, Visibility.PUBLIC)
-            .method(isEquals())
-            .intercept(EqualsMethod.isolated().withNonNullableFields(any()).withPrimitiveTypedFieldsFirst())
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
+                .defineField(BAR, int.class, Visibility.PUBLIC)
+                .method(isEquals())
+                .intercept(EqualsMethod.isolated().withNonNullableFields(any()).withPrimitiveTypedFieldsFirst())
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));

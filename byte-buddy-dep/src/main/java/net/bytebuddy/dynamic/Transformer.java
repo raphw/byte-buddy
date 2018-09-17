@@ -56,7 +56,9 @@ public interface Transformer<T> {
             return (Transformer<T>) INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Object transform(TypeDescription instrumentedType, Object target) {
             return target;
         }
@@ -102,7 +104,9 @@ public interface Transformer<T> {
             return new ForField(new FieldModifierTransformer(ModifierContributor.Resolver.of(modifierContributors)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
             return new TransformedField(instrumentedType,
                     fieldDescription.getDeclaringType(),
@@ -130,7 +134,9 @@ public interface Transformer<T> {
                 this.resolver = resolver;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription.Token transform(TypeDescription instrumentedType, FieldDescription.Token target) {
                 return new FieldDescription.Token(target.getName(),
                         resolver.resolve(target.getModifiers()),
@@ -182,32 +188,44 @@ public interface Transformer<T> {
                 this.fieldDescription = fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription.Generic getType() {
                 return token.getType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(instrumentedType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationList getDeclaredAnnotations() {
                 return token.getAnnotations();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDefinition getDeclaringType() {
                 return declaringType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return token.getModifiers();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InDefinedShape asDefined() {
                 return fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getName() {
                 return token.getName();
             }
@@ -256,7 +274,9 @@ public interface Transformer<T> {
             return new ForMethod(new MethodModifierTransformer(ModifierContributor.Resolver.of(modifierContributors)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription transform(TypeDescription instrumentedType, MethodDescription methodDescription) {
             return new TransformedMethod(instrumentedType,
                     methodDescription.getDeclaringType(),
@@ -284,7 +304,9 @@ public interface Transformer<T> {
                 this.resolver = resolver;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDescription.Token transform(TypeDescription instrumentedType, MethodDescription.Token target) {
                 return new MethodDescription.Token(target.getName(),
                         resolver.resolve(target.getModifiers()),
@@ -341,57 +363,79 @@ public interface Transformer<T> {
                 this.methodDescription = methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeVariables() {
                 return new TypeList.Generic.ForDetachedTypes.OfTypeVariables(this, token.getTypeVariableTokens(), new AttachmentVisitor());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription.Generic getReturnType() {
                 return token.getReturnType().accept(new AttachmentVisitor());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterList<?> getParameters() {
                 return new TransformedParameterList();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getExceptionTypes() {
                 return new TypeList.Generic.ForDetachedTypes(token.getExceptionTypes(), new AttachmentVisitor());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationList getDeclaredAnnotations() {
                 return token.getAnnotations();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getInternalName() {
                 return token.getName();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDefinition getDeclaringType() {
                 return declaringType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int getModifiers() {
                 return token.getModifiers();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationValue<?, ?> getDefaultValue() {
                 return token.getDefaultValue();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InDefinedShape asDefined() {
                 return methodDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeDescription.Generic getReceiverType() {
                 TypeDescription.Generic receiverType = token.getReceiverType();
                 return receiverType == null
@@ -404,12 +448,16 @@ public interface Transformer<T> {
              */
             protected class TransformedParameterList extends ParameterList.AbstractBase<ParameterDescription> {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterDescription get(int index) {
                     return new TransformedParameter(index, token.getParameterTokens().get(index));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int size() {
                     return token.getParameterTokens().size();
                 }
@@ -441,51 +489,69 @@ public interface Transformer<T> {
                     this.parameterToken = parameterToken;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic getType() {
                     return parameterToken.getType().accept(new AttachmentVisitor());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDescription getDeclaringMethod() {
                     return TransformedMethod.this;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getIndex() {
                     return index;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isNamed() {
                     return parameterToken.getName() != null;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean hasModifiers() {
                     return parameterToken.getModifiers() != null;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getName() {
                     return isNamed()
                             ? parameterToken.getName()
                             : super.getName();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getModifiers() {
                     return hasModifiers()
                             ? parameterToken.getModifiers()
                             : super.getModifiers();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotationList getDeclaredAnnotations() {
                     return parameterToken.getAnnotations();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InDefinedShape asDefined() {
                     return methodDescription.getParameters().get(index);
                 }
@@ -499,7 +565,9 @@ public interface Transformer<T> {
             @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
             protected class AttachmentVisitor extends TypeDescription.Generic.Visitor.Substitutor.WithoutTypeSubstitution {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeDescription.Generic onTypeVariable(TypeDescription.Generic typeVariable) {
                     TypeList.Generic candidates = getTypeVariables().filter(named(typeVariable.getSymbol()));
                     TypeDescription.Generic attached = candidates.isEmpty()
@@ -554,7 +622,9 @@ public interface Transformer<T> {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public S transform(TypeDescription instrumentedType, S target) {
             for (Transformer<S> transformer : transformers) {
                 target = transformer.transform(instrumentedType, target);

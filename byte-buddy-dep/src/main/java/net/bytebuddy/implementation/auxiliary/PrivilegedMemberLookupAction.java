@@ -126,7 +126,9 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
         }
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {

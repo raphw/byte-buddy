@@ -37,7 +37,9 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         this.map = map;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         Boolean cached = map.get(target);
         if (cached == null) {
@@ -58,7 +60,9 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         return cached;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "cached(" + matcher + ")";
     }
@@ -89,7 +93,9 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
             this.evictionSize = evictionSize;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         protected boolean onCacheMiss(S target) {
             if (map.size() >= evictionSize) {
                 Iterator<?> iterator = map.entrySet().iterator();

@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 
 public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpecialMethodInvocationTest {
 
-    @Override
     protected Implementation.SpecialMethodInvocation make(MethodDescription methodDescription, TypeDescription typeDescription) {
         return new Implementation.SpecialMethodInvocation.Simple(methodDescription, typeDescription, mock(StackManipulation.class));
     }

@@ -94,17 +94,23 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         return new ExceptionMethod(new ConstructionDelegate.ForStringConstructor(throwableType, message));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return this;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 constructionDelegate.make(),
@@ -153,7 +159,9 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                         .filter(isConstructor().and(takesArguments(0))).getOnly();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation make() {
                 return new StackManipulation.Compound(
                         TypeCreation.of(throwableType),
@@ -196,7 +204,9 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                 this.message = message;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation make() {
                 return new StackManipulation.Compound(
                         TypeCreation.of(throwableType),

@@ -208,12 +208,16 @@ public enum MethodVariableAccess {
             this.typeCastingHandler = typeCastingHandler;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
@@ -271,7 +275,9 @@ public enum MethodVariableAccess {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation ofIndex(TypeDescription parameterType, int index) {
                     return Trivial.INSTANCE;
                 }
@@ -298,7 +304,9 @@ public enum MethodVariableAccess {
                     this.bridgeTarget = bridgeTarget;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation ofIndex(TypeDescription parameterType, int index) {
                     TypeDescription targetType = bridgeTarget.getParameters().get(index).getType().asErasure();
                     return parameterType.equals(targetType)
@@ -329,12 +337,16 @@ public enum MethodVariableAccess {
             this.offset = offset;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(loadOpcode, offset);
             return size.toIncreasingSize();
@@ -361,12 +373,16 @@ public enum MethodVariableAccess {
             this.offset = offset;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(storeOpcode, offset);
             return size.toDecreasingSize();
@@ -400,12 +416,16 @@ public enum MethodVariableAccess {
             this.value = value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIincInsn(offset, value);
             return new Size(0, 0);

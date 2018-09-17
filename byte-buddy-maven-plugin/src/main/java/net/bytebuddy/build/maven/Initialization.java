@@ -33,7 +33,7 @@ public class Initialization extends AbstractUserConfiguration {
      * @param groupId             This project's group id.
      * @param artifactId          This project's artifact id.
      * @param version             This project's version id.
-     * @param packaging             This project's packaging
+     * @param packaging           This project's packaging
      * @return The resolved entry point.
      * @throws MojoExecutionException If the entry point cannot be created.
      */

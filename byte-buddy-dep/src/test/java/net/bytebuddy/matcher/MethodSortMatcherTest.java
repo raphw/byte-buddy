@@ -55,7 +55,6 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
     }
 
     @Test
-    @Override
     public void testStringRepresentation() throws Exception {
         assertThat(new MethodSortMatcher<MethodDescription>(sort).toString(), is(sort.getDescription()));
     }
@@ -63,35 +62,30 @@ public class MethodSortMatcherTest extends AbstractElementMatcherTest<MethodSort
     private enum MockImplementation {
 
         CONSTRUCTOR {
-            @Override
             protected void prepare(MethodDescription target) {
                 when(target.isConstructor()).thenReturn(true);
             }
         },
 
         DEFAULT_METHOD {
-            @Override
             protected void prepare(MethodDescription target) {
                 when(target.isDefaultMethod()).thenReturn(true);
             }
         },
 
         METHOD {
-            @Override
             protected void prepare(MethodDescription target) {
                 when(target.isMethod()).thenReturn(true);
             }
         },
 
         VIRTUAL {
-            @Override
             protected void prepare(MethodDescription target) {
                 when(target.isVirtual()).thenReturn(true);
             }
         },
 
         TYPE_INITIALIZER {
-            @Override
             protected void prepare(MethodDescription target) {
                 when(target.isTypeInitializer()).thenReturn(true);
             }

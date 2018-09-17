@@ -26,12 +26,16 @@ public class AnnotationTypeMatcher<T extends AnnotationDescription> extends Elem
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getAnnotationType());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "ofAnnotationType(" + matcher + ')';
     }

@@ -62,7 +62,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      */
     abstract class AbstractBase<S extends ParameterDescription> extends FilterableList.AbstractBase<S, ParameterList<S>> implements ParameterList<S> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasExplicitMetaData() {
             for (ParameterDescription parameterDescription : this) {
                 if (!parameterDescription.isNamed() || !parameterDescription.hasModifiers()) {
@@ -72,7 +74,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
@@ -81,7 +85,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic asTypeList() {
             List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(size());
             for (ParameterDescription parameterDescription : this) {
@@ -90,7 +96,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             return new TypeList.Generic.Explicit(types);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
             List<ParameterDescription.InDefinedShape> declaredForms = new ArrayList<ParameterDescription.InDefinedShape>(size());
             for (ParameterDescription parameterDescription : this) {
@@ -182,7 +190,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             return DISPATCHER.describe(method, parameterAnnotationSource);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return DISPATCHER.getParameterCount(executable);
         }
@@ -230,7 +240,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Dispatcher run() {
                     try {
@@ -251,18 +263,24 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getParameterCount(Object executable) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Executable");
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
                                                                                    ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                     return new OfLegacyVmConstructor(constructor, parameterAnnotationSource);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
                                                                                    ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                     return new OfLegacyVmMethod(method, parameterAnnotationSource);
@@ -294,7 +312,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                     this.getParameterCount = getParameterCount;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public int getParameterCount(Object executable) {
                     try {
                         return (Integer) getParameterCount.invoke(executable, NO_ARGUMENTS);
@@ -305,13 +325,17 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                     }
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor,
                                                                                    ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                     return new OfConstructor(constructor, parameterAnnotationSource);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Method method,
                                                                                    ParameterDescription.ForLoadedParameter.ParameterAnnotationSource parameterAnnotationSource) {
                     return new OfMethod(method, parameterAnnotationSource);
@@ -334,7 +358,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 super(constructor, parameterAnnotationSource);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfConstructor(executable, index, parameterAnnotationSource);
             }
@@ -355,7 +381,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 super(method, parameterAnnotationSource);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index, parameterAnnotationSource);
             }
@@ -394,12 +422,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType, parameterAnnotationSource);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int size() {
                 return parameterType.length;
             }
@@ -438,12 +470,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 this.parameterAnnotationSource = parameterAnnotationSource;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterDescription.InDefinedShape get(int index) {
                 return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType, parameterAnnotationSource);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int size() {
                 return parameterType.length;
             }
@@ -481,12 +517,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             this.parameterDescriptions = parameterDescriptions;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public S get(int index) {
             return parameterDescriptions.get(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return parameterDescriptions.size();
         }
@@ -527,7 +567,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 this.typeDefinitions = typeDefinitions;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterDescription.InDefinedShape get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
                 for (int previous = 0; previous < index; previous++) {
@@ -536,7 +578,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 return new ParameterDescription.Latent(methodDescription, typeDefinitions.get(index).asGenericType(), index, offset);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public int size() {
                 return typeDefinitions.size();
             }
@@ -569,7 +613,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             this.tokens = tokens;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterDescription.InDefinedShape get(int index) {
             int offset = declaringMethod.isStatic() ? 0 : 1;
             for (ParameterDescription.Token token : tokens.subList(0, index)) {
@@ -578,7 +624,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             return new ParameterDescription.Latent(declaringMethod, tokens.get(index), index, offset);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return tokens.size();
         }
@@ -619,12 +667,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             this.visitor = visitor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ParameterDescription.InGenericShape get(int index) {
             return new ParameterDescription.TypeSubstituting(declaringMethod, parameterDescriptions.get(index), visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return parameterDescriptions.size();
         }
@@ -637,22 +689,30 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      */
     class Empty<S extends ParameterDescription> extends FilterableList.Empty<S, ParameterList<S>> implements ParameterList<S> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasExplicitMetaData() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeList.Generic asTypeList() {
             return new TypeList.Generic.Empty();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
             return (ParameterList<ParameterDescription.InDefinedShape>) this;

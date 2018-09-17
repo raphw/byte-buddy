@@ -33,7 +33,9 @@ public class MethodOverrideMatcher<T extends MethodDescription> extends ElementM
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         Set<TypeDescription> duplicates = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target.getDeclaringType()) {
@@ -81,7 +83,9 @@ public class MethodOverrideMatcher<T extends MethodDescription> extends ElementM
         return false;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isOverriddenFrom(" + matcher + ")";
     }

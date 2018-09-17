@@ -337,14 +337,18 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return compareTo(classFileVersion) < 0;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public int compareTo(ClassFileVersion other) {
         return Integer.signum(getMajorVersion() == other.getMajorVersion()
                 ? getMinorVersion() - other.getMinorVersion()
                 : getMajorVersion() - other.getMajorVersion());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "Java " + getJavaVersion();
     }
@@ -371,7 +375,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public VersionLocator run() {
                 try {
@@ -415,7 +421,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 this.major = major;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileVersion locate() {
                 try {
                     return ClassFileVersion.ofJavaVersion((Integer) major.invoke(current.invoke(STATIC_METHOD)));
@@ -442,7 +450,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
              */
             private static final String JAVA_VERSION_PROPERTY = "java.version";
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ClassFileVersion locate() {
                 String versionString = AccessController.doPrivileged(this);
                 int[] versionIndex = {-1, 0, 0};
@@ -455,7 +465,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return ClassFileVersion.ofJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String run() {
                 return System.getProperty(JAVA_VERSION_PROPERTY);
             }

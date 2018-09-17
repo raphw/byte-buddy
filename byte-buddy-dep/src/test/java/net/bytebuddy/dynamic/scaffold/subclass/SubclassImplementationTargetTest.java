@@ -39,7 +39,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Mock
     private MethodDescription.SignatureToken superConstructorToken;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
@@ -69,7 +68,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         super.setUp();
     }
 
-    @Override
     protected Implementation.Target makeImplementationTarget() {
         return new SubclassImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, SubclassImplementationTarget.OriginTypeResolver.SUPER_CLASS);
     }

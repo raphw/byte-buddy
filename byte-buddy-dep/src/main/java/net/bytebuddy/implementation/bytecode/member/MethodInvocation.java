@@ -138,17 +138,23 @@ public enum MethodInvocation {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation virtual(TypeDescription invocationTarget) {
             return Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation special(TypeDescription invocationTarget) {
             return Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation dynamic(String methodName,
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
@@ -156,17 +162,23 @@ public enum MethodInvocation {
             return Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation onHandle(HandleType type) {
             return Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
         }
@@ -257,32 +269,44 @@ public enum MethodInvocation {
             return new OfGenericMethod(methodDescription.getReturnType().asErasure(), invocation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation virtual(TypeDescription invocationTarget) {
             return new StackManipulation.Compound(invocation.virtual(invocationTarget), TypeCasting.to(targetType));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation special(TypeDescription invocationTarget) {
             return new StackManipulation.Compound(invocation.special(invocationTarget), TypeCasting.to(targetType));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation dynamic(String methodName, TypeDescription returnType, List<? extends TypeDescription> methodType, List<?> arguments) {
             return invocation.dynamic(methodName, returnType, methodType, arguments);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation onHandle(HandleType type) {
             return new Compound(invocation.onHandle(type), TypeCasting.to(targetType));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return invocation.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
         }
@@ -324,12 +348,16 @@ public enum MethodInvocation {
             this.methodDescription = methodDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitMethodInsn(opcode == legacyOpcode || implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11)
                             ? opcode
@@ -342,7 +370,9 @@ public enum MethodInvocation {
             return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation virtual(TypeDescription invocationTarget) {
             if (methodDescription.isConstructor() || methodDescription.isStatic()) {
                 return Illegal.INSTANCE;
@@ -359,14 +389,18 @@ public enum MethodInvocation {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation special(TypeDescription invocationTarget) {
             return methodDescription.isSpecializableFor(invocationTarget)
                     ? SPECIAL.new Invocation(methodDescription, invocationTarget)
                     : Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation dynamic(String methodName,
                                          TypeDescription returnType,
                                          List<? extends TypeDescription> methodType,
@@ -376,7 +410,9 @@ public enum MethodInvocation {
                     : Illegal.INSTANCE;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation onHandle(HandleType type) {
             return new HandleInvocation(methodDescription, type);
         }
@@ -434,12 +470,16 @@ public enum MethodInvocation {
             this.arguments = arguments;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             StringBuilder stringBuilder = new StringBuilder("(");
             for (TypeDescription parameterType : parameterTypes) {
@@ -493,12 +533,16 @@ public enum MethodInvocation {
             this.type = type;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return true;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
                     METHOD_HANDLE,

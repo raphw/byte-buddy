@@ -158,12 +158,16 @@ public enum FieldAccess {
             return new OfGenericField(fieldDescription.getType(), fieldAccess);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation read() {
             return new StackManipulation.Compound(defined.read(), TypeCasting.to(targetType));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation write() {
             return defined.write();
         }
@@ -189,12 +193,16 @@ public enum FieldAccess {
             this.fieldDescription = fieldDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation read() {
             return new FieldGetInstruction();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public StackManipulation write() {
             return new FieldPutInstruction();
         }
@@ -204,12 +212,16 @@ public enum FieldAccess {
          */
         private abstract class AbstractFieldInstruction implements StackManipulation {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitFieldInsn(getOpcode(),
                         fieldDescription.getDeclaringType().getInternalName(),

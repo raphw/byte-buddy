@@ -5,7 +5,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.utility.RandomString;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -133,12 +132,10 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
                 this.value = value;
             }
 
-            @Override
             public String value() {
                 return value;
             }
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return SimpleAnnotation.class;
             }

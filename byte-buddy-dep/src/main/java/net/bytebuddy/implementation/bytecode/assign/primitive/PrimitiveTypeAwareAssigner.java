@@ -39,7 +39,9 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
         this.referenceTypeAwareAssigner = referenceTypeAwareAssigner;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
         if (source.isPrimitive() && target.isPrimitive()) {
             return PrimitiveWideningDelegate.forPrimitive(source).widenTo(target);

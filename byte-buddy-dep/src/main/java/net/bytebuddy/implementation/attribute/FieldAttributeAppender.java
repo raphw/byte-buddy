@@ -34,12 +34,16 @@ public interface FieldAttributeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
@@ -95,7 +99,9 @@ public interface FieldAttributeAppender {
                 }
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldAttributeAppender make(TypeDescription typeDescription) {
                 List<FieldAttributeAppender> fieldAttributeAppenders = new ArrayList<FieldAttributeAppender>(factories.size());
                 for (Factory factory : factories) {
@@ -116,7 +122,9 @@ public interface FieldAttributeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             annotationAppender = fieldDescription.getType().accept(AnnotationAppender.ForTypeAnnotations.ofFieldType(annotationAppender, annotationValueFilter));
@@ -125,7 +133,9 @@ public interface FieldAttributeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
@@ -152,7 +162,9 @@ public interface FieldAttributeAppender {
             this.annotations = annotations;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : annotations) {
@@ -160,7 +172,9 @@ public interface FieldAttributeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
@@ -205,7 +219,9 @@ public interface FieldAttributeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
                 fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);

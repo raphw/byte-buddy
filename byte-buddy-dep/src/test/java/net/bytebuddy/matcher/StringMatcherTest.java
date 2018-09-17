@@ -53,7 +53,6 @@ public class StringMatcherTest extends AbstractElementMatcherTest<StringMatcher>
     }
 
     @Test
-    @Override
     public void testStringRepresentation() throws Exception {
         assertThat(new StringMatcher(FOO, mode).toString(), startsWith(mode.getDescription()));
     }

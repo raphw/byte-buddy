@@ -3,7 +3,7 @@ package net.bytebuddy.description.annotation;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 
 public class AnnotationSourceTest {

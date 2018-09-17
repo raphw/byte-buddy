@@ -124,7 +124,7 @@ public enum PrimitiveBoxingDelegate {
      * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
      * to the result of this boxing operation.
      *
-     * @param target      The type that is target of the assignment operation.
+     * @param target          The type that is target of the assignment operation.
      * @param chainedAssigner The assigner that is to be used to perform the chained assignment.
      * @param typing          Determines if an assignment to an incompatible type should be enforced by a casting.
      * @return A stack manipulation that represents the described assignment operation.
@@ -153,12 +153,16 @@ public enum PrimitiveBoxingDelegate {
             this.stackManipulation = stackManipulation;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return stackManipulation.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                     wrapperType.getInternalName(),

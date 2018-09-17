@@ -24,37 +24,31 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    @Override
     protected TypeDescription.Generic describeType(Field field) {
         return describe(field.getGenericType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new FieldDescription.ForLoadedField(field)));
     }
 
-    @Override
     protected TypeDescription.Generic describeReturnType(Method method) {
         return describe(method.getGenericReturnType(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReturnType(method))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
-    @Override
     protected TypeDescription.Generic describeParameterType(Method method, int index) {
         return describe(method.getGenericParameterTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveParameterType(method, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
-    @Override
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
         return describe(method.getGenericExceptionTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
-    @Override
     protected TypeDescription.Generic describeSuperClass(Class<?> type) {
         return describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
     }
 
-    @Override
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
         return describe(type.getGenericInterfaces()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(TypeDescription.ForLoadedType.of(type)));
@@ -147,14 +141,12 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         assertThat(typeDescription.getOwnerType(), sameInstance(ownerType));
     }
 
-    @Override
     @Test
     @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
 
-    @Override
     @Test
     @Ignore("The Java reflection API does not currently support generic inner types")
     public void testTypeAnnotationNonGenericInnerType() throws Exception {

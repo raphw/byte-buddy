@@ -28,13 +28,17 @@ public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatch
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         TypeDefinition declaringType = target.getDeclaringType();
         return declaringType != null && matcher.matches(declaringType.asGenericType());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "declaredBy(" + matcher + ")";
     }

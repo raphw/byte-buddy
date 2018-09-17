@@ -68,7 +68,6 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         });
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();

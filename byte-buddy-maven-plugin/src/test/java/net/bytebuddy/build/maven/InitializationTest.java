@@ -118,23 +118,21 @@ public class InitializationTest {
         initialization.groupId = BAR;
         initialization.artifactId = QUX;
         initialization.version = BAZ;
-        assertThat(initialization.asCoordinate(FOO, FOO, FOO, JAR), is(new MavenCoordinate(BAR, QUX, BAZ , JAR)));
+        assertThat(initialization.asCoordinate(FOO, FOO, FOO, JAR), is(new MavenCoordinate(BAR, QUX, BAZ, JAR)));
     }
 
     @Test
     public void testAsCoordinateUnresolved() throws Exception {
         Initialization initialization = new Initialization();
-        assertThat(initialization.asCoordinate(BAR, QUX, BAZ, JAR), is(new MavenCoordinate(BAR, QUX, BAZ , JAR)));
+        assertThat(initialization.asCoordinate(BAR, QUX, BAZ, JAR), is(new MavenCoordinate(BAR, QUX, BAZ, JAR)));
     }
 
     public static class Foo implements EntryPoint {
 
-        @Override
         public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
             throw new AssertionError();
         }
 
-        @Override
         public DynamicType.Builder<?> transform(TypeDescription typeDescription, ByteBuddy byteBuddy,
                                                 ClassFileLocator classFileLocator,
                                                 MethodNameTransformer methodNameTransformer) {

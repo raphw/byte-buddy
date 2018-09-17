@@ -371,14 +371,14 @@ public class TargetMethodAnnotationDrivenBinderTest {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && value.equals(((Key) other).value);
+        public int hashCode() {
+            return value.hashCode();
         }
 
         @Override
-        public int hashCode() {
-            return value.hashCode();
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && value.equals(((Key) other).value);
         }
     }
 }

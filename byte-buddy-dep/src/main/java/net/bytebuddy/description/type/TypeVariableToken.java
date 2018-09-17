@@ -91,9 +91,19 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         return new AnnotationList.Explicit(annotations);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public TypeVariableToken accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
         return new TypeVariableToken(symbol, getBounds().accept(visitor), annotations);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = symbol.hashCode();
+        result = 31 * result + bounds.hashCode();
+        result = 31 * result + annotations.hashCode();
+        return result;
     }
 
     @Override
@@ -107,14 +117,6 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         return symbol.equals(typeVariableToken.symbol)
                 && bounds.equals(typeVariableToken.bounds)
                 && annotations.equals(typeVariableToken.annotations);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = symbol.hashCode();
-        result = 31 * result + bounds.hashCode();
-        result = 31 * result + annotations.hashCode();
-        return result;
     }
 
     @Override

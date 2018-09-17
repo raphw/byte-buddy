@@ -45,12 +45,16 @@ public interface LoadedTypeInitializer {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void onLoad(Class<?> type) {
             /* do nothing */
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAlive() {
             return false;
         }
@@ -93,7 +97,9 @@ public interface LoadedTypeInitializer {
             this.value = value;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void onLoad(Class<?> type) {
             try {
                 Field field = type.getDeclaredField(fieldName);
@@ -108,7 +114,9 @@ public interface LoadedTypeInitializer {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAlive() {
             return true;
         }
@@ -156,14 +164,18 @@ public interface LoadedTypeInitializer {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void onLoad(Class<?> type) {
             for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
                 loadedTypeInitializer.onLoad(type);
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isAlive() {
             for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
                 if (loadedTypeInitializer.isAlive()) {

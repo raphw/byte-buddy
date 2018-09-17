@@ -27,22 +27,30 @@ public enum SuperMethodCall implements Implementation.Composable {
      */
     INSTANCE;
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         return new Appender(implementationTarget, Appender.TerminationHandler.RETURNING);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation andThen(Implementation implementation) {
         return new Compound(WithoutReturn.INSTANCE, implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Composable andThen(Composable implementation) {
         return new Compound.Composable(WithoutReturn.INSTANCE, implementation);
     }
@@ -57,12 +65,16 @@ public enum SuperMethodCall implements Implementation.Composable {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget, Appender.TerminationHandler.DROPPING);
         }
@@ -95,7 +107,9 @@ public enum SuperMethodCall implements Implementation.Composable {
             this.terminationHandler = terminationHandler;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation superMethodCall = implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
             if (!superMethodCall.isValid()) {

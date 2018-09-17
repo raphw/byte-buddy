@@ -81,7 +81,6 @@ public class AnnotationDescriptionBuilderTest {
 
         class Instance implements Qux {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return Qux.class;
             }
@@ -92,7 +91,6 @@ public class AnnotationDescriptionBuilderTest {
 
         class Instance implements QuxBaz {
 
-            @Override
             public Class<? extends Annotation> annotationType() {
                 return QuxBaz.class;
             }

@@ -39,12 +39,16 @@ public class FieldConstant implements StackManipulation {
         return new Cached(this);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean isValid() {
         return true;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         try {
             return new Compound(
@@ -58,6 +62,11 @@ public class FieldConstant implements StackManipulation {
     }
 
     @Override
+    public int hashCode() {
+        return fieldDescription.hashCode();
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) {
             return true;
@@ -66,11 +75,6 @@ public class FieldConstant implements StackManipulation {
         }
         FieldConstant fieldConstant = (FieldConstant) other;
         return fieldDescription.equals(fieldConstant.fieldDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return fieldDescription.hashCode();
     }
 
     /**
@@ -92,16 +96,25 @@ public class FieldConstant implements StackManipulation {
             this.fieldConstant = fieldConstant;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isValid() {
             return fieldConstant.isValid();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(fieldConstant, TypeDescription.ForLoadedType.of(Field.class)))
                     .read()
                     .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public int hashCode() {
+            return fieldConstant.hashCode();
         }
 
         @Override
@@ -113,11 +126,6 @@ public class FieldConstant implements StackManipulation {
             }
             Cached cached = (Cached) other;
             return fieldConstant.equals(cached.fieldConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return fieldConstant.hashCode();
         }
     }
 }

@@ -167,7 +167,6 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedJavaAgent() throws Exception {
         new AgentBuilder.Default().type(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
-            @Override
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
             }
@@ -439,12 +438,10 @@ public class ByteBuddyTutorialExamplesTest {
 
         INSTANCE;
 
-        @Override
         public boolean isValid() {
             return true;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(Opcodes.IADD);
             return new Size(-1, 0);
@@ -455,7 +452,6 @@ public class ByteBuddyTutorialExamplesTest {
 
         INSTANCE;
 
-        @Override
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
@@ -475,12 +471,10 @@ public class ByteBuddyTutorialExamplesTest {
     public enum SumImplementation implements Implementation {
         INSTANCE;
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return SumMethod.INSTANCE;
         }
@@ -490,7 +484,6 @@ public class ByteBuddyTutorialExamplesTest {
 
         INSTANCE;
 
-        @Override
         public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
             if (!source.isPrimitive() && target.represents(String.class)) {
                 MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
@@ -507,12 +500,10 @@ public class ByteBuddyTutorialExamplesTest {
 
         INSTANCE;
 
-        @Override
         public Class<StringValue> getHandledType() {
             return StringValue.class;
         }
 
-        @Override
         public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<StringValue> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -749,7 +740,6 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unused")
     public static class HelloWorldInterceptor implements Interceptor2 {
 
-        @Override
         public String doSomethingElse() {
             return "Hello World!";
         }
@@ -757,7 +747,6 @@ public class ByteBuddyTutorialExamplesTest {
 
     private static class RuntimeDefinitionImpl implements RuntimeDefinition {
 
-        @Override
         public Class<? extends Annotation> annotationType() {
             return RuntimeDefinition.class;
         }
@@ -800,7 +789,6 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unchecked")
     class LoggingMemoryDatabase extends MemoryDatabase {
 
-        @Override
         public List<String> load(String info) {
             try {
                 return LoggerInterceptor.log(new LoadMethodSuperCall(info));
@@ -817,7 +805,6 @@ public class ByteBuddyTutorialExamplesTest {
                 this.info = info;
             }
 
-            @Override
             public Object call() throws Exception {
                 return LoggingMemoryDatabase.super.load(info);
             }

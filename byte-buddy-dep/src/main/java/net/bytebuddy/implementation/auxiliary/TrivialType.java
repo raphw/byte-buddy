@@ -41,7 +41,9 @@ public enum TrivialType implements AuxiliaryType {
         this.eager = eager;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {

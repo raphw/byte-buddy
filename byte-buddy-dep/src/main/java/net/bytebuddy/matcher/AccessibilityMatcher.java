@@ -26,12 +26,16 @@ public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatc
         this.typeDescription = typeDescription;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return target.isAccessibleTo(typeDescription);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isAccessibleTo(" + typeDescription + ")";
     }

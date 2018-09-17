@@ -8,7 +8,7 @@ public class MorphDefaultDelegationTargetImplicit {
     private static final String BAR = "bar";
 
     public static String intercept(@Morph(defaultMethod = true)
-                                   MethodDelegationMorphTest.Morphing<String> morphing) {
+                                           MethodDelegationMorphTest.Morphing<String> morphing) {
         return morphing.morph(BAR);
     }
 }

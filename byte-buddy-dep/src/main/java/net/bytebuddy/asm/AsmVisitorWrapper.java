@@ -82,17 +82,23 @@ public interface AsmVisitorWrapper {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeWriter(int flags) {
             return flags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeReader(int flags) {
             return flags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
@@ -110,12 +116,16 @@ public interface AsmVisitorWrapper {
      */
     abstract class AbstractBase implements AsmVisitorWrapper {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeWriter(int flags) {
             return flags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeReader(int flags) {
             return flags;
         }
@@ -172,7 +182,9 @@ public interface AsmVisitorWrapper {
             return new ForDeclaredFields(CompoundList.of(entries, new Entry(matcher, fieldVisitorWrappers)));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
@@ -231,12 +243,16 @@ public interface AsmVisitorWrapper {
                 this.fieldVisitorWrappers = fieldVisitorWrappers;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(FieldDescription.InDefinedShape target) {
                 return target != null && matcher.matches(target);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldVisitor wrap(TypeDescription instrumentedType, FieldDescription.InDefinedShape fieldDescription, FieldVisitor fieldVisitor) {
                 for (FieldVisitorWrapper fieldVisitorWrapper : fieldVisitorWrappers) {
                     fieldVisitor = fieldVisitorWrapper.wrap(instrumentedType, fieldDescription, fieldVisitor);
@@ -379,17 +395,23 @@ public interface AsmVisitorWrapper {
             return new ForDeclaredMethods(entries, writerFlags, readerFlags | flags);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeWriter(int flags) {
             return flags | writerFlags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeReader(int flags) {
             return flags | readerFlags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
@@ -464,12 +486,16 @@ public interface AsmVisitorWrapper {
                 this.methodVisitorWrappers = methodVisitorWrappers;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(MethodDescription target) {
                 return target != null && matcher.matches(target);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
@@ -616,7 +642,9 @@ public interface AsmVisitorWrapper {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeWriter(int flags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
                 flags = asmVisitorWrapper.mergeWriter(flags);
@@ -624,7 +652,9 @@ public interface AsmVisitorWrapper {
             return flags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int mergeReader(int flags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
                 flags = asmVisitorWrapper.mergeReader(flags);
@@ -632,7 +662,9 @@ public interface AsmVisitorWrapper {
             return flags;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,

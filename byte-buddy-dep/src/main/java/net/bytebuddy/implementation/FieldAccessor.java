@@ -166,7 +166,9 @@ public abstract class FieldAccessor implements Implementation {
                 : MethodVariableAccess.loadThis(), fieldAccess);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return instrumentedType;
     }
@@ -226,12 +228,16 @@ public abstract class FieldAccessor implements Implementation {
                 this.fieldDescription = fieldDescription;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocation with(FieldLocator.Factory fieldLocatorFactory) {
                 throw new IllegalStateException("Cannot specify a field locator factory for an absolute field location");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Prepared prepare(TypeDescription instrumentedType) {
                 if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                     throw new IllegalStateException(fieldDescription + " is not declared by " + instrumentedType);
@@ -241,7 +247,9 @@ public abstract class FieldAccessor implements Implementation {
                 return this;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDescription resolve(MethodDescription instrumentedMethod) {
                 return fieldDescription;
             }
@@ -283,12 +291,16 @@ public abstract class FieldAccessor implements Implementation {
                 this.fieldLocatorFactory = fieldLocatorFactory;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocation with(FieldLocator.Factory fieldLocatorFactory) {
                 return new Relative(fieldNameExtractor, fieldLocatorFactory);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldLocation.Prepared prepare(TypeDescription instrumentedType) {
                 return new Prepared(fieldNameExtractor, fieldLocatorFactory.make(instrumentedType));
             }
@@ -320,7 +332,9 @@ public abstract class FieldAccessor implements Implementation {
                     this.fieldLocator = fieldLocator;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDescription resolve(MethodDescription instrumentedMethod) {
                     FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
                     if (!resolution.isResolved()) {
@@ -357,7 +371,9 @@ public abstract class FieldAccessor implements Implementation {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String resolve(MethodDescription methodDescription) {
                 String name = methodDescription.getInternalName();
                 int crop;
@@ -396,7 +412,9 @@ public abstract class FieldAccessor implements Implementation {
                 this.name = name;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String resolve(MethodDescription methodDescription) {
                 return name;
             }
@@ -491,12 +509,16 @@ public abstract class FieldAccessor implements Implementation {
             super(fieldLocation, assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(fieldLocation.prepare(implementationTarget.getInstrumentedType()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Composable setsArgumentAt(int index) {
             if (index < 0) {
                 throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
@@ -504,22 +526,30 @@ public abstract class FieldAccessor implements Implementation {
             return new ForParameterSetter(fieldLocation, assigner, typing, index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public PropertyConfigurable withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForImplicitProperty(fieldLocation, assigner, typing);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AssignerConfigurable in(Class<?> type) {
             return in(TypeDescription.ForLoadedType.of(type));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AssignerConfigurable in(TypeDescription typeDescription) {
             return in(new FieldLocator.ForExactType.Factory(typeDescription));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
             return new ForImplicitProperty(fieldLocation.with(fieldLocatorFactory), assigner, typing);
         }
@@ -544,7 +574,9 @@ public abstract class FieldAccessor implements Implementation {
                 this.fieldLocation = fieldLocation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                 if (!instrumentedMethod.isMethod()) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not describe a field getter or setter");
@@ -606,12 +638,16 @@ public abstract class FieldAccessor implements Implementation {
             this.terminationHandler = terminationHandler;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(fieldLocation.prepare(implementationTarget.getInstrumentedType()));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation andThen(Implementation implementation) {
             return new Compound(new ForParameterSetter(fieldLocation,
                     assigner,
@@ -619,7 +655,9 @@ public abstract class FieldAccessor implements Implementation {
                     index, TerminationHandler.NON_OPERATIONAL), implementation);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Composable andThen(Composable implementation) {
             return new Compound.Composable(new ForParameterSetter(fieldLocation,
                     assigner,
@@ -684,7 +722,9 @@ public abstract class FieldAccessor implements Implementation {
                 this.fieldLocation = fieldLocation;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                 if (instrumentedMethod.getParameters().size() <= index) {
                     throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + index);

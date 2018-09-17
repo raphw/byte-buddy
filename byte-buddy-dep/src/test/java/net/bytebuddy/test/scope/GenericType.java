@@ -12,7 +12,6 @@ public class GenericType<U> {
             return null;
         }
 
-        @Override
         public Map<? super String, ? extends String> call() throws Exception {
             return null;
         }

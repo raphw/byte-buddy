@@ -29,7 +29,9 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         Set<TypeDescription> checkedInterfaces = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
@@ -56,7 +58,9 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
         return false;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasSuperType(" + matcher + ")";
     }

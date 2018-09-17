@@ -2048,7 +2048,6 @@ public class AgentBuilderDefaultTest {
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         doAnswer(new Answer() {
-            @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 assertThat(executingTransformer.transform(classLoader,
                         FOO,
@@ -2088,7 +2087,6 @@ public class AgentBuilderDefaultTest {
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         doAnswer(new Answer() {
-            @Override
             public Object answer(InvocationOnMock invocation) throws Throwable {
                 assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
                         classLoader,
@@ -2216,7 +2214,6 @@ public class AgentBuilderDefaultTest {
             this.type = type;
         }
 
-        @Override
         public boolean matches(ClassDefinition classDefinition) {
             return classDefinition.getDefinitionClass() == type;
         }
@@ -2230,7 +2227,6 @@ public class AgentBuilderDefaultTest {
             this.throwable = throwable;
         }
 
-        @Override
         public boolean matches(Throwable item) {
             return throwable.equals((item).getCause());
         }

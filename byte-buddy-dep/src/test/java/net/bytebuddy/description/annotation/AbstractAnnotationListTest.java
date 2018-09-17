@@ -3,7 +3,6 @@ package net.bytebuddy.description.annotation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import net.bytebuddy.matcher.ElementMatchers;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -11,7 +10,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;

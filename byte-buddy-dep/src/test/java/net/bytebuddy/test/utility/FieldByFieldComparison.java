@@ -33,7 +33,6 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
         return argThat(hasPrototype(instance));
     }
 
-    @Override
     public boolean matches(Object other) {
         if (other == null || other.getClass() != base.getClass()) {
             return false;
@@ -131,7 +130,6 @@ public class FieldByFieldComparison<T> extends BaseMatcher<T> {
         return true;
     }
 
-    @Override
     public void describeTo(Description description) {
         description.appendText("an object similar to " + base);
     }

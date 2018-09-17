@@ -46,7 +46,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             return new Explicit<S>(values);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
             for (MethodDescription methodDescription : this) {
@@ -55,7 +57,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodList<MethodDescription.InDefinedShape> asDefined() {
             List<MethodDescription.InDefinedShape> declaredForms = new ArrayList<MethodDescription.InDefinedShape>(size());
             for (MethodDescription methodDescription : this) {
@@ -113,7 +117,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             this.methods = methods;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape get(int index) {
             return index < constructors.size()
                     ? new MethodDescription.ForLoadedConstructor(constructors.get(index))
@@ -121,7 +127,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return constructors.size() + methods.size();
         }
@@ -158,12 +166,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             this.methodDescriptions = methodDescriptions;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public S get(int index) {
             return methodDescriptions.get(index);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return methodDescriptions.size();
         }
@@ -205,12 +217,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             this.tokens = tokens;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InDefinedShape get(int index) {
             return new MethodDescription.Latent(declaringType, tokens.get(index));
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return tokens.size();
         }
@@ -251,12 +267,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
             this.visitor = visitor;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDescription.InGenericShape get(int index) {
             return new MethodDescription.TypeSubstituting(declaringType, methodDescriptions.get(index), visitor);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public int size() {
             return methodDescriptions.size();
         }
@@ -269,12 +289,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      */
     class Empty<S extends MethodDescription> extends FilterableList.Empty<S, MethodList<S>> implements MethodList<S> {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public MethodList<MethodDescription.InDefinedShape> asDefined() {
             return (MethodList<MethodDescription.InDefinedShape>) this;

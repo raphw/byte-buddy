@@ -1393,17 +1393,23 @@ public interface DynamicType {
              */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements TypeVariableDefinition<U> {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableDefinition<U> annotateTypeVariable(Annotation... annotation) {
                     return annotateTypeVariable(Arrays.asList(annotation));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableDefinition<U> annotateTypeVariable(List<? extends Annotation> annotations) {
                     return annotateTypeVariable(new AnnotationList.ForLoadedAnnotations(annotations));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableDefinition<U> annotateTypeVariable(AnnotationDescription... annotation) {
                     return annotateTypeVariable(Arrays.asList(annotation));
                 }
@@ -1603,32 +1609,44 @@ public interface DynamicType {
                      */
                     abstract class AbstractBase<U> extends Optional.AbstractBase<U> implements Optional.Valuable<U> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(boolean value) {
                             return defaultValue(value ? 1 : 0);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(int value) {
                             return defaultValue(value);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(long value) {
                             return defaultValue(value);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(float value) {
                             return defaultValue(value);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(double value) {
                             return defaultValue(value);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public FieldDefinition.Optional<U> value(String value) {
                             if (value == null) {
                                 throw new IllegalArgumentException("Cannot set null as a default value");
@@ -1684,12 +1702,16 @@ public interface DynamicType {
                                 this.defaultValue = defaultValue;
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public FieldDefinition.Optional<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
                                 return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                             public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
                                 return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
@@ -1722,17 +1744,23 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements FieldDefinition.Optional<U> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldDefinition.Optional<U> annotateField(Annotation... annotation) {
                         return annotateField(Arrays.asList(annotation));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldDefinition.Optional<U> annotateField(List<? extends Annotation> annotations) {
                         return annotateField(new AnnotationList.ForLoadedAnnotations(annotations));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public FieldDefinition.Optional<U> annotateField(AnnotationDescription... annotation) {
                         return annotateField(Arrays.asList(annotation));
                     }
@@ -1875,7 +1903,9 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<V> extends MethodDefinition.AbstractBase<V> implements ReceiverTypeDefinition<V> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition<V> receiverType(AnnotatedElement receiverType) {
                         return receiverType(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(receiverType));
                     }
@@ -1955,7 +1985,9 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<V> implements ImplementationDefinition<V> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public <W> MethodDefinition.ReceiverTypeDefinition<V> defaultValue(W value, Class<? extends W> type) {
                         return defaultValue(AnnotationDescription.ForLoadedAnnotation.asValue(value, type));
                     }
@@ -2067,17 +2099,23 @@ public interface DynamicType {
                      */
                     abstract class AbstractBase<W> extends TypeVariableDefinition.AbstractBase<W> implements Annotatable<W> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(Annotation... annotation) {
                             return annotateTypeVariable(Arrays.asList(annotation));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(List<? extends Annotation> annotations) {
                             return annotateTypeVariable(new AnnotationList.ForLoadedAnnotations(annotations));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(AnnotationDescription... annotation) {
                             return annotateTypeVariable(Arrays.asList(annotation));
                         }
@@ -2089,27 +2127,37 @@ public interface DynamicType {
                          */
                         protected abstract static class Adapter<X> extends TypeVariableDefinition.Annotatable.AbstractBase<X> {
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                                 return materialize().typeVariable(symbol, bounds);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                 return materialize().intercept(implementation);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                 return materialize().withoutCode();
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                 return materialize().defaultValue(annotationValue);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                 return materialize().defaultValue(value, type);
                             }
@@ -2121,7 +2169,6 @@ public interface DynamicType {
                              */
                             protected abstract MethodDefinition.ParameterDefinition<X> materialize();
                         }
-
                     }
                 }
 
@@ -2132,22 +2179,30 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<V> extends ImplementationDefinition.AbstractBase<V> implements TypeVariableDefinition<V> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Annotatable<V> typeVariable(String symbol) {
                         return typeVariable(symbol, Collections.singletonList(Object.class));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Annotatable<V> typeVariable(String symbol, Type... bound) {
                         return typeVariable(symbol, Arrays.asList(bound));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Annotatable<V> typeVariable(String symbol, List<? extends Type> bounds) {
                         return typeVariable(symbol, new TypeList.Generic.ForLoadedTypes(bounds));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Annotatable<V> typeVariable(String symbol, TypeDefinition... bound) {
                         return typeVariable(symbol, Arrays.asList(bound));
                     }
@@ -2200,17 +2255,23 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<V> extends TypeVariableDefinition.AbstractBase<V> implements ExceptionDefinition<V> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExceptionDefinition<V> throwing(Type... type) {
                         return throwing(Arrays.asList(type));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExceptionDefinition<V> throwing(List<? extends Type> types) {
                         return throwing(new TypeList.Generic.ForLoadedTypes(types));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExceptionDefinition<V> throwing(TypeDefinition... type) {
                         return throwing(Arrays.asList(type));
                     }
@@ -2340,17 +2401,23 @@ public interface DynamicType {
                      */
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Annotatable<W> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ParameterDefinition.Annotatable<W> annotateParameter(Annotation... annotation) {
                             return annotateParameter(Arrays.asList(annotation));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ParameterDefinition.Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
                             return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ParameterDefinition.Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                             return annotateParameter(Arrays.asList(annotation));
                         }
@@ -2362,37 +2429,51 @@ public interface DynamicType {
                          */
                         protected abstract static class Adapter<X> extends ParameterDefinition.Annotatable.AbstractBase<X> {
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public ParameterDefinition.Annotatable<X> withParameter(TypeDefinition type, String name, int modifiers) {
                                 return materialize().withParameter(type, name, modifiers);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
                                 return materialize().throwing(types);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                                 return materialize().typeVariable(symbol, bounds);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                 return materialize().intercept(implementation);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                 return materialize().withoutCode();
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                 return materialize().defaultValue(annotationValue);
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                 return materialize().defaultValue(value, type);
                             }
@@ -2482,17 +2563,23 @@ public interface DynamicType {
                          */
                         abstract class AbstractBase<W> extends Simple.AbstractBase<W> implements Annotatable<W> {
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Simple.Annotatable<W> annotateParameter(Annotation... annotation) {
                                 return annotateParameter(Arrays.asList(annotation));
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Simple.Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
                                 return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                             }
 
-                            @Override
+                            /**
+                             * {@inheritDoc}
+                             */
                             public Simple.Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                                 return annotateParameter(Arrays.asList(annotation));
                             }
@@ -2504,37 +2591,51 @@ public interface DynamicType {
                              */
                             protected abstract static class Adapter<X> extends Simple.Annotatable.AbstractBase<X> {
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public Simple.Annotatable<X> withParameter(TypeDefinition type) {
                                     return materialize().withParameter(type);
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
                                     return materialize().throwing(types);
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                                     return materialize().typeVariable(symbol, bounds);
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                     return materialize().intercept(implementation);
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                     return materialize().withoutCode();
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                     return materialize().defaultValue(annotationValue);
                                 }
 
-                                @Override
+                                /**
+                                 * {@inheritDoc}
+                                 */
                                 public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                     return materialize().defaultValue(value, type);
                                 }
@@ -2556,7 +2657,9 @@ public interface DynamicType {
                      */
                     abstract class AbstractBase<W> extends ExceptionDefinition.AbstractBase<W> implements Simple<W> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Simple.Annotatable<W> withParameter(Type type) {
                             return withParameter(TypeDefinition.Sort.describe(type));
                         }
@@ -2616,27 +2719,37 @@ public interface DynamicType {
                      */
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Initial<W> {
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Simple.Annotatable<W> withParameter(Type type) {
                             return withParameter(TypeDefinition.Sort.describe(type));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ExceptionDefinition<W> withParameters(Type... type) {
                             return withParameters(Arrays.asList(type));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ExceptionDefinition<W> withParameters(List<? extends Type> types) {
                             return withParameters(new TypeList.Generic.ForLoadedTypes(types));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ExceptionDefinition<W> withParameters(TypeDefinition... type) {
                             return withParameters(Arrays.asList(type));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public ExceptionDefinition<W> withParameters(Collection<? extends TypeDefinition> types) {
                             ParameterDefinition.Simple<W> parameterDefinition = this;
                             for (TypeDefinition type : types) {
@@ -2654,27 +2767,37 @@ public interface DynamicType {
                  */
                 abstract class AbstractBase<V> extends ExceptionDefinition.AbstractBase<V> implements ParameterDefinition<V> {
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, ModifierContributor.ForParameter... modifierContributor) {
                         return withParameter(type, name, Arrays.asList(modifierContributor));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
                         return withParameter(type, name, ModifierContributor.Resolver.of(modifierContributors).resolve());
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, int modifiers) {
                         return withParameter(TypeDefinition.Sort.describe(type), name, modifiers);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterDefinition.Annotatable<V> withParameter(TypeDefinition type, String name, ModifierContributor.ForParameter... modifierContributor) {
                         return withParameter(type, name, Arrays.asList(modifierContributor));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ParameterDefinition.Annotatable<V> withParameter(TypeDefinition type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
                         return withParameter(type, name, ModifierContributor.Resolver.of(modifierContributors).resolve());
                     }
@@ -2688,32 +2811,44 @@ public interface DynamicType {
              */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements MethodDefinition<U> {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateMethod(Annotation... annotation) {
                     return annotateMethod(Arrays.asList(annotation));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateMethod(List<? extends Annotation> annotations) {
                     return annotateMethod(new AnnotationList.ForLoadedAnnotations(annotations));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateMethod(AnnotationDescription... annotation) {
                     return annotateMethod(Arrays.asList(annotation));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateParameter(int index, Annotation... annotation) {
                     return annotateParameter(index, Arrays.asList(annotation));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateParameter(int index, List<? extends Annotation> annotations) {
                     return annotateParameter(index, new AnnotationList.ForLoadedAnnotations(annotations));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition<U> annotateParameter(int index, AnnotationDescription... annotation) {
                     return annotateParameter(index, Arrays.asList(annotation));
                 }
@@ -2756,12 +2891,16 @@ public interface DynamicType {
                         this.transformer = transformer;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition<V> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
                         return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), transformer);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
                         return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
@@ -2789,222 +2928,310 @@ public interface DynamicType {
          */
         abstract class AbstractBase<S> implements Builder<S> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InnerTypeDefinition.ForType<S> innerTypeOf(Class<?> type) {
                 return innerTypeOf(TypeDescription.ForLoadedType.of(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InnerTypeDefinition<S> innerTypeOf(Method method) {
                 return innerTypeOf(new MethodDescription.ForLoadedMethod(method));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InnerTypeDefinition<S> innerTypeOf(Constructor<?> constructor) {
                 return innerTypeOf(new MethodDescription.ForLoadedConstructor(constructor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> declaredTypes(Class<?>... type) {
                 return declaredTypes(Arrays.asList(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> declaredTypes(TypeDescription... type) {
                 return declaredTypes(Arrays.asList(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> declaredTypes(List<? extends Class<?>> type) {
                 return declaredTypes(new TypeList.ForLoadedTypes(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> noNestMate() {
                 return nestHost(TargetType.DESCRIPTION);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> nestHost(Class<?> type) {
                 return nestHost(TypeDescription.ForLoadedType.of(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> nestMembers(Class<?>... type) {
                 return nestMembers(Arrays.asList(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> nestMembers(TypeDescription... type) {
                 return nestMembers(Arrays.asList(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> nestMembers(List<? extends Class<?>> types) {
                 return nestMembers(new TypeList.ForLoadedTypes(types));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> annotateType(Annotation... annotation) {
                 return annotateType(Arrays.asList(annotation));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> annotateType(List<? extends Annotation> annotations) {
                 return annotateType(new AnnotationList.ForLoadedAnnotations(annotations));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> annotateType(AnnotationDescription... annotation) {
                 return annotateType(Arrays.asList(annotation));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> modifiers(ModifierContributor.ForType... modifierContributor) {
                 return modifiers(Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> modifiers(Collection<? extends ModifierContributor.ForType> modifierContributors) {
                 return modifiers(ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> merge(ModifierContributor.ForType... modifierContributor) {
                 return merge(Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition.Optional<S> implement(Type... interfaceType) {
                 return implement(Arrays.asList(interfaceType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition.Optional<S> implement(List<? extends Type> interfaceTypes) {
                 return implement(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition.Optional<S> implement(TypeDefinition... interfaceType) {
                 return implement(Arrays.asList(interfaceType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableDefinition<S> typeVariable(String symbol) {
                 return typeVariable(symbol, TypeDescription.Generic.OBJECT);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableDefinition<S> typeVariable(String symbol, Type... bound) {
                 return typeVariable(symbol, Arrays.asList(bound));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableDefinition<S> typeVariable(String symbol, List<? extends Type> bounds) {
                 return typeVariable(symbol, new TypeList.Generic.ForLoadedTypes(bounds));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public TypeVariableDefinition<S> typeVariable(String symbol, TypeDefinition... bound) {
                 return typeVariable(symbol, Arrays.asList(bound));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor) {
                 return defineField(name, type, Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
                 return defineField(name, type, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, int modifiers) {
                 return defineField(name, TypeDefinition.Sort.describe(type), modifiers);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor) {
                 return defineField(name, type, Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
                 return defineField(name, type, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> define(Field field) {
                 return define(new FieldDescription.ForLoadedField(field));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional.Valuable<S> define(FieldDescription field) {
                 return defineField(field.getName(), field.getType(), field.getModifiers());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional<S> serialVersionUid(long serialVersionUid) {
                 return defineField("serialVersionUID", long.class, Visibility.PRIVATE, FieldManifestation.FINAL, Ownership.STATIC).value(serialVersionUid);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Valuable<S> field(ElementMatcher<? super FieldDescription> matcher) {
                 return field(new LatentMatcher.Resolved<FieldDescription>(matcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
                 return ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(ignoredMethods));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor) {
                 return defineMethod(name, returnType, Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
                 return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, int modifiers) {
                 return defineMethod(name, TypeDefinition.Sort.describe(returnType), modifiers);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, TypeDefinition returnType, ModifierContributor.ForMethod... modifierContributor) {
                 return defineMethod(name, returnType, Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
                 return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineConstructor(ModifierContributor.ForMethod... modifierContributor) {
                 return defineConstructor(Arrays.asList(modifierContributor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ParameterDefinition.Initial<S> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
                 return defineConstructor(ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> define(Method method) {
                 return define(new MethodDescription.ForLoadedMethod(method));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> define(Constructor<?> constructor) {
                 return define(new MethodDescription.ForLoadedConstructor(constructor));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> define(MethodDescription methodDescription) {
                 MethodDefinition.ParameterDefinition.Initial<S> initialParameterDefinition = methodDescription.isConstructor()
                         ? defineConstructor(methodDescription.getModifiers())
@@ -3027,24 +3254,32 @@ public interface DynamicType {
                 return typeVariableDefinition;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional<S> defineProperty(String name, Type type) {
                 return defineProperty(name, TypeDefinition.Sort.describe(type));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional<S> defineProperty(String name, Type type, boolean readOnly) {
                 return defineProperty(name, TypeDefinition.Sort.describe(type), readOnly);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional<S> defineProperty(String name, TypeDefinition type) {
                 return defineProperty(name, type, false);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public FieldDefinition.Optional<S> defineProperty(String name, TypeDefinition type, boolean readOnly) {
-                if (name.isEmpty()) {
+                if (name.length() == 0) {
                     throw new IllegalArgumentException("A bean property cannot have an empty name");
                 } else if (type.represents(void.class)) {
                     throw new IllegalArgumentException("A bean property cannot have a void type");
@@ -3068,22 +3303,30 @@ public interface DynamicType {
                         .defineField(name, type, Visibility.PRIVATE, fieldManifestation);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> method(ElementMatcher<? super MethodDescription> matcher) {
                 return invokable(isMethod().and(matcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> constructor(ElementMatcher<? super MethodDescription> matcher) {
                 return invokable(isConstructor().and(matcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public MethodDefinition.ImplementationDefinition<S> invokable(ElementMatcher<? super MethodDescription> matcher) {
                 return invokable(new LatentMatcher.Resolved<MethodDescription>(matcher));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> withHashCodeEquals() {
                 return method(isHashCode())
                         .intercept(HashCodeMethod.usingDefaultOffset().withIgnoredFields(isSynthetic()))
@@ -3091,32 +3334,44 @@ public interface DynamicType {
                         .intercept(EqualsMethod.isolated().withIgnoredFields(isSynthetic()));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> withToString() {
                 return method(isToString()).intercept(ToStringMethod.prefixedBySimpleClassName());
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> require(TypeDescription type, byte[] binaryRepresentation) {
                 return require(type, binaryRepresentation, LoadedTypeInitializer.NoOp.INSTANCE);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> require(TypeDescription type, byte[] binaryRepresentation, LoadedTypeInitializer typeInitializer) {
                 return require(new Default(type, binaryRepresentation, typeInitializer, Collections.<DynamicType>emptyList()));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> require(DynamicType... auxiliaryType) {
                 return require(Arrays.asList(auxiliaryType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Unloaded<S> make(TypePool typePool) {
                 return make(TypeResolutionStrategy.Passive.INSTANCE, typePool);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Unloaded<S> make() {
                 return make(TypeResolutionStrategy.Passive.INSTANCE);
             }
@@ -3128,147 +3383,205 @@ public interface DynamicType {
              */
             public abstract static class Delegator<U> extends AbstractBase<U> {
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> visit(AsmVisitorWrapper asmVisitorWrapper) {
                     return materialize().visit(asmVisitorWrapper);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> initializer(LoadedTypeInitializer loadedTypeInitializer) {
                     return materialize().initializer(loadedTypeInitializer);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
                     return materialize().annotateType(annotations);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> attribute(TypeAttributeAppender typeAttributeAppender) {
                     return materialize().attribute(typeAttributeAppender);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> modifiers(int modifiers) {
                     return materialize().modifiers(modifiers);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
                     return materialize().merge(modifierContributors);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> name(String name) {
                     return materialize().name(name);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> topLevelType() {
                     return materialize().topLevelType();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InnerTypeDefinition.ForType<U> innerTypeOf(TypeDescription type) {
                     return materialize().innerTypeOf(type);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InnerTypeDefinition<U> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
                     return materialize().innerTypeOf(methodDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
                     return materialize().declaredTypes(types);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> nestHost(TypeDescription type) {
                     return materialize().nestHost(type);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
                     return materialize().nestMembers(types);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
                     return materialize().implement(interfaceTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
                     return materialize().initializer(byteCodeAppender);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize().ignoreAlso(ignoredMethods);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize().ignoreAlso(ignoredMethods);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                     return materialize().typeVariable(symbol, bounds);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer) {
                     return materialize().transform(matcher, transformer);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDefinition.Optional.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
                     return materialize().defineField(name, type, modifiers);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDefinition.Valuable<U> field(LatentMatcher<? super FieldDescription> matcher) {
                     return materialize().field(matcher);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ParameterDefinition.Initial<U> defineMethod(String name, TypeDefinition returnType, int modifiers) {
                     return materialize().defineMethod(name, returnType, modifiers);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ParameterDefinition.Initial<U> defineConstructor(int modifiers) {
                     return materialize().defineConstructor(modifiers);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ImplementationDefinition<U> invokable(LatentMatcher<? super MethodDescription> matcher) {
                     return materialize().invokable(matcher);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
                     return materialize().require(auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public DynamicType.Unloaded<U> make() {
                     return materialize().make();
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy) {
                     return materialize().make(typeResolutionStrategy);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Unloaded<U> make(TypePool typePool) {
                     return materialize().make(typePool);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Unloaded<U> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
                     return materialize().make(typeResolutionStrategy, typePool);
                 }
@@ -3415,37 +3728,51 @@ public interface DynamicType {
                     this.auxiliaryTypes = auxiliaryTypes;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDefinition.Optional.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
                     return new FieldDefinitionAdapter(new FieldDescription.Token(name, modifiers, type.asGenericType()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public FieldDefinition.Valuable<U> field(LatentMatcher<? super FieldDescription> matcher) {
                     return new FieldMatchAdapter(matcher);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ParameterDefinition.Initial<U> defineMethod(String name, TypeDefinition returnType, int modifiers) {
                     return new MethodDefinitionAdapter(new MethodDescription.Token(name, modifiers, returnType.asGenericType()));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ParameterDefinition.Initial<U> defineConstructor(int modifiers) {
                     return new MethodDefinitionAdapter(new MethodDescription.Token(modifiers));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ImplementationDefinition<U> invokable(LatentMatcher<? super MethodDescription> matcher) {
                     return new MethodMatchAdapter(matcher);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
                     return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(interfaceTypes)));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                 public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
@@ -3465,7 +3792,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
                     return materialize(instrumentedType.withInitializer(byteCodeAppender),
                             fieldRegistry,
@@ -3484,7 +3813,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> initializer(LoadedTypeInitializer loadedTypeInitializer) {
                     return materialize(instrumentedType.withInitializer(loadedTypeInitializer),
                             fieldRegistry,
@@ -3503,7 +3834,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> name(String name) {
                     return materialize(instrumentedType.withName(name),
                             fieldRegistry,
@@ -3522,7 +3855,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> modifiers(int modifiers) {
                     return materialize(instrumentedType.withModifiers(modifiers),
                             fieldRegistry,
@@ -3541,7 +3876,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
                     return materialize(instrumentedType.withModifiers(ModifierContributor.Resolver.of(modifierContributors).resolve(instrumentedType.getModifiers())),
                             fieldRegistry,
@@ -3560,7 +3897,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> topLevelType() {
                     return Adapter.this.materialize(instrumentedType
                                     .withDeclaringType(TypeDescription.UNDEFINED)
@@ -3582,19 +3921,25 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InnerTypeDefinition.ForType<U> innerTypeOf(TypeDescription type) {
                     return new InnerTypeDefinitionForTypeAdapter(type);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InnerTypeDefinition<U> innerTypeOf(MethodDescription.InDefinedShape methodDescription) {
                     return methodDescription.isTypeInitializer()
                             ? new InnerTypeDefinitionForTypeAdapter(methodDescription.getDeclaringType())
                             : new InnerTypeDefinitionForMethodAdapter(methodDescription);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> declaredTypes(Collection<? extends TypeDescription> types) {
                     return materialize(instrumentedType.withDeclaredTypes(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
                             fieldRegistry,
@@ -3613,7 +3958,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> nestHost(TypeDescription type) {
                     return materialize(instrumentedType.withNestHost(type),
                             fieldRegistry,
@@ -3632,7 +3979,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
                     return materialize(instrumentedType.withNestMembers(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
                             fieldRegistry,
@@ -3651,12 +4000,16 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                     return new TypeVariableDefinitionAdapter(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds))));
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer) {
                     return materialize(instrumentedType.withTypeVariables(matcher, transformer),
                             fieldRegistry,
@@ -3675,7 +4028,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> attribute(TypeAttributeAppender typeAttributeAppender) {
                     return materialize(instrumentedType,
                             fieldRegistry,
@@ -3694,7 +4049,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
                     return materialize(instrumentedType.withAnnotations(new ArrayList<AnnotationDescription>(annotations)),
                             fieldRegistry,
@@ -3713,7 +4070,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> visit(AsmVisitorWrapper asmVisitorWrapper) {
                     return materialize(instrumentedType,
                             fieldRegistry,
@@ -3732,7 +4091,9 @@ public interface DynamicType {
                             auxiliaryTypes);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
                     return materialize(instrumentedType,
                             fieldRegistry,
@@ -3807,7 +4168,9 @@ public interface DynamicType {
                         this.typeDescription = typeDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Builder<U> asAnonymousType() {
                         return Adapter.this.materialize(instrumentedType
                                         .withDeclaringType(TypeDescription.UNDEFINED)
@@ -3829,7 +4192,9 @@ public interface DynamicType {
                                 auxiliaryTypes);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Builder<U> asMemberType() {
                         return Adapter.this.materialize(instrumentedType
                                         .withDeclaringType(typeDescription)
@@ -3895,7 +4260,9 @@ public interface DynamicType {
                         this.methodDescription = methodDescription;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Builder<U> asAnonymousType() {
                         return Adapter.this.materialize(instrumentedType
                                         .withDeclaringType(TypeDescription.UNDEFINED)
@@ -3960,7 +4327,9 @@ public interface DynamicType {
                         this.token = token;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeVariableDefinition<U> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations) {
                         return new TypeVariableDefinitionAdapter(new TypeVariableToken(token.getSymbol(),
                                 token.getBounds(),
@@ -4026,7 +4395,9 @@ public interface DynamicType {
                         this.token = token;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
                                 token.getModifiers(),
@@ -4100,7 +4471,9 @@ public interface DynamicType {
                         this.matcher = matcher;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
                         return attribute(new FieldAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
                     }
@@ -4152,17 +4525,23 @@ public interface DynamicType {
                         this.token = token;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ParameterDefinition.Annotatable<U> withParameter(TypeDefinition type, String name, int modifiers) {
                         return new ParameterAnnotationAdapter(new ParameterDescription.Token(type.asGenericType(), name, modifiers));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Simple.Annotatable<U> withParameter(TypeDefinition type) {
                         return new SimpleParameterAnnotationAdapter(new ParameterDescription.Token(type.asGenericType()));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 token.getModifiers(),
@@ -4175,17 +4554,23 @@ public interface DynamicType {
                                 token.getReceiverType()));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.TypeVariableDefinition.Annotatable<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                         return new TypeVariableAnnotationAdapter(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds))));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
@@ -4198,7 +4583,9 @@ public interface DynamicType {
                                 token.getReceiverType())).materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
@@ -4254,7 +4641,9 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public Annotatable<U> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations) {
                             return new TypeVariableAnnotationAdapter(new TypeVariableToken(token.getSymbol(),
                                     token.getBounds(),
@@ -4282,7 +4671,9 @@ public interface DynamicType {
                             this.token = token;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition.ParameterDefinition.Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
                             return new ParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
@@ -4324,7 +4715,9 @@ public interface DynamicType {
                             this.token = token;
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition.ParameterDefinition.Simple.Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
                             return new SimpleParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
@@ -4376,7 +4769,9 @@ public interface DynamicType {
                             super(handler, methodAttributeAppenderFactory, transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> receiverType(TypeDescription.Generic receiverType) {
                             return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                     token.getModifiers(),
@@ -4389,7 +4784,9 @@ public interface DynamicType {
                                     receiverType)).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                             return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                     token.getModifiers(),
@@ -4402,7 +4799,9 @@ public interface DynamicType {
                                     token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                             List<ParameterDescription.Token> parameterTokens = new ArrayList<ParameterDescription.Token>(token.getParameterTokens());
                             parameterTokens.set(index, new ParameterDescription.Token(token.getParameterTokens().get(index).getType(),
@@ -4471,17 +4870,23 @@ public interface DynamicType {
                         this.matcher = matcher;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return materialize(new MethodRegistry.Handler.ForAnnotationValue(annotationValue));
                     }
@@ -4524,21 +4929,27 @@ public interface DynamicType {
                             super(handler, methodAttributeAppenderFactory, transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> receiverType(TypeDescription.Generic receiverType) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForReceiverType(receiverType)),
                                     transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations))),
                                     transformer);
                         }
 
-                        @Override
+                        /**
+                         * {@inheritDoc}
+                         */
                         public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(index, new ArrayList<AnnotationDescription>(annotations))),
@@ -4612,22 +5023,30 @@ public interface DynamicType {
                                 auxiliaryTypes);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return interfaceType().intercept(implementation);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return interfaceType().withoutCode();
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return interfaceType().defaultValue(annotationValue);
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public <V> MethodDefinition.ReceiverTypeDefinition<U> defaultValue(V value, Class<? extends V> type) {
                         return interfaceType().defaultValue(value, type);
                     }
@@ -4800,12 +5219,16 @@ public interface DynamicType {
             this.auxiliaryTypes = auxiliaryTypes;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription getTypeDescription() {
             return typeDescription;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, byte[]> getAllTypes() {
             Map<TypeDescription, byte[]> allTypes = new LinkedHashMap<TypeDescription, byte[]>();
             allTypes.put(typeDescription, binaryRepresentation);
@@ -4815,7 +5238,9 @@ public interface DynamicType {
             return allTypes;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, LoadedTypeInitializer> getLoadedTypeInitializers() {
             Map<TypeDescription, LoadedTypeInitializer> classLoadingCallbacks = new HashMap<TypeDescription, LoadedTypeInitializer>();
             for (DynamicType auxiliaryType : auxiliaryTypes) {
@@ -4825,7 +5250,9 @@ public interface DynamicType {
             return classLoadingCallbacks;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean hasAliveLoadedTypeInitializers() {
             for (LoadedTypeInitializer loadedTypeInitializer : getLoadedTypeInitializers().values()) {
                 if (loadedTypeInitializer.isAlive()) {
@@ -4835,13 +5262,17 @@ public interface DynamicType {
             return false;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
         public byte[] getBytes() {
             return binaryRepresentation;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, byte[]> getAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
             for (DynamicType auxiliaryType : this.auxiliaryTypes) {
@@ -4851,7 +5282,9 @@ public interface DynamicType {
             return auxiliaryTypes;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
             Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
@@ -4871,7 +5304,9 @@ public interface DynamicType {
             return savedFiles;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public File inject(File sourceJar, File targetJar) throws IOException {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
@@ -4920,7 +5355,9 @@ public interface DynamicType {
             return targetJar;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public File inject(File jar) throws IOException {
             File temporary = inject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX));
             try {
@@ -4947,14 +5384,18 @@ public interface DynamicType {
             return jar;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public File toJar(File file) throws IOException {
             Manifest manifest = new Manifest();
             manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION);
             return toJar(file, manifest);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public File toJar(File file, Manifest manifest) throws IOException {
             if (!file.isFile() && !file.createNewFile()) {
                 throw new IllegalArgumentException("Could not create file: " + file);
@@ -5007,14 +5448,18 @@ public interface DynamicType {
                 this.typeResolutionStrategy = typeResolutionStrategy;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
                 return classLoader instanceof InjectionClassLoader && !((InjectionClassLoader) classLoader).isSealed()
                         ? load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE)
                         : load(classLoader, ClassLoadingStrategy.Default.WRAPPER);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public <S extends ClassLoader> DynamicType.Loaded<T> load(S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
@@ -5023,12 +5468,16 @@ public interface DynamicType {
                         typeResolutionStrategy.initialize(this, classLoader, classLoadingStrategy));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Unloaded<T> include(DynamicType... dynamicType) {
                 return include(Arrays.asList(dynamicType));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public DynamicType.Unloaded<T> include(List<? extends DynamicType> dynamicType) {
                 return new Default.Unloaded<T>(typeDescription,
                         binaryRepresentation,
@@ -5070,13 +5519,17 @@ public interface DynamicType {
                 this.loadedTypes = loadedTypes;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             @SuppressWarnings("unchecked")
             public Class<? extends T> getLoaded() {
                 return (Class<? extends T>) loadedTypes.get(typeDescription);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Map<TypeDescription, Class<?>> getLoadedAuxiliaryTypes() {
                 Map<TypeDescription, Class<?>> loadedAuxiliaryTypes = new HashMap<TypeDescription, Class<?>>(
                         loadedTypes);

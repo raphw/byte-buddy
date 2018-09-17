@@ -48,7 +48,6 @@ public class ImplementationContextDefaultOtherTest {
     @Test(expected = UnsupportedOperationException.class)
     public void testDefaultContext() throws Exception {
         new Implementation.Context.Default.DelegationRecord(mock(MethodDescription.InDefinedShape.class), Visibility.PACKAGE_PRIVATE) {
-            @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                 throw new AssertionError();
             }

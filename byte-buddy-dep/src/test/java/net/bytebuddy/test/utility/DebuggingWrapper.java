@@ -46,17 +46,14 @@ public class DebuggingWrapper implements AsmVisitorWrapper {
         return new DebuggingWrapper(System.out, new Textifier(), check);
     }
 
-    @Override
     public int mergeWriter(int flags) {
         return flags;
     }
 
-    @Override
     public int mergeReader(int flags) {
         return flags;
     }
 
-    @Override
     public ClassVisitor wrap(TypeDescription instrumentedType,
                              ClassVisitor classVisitor,
                              Implementation.Context implementationContext,

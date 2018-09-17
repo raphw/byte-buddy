@@ -38,7 +38,9 @@ public interface PackageDefinitionStrategy {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Undefined.INSTANCE;
         }
@@ -54,7 +56,9 @@ public interface PackageDefinitionStrategy {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Trivial.INSTANCE;
         }
@@ -146,47 +150,65 @@ public interface PackageDefinitionStrategy {
              */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isDefined() {
                 return false;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationTitle() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVersion() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVendor() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationTitle() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVersion() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVendor() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public URL getSealBase() {
                 throw new IllegalStateException("Cannot read property of undefined package");
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isCompatibleTo(Package definedPackage) {
                 throw new IllegalStateException("Cannot check compatibility to undefined package");
             }
@@ -212,47 +234,65 @@ public interface PackageDefinitionStrategy {
              */
             private static final URL NOT_SEALED = null;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isDefined() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationTitle() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVersion() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVendor() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationTitle() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVersion() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVendor() {
                 return NO_VALUE;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public URL getSealBase() {
                 return NOT_SEALED;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isCompatibleTo(Package definedPackage) {
                 return true;
             }
@@ -325,53 +365,84 @@ public interface PackageDefinitionStrategy {
                 this.sealBase = sealBase;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isDefined() {
                 return true;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationTitle() {
                 return specificationTitle;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVersion() {
                 return specificationVersion;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getSpecificationVendor() {
                 return specificationVendor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationTitle() {
                 return implementationTitle;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVersion() {
                 return implementationVersion;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public String getImplementationVendor() {
                 return implementationVendor;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public URL getSealBase() {
                 return sealBase;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isCompatibleTo(Package definedPackage) {
                 if (sealBase == null) {
                     return !definedPackage.isSealed();
                 } else {
                     return definedPackage.isSealed(sealBase);
                 }
+            }
+
+            @Override
+            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+            public int hashCode() {
+                int result = specificationTitle != null ? specificationTitle.hashCode() : 0;
+                result = 31 * result + (specificationVersion != null ? specificationVersion.hashCode() : 0);
+                result = 31 * result + (specificationVendor != null ? specificationVendor.hashCode() : 0);
+                result = 31 * result + (implementationTitle != null ? implementationTitle.hashCode() : 0);
+                result = 31 * result + (implementationVersion != null ? implementationVersion.hashCode() : 0);
+                result = 31 * result + (implementationVendor != null ? implementationVendor.hashCode() : 0);
+                result = 31 * result + (sealBase != null ? sealBase.hashCode() : 0);
+                return result;
             }
 
             @Override
@@ -390,19 +461,6 @@ public interface PackageDefinitionStrategy {
                         && !(implementationVersion != null ? !implementationVersion.equals(simple.implementationVersion) : simple.implementationVersion != null)
                         && !(implementationVendor != null ? !implementationVendor.equals(simple.implementationVendor) : simple.implementationVendor != null)
                         && !(sealBase != null ? !sealBase.equals(simple.sealBase) : simple.sealBase != null);
-            }
-
-            @Override
-            @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-            public int hashCode() {
-                int result = specificationTitle != null ? specificationTitle.hashCode() : 0;
-                result = 31 * result + (specificationVersion != null ? specificationVersion.hashCode() : 0);
-                result = 31 * result + (specificationVendor != null ? specificationVendor.hashCode() : 0);
-                result = 31 * result + (implementationTitle != null ? implementationTitle.hashCode() : 0);
-                result = 31 * result + (implementationVersion != null ? implementationVersion.hashCode() : 0);
-                result = 31 * result + (implementationVendor != null ? implementationVendor.hashCode() : 0);
-                result = 31 * result + (sealBase != null ? sealBase.hashCode() : 0);
-                return result;
             }
         }
     }
@@ -457,7 +515,9 @@ public interface PackageDefinitionStrategy {
             this.sealBaseLocator = sealBaseLocator;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             InputStream inputStream = classLoader.getResourceAsStream(MANIFEST_FILE);
             if (inputStream != null) {
@@ -524,7 +584,9 @@ public interface PackageDefinitionStrategy {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
                 }
@@ -549,9 +611,17 @@ public interface PackageDefinitionStrategy {
                     this.sealBase = sealBase;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return sealBase;
+                }
+
+                @Override
+                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
+                public int hashCode() {
+                    return sealBase.hashCode();
                 }
 
                 @Override
@@ -564,12 +634,6 @@ public interface PackageDefinitionStrategy {
                     }
                     ForFixedValue forFixedValue = (ForFixedValue) other;
                     return sealBase.equals(forFixedValue.sealBase);
-                }
-
-                @Override
-                @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
-                public int hashCode() {
-                    return sealBase.hashCode();
                 }
             }
 
@@ -628,7 +692,9 @@ public interface PackageDefinitionStrategy {
                     this.fallback = fallback;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     URL url = classLoader.getResource(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
                     if (url != null) {

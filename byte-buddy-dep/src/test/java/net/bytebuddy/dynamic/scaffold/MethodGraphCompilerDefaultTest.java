@@ -1153,7 +1153,6 @@ public class MethodGraphCompilerDefaultTest {
 
         interface DominantIntermediate extends InterfaceBase, AmbiguousInterfaceBase {
 
-            @Override
             void foo();
         }
 
@@ -1205,18 +1204,15 @@ public class MethodGraphCompilerDefaultTest {
 
         interface Inner extends GenericInterfaceBase<Void> {
 
-            @Override
             void foo(Void t);
         }
 
         interface Intermediate<T extends Number> extends GenericInterfaceBase<T> {
 
-            @Override
             void foo(T t);
 
             interface Inner extends Intermediate<Integer> {
 
-                @Override
                 void foo(Integer t);
             }
         }
@@ -1228,18 +1224,15 @@ public class MethodGraphCompilerDefaultTest {
 
         interface Inner extends ReturnTypeInterfaceBase {
 
-            @Override
             Void foo();
         }
 
         interface Intermediate extends ReturnTypeInterfaceBase {
 
-            @Override
             Number foo();
 
             interface Inner extends Intermediate {
 
-                @Override
                 Integer foo();
             }
         }
@@ -1251,18 +1244,15 @@ public class MethodGraphCompilerDefaultTest {
 
         interface Inner extends GenericWithReturnTypeInterfaceBase<Void> {
 
-            @Override
             Void foo(Void t);
         }
 
         interface Intermediate<T extends Number> extends GenericWithReturnTypeInterfaceBase<T> {
 
-            @Override
             Number foo(T t);
 
             interface Inner extends Intermediate<Integer> {
 
-                @Override
                 Integer foo(Integer t);
             }
         }
@@ -1342,7 +1332,6 @@ public class MethodGraphCompilerDefaultTest {
 
         static class Inner extends ClassBase {
 
-            @Override
             public void foo() {
                 /* empty */
             }
@@ -1361,7 +1350,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Inner extends GenericClassBase<Void> {
 
-            @Override
             public void foo(Void t) {
                 /* empty */
             }
@@ -1369,14 +1357,12 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Intermediate<T extends Number> extends GenericClassBase<T> {
 
-            @Override
             public void foo(T t) {
                 /* empty */
             }
 
             public static class Inner extends Intermediate<Integer> {
 
-                @Override
                 public void foo(Integer t) {
                     /* empty */
                 }
@@ -1392,7 +1378,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Inner extends GenericReturnClassBase<Void> {
 
-            @Override
             public Void foo() {
                 return null;
             }
@@ -1400,14 +1385,12 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Intermediate<T extends Number> extends GenericReturnClassBase<T> {
 
-            @Override
             public T foo() {
                 return null;
             }
 
             public static class Inner extends Intermediate<Integer> {
 
-                @Override
                 public Integer foo() {
                     return null;
                 }
@@ -1423,7 +1406,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Inner extends ReturnTypeClassBase {
 
-            @Override
             public Void foo() {
                 return null;
             }
@@ -1431,14 +1413,12 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Intermediate extends ReturnTypeClassBase {
 
-            @Override
             public Number foo() {
                 return null;
             }
 
             public static class Inner extends Intermediate {
 
-                @Override
                 public Integer foo() {
                     return null;
                 }
@@ -1454,7 +1434,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Inner extends GenericWithReturnTypeClassBase<Void> {
 
-            @Override
             public Void foo(Void t) {
                 return null;
             }
@@ -1462,14 +1441,12 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Intermediate<T extends Number> extends GenericWithReturnTypeClassBase<T> {
 
-            @Override
             public Number foo(T t) {
                 return null;
             }
 
             public static class Inner extends Intermediate<Integer> {
 
-                @Override
                 public Integer foo(Integer t) {
                     return null;
                 }
@@ -1586,7 +1563,6 @@ public class MethodGraphCompilerDefaultTest {
 
     static class GenericVisibilityBridge extends GenericVisibilityBridgeBase<Void> {
 
-        @Override
         public void foo(Void aVoid) {
             /* empty */
         }
@@ -1608,7 +1584,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Inner extends MethodClassConvergence<Void> {
 
-            @Override
             public Void foo(Void arg) {
                 return null;
             }
@@ -1628,7 +1603,6 @@ public class MethodGraphCompilerDefaultTest {
 
     static class MethodConvergenceVisibilityBridgeIntermediate extends MethodConvergenceVisibilityBridgeBase<Void> {
 
-        @Override
         public Void foo(Void arg) {
             return null;
         }
@@ -1646,7 +1620,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Intermediate<T extends Number> extends RawType<T> {
 
-            @Override
             public void foo(T t) {
                 /* empty */
             }
@@ -1654,7 +1627,6 @@ public class MethodGraphCompilerDefaultTest {
 
         public static class Raw extends Intermediate {
 
-            @Override
             public void foo(Number t) {
                 /* empty */
             }

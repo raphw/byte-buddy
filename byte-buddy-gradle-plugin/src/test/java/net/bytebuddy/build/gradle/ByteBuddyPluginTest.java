@@ -10,10 +10,8 @@ import org.junit.Rule;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.*;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ByteBuddyPluginTest {
 
@@ -58,11 +56,9 @@ public class ByteBuddyPluginTest {
                 "import static net.bytebuddy.matcher.ElementMatchers.named;\n" +
                 "\n" +
                 "public class SimplePlugin implements Plugin {\n" +
-                "    @Override\n" +
                 "    public boolean matches(TypeDescription target) {\n" +
                 "        return target.getName().equals(\"net.bytebuddy.test.Sample\");\n" +
                 "    }\n" +
-                "    @Override\n" +
                 "    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {\n" +
                 "        return builder.method(named(\"foo\")).intercept(FixedValue.value(\"qux\"));\n" +
                 "    }\n" +

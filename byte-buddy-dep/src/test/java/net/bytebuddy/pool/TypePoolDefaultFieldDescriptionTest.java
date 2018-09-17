@@ -24,7 +24,6 @@ public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptio
         typePool.clear();
     }
 
-    @Override
     protected FieldDescription.InDefinedShape describe(Field field) {
         return typePool.describe(field.getDeclaringClass().getName())
                 .resolve()

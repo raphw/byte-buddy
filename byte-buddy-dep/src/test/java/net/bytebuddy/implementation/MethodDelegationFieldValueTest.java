@@ -173,7 +173,6 @@ public class MethodDelegationFieldValueTest {
 
         public Object foo;
 
-        @Override
         public Object foo() {
             return null;
         }
@@ -183,7 +182,6 @@ public class MethodDelegationFieldValueTest {
 
         private Object foo;
 
-        @Override
         public Object foo() {
             return null;
         }

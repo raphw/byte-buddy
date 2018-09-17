@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.pool.TypePool;
@@ -69,37 +68,30 @@ public class ClassFileExtraction {
 
     private static class IllegalContext implements Implementation.Context {
 
-        @Override
         public TypeDescription register(AuxiliaryType auxiliaryType) {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public TypeDescription getInstrumentedType() {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public ClassFileVersion getClassFileVersion() {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
             throw new AssertionError("Did not expect method call");
         }
 
-        @Override
         public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
             throw new AssertionError("Did not expect method call");
         }

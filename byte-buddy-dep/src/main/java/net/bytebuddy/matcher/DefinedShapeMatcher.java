@@ -27,12 +27,16 @@ public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, 
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.asDefined());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "isDefinedAs(" + matcher + ')';
     }

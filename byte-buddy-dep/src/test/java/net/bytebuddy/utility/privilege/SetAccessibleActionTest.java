@@ -34,7 +34,6 @@ public class SetAccessibleActionTest {
             this.accessibleObject = accessibleObject;
         }
 
-        @Override
         public void setAccessible(boolean flag) {
             accessible = flag;
             accessibleObject.setAccessible(flag);

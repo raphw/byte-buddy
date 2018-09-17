@@ -35,7 +35,9 @@ public interface TypeAttributeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
@@ -53,7 +55,9 @@ public interface TypeAttributeAppender {
          */
         INSTANCE;
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             annotationAppender = AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
@@ -119,7 +123,9 @@ public interface TypeAttributeAppender {
                 this.interfaceTypeIndex = interfaceTypeIndex;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
                 AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
                 AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
@@ -163,7 +169,9 @@ public interface TypeAttributeAppender {
             this.annotations = annotations;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : annotations) {
@@ -208,7 +216,9 @@ public interface TypeAttributeAppender {
             }
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilter);

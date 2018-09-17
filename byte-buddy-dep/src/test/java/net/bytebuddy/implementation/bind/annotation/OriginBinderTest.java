@@ -42,7 +42,6 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         super(Origin.class);
     }
 
-    @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -52,7 +51,6 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
-    @Override
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<Origin> getSimpleBinder() {
         return Origin.Binder.INSTANCE;
     }

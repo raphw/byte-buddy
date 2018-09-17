@@ -15,13 +15,11 @@ import static org.mockito.Mockito.mock;
 
 public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
 
-    @Override
     protected MethodDescription.InDefinedShape describe(Method method) {
         return new MethodDescription.Latent(TypeDescription.ForLoadedType.of(method.getDeclaringClass()),
                 new MethodDescription.ForLoadedMethod(method).asToken(ElementMatchers.is(method.getDeclaringClass())));
     }
 
-    @Override
     protected MethodDescription.InDefinedShape describe(Constructor<?> constructor) {
         return new MethodDescription.Latent(TypeDescription.ForLoadedType.of(constructor.getDeclaringClass()),
                 new MethodDescription.ForLoadedConstructor(constructor).asToken(ElementMatchers.is(constructor.getDeclaringClass())));
@@ -39,7 +37,6 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
         assertThat(typeInitializer.getModifiers(), is(MethodDescription.TYPE_INITIALIZER_MODIFIER));
     }
 
-    @Override
     protected boolean canReadDebugInformation() {
         return false;
     }

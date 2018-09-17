@@ -65,7 +65,6 @@ public class AnnotationDescriptionLatentTest extends AbstractAnnotationDescripti
         return builder.build();
     }
 
-    @Override
     protected AnnotationDescription describe(Annotation annotation, Class<?> declaringType) {
         try {
             return build(annotation);

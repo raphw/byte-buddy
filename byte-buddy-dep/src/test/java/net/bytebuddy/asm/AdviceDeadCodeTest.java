@@ -118,17 +118,14 @@ public class AdviceDeadCodeTest {
 
     private static class DeadStringAppender implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitInsn(Opcodes.ARETURN);
@@ -141,17 +138,14 @@ public class AdviceDeadCodeTest {
 
     private static class DeadVoidAppender implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitInsn(Opcodes.RETURN);
             methodVisitor.visitInsn(Opcodes.POP); // dead code
@@ -162,17 +156,14 @@ public class AdviceDeadCodeTest {
 
     private static class DeadExchangeAppender implements Implementation, ByteCodeAppender {
 
-        @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return this;
         }
 
-        @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType;
         }
 
-        @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
             methodVisitor.visitInsn(Opcodes.ARETURN);

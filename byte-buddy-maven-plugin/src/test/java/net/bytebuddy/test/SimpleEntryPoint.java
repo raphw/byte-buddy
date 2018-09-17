@@ -10,12 +10,10 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 
 public class SimpleEntryPoint implements EntryPoint {
 
-    @Override
     public ByteBuddy byteBuddy(ClassFileVersion classFileVersion) {
         return new ByteBuddy(classFileVersion);
     }
 
-    @Override
     public DynamicType.Builder<?> transform(TypeDescription typeDescription,
                                             ByteBuddy byteBuddy,
                                             ClassFileLocator classFileLocator,

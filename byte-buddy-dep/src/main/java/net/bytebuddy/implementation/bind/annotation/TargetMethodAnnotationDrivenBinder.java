@@ -55,7 +55,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         return new TargetMethodAnnotationDrivenBinder(DelegationProcessor.of(parameterBinders));
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public MethodDelegationBinder.Record compile(MethodDescription candidate) {
         if (IgnoreForBinding.Verifier.check(candidate)) {
             return MethodDelegationBinder.Record.Illegal.INSTANCE;
@@ -101,7 +103,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             this.typing = typing;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodBinding bind(Implementation.Target implementationTarget,
                                   MethodDescription source,
                                   MethodDelegationBinder.TerminationHandler terminationHandler,
@@ -124,7 +128,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return methodDelegationBindingBuilder.build(methodTermination);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public String toString() {
             return candidate.toString();
         }
@@ -202,7 +208,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         abstract class ForFixedValue<S extends Annotation> implements ParameterBinder<S> {
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterBinding<?> bind(AnnotationDescription.Loadable<S> annotation,
                                             MethodDescription source,
                                             ParameterDescription target,
@@ -329,7 +337,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     return new OfConstant<V>(type, value);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Class<U> getHandledType() {
                     return type;
                 }
@@ -372,7 +382,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ParameterBinding<?> bind(AnnotationDescription.Loadable<S> annotation,
                                             MethodDescription source,
                                             ParameterDescription target,
@@ -547,12 +559,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     this.typing = typing;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isBound() {
                     return false;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterBinding<?> bind(MethodDescription source, Implementation.Target implementationTarget, Assigner assigner) {
                     return Argument.Binder.INSTANCE.bind(AnnotationDescription.ForLoadedAnnotation.<Argument>of(new DefaultArgument(target.getIndex())),
                             source,
@@ -591,30 +607,36 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                         this.parameterIndex = parameterIndex;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public int value() {
                         return parameterIndex;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public BindingMechanic bindingMechanic() {
                         return BindingMechanic.UNIQUE;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Class<Argument> annotationType() {
                         return Argument.class;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
                     }
 
                     @Override
                     public int hashCode() {
                         return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode())
                                 + ((127 * VALUE.hashCode()) ^ parameterIndex);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
                     }
 
                     @Override
@@ -693,12 +715,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             typing);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isBound() {
                     return true;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public ParameterBinding<?> bind(MethodDescription source, Implementation.Target implementationTarget, Assigner assigner) {
                     return parameterBinder.bind(annotation,
                             source,

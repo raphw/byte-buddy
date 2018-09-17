@@ -70,7 +70,6 @@ public class ToStringPluginTest {
     @ToStringPlugin.Enhance
     public static class RedundantSample {
 
-        @Override
         public String toString() {
             return BAR;
         }

@@ -13,10 +13,8 @@ public class MockitoRule implements TestRule {
         this.target = target;
     }
 
-    @Override
     public Statement apply(final Statement base, Description description) {
         return new Statement() {
-            @Override
             public void evaluate() throws Throwable {
                 MockitoAnnotations.initMocks(target);
                 base.evaluate();

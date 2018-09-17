@@ -213,17 +213,14 @@ public class ByteArrayClassLoaderChildFirstTest {
             this.newName = newName;
         }
 
-        @Override
         public int mergeWriter(int flags) {
             return flags;
         }
 
-        @Override
         public int mergeReader(int flags) {
             return flags;
         }
 
-        @Override
         public ClassVisitor wrap(TypeDescription instrumentedType,
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,

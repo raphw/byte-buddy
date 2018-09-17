@@ -25,12 +25,16 @@ public class SignatureTokenMatcher<T extends MethodDescription> extends ElementM
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.asSignatureToken());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "signature(" + matcher + ")";
     }

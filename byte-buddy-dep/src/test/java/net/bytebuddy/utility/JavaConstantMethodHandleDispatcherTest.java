@@ -2,11 +2,6 @@ package net.bytebuddy.utility;
 
 import org.junit.Test;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Iterator;
-
 import static org.mockito.Mockito.mock;
 
 public class JavaConstantMethodHandleDispatcherTest {

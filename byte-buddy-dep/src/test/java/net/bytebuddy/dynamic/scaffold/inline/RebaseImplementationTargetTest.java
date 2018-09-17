@@ -46,7 +46,6 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Mock
     private TypeDescription.Generic superClass;
 
-    @Override
     @Before
     public void setUp() throws Exception {
         when(methodGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
@@ -64,7 +63,6 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         super.setUp();
     }
 
-    @Override
     protected Implementation.Target makeImplementationTarget() {
         return new RebaseImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, Collections.singletonMap(rebasedSignatureToken, resolution));
     }

@@ -105,12 +105,16 @@ public @interface DefaultMethod {
             NULL_IF_IMPOSSIBLE = methodList.filter(named("nullIfImpossible")).getOnly();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Class<DefaultMethod> getHandledType() {
             return DefaultMethod.class;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public MethodDelegationBinder.ParameterBinding<?> bind(final AnnotationDescription.Loadable<DefaultMethod> annotation,
                                                                MethodDescription source,
                                                                ParameterDescription target,
@@ -164,7 +168,9 @@ public @interface DefaultMethod {
                  */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
@@ -190,7 +196,9 @@ public @interface DefaultMethod {
                     this.typeDescription = typeDescription;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
@@ -234,12 +242,16 @@ public @interface DefaultMethod {
                 this.privileged = privileged;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean isValid() {
                 return specialMethodInvocation.isValid();
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 StackManipulation methodConstant = privileged
                         ? MethodConstant.ofPrivileged(implementationContext.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.PUBLIC))

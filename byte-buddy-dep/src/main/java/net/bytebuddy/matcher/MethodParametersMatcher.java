@@ -27,12 +27,16 @@ public class MethodParametersMatcher<T extends MethodDescription> extends Elemen
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getParameters());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "hasParameter(" + matcher + ")";
     }

@@ -24,12 +24,16 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         this.matches = matches;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matches;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return Boolean.toString(matches);
     }

@@ -39,7 +39,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         this.originTypeResolver = originTypeResolver;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
         return token.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
                 ? invokeConstructor(token)
@@ -75,7 +77,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public TypeDefinition getOriginType() {
         return originTypeResolver.identify(instrumentedType);
     }
@@ -144,7 +148,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
             this.originTypeResolver = originTypeResolver;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), originTypeResolver);
         }

@@ -54,7 +54,9 @@ public interface LatentMatcher<T> {
             this.inverted = inverted;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
             // Casting is required by some Java 6 compilers.
@@ -86,7 +88,9 @@ public interface LatentMatcher<T> {
             this.matcher = matcher;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             return matcher;
         }
@@ -112,7 +116,9 @@ public interface LatentMatcher<T> {
             this.token = token;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
             return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
@@ -137,7 +143,9 @@ public interface LatentMatcher<T> {
                 this.signatureToken = signatureToken;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(FieldDescription target) {
                 return target.asSignatureToken().equals(signatureToken);
             }
@@ -164,7 +172,9 @@ public interface LatentMatcher<T> {
             this.token = token;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
             return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
@@ -189,7 +199,9 @@ public interface LatentMatcher<T> {
                 this.signatureToken = signatureToken;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public boolean matches(MethodDescription target) {
                 return target.asSignatureToken().equals(signatureToken);
             }
@@ -228,7 +240,9 @@ public interface LatentMatcher<T> {
             this.matchers = matchers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             ElementMatcher.Junction<S> matcher = any();
             for (LatentMatcher<? super S> latentMatcher : matchers) {
@@ -270,7 +284,9 @@ public interface LatentMatcher<T> {
             this.matchers = matchers;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             ElementMatcher.Junction<S> matcher = none();
             for (LatentMatcher<? super S> latentMatcher : matchers) {

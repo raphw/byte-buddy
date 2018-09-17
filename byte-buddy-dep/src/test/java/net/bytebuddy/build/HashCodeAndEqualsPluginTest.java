@@ -8,8 +8,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.EqualsMethod;
-import net.bytebuddy.implementation.EqualsMethodOtherTest;
-
 import org.junit.Test;
 
 import java.util.Comparator;
@@ -126,10 +124,10 @@ public class HashCodeAndEqualsPluginTest {
     @Test
     public void testPluginFieldOrder() throws Exception {
         Class<?> type = new HashCodeAndEqualsPlugin.WithNonNullableFields()
-            .apply(new ByteBuddy().redefine(FieldSortOrderSample.class), TypeDescription.ForLoadedType.of(FieldSortOrderSample.class), ClassFileLocator.ForClassLoader.of(FieldSortOrderSample.class.getClassLoader()))
-            .make()
-            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .apply(new ByteBuddy().redefine(FieldSortOrderSample.class), TypeDescription.ForLoadedType.of(FieldSortOrderSample.class), ClassFileLocator.ForClassLoader.of(FieldSortOrderSample.class.getClassLoader()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         Object left = type.getDeclaredConstructor().newInstance(), right = type.getDeclaredConstructor().newInstance();
         type.getDeclaredField(QUX).set(left, FOO);
         type.getDeclaredField(QUX).set(right, BAR);
@@ -172,7 +170,7 @@ public class HashCodeAndEqualsPluginTest {
         Comparator<FieldDescription.InDefinedShape> comparator = HashCodeAndEqualsPlugin.AnnotationOrderComparator.INSTANCE;
         FieldDescription.InDefinedShape left = mock(FieldDescription.InDefinedShape.class), right = mock(FieldDescription.InDefinedShape.class);
         when(left.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
-        .define("value", 0)
+                .define("value", 0)
                 .build()));
         when(right.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(AnnotationDescription.Builder.ofType(HashCodeAndEqualsPlugin.Sorted.class)
                 .define("value", 0)

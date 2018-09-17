@@ -518,7 +518,9 @@ public class MethodDelegation implements Implementation.Composable {
                 assigner);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,
@@ -528,7 +530,9 @@ public class MethodDelegation implements Implementation.Composable {
                 assigner), implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public Composable andThen(Composable implementation) {
         return new Compound.Composable(new MethodDelegation(implementationDelegate,
                 parameterBinders,
@@ -538,12 +542,16 @@ public class MethodDelegation implements Implementation.Composable {
                 assigner), implementation);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
         return implementationDelegate.prepare(instrumentedType);
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public ByteCodeAppender appender(Target implementationTarget) {
         ImplementationDelegate.Compiled compiled = implementationDelegate.compile(implementationTarget.getInstrumentedType());
         return new Appender(implementationTarget,
@@ -618,17 +626,23 @@ public class MethodDelegation implements Implementation.Composable {
                     this.records = records;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation prepare(MethodDescription instrumentedMethod) {
                     return StackManipulation.Trivial.INSTANCE;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDelegationBinder.MethodInvoker invoke() {
                     return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
@@ -661,7 +675,9 @@ public class MethodDelegation implements Implementation.Composable {
                     this.records = records;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation prepare(MethodDescription instrumentedMethod) {
                     if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
                         throw new IllegalStateException("Cannot read " + fieldDescription + " from " + instrumentedMethod);
@@ -671,12 +687,16 @@ public class MethodDelegation implements Implementation.Composable {
                             : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDelegationBinder.MethodInvoker invoke() {
                     return new MethodDelegationBinder.MethodInvoker.Virtual(fieldDescription.getType().asErasure());
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
@@ -709,17 +729,23 @@ public class MethodDelegation implements Implementation.Composable {
                     this.records = records;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public StackManipulation prepare(MethodDescription instrumentedMethod) {
                     return new StackManipulation.Compound(TypeCreation.of(typeDescription), Duplication.SINGLE);
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public MethodDelegationBinder.MethodInvoker invoke() {
                     return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
@@ -761,12 +787,16 @@ public class MethodDelegation implements Implementation.Composable {
                 return new ForStaticMethod(records);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public ImplementationDelegate.Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForStaticCall(records);
             }
@@ -816,7 +846,9 @@ public class MethodDelegation implements Implementation.Composable {
                 this.matcher = matcher;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(TypeDescription instrumentedType) {
                 FieldDescription fieldDescription = resolve(instrumentedType);
                 if (!fieldDescription.getType().asErasure().isVisibleTo(instrumentedType)) {
@@ -880,7 +912,9 @@ public class MethodDelegation implements Implementation.Composable {
                     this.fieldType = fieldType;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
                             .withField(new FieldDescription.Token(fieldName,
@@ -930,7 +964,9 @@ public class MethodDelegation implements Implementation.Composable {
                     this.fieldLocatorFactory = fieldLocatorFactory;
                 }
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
@@ -992,12 +1028,16 @@ public class MethodDelegation implements Implementation.Composable {
                 return new ForConstruction(typeDescription, records);
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForConstruction(typeDescription, records);
             }
@@ -1056,7 +1096,9 @@ public class MethodDelegation implements Implementation.Composable {
             this.compiled = compiled;
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     compiled.prepare(instrumentedMethod),

@@ -26,12 +26,16 @@ public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends Elem
         this.matcher = matcher;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public boolean matches(T target) {
         return matcher.matches(target.getDeclaredAnnotations());
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public String toString() {
         return "declaresAnnotations(" + matcher + ")";
     }

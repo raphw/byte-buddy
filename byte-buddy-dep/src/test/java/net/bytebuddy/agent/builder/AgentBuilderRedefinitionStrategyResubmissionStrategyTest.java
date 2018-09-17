@@ -76,7 +76,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformation() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -126,7 +125,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinition() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -159,7 +157,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verify(instrumentation).redefineClasses(Mockito.argThat(new ArgumentMatcher<ClassDefinition>() {
-            @Override
             public boolean matches(ClassDefinition classDefinition) {
                 return classDefinition.getDefinitionClass() == Foo.class && Arrays.equals(classDefinition.getDefinitionClassFile(), new byte[]{1, 2, 3});
             }
@@ -184,7 +181,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationNonModifiable() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(false);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -227,7 +223,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionNonModifiable() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(false);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -273,7 +268,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testNoRetransformation() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -310,7 +304,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationNonAlive() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -348,7 +341,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionNonAlive() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -389,7 +381,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationNonMatched() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -437,7 +428,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionNonMatched() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -488,7 +478,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationAlreadyLoaded() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -529,7 +518,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionAlreadyLoaded() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -573,7 +561,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationNonMatchedError() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -615,7 +602,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionNonMatchedError() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -660,7 +646,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRetransformationError() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }
@@ -711,7 +696,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testRedefinitionError() throws Exception {
         when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
         when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
-            @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return Collections.singleton(invocationOnMock.getArgument(0));
             }

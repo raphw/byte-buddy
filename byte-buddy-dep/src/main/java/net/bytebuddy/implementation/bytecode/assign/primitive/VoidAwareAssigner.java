@@ -36,7 +36,9 @@ public class VoidAwareAssigner implements Assigner {
         this.chained = chained;
     }
 
-    @Override
+    /**
+     * {@inheritDoc}
+     */
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
         if (source.represents(void.class) && target.represents(void.class)) {
             return StackManipulation.Trivial.INSTANCE;
