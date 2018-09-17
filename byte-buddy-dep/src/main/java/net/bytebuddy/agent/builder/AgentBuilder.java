@@ -63,6 +63,7 @@ import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -4502,7 +4503,7 @@ public interface AgentBuilder {
         RETRANSFORMATION(true, true) {
             @Override
             protected void check(Instrumentation instrumentation) {
-                if (!instrumentation.isRetransformClassesSupported()) {
+                if (!DISPATCHER.isRetransformClassesSupported(instrumentation)) {
                     throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
                 }
             }
@@ -4512,6 +4513,11 @@ public interface AgentBuilder {
                 return new Collector.ForRetransformation();
             }
         };
+
+        /**
+         * A dispatcher to use for interacting with the instrumentation API.
+         */
+        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * Indicates that this redefinition strategy is enabled.
@@ -4618,7 +4624,7 @@ public interface AgentBuilder {
                                     type,
                                     type,
                                     module,
-                                    !instrumentation.isModifiableClass(type));
+                                    !DISPATCHER.isModifiableClass(instrumentation, type));
                         } catch (Throwable throwable) {
                             if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
                                 collector.consider(typeMatcher,
@@ -6296,7 +6302,7 @@ public interface AgentBuilder {
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             try {
-                                                if (instrumentation.isModifiableClass(type) && matcher.matches(TypeDescription.ForLoadedType.of(type),
+                                                if (DISPATCHER.isModifiableClass(instrumentation, type) && matcher.matches(TypeDescription.ForLoadedType.of(type),
                                                         type.getClassLoader(),
                                                         JavaModule.ofType(type),
                                                         type,
@@ -6487,6 +6493,172 @@ public interface AgentBuilder {
                  */
                 protected InstallationListener getInstallationListener() {
                     return installationListener;
+                }
+            }
+        }
+
+        /**
+         * A dispatcher for interacting with the instrumentation API.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Checks if the supplied type is modifiable.
+             *
+             * @param instrumentation The instrumentation instance available.
+             * @param type            The type to check for modifiability.
+             * @return {@code true} if the supplied type is modifiable.
+             */
+            boolean isModifiableClass(Instrumentation instrumentation, Class<?> type);
+
+            /**
+             * Checks if retransformation is supported for the supplied instrumentation instance.
+             *
+             * @param instrumentation The instrumentation instance available.
+             * @return {@code true} if the supplied instance supports retransformation.
+             */
+            boolean isRetransformClassesSupported(Instrumentation instrumentation);
+
+            /**
+             * Retransforms the supplied classes.
+             *
+             * @param instrumentation The instrumentation instance to use for retransformation.
+             * @param type            The types to retransform.
+             * @throws UnmodifiableClassException If the supplied classes cannot be retransformed.
+             */
+            void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException;
+
+            /**
+             * An action for creating a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Dispatcher run() {
+                    try {
+                        return new ForJava6CapableVm(Instrumentation.class.getMethod("isModifiableClass", Class.class),
+                                Instrumentation.class.getMethod("isRetransformClassesSupported"),
+                                Instrumentation.class.getMethod("retransformClasses", Class[].class));
+                    } catch (NoSuchMethodException ignored) {
+                        return ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher for a legacy VM.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isModifiableClass(Instrumentation instrumentation, Class<?> type) {
+                    return !type.isArray() && !type.isPrimitive();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) {
+                    throw new IllegalStateException("The current VM does not support retransformation");
+                }
+            }
+
+            /**
+             * A dispatcher for a Java 6 capable VM.
+             */
+            class ForJava6CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code Instrumentation#isModifiableClass} method.
+                 */
+                private final Method isModifiableClass;
+
+                /**
+                 * The {@code Instrumentation#isRetransformClassesSupported} method.
+                 */
+                private final Method isRetransformClassesSupported;
+
+                /**
+                 * The {@code Instrumentation#retransformClasses} method.
+                 */
+                private final Method retransformClasses;
+
+                /**
+                 * Creates a new Java 6 capable dispatcher.
+                 *
+                 * @param isModifiableClass             The {@code Instrumentation#isModifiableClass} method.
+                 * @param isRetransformClassesSupported The {@code Instrumentation#isRetransformClassesSupported} method.
+                 * @param retransformClasses
+                 */
+                protected ForJava6CapableVm(Method isModifiableClass, Method isRetransformClassesSupported, Method retransformClasses) {
+                    this.isModifiableClass = isModifiableClass;
+                    this.isRetransformClassesSupported = isRetransformClassesSupported;
+                    this.retransformClasses = retransformClasses;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isModifiableClass(Instrumentation instrumentation, Class<?> type) {
+                    try {
+                        return (Boolean) isModifiableClass.invoke(instrumentation, type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isModifiableClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#isModifiableClass", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRetransformClassesSupported(Instrumentation instrumentation) {
+                    try {
+                        return (Boolean) isRetransformClassesSupported.invoke(instrumentation);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#isRetransformClassesSupported", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) throws UnmodifiableClassException {
+                    try {
+                        retransformClasses.invoke(instrumentation, (Object) type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#retransformClasses", exception);
+                    } catch (InvocationTargetException exception) {
+                        Throwable cause = exception.getCause();
+                        if (cause instanceof UnmodifiableClassException) {
+                            throw (UnmodifiableClassException) cause;
+                        } else {
+                            throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#retransformClasses", cause);
+                        }
+                    }
                 }
             }
         }
@@ -6753,7 +6925,7 @@ public interface AgentBuilder {
                     if (!types.isEmpty()) {
                         circularityLock.release();
                         try {
-                            instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                            DISPATCHER.retransformClasses(instrumentation, types.toArray(new Class<?>[types.size()]));
                         } finally {
                             circularityLock.acquire();
                         }
