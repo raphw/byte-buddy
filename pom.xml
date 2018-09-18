@@ -188,8 +188,7 @@
                 <configuration>
                     <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
                     <sourceDirectories>
-                        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
-                        <sourceDirectory>${project.basedir}/src/precompiled/java</sourceDirectory>
+                        <sourceDirectory>${project.basedir}/byte-buddy-dep/src/precompiled/java</sourceDirectory>
                     </sourceDirectories>
                 </configuration>
             </plugin>

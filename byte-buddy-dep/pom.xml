@@ -117,20 +117,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Specify the precompiled folder for locating source files to allow coverage computation. -->
-            <plugin>
-                <groupId>org.eluder.coveralls</groupId>
-                <artifactId>coveralls-maven-plugin</artifactId>
-                <version>${version.plugin.coveralls}</version>
-                <configuration>
-                    <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
-                    <sourceDirectories>
-                        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
-                        <sourceDirectory>${project.basedir}/src/precompiled/java</sourceDirectory>
-                    </sourceDirectories>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
-
 </project>
