@@ -51,6 +51,8 @@
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sourcecode.main.version>1.5</sourcecode.main.version>
+        <sourcecode.test.version>1.6</sourcecode.test.version>
         <bytecode.main.version>1.5</bytecode.main.version>
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
@@ -252,9 +254,9 @@
                     <version>${version.plugin.compiler}</version>
                     <inherited>true</inherited>
                     <configuration>
-                        <source>1.5</source>
-                        <testSource>1.6</testSource>
+                        <source>${sourcecode.main.version}</source>
                         <target>${bytecode.main.version}</target>
+                        <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>
                         <compilerArgument>-Xlint:none</compilerArgument>
@@ -340,6 +342,62 @@
             <properties>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 9 JVMs. -->
+        <profile>
+            <id>java9-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>9</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.6</sourcecode.main.version>
+                <sourcecode.test.version>1.6</sourcecode.test.version>
+                <bytecode.main.version>1.6</bytecode.main.version>
+                <bytecode.test.version>1.6</bytecode.test.version>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 10 JVMs. -->
+        <profile>
+            <id>java10-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>10</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.7</sourcecode.main.version>
+                <sourcecode.test.version>1.7</sourcecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 11 JVMs. -->
+        <profile>
+            <id>java11-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>11</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.8</sourcecode.main.version>
+                <sourcecode.test.version>1.8</sourcecode.test.version>
+                <bytecode.main.version>1.8</bytecode.main.version>
+                <bytecode.test.version>1.8</bytecode.test.version>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 12 JVMs. -->
+        <profile>
+            <id>java12-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>12</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.8</sourcecode.main.version>
+                <sourcecode.test.version>1.8</sourcecode.test.version>
+                <bytecode.main.version>1.8</bytecode.main.version>
+                <bytecode.test.version>1.8</bytecode.test.version>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 6. -->
