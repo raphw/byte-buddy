@@ -187,6 +187,10 @@
                 <version>${version.plugin.coveralls}</version>
                 <configuration>
                     <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+                        <sourceDirectory>${project.basedir}/src/precompiled/java</sourceDirectory>
+                    </sourceDirectories>
                 </configuration>
             </plugin>
             <!-- Also allow for manual spotbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
