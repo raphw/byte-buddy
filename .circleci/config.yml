@@ -1,11 +1,5 @@
 version: 2
 jobs:
-  jdk6-5:
-    docker:
-      - image: openjdk:6-jdk
-    steps:
-      - checkout
-      - run: ./mvnw verify -Pintegration -s nossl.settings.xml -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
   jdk6:
     docker:
       - image: openjdk:6-jdk
@@ -29,7 +23,7 @@ jobs:
       - image: openjdk:8-jdk
     steps:
       - checkout
-      - run: ./mvnw jacoco:prepare-agent test jacoco:report coveralls:report -Pintegration -Pjava8 -Dnet.bytebuddy.test.ci=true -DrepoToken=$COVERALLS_REPO_TOKEN -pl '!byte-buddy-gradle-plugin'
+      - run: ./mvnw jacoco:prepare-agent test jacoco:report coveralls:report -Pintegration -Dnet.bytebuddy.test.ci=true -DrepoToken=$COVERALLS_REPO_TOKEN -pl '!byte-buddy-gradle-plugin'
 workflows:
   version: 2
   build_all:
