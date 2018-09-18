@@ -294,17 +294,69 @@ public interface ClassFileLocator extends Closeable {
          * {@link java.lang.ClassLoader}.
          *
          * @param type The type of interest.
-         * @return The binary data to this type which might be illegal.
+         * @return The binary representation of the supplied type.
          */
-        public static Resolution read(Class<?> type) {
+        public static byte[] read(Class<?> type) {
             try {
                 ClassLoader classLoader = type.getClassLoader();
                 return locate(classLoader == null
                         ? ClassLoader.getSystemClassLoader()
-                        : classLoader, TypeDescription.ForLoadedType.getName(type));
+                        : classLoader, TypeDescription.ForLoadedType.getName(type)).resolve();
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
+        }
+
+        /**
+         * Attempts to create a binary representation of several loaded types by requesting
+         * data from their respective {@link java.lang.ClassLoader}s.
+         *
+         * @param type The types of interest.
+         * @return A mapping of the supplied types to their binary representation.
+         */
+        public static Map<Class<?>, byte[]> read(Class<?>... type) {
+            return read(Arrays.asList(type));
+        }
+
+        /**
+         * Attempts to create a binary representation of several loaded types by requesting
+         * data from their respective {@link java.lang.ClassLoader}s.
+         *
+         * @param types The types of interest.
+         * @return A mapping of the supplied types to their binary representation.
+         */
+        public static Map<Class<?>, byte[]> read(Collection<? extends Class<?>> types) {
+            Map<Class<?>, byte[]> result = new HashMap<Class<?>, byte[]>();
+            for (Class<?> type : types) {
+                result.put(type, read(type));
+            }
+            return result;
+        }
+
+        /**
+         * Attempts to create a binary representation of several loaded types by requesting
+         * data from their respective {@link java.lang.ClassLoader}s.
+         *
+         * @param type The types of interest.
+         * @return A mapping of the supplied types' names to their binary representation.
+         */
+        public static Map<String, byte[]> readToNames(Class<?>... type) {
+            return readToNames(Arrays.asList(type));
+        }
+
+        /**
+         * Attempts to create a binary representation of several loaded types by requesting
+         * data from their respective {@link java.lang.ClassLoader}s.
+         *
+         * @param types The types of interest.
+         * @return A mapping of the supplied types' names to their binary representation.
+         */
+        public static Map<String, byte[]> readToNames(Collection<? extends Class<?>> types) {
+            Map<String, byte[]> result = new HashMap<String, byte[]>();
+            for (Class<?> type : types) {
+                result.put(type.getName(), read(type));
+            }
+            return result;
         }
 
         /**
@@ -317,7 +369,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * {@inheritDoc}
          */
-        public void close() throws IOException {
+        public void close() {
             /* do nothing */
         }
 

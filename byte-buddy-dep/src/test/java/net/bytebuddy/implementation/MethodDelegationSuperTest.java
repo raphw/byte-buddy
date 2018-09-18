@@ -3,13 +3,13 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.implementation.bind.annotation.Super;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -120,7 +120,9 @@ public class MethodDelegationSuperTest {
 
     @Test
     public void testFinalType() throws Exception {
-        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, false, ClassFileExtraction.of(SimpleInterceptor.class));
+        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                false,
+                ClassFileLocator.ForClassLoader.readToNames(SimpleInterceptor.class));
         Class<?> type = new ByteBuddy()
                 .rebase(FinalType.class)
                 .modifiers(TypeManifestation.PLAIN, Visibility.PUBLIC)

@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Rule;
@@ -205,7 +204,7 @@ public class ClassReloadingStrategyTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testAnonymousType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
+                ClassFileLocator.ForClassLoader.readToNames(Class.forName(LAMBDA_SAMPLE_FACTORY)),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Instrumentation instrumentation = ByteBuddyAgent.install();
         Class<?> factory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);

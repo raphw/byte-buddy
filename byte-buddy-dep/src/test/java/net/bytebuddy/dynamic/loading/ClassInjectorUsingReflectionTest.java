@@ -2,13 +2,13 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
@@ -51,7 +51,8 @@ public class ClassInjectorUsingReflectionTest {
     @Test
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testInjection() throws Exception {
-        new ClassInjector.UsingReflection(classLoader).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileExtraction.extract(Foo.class)));
+        new ClassInjector.UsingReflection(classLoader).inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class),
+                        ClassFileLocator.ForClassLoader.read(Foo.class)));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
@@ -71,7 +72,7 @@ public class ClassInjectorUsingReflectionTest {
                 null,
                 null), notNullValue(Package.class));
         assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
-        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
+        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class), null), notNullValue(Class.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
@@ -91,7 +92,7 @@ public class ClassInjectorUsingReflectionTest {
                 null,
                 null), notNullValue(Package.class));
         assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
-        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
+        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class), null), notNullValue(Class.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
@@ -110,7 +111,7 @@ public class ClassInjectorUsingReflectionTest {
                 null,
                 null), notNullValue(Package.class));
         assertThat(dispatcher.findClass(classLoader, Foo.class.getName()), nullValue(Class.class));
-        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileExtraction.extract(Foo.class), null), notNullValue(Class.class));
+        assertThat(dispatcher.defineClass(classLoader, Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class), null), notNullValue(Class.class));
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
@@ -197,7 +198,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Bar.class, Interceptor.class));
+                ClassFileLocator.ForClassLoader.readToNames(Bar.class, Interceptor.class));
         Class<?> type = new ByteBuddy().rebase(Bar.class)
                 .method(named(BAR))
                 .intercept(MethodDelegation.to(Interceptor.class)).make()

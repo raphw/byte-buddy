@@ -2,11 +2,11 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -531,7 +531,7 @@ public class MemberSubstitutionTest {
                 .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
                 .visit(MemberSubstitution.strict().method(named(FOO)).onVirtualCall().stub().on(named(RUN)))
                 .make()
-                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(VirtualMethodCallSubstitutionSample.class)),
                         ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();
@@ -544,7 +544,7 @@ public class MemberSubstitutionTest {
                 .redefine(VirtualMethodCallSubstitutionSample.Extension.class)
                 .visit(MemberSubstitution.strict().method(named(FOO)).onSuperCall().stub().on(named(RUN)))
                 .make()
-                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(VirtualMethodCallSubstitutionSample.class)),
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(VirtualMethodCallSubstitutionSample.class)),
                         ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Object instance = type.getDeclaredConstructor().newInstance();

@@ -2,7 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,7 +52,7 @@ public class TypePoolDefaultHierarchyTest {
         TypePool typePool = new TypePool.Default(cacheProvider, classFileLocator, TypePool.Default.ReaderMode.FAST, parentPool);
         when(parentPool.describe(FOO)).thenReturn(resolution);
         when(resolution.isResolved()).thenReturn(false);
-        when(classFileLocator.locate(FOO)).thenReturn(new ClassFileLocator.Resolution.Explicit(ClassFileExtraction.extract(Foo.class)));
+        when(classFileLocator.locate(FOO)).thenReturn(new ClassFileLocator.Resolution.Explicit(ClassFileLocator.ForClassLoader.read(Foo.class)));
         when(cacheProvider.register(eq(FOO), any(TypePool.Resolution.class))).then(new Answer<TypePool.Resolution>() {
             public TypePool.Resolution answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return (TypePool.Resolution) invocationOnMock.getArguments()[1];

@@ -204,7 +204,7 @@ public class NexusAccessor {
                 } else {
                     try {
                         Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.NO_PROTECTION_DOMAIN)
-                                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class)))
                                 .get(TypeDescription.ForLoadedType.of(Nexus.class));
                         return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
                                 nexusType.getMethod("clean", Reference.class));

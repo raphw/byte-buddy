@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,7 +57,7 @@ public class NexusTest {
     @Test
     public void testNexusAccessorNonActive() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Nexus.class,
+                ClassFileLocator.ForClassLoader.readToNames(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
                         NexusAccessor.Dispatcher.CreationAction.class,
@@ -93,7 +92,7 @@ public class NexusTest {
     @Test
     public void testNexusAccessorClassLoaderBoundary() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Nexus.class,
+                ClassFileLocator.ForClassLoader.readToNames(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
                         NexusAccessor.Dispatcher.CreationAction.class,
@@ -128,7 +127,7 @@ public class NexusTest {
     @Test
     public void testNexusAccessorClassLoaderNoResource() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Nexus.class,
+                ClassFileLocator.ForClassLoader.readToNames(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
                         NexusAccessor.Dispatcher.CreationAction.class,

@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,7 +37,7 @@ public class ClassLoadingStrategyForUnsafeInjectionTest {
         classLoader = new URLClassLoader(new URL[0], null);
         binaryRepresentations = new LinkedHashMap<TypeDescription, byte[]>();
         typeDescription = TypeDescription.ForLoadedType.of(Foo.class);
-        binaryRepresentations.put(typeDescription, ClassFileExtraction.extract(Foo.class));
+        binaryRepresentations.put(typeDescription, ClassFileLocator.ForClassLoader.read(Foo.class));
         protectionDomain = getClass().getProtectionDomain();
     }
 

@@ -2,12 +2,12 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,7 +38,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Foo.class, Bar.class),
+                ClassFileLocator.ForClassLoader.readToNames(Foo.class, Bar.class),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 

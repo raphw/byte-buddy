@@ -76,7 +76,7 @@ public class LambdaFactory {
         try {
             TypeDescription typeDescription = TypeDescription.ForLoadedType.of(LambdaFactory.class);
             Class<?> lambdaFactory = ClassInjector.UsingReflection.ofSystemClassLoader()
-                    .inject(Collections.singletonMap(typeDescription, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
+                    .inject(Collections.singletonMap(typeDescription, ClassFileLocator.ForClassLoader.read(LambdaFactory.class)))
                     .get(typeDescription);
             @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) lambdaFactory

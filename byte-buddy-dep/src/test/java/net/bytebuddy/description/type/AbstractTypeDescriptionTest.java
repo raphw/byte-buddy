@@ -5,13 +5,13 @@ import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.scope.EnclosingType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
@@ -467,7 +467,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testIsAssignableClassLoader() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(SimpleType.class),
+                ClassFileLocator.ForClassLoader.readToNames(SimpleType.class),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Class<?> otherSimpleType = classLoader.loadClass(SimpleType.class.getName());
         assertThat(describe(SimpleType.class).isAssignableFrom(describe(otherSimpleType)), is(true));
@@ -596,7 +596,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testNonAvailableAnnotations() throws Exception {
         TypeDescription typeDescription = describe(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(MissingAnnotations.class),
+                ClassFileLocator.ForClassLoader.readToNames(MissingAnnotations.class),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST).loadClass(MissingAnnotations.class.getName()));
         assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
         assertThat(typeDescription.getDeclaredFields().getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));

@@ -4,6 +4,8 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.ClassFileLocatorForClassLoaderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -13,7 +15,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleOptionalType;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
@@ -28,6 +29,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -71,10 +73,10 @@ public class AgentBuilderDefaultApplicationRedefineTest {
     @Before
     public void setUp() throws Exception {
         simpleTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(SimpleType.class),
+                ClassFileLocator.ForClassLoader.readToNames(SimpleType.class),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         optionalTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(SimpleOptionalType.class),
+                ClassFileLocator.ForClassLoader.readToNames(SimpleOptionalType.class),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 

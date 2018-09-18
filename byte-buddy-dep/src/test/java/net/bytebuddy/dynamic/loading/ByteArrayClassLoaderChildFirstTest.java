@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
@@ -8,7 +9,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
@@ -26,7 +26,10 @@ import org.objectweb.asm.commons.SimpleRemapper;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.ProtectionDomain;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.*;
@@ -66,11 +69,12 @@ public class ByteArrayClassLoaderChildFirstTest {
 
     @Before
     public void setUp() throws Exception {
-        Map<String, byte[]> values = Collections.singletonMap(Foo.class.getName(),
-                ClassFileExtraction.extract(Bar.class, new RenamingWrapper(Bar.class.getName().replace('.', '/'),
-                        Foo.class.getName().replace('.', '/'))));
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                values,
+                Collections.singletonMap(Foo.class.getName(), new ByteBuddy()
+                        .redefine(Bar.class)
+                        .visit(new RenamingWrapper(Bar.class.getName().replace('.', '/'), Foo.class.getName().replace('.', '/')))
+                        .make()
+                        .getBytes()),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
                 PackageDefinitionStrategy.NoOp.INSTANCE);

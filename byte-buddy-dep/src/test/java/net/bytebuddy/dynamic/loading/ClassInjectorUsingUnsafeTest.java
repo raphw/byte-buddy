@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -33,7 +33,7 @@ public class ClassInjectorUsingUnsafeTest {
     @ClassUnsafeInjectionAvailableRule.Enforce
     public void testUnsafeInjection() throws Exception {
         assertThat(new ClassInjector.UsingUnsafe(classLoader)
-                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileExtraction.extract(Foo.class)))
+                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileLocator.ForClassLoader.read(Foo.class)))
                 .get(TypeDescription.ForLoadedType.of(Foo.class)), notNullValue(Class.class));
         assertThat(Class.forName(Foo.class.getName(), false, classLoader).getName(), is(Foo.class.getName()));
     }

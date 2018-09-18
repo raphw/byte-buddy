@@ -28,7 +28,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.OpenedClassReader;
@@ -215,7 +214,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testTypeInitializer() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Bar.class));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(Bar.class));
         Class<?> type = createPlain()
                 .invokable(isTypeInitializer()).intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("invoke")))
                 .make()
@@ -289,7 +288,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testPreparedField() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SampleAnnotation.class));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(SampleAnnotation.class));
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedField())
@@ -309,7 +308,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testPreparedMethod() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SampleAnnotation.class));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(SampleAnnotation.class));
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedMethod())

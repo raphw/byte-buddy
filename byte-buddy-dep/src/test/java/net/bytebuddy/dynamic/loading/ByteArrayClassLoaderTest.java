@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
@@ -76,7 +75,7 @@ public class ByteArrayClassLoaderTest {
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
-                ClassFileExtraction.of(Foo.class),
+                ClassFileLocator.ForClassLoader.readToNames(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
                 packageDefinitionStrategy,
@@ -91,7 +90,7 @@ public class ByteArrayClassLoaderTest {
                 Mockito.any(Class.class),
                 Mockito.any(ProtectionDomain.class),
                 Mockito.any(byte[].class))).thenAnswer(new Answer<byte[]>() {
-            public byte[] answer(InvocationOnMock invocation) throws Throwable {
+            public byte[] answer(InvocationOnMock invocation) {
                 return (byte[]) invocation.getArguments()[4];
             }
         });
@@ -233,18 +232,18 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testInjection() throws Exception {
-        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve()).getName(), is(Bar.class.getName()));
+        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class)).getName(), is(Bar.class.getName()));
     }
 
     @Test
     public void testDuplicateInjection() throws Exception {
-        Class<?> type = classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve());
-        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve()), is((Object) type));
+        Class<?> type = classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class));
+        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class)), is((Object) type));
     }
 
     @Test
     public void testPredefinedInjection() throws Exception {
-        Class<?> type = classLoader.defineClass(Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class).resolve());
+        Class<?> type = classLoader.defineClass(Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class));
         assertThat(type, is((Object) classLoader.loadClass(Foo.class.getName())));
     }
 

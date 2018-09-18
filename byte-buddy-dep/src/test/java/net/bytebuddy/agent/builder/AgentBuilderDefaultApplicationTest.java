@@ -3,6 +3,7 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -17,7 +18,6 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
@@ -95,7 +95,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileExtraction.of(Foo.class,
+                ClassFileLocator.ForClassLoader.readToNames(Foo.class,
                         Bar.class,
                         Qux.class,
                         Baz.class,
@@ -106,7 +106,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     private ClassLoader lambdaSamples() throws Exception {
         return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
+                ClassFileLocator.ForClassLoader.readToNames(Class.forName(LAMBDA_SAMPLE_FACTORY)),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 

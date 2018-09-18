@@ -1,9 +1,9 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -122,7 +122,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     public void testLazyResolution() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Foo.class));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(Foo.class));
         TypeDescription.ForLoadedType.of(classLoader.loadClass(Foo.class.getName()));
     }
 

@@ -7,6 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -19,7 +20,6 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.InjectionStrategyResolver;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
@@ -295,8 +295,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .method(isDeclaredBy(PackagePrivateReturnType.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                        ClassFileExtraction.of(PackagePrivateReturnType.class, PackagePrivateReturnType.Argument.class)), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(PackagePrivateReturnType.class,
+                        PackagePrivateReturnType.Argument.class)), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
@@ -309,8 +309,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .method(isDeclaredBy(PackagePrivateArgumentType.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                        ClassFileExtraction.of(PackagePrivateArgumentType.class, PackagePrivateArgumentType.Argument.class)), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(PackagePrivateArgumentType.class,
+                        PackagePrivateArgumentType.Argument.class)), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }
@@ -322,8 +322,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .method(isDeclaredBy(PrivateMethod.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
-                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                        ClassFileExtraction.of(PrivateMethod.class)), ClassLoadingStrategy.Default.WRAPPER)
+                .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileLocator.ForClassLoader.readToNames(PrivateMethod.class)),
+                        ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(0));
     }

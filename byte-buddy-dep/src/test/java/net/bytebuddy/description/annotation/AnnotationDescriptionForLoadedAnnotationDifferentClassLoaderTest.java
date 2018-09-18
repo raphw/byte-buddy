@@ -1,8 +1,8 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Before;
 
 import java.lang.annotation.Annotation;
@@ -15,7 +15,11 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
     public void setUp() throws Exception {
         super.setUp();
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Sample.class, SampleDefault.class, Other.class, SampleEnumeration.class, ExplicitTarget.class));
+                ClassFileLocator.ForClassLoader.readToNames(Sample.class,
+                        SampleDefault.class,
+                        Other.class,
+                        SampleEnumeration.class,
+                        ExplicitTarget.class));
     }
 
     @SuppressWarnings("unchecked")

@@ -26,7 +26,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.GenericType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.After;
@@ -143,7 +142,9 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test
     public void testGenericType() throws Exception {
-        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, false, ClassFileExtraction.of(GenericType.class));
+        InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                false,
+                ClassFileLocator.ForClassLoader.readToNames(GenericType.class));
         Class<?> dynamicType = create(GenericType.Inner.class)
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
@@ -268,7 +269,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testVisibilityBridge() throws Exception {
         InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
-                ClassFileExtraction.of(VisibilityBridge.class, FooBar.class));
+                ClassFileLocator.ForClassLoader.readToNames(VisibilityBridge.class, FooBar.class));
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
@@ -302,7 +303,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForNonPublicType() throws Exception {
         InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
-                ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class));
+                ClassFileLocator.ForClassLoader.readToNames(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class));
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
                 .modifiers(0)
                 .make()
@@ -316,7 +317,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForInheritedType() throws Exception {
         InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
-                ClassFileExtraction.of(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class));
+                ClassFileLocator.ForClassLoader.readToNames(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class));
         Class<?> type = new ByteBuddy().subclass(PublicVisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
@@ -330,7 +331,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testNoVisibilityBridgeForAbstractMethod() throws Exception {
         InjectionClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 false,
-                ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class));
+                ClassFileLocator.ForClassLoader.readToNames(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class));
         Class<?> type = create(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class)
                 .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
                 .make()
@@ -421,7 +422,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .method(ElementMatchers.any()).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                        ClassFileExtraction.of(SampleAnnotation.class)), ClassLoadingStrategy.Default.WRAPPER)
+                        ClassFileLocator.ForClassLoader.readToNames(SampleAnnotation.class)), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> sampleAnnotation = (Class<? extends Annotation>) type.getClassLoader().loadClass(SampleAnnotation.class.getName());
@@ -438,7 +439,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .method(ElementMatchers.any()).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                        ClassFileExtraction.of(SampleAnnotation.class)), ClassLoadingStrategy.Default.WRAPPER)
+                        ClassFileLocator.ForClassLoader.readToNames(SampleAnnotation.class)), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> sampleAnnotation = (Class<? extends Annotation>) type.getClassLoader().loadClass(SampleAnnotation.class.getName());
