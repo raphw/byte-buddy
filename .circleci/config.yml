@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  jdk6_target5:
+  jdk6-5:
     docker:
       - image: openjdk:6-jdk
     steps:
@@ -34,11 +34,13 @@ workflows:
   version: 2
   build_all:
     jobs:
+      - jdk6-5
       - jdk6
       - jdk7
       - jdk8
       - coverage:
           requires:
+            - jdk6-5
             - jdk6
             - jdk7
             - jdk8
