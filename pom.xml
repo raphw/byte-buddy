@@ -185,6 +185,9 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>${version.plugin.coveralls}</version>
+                <configuration>
+                    <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+                </configuration>
             </plugin>
             <!-- Also allow for manual spotbugs execution. Note that the generated warnings do not always apply for Byte Buddy's use case. -->
             <plugin>
