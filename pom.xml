@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -24,9 +25,9 @@
       - integration: Runs additional unit tests and executes static code analysis (activated on CI server)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
 
-      It is also possible to build Byte Buddy against a specific byte code level. By default, Byte Buddy is Java 6 compatible:
-      - java7: Sets the target level to Java 7.
-      - java8: Sets the target level to Java 8.
+      It is also possible to build Byte Buddy against a specific byte code level. By default, Byte Buddy is Java 5 compatible
+      but requires Java 6 to build and to run tests: By activating a profile javaX where X is a specific version number,
+      tests and source are compiled to a differing byte code level.
 
       Additionally, the following reports are available via Maven:
       - jacoco:prepare-agent verify jacoco:report - Computes coverage for test suite (all modules)
@@ -300,20 +301,20 @@
     <profiles>
         <!-- Runs the build with compatibility for Java 5 JVMs. -->
         <profile>
-          <id>java5-compatibility</id>
-          <activation>
-            <activeByDefault>false</activeByDefault>
-            <jdk>1.5</jdk>
-          </activation>
-          <properties>
-            <version.plugin.bundle>2.5.4</version.plugin.bundle>
-            <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
-            <version.plugin.compiler>3.6.2</version.plugin.compiler>
-            <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-            <spotbugs.skip>true</spotbugs.skip>
-          </properties>
+            <id>java5-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.5</jdk>
+            </activation>
+            <properties>
+                <version.plugin.bundle>2.5.4</version.plugin.bundle>
+                <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+                <version.plugin.compiler>3.6.2</version.plugin.compiler>
+                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
         </profile>
-      <!-- Runs the build with compatibility for Java 6 JVMs. -->
+        <!-- Runs the build with compatibility for Java 6 JVMs. -->
         <profile>
             <id>java6-compatibility</id>
             <activation>
@@ -330,60 +331,60 @@
         </profile>
         <!-- Runs the build with compatibility for Java 7 JVMs. -->
         <profile>
-          <id>java7-compatibility</id>
-          <activation>
-            <activeByDefault>false</activeByDefault>
-            <jdk>1.7</jdk>
-          </activation>
-          <properties>
-            <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-            <spotbugs.skip>true</spotbugs.skip>
-          </properties>
+            <id>java7-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.7</jdk>
+            </activation>
+            <properties>
+                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
         </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
-          <id>java6</id>
-          <activation>
-            <activeByDefault>false</activeByDefault>
-          </activation>
-          <properties>
-            <bytecode.main.version>1.6</bytecode.main.version>
-          </properties>
+            <id>java6</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>1.6</bytecode.main.version>
+            </properties>
         </profile>
-      <!-- Builds using a byte code target for Java 7. -->
+        <!-- Builds using a byte code target for Java 7. -->
         <profile>
             <id>java7</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-              <bytecode.main.version>1.7</bytecode.main.version>
-              <bytecode.test.version>1.7</bytecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
             </properties>
         </profile>
-      <!-- Builds using a byte code target for Java 8. -->
+        <!-- Builds using a byte code target for Java 8. -->
         <profile>
             <id>java8</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-              <bytecode.main.version>1.8</bytecode.main.version>
-              <bytecode.test.version>1.8</bytecode.test.version>
+                <bytecode.main.version>1.8</bytecode.main.version>
+                <bytecode.test.version>1.8</bytecode.test.version>
             </properties>
         </profile>
-      <!-- Builds using a byte code target for Java 9. -->
+        <!-- Builds using a byte code target for Java 9. -->
         <profile>
             <id>java9</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-              <bytecode.main.version>9</bytecode.main.version>
-              <bytecode.test.version>9</bytecode.test.version>
+                <bytecode.main.version>9</bytecode.main.version>
+                <bytecode.test.version>9</bytecode.test.version>
             </properties>
         </profile>
-      <!-- Builds using a byte code target for Java 10. -->
+        <!-- Builds using a byte code target for Java 10. -->
         <profile>
             <id>java10</id>
             <activation>
@@ -395,7 +396,7 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
-      <!-- Builds using a byte code target for Java 11. -->
+        <!-- Builds using a byte code target for Java 11. -->
         <profile>
             <id>java11</id>
             <activation>
@@ -560,10 +561,10 @@
                                             </includes>
                                         </bannedDependencies>
                                         <requireMavenVersion>
-                                          <version>[3.2.5,)</version>
+                                            <version>[3.2.5,)</version>
                                         </requireMavenVersion>
                                         <requireJavaVersion>
-                                          <version>[1.6,)</version>
+                                            <version>[1.6,)</version>
                                         </requireJavaVersion>
                                     </rules>
                                 </configuration>
