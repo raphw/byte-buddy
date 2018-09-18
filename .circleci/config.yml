@@ -1,11 +1,17 @@
 version: 2
 jobs:
-  jdk6:
+  jdk6_target5:
     docker:
       - image: openjdk:6-jdk
     steps:
       - checkout
       - run: ./mvnw verify -Pintegration -s nossl.settings.xml -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  jdk6:
+    docker:
+      - image: openjdk:6-jdk
+    steps:
+      - checkout
+      - run: ./mvnw verify -Pintegration -Pjava6 -s nossl.settings.xml -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
   jdk7:
     docker:
       - image: openjdk:7-jdk
