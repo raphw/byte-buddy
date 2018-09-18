@@ -21,4 +21,8 @@ public class LiveInitializerPlugin implements Plugin {
     public String intercept() {
         return "qux";
     }
+
+    public void close() {
+        /* do nothing */
+    }
 }

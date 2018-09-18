@@ -100,15 +100,21 @@ public class TransformationAction implements Action<Task> {
                     throw new GradleException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
-            EntryPoint entryPoint = byteBuddyExtension.getInitialization().getEntryPoint(classLoaderResolver, root, classPath);
-            project.getLogger().info("Resolved entry point: {}", entryPoint);
-            ResultBag resultBag = transform(root, classPath, entryPoint, plugins);
-            if (resultBag.hasFailures()) {
-                throw new GradleException(resultBag.getFailure() + " type transformations have failed");
-            } else if (resultBag.isEmpty()) {
-                project.getLogger().warn("No types were transformed during plugin execution");
-            } else {
-                project.getLogger().info("Transformed {} types", resultBag.getSuccess());
+            try {
+                EntryPoint entryPoint = byteBuddyExtension.getInitialization().getEntryPoint(classLoaderResolver, root, classPath);
+                project.getLogger().info("Resolved entry point: {}", entryPoint);
+                ResultBag resultBag = transform(root, classPath, entryPoint, plugins);
+                if (resultBag.hasFailures()) {
+                    throw new GradleException(resultBag.getFailure() + " type transformations have failed");
+                } else if (resultBag.isEmpty()) {
+                    project.getLogger().warn("No types were transformed during plugin execution");
+                } else {
+                    project.getLogger().info("Transformed {} types", resultBag.getSuccess());
+                }
+            } finally {
+                for (Plugin plugin : plugins) {
+                    plugin.close();
+                }
             }
         } finally {
             classLoaderResolver.close();

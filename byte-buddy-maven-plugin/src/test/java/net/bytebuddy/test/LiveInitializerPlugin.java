@@ -6,6 +6,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.MethodDelegation;
 
+import java.io.IOException;
+
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class LiveInitializerPlugin implements Plugin {
@@ -20,5 +22,9 @@ public class LiveInitializerPlugin implements Plugin {
 
     public String intercept() {
         return "qux";
+    }
+
+    public void close() {
+        /* do nothing */
     }
 }

@@ -2132,7 +2132,8 @@ public interface AgentBuilder {
         }
 
         /**
-         * A transformer that applies a build {@link Plugin}.
+         * A transformer that applies a build {@link Plugin}. Note that a transformer is never completed as class loading
+         * might happen dynamically such that plugins are not closed.
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ForBuildPlugin implements Transformer {

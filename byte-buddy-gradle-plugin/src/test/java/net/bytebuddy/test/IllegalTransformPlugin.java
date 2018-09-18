@@ -18,4 +18,8 @@ public class IllegalTransformPlugin implements Plugin {
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         throw new AssertionError();
     }
+
+    public void close() {
+        /* do nothing */
+    }
 }

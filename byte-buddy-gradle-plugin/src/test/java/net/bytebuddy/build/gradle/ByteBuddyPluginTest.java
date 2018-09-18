@@ -69,6 +69,7 @@ public class ByteBuddyPluginTest {
                 "    public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {\n" +
                 "        return builder.method(named(\"foo\")).intercept(FixedValue.value(\"qux\"));\n" +
                 "    }\n" +
+                "    public void close() { }\n" +
                 "}\n", new File(pluginRoot, "SimplePlugin.java"));
         BuildResult result = GradleRunner.create()
                 .withProjectDir(pluginFolder)

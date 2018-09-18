@@ -19,7 +19,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A build tool plugin that adds {@link Object#hashCode()} and {@link Object#equals(Object)} methods to a class if the
- * {@link Enhance} annotation is present and no explicit method declaration was added.
+ * {@link Enhance} annotation is present and no explicit method declaration was added. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class HashCodeAndEqualsPlugin implements Plugin {
@@ -74,6 +74,13 @@ public class HashCodeAndEqualsPlugin implements Plugin {
      */
     protected ElementMatcher<FieldDescription> nonNullable(ElementMatcher<FieldDescription> matcher) {
         return matcher;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        /* do nothing */
     }
 
     /**

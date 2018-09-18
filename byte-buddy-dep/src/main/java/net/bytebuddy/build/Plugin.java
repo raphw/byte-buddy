@@ -5,6 +5,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatcher;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
  * transformation is applied to any type matching this plugin's type matcher. Plugin types must be public,
  * non-abstract and must declare a public default constructor to work.
  */
-public interface Plugin extends ElementMatcher<TypeDescription> {
+public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
 
     /**
      * Applies this plugin.
@@ -27,10 +29,17 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
     DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator);
 
     /**
-     * A non-operational plugin that does not instrument any type.
+     * A non-operational plugin that does not instrument any type. This plugin does not need to be closed.
      */
     @HashCodeAndEqualsPlugin.Enhance
     class NoOp implements Plugin {
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean matches(TypeDescription target) {
+            return false;
+        }
 
         /**
          * {@inheritDoc}
@@ -42,8 +51,8 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(TypeDescription target) {
-            return false;
+        public void close() {
+            /* do nothing */
         }
     }
 
@@ -114,6 +123,18 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
         /**
          * {@inheritDoc}
          */
+        public boolean matches(TypeDescription target) {
+            for (Plugin plugin : plugins) {
+                if (plugin.matches(target)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             for (Plugin plugin : plugins) {
                 if (plugin.matches(typeDescription)) {
@@ -126,13 +147,10 @@ public interface Plugin extends ElementMatcher<TypeDescription> {
         /**
          * {@inheritDoc}
          */
-        public boolean matches(TypeDescription target) {
+        public void close() throws IOException {
             for (Plugin plugin : plugins) {
-                if (plugin.matches(target)) {
-                    return true;
-                }
+                plugin.close();
             }
-            return false;
         }
     }
 }

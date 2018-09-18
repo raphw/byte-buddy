@@ -235,17 +235,23 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     throw new MojoExecutionException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
-            EntryPoint entryPoint = (initialization == null
-                    ? Initialization.makeDefault()
-                    : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
-            getLog().info("Resolved entry point: " + entryPoint);
-            ResultBag resultBag = transform(root, entryPoint, classPath, plugins);
-            if (resultBag.hasFailures()) {
-                throw new MojoExecutionException(resultBag.getFailure() + " type transformations have failed");
-            } else if (resultBag.isEmpty()) {
-                getLog().warn("No types were transformed during plugin execution");
-            } else {
-                getLog().info("Transformed " + resultBag.getSuccess() + " types");
+            try {
+                EntryPoint entryPoint = (initialization == null
+                        ? Initialization.makeDefault()
+                        : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
+                getLog().info("Resolved entry point: " + entryPoint);
+                ResultBag resultBag = transform(root, entryPoint, classPath, plugins);
+                if (resultBag.hasFailures()) {
+                    throw new MojoExecutionException(resultBag.getFailure() + " type transformations have failed");
+                } else if (resultBag.isEmpty()) {
+                    getLog().warn("No types were transformed during plugin execution");
+                } else {
+                    getLog().info("Transformed " + resultBag.getSuccess() + " types");
+                }
+            } finally {
+                for (Plugin plugin : plugins) {
+                    plugin.close();
+                }
             }
         } finally {
             classLoaderResolver.close();

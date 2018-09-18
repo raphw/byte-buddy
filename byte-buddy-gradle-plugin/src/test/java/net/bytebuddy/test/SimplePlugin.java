@@ -17,4 +17,8 @@ public class SimplePlugin implements Plugin {
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return builder.method(named("foo")).intercept(FixedValue.value("qux"));
     }
+
+    public void close() {
+        /* do nothing */
+    }
 }

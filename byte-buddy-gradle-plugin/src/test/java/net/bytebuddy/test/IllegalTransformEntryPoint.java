@@ -20,4 +20,8 @@ public class IllegalTransformEntryPoint implements EntryPoint {
                                             MethodNameTransformer methodNameTransformer) {
         throw new RuntimeException();
     }
+
+    public void close() {
+        /* do nothing */
+    }
 }

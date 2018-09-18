@@ -14,4 +14,8 @@ public class IllegalPlugin implements Plugin {
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         throw new RuntimeException();
     }
+
+    public void close() {
+        /* do nothing */
+    }
 }

@@ -14,7 +14,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isToString;
 
 /**
  * A build tool plugin that adds a {@link Object#toString()} and method to a class if the {@link Enhance} annotation is present and no
- * explicit method declaration was added.
+ * explicit method declaration was added. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class ToStringPlugin implements Plugin {
@@ -39,6 +39,13 @@ public class ToStringPlugin implements Plugin {
                     .withIgnoredFields(isAnnotatedWith(Exclude.class)));
         }
         return builder;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        /* do nothing */
     }
 
     /**

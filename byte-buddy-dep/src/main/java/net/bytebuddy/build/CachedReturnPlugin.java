@@ -25,7 +25,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * the method is executed multiple times by different threads but at the same time, this approach avoids a {@code volatile} field
  * declaration. For methods with a primitive return type, the type's default value is used to indicate that a method was not yet invoked.
  * For methods that return a reference type, {@code null} is used as an indicator. If a method returns such a value, this mechanism will
- * not work.
+ * not work. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
 public class CachedReturnPlugin extends Plugin.ForElementMatcher {
@@ -116,6 +116,13 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                             .on(is(methodDescription)));
         }
         return builder;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void close() {
+        /* do nothing */
     }
 
     /**
