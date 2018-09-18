@@ -42,6 +42,7 @@ public class ClassInjectorUsingUnsafeTest {
     @ClassUnsafeInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingUnsafe.isAvailable(), is(true));
+        assertThat(new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader()).isAlive(), is(true));
         assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Disabled(null).isAvailable(), is(false));
     }
 

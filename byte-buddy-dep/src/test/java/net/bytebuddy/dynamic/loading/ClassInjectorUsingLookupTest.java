@@ -1,10 +1,12 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,13 +46,13 @@ public class ClassInjectorUsingLookupTest {
     @Test
     @JavaVersionRule.Enforce(9)
     public void testLookupType() throws Exception {
-        assertThat(ClassInjector.UsingLookup.of(type.getDeclaredMethod("lookup").invoke(null)).lookupType(), is((Object) type));
+        assertThat(ClassInjector.UsingLookup.of(type.getMethod("lookup").invoke(null)).lookupType(), is((Object) type));
     }
 
     @Test
     @JavaVersionRule.Enforce(9)
     public void testLookupInjection() throws Exception {
-        ClassInjector injector = ClassInjector.UsingLookup.of(type.getDeclaredMethod("lookup").invoke(null));
+        ClassInjector injector = ClassInjector.UsingLookup.of(type.getMethod("lookup").invoke(null));
         DynamicType dynamicType = new ByteBuddy()
                 .subclass(Object.class)
                 .name("net.bytebuddy.test.Bar")
@@ -69,5 +71,12 @@ public class ClassInjectorUsingLookupTest {
                 .make();
         assertThat(injector.inject(Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()))
                 .get(dynamicType.getTypeDescription()).getName(), is("net.bytebuddy.test.Bar"));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testAvailable() throws Exception {
+        assertThat(ClassInjector.UsingLookup.isAvailable(), is(true));
+        assertThat(ClassInjector.UsingLookup.of(type.getMethod("lookup").invoke(null)).isAlive(), is((Object) true));
     }
 }

@@ -199,7 +199,8 @@ public class ClassInjectorUsingReflectionTest {
     public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileLocator.ForClassLoader.readToNames(Bar.class, Interceptor.class));
-        Class<?> type = new ByteBuddy().rebase(Bar.class)
+        Class<?> type = new ByteBuddy()
+                .rebase(Bar.class)
                 .method(named(BAR))
                 .intercept(MethodDelegation.to(Interceptor.class)).make()
                 .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
@@ -211,6 +212,7 @@ public class ClassInjectorUsingReflectionTest {
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
+        assertThat(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader()).isAlive(), is(true));
         assertThat(new ClassInjector.UsingReflection.Dispatcher.Initializable.Unavailable(null).isAvailable(), is(false));
     }
 

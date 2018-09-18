@@ -63,4 +63,13 @@ public class ClassInjectorUsingInstrumentationTest {
         assertThat(types.get(dynamicType.getTypeDescription()).getName(), is(name));
         assertThat(types.get(dynamicType.getTypeDescription()).getClassLoader(), is(ClassLoader.getSystemClassLoader()));
     }
+
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testAvailable() {
+        assertThat(ClassInjector.UsingInstrumentation.isAvailable(), is(true));
+        assertThat(ClassInjector.UsingInstrumentation.of(folder,
+                        ClassInjector.UsingInstrumentation.Target.SYSTEM,
+                        ByteBuddyAgent.install()).isAlive(), is(true));
+    }
 }

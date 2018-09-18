@@ -26,6 +26,7 @@ import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -49,6 +50,13 @@ public interface ClassInjector {
     boolean ALLOW_EXISTING_TYPES = false;
 
     /**
+     * Indicates if this class injector is available on the current VM.
+     *
+     * @return {@code true} if this injector is available on the current VM.
+     */
+    boolean isAlive();
+
+    /**
      * Injects the given types into the represented class loader.
      *
      * @param types The types to load via injection.
@@ -57,10 +65,40 @@ public interface ClassInjector {
     Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types);
 
     /**
+     * Injects the given types into the represented class loader using a mapping from name to binary representation.
+     *
+     * @param types The types to load via injection.
+     * @return The loaded types that were passed as arguments.
+     */
+    Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types);
+
+    /**
+     * An abstract base implementation of a class injector.
+     */
+    abstract class AbstractBase implements ClassInjector {
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
+            Map<String, byte[]> binaryRepresentations = new LinkedHashMap<String, byte[]>();
+            for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
+                binaryRepresentations.put(entry.getKey().getName(), entry.getValue());
+            }
+            Map<String, Class<?>> loadedTypes = injectRaw(binaryRepresentations);
+            Map<TypeDescription, Class<?>> result = new LinkedHashMap<TypeDescription, Class<?>>();
+            for (TypeDescription typeDescription : types.keySet()) {
+                result.put(typeDescription, loadedTypes.get(typeDescription.getName()));
+            }
+            return result;
+        }
+    }
+
+    /**
      * A class injector that uses reflective method calls.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class UsingReflection implements ClassInjector {
+    class UsingReflection extends AbstractBase {
 
         /**
          * The dispatcher to use for accessing a class loader via reflection.
@@ -134,38 +172,26 @@ public interface ClassInjector {
         }
 
         /**
-         * Indicates if this class injection is available on the current VM.
-         *
-         * @return {@code true} if this class injection is available.
+         * {@inheritDoc}
          */
-        public static boolean isAvailable() {
-            return DISPATCHER.isAvailable();
-        }
-
-        /**
-         * Creates a class injector for the system class loader.
-         *
-         * @return A class injector for the system class loader.
-         */
-        public static ClassInjector ofSystemClassLoader() {
-            return new UsingReflection(ClassLoader.getSystemClassLoader());
+        public boolean isAlive() {
+            return isAvailable();
         }
 
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
+        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
             Dispatcher dispatcher = DISPATCHER.initialize();
-            Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
-            for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                String typeName = entry.getKey().getName();
-                synchronized (dispatcher.getClassLoadingLock(classLoader, typeName)) {
-                    Class<?> type = dispatcher.findClass(classLoader, typeName);
+            Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+            for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                synchronized (dispatcher.getClassLoadingLock(classLoader, entry.getKey())) {
+                    Class<?> type = dispatcher.findClass(classLoader, entry.getKey());
                     if (type == null) {
-                        int packageIndex = typeName.lastIndexOf('.');
+                        int packageIndex = entry.getKey().lastIndexOf('.');
                         if (packageIndex != -1) {
-                            String packageName = typeName.substring(0, packageIndex);
-                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, typeName);
+                            String packageName = entry.getKey().substring(0, packageIndex);
+                            PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(classLoader, packageName, entry.getKey());
                             if (definition.isDefined()) {
                                 Package definedPackage = dispatcher.getPackage(classLoader, packageName);
                                 if (definedPackage == null) {
@@ -183,14 +209,32 @@ public interface ClassInjector {
                                 }
                             }
                         }
-                        type = dispatcher.defineClass(classLoader, typeName, entry.getValue(), protectionDomain);
+                        type = dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain);
                     } else if (forbidExisting) {
                         throw new IllegalStateException("Cannot inject already loaded type: " + type);
                     }
-                    loadedTypes.put(entry.getKey(), type);
+                    result.put(entry.getKey(), type);
                 }
             }
-            return loadedTypes;
+            return result;
+        }
+
+        /**
+         * Indicates if this class injection is available on the current VM.
+         *
+         * @return {@code true} if this class injection is available.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAvailable();
+        }
+
+        /**
+         * Creates a class injector for the system class loader.
+         *
+         * @return A class injector for the system class loader.
+         */
+        public static ClassInjector ofSystemClassLoader() {
+            return new UsingReflection(ClassLoader.getSystemClassLoader());
         }
 
         /**
@@ -1243,7 +1287,7 @@ public interface ClassInjector {
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class UsingLookup implements ClassInjector {
+    class UsingLookup extends AbstractBase {
 
         /**
          * The dispatcher to interacting with method handles.
@@ -1287,15 +1331,6 @@ public interface ClassInjector {
         }
 
         /**
-         * Checks if the current VM is capable of defining classes using a method handle lookup.
-         *
-         * @return {@code true} if the current VM is capable of defining classes using a lookup.
-         */
-        public static boolean isAvailable() {
-            return DISPATCHER.isAlive();
-        }
-
-        /**
          * Returns the lookup type this injector is based upon.
          *
          * @return The lookup type.
@@ -1317,15 +1352,32 @@ public interface ClassInjector {
         /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
-            Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
-            for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                if (!entry.getKey().isSamePackage(TypeDescription.ForLoadedType.of(lookupType()))) {
+        public boolean isAlive() {
+            return isAvailable();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+            Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+            for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                int index = entry.getKey().lastIndexOf('.');
+                if (index == -1 || !entry.getKey().substring(0, index).equals(TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName())) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
-                loaded.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));
+                result.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));
             }
-            return loaded;
+            return result;
+        }
+
+        /**
+         * Checks if the current VM is capable of defining classes using a method handle lookup.
+         *
+         * @return {@code true} if the current VM is capable of defining classes using a lookup.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAlive();
         }
 
         /**
@@ -1601,7 +1653,7 @@ public interface ClassInjector {
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class UsingUnsafe implements ClassInjector {
+    class UsingUnsafe extends AbstractBase {
 
         /**
          * The dispatcher to use.
@@ -1646,6 +1698,33 @@ public interface ClassInjector {
         }
 
         /**
+         * {@inheritDoc}
+         */
+        public boolean isAlive() {
+            return isAvailable();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+            Dispatcher dispatcher = DISPATCHER.initialize();
+            Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+            synchronized (classLoader == null
+                    ? BOOTSTRAP_LOADER_LOCK
+                    : classLoader) {
+                for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                    try {
+                        result.put(entry.getKey(), Class.forName(entry.getKey(), false, classLoader));
+                    } catch (ClassNotFoundException ignored) {
+                        result.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey(), entry.getValue(), protectionDomain));
+                    }
+                }
+            }
+            return result;
+        }
+
+        /**
          * Checks if unsafe class injection is available on the current VM.
          *
          * @return {@code true} if unsafe class injection is available on the current VM.
@@ -1670,26 +1749,6 @@ public interface ClassInjector {
          */
         public static ClassInjector ofClassPath() {
             return new UsingUnsafe(ClassLoader.getSystemClassLoader());
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
-            Dispatcher dispatcher = DISPATCHER.initialize();
-            Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
-            synchronized (classLoader == null
-                    ? BOOTSTRAP_LOADER_LOCK
-                    : classLoader) {
-                for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                    try {
-                        loaded.put(entry.getKey(), Class.forName(entry.getKey().getName(), false, classLoader));
-                    } catch (ClassNotFoundException ignored) {
-                        loaded.put(entry.getKey(), dispatcher.defineClass(classLoader, entry.getKey().getName(), entry.getValue(), protectionDomain));
-                    }
-                }
-            }
-            return loaded;
         }
 
         /**
@@ -1863,7 +1922,7 @@ public interface ClassInjector {
      * or the system class path.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class UsingInstrumentation implements ClassInjector {
+    class UsingInstrumentation extends AbstractBase {
 
         /**
          * The jar file name extension.
@@ -1906,27 +1965,6 @@ public interface ClassInjector {
          * @param folder          The folder to be used for storing jar files.
          * @param target          A representation of the target path to which classes are to be appended.
          * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
-         * @return An appropriate class injector that applies instrumentation.
-         */
-        public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
-            return new UsingInstrumentation(folder, target, instrumentation, new RandomString());
-        }
-
-        /**
-         * Returns {@code true} if this class injector is available on this VM.
-         *
-         * @return {@code true} if this class injector is available on this VM.
-         */
-        public static boolean isAvailable() {
-            return DISPATCHER.isAlive();
-        }
-
-        /**
-         * Creates an instrumentation-based class injector.
-         *
-         * @param folder          The folder to be used for storing jar files.
-         * @param target          A representation of the target path to which classes are to be appended.
-         * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
          * @param randomString    The random string generator to use.
          */
         protected UsingInstrumentation(File folder,
@@ -1940,9 +1978,28 @@ public interface ClassInjector {
         }
 
         /**
+         * Creates an instrumentation-based class injector.
+         *
+         * @param folder          The folder to be used for storing jar files.
+         * @param target          A representation of the target path to which classes are to be appended.
+         * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
+         * @return An appropriate class injector that applies instrumentation.
+         */
+        public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
+            return new UsingInstrumentation(folder, target, instrumentation, new RandomString());
+        }
+
+        /**
          * {@inheritDoc}
          */
-        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
+        public boolean isAlive() {
+            return isAvailable();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
             File jarFile = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
                 if (!jarFile.createNewFile()) {
@@ -1950,24 +2007,33 @@ public interface ClassInjector {
                 }
                 JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
                 try {
-                    for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                    for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION));
                         jarOutputStream.write(entry.getValue());
                     }
                 } finally {
                     jarOutputStream.close();
                 }
                 target.inject(instrumentation, new JarFile(jarFile));
-                Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
-                for (TypeDescription typeDescription : types.keySet()) {
-                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, ClassLoader.getSystemClassLoader()));
+                Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+                for (String name : types.keySet()) {
+                    result.put(name, Class.forName(name, false, ClassLoader.getSystemClassLoader()));
                 }
-                return loaded;
+                return result;
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot write jar file to disk", exception);
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Cannot load injected class", exception);
             }
+        }
+
+        /**
+         * Returns {@code true} if this class injector is available on this VM.
+         *
+         * @return {@code true} if this class injector is available on this VM.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAlive();
         }
 
         /**
