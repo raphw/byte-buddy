@@ -35,7 +35,7 @@ public class AbstractUserConfiguration {
      * @return The group id to use.
      */
     protected String getGroupId(String groupId) {
-        return this.groupId == null || this.groupId.isEmpty()
+        return this.groupId == null || this.groupId.length() == 0
                 ? groupId
                 : this.groupId;
     }
@@ -47,7 +47,7 @@ public class AbstractUserConfiguration {
      * @return The artifact id to use.
      */
     protected String getArtifactId(String artifactId) {
-        return this.artifactId == null || this.artifactId.isEmpty()
+        return this.artifactId == null || this.artifactId.length() == 0
                 ? artifactId
                 : this.artifactId;
     }
@@ -60,7 +60,7 @@ public class AbstractUserConfiguration {
      * @return The version to use.
      */
     protected String getVersion(String version) {
-        return this.version == null || this.version.isEmpty()
+        return this.version == null || this.version.length() == 0
                 ? version
                 : this.version;
     }
@@ -72,7 +72,7 @@ public class AbstractUserConfiguration {
      * @return The packaging to use.
      */
     protected String getPackaging(String packaging) {
-        return this.packaging == null || this.packaging.isEmpty()
+        return this.packaging == null || this.packaging.length() == 0
                 ? packaging
                 : this.packaging;
     }

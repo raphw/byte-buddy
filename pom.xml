@@ -50,7 +50,8 @@
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <bytecode.target>1.5</bytecode.target>
+        <bytecode.main.version>1.5</bytecode.main.version>
+        <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.javadoc>http://asm.ow2.io/javadoc</asm.javadoc>
         <version.asm>6.2.1</version.asm>
@@ -250,8 +251,11 @@
                     <inherited>true</inherited>
                     <configuration>
                         <source>1.5</source>
-                        <target>${bytecode.target}</target>
+                        <testSource>1.6</testSource>
+                        <target>${bytecode.main.version}</target>
+                        <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <compilerArgument>-Xlint:none</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -343,7 +347,7 @@
             <activeByDefault>false</activeByDefault>
           </activation>
           <properties>
-            <bytecode.target>1.6</bytecode.target>
+            <bytecode.main.version>1.6</bytecode.main.version>
           </properties>
         </profile>
       <!-- Builds using a byte code target for Java 7. -->
@@ -353,7 +357,8 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>1.7</code.level>
+              <bytecode.main.version>1.7</bytecode.main.version>
+              <bytecode.test.version>1.7</bytecode.test.version>
             </properties>
         </profile>
       <!-- Builds using a byte code target for Java 8. -->
@@ -363,7 +368,8 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>1.8</code.level>
+              <bytecode.main.version>1.8</bytecode.main.version>
+              <bytecode.test.version>1.8</bytecode.test.version>
             </properties>
         </profile>
       <!-- Builds using a byte code target for Java 9. -->
@@ -373,7 +379,8 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>9</code.level>
+              <bytecode.main.version>9</bytecode.main.version>
+              <bytecode.test.version>9</bytecode.test.version>
             </properties>
         </profile>
       <!-- Builds using a byte code target for Java 10. -->
@@ -383,7 +390,8 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>10</code.level>
+                <bytecode.main.version>10</bytecode.main.version>
+                <bytecode.test.version>10</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
@@ -394,7 +402,8 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <properties>
-                <code.level>11</code.level>
+                <bytecode.main.version>11</bytecode.main.version>
+                <bytecode.test.version>11</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
@@ -550,6 +559,12 @@
                                                 <include>org.ow2.asm:asm-tree</include>
                                             </includes>
                                         </bannedDependencies>
+                                        <requireMavenVersion>
+                                          <version>[3.2.5,)</version>
+                                        </requireMavenVersion>
+                                        <requireJavaVersion>
+                                          <version>[1.6,)</version>
+                                        </requireJavaVersion>
                                     </rules>
                                 </configuration>
                             </execution>

@@ -21,7 +21,7 @@ public class Transformation extends AbstractUserConfiguration {
      * @throws MojoExecutionException If the plugin name was not specified or is empty.
      */
     public String getPlugin() throws MojoExecutionException {
-        if (plugin == null || plugin.isEmpty()) {
+        if (plugin == null || plugin.length() == 0) {
             throw new MojoExecutionException("Plugin name was not specified");
         }
         return plugin;

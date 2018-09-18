@@ -44,7 +44,7 @@ public class Initialization extends AbstractUserConfiguration {
      * @return A resolved entry point.
      */
     public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, File root, Iterable<? extends File> classPath) {
-        if (entryPoint == null || entryPoint.isEmpty()) {
+        if (entryPoint == null || entryPoint.length() == 0) {
             throw new GradleException("Entry point name is not defined");
         }
         for (EntryPoint.Default entryPoint : EntryPoint.Default.values()) {

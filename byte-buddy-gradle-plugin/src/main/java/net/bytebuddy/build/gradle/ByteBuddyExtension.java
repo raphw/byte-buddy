@@ -110,7 +110,7 @@ public class ByteBuddyExtension {
      * @return The method name transformer to use.
      */
     public MethodNameTransformer getMethodNameTransformer() {
-        return suffix == null || suffix.isEmpty()
+        return suffix == null || suffix.length() == 0
                 ? MethodNameTransformer.Suffixing.withRandomSuffix()
                 : new MethodNameTransformer.Suffixing(suffix);
     }

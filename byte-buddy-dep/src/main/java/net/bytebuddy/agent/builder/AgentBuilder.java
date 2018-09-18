@@ -6587,6 +6587,7 @@ public interface AgentBuilder {
             /**
              * A dispatcher for a Java 6 capable VM.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava6CapableVm implements Dispatcher {
 
                 /**
@@ -6609,7 +6610,7 @@ public interface AgentBuilder {
                  *
                  * @param isModifiableClass             The {@code Instrumentation#isModifiableClass} method.
                  * @param isRetransformClassesSupported The {@code Instrumentation#isRetransformClassesSupported} method.
-                 * @param retransformClasses
+                 * @param retransformClasses            The {@code Instrumentation#retransformClasses} method.
                  */
                 protected ForJava6CapableVm(Method isModifiableClass, Method isRetransformClassesSupported, Method retransformClasses) {
                     this.isModifiableClass = isModifiableClass;
@@ -8179,6 +8180,11 @@ public interface AgentBuilder {
         private static final Class<?> NO_LOADED_TYPE = null;
 
         /**
+         * A dipatcher to use for interacting with the instrumentation API.
+         */
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
          * The default circularity lock that assures that no agent created by any agent builder within this
          * class loader causes a class loading circularity.
          */
@@ -9167,9 +9173,9 @@ public interface AgentBuilder {
                 ResettableClassFileTransformer classFileTransformer = makeRaw(installation.getListener(), installation.getInstallationListener());
                 installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
                 try {
-                    instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
+                    DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
                     if (nativeMethodStrategy.isEnabled(instrumentation)) {
-                        instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
+                        DISPATCHER.setNativeMethodPrefix(instrumentation, classFileTransformer, nativeMethodStrategy.getPrefix());
                     }
                     lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
                     if (redefinitionStrategy.isEnabled()) {
@@ -9214,6 +9220,171 @@ public interface AgentBuilder {
                 throw exception;
             } catch (Exception exception) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+            }
+        }
+
+        /**
+         * A dispatcher for interacting with the instrumentation API.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Returns {@code true} if the supplied instrumentation instance supports setting native method prefixes.
+             *
+             * @param instrumentation The instrumentation instance to use.
+             * @return {@code true} if the supplied instrumentation instance supports native method prefixes.
+             */
+            boolean isNativeMethodPrefixSupported(Instrumentation instrumentation);
+
+            /**
+             * Sets a native method prefix for the supplied class file transformer.
+             *
+             * @param instrumentation      The instrumentation instance to use.
+             * @param classFileTransformer The class file transformer for which the prefix is set.
+             * @param prefix               The prefix to set.
+             */
+            void setNativeMethodPrefix(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, String prefix);
+
+            /**
+             * Adds a class file transformer to an instrumentation instance.
+             *
+             * @param instrumentation      The instrumentation instance to use for registration.
+             * @param classFileTransformer The class file transformer to register.
+             * @param canRetransform       {@code true} if the class file transformer is capable of retransformation.
+             */
+            void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform);
+
+            /**
+             * An action for creating a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Dispatcher run() {
+                    try {
+                        return new Dispatcher.ForJava6CapableVm(Instrumentation.class.getMethod("isNativeMethodPrefixSupported"),
+                                Instrumentation.class.getMethod("setNativeMethodPrefix", ClassFileTransformer.class, String.class),
+                                Instrumentation.class.getMethod("addTransformer", ClassFileTransformer.class, boolean.class));
+                    } catch (NoSuchMethodException ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher for a legacy VM.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isNativeMethodPrefixSupported(Instrumentation instrumentation) {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void setNativeMethodPrefix(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, String prefix) {
+                    throw new IllegalStateException("The current VM does not support native method prefixes");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
+                    if (canRetransform) {
+                        throw new IllegalStateException("The current VM does not support retransformation");
+                    }
+                    instrumentation.addTransformer(classFileTransformer);
+                }
+            }
+
+            /**
+             * A dispatcher for a Java 6 capable VM.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForJava6CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code Instrumentation#isNativeMethodPrefixSupported} method.
+                 */
+                private final Method isNativeMethodPrefixSupported;
+
+                /**
+                 * The {@code Instrumentation#setNativeMethodPrefix} method.
+                 */
+                private final Method setNativeMethodPrefix;
+
+                /**
+                 * The {@code Instrumentation#addTransformer} method.
+                 */
+                private final Method addTransformer;
+
+                /**
+                 * Creates a new Java 6 capable dispatcher.
+                 *
+                 * @param isNativeMethodPrefixSupported The {@code Instrumentation#isNativeMethodPrefixSupported} method.
+                 * @param setNativeMethodPrefix         The {@code Instrumentation#setNativeMethodPrefix} method.
+                 * @param addTransformer                The {@code Instrumentation#addTransformer} method.
+                 */
+                protected ForJava6CapableVm(Method isNativeMethodPrefixSupported, Method setNativeMethodPrefix, Method addTransformer) {
+                    this.isNativeMethodPrefixSupported = isNativeMethodPrefixSupported;
+                    this.setNativeMethodPrefix = setNativeMethodPrefix;
+                    this.addTransformer = addTransformer;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isNativeMethodPrefixSupported(Instrumentation instrumentation) {
+                    try {
+                        return (Boolean) isNativeMethodPrefixSupported.invoke(instrumentation);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#isNativeMethodPrefixSupported", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#isNativeMethodPrefixSupported", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void setNativeMethodPrefix(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, String prefix) {
+                    try {
+                        setNativeMethodPrefix.invoke(instrumentation, classFileTransformer, prefix);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#setNativeMethodPrefix", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#setNativeMethodPrefix", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
+                    try {
+                        addTransformer.invoke(instrumentation, classFileTransformer, canRetransform);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.instrument.Instrumentation#addTransformer", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.instrument.Instrumentation#addTransformer", exception.getCause());
+                    }
+                }
             }
         }
 
@@ -9414,7 +9585,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public boolean isEnabled(Instrumentation instrumentation) {
-                    if (!instrumentation.isNativeMethodPrefixSupported()) {
+                    if (!DISPATCHER.isNativeMethodPrefixSupported(instrumentation)) {
                         throw new IllegalArgumentException("A prefix for native methods is not supported: " + instrumentation);
                     }
                     return true;

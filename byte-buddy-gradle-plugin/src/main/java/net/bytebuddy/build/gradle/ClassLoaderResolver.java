@@ -9,6 +9,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A class loader resolver for creating class loaders for given class paths.
@@ -85,12 +91,5 @@ public class ClassLoaderResolver implements Closeable {
                 ((Closeable) classLoader).close();
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return "ClassLoaderResolver{" +
-                "classLoaders=" + classLoaders +
-                '}';
     }
 }

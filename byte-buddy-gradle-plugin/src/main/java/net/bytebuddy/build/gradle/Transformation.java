@@ -18,7 +18,7 @@ public class Transformation extends AbstractUserConfiguration {
      * @return The plugin type name.
      */
     public String getPlugin() {
-        if (plugin == null || plugin.isEmpty()) {
+        if (plugin == null || plugin.length() == 0) {
             throw new GradleException("Plugin name was not specified or is empty");
         }
         return plugin;

@@ -13,6 +13,13 @@ import org.junit.rules.TemporaryFolder;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class ByteBuddyPluginTest {
 
     private static final String BYTE_BUDDY_VERSION = System.getProperty("net.bytebuddy.test.version", "1.4.22");

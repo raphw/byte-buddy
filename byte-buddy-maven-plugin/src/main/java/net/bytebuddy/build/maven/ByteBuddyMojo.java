@@ -302,7 +302,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     root,
                     byteBuddy,
                     entryPoint,
-                    suffix == null || suffix.isEmpty()
+                    suffix == null || suffix.length() == 0
                             ? MethodNameTransformer.Suffixing.withRandomSuffix()
                             : new MethodNameTransformer.Suffixing(suffix),
                     classFileLocator,

@@ -1019,7 +1019,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
-        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
+        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable, 2)));
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
         verifyNoMoreInteractions(installationListener);
     }
@@ -1676,7 +1676,7 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
         verify(installationListener).onInstall(instrumentation, classFileTransformer);
-        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
+        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable, 1)));
         verifyNoMoreInteractions(installationListener);
     }
 
@@ -2223,12 +2223,18 @@ public class AgentBuilderDefaultTest {
 
         private final Throwable throwable;
 
-        private CauseMatcher(Throwable throwable) {
+        private final int nesting;
+
+        private CauseMatcher(Throwable throwable, int nesting) {
             this.throwable = throwable;
+            this.nesting = nesting;
         }
 
         public boolean matches(Throwable item) {
-            return throwable.equals((item).getCause());
+            for (int index = 0; index < nesting; index++) {
+                item = item.getCause();
+            }
+            return throwable.equals(item);
         }
     }
 }

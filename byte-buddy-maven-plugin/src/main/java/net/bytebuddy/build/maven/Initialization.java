@@ -39,7 +39,7 @@ public class Initialization extends AbstractUserConfiguration {
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
     public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, String groupId, String artifactId, String version, String packaging) throws MojoExecutionException {
-        if (entryPoint == null || entryPoint.isEmpty()) {
+        if (entryPoint == null || entryPoint.length() == 0) {
             throw new MojoExecutionException("Entry point name is not defined");
         }
         for (EntryPoint.Default entryPoint : EntryPoint.Default.values()) {
