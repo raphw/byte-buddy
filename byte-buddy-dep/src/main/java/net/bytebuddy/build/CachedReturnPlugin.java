@@ -1,6 +1,5 @@
 package net.bytebuddy.build;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldPersistence;
@@ -11,9 +10,12 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.RandomString;
 
 import java.lang.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -25,6 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * For methods that return a reference type, {@code null} is used as an indicator. If a method returns such a value, this mechanism will
  * not work.
  */
+@HashCodeAndEqualsPlugin.Enhance
 public class CachedReturnPlugin extends Plugin.ForElementMatcher {
 
     /**
@@ -33,9 +36,30 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
     private static final String NAME_INFIX = "_";
 
     /**
+     * The infix symbol for advice classes.
+     */
+    private static final String ADVICE_INFIX = "$";
+
+    /**
      * A random string to use for avoid field name collisions.
      */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
     private final RandomString randomString;
+
+    /**
+     * The class file locator to use.
+     */
+    private final ClassFileLocator classFileLocator;
+
+    /**
+     * A map of advice types mapped by their argument type. All advice types are precompiled using Java 6 to allow
+     * for releasing Byte Buddy with a Java 5 byte code level where compiled classes do not contain stack map frames.
+     * Byte Buddy filters stack map frames when applying advice in newer version but it cannot add stack map frames
+     * without explicit frame computation which is expensive which is why precompilation was used. To avoid loading
+     * Java classes in incompatible versions, all advice types are resolved using a type pool.
+     */
+    @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.IGNORE)
+    private final Map<TypeDescription, TypeDescription> adviceByType;
 
     /**
      * Creates a plugin for caching method return values.
@@ -43,6 +67,24 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
     public CachedReturnPlugin() {
         super(declaresMethod(isAnnotatedWith(Enhance.class)));
         randomString = new RandomString();
+        classFileLocator = ClassFileLocator.ForClassLoader.of(CachedReturnPlugin.class.getClassLoader());
+        TypePool typePool = TypePool.Default.of(classFileLocator);
+        adviceByType = new HashMap<TypeDescription, TypeDescription>();
+        for (Class<?> type : new Class<?>[]{
+                boolean.class,
+                byte.class,
+                short.class,
+                char.class,
+                int.class,
+                long.class,
+                float.class,
+                double.class,
+                Object.class
+        }) {
+            adviceByType.put(TypeDescription.ForLoadedType.ForLoadedType.of(type), typePool.describe(CachedReturnPlugin.class.getName()
+                    + ADVICE_INFIX
+                    + type.getSimpleName()).resolve());
+        }
     }
 
     /**
@@ -55,32 +97,12 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                 throw new IllegalStateException("Cannot cache the value of an abstract method: " + methodDescription);
             } else if (!methodDescription.getParameters().isEmpty()) {
                 throw new IllegalStateException("Cannot cache the value of a method with parameters: " + methodDescription);
+            } else if (methodDescription.getReturnType().represents(void.class)) {
+                throw new IllegalStateException("Cannot cache void result for " + methodDescription);
             }
             String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent().value();
             if (name.length() == 0) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
-            }
-            Class<?> advice;
-            if (!methodDescription.getReturnType().isPrimitive()) {
-                advice = ReferenceAdvice.class;
-            } else if (methodDescription.getReturnType().represents(boolean.class)) {
-                advice = BooleanAdvice.class;
-            } else if (methodDescription.getReturnType().represents(byte.class)) {
-                advice = ByteAdvice.class;
-            } else if (methodDescription.getReturnType().represents(short.class)) {
-                advice = ShortAdvice.class;
-            } else if (methodDescription.getReturnType().represents(char.class)) {
-                advice = CharacterAdvice.class;
-            } else if (methodDescription.getReturnType().represents(int.class)) {
-                advice = IntegerAdvice.class;
-            } else if (methodDescription.getReturnType().represents(long.class)) {
-                advice = LongAdvice.class;
-            } else if (methodDescription.getReturnType().represents(float.class)) {
-                advice = FloatAdvice.class;
-            } else if (methodDescription.getReturnType().represents(double.class)) {
-                advice = DoubleAdvice.class;
-            } else {
-                throw new IllegalStateException("Cannot cache a method that returns void: " + methodDescription);
             }
             builder = builder
                     .defineField(name, methodDescription.getReturnType().asErasure(), methodDescription.isStatic()
@@ -88,7 +110,9 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                             : Ownership.MEMBER, Visibility.PRIVATE, SyntheticState.SYNTHETIC, FieldPersistence.TRANSIENT)
                     .visit(Advice.withCustomMapping()
                             .bind(CacheField.class, new CacheFieldOffsetMapping(name))
-                            .to(advice)
+                            .to(adviceByType.get(methodDescription.getReturnType().isPrimitive()
+                                    ? methodDescription.getReturnType().asErasure()
+                                    : TypeDescription.OBJECT), this.classFileLocator)
                             .on(is(methodDescription)));
         }
         return builder;
@@ -117,7 +141,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
      */
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.RUNTIME)
-    private @interface CacheField {
+    protected @interface CacheField {
         /* empty */
     }
 
@@ -150,366 +174,6 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                               Advice.ArgumentHandler argumentHandler,
                               Sort sort) {
             return new Target.ForField.ReadWrite(instrumentedType.getDeclaredFields().filter(named(name)).getOnly());
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code boolean} value.
-     */
-    private static class BooleanAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private BooleanAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static boolean enter(@CacheField boolean cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "IP_PARAMETER_IS_DEAD_BUT_OVERWRITTEN"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) boolean returned, @CacheField boolean cached) {
-            if (returned) {
-                cached = true;
-            } else {
-                returned = true;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code byte} value.
-     */
-    private static class ByteAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private ByteAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static byte enter(@CacheField byte cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) byte returned, @CacheField byte cached) {
-            if (returned == 0) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code short} value.
-     */
-    private static class ShortAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private ShortAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static short enter(@CacheField short cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) short returned, @CacheField short cached) {
-            if (returned == 0) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code char} value.
-     */
-    private static class CharacterAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private CharacterAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static char enter(@CacheField char cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) char returned, @CacheField char cached) {
-            if (returned == 0) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code int} value.
-     */
-    private static class IntegerAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private IntegerAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static int enter(@CacheField int cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) int returned, @CacheField int cached) {
-            if (returned == 0) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code long} value.
-     */
-    private static class LongAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private LongAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static long enter(@CacheField long cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) long returned, @CacheField long cached) {
-            if (returned == 0L) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code float} value.
-     */
-    private static class FloatAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private FloatAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static float enter(@CacheField float cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) float returned, @CacheField float cached) {
-            if (returned == 0f) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a {@code double} value.
-     */
-    private static class DoubleAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private DoubleAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static double enter(@CacheField double cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false) double returned, @CacheField double cached) {
-            if (returned == 0d) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
-        }
-    }
-
-    /**
-     * An advice class for caching a reference value.
-     */
-    private static class ReferenceAdvice {
-
-        /**
-         * A constructor that prohibits the instantiation of the class.
-         */
-        private ReferenceAdvice() {
-            throw new UnsupportedOperationException("This class is merely an advice template and should not be instantiated");
-        }
-
-        /**
-         * The enter advice.
-         *
-         * @param cached The cached field's value.
-         * @return {@code true} if a cached value exists.
-         */
-        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
-        protected static Object enter(@CacheField Object cached) {
-            return cached;
-        }
-
-        /**
-         * The exit advice.
-         *
-         * @param returned The value that was returned by the method's execution or {@code 0} if it was not executed.
-         * @param cached   The previously cached value or {@code 0} if no previous value exists.
-         */
-        @Advice.OnMethodExit
-        @SuppressFBWarnings(value = {"UC_USELESS_VOID_METHOD", "DLS_DEAD_LOCAL_STORE"}, justification = "Advice method serves as a template")
-        protected static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object returned, @CacheField Object cached) {
-            if (returned == null) {
-                returned = cached;
-            } else {
-                cached = returned;
-            }
         }
     }
 }
