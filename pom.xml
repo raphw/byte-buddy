@@ -50,6 +50,7 @@
     <properties>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
+        <bytebuddy.experimental>false</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sourcecode.main.version>1.5</sourcecode.main.version>
         <sourcecode.test.version>1.6</sourcecode.test.version>
@@ -239,6 +240,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.plugin.surefire}</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <net.bytebuddy.experimental>${bytebuddy.experimental}</net.bytebuddy.experimental>
+                            <net.bytebuddy.test.integration>${bytebuddy.integration}</net.bytebuddy.test.integration>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -384,6 +391,7 @@
                 <sourcecode.test.version>1.8</sourcecode.test.version>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
+                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 12 JVMs. -->
@@ -394,10 +402,11 @@
                 <jdk>12</jdk>
             </activation>
             <properties>
-                <sourcecode.main.version>1.8</sourcecode.main.version>
-                <sourcecode.test.version>1.8</sourcecode.test.version>
-                <bytecode.main.version>1.8</bytecode.main.version>
-                <bytecode.test.version>1.8</bytecode.test.version>
+                <sourcecode.main.version>9</sourcecode.main.version>
+                <sourcecode.test.version>9</sourcecode.test.version>
+                <bytecode.main.version>9</bytecode.main.version>
+                <bytecode.test.version>9</bytecode.test.version>
+                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Builds using a byte code target for Java 6. -->
@@ -644,16 +653,6 @@
             </properties>
             <build>
                 <plugins>
-                    <!-- Enable non-fast-running unit tests by setting the integration profile. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <net.bytebuddy.test.integration>true</net.bytebuddy.test.integration>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
                     <!-- Run spotbugs if not specified differently in a module.-->
                     <plugin>
                         <groupId>com.github.spotbugs</groupId>
