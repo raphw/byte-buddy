@@ -16,6 +16,7 @@
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
         <version.unixsocket>2.0.4</version.unixsocket>
+        <packages.list>net.bytebuddy.agent</packages.list>
     </properties>
 
     <name>Byte Buddy Java agent</name>
@@ -102,11 +103,28 @@
                             ${attach.package.sun};resolution:="optional",
                             ${attach.package.ibm};resolution:="optional"
                         </Import-Package>
-                        <Export-Package>
-                            net.bytebuddy.agent
-                        </Export-Package>
-                        <Automatic-Module-Name>${project.groupId}.agent</Automatic-Module-Name>
+                        <Export-Package>${packages.list}</Export-Package>
                     </instructions>
+                </configuration>
+            </plugin>
+            <!-- Create a module-info.class file. -->
+            <plugin>
+                <groupId>codes.rafael.modulemaker</groupId>
+                <artifactId>modulemaker-maven-plugin</artifactId>
+                <version>${version.plugin.modulemaker}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>make-module</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>net.bytebuddy.agent</name>
+                    <packages>${packages.list}</packages>
+                    <exports>${packages.list}</exports>
+                    <requires>java.instrument</requires>
                 </configuration>
             </plugin>
         </plugins>
