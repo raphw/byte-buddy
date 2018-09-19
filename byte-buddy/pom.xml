@@ -185,29 +185,29 @@
                     </instructions>
                 </configuration>
             </plugin>
-            <!-- Inject a module-info.class file into the created jar. -->
-            <!--<plugin>-->
-                <!--<groupId>codes.rafael.modulemaker</groupId>-->
-                <!--<artifactId>modulemaker-maven-plugin</artifactId>-->
-                <!--<version>${version.plugin.modulemaker}</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>inject-module</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<name>net.bytebuddy</name>-->
-                    <!--<packages>${packages.list}</packages>-->
-                    <!--<exports>${packages.list}</exports>-->
-                    <!--<static-requires>-->
-                        <!--java.instrument,-->
-                        <!--net.bytebuddy.agent-->
-                    <!--</static-requires>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
+            <!-- Inject a module-info.class file into the shaded jar. -->
+            <plugin>
+                <groupId>codes.rafael.modulemaker</groupId>
+                <artifactId>modulemaker-maven-plugin</artifactId>
+                <version>${version.plugin.modulemaker}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>inject-module</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>net.bytebuddy</name>
+                    <packages>${packages.list}</packages>
+                    <exports>${packages.list}</exports>
+                    <static-requires>
+                        java.instrument,
+                        net.bytebuddy.agent
+                    </static-requires>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -235,5 +235,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

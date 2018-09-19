@@ -108,25 +108,25 @@
                 </configuration>
             </plugin>
             <!-- Create a module-info.class file. -->
-            <!--<plugin>-->
-                <!--<groupId>codes.rafael.modulemaker</groupId>-->
-                <!--<artifactId>modulemaker-maven-plugin</artifactId>-->
-                <!--<version>${version.plugin.modulemaker}</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>prepare-package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>make-module</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-                <!--<configuration>-->
-                    <!--<name>net.bytebuddy.agent</name>-->
-                    <!--<packages>${packages.list}</packages>-->
-                    <!--<exports>${packages.list}</exports>-->
-                    <!--<requires>java.instrument</requires>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
+            <plugin>
+                <groupId>codes.rafael.modulemaker</groupId>
+                <artifactId>modulemaker-maven-plugin</artifactId>
+                <version>${version.plugin.modulemaker}</version>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>make-module</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>net.bytebuddy.agent</name>
+                    <packages>${packages.list}</packages>
+                    <exports>${packages.list}</exports>
+                    <requires>java.instrument</requires>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
