@@ -43,12 +43,12 @@ public class ClassInjectorUsingUnsafeTest {
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingUnsafe.isAvailable(), is(true));
         assertThat(new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader()).isAlive(), is(true));
-        assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Disabled(null).isAvailable(), is(false));
+        assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Unavailable(null).isAvailable(), is(false));
     }
 
     @Test(expected = RuntimeException.class)
     public void testUnavailableThrowsException() throws Exception {
-        new ClassInjector.UsingUnsafe.Dispatcher.Disabled("foo").initialize();
+        new ClassInjector.UsingUnsafe.Dispatcher.Unavailable("foo").initialize();
     }
 
     @Test

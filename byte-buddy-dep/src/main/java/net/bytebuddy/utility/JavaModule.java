@@ -483,42 +483,42 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * {@inheritDoc}
              */
             public ClassLoader getClassLoader(Object module) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean isNamed(Object module) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
 
             /**
              * {@inheritDoc}
              */
             public String getName(Object module) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
 
             /**
              * {@inheritDoc}
              */
             public InputStream getResourceAsStream(Object module, String name) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
 
             /**
              * {@inheritDoc}
              */
             public boolean canRead(Object source, Object target) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
 
             /**
              * {@inheritDoc}
              */
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
-                throw new IllegalStateException("Current VM does not support modules");
+                throw new UnsupportedOperationException("Current VM does not support modules");
             }
         }
     }

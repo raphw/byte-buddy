@@ -1623,7 +1623,7 @@ public interface ClassFileLocator extends Closeable {
                          * {@inheritDoc}
                          */
                         public Dispatcher initialize() {
-                            throw new IllegalStateException("Could not locate classes vector: " + message);
+                            throw new UnsupportedOperationException("Could not locate classes vector: " + message);
                         }
                     }
                 }

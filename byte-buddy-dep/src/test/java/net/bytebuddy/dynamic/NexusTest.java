@@ -186,12 +186,12 @@ public class NexusTest {
         assertThat(new NexusAccessor.Dispatcher.Unavailable("unavailable").isAlive(), is(false));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testUnavailableDispatcherRegisterThrowsException() throws Exception {
         new NexusAccessor.Dispatcher.Unavailable("unavailable").register(FOO, classLoader, Nexus.NO_QUEUE, BAR, loadedTypeInitializer);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     @SuppressWarnings("unchecked")
     public void testUnavailableDispatcherCleanThrowsException() throws Exception {
         new NexusAccessor.Dispatcher.Unavailable("unavailable").clean(mock(Reference.class));

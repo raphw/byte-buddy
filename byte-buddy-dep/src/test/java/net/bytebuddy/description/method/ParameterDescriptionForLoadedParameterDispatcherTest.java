@@ -16,17 +16,17 @@ public class ParameterDescriptionForLoadedParameterDispatcherTest {
         accessibleObject = Foo.class.getDeclaredConstructor();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testLegacyVmGetName() throws Exception {
         ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getName(accessibleObject, FOO);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testLegacyVmGetModifiers() throws Exception {
         ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getModifiers(accessibleObject, FOO);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testLegacyVmIsNamePresent() throws Exception {
         ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.isNamePresent(accessibleObject, FOO);
     }

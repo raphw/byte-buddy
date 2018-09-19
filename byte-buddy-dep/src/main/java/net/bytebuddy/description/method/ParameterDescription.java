@@ -523,21 +523,21 @@ public interface ParameterDescription extends AnnotationSource,
                  * {@inheritDoc}
                  */
                 public int getModifiers(AccessibleObject executable, int index) {
-                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean isNamePresent(AccessibleObject executable, int index) {
-                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public String getName(AccessibleObject executable, int index) {
-                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
+                    throw new UnsupportedOperationException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
             }
         }

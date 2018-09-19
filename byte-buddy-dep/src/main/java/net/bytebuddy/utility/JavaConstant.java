@@ -392,14 +392,14 @@ public interface JavaConstant {
                  * {@inheritDoc}
                  */
                 public Class<?> returnType(Object methodType) {
-                    throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
+                    throw new UnsupportedOperationException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Class<?>[] parameterArray(Object methodType) {
-                    throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
+                    throw new UnsupportedOperationException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
                 }
             }
         }
@@ -1189,21 +1189,21 @@ public interface JavaConstant {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
+                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Object publicLookup() {
-                    throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
+                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Class<?> lookupType(Object lookup) {
-                    throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
+                    throw new UnsupportedOperationException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
             }
         }

@@ -45,6 +45,11 @@ import java.util.jar.JarOutputStream;
 public interface ClassInjector {
 
     /**
+     * A permission for the {@code suppressAccessChecks} permission.
+     */
+    Permission SUPPRESS_ACCESS_CHECKS = new ReflectPermission("suppressAccessChecks");
+
+    /**
      * Determines the default behavior for type injections when a type is already loaded.
      */
     boolean ALLOW_EXISTING_TYPES = false;
@@ -315,11 +320,6 @@ public interface ClassInjector {
             interface Initializable {
 
                 /**
-                 * The access permission to check upon injection if a security manager is active.
-                 */
-                Permission ACCESS_PERMISSION = new ReflectPermission("suppressAccessChecks");
-
-                /**
                  * Indicates if this dispatcher is available.
                  *
                  * @return {@code true} if this dispatcher is available.
@@ -504,17 +504,21 @@ public interface ClassInjector {
                             getPackage = ClassLoader.class.getMethod("getDefinedPackage", String.class);
                         } catch (NoSuchMethodException ignored) {
                             getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                            getPackage.setAccessible(true);
                         }
                     } else {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        getPackage.setAccessible(true);
                     }
                     Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                    findLoadedClass.setAccessible(true);
                     Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
                             String.class,
                             byte[].class,
                             int.class,
                             int.class,
                             ProtectionDomain.class);
+                    defineClass.setAccessible(true);
                     Method definePackage = ClassLoader.class.getDeclaredMethod("definePackage",
                             String.class,
                             String.class,
@@ -524,12 +528,15 @@ public interface ClassInjector {
                             String.class,
                             String.class,
                             URL.class);
+                    definePackage.setAccessible(true);
                     try {
+                        Method getClassLoadingLock = ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class);
+                        getClassLoadingLock.setAccessible(true);
                         return new ForJava7CapableVm(findLoadedClass,
                                 defineClass,
                                 getPackage,
                                 definePackage,
-                                ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                                getClassLoadingLock);
                     } catch (NoSuchMethodException ignored) {
                         return new ForLegacyVm(findLoadedClass, defineClass, getPackage, definePackage);
                     }
@@ -547,24 +554,16 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
-                    try {
-                        // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
-                        // By always setting accessibility, the security manager is always triggered if this operation was illegal.
-                        findLoadedClass.setAccessible(true);
-                        defineClass.setAccessible(true);
-                        getPackage.setAccessible(true);
-                        definePackage.setAccessible(true);
-                        onInitialization();
-                        return this;
-                    } catch (Exception exception) {
-                        return new Dispatcher.Unavailable(exception);
+                    SecurityManager securityManager = System.getSecurityManager();
+                    if (securityManager != null) {
+                        try {
+                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                        } catch (Exception exception) {
+                            return new Dispatcher.Unavailable(exception.getMessage());
+                        }
                     }
+                    return this;
                 }
-
-                /**
-                 * Invoked upon initializing methods.
-                 */
-                protected abstract void onInitialization();
 
                 /**
                  * {@inheritDoc}
@@ -675,12 +674,6 @@ public interface ClassInjector {
                             throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getCause());
                         }
                     }
-
-                    @Override
-                    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
-                    protected void onInitialization() {
-                        getClassLoadingLock.setAccessible(true);
-                    }
                 }
 
                 /**
@@ -708,11 +701,6 @@ public interface ClassInjector {
                      */
                     public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                         return classLoader;
-                    }
-
-                    @Override
-                    protected void onInitialization() {
-                        /* do nothing */
                     }
                 }
             }
@@ -801,18 +789,22 @@ public interface ClassInjector {
                     } else {
                         getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                     }
+                    getPackage.setAccessible(true);
                     DynamicType.Builder<?> builder = new ByteBuddy()
                             .with(TypeValidation.DISABLED)
                             .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                             .name(ClassLoader.class.getName() + "$ByteBuddyAccessor$" + RandomString.make())
                             .defineMethod("findLoadedClass", Class.class, Visibility.PUBLIC)
                             .withParameters(ClassLoader.class, String.class)
-                            .intercept(MethodCall.invoke(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class))
+                            .intercept(MethodCall.invoke(ClassLoader.class
+                                    .getDeclaredMethod("findLoadedClass", String.class))
                                     .onArgument(0)
                                     .withArgument(1))
                             .defineMethod("defineClass", Class.class, Visibility.PUBLIC)
-                            .withParameters(ClassLoader.class, String.class, byte[].class, int.class, int.class, ProtectionDomain.class)
-                            .intercept(MethodCall.invoke(ClassLoader.class.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class, ProtectionDomain.class))
+                            .withParameters(ClassLoader.class, String.class, byte[].class, int.class, int.class,
+                                    ProtectionDomain.class)
+                            .intercept(MethodCall.invoke(ClassLoader.class
+                                    .getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class, ProtectionDomain.class))
                                     .onArgument(0)
                                     .withArgument(1, 2, 3, 4, 5))
                             .defineMethod("getPackage", Package.class, Visibility.PUBLIC)
@@ -821,8 +813,10 @@ public interface ClassInjector {
                                     .onArgument(0)
                                     .withArgument(1))
                             .defineMethod("definePackage", Package.class, Visibility.PUBLIC)
-                            .withParameters(ClassLoader.class, String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class)
-                            .intercept(MethodCall.invoke(ClassLoader.class.getDeclaredMethod("definePackage", String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class))
+                            .withParameters(ClassLoader.class, String.class, String.class, String.class, String.class,
+                                    String.class, String.class, String.class, URL.class)
+                            .intercept(MethodCall.invoke(ClassLoader.class
+                                    .getDeclaredMethod("definePackage", String.class, String.class, String.class, String.class, String.class, String.class, String.class, URL.class))
                                     .onArgument(0)
                                     .withArgument(1, 2, 3, 4, 5, 6, 7, 8));
                     try {
@@ -836,8 +830,11 @@ public interface ClassInjector {
                                 .withParameters(ClassLoader.class, String.class)
                                 .intercept(FixedValue.argument(0));
                     }
-                    Class<?> type = builder.make().load(ClassLoadingStrategy.BOOTSTRAP_LOADER, new ClassLoadingStrategy.ForUnsafeInjection()).getLoaded();
-                    return new UsingUnsafeInjection(unsafe.getDeclaredMethod("allocateInstance", Class.class).invoke(unsafeInstance, type),
+                    Class<?> type = builder.make()
+                            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, new ClassLoadingStrategy.ForUnsafeInjection())
+                            .getLoaded();
+                    return new UsingUnsafeInjection(
+                            unsafe.getMethod("allocateInstance", Class.class).invoke(unsafeInstance, type),
                             type.getMethod("findLoadedClass", ClassLoader.class, String.class),
                             type.getMethod("defineClass", ClassLoader.class, String.class, byte[].class, int.class, int.class, ProtectionDomain.class),
                             type.getMethod("getPackage", ClassLoader.class, String.class),
@@ -858,7 +855,11 @@ public interface ClassInjector {
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {
-                        securityManager.checkPermission(ACCESS_PERMISSION);
+                        try {
+                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                        } catch (Exception exception) {
+                            return new Dispatcher.Unavailable(exception.getMessage());
+                        }
                     }
                     return this;
                 }
@@ -1063,7 +1064,11 @@ public interface ClassInjector {
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {
-                        securityManager.checkPermission(ACCESS_PERMISSION);
+                        try {
+                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                        } catch (Exception exception) {
+                            return new Dispatcher.Unavailable(exception.getMessage());
+                        }
                     }
                     return this;
                 }
@@ -1215,17 +1220,17 @@ public interface ClassInjector {
             class Unavailable implements Dispatcher {
 
                 /**
-                 * The exception that was thrown when initializing this dispatcher.
+                 * The error message being displayed.
                  */
-                private final Exception exception;
+                private final String message;
 
                 /**
-                 * Creates a new faulty reflection store.
+                 * Creates a dispatcher for a VM that does not support reflective injection.
                  *
-                 * @param exception The exception that was thrown when initializing this dispatcher.
+                 * @param message The error message being displayed.
                  */
-                protected Unavailable(Exception exception) {
-                    this.exception = exception;
+                protected Unavailable(String message) {
+                    this.message = message;
                 }
 
                 /**
@@ -1250,14 +1255,14 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
-                    throw new UnsupportedOperationException("Cannot define class using reflection", exception);
+                    throw new UnsupportedOperationException("Cannot define class using reflection: " + message);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Package getPackage(ClassLoader classLoader, String name) {
-                    throw new UnsupportedOperationException("Cannot get package using reflection", exception);
+                    throw new UnsupportedOperationException("Cannot get package using reflection: " + message);
                 }
 
                 /**
@@ -1272,7 +1277,7 @@ public interface ClassInjector {
                                              String implementationVersion,
                                              String implementationVendor,
                                              URL sealBase) {
-                    throw new UnsupportedOperationException("Cannot define package using injection", exception);
+                    throw new UnsupportedOperationException("Cannot define package using injection: " + message);
                 }
             }
         }
@@ -1803,16 +1808,44 @@ public interface ClassInjector {
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
                     try {
-                        Class<?> unsafe = Class.forName("sun.misc.Unsafe");
-                        return new Enabled(unsafe.getDeclaredField("theUnsafe"), unsafe.getMethod("defineClass",
-                                String.class,
-                                byte[].class,
-                                int.class,
-                                int.class,
-                                ClassLoader.class,
-                                ProtectionDomain.class));
+                        Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
+                        Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
+                        theUnsafe.setAccessible(true);
+                        try {
+                            Method defineClass = unsafeType.getMethod("defineClass",
+                                    String.class,
+                                    byte[].class,
+                                    int.class,
+                                    int.class,
+                                    ClassLoader.class,
+                                    ProtectionDomain.class);
+                            defineClass.setAccessible(true);
+                            return new Enabled(theUnsafe, defineClass);
+                        } catch (Exception exception) {
+                            try {
+                                Object unsafe = theUnsafe.get(null);
+                                long offset = (Long) unsafeType
+                                        .getMethod("objectFieldOffset", Field.class)
+                                        .invoke(unsafe, AccessibleObject.class.getDeclaredField("override"));
+                                Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
+                                Class<?> internalUnsafe = Class.forName("jdk.internal.misc.Unsafe");
+                                Field theUnsafeInternal = internalUnsafe.getDeclaredField("theUnsafe");
+                                putBoolean.invoke(unsafe, theUnsafeInternal, offset, true);
+                                Method defineClassInternal = internalUnsafe.getMethod("defineClass",
+                                        String.class,
+                                        byte[].class,
+                                        int.class,
+                                        int.class,
+                                        ClassLoader.class,
+                                        ProtectionDomain.class);
+                                putBoolean.invoke(unsafe, defineClassInternal, offset, true);
+                                return new Enabled(theUnsafeInternal, defineClassInternal);
+                            } catch (Exception ignored) {
+                                throw exception;
+                            }
+                        }
                     } catch (Exception exception) {
-                        return new Disabled(exception.getMessage());
+                        return new Unavailable(exception.getMessage());
                     }
                 }
             }
@@ -1856,7 +1889,14 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 public Dispatcher initialize() {
-                    theUnsafe.setAccessible(true);
+                    SecurityManager securityManager = System.getSecurityManager();
+                    if (securityManager != null) {
+                        try {
+                            securityManager.checkPermission(SUPPRESS_ACCESS_CHECKS);
+                        } catch (Exception exception) {
+                            return new Unavailable(exception.getMessage());
+                        }
+                    }
                     return this;
                 }
 
@@ -1884,7 +1924,7 @@ public interface ClassInjector {
              * A disabled dispatcher.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class Disabled implements Initializable {
+            class Unavailable implements Dispatcher, Initializable {
 
                 /**
                  * The reason why this dispatcher is not available.
@@ -1896,7 +1936,7 @@ public interface ClassInjector {
                  *
                  * @param message The reason why this dispatcher is not available.
                  */
-                protected Disabled(String message) {
+                protected Unavailable(String message) {
                     this.message = message;
                 }
 
@@ -1911,7 +1951,14 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public Dispatcher initialize() {
-                    throw new IllegalStateException("Could not find sun.misc.Unsafe: " + message);
+                    throw new UnsupportedOperationException("Could not access Unsafe class: " + message);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    throw new UnsupportedOperationException("Could not access Unsafe class: " + message);
                 }
             }
         }
@@ -2108,14 +2155,14 @@ public interface ClassInjector {
                  * {@inheritDoc}
                  */
                 public void appendToBootstrapClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    throw new IllegalStateException("The current JVM does not support appending to the bootstrap loader");
+                    throw new UnsupportedOperationException("The current JVM does not support appending to the bootstrap loader");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public void appendToSystemClassLoaderSearch(Instrumentation instrumentation, JarFile jarFile) {
-                    throw new IllegalStateException("The current JVM does not support appending to the system class loader");
+                    throw new UnsupportedOperationException("The current JVM does not support appending to the system class loader");
                 }
             }
 

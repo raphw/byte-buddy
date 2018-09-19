@@ -6581,7 +6581,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public void retransformClasses(Instrumentation instrumentation, Class<?>[] type) {
-                    throw new IllegalStateException("The current VM does not support retransformation");
+                    throw new UnsupportedOperationException("The current VM does not support retransformation");
                 }
             }
 
@@ -9300,7 +9300,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public void setNativeMethodPrefix(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, String prefix) {
-                    throw new IllegalStateException("The current VM does not support native method prefixes");
+                    throw new UnsupportedOperationException("The current VM does not support native method prefixes");
                 }
 
                 /**
@@ -9308,7 +9308,7 @@ public interface AgentBuilder {
                  */
                 public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
                     if (canRetransform) {
-                        throw new IllegalStateException("The current VM does not support retransformation");
+                        throw new UnsupportedOperationException("The current VM does not support retransformation");
                     }
                     instrumentation.addTransformer(classFileTransformer);
                 }

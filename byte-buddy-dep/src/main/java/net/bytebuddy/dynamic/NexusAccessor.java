@@ -322,7 +322,7 @@ public class NexusAccessor {
              * {@inheritDoc}
              */
             public void clean(Reference<? extends ClassLoader> reference) {
-                throw new IllegalStateException("Could not initialize Nexus accessor: " + message);
+                throw new UnsupportedOperationException("Could not initialize Nexus accessor: " + message);
             }
 
             /**
@@ -333,7 +333,7 @@ public class NexusAccessor {
                                  ReferenceQueue<? super ClassLoader> referenceQueue,
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
-                throw new IllegalStateException("Could not initialize Nexus accessor: " + message);
+                throw new UnsupportedOperationException("Could not initialize Nexus accessor: " + message);
             }
         }
     }

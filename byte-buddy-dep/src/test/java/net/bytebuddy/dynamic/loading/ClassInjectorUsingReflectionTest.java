@@ -155,7 +155,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyDispatcherDefineClass() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).defineClass(null,
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(FOO).defineClass(null,
                 null,
                 null,
                 null);
@@ -163,12 +163,12 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyDispatcherGetPackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).getPackage(null, null);
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(FOO).getPackage(null, null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testDispatcherFaultyDispatcherDefinePackage() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Unavailable(new Exception()).definePackage(null,
+        new ClassInjector.UsingReflection.Dispatcher.Unavailable(FOO).definePackage(null,
                 null,
                 null,
                 null,

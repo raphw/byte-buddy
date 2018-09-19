@@ -6,17 +6,17 @@ import static org.mockito.Mockito.mock;
 
 public class JavaConstantMethodHandleDispatcherTest {
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testLegacyVmInitialization() throws Exception {
         JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.initialize();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testLegacyVmPunlicLookup() throws Exception {
+    @Test(expected = UnsupportedOperationException.class)
+    public void testLegacyVmPublicLookup() throws Exception {
         JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.publicLookup();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testLegacyVmLookupType() throws Exception {
         JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.lookupType(mock(Object.class));
     }

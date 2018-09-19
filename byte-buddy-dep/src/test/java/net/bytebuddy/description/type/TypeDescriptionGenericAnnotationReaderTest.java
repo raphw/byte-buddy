@@ -28,7 +28,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                 nullValue(TypeDescription.Generic.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testCannotResolveAnnotatedType() throws Exception {
         TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolve(null);
     }

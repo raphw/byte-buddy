@@ -373,7 +373,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
              */
             public void addTransformer(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, boolean canRetransform) {
                 if (canRetransform) {
-                    throw new IllegalStateException();
+                    throw new UnsupportedOperationException("Cannot apply retransformation on legacy VM");
                 } else {
                     instrumentation.addTransformer(classFileTransformer);
                 }

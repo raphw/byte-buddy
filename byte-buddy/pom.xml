@@ -107,12 +107,6 @@
                             </relocations>
                             <filters>
                                 <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>module-info.class</exclude>
-                                    </excludes>
-                                </filter>
-                                <filter>
                                     <artifact>org.ow2.asm:asm-commons</artifact>
                                     <includes>
                                         <include>org/objectweb/asm/commons/Remapper.class</include>
@@ -171,7 +165,7 @@
                     </archive>
                 </configuration>
             </plugin>
-            <!-- Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. -->
+            <!--&lt;!&ndash; Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. &ndash;&gt;-->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -191,29 +185,29 @@
                     </instructions>
                 </configuration>
             </plugin>
-            <!-- Create a module-info.class file. -->
-            <plugin>
-                <groupId>codes.rafael.modulemaker</groupId>
-                <artifactId>modulemaker-maven-plugin</artifactId>
-                <version>${version.plugin.modulemaker}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>make-module</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <name>net.bytebuddy</name>
-                    <packages>${packages.list}</packages>
-                    <exports>${packages.list}</exports>
-                    <static-requires>
-                        java.instrument,
-                        net.bytebuddy.agent
-                    </static-requires>
-                </configuration>
-            </plugin>
+            <!-- Inject a module-info.class file into the created jar. -->
+            <!--<plugin>-->
+                <!--<groupId>codes.rafael.modulemaker</groupId>-->
+                <!--<artifactId>modulemaker-maven-plugin</artifactId>-->
+                <!--<version>${version.plugin.modulemaker}</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>inject-module</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+                <!--<configuration>-->
+                    <!--<name>net.bytebuddy</name>-->
+                    <!--<packages>${packages.list}</packages>-->
+                    <!--<exports>${packages.list}</exports>-->
+                    <!--<static-requires>-->
+                        <!--java.instrument,-->
+                        <!--net.bytebuddy.agent-->
+                    <!--</static-requires>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 

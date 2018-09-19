@@ -2571,7 +2571,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * {@inheritDoc}
                      */
                     public Generic resolve(AnnotatedElement annotatedType) {
-                        throw new IllegalStateException("Loaded annotated type cannot be represented on this VM");
+                        throw new UnsupportedOperationException("Loaded annotated type cannot be represented on this VM");
                     }
                 }
 

@@ -29,32 +29,32 @@ public class JavaModuleTest {
         assertThat(module.unwrap(), sameInstance(object));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testIsNamedDisabledThrowException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.isNamed(mock(Object.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testGetNameDisabledThrowException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.getName(mock(Object.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testGetClassLoaderDisabledThrowException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.getClassLoader(mock(Object.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testCanReadThrowsException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.canRead(mock(Object.class), mock(Object.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testGetResourceAsStreamThrowsException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.getResourceAsStream(mock(Object.class), FOO);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void testAddReadsThrowsException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.addReads(mock(Instrumentation.class), mock(Object.class), mock(Object.class));
     }
