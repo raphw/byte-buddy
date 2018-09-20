@@ -204,6 +204,7 @@
                     <exports>${packages.list}</exports>
                     <static-requires>
                         java.instrument,
+                        jdk.unsupported,
                         net.bytebuddy.agent
                     </static-requires>
                 </configuration>
