@@ -6310,7 +6310,7 @@ public interface TypePool {
                 public TypeDescription get(int index) {
                     return index == 0
                             ? typeDescription
-                            : typePool.describe(nestMembers.get(index)).resolve();
+                            : typePool.describe(nestMembers.get(index - 1)).resolve();
                 }
 
                 /**

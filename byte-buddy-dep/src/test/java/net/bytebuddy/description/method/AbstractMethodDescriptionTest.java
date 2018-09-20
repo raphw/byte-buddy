@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -513,7 +514,8 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
                 .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
-                .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
+                        .isAccessibleTo(TypeDescription.ForLoadedType.of(Sample.class)),
+                is(ClassFileVersion.of(PublicType.class).isAtLeast(ClassFileVersion.JAVA_V11))); // introduction of nest mates
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
                 .isAccessibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))

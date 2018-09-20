@@ -497,6 +497,7 @@ public interface ClassInjector {
                  * @return A direct dispatcher for class injection.
                  * @throws Exception If the creation is impossible.
                  */
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
                     Method getPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
@@ -552,7 +553,6 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {
@@ -1887,7 +1887,6 @@ public interface ClassInjector {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 public Dispatcher initialize() {
                     SecurityManager securityManager = System.getSecurityManager();
                     if (securityManager != null) {

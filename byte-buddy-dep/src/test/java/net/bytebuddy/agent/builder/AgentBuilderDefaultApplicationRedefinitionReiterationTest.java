@@ -4,6 +4,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -37,9 +38,10 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
-                ClassFileLocator.ForClassLoader.readToNames(Foo.class, Bar.class),
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+        classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileLocator.ForClassLoader.readToNames(AgentBuilderDefaultApplicationRedefinitionReiterationTest.class,
+                        Foo.class,
+                        Bar.class), ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 
     @Test
@@ -117,7 +119,6 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
         public Bar createBar() throws Exception {
             return new Bar();
         }
-
     }
 
     public static class Bar {

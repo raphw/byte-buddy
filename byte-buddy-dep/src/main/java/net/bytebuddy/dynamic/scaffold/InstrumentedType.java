@@ -356,10 +356,12 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getDeclaredTypes(),
                             typeDescription.isAnonymousType(),
                             typeDescription.isLocalType(),
-                            typeDescription.getNestHost().equals(typeDescription)
+                            typeDescription.isNestHost()
                                     ? TargetType.DESCRIPTION
                                     : typeDescription.getNestHost(),
-                            typeDescription.getNestMembers().filter(not(is(typeDescription))));
+                            typeDescription.isNestHost()
+                                    ? typeDescription.getNestMembers().filter(not(is(typeDescription)))
+                                    : Collections.<TypeDescription>emptyList());
                 }
             },
 
@@ -1167,7 +1169,9 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         public TypeList getNestMembers() {
-            return new TypeList.Explicit(CompoundList.of(this, nestMembers));
+            return nestHost.represents(TargetType.class)
+                    ? new TypeList.Explicit(CompoundList.of(this, nestMembers))
+                    : nestHost.getNestMembers();
         }
 
         /**
