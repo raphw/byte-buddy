@@ -33,7 +33,7 @@ public class TransformerCompoundTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public void testTransformation() throws Exception {
         assertThat(new Transformer.Compound<Object>(first, second).transform(typeDescription, firstTarget), is(finalTarget));
     }

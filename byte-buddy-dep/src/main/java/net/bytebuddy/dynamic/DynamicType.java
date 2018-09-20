@@ -1712,7 +1712,7 @@ public interface DynamicType {
                             /**
                              * {@inheritDoc}
                              */
-                            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                             public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
                                 return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
                             }
@@ -2901,7 +2901,7 @@ public interface DynamicType {
                     /**
                      * {@inheritDoc}
                      */
-                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
                         return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
                     }
@@ -3773,7 +3773,7 @@ public interface DynamicType {
                 /**
                  * {@inheritDoc}
                  */
-                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
                             fieldRegistry,

@@ -3361,7 +3361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod The exit advice method, annotated with {@link OnMethodExit}.
                  * @return An appropriate offset mapping factory.
                  */
-                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod) {
                     return adviceMethod.getDeclaredAnnotations()
                             .ofType(OnMethodExit.class)
@@ -7498,7 +7498,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
-                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              Map<String, TypeDefinition> namedTypes,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -8805,7 +8805,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      */
-                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType) {

@@ -184,7 +184,7 @@ public class EqualsMethod implements Implementation {
      * @param comparator The comparator to apply.
      * @return A new version of this equals method that sorts fields in their application order using the supplied comparator.
      */
-    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     public EqualsMethod withFieldOrder(Comparator<? super FieldDescription.InDefinedShape> comparator) {
         return new EqualsMethod(superClassCheck, typeCompatibilityCheck, ignored, nonNullable, new CompoundComparator(this.comparator, comparator));
     }
@@ -1025,6 +1025,7 @@ public class EqualsMethod implements Implementation {
          *
          * @param comparator All comparators to be applied in the application order.
          */
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         protected CompoundComparator(Comparator<? super FieldDescription.InDefinedShape>... comparator) {
             this(Arrays.asList(comparator));
         }

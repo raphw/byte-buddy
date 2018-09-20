@@ -226,7 +226,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this conjunction represents.
          */
-        @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public Conjunction(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }
@@ -270,7 +270,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this disjunction represents.
          */
-        @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs
         public Disjunction(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }

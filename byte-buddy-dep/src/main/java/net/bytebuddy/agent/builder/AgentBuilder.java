@@ -4003,7 +4003,7 @@ public interface AgentBuilder {
              *
              * @param type The throwable types that should trigger a fallback.
              */
-            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public ByThrowableType(Class<? extends Throwable>... type) {
                 this(new HashSet<Class<? extends Throwable>>(Arrays.asList(type)));
             }
@@ -4022,7 +4022,7 @@ public interface AgentBuilder {
              *
              * @return A fallback strategy that triggers a reattempt if a {@link LinkageError} or a {@link TypeNotPresentException} is raised.
              */
-            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs
             public static FallbackStrategy ofOptionalTypes() {
                 return new ByThrowableType(LinkageError.class, TypeNotPresentException.class);
             }
@@ -4760,7 +4760,7 @@ public interface AgentBuilder {
                  *
                  * @param matcher The type matchers to apply in their application order.
                  */
-                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 public ForMatchedGrouping(ElementMatcher<? super TypeDescription>... matcher) {
                     this(new LinkedHashSet<ElementMatcher<? super TypeDescription>>(Arrays.asList(matcher)));
                 }

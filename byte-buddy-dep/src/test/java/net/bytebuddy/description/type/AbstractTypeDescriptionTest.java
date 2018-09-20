@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -701,7 +702,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testNestMatesTrivial() {
+    public void testNestMatesTrivial() throws Exception {
         assertThat(describe(Object.class).getNestHost(), is(TypeDescription.OBJECT));
         assertThat(describe(Object.class).getNestMembers().size(), is(1));
         assertThat(describe(Object.class).getNestMembers(), hasItem(TypeDescription.OBJECT));
@@ -712,20 +713,20 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     @JavaVersionRule.Enforce(11)
-    public void testNestMatesSupported() {
-        assertThat(describe(SampleClass.class).getNestHost(), is(describe(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(SampleClass.class).getNestMembers(),
-                hasItems(describe(SampleClass.class), describe(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(SampleClass.class).isNestHost(), is(false));
-        assertThat(describe(AbstractTypeDescriptionTest.class).getNestHost(), is(describe(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(AbstractTypeDescriptionTest.class).getNestMembers(),
-                hasItems(describe(SampleClass.class), describe(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(AbstractTypeDescriptionTest.class).isNestHost(), is(true));
-        assertThat(describe(SampleClass.class).isNestMateOf(SampleClass.class), is(true));
-        assertThat(describe(SampleClass.class).isNestMateOf(AbstractTypeDescriptionTest.class), is(true));
-        assertThat(describe(AbstractTypeDescriptionTest.class).isNestMateOf(SampleClass.class), is(true));
-        assertThat(describe(AbstractTypeDescriptionTest.class).isNestMateOf(Object.class), is(false));
-        assertThat(describe(Object.class).isNestMateOf(AbstractTypeDescriptionTest.class), is(false));
+    public void testNestMatesSupported() throws Exception {
+        if (ClassFileVersion.of(SampleClass.class).isAtLeast(ClassFileVersion.JAVA_V11)) {
+            assertThat(describe(SampleClass.class).getNestHost(), is(describe(AbstractTypeDescriptionTest.class)));
+            assertThat(describe(SampleClass.class).getNestMembers(), hasItems(describe(SampleClass.class), describe(AbstractTypeDescriptionTest.class)));
+            assertThat(describe(SampleClass.class).isNestHost(), is(false));
+            assertThat(describe(AbstractTypeDescriptionTest.class).getNestHost(), is(describe(AbstractTypeDescriptionTest.class)));
+            assertThat(describe(AbstractTypeDescriptionTest.class).getNestMembers(), hasItems(describe(SampleClass.class), describe(AbstractTypeDescriptionTest.class)));
+            assertThat(describe(AbstractTypeDescriptionTest.class).isNestHost(), is(true));
+            assertThat(describe(SampleClass.class).isNestMateOf(SampleClass.class), is(true));
+            assertThat(describe(SampleClass.class).isNestMateOf(AbstractTypeDescriptionTest.class), is(true));
+            assertThat(describe(AbstractTypeDescriptionTest.class).isNestMateOf(SampleClass.class), is(true));
+            assertThat(describe(AbstractTypeDescriptionTest.class).isNestMateOf(Object.class), is(false));
+            assertThat(describe(Object.class).isNestMateOf(AbstractTypeDescriptionTest.class), is(false));
+        }
     }
 
     private Class<?> inMethodClass() {

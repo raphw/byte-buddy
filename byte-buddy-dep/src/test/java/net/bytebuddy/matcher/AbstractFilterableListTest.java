@@ -17,7 +17,7 @@ public abstract class AbstractFilterableListTest<T, S extends FilterableList<T, 
 
     protected abstract S asList(List<U> elements);
 
-    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
     protected S asList(U... element) {
         return asList(Arrays.asList(element));
     }
