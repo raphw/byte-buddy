@@ -314,21 +314,6 @@
     </distributionManagement>
 
     <profiles>
-        <!-- Runs the build with compatibility for Java 5 JVMs. -->
-        <profile>
-            <id>java5-compatibility</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>1.5</jdk>
-            </activation>
-            <properties>
-                <version.plugin.bundle>2.5.4</version.plugin.bundle>
-                <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
-                <version.plugin.compiler>3.6.2</version.plugin.compiler>
-                <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
-                <spotbugs.skip>true</spotbugs.skip>
-            </properties>
-        </profile>
         <!-- Runs the build with compatibility for Java 6 JVMs. -->
         <profile>
             <id>java6-compatibility</id>
@@ -341,6 +326,7 @@
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
+                <version.plugin.shade>3.1.1</version.plugin.shade>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
