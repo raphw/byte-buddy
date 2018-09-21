@@ -74,7 +74,7 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
      * @return A new type reference adjustment that uses the supplied filter for excluding types.
      */
     public TypeReferenceAdjustment filter(ElementMatcher<? super TypeDescription> filter) {
-        return new TypeReferenceAdjustment(strict, this.filter.or(filter));
+        return new TypeReferenceAdjustment(strict, this.filter.<TypeDescription>or(filter));
     }
 
     /**
