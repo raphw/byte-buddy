@@ -4346,7 +4346,10 @@ public interface TypeWriter<T> {
                                     enclosingMethod.getInternalName(),
                                     enclosingMethod.getDescriptor());
                         } else if (instrumentedType.isLocalType() || instrumentedType.isAnonymousType()) {
-                            cv.visitOuterClass(instrumentedType.getEnclosingType().getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                            TypeDescription enclosingType = instrumentedType.getEnclosingType();
+                            if (enclosingType != null) { // The Scala compiler sometimes generates illegal combinations.
+                                cv.visitOuterClass(enclosingType.getInternalName(), NO_REFERENCE, NO_REFERENCE);
+                            }
                         }
                     }
 

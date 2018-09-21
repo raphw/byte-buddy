@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -202,6 +203,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The currently running Java process's class file version.
      */
+    @CachedReturnPlugin.Enhance
     public static ClassFileVersion ofThisVm() {
         return VERSION_LOCATOR.locate();
     }

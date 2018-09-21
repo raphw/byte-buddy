@@ -5,6 +5,7 @@ import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
+import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,13 +29,21 @@ public class JavaVersionRule implements MethodRule {
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
-            if (enforce.value() != UNDEFINED && !currentVersion.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
+            ClassFileVersion version;
+            try {
+                version = enforce.target() == void.class
+                        ? currentVersion
+                        : ClassFileVersion.of(enforce.target());
+            } catch (IOException exception) {
+                throw new AssertionError(exception);
+            }
+            if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value(), "at least");
-            } else if (enforce.atMost() != UNDEFINED && !currentVersion.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
+            } else if (enforce.atMost() != UNDEFINED && !version.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
                 return new NoOpStatement(enforce.atMost(), "at most");
             } else if (!hotSpot) {
                 for (int javaVersion : enforce.hotSpot()) {
-                    if (currentVersion.getJavaVersion() == javaVersion) {
+                    if (version.getJavaVersion() == javaVersion) {
                         return new NoOpHotSpotStatement(javaVersion);
                     }
                 }
@@ -52,6 +61,8 @@ public class JavaVersionRule implements MethodRule {
         int atMost() default UNDEFINED;
 
         int[] hotSpot() default {};
+
+        Class<?> target() default void.class;
     }
 
     private static class NoOpStatement extends Statement {

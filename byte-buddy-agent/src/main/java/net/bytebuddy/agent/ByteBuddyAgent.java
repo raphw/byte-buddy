@@ -522,9 +522,10 @@ public class ByteBuddyAgent {
          */
         AttachmentProvider DEFAULT = new Compound(ForJigsawVm.INSTANCE,
                 ForJ9Vm.INSTANCE,
-                ForToolsJarVm.JVM_ROOT,
-                ForToolsJarVm.JDK_ROOT,
-                ForToolsJarVm.MACINTOSH,
+                ForStandardToolsJarVm.JVM_ROOT,
+                ForStandardToolsJarVm.JDK_ROOT,
+                ForStandardToolsJarVm.MACINTOSH,
+                ForUserDefinedToolsJar.INSTANCE,
                 ForUnixHotSpotVm.INSTANCE);
 
         /**
@@ -816,7 +817,7 @@ public class ByteBuddyAgent {
          * An attachment provider that is dependant on the existence of a <i>tools.jar</i> file on the local
          * file system.
          */
-        enum ForToolsJarVm implements AttachmentProvider {
+        enum ForStandardToolsJarVm implements AttachmentProvider {
 
             /**
              * An attachment provider that locates the <i>tools.jar</i> from a Java home directory.
@@ -851,7 +852,7 @@ public class ByteBuddyAgent {
              *
              * @param toolsJarPath The path to the <i>tools.jar</i> file, starting from the Java home directory.
              */
-            ForToolsJarVm(String toolsJarPath) {
+            ForStandardToolsJarVm(String toolsJarPath) {
                 this.toolsJarPath = toolsJarPath;
             }
 
@@ -867,6 +868,40 @@ public class ByteBuddyAgent {
                             : Accessor.Unavailable.INSTANCE;
                 } catch (MalformedURLException exception) {
                     throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
+                }
+            }
+        }
+
+        /**
+         * An attachment provider that attempts to locate a {@code tools.jar} from a custom location set via a system property.
+         */
+        enum ForUserDefinedToolsJar implements AttachmentProvider {
+
+            /**
+             * The singelton instance.
+             */
+            INSTANCE;
+
+            /**
+             * The property being read for locating {@code tools.jar}.
+             */
+            public static final String PROPERTY = "net.bytebuddy.agent.toolsjar";
+
+            /**
+             * {@inheritDoc}
+             */
+            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+            public Accessor attempt() {
+                String location = System.getProperty(PROPERTY);
+                if (location == null) {
+                    return Accessor.Unavailable.INSTANCE;
+                } else {
+                    File toolsJar = new File(location);
+                    try {
+                        return Accessor.Simple.of(new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER), toolsJar);
+                    } catch (MalformedURLException exception) {
+                        throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
+                    }
                 }
             }
         }
