@@ -727,6 +727,23 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(Object.class).isNestMateOf(AbstractTypeDescriptionTest.class), is(false));
     }
 
+    @Test
+    public void testNonEnclosedAnonymousType() throws Exception {
+        ClassWriter classWriter = new ClassWriter(0);
+        classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC, "foo/Bar", null, "java/lang/Object", null);
+        classWriter.visitInnerClass("foo/Bar", null, null, Opcodes.ACC_PUBLIC);
+        classWriter.visitEnd();
+
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                Collections.singletonMap("foo.Bar", classWriter.toByteArray()),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
+        Class<?> type = classLoader.loadClass("foo.Bar");
+
+        assertThat(describe(type).isAnonymousType(), is(type.isAnonymousClass()));
+        assertThat(describe(type).isLocalType(), is(type.isLocalClass()));
+        assertThat(describe(type).isMemberType(), is(type.isMemberClass()));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */
