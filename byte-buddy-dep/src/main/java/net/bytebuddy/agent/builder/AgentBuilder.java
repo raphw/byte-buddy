@@ -367,9 +367,10 @@ public interface AgentBuilder {
      * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
-     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
-     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
+     * If this matcher is chained with additional subsequent matchers, any matcher is executed in registration order with matchers that were registered
+     * first being executed first. Doing so, later transformations can override transformations that are applied by this matcher. To avoid this, it is
+     * possible to register this transformation as terminal via {@link Identified.Extendable#asTerminalTransformation()} where no subsequent matchers
+     * are applied if this matcher matched a given type.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -393,9 +394,10 @@ public interface AgentBuilder {
      * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
-     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
-     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
+     * If this matcher is chained with additional subsequent matchers, any matcher is executed in registration order with matchers that were registered
+     * first being executed first. Doing so, later transformations can override transformations that are applied by this matcher. To avoid this, it is
+     * possible to register this transformation as terminal via {@link Identified.Extendable#asTerminalTransformation()} where no subsequent matchers
+     * are applied if this matcher matched a given type.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -423,9 +425,10 @@ public interface AgentBuilder {
      * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
-     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
-     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
+     * If this matcher is chained with additional subsequent matchers, any matcher is executed in registration order with matchers that were registered
+     * first being executed first. Doing so, later transformations can override transformations that are applied by this matcher. To avoid this, it is
+     * possible to register this transformation as terminal via {@link Identified.Extendable#asTerminalTransformation()} where no subsequent matchers
+     * are applied if this matcher matched a given type.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -459,8 +462,10 @@ public interface AgentBuilder {
      * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
-     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * If this matcher is chained with additional subsequent matchers, any matcher is executed in registration order with matchers that were registered
+     * first being executed first. Doing so, later transformations can override transformations that are applied by this matcher. To avoid this, it is
+     * possible to register this transformation as terminal via {@link Identified.Extendable#asTerminalTransformation()} where no subsequent matchers
+     * are applied if this matcher matched a given type.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
