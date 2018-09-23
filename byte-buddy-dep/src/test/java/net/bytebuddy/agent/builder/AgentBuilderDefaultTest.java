@@ -1930,7 +1930,7 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
-                .type(typeMatcher).transform(transformer).asDecorator()
+                .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);

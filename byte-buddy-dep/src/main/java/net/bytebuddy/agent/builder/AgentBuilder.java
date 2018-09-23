@@ -897,20 +897,14 @@ public interface AgentBuilder {
         interface Extendable extends AgentBuilder, Identified {
 
             /**
-             * <p>
-             * Applies the specified transformation as a decorative transformation. For a decorative transformation, the supplied
-             * transformer is prepended to any previous transformation that also matches the instrumented type, i.e. both transformations
-             * are supplied. This procedure is repeated until a transformer is reached that matches the instrumented type but is not
-             * defined as decorating after which no further transformations are considered. If all matching transformations are declared
-             * as decorating, all matching transformers are applied.
-             * </p>
-             * <p>
-             * <b>Note</b>: A decorating transformer is applied <b>after</b> previously registered transformers.
-             * </p>
+             * Applies the previously defined transformation as terminal such that no subsequent transformers are applied even
+             * if their matchers would include the type that was matched for applying this transformer. If this option is not set,
+             * subsequent transformations are applied after this transformation such that it is possible that they override non-additive
+             * type transformations.
              *
-             * @return A new instance of this agent builder with the specified transformation being applied as a decorator.
+             * @return A new agent builder that applies the previously configured transformer terminally.
              */
-            AgentBuilder asDecorator();
+            AgentBuilder asTerminalTransformation();
         }
     }
 
@@ -9065,7 +9059,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public Identified.Narrowable type(RawMatcher matcher) {
-            return new Transforming(matcher, Transformer.NoOp.INSTANCE, false);
+            return new Transforming(matcher, Transformer.NoOp.INSTANCE, true);
         }
 
         /**
@@ -11481,7 +11475,7 @@ public interface AgentBuilder {
                         classFileBufferStrategy,
                         installationListener,
                         ignoredTypeMatcher,
-                        new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
+                        new Transformation.Compound(transformation, new Transformation.Simple(rawMatcher, transformer, decorator)));
             }
 
             /**
@@ -11494,8 +11488,8 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public AgentBuilder asDecorator() {
-                return new Transforming(rawMatcher, transformer, true);
+            public AgentBuilder asTerminalTransformation() {
+                return new Transforming(rawMatcher, transformer, false);
             }
 
             /**
