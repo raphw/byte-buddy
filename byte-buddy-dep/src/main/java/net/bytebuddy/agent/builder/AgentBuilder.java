@@ -2262,7 +2262,7 @@ public interface AgentBuilder {
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
-                    asmVisitorWrapper = asmVisitorWrapper.method(entry.getMatcher().resolve(typeDescription), entry.resolve(advice, typePool, classFileLocator)
+                    asmVisitorWrapper = asmVisitorWrapper.invokable(entry.getMatcher().resolve(typeDescription), entry.resolve(advice, typePool, classFileLocator)
                             .withAssigner(assigner)
                             .withExceptionHandler(exceptionHandler));
                 }

@@ -193,7 +193,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
      * @return An ASM visitor wrapper that applies all specified substitutions for any matched method.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().invokable(matcher, this);
     }
 
     /**

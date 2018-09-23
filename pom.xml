@@ -271,7 +271,6 @@
                         <testSource>${sourcecode.test.version}</testSource>
                         <testTarget>${bytecode.test.version}</testTarget>
                         <encoding>${project.build.sourceEncoding}</encoding>
-                        <compilerArgument>-Xlint:none</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>

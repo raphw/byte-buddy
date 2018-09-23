@@ -17,6 +17,9 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+
 /**
  * A class visitor wrapper is used in order to register an intermediate ASM {@link org.objectweb.asm.ClassVisitor} which
  * is applied to the main type created by a {@link net.bytebuddy.dynamic.DynamicType.Builder} but not
@@ -352,8 +355,8 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * Defines a new method visitor wrapper to be applied if the given method matcher is matched. Previously defined
-         * entries are applied before the given matcher is applied.
+         * Defines a new method visitor wrapper to be applied on any method if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
          *
          * @param matcher              The matcher to identify methods to be wrapped.
          * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
@@ -364,14 +367,62 @@ public interface AsmVisitorWrapper {
         }
 
         /**
-         * Defines a new method visitor wrapper to be applied if the given method matcher is matched. Previously defined
-         * entries are applied before the given matcher is applied.
+         * Defines a new method visitor wrapper to be applied on any method if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
          *
          * @param matcher               The matcher to identify methods to be wrapped.
          * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
          * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
          */
         public ForDeclaredMethods method(ElementMatcher<? super MethodDescription> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
+            return invokable(isMethod().and(matcher), methodVisitorWrappers);
+        }
+
+        /**
+         * Defines a new method visitor wrapper to be applied on any constructor if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
+         *
+         * @param matcher              The matcher to identify constructors to be wrapped.
+         * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredMethods constructor(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper... methodVisitorWrapper) {
+            return constructor(matcher, Arrays.asList(methodVisitorWrapper));
+        }
+
+        /**
+         * Defines a new method visitor wrapper to be applied on any constructor if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
+         *
+         * @param matcher               The matcher to identify constructors to be wrapped.
+         * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredMethods constructor(ElementMatcher<? super MethodDescription> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
+            return invokable(isConstructor().and(matcher), methodVisitorWrappers);
+        }
+
+        /**
+         * Defines a new method visitor wrapper to be applied on any method or constructor if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
+         *
+         * @param matcher              The matcher to identify methods or constructors to be wrapped.
+         * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredMethods invokable(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper... methodVisitorWrapper) {
+            return invokable(matcher, Arrays.asList(methodVisitorWrapper));
+        }
+
+        /**
+         * Defines a new method visitor wrapper to be applied on any method or constructor if the given method matcher is matched.
+         * Previously defined entries are applied before the given matcher is applied.
+         *
+         * @param matcher               The matcher to identify methods or constructors to be wrapped.
+         * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredMethods invokable(ElementMatcher<? super MethodDescription> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
             return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrappers)), writerFlags, readerFlags);
         }
 
