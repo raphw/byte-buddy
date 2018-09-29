@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. September 2018: version 1.9.0
+
+- Update to ASM 7 for non-experimental Java 11 support.
+- Reduce byte code level to Java 5.
+- Add *module-info.class* for *byte-buddy* and *byte-buddy-agent* artifacts.
+- Extend `ClassInjector` API to allow supplying string to byte array mappings.
+- Add visitor to allow adjustment of inner class attribute.
+- Refactor agent builder API to use decoration by default and rather require explicit termination.
+- Add `Plugin.Engine` to allow simple static enhancements and rework build plugins for Maven and Gradle to use it.
+
 ### 8. September 2018: version 1.8.22
 
 - Add guard to `EnclosedMethod` property upon redefinition to avoid error with Groovy which often gets the propery wrong.
