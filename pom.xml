@@ -381,7 +381,6 @@
                 <sourcecode.test.version>1.8</sourcecode.test.version>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 12 JVMs. -->
