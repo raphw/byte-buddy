@@ -1,5 +1,6 @@
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
@@ -1963,6 +1964,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * An element representation for a byte array.
                  */
+                @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Not mutating the byte array is part of the class contract.")
                 @HashCodeAndEqualsPlugin.Enhance
                 class ForByteArray implements Element {
 
@@ -2346,6 +2348,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "IT_NO_SUCH_ELEMENT", justification = "Exception is thrown by invoking removeFirst on an empty list.")
                     public Element next() {
                         try {
                             return new Element.ForFile(folder, files.removeFirst());
