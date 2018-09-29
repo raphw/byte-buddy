@@ -2505,6 +2505,65 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * @throws IOException If an I/O error occurs.
                  */
                 void retain(Source.Element element) throws IOException;
+
+                /**
+                 * Implements a sink for a jar file.
+                 */
+                class ForJarOutputStream implements Sink {
+
+                    /**
+                     * The output stream to write to.
+                     */
+                    private final JarOutputStream outputStream;
+
+                    /**
+                     * Creates a new sink for a jar file.
+                     *
+                     * @param outputStream The output stream to write to.
+                     */
+                    public ForJarOutputStream(JarOutputStream outputStream) {
+                        this.outputStream = outputStream;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
+                        for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                            outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
+                            outputStream.write(entry.getValue());
+                            outputStream.closeEntry();
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void retain(Source.Element element) throws IOException {
+                        JarEntry entry = element.resolveAs(JarEntry.class);
+                        outputStream.putNextEntry(entry == null
+                                ? new JarEntry(element.getName())
+                                : entry);
+                        InputStream inputStream = element.getInputStream();
+                        try {
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, length);
+                            }
+                        } finally {
+                            inputStream.close();
+                        }
+                        outputStream.closeEntry();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void close() throws IOException {
+                        outputStream.close();
+                    }
+                }
             }
 
             /**
@@ -2731,8 +2790,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void retain(Source.Element element) throws IOException {
-                    File resolved = element.resolveAs(File.class), target = new File(folder, element.getName());
-                    if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
+                    File target = new File(folder, element.getName()), resolved = element.resolveAs(File.class);
+                    if (!target.getAbsolutePath().startsWith(folder.getAbsolutePath())) {
+                        throw new IllegalStateException(target + " is not a subdirectory of " + folder);
+                    } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                         throw new IOException("Could not create directory: " + target.getParent());
                     } else if (resolved == null || !resolved.equals(target)) {
                         InputStream inputStream = element.getInputStream();
@@ -2785,73 +2846,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public Sink write() throws IOException {
-                    return new JarFileSink(new JarOutputStream(new FileOutputStream(file)));
+                    return new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)));
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Sink write(Manifest manifest) throws IOException {
-                    return new JarFileSink(new JarOutputStream(new FileOutputStream(file), manifest));
-                }
-
-                /**
-                 * Implements a sink for a jar file.
-                 */
-                protected static class JarFileSink implements Sink {
-
-                    /**
-                     * The output stream to write to.
-                     */
-                    private final JarOutputStream outputStream;
-
-                    /**
-                     * Creates a new sink for a jar file.
-                     *
-                     * @param outputStream The output stream to write to.
-                     */
-                    protected JarFileSink(JarOutputStream outputStream) {
-                        this.outputStream = outputStream;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void store(Map<TypeDescription, byte[]> binaryRepresentations) throws IOException {
-                        for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
-                            outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
-                            outputStream.write(entry.getValue());
-                            outputStream.closeEntry();
-                        }
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void retain(Source.Element element) throws IOException {
-                        JarEntry entry = element.resolveAs(JarEntry.class);
-                        outputStream.putNextEntry(entry == null
-                                ? new JarEntry(element.getName())
-                                : entry);
-                        InputStream inputStream = element.getInputStream();
-                        try {
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = inputStream.read(buffer)) != -1) {
-                                outputStream.write(buffer, 0, length);
-                            }
-                        } finally {
-                            inputStream.close();
-                        }
-                        outputStream.closeEntry();
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void close() throws IOException {
-                        outputStream.close();
-                    }
+                    return new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
                 }
             }
         }
