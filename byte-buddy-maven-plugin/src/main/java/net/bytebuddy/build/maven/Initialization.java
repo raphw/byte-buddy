@@ -7,7 +7,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 /**
  * Defines a configuration for a Maven build's type transformation.
  */
-@SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven")
+@SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven.")
 public class Initialization extends AbstractUserConfiguration {
 
     /**

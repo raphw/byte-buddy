@@ -1,10 +1,12 @@
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.Plugin;
 
 /**
  * Describes an argument to a {@link Plugin} constuctor.
  */
+@SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven.")
 public class PluginArgument {
 
     /**

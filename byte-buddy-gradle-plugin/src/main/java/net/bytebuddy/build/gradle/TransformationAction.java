@@ -90,8 +90,8 @@ public class TransformationAction implements Action<Task> {
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Logger.class, project.getLogger()),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new GradleBuildLogger(project.getLogger()))));
                     project.getLogger().info("Resolved plugin: {}", transformation.getRawPlugin());
-                } catch (Exception exception) {
-                    throw new GradleException("Cannot resolve plugin: " + transformation.getRawPlugin(), exception);
+                } catch (Throwable throwable) {
+                    throw new GradleException("Cannot resolve plugin: " + transformation.getRawPlugin(), throwable);
                 }
             }
             EntryPoint entryPoint = byteBuddyExtension.getInitialization().getEntryPoint(classLoaderResolver, root, classPath);

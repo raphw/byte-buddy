@@ -231,8 +231,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
                                     Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
                     getLog().info("Resolved plugin: " + transformation.getRawPlugin());
-                } catch (Exception exception) {
-                    throw new MojoExecutionException("Cannot resolve plugin: " + transformation.getRawPlugin(), exception);
+                } catch (Throwable throwable) {
+                    throw new MojoExecutionException("Cannot resolve plugin: " + transformation.getRawPlugin(), throwable);
                 }
             }
             EntryPoint entryPoint = (initialization == null
