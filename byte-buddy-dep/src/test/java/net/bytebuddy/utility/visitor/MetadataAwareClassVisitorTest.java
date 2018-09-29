@@ -2,7 +2,6 @@ package net.bytebuddy.utility.visitor;
 
 import net.bytebuddy.utility.OpenedClassReader;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,9 +33,8 @@ public class MetadataAwareClassVisitorTest {
     }
 
     @Test
-    @Ignore("Requires new ASM")
     public void testVisitNestHost() {
-        classVisitor.visitNestHostExperimental(null);
+        classVisitor.visitNestHost(null);
         assertThat(classVisitor.nestHostVisited, is(false));
         assertThat(classVisitor.outerClassVisited, is(false));
         assertThat(classVisitor.afterAttributesVisited, is(false));
@@ -83,10 +81,8 @@ public class MetadataAwareClassVisitorTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    @Ignore("Requires new ASM")
     public void testVisitNestMember() {
-        classVisitor.visitNestMemberExperimental(null);
+        classVisitor.visitNestMember(null);
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));

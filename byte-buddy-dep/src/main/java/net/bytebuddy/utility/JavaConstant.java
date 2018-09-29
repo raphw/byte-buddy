@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -1360,7 +1361,6 @@ public interface JavaConstant {
     /**
      * Represents a dynamically resolved constant pool entry of a class file. This feature is supported for class files in version 11 and newer.
      */
-    @SuppressWarnings("deprecation")
     class Dynamic implements JavaConstant {
 
         /**
@@ -1371,7 +1371,7 @@ public interface JavaConstant {
         /**
          * The represented bootstrap value.
          */
-        private final org.objectweb.asm.ConstantDynamic value;
+        private final ConstantDynamic value;
 
         /**
          * The represented value constant.
@@ -1384,7 +1384,7 @@ public interface JavaConstant {
          * @param value           The represented bootstrap value.
          * @param typeDescription The represented value constant.
          */
-        protected Dynamic(org.objectweb.asm.ConstantDynamic value, TypeDescription typeDescription) {
+        protected Dynamic(ConstantDynamic value, TypeDescription typeDescription) {
             this.value = value;
             this.typeDescription = typeDescription;
         }
@@ -1395,7 +1395,7 @@ public interface JavaConstant {
          * @return A dynamically resolved null constant.
          */
         public static Dynamic ofNullConstant() {
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic("nullConstant",
+            return new Dynamic(new ConstantDynamic("nullConstant",
                     TypeDescription.OBJECT.getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1424,7 +1424,7 @@ public interface JavaConstant {
             if (!typeDescription.isPrimitive()) {
                 throw new IllegalArgumentException("Not a primitive type: " + typeDescription);
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(typeDescription.getDescriptor(),
+            return new Dynamic(new ConstantDynamic(typeDescription.getDescriptor(),
                     TypeDescription.CLASS.getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1450,7 +1450,7 @@ public interface JavaConstant {
          * @return A dynamically resolved enumeration constant.
          */
         public static JavaConstant ofEnumeration(EnumerationDescription enumerationDescription) {
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(enumerationDescription.getValue(),
+            return new Dynamic(new ConstantDynamic(enumerationDescription.getValue(),
                     enumerationDescription.getEnumerationType().getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1482,7 +1482,7 @@ public interface JavaConstant {
             boolean selfDeclared = fieldDescription.getType().isPrimitive()
                     ? fieldDescription.getType().asErasure().asBoxed().equals(fieldDescription.getType().asErasure())
                     : fieldDescription.getDeclaringType().equals(fieldDescription.getType().asErasure());
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
+            return new Dynamic(new ConstantDynamic(fieldDescription.getInternalName(),
                     fieldDescription.getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1609,7 +1609,7 @@ public interface JavaConstant {
                 }
                 asmifiedArgument[index++] = argument;
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic("invoke",
+            return new Dynamic(new ConstantDynamic("invoke",
                     (methodDescription.isConstructor()
                             ? methodDescription.getDeclaringType()
                             : methodDescription.getReturnType().asErasure()).getDescriptor(),
@@ -1638,7 +1638,7 @@ public interface JavaConstant {
          * @return A dynamic constant that represents the created var handle constant.
          */
         public static JavaConstant ofVarHandle(FieldDescription.InDefinedShape fieldDescription) {
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(fieldDescription.getInternalName(),
+            return new Dynamic(new ConstantDynamic(fieldDescription.getInternalName(),
                     JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1671,7 +1671,7 @@ public interface JavaConstant {
             if (!typeDescription.isArray()) {
                 throw new IllegalArgumentException("Not an array type: " + typeDescription);
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic("arrayVarHandle",
+            return new Dynamic(new ConstantDynamic("arrayVarHandle",
                     JavaType.VAR_HANDLE.getTypeStub().getDescriptor(),
                     new Handle(Opcodes.H_INVOKESTATIC,
                             CONSTANT_BOOTSTRAPS,
@@ -1789,7 +1789,7 @@ public interface JavaConstant {
                 }
                 asmifiedArgument[index++] = argument;
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(name,
+            return new Dynamic(new ConstantDynamic(name,
                     (bootstrapMethod.isConstructor()
                             ? bootstrapMethod.getDeclaringType()
                             : bootstrapMethod.getReturnType().asErasure()).getDescriptor(),
@@ -1830,10 +1830,14 @@ public interface JavaConstant {
                     : (!typeDescription.asBoxed().isInHierarchyWith(this.typeDescription.asBoxed()))) {
                 throw new IllegalArgumentException(typeDescription + " is not compatible with bootstrapped type " + this.typeDescription);
             }
-            return new Dynamic(new org.objectweb.asm.ConstantDynamic(value.getName(),
+            Object[] bootstrapMethodArgument = new Object[value.getBootstrapMethodArgumentCount()];
+            for (int index = 0; index < value.getBootstrapMethodArgumentCount(); index++) {
+                bootstrapMethodArgument[index] = value.getBootstrapMethodArgument(index);
+            }
+            return new Dynamic(new ConstantDynamic(value.getName(),
                     typeDescription.getDescriptor(),
                     value.getBootstrapMethod(),
-                    value.getBootstrapMethodArguments()), typeDescription);
+                    bootstrapMethodArgument), typeDescription);
         }
 
         /**

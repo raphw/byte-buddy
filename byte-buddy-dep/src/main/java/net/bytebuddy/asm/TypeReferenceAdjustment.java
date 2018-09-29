@@ -170,10 +170,9 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
-        public void visitNestHostExperimental(String nestHost) {
+        public void visitNestHost(String nestHost) {
             observedTypes.add(nestHost);
-            super.visitNestHostExperimental(nestHost);
+            super.visitNestHost(nestHost);
         }
 
         @Override
@@ -183,10 +182,9 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
-        public void visitNestMemberExperimental(String nestMember) {
+        public void visitNestMember(String nestMember) {
             observedTypes.add(nestMember);
-            super.visitNestMemberExperimental(nestMember);
+            super.visitNestMember(nestMember);
         }
 
         @Override
@@ -320,7 +318,6 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
          *
          * @param constant The dynamic constant to resolve.
          */
-        @SuppressWarnings("deprecation")
         protected void resolve(ConstantDynamic constant) {
             Type methodType = Type.getType(constant.getDescriptor());
             resolve(methodType.getReturnType());
@@ -328,8 +325,8 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
                 resolve(type);
             }
             resolve(constant.getBootstrapMethod());
-            for (Object argument : constant.getBootstrapMethodArguments()) {
-                resolve(argument);
+            for (int index = 0; index < constant.getBootstrapMethodArgumentCount(); index++) {
+                resolve(constant.getBootstrapMethodArgument(index));
             }
         }
 
@@ -350,7 +347,6 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
          *
          * @param value The unknown constant value to resolve.
          */
-        @SuppressWarnings("deprecation")
         protected void resolve(Object value) {
             if (value instanceof Type) {
                 resolve((Type) value);

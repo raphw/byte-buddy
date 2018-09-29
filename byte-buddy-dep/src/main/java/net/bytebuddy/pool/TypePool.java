@@ -7672,14 +7672,12 @@ public interface TypePool {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
-            public void visitNestHostExperimental(String nestHost) {
+            public void visitNestHost(String nestHost) {
                 this.nestHost = nestHost;
             }
 
             @Override
-            @SuppressWarnings("deprecation")
-            public void visitNestMemberExperimental(String nestMember) {
+            public void visitNestMember(String nestMember) {
                 nestMembers.add(nestMember);
             }
 

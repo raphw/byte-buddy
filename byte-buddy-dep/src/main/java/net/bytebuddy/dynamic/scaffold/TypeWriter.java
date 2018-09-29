@@ -2074,17 +2074,15 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
-            public void visitNestHostExperimental(String nestHost) {
+            public void visitNestHost(String nestHost) {
                 constraint.assertNestMate();
-                super.visitNestHostExperimental(nestHost);
+                super.visitNestHost(nestHost);
             }
 
             @Override
-            @SuppressWarnings("deprecation")
-            public void visitNestMemberExperimental(String nestMember) {
+            public void visitNestMember(String nestMember) {
                 constraint.assertNestMate();
-                super.visitNestMemberExperimental(nestMember);
+                super.visitNestMember(nestMember);
             }
 
             @Override
@@ -3219,7 +3217,6 @@ public interface TypeWriter<T> {
 
                 @Override
                 @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
-                @SuppressWarnings("deprecation")
                 public void visitLdcInsn(Object value) {
                     if (value instanceof Type) {
                         Type type = (Type) value;
@@ -3249,7 +3246,6 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                @SuppressWarnings("deprecation")
                 public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object[] bootstrapArgument) {
                     constraint.assertInvokeDynamic();
                     for (Object constant : bootstrapArgument) {
@@ -4322,10 +4318,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @SuppressWarnings("deprecation")
                     protected void onNestHost() {
                         if (!instrumentedType.isNestHost()) {
-                            cv.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                            cv.visitNestHost(instrumentedType.getNestHost().getInternalName());
                         }
                     }
 
@@ -4510,10 +4505,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    @SuppressWarnings("deprecation")
                     protected void onVisitNestMember(String nestMember) {
                         if (instrumentedType.isNestHost() && nestMembers.remove(nestMember)) {
-                            cv.visitNestMemberExperimental(nestMember);
+                            cv.visitNestMember(nestMember);
                         }
                     }
 
@@ -5077,7 +5071,6 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            @SuppressWarnings("deprecation")
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
@@ -5103,7 +5096,7 @@ public interface TypeWriter<T> {
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 if (!instrumentedType.isNestHost()) {
-                    classVisitor.visitNestHostExperimental(instrumentedType.getNestHost().getInternalName());
+                    classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
                 }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -5125,7 +5118,7 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 if (instrumentedType.isNestHost()) {
                     for (TypeDescription typeDescription : instrumentedType.getNestMembers().filter(not(is(instrumentedType)))) {
-                        classVisitor.visitNestMemberExperimental(typeDescription.getInternalName());
+                        classVisitor.visitNestMember(typeDescription.getInternalName());
                     }
                 }
                 TypeDescription declaringType = instrumentedType.getDeclaringType();

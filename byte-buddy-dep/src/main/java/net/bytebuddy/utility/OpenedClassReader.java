@@ -37,9 +37,7 @@ public class OpenedClassReader {
             experimental = false;
         }
         EXPERIMENTAL = experimental;
-        @SuppressWarnings("deprecation")
-        int asm7Experimental = Opcodes.ASM7_EXPERIMENTAL;
-        ASM_API = experimental ? asm7Experimental : Opcodes.ASM6;
+        ASM_API = Opcodes.ASM7;
     }
 
     /**

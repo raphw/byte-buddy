@@ -684,7 +684,7 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        @SuppressWarnings("deprecation")
+        @SuppressWarnings("deprecation") // Due to isAccessible() call.
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {

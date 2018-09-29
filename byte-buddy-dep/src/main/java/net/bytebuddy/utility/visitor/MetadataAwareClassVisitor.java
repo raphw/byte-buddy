@@ -81,20 +81,18 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public final void visitNestHostExperimental(String nestHost) {
+    public final void visitNestHost(String nestHost) {
         triggerNestHost = false;
         onVisitNestHost(nestHost);
     }
 
     /**
-     * An order-sensitive invocation of {@link ClassVisitor#visitNestHostExperimental(String)}.
+     * An order-sensitive invocation of {@link ClassVisitor#visitNestHost(String)}.
      *
      * @param nestHost The internal name of the nest host.
      */
-    @SuppressWarnings("deprecation")
     protected void onVisitNestHost(String nestHost) {
-        super.visitNestHostExperimental(nestHost);
+        super.visitNestHost(nestHost);
     }
 
     @Override
@@ -170,8 +168,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public final void visitNestMemberExperimental(String nestMember) {
+    public final void visitNestMember(String nestMember) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
@@ -179,13 +176,12 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     /**
-     * An order-sensitive invocation of {@link ClassVisitor#visitNestMemberExperimental(String)}.
+     * An order-sensitive invocation of {@link ClassVisitor#visitNestMember(String)}.
      *
      * @param nestMember The internal name of the nest member.
      */
-    @SuppressWarnings("deprecation")
     protected void onVisitNestMember(String nestMember) {
-        super.visitNestMemberExperimental(nestMember);
+        super.visitNestMember(nestMember);
     }
 
     @Override
