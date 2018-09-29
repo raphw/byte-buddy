@@ -17,9 +17,7 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
-import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.*;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -83,6 +81,9 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Rule
     public MethodRule integrationRule = new IntegrationRule();
+
+    @Rule
+    public MethodRule classUnsafeInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();
 
     private ClassLoader classLoader;
 
@@ -150,6 +151,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
+    @ClassReflectionInjectionAvailableRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypeEager() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -168,6 +170,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
+    @ClassReflectionInjectionAvailableRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypeLazy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -460,6 +463,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
+    @ClassReflectionInjectionAvailableRule.Enforce
     public void testChainedAgent() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         AgentBuilder agentBuilder = new AgentBuilder.Default()
@@ -480,6 +484,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
+    @ClassReflectionInjectionAvailableRule.Enforce
     public void testSignatureTypesAreAvailableAfterLoad() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
