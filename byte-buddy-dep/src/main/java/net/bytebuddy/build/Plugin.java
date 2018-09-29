@@ -265,7 +265,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } else if (leftPriority < rightPriority) {
                             return instantiator;
                         } else {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Ambiguous constructors " + constructor + " and " + instantiator.constructor);
                         }
                     }
 
@@ -3110,7 +3110,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             @SuppressWarnings("unchecked")
             public static void main(String... argument) throws ClassNotFoundException, IOException {
                 if (argument.length < 2) {
-                    throw new IllegalArgumentException();
+                    throw new IllegalArgumentException("Expected arguments of type: <source> <target> [<plugin>, ...]");
                 }
                 List<Plugin.Factory> factories = new ArrayList<Factory>(argument.length - 2);
                 for (String plugin : Arrays.asList(argument).subList(2, argument.length)) {
