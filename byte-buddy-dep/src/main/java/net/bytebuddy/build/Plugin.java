@@ -3207,7 +3207,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         errorHandler,
-                        ignoredTypeMatcher.or(matcher));
+                        ignoredTypeMatcher.<TypeDescription>or(matcher));
             }
 
             /**
