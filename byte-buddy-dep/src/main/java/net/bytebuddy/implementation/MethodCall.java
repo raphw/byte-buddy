@@ -22,6 +22,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
@@ -35,6 +36,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -153,7 +155,7 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     * Invokes a unique virtual method or constructor of the instrumented type that is matched by the specified matcher.
      *
      * @param matcher The matcher to identify the method to invoke.
      * @return A method call for the uniquely identified method.
@@ -163,7 +165,7 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     * Invokes a unique virtual method or constructor of the instrumented type that is matched by the specified matcher.
      *
      * @param matcher             The matcher to identify the method to invoke.
      * @param methodGraphCompiler The method graph compiler to use.
@@ -709,11 +711,13 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public MethodDescription resolve(TypeDescription instrumentedType, TypeDescription targetType, MethodDescription instrumentedMethod) {
-                MethodList<?> candidates = methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher);
+                List<MethodDescription> candidates = CompoundList.<MethodDescription>of(
+                        instrumentedType.getSuperClass().getDeclaredMethods().filter(isConstructor().and(matcher)),
+                        methodGraphCompiler.compile(targetType, instrumentedType).listNodes().asMethodList().filter(matcher));
                 if (candidates.size() == 1) {
-                    return candidates.getOnly();
+                    return candidates.get(0);
                 } else {
-                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method for " + matcher);
+                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method or constructor for " + matcher);
                 }
             }
         }

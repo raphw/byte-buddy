@@ -8,6 +8,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -20,7 +21,6 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -348,15 +348,16 @@ public class MethodCallTest {
     }
 
     @Test
-    @Ignore
     public void testSuperConstructorInvocationUsingMatcher() throws Exception {
-        new ByteBuddy()
-                .subclass(Object.class)
-                .defineMethod("callConstructor", Object.class)
-                // Can't find method because of MethodGraph default compiler, file line 508: isVirtual().and(...)
-                // isVirtual excludes constructors from the search
+        assertThat(new ByteBuddy()
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .defineConstructor(Visibility.PUBLIC)
                 .intercept(MethodCall.invoke(isConstructor()).onSuper())
-                .make();
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getConstructor()
+                .newInstance(), notNullValue(Object.class));
     }
 
     @Test
