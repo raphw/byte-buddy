@@ -89,6 +89,7 @@
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
+        <jacoco.skip>false</jacoco.skip>
     </properties>
 
     <licenses>
@@ -169,6 +170,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${version.plugin.jacoco}</version>
                 <configuration>
+                    <skip>${jacoco.skip}</skip>
                     <includes>
                         <include>net/bytebuddy/**</include>
                     </includes>
@@ -381,6 +383,7 @@
                 <sourcecode.test.version>1.8</sourcecode.test.version>
                 <bytecode.main.version>1.8</bytecode.main.version>
                 <bytecode.test.version>1.8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 12 JVMs. -->
@@ -395,6 +398,7 @@
                 <sourcecode.test.version>9</sourcecode.test.version>
                 <bytecode.main.version>9</bytecode.main.version>
                 <bytecode.test.version>9</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
                 <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
