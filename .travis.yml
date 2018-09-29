@@ -17,14 +17,11 @@ matrix:
     - env: TARGET='-Pjava10'
       jdk: oraclejdk10
     # Java 11
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava10'
       jdk: oraclejdk11
     # Java 12
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava10'
       jdk: openjdk-ea
-      script:
-        - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-        - ./mvnw verify ${TARGET} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
 
 script:
   - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
