@@ -468,6 +468,18 @@
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
+        <!-- Builds using a byte code target for Java 12. -->
+        <profile>
+            <id>java12</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>12</bytecode.main.version>
+                <bytecode.test.version>12</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
         <profile>
             <id>extras</id>
