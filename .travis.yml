@@ -11,14 +11,14 @@ install: echo "The default Travis install script is being skipped!"
 matrix:
   include:
     # Java 9
-    - jdk: oraclejdk9
+    - jdk: openjdk9
       env: TARGET='-Pjava9'
     # Java 10
     - env: TARGET='-Pjava10'
-      jdk: oraclejdk10
+      jdk: openjdk10
     # Java 11
     - env: TARGET='-Pjava10'
-      jdk: oraclejdk11
+      jdk: openjdk11
     # Java 12
     - env: TARGET='-Pjava10'
       jdk: openjdk-ea
