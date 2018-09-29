@@ -63,7 +63,7 @@ public class ClassFileLocatorForModuleWeaklyReferencedTest {
     public void testCreationUnnamedSystem() throws Exception {
         when(module.isNamed()).thenReturn(false);
         when(module.getClassLoader()).thenReturn(ClassLoader.getSystemClassLoader());
-        assertThat(ClassFileLocator.ForModule.of(module), hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForModule.of(module), hasPrototype(ClassFileLocator.ForClassLoader.ofSystemLoader()));
     }
 
     @Test
@@ -85,16 +85,14 @@ public class ClassFileLocatorForModuleWeaklyReferencedTest {
     public void testCreationNamedBoot() throws Exception {
         when(module.isNamed()).thenReturn(true);
         when(module.getClassLoader()).thenReturn(null);
-        assertThat(ClassFileLocator.ForModule.WeaklyReferenced.of(module),
-                hasPrototype((ClassFileLocator) new ClassFileLocator.ForModule(module)));
+        assertThat(ClassFileLocator.ForModule.WeaklyReferenced.of(module), hasPrototype((ClassFileLocator) new ClassFileLocator.ForModule(module)));
     }
 
     @Test
     public void testCreationUnnamedBoot() throws Exception {
         when(module.isNamed()).thenReturn(false);
         when(module.getClassLoader()).thenReturn(null);
-        assertThat(ClassFileLocator.ForModule.of(module),
-                hasPrototype((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForModule.of(module), hasPrototype(ClassFileLocator.ForClassLoader.ofBootLoader()));
     }
 
     @Test

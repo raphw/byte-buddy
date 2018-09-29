@@ -22,7 +22,14 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * {@link Enhance} annotation is present and no explicit method declaration was added. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class HashCodeAndEqualsPlugin implements Plugin {
+public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
+    }
 
     /**
      * {@inheritDoc}

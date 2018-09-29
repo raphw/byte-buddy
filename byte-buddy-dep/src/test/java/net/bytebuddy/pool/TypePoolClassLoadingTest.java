@@ -23,8 +23,9 @@ public class TypePoolClassLoadingTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {TypePool.ClassLoading.ofBootPath()},
-                {TypePool.ClassLoading.ofClassPath()},
+                {TypePool.ClassLoading.ofBootLoader()},
+                {TypePool.ClassLoading.ofPlatformLoader()},
+                {TypePool.ClassLoading.ofSystemLoader()},
                 {TypePool.ClassLoading.of(TypePoolClassLoadingTest.class.getClassLoader())}
         });
     }

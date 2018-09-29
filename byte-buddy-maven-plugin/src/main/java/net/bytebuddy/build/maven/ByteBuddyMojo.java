@@ -1,20 +1,17 @@
 package net.bytebuddy.build.maven;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.BuildLogger;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
-import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -34,39 +31,34 @@ import java.util.Map;
 public abstract class ByteBuddyMojo extends AbstractMojo {
 
     /**
-     * The file extension of a Java class file.
-     */
-    private static final String CLASS_FILE_EXTENSION = ".class";
-
-    /**
      * The built project's group id.
      */
     @Parameter(defaultValue = "${project.groupId}", required = true, readonly = true)
-    protected String groupId;
+    public String groupId;
 
     /**
      * The built project's artifact id.
      */
     @Parameter(defaultValue = "${project.artifactId}", required = true, readonly = true)
-    protected String artifactId;
+    public String artifactId;
 
     /**
      * The built project's version.
      */
     @Parameter(defaultValue = "${project.version}", required = true, readonly = true)
-    protected String version;
+    public String version;
 
     /**
      * The built project's packaging.
      */
     @Parameter(defaultValue = "${project.packaging}", required = true, readonly = true)
-    protected String packaging;
+    public String packaging;
 
     /**
      * The Maven project.
      */
     @Parameter(defaultValue = "${project}", readonly = true)
-    protected MavenProject project;
+    public MavenProject project;
 
     /**
      * <p>
@@ -91,13 +83,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * </p>
      */
     @Parameter
-    protected List<Transformation> transformations;
+    public List<Transformation> transformations;
 
     /**
      * <p>
-     * The initializer used for creating a {@link ByteBuddy} instance and for applying a transformation. By default, a type is
-     * rebased. The initializer's {@code entryPoint} property can be set to any constant name of {@link EntryPoint.Default} or
-     * to a class name. If the latter applies, it is possible to set Maven coordinates for a Maven plugin which defines this
+     * The initializer used for creating a {@link net.bytebuddy.ByteBuddy} instance and for applying a transformation. By default,
+     * a type is rebased. The initializer's {@code entryPoint} property can be set to any constant name of {@link EntryPoint.Default}
+     * or to a class name. If the latter applies, it is possible to set Maven coordinates for a Maven plugin which defines this
      * class where any property defaults to this project's coordinates.
      * </p>
      * <p>
@@ -112,7 +104,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * }</pre></blockquote>
      */
     @Parameter
-    protected Initialization initialization;
+    public Initialization initialization;
 
     /**
      * Specifies the method name suffix that is used when type's method need to be rebased. If this property is not
@@ -120,7 +112,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * value is appended to the original method name.
      */
     @Parameter
-    protected String suffix;
+    public String suffix;
 
     /**
      * When transforming classes during build time, it is not possible to apply any transformations which require a class
@@ -129,43 +121,49 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * initializer is defined during a transformation process.
      */
     @Parameter(defaultValue = "true", required = true)
-    protected boolean failOnLiveInitializer;
+    public boolean failOnLiveInitializer;
 
     /**
      * When set to {@code true}, this mojo is not applied to the current module.
      */
     @Parameter(defaultValue = "false", required = true)
-    protected boolean skip;
+    public boolean skip;
 
     /**
      * When set to {@code true}, this mojo warns of an non-existent output directory.
      */
     @Parameter(defaultValue = "true", required = true)
-    protected boolean warnOnMissingOutputDirectory;
+    public boolean warnOnMissingOutputDirectory;
 
     /**
      * When set to {@code true}, this mojo fails immediately if a plugin cannot be applied.
      */
     @Parameter(defaultValue = "true", required = true)
-    protected boolean failFast;
+    public boolean failFast;
+
+    /**
+     * When set to {@code true}, the debug information of class files should be parsed to extract parameter names.
+     */
+    @Parameter(defaultValue = "false", required = true)
+    public boolean extendedParsing;
 
     /**
      * The currently used repository system.
      */
     @Component
-    protected RepositorySystem repositorySystem;
+    public RepositorySystem repositorySystem;
 
     /**
      * The currently used system session for the repository system.
      */
     @Parameter(defaultValue = "${repositorySystemSession}", required = true, readonly = true)
-    protected RepositorySystemSession repositorySystemSession;
+    public RepositorySystemSession repositorySystemSession;
 
     /**
      * A list of all remote repositories.
      */
     @Parameter(defaultValue = "${project.remoteProjectRepositories}", required = true, readonly = true)
-    protected List<RemoteRepository> remoteRepositories;
+    public List<RemoteRepository> remoteRepositories;
 
     /**
      * {@inheritDoc}
@@ -179,7 +177,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             return;
         }
         try {
-            processOutputDirectory(new File(getOutputDirectory()), getClassPathElements());
+            apply(new File(getOutputDirectory()), getClassPathElements());
         } catch (IOException exception) {
             throw new MojoFailureException("Error during writing process", exception);
         }
@@ -200,22 +198,20 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     protected abstract List<String> getClassPathElements();
 
     /**
-     * Processes all class files within the given directory.
+     * Applies the instrumentation.
      *
-     * @param root      The root directory to process.
-     * @param classPath A list of class path elements expected by the processed classes.
-     * @throws MojoExecutionException If the user configuration results in an error.
-     * @throws MojoFailureException   If the plugin application raises an error.
+     * @param root      The root folder that contains all class files.
+     * @param classPath An iterable over all class path elements.
+     * @throws MojoExecutionException If the plugin cannot be applied.
      * @throws IOException            If an I/O exception occurs.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
-    private void processOutputDirectory(File root, List<? extends String> classPath) throws MojoExecutionException, MojoFailureException, IOException {
+    @SuppressWarnings("unchecked")
+    private void apply(File root, List<? extends String> classPath) throws MojoExecutionException, IOException {
         if (!root.exists()) {
-            String message = "Skipping instrumentation due to missing directory: " + root;
             if (warnOnMissingOutputDirectory) {
-                getLog().warn(message);
+                getLog().warn("Skipping instrumentation due to missing directory: " + root);
             } else {
-                getLog().info(message);
+                getLog().info("Skipping instrumentation due to missing directory: " + root);
             }
             return;
         } else if (!root.isDirectory()) {
@@ -223,229 +219,82 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         }
         ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getLog(), repositorySystem, repositorySystemSession, remoteRepositories);
         try {
-            List<Plugin> plugins = new ArrayList<Plugin>(transformations.size());
+            List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(transformations.size());
             for (Transformation transformation : transformations) {
                 String plugin = transformation.getPlugin();
                 try {
-                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version, packaging)))
-                            .getDeclaredConstructor()
-                            .newInstance());
-                    getLog().info("Created plugin: " + plugin);
+                    factories.add(new Plugin.Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin,
+                            false,
+                            classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version, packaging))))
+                            .with(transformation.makeArgumentResolvers())
+                            .with(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(File.class, root),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(Log.class, getLog()),
+                                    Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(BuildLogger.class, new MavenBuildLogger(getLog()))));
+                    getLog().info("Resolved plugin: " + transformation.getRawPlugin());
                 } catch (Exception exception) {
-                    throw new MojoExecutionException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
+                    throw new MojoExecutionException("Cannot resolve plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
+            EntryPoint entryPoint = (initialization == null
+                    ? Initialization.makeDefault()
+                    : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
+            getLog().info("Resolved entry point: " + entryPoint);
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size());
+            for (String target : classPath) {
+                File artifact = new File(target);
+                classFileLocators.add(artifact.isFile()
+                        ? ClassFileLocator.ForJarFile.of(artifact)
+                        : new ClassFileLocator.ForFolder(artifact));
+            }
+            ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
+            Plugin.Engine.Summary summary;
             try {
-                EntryPoint entryPoint = (initialization == null
-                        ? Initialization.makeDefault()
-                        : initialization).getEntryPoint(classLoaderResolver, groupId, artifactId, version, packaging);
-                getLog().info("Resolved entry point: " + entryPoint);
-                ResultBag resultBag = transform(root, entryPoint, classPath, plugins);
-                if (resultBag.hasFailures()) {
-                    throw new MojoExecutionException(resultBag.getFailure() + " type transformations have failed");
-                } else if (resultBag.isEmpty()) {
-                    getLog().warn("No types were transformed during plugin execution");
-                } else {
-                    getLog().info("Transformed " + resultBag.getSuccess() + " types");
+                getLog().info("Processing class files located in in: " + root);
+                Plugin.Engine pluginEngine;
+                try {
+                    String javaVersionString = findJavaVersionString(project);
+                    ClassFileVersion classFileVersion;
+                    if (javaVersionString == null) {
+                        classFileVersion = ClassFileVersion.ofThisVm();
+                        getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
+                    } else {
+                        classFileVersion = ClassFileVersion.ofJavaVersionString(javaVersionString);
+                        getLog().debug("Java version detected: " + javaVersionString);
+                    }
+                    pluginEngine = Plugin.Engine.Default.of(entryPoint, classFileVersion, suffix == null || suffix.length() == 0
+                            ? MethodNameTransformer.Suffixing.withRandomSuffix()
+                            : new MethodNameTransformer.Suffixing(suffix));
+                } catch (Throwable throwable) {
+                    throw new MojoExecutionException("Cannot create plugin engine", throwable);
+                }
+                try {
+                    summary = pluginEngine
+                            .with(extendedParsing
+                                    ? Plugin.Engine.PoolStrategy.Default.EXTENDED
+                                    : Plugin.Engine.PoolStrategy.Default.FAST)
+                            .with(classFileLocator)
+                            .with(new TransformationLogger(getLog()))
+                            .withErrorHandlers(Plugin.Engine.ErrorHandler.Enforcing.ALL_TYPES_RESOLVED, failOnLiveInitializer
+                                    ? Plugin.Engine.ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS
+                                    : Plugin.Engine.Listener.NoOp.INSTANCE, failFast
+                                    ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
+                                    : Plugin.Engine.Listener.NoOp.INSTANCE)
+                            .apply(new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), factories);
+                } catch (Throwable throwable) {
+                    throw new MojoExecutionException("Failed to transform class files in " + root, throwable);
                 }
             } finally {
-                for (Plugin plugin : plugins) {
-                    plugin.close();
-                }
+                classFileLocator.close();
+            }
+            if (!summary.getFailed().isEmpty()) {
+                throw new MojoExecutionException(summary.getFailed() + " type transformations have failed");
+            } else if (summary.getTransformed().isEmpty()) {
+                getLog().warn("No types were transformed during plugin execution");
+            } else {
+                getLog().info("Transformed " + summary.getTransformed().size() + " types");
             }
         } finally {
             classLoaderResolver.close();
-        }
-    }
-
-    /**
-     * Applies all registered transformations.
-     *
-     * @param root       The root directory to process.
-     * @param entryPoint The transformation's entry point.
-     * @param classPath  A list of class path elements expected by the processed classes.
-     * @param plugins    The plugins to apply.
-     * @return A collection of all transformations.
-     * @throws MojoExecutionException If the user configuration results in an error.
-     * @throws MojoFailureException   If the plugin application raises an error.
-     * @throws IOException            If an I/O exception occurs.
-     */
-    private ResultBag transform(File root,
-                                EntryPoint entryPoint,
-                                List<? extends String> classPath,
-                                List<Plugin> plugins) throws MojoExecutionException, MojoFailureException, IOException {
-        List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size() + 1);
-        classFileLocators.add(new ClassFileLocator.ForFolder(root));
-        for (String target : classPath) {
-            File artifact = new File(target);
-            classFileLocators.add(artifact.isFile()
-                    ? ClassFileLocator.ForJarFile.of(artifact)
-                    : new ClassFileLocator.ForFolder(artifact));
-        }
-        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(classFileLocators);
-        try {
-            TypePool typePool = new TypePool.Default.WithLazyResolution(new TypePool.CacheProvider.Simple(),
-                    classFileLocator,
-                    TypePool.Default.ReaderMode.FAST,
-                    TypePool.ClassLoading.ofBootPath());
-            getLog().info("Processing class files located in in: " + root);
-            ByteBuddy byteBuddy;
-            try {
-                String javaVersionString = findJavaVersionString(project);
-                if (javaVersionString == null) {
-                    ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm();
-                    getLog().warn("Could not locate Java target version, build is JDK dependant: " + classFileVersion.getMajorVersion());
-                    byteBuddy = entryPoint.byteBuddy(classFileVersion);
-                } else {
-                    getLog().debug("Java version detected: " + javaVersionString);
-                    byteBuddy = entryPoint.byteBuddy(ClassFileVersion.ofJavaVersionString(javaVersionString));
-                }
-            } catch (Throwable throwable) {
-                throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
-            }
-            ResultBag resultBag = new ResultBag();
-            processDirectory(root,
-                    root,
-                    byteBuddy,
-                    entryPoint,
-                    suffix == null || suffix.length() == 0
-                            ? MethodNameTransformer.Suffixing.withRandomSuffix()
-                            : new MethodNameTransformer.Suffixing(suffix),
-                    classFileLocator,
-                    typePool,
-                    plugins,
-                    resultBag);
-            return resultBag;
-        } finally {
-            classFileLocator.close();
-        }
-    }
-
-    /**
-     * Processes a directory.
-     *
-     * @param root                  The root directory to process.
-     * @param folder                The currently processed folder.
-     * @param byteBuddy             The Byte Buddy instance to use.
-     * @param entryPoint            The transformation's entry point.
-     * @param methodNameTransformer The method name transformer to use.
-     * @param classFileLocator      The class file locator to use.
-     * @param typePool              The type pool to query for type descriptions.
-     * @param plugins               The plugins to apply.
-     * @param resultBag             A collection of all transformations.
-     * @throws MojoExecutionException If the user configuration results in an error.
-     * @throws MojoFailureException   If the plugin application raises an error.
-     */
-    private void processDirectory(File root,
-                                  File folder,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins,
-                                  ResultBag resultBag) throws MojoExecutionException, MojoFailureException {
-        File[] file = folder.listFiles();
-        if (file != null) {
-            for (File aFile : file) {
-                if (aFile.isDirectory()) {
-                    processDirectory(root,
-                            aFile,
-                            byteBuddy,
-                            entryPoint,
-                            methodNameTransformer,
-                            classFileLocator,
-                            typePool,
-                            plugins,
-                            resultBag);
-                } else if (aFile.isFile() && aFile.getName().endsWith(CLASS_FILE_EXTENSION)) {
-                    processClassFile(root,
-                            root.toURI().relativize(aFile.toURI()).toString(),
-                            byteBuddy,
-                            entryPoint,
-                            methodNameTransformer,
-                            classFileLocator,
-                            typePool,
-                            plugins,
-                            resultBag);
-                } else {
-                    getLog().debug("Skipping ignored file: " + aFile);
-                }
-            }
-        }
-    }
-
-    /**
-     * Processes a class file.
-     *
-     * @param root                  The root directory to process.
-     * @param file                  The class file to process.
-     * @param byteBuddy             The Byte Buddy instance to use.
-     * @param entryPoint            The transformation's entry point.
-     * @param methodNameTransformer The method name transformer to use.
-     * @param classFileLocator      The class file locator to use.
-     * @param typePool              The type pool to query for type descriptions.
-     * @param plugins               The plugins to apply.
-     * @param resultBag             A collection of all transformations.
-     * @throws MojoExecutionException If the user configuration results in an error.
-     * @throws MojoFailureException   If the plugin application raises an error.
-     */
-    private void processClassFile(File root,
-                                  String file,
-                                  ByteBuddy byteBuddy,
-                                  EntryPoint entryPoint,
-                                  MethodNameTransformer methodNameTransformer,
-                                  ClassFileLocator classFileLocator,
-                                  TypePool typePool,
-                                  List<Plugin> plugins,
-                                  ResultBag resultBag) throws MojoExecutionException, MojoFailureException {
-        String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
-        getLog().debug("Processing class file: " + typeName);
-        TypeDescription typeDescription = typePool.describe(typeName).resolve();
-        DynamicType.Builder<?> builder;
-        try {
-            builder = entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
-        } catch (Throwable throwable) {
-            throw new MojoExecutionException("Cannot transform type: " + typeName, throwable);
-        }
-        boolean transformed = false, failed = false;
-        for (Plugin plugin : plugins) {
-            try {
-                if (plugin.matches(typeDescription)) {
-                    try {
-                        builder = plugin.apply(builder, typeDescription, classFileLocator);
-                        transformed = true;
-                    } catch (RuntimeException exception) {
-                        if (failFast) {
-                            throw exception;
-                        } else {
-                            getLog().error("Failure during the application of " + plugin, exception);
-                            failed = true;
-                        }
-                    }
-                }
-            } catch (Throwable throwable) {
-                throw new MojoExecutionException("Cannot apply " + plugin + " on " + typeName, throwable);
-            }
-        }
-        if (failed) {
-            resultBag.failure();
-        } else if (transformed) {
-            getLog().debug("Transformed type: " + typeName);
-            DynamicType dynamicType = builder.make();
-            for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
-                if (failOnLiveInitializer && entry.getValue().isAlive()) {
-                    throw new MojoExecutionException("Cannot apply live initializer for " + entry.getKey());
-                }
-            }
-            try {
-                dynamicType.saveIn(root);
-            } catch (IOException exception) {
-                throw new MojoFailureException("Cannot save " + typeName + " in " + root, exception);
-            }
-            resultBag.success();
-        } else {
-            getLog().debug("Skipping non-transformed type: " + typeName);
         }
     }
 
@@ -489,13 +338,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * The current build's production output directory.
          */
         @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
-        protected String outputDirectory;
+        public String outputDirectory;
 
         /**
          * The production class path.
          */
         @Parameter(defaultValue = "${project.compileClasspathElements}", required = true, readonly = true)
-        protected List<String> compileClasspathElements;
+        public List<String> compileClasspathElements;
 
         @Override
         protected String getOutputDirectory() {
@@ -521,13 +370,13 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
          * The current build's test output directory.
          */
         @Parameter(defaultValue = "${project.build.testOutputDirectory}", required = true, readonly = true)
-        protected String testOutputDirectory;
+        public String testOutputDirectory;
 
         /**
          * The test class path.
          */
         @Parameter(defaultValue = "${project.testClasspathElements}", required = true, readonly = true)
-        protected List<String> testClasspathElements;
+        public List<String> testClasspathElements;
 
         @Override
         protected String getOutputDirectory() {
@@ -541,68 +390,151 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     }
 
     /**
-     * A result bag records transformation results during the mojo application.
+     * A {@link BuildLogger} implementation for a Maven {@link Log}.
      */
-    private static class ResultBag {
+    protected static class MavenBuildLogger implements BuildLogger {
 
         /**
-         * The count of successful transformations.
+         * The logger to delegate to.
          */
-        private int success;
+        private final Log log;
 
         /**
-         * The count of failed transformations.
-         */
-        private int failure;
-
-        /**
-         * Increases the count of successful transformations.
-         */
-        private void success() {
-            success += 1;
-        }
-
-        /**
-         * Increases the count of failed transformations.
-         */
-        private void failure() {
-            failure += 1;
-        }
-
-        /**
-         * Returns the current count of successful transformations.
+         * Creates a new Maven build logger.
          *
-         * @return The current count of successful transformations.
+         * @param log The logger to delegate to.
          */
-        private int getSuccess() {
-            return success;
+        protected MavenBuildLogger(Log log) {
+            this.log = log;
         }
 
         /**
-         * Returns the current count of failed transformations.
-         *
-         * @return The current count of failed transformations.
+         * {@inheritDoc}
          */
-        private int getFailure() {
-            return failure;
+        public boolean isDebugEnabled() {
+            return log.isDebugEnabled();
         }
 
         /**
-         * Returns {@code true} if at least one transformation failed.
-         *
-         * @return {@code true} if at least one transformation failed.
+         * {@inheritDoc}
          */
-        private boolean hasFailures() {
-            return failure > 0;
+        public void debug(String message) {
+            log.debug(message);
         }
 
         /**
-         * Returns {@code true} if no transformations were applied.
-         *
-         * @return {@code true} if no transformations were applied.
+         * {@inheritDoc}
          */
-        private boolean isEmpty() {
-            return success == 0 && failure == 0;
+        public void debug(String message, Throwable throwable) {
+            log.debug(message, throwable);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isInfoEnabled() {
+            return log.isInfoEnabled();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void info(String message) {
+            log.info(message);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void info(String message, Throwable throwable) {
+            log.info(message, throwable);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isWarnEnabled() {
+            return log.isWarnEnabled();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void warn(String message) {
+            log.warn(message);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void warn(String message, Throwable throwable) {
+            log.warn(message, throwable);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isErrorEnabled() {
+            return log.isErrorEnabled();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void error(String message) {
+            log.error(message);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void error(String message, Throwable throwable) {
+            log.error(message, throwable);
+        }
+    }
+
+    /**
+     * A {@link Plugin.Engine.Listener} that logs several relevant events during the build.
+     */
+    protected static class TransformationLogger extends Plugin.Engine.Listener.Adapter {
+
+        /**
+         * The logger to delegate to.
+         */
+        private final Log log;
+
+        /**
+         * Creates a new transformation logger.
+         *
+         * @param log The logger to delegate to.
+         */
+        protected TransformationLogger(Log log) {
+            this.log = log;
+        }
+
+        @Override
+        public void onTransformation(TypeDescription typeDescription, List<Plugin> plugins) {
+            log.debug("Transformed " + typeDescription + " using " + plugins);
+        }
+
+        @Override
+        public void onError(TypeDescription typeDescription, Plugin plugin, Throwable throwable) {
+            log.warn("Failed to transform " + typeDescription + " using " + plugin, throwable);
+        }
+
+        @Override
+        public void onError(Map<TypeDescription, List<Throwable>> throwables) {
+            log.warn("Failed to transform " + throwables.size() + " types");
+        }
+
+        @Override
+        public void onError(Plugin plugin, Throwable throwable) {
+            log.error("Failed to close " + plugin, throwable);
+        }
+
+        @Override
+        public void onLiveInitializer(TypeDescription typeDescription, TypeDescription definingType) {
+            log.debug("Discovered live initializer for " + definingType + " as a result of transforming " + typeDescription);
         }
     }
 }

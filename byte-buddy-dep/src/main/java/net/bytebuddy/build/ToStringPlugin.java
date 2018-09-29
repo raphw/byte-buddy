@@ -17,7 +17,14 @@ import static net.bytebuddy.matcher.ElementMatchers.isToString;
  * explicit method declaration was added. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class ToStringPlugin implements Plugin {
+public class ToStringPlugin implements Plugin, Plugin.Factory {
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
+    }
 
     /**
      * {@inheritDoc}

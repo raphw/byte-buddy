@@ -1739,21 +1739,31 @@ public interface ClassInjector {
         }
 
         /**
-         * Returns an unsafe class injector for the bootstrap class loader.
-         *
-         * @return A class injector for the bootstrap loader.
-         */
-        public static ClassInjector ofBootstrapLoader() {
-            return new UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER);
-        }
-
-        /**
-         * Returns an unsafe class injector for the class path.
+         * Returns an unsafe class injector for the system class loader.
          *
          * @return A class injector for the system class loader.
          */
-        public static ClassInjector ofClassPath() {
+        public static ClassInjector ofSystemLoader() {
             return new UsingUnsafe(ClassLoader.getSystemClassLoader());
+        }
+
+        /**
+         * Returns an unsafe class injector for the platform class loader. For VMs of version 8 or older,
+         * the extension class loader is represented instead.
+         *
+         * @return A class injector for the platform class loader.
+         */
+        public static ClassInjector ofPlatformLoader() {
+            return new UsingUnsafe(ClassLoader.getSystemClassLoader().getParent());
+        }
+
+        /**
+         * Returns an unsafe class injector for the boot class loader.
+         *
+         * @return A class injector for the boot loader.
+         */
+        public static ClassInjector ofBootLoader() {
+            return new UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER);
         }
 
         /**

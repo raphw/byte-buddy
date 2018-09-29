@@ -13,7 +13,7 @@ public class Initialization extends AbstractUserConfiguration {
     /**
      * The fully-qualified name of the entry point or any constant name of {@link EntryPoint.Default}.
      */
-    protected String entryPoint;
+    public String entryPoint;
 
     /**
      * Creates a default initialization instance.

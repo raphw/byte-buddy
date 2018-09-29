@@ -20,7 +20,7 @@ public class TypePoolDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        typePool = TypePool.Default.ofClassPath();
+        typePool = TypePool.Default.ofSystemLoader();
     }
 
     @After
@@ -56,7 +56,7 @@ public class TypePoolDefaultTest {
 
     @Test
     public void testTypeIsCached() throws Exception {
-        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(typePool.describe(Object.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
@@ -66,7 +66,7 @@ public class TypePoolDefaultTest {
 
     @Test
     public void testReferencedTypeIsCached() throws Exception {
-        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofSystemLoader());
         TypePool typePool = TypePool.Default.of(classFileLocator);
         TypePool.Resolution resolution = typePool.describe(String.class.getName());
         assertThat(typePool.describe(String.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));

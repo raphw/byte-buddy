@@ -253,6 +253,11 @@ public interface ClassFileLocator extends Closeable {
     class ForClassLoader implements ClassFileLocator {
 
         /**
+         * A class loader that does not define resources of its own but allows querying for resources supplied by the boot loader.
+         */
+        private static final ClassLoader BOOT_LOADER_PROXY = AccessController.doPrivileged(BootLoaderProxyCreationAction.INSTANCE);
+
+        /**
          * The class loader to query.
          */
         private final ClassLoader classLoader;
@@ -271,21 +276,38 @@ public interface ClassFileLocator extends Closeable {
          *
          * @return A class file locator that queries the system class loader.
          */
-        public static ClassFileLocator ofClassPath() {
+        public static ClassFileLocator ofSystemLoader() {
             return new ForClassLoader(ClassLoader.getSystemClassLoader());
+        }
+
+        /**
+         * Creates a class file locator that queries the plaform class loader or the extension class loader if the
+         * current VM is not at least of version 9.
+         *
+         * @return A class file locator that queries the plaform class loader or the extension class loader.
+         */
+        public static ClassFileLocator ofPlatformLoader() {
+            return of(ClassLoader.getSystemClassLoader().getParent());
+        }
+
+        /**
+         * Creates a class file locator that queries the boot loader.
+         *
+         * @return A class file locator that queries the boot loader.
+         */
+        public static ClassFileLocator ofBootLoader() {
+            return new ForClassLoader(BOOT_LOADER_PROXY);
         }
 
         /**
          * Creates a class file locator for a given class loader.
          *
-         * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
-         *                    loader which is represented by the {@code null} value, this system class loader
-         *                    is used instead.
+         * @param classLoader The class loader to be used which might be {@code null} to represent the bootstrap loader.
          * @return A corresponding source locator.
          */
         public static ClassFileLocator of(ClassLoader classLoader) {
             return new ForClassLoader(classLoader == null
-                    ? ClassLoader.getSystemClassLoader()
+                    ? BOOT_LOADER_PROXY
                     : classLoader);
         }
 
@@ -391,6 +413,24 @@ public interface ClassFileLocator extends Closeable {
                 }
             } else {
                 return new Resolution.Illegal(name);
+            }
+        }
+
+        /**
+         * A privileged action for creating a proxy class loader for the boot class loader.
+         */
+        protected enum BootLoaderProxyCreationAction implements PrivilegedAction<ClassLoader> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassLoader run() {
+                return new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
             }
         }
 

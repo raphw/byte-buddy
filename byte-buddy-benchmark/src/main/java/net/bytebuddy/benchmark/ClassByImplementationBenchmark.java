@@ -170,7 +170,7 @@ public class ClassByImplementationBenchmark {
      */
     @Setup
     public void setup() {
-        baseClassDescription = TypePool.Default.ofClassPath().describe(baseClass.getName()).resolve();
+        baseClassDescription = TypePool.Default.ofSystemLoader().describe(baseClass.getName()).resolve();
     }
 
     /**

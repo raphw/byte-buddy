@@ -1071,10 +1071,31 @@ public interface TypePool {
          * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the system class
          * loader. The returned instance is configured to use a fast reading mode and a simple cache.
          *
-         * @return A type pool that reads its data from the system class path.
+         * @return A type pool that reads its data from the system class loader.
          */
-        public static TypePool ofClassPath() {
-            return of(ClassFileLocator.ForClassLoader.ofClassPath());
+        public static TypePool ofSystemLoader() {
+            return of(ClassFileLocator.ForClassLoader.ofSystemLoader());
+        }
+
+        /**
+         * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the plaform class
+         * loader. The returned instance is configured to use a fast reading mode and a simple cache. If the current
+         * VM is of version 8 or older, the extension class loader is represented instead.
+         *
+         * @return A type pool that reads its data from the platform class path.
+         */
+        public static TypePool ofPlatformLoader() {
+            return of(ClassFileLocator.ForClassLoader.ofPlatformLoader());
+        }
+
+        /**
+         * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the boot class
+         * loader. The returned instance is configured to use a fast reading mode and a simple cache.
+         *
+         * @return A type pool that reads its data from the boot class loader.
+         */
+        public static TypePool ofBootLoader() {
+            return of(ClassFileLocator.ForClassLoader.ofBootLoader());
         }
 
         /**
@@ -1212,10 +1233,31 @@ public interface TypePool {
              * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the system class
              * loader. The returned instance is configured to use a fast reading mode and a simple cache.
              *
-             * @return A type pool that reads its data from the system class path.
+             * @return A type pool that reads its data from the system class loader.
              */
-            public static TypePool ofClassPath() {
-                return of(ClassFileLocator.ForClassLoader.ofClassPath());
+            public static TypePool ofSystemLoader() {
+                return of(ClassFileLocator.ForClassLoader.ofSystemLoader());
+            }
+
+            /**
+             * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the platform class
+             * loader. The returned instance is configured to use a fast reading mode and a simple cache. If the current VM is Java 8 or older,
+             * the type pool represents the extension class loader.
+             *
+             * @return A type pool that reads its data from the boot class loader.
+             */
+            public static TypePool ofPlatformLoader() {
+                return of(ClassFileLocator.ForClassLoader.ofPlatformLoader());
+            }
+
+            /**
+             * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the boot class
+             * loader. The returned instance is configured to use a fast reading mode and a simple cache.
+             *
+             * @return A type pool that reads its data from the boot class loader.
+             */
+            public static TypePool ofBootLoader() {
+                return of(ClassFileLocator.ForClassLoader.ofBootLoader());
             }
 
             /**
@@ -8377,21 +8419,31 @@ public interface TypePool {
         }
 
         /**
-         * Returns a type pool that attempts type descriptions by loadings types from the bootstrap class loader.
-         *
-         * @return An class loading type pool for the bootstrap class loader.
-         */
-        public static TypePool ofBootPath() {
-            return of(BOOTSTRAP_CLASS_LOADER);
-        }
-
-        /**
          * Returns a type pool that attempts type descriptions by loadings types from the system class loader.
          *
          * @return An class loading type pool for the system class loader.
          */
-        public static TypePool ofClassPath() {
+        public static TypePool ofSystemLoader() {
             return of(ClassLoader.getSystemClassLoader());
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the platform class loader.
+         * If the current VM is Java 8 or older, the extension class loader is represented instead.
+         *
+         * @return An class loading type pool for the system class loader.
+         */
+        public static TypePool ofPlatformLoader() {
+            return of(ClassLoader.getSystemClassLoader().getParent());
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the bootstrap class loader.
+         *
+         * @return An class loading type pool for the bootstrap class loader.
+         */
+        public static TypePool ofBootLoader() {
+            return of(BOOTSTRAP_CLASS_LOADER);
         }
 
         @Override

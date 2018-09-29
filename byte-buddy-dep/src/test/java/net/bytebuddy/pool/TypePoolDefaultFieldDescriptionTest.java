@@ -16,7 +16,7 @@ public class TypePoolDefaultFieldDescriptionTest extends AbstractFieldDescriptio
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        typePool = TypePool.Default.ofClassPath();
+        typePool = TypePool.Default.ofSystemLoader();
     }
 
     @After

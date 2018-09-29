@@ -154,9 +154,9 @@ public class ByteBuddyTutorialExamplesTest {
 
     @Test
     public void testTutorialGettingStartedTypePool() throws Exception {
-        TypePool typePool = TypePool.Default.ofClassPath();
+        TypePool typePool = TypePool.Default.ofSystemLoader();
         ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability.
-        Class<?> type = new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(), ClassFileLocator.ForClassLoader.ofClassPath())
+        Class<?> type = new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(), ClassFileLocator.ForClassLoader.ofSystemLoader())
                 .defineField("qux", String.class)
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)

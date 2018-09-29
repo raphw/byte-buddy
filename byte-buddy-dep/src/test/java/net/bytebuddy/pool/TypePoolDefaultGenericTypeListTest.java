@@ -18,7 +18,7 @@ public class TypePoolDefaultGenericTypeListTest extends AbstractTypeListGenericT
 
     @Before
     public void setUp() throws Exception {
-        typePool = TypePool.Default.ofClassPath();
+        typePool = TypePool.Default.ofSystemLoader();
     }
 
     @After

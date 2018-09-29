@@ -53,8 +53,9 @@ public class ClassInjectorUsingUnsafeTest {
 
     @Test
     public void testHelperMethods() throws Exception {
-        assertThat(ClassInjector.UsingUnsafe.ofBootstrapLoader(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
-        assertThat(ClassInjector.UsingUnsafe.ofClassPath(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassInjector.UsingUnsafe.ofBootLoader(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
+        assertThat(ClassInjector.UsingUnsafe.ofPlatformLoader(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader().getParent())));
+        assertThat(ClassInjector.UsingUnsafe.ofSystemLoader(), hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));
     }
 
     private static class Foo {

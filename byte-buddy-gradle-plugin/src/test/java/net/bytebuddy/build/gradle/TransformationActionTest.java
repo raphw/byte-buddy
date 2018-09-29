@@ -2,16 +2,11 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.test.IllegalEntryPoint;
-import net.bytebuddy.test.IllegalPlugin;
-import net.bytebuddy.test.IllegalTransformEntryPoint;
-import net.bytebuddy.test.IllegalTransformPlugin;
-import net.bytebuddy.test.LiveInitializerPlugin;
-import net.bytebuddy.test.SimpleEntryPoint;
-import net.bytebuddy.test.SimplePlugin;
+import net.bytebuddy.test.*;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -34,11 +29,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -106,6 +97,7 @@ public class TransformationActionTest {
             }
         });
         when(byteBuddyExtension.getMethodNameTransformer()).thenReturn(MethodNameTransformer.Suffixing.withRandomSuffix());
+        when(transformation.makeArgumentResolvers()).thenReturn(Collections.<Plugin.Factory.UsingReflection.ArgumentResolver>emptyList());
         transformationAction = new TransformationAction(project, byteBuddyExtension, parent);
     }
 
@@ -126,6 +118,30 @@ public class TransformationActionTest {
             transformationAction.execute(task);
             ClassLoader classLoader = new URLClassLoader(new URL[]{target.toURI().toURL()});
             assertMethod(classLoader.loadClass("foo.Bar"), FOO, QUX);
+            assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
+            assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
+            assertMethod(classLoader.loadClass("foo.Qux"), BAR, BAR);
+        } finally {
+            for (File file : files) {
+                assertThat(file.delete(), is(true));
+            }
+            assertThat(new File(target, FOO).delete(), is(true));
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testSimpleTransformationWithArgument() throws Exception {
+        Set<File> files = new HashSet<File>();
+        files.addAll(addClass("foo.Bar"));
+        files.addAll(addClass("foo.Qux"));
+        try {
+            when(transformation.getPlugin()).thenReturn(ArgumentPlugin.class.getName());
+            when(transformation.makeArgumentResolvers()).thenReturn(Collections.singletonList(Plugin.Factory.UsingReflection.ArgumentResolver.ForType.of(int.class, 42)));
+            when(initialization.getEntryPoint(any(ClassLoaderResolver.class), any(File.class), any(Iterable.class))).thenReturn(EntryPoint.Default.REBASE);
+            transformationAction.execute(task);
+            ClassLoader classLoader = new URLClassLoader(new URL[]{target.toURI().toURL()});
+            assertMethod(classLoader.loadClass("foo.Bar"), FOO, "42");
             assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
             assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
             assertMethod(classLoader.loadClass("foo.Qux"), BAR, BAR);

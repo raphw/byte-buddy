@@ -171,7 +171,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * {@inheritDoc}
      */
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
-        return make(typeResolutionStrategy, TypePool.ClassLoading.ofClassPath()); // Mimics the default behavior of ASM for least surprise.
+        return make(typeResolutionStrategy, TypePool.ClassLoading.ofSystemLoader()); // Mimics the default behavior of ASM for least surprise.
     }
 
     /**

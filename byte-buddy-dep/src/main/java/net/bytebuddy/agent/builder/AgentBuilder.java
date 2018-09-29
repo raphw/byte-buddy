@@ -1578,7 +1578,7 @@ public interface AgentBuilder {
          * A listener that only delegates events if they are successful or failed transformations.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class WithTransformationsOnly extends Listener.Adapter {
+        class WithTransformationsOnly extends Adapter {
 
             /**
              * The delegate listener.
@@ -1609,7 +1609,7 @@ public interface AgentBuilder {
          * A listener that only delegates events if they are failed transformations.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class WithErrorsOnly extends Listener.Adapter {
+        class WithErrorsOnly extends Adapter {
 
             /**
              * The delegate listener.
@@ -1635,7 +1635,7 @@ public interface AgentBuilder {
          * A listener that adds read-edges to any module of an instrumented class upon its transformation.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class ModuleReadEdgeCompleting extends Listener.Adapter {
+        class ModuleReadEdgeCompleting extends Adapter {
 
             /**
              * The instrumentation instance used for adding read edges.

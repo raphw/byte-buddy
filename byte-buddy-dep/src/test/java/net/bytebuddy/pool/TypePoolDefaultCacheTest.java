@@ -11,7 +11,7 @@ public class TypePoolDefaultCacheTest {
 
     @Test
     public void testCache() throws Exception {
-        TypePool typePool = TypePool.Default.ofClassPath();
+        TypePool typePool = TypePool.Default.ofSystemLoader();
         TypeDescription typeDescription = typePool.describe(Void.class.getName()).resolve();
         assertThat(typePool.describe(Void.class.getName()).resolve(), sameInstance(typeDescription));
         typePool.clear();

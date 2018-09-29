@@ -126,10 +126,10 @@ public class ClassByExtensionBenchmark {
         proxyInterceptor = MethodDelegation.to(ByteBuddyProxyInterceptor.class);
         accessInterceptor = MethodDelegation.to(ByteBuddyAccessInterceptor.class);
         prefixInterceptor = MethodDelegation.to(ByteBuddyPrefixInterceptor.class);
-        baseClassDescription = TypePool.Default.ofClassPath().describe(baseClass.getName()).resolve();
-        proxyClassDescription = TypePool.Default.ofClassPath().describe(ByteBuddyProxyInterceptor.class.getName()).resolve();
-        accessClassDescription = TypePool.Default.ofClassPath().describe(ByteBuddyAccessInterceptor.class.getName()).resolve();
-        prefixClassDescription = TypePool.Default.ofClassPath().describe(ByteBuddyPrefixInterceptor.class.getName()).resolve();
+        baseClassDescription = TypePool.Default.ofSystemLoader().describe(baseClass.getName()).resolve();
+        proxyClassDescription = TypePool.Default.ofSystemLoader().describe(ByteBuddyProxyInterceptor.class.getName()).resolve();
+        accessClassDescription = TypePool.Default.ofSystemLoader().describe(ByteBuddyAccessInterceptor.class.getName()).resolve();
+        prefixClassDescription = TypePool.Default.ofSystemLoader().describe(ByteBuddyPrefixInterceptor.class.getName()).resolve();
         proxyInterceptorDescription = MethodDelegation.to(proxyClassDescription);
         accessInterceptorDescription = MethodDelegation.to(accessClassDescription);
         prefixInterceptorDescription = MethodDelegation.to(prefixClassDescription);

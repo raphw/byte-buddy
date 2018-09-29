@@ -28,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * not work. This plugin does not need to be closed.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class CachedReturnPlugin extends Plugin.ForElementMatcher {
+public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plugin.Factory {
 
     /**
      * An infix between a field and the random suffix if no field name is chosen.
@@ -85,6 +85,13 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher {
                     + ADVICE_INFIX
                     + type.getSimpleName()).resolve());
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Plugin make() {
+        return this;
     }
 
     /**

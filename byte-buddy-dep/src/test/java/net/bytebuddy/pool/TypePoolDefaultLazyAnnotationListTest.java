@@ -17,7 +17,7 @@ public class TypePoolDefaultLazyAnnotationListTest extends AbstractAnnotationLis
 
     @Before
     public void setUp() throws Exception {
-        typePool = TypePool.Default.ofClassPath();
+        typePool = TypePool.Default.ofSystemLoader();
     }
 
     @After

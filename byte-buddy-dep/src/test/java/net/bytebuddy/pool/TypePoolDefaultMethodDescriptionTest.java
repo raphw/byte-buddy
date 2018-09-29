@@ -19,7 +19,7 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
     public void setUp() throws Exception {
         super.setUp();
         typePool = new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE,
-                ClassFileLocator.ForClassLoader.ofClassPath(),
+                ClassFileLocator.ForClassLoader.ofSystemLoader(),
                 TypePool.Default.ReaderMode.EXTENDED); // In order to allow debug information parsing.
     }
 

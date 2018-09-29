@@ -113,6 +113,26 @@ public class ByteBuddyMojoTest {
         }
     }
 
+    @Test
+    public void testSimpleTransformationWithArgument() throws Exception {
+        Set<File> files = new HashSet<File>();
+        files.addAll(addClass("foo.Bar"));
+        files.addAll(addClass("foo.Qux"));
+        try {
+            execute("transform", "argument");
+            ClassLoader classLoader = new URLClassLoader(new URL[]{project.toURI().toURL()});
+            assertMethod(classLoader.loadClass("foo.Bar"), FOO, "42");
+            assertMethod(classLoader.loadClass("foo.Bar"), BAR, BAR);
+            assertMethod(classLoader.loadClass("foo.Qux"), FOO, FOO);
+            assertMethod(classLoader.loadClass("foo.Qux"), BAR, BAR);
+        } finally {
+            for (File file : files) {
+                assertThat(file.delete(), is(true));
+            }
+            assertThat(new File(project, FOO).delete(), is(true));
+        }
+    }
+
     @Test(expected = MojoExecutionException.class)
     public void testLiveInitializer() throws Exception {
         Set<File> files = new HashSet<File>(addClass("foo.Bar"));

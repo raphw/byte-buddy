@@ -17,7 +17,7 @@ public class TypePoolDefaultLazyMethodListTest extends AbstractMethodListTest<Me
 
     @Before
     public void setUp() throws Exception {
-        typePool = TypePool.Default.ofClassPath();
+        typePool = TypePool.Default.ofSystemLoader();
     }
 
     @After

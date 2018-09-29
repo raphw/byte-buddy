@@ -41,9 +41,14 @@ public class ByteBuddyExtension {
     private boolean failOnLiveInitializer;
 
     /**
-     * {@code true} if this mojo should fail fast upon a plugin's failure.
+     * {@code true} if this plugin should fail fast upon a plugin's failure.
      */
     private boolean failFast;
+
+    /**
+     * {@code true} if the debug information of class files should be parsed to extract parameter names.
+     */
+    private boolean extendedParsing;
 
     /**
      * A list of task names for which to apply a transformation or {@code null} if the task should apply to all tasks.
@@ -143,21 +148,39 @@ public class ByteBuddyExtension {
     }
 
     /**
-     * Returns {@code true} if this mojo should fail fast upon a plugin's failure.
+     * Returns {@code true} if this plugin should fail fast upon a plugin's failure.
      *
-     * @return {@code true} if this mojo should fail fast upon a plugin's failure.
+     * @return {@code true} if this plugin should fail fast upon a plugin's failure.
      */
     public boolean isFailFast() {
         return failFast;
     }
 
     /**
-     * Determines if this mojo should fail fast upon a plugin's failure.
+     * Determines if this plugin should fail fast upon a plugin's failure.
      *
-     * @param failFast {@code true} if this mojo should fail fast upon a plugin's failure.
+     * @param failFast {@code true} if this plugin should fail fast upon a plugin's failure.
      */
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
+    }
+
+    /**
+     * Returns {@code true} if the debug information of class files should be parsed to extract parameter names.
+     *
+     * @return {@code true} if the debug information of class files should be parsed to extract parameter names.
+     */
+    public boolean isExtendedParsing() {
+        return extendedParsing;
+    }
+
+    /**
+     * Determines if the debug information of class files should be parsed to extract parameter names.
+     *
+     * @param extendedParsing {@code true} if the debug information of class files should be parsed to extract parameter names.
+     */
+    public void setExtendedParsing(boolean extendedParsing) {
+        this.extendedParsing = extendedParsing;
     }
 
     /**
