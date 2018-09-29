@@ -479,7 +479,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     /**
                      * A mapping of primitive types to their wrapper types.
                      */
-                    protected static final Map<Class<?>, Class<?>> WRAPPER_TYPES;
+                    private static final Map<Class<?>, Class<?>> WRAPPER_TYPES;
 
                     /*
                      * Creates the primitive to wrapper type mapping.
