@@ -9,8 +9,8 @@ version = pom.parent.version.text().toString()
 
 description = pom.description.text().toString()
 
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
+sourceCompatibility = JavaVersion.VERSION_1_5
+targetCompatibility = JavaVersion.VERSION_1_5
 
 repositories {
     mavenLocal()
