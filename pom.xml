@@ -79,7 +79,7 @@
         <version.plugin.pitest>1.2.0</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
-        <version.plugin.jacoco>0.8.1</version.plugin.jacoco>
+        <version.plugin.jacoco>0.8.2</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
