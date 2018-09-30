@@ -66,3 +66,5 @@ public class HookInstallingPlugin implements Plugin {
 ```
 
 This example transformation specifies that Byte Buddy should install a method interceptor (defined by **SampleInterceptor**) on all test classes with a name ending with `Test`. The interceptor is added to all methods with the annotations **`@Test`**, **`@Before`**, **`@After`**, **`@BeforeClass`**, or **`@AfterClass`**. This transformation also adds a marker interface **Hooked** so that we can identify enhanced classes at runtime.
+
+A plugin can declare a constructor that can take arguments of type `File`, `BuildLogger` or a Maven-specific `Log` where the class file root directory or an appropriate logger is provided. It is also possible to supply an argument explicitly by specifying an argument in the plugin configuration.
