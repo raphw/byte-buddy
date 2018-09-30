@@ -17,10 +17,10 @@ matrix:
     - env: TARGET='-Pjava10'
       jdk: openjdk10
     # Java 11
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava10'
       jdk: openjdk11
     # Java 12
-    - env: TARGET='-Pjava12'
+    - env: TARGET='-Pjava10'
       jdk: openjdk-ea
 
 script:
