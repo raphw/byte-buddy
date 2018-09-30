@@ -194,6 +194,13 @@
                 <groupId>codes.rafael.modulemaker</groupId>
                 <artifactId>modulemaker-maven-plugin</artifactId>
                 <version>${version.plugin.modulemaker}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                        <version>${version.asm}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <phase>package</phase>

@@ -220,13 +220,22 @@ public interface TypePool {
             /**
              * A map containing all cached resolutions by their names.
              */
-            private final ConcurrentMap<String, Resolution> cache;
+            private final ConcurrentMap<String, Resolution> storage;
 
             /**
              * Creates a new simple cache.
              */
             public Simple() {
-                cache = new ConcurrentHashMap<String, Resolution>();
+                this(new ConcurrentHashMap<String, Resolution>());
+            }
+
+            /**
+             * Creates a new simple cache.
+             *
+             * @param storage A map that is used for locating and storing resolutions.
+             */
+            public Simple(ConcurrentMap<String, Resolution> storage) {
+                this.storage = storage;
             }
 
             /**
@@ -244,14 +253,14 @@ public interface TypePool {
              * {@inheritDoc}
              */
             public Resolution find(String name) {
-                return cache.get(name);
+                return storage.get(name);
             }
 
             /**
              * {@inheritDoc}
              */
             public Resolution register(String name, Resolution resolution) {
-                Resolution cached = cache.putIfAbsent(name, resolution);
+                Resolution cached = storage.putIfAbsent(name, resolution);
                 return cached == null
                         ? resolution
                         : cached;
@@ -261,7 +270,16 @@ public interface TypePool {
              * {@inheritDoc}
              */
             public void clear() {
-                cache.clear();
+                storage.clear();
+            }
+
+            /**
+             * Returns the underlying storage map of this simple cache provider.
+             *
+             * @return A map containing all cached resolutions by their names.
+             */
+            public ConcurrentMap<String, Resolution> getStorage() {
+                return storage;
             }
         }
     }
