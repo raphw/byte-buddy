@@ -81,6 +81,17 @@ public class PluginEngineDefaultTest {
     }
 
     @Test
+    public void testMain() throws Exception {
+        File source = File.createTempFile("foo", "bar"), target = File.createTempFile("qux", "baz");
+        assertThat(target.delete(), is(true));
+        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(source));
+        outputStream.close();
+        Plugin.Engine.Default.main(source.getAbsolutePath(), target.getAbsolutePath(), Plugin.NoOp.class.getName());
+        assertThat(target.isFile(), is(true));
+        assertThat(target.delete(), is(true));
+    }
+
+    @Test
     public void testImplicitFolderInput() throws Exception {
         File file = File.createTempFile("foo", "bar");
         assertThat(file.delete(), is(true));

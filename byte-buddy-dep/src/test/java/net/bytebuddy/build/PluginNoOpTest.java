@@ -6,17 +6,23 @@ import net.bytebuddy.dynamic.DynamicType;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
 public class PluginNoOpTest {
 
-    private Plugin plugin;
+    private Plugin.NoOp plugin;
 
     @Before
     public void setUp() throws Exception {
         plugin = new Plugin.NoOp();
+    }
+
+    @Test
+    public void testFactory() {
+        assertThat(plugin.make(), sameInstance((Plugin) plugin));
     }
 
     @Test(expected = IllegalStateException.class)

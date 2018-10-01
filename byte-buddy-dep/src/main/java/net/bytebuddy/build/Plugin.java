@@ -3342,7 +3342,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
      * A non-operational plugin that does not instrument any type. This plugin does not need to be closed.
      */
     @HashCodeAndEqualsPlugin.Enhance
-    class NoOp implements Plugin {
+    class NoOp implements Plugin, Plugin.Factory {
+
+        /**
+         * {@inheritDoc}
+         */
+        public Plugin make() {
+            return this;
+        }
 
         /**
          * {@inheritDoc}
