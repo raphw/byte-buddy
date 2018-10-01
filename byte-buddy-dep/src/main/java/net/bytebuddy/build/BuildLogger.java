@@ -2,6 +2,7 @@ package net.bytebuddy.build;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -107,6 +108,96 @@ public interface BuildLogger {
          * The singleton instance.
          */
         INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isDebugEnabled() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void debug(String message) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void debug(String message, Throwable throwable) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isInfoEnabled() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void info(String message) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void info(String message, Throwable throwable) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isWarnEnabled() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void warn(String message) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void warn(String message, Throwable throwable) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isErrorEnabled() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void error(String message) {
+            /* empty */
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void error(String message, Throwable throwable) {
+            /* empty */
+        }
+    }
+
+    /**
+     * An abstract adapter implementation for a build logger.
+     */
+    abstract class Adapter implements BuildLogger {
 
         /**
          * {@inheritDoc}
@@ -342,6 +433,15 @@ public interface BuildLogger {
         /**
          * Creates a new compound build logger.
          *
+         * @param buildLogger The build loggers to delegate to.
+         */
+        public Compound(BuildLogger... buildLogger) {
+            this(Arrays.asList(buildLogger));
+        }
+
+        /**
+         * Creates a new compound build logger.
+         *
          * @param buildLoggers The build loggers to delegate to.
          */
         public Compound(List<? extends BuildLogger> buildLoggers) {
@@ -372,7 +472,9 @@ public interface BuildLogger {
          */
         public void debug(String message) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.debug(message);
+                if (buildLogger.isDebugEnabled()) {
+                    buildLogger.debug(message);
+                }
             }
         }
 
@@ -381,7 +483,9 @@ public interface BuildLogger {
          */
         public void debug(String message, Throwable throwable) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.debug(message, throwable);
+                if (buildLogger.isDebugEnabled()) {
+                    buildLogger.debug(message, throwable);
+                }
             }
         }
 
@@ -402,7 +506,9 @@ public interface BuildLogger {
          */
         public void info(String message) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.info(message);
+                if (buildLogger.isInfoEnabled()) {
+                    buildLogger.info(message);
+                }
             }
         }
 
@@ -411,7 +517,9 @@ public interface BuildLogger {
          */
         public void info(String message, Throwable throwable) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.info(message, throwable);
+                if (buildLogger.isInfoEnabled()) {
+                    buildLogger.info(message, throwable);
+                }
             }
         }
 
@@ -432,7 +540,9 @@ public interface BuildLogger {
          */
         public void warn(String message) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.warn(message);
+                if (buildLogger.isWarnEnabled()) {
+                    buildLogger.warn(message);
+                }
             }
         }
 
@@ -441,7 +551,9 @@ public interface BuildLogger {
          */
         public void warn(String message, Throwable throwable) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.warn(message, throwable);
+                if (buildLogger.isWarnEnabled()) {
+                    buildLogger.warn(message, throwable);
+                }
             }
         }
 
@@ -462,7 +574,9 @@ public interface BuildLogger {
          */
         public void error(String message) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.error(message);
+                if (buildLogger.isErrorEnabled()) {
+                    buildLogger.error(message);
+                }
             }
         }
 
@@ -471,7 +585,9 @@ public interface BuildLogger {
          */
         public void error(String message, Throwable throwable) {
             for (BuildLogger buildLogger : buildLoggers) {
-                buildLogger.error(message, throwable);
+                if (buildLogger.isErrorEnabled()) {
+                    buildLogger.error(message, throwable);
+                }
             }
         }
     }

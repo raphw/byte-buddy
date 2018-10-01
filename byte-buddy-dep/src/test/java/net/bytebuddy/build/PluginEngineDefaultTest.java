@@ -18,7 +18,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testSimpleTransformation() throws Exception {
-        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(ClassFileLocator.ForClassLoader.readToNames(Sample.class));
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
@@ -33,7 +33,7 @@ public class PluginEngineDefaultTest {
 
     @Test
     public void testSimpleTransformationIgnored() throws Exception {
-        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(ClassFileLocator.ForClassLoader.readToNames(Sample.class));
+        Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))

@@ -223,6 +223,22 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
+         * Creates a class file locator of a map of resources where class files are mapped by their path and file extension.
+         *
+         * @param binaryRepresentations A map of resource names to their binary representation.
+         * @return A class file locator that finds class files within the map.
+         */
+        public static ClassFileLocator ofResources(Map<String, byte[]> binaryRepresentations) {
+            Map<String, byte[]> classFiles = new HashMap<String, byte[]>();
+            for (Map.Entry<String, byte[]> entry : binaryRepresentations.entrySet()) {
+                if (entry.getKey().endsWith(CLASS_FILE_EXTENSION)) {
+                    classFiles.put(entry.getKey().substring(0, entry.getKey().length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'), entry.getValue());
+                }
+            }
+            return new Simple(classFiles);
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Resolution locate(String name) {

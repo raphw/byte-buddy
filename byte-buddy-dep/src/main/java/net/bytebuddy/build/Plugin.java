@@ -2159,16 +2159,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 private final Map<String, byte[]> storage;
 
                 /**
-                 * Creates a new in-memory source with a single entry.
-                 *
-                 * @param name                 The name of the only resource.
-                 * @param binaryRepresentation The resource's binary representation.
-                 */
-                public InMemory(String name, byte[] binaryRepresentation) {
-                    this(Collections.singletonMap(name, binaryRepresentation));
-                }
-
-                /**
                  * Creates a new in-memory source.
                  *
                  * @param storage A mapping of resource names to their binary representation.
@@ -2178,15 +2168,39 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
 
                 /**
+                 * Represents a collection of types as a in-memory source.
+                 *
+                 * @param type The types to represent.
+                 * @return A source representing the supplied types.
+                 */
+                public static Source ofTypes(Class<?>... type) {
+                    return ofTypes(Arrays.asList(type));
+                }
+
+                /**
+                 * Represents a collection of types as a in-memory source.
+                 *
+                 * @param types The types to represent.
+                 * @return A source representing the supplied types.
+                 */
+                public static Source ofTypes(Collection<? extends Class<?>> types) {
+                    Map<TypeDescription, byte[]> binaryRepresentations = new HashMap<TypeDescription, byte[]>();
+                    for (Class<?> type : types) {
+                        binaryRepresentations.put(TypeDescription.ForLoadedType.of(type), ClassFileLocator.ForClassLoader.read(type));
+                    }
+                    return ofTypes(binaryRepresentations);
+                }
+
+                /**
                  * Represents a map of type names to their binary representation as an in-memory source.
                  *
                  * @param binaryRepresentations A mapping of type names to their binary representation.
                  * @return A source representing the supplied types.
                  */
-                public static Source ofTypes(Map<String, byte[]> binaryRepresentations) {
+                public static Source ofTypes(Map<TypeDescription, byte[]> binaryRepresentations) {
                     Map<String, byte[]> storage = new HashMap<String, byte[]>();
-                    for (Map.Entry<String, byte[]> entry : binaryRepresentations.entrySet()) {
-                        storage.put(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION, entry.getValue());
+                    for (Map.Entry<TypeDescription, byte[]> entry : binaryRepresentations.entrySet()) {
+                        storage.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
                     }
                     return new InMemory(storage);
                 }
@@ -2195,7 +2209,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public ClassFileLocator getClassFileLocator() {
-                    return new ClassFileLocator.Simple(storage);
+                    return ClassFileLocator.Simple.ofResources(storage);
                 }
 
                 /**
