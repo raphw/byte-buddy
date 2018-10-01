@@ -1500,7 +1500,7 @@ public class MethodCall implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
+                    return methodCall.prepare(instrumentedType);
                 }
 
                 /**
