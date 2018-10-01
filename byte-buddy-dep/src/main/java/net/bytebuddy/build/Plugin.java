@@ -3361,8 +3361,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription,
-                                            ClassFileLocator classFileLocator) {
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             throw new IllegalStateException("Cannot apply non-operational plugin");
         }
 
@@ -3453,8 +3452,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * {@inheritDoc}
          */
-        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription,
-                                            ClassFileLocator classFileLocator) {
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             for (Plugin plugin : plugins) {
                 if (plugin.matches(typeDescription)) {
                     builder = plugin.apply(builder, typeDescription, classFileLocator);

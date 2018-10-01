@@ -60,6 +60,11 @@ public class MethodCall implements Implementation.Composable {
     protected final List<ArgumentLoader.Factory> argumentLoaders;
 
     /**
+     * A list of additional initializations for the instrumented type.
+     */
+    protected final List<InstrumentedType.Prepareable> preparables;
+
+    /**
      * The method invoker to use.
      */
     protected final MethodInvoker methodInvoker;
@@ -84,8 +89,8 @@ public class MethodCall implements Implementation.Composable {
      *
      * @param methodLocator      The method locator to use.
      * @param targetHandler      The target handler to use.
-     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in
-     *                           their application order.
+     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in their application order.
+     * @param preparables        A list of additional initializations for the instrumented type.
      * @param methodInvoker      The method invoker to use.
      * @param terminationHandler The termination handler to use.
      * @param assigner           The assigner to use.
@@ -94,6 +99,7 @@ public class MethodCall implements Implementation.Composable {
     protected MethodCall(MethodLocator methodLocator,
                          TargetHandler targetHandler,
                          List<ArgumentLoader.Factory> argumentLoaders,
+                         List<InstrumentedType.Prepareable> preparables,
                          MethodInvoker methodInvoker,
                          TerminationHandler terminationHandler,
                          Assigner assigner,
@@ -101,6 +107,7 @@ public class MethodCall implements Implementation.Composable {
         this.methodLocator = methodLocator;
         this.targetHandler = targetHandler;
         this.argumentLoaders = argumentLoaders;
+        this.preparables = preparables;
         this.methodInvoker = methodInvoker;
         this.terminationHandler = terminationHandler;
         this.assigner = assigner;
@@ -256,6 +263,7 @@ public class MethodCall implements Implementation.Composable {
         return new MethodCall(new MethodLocator.ForExplicitMethod(methodDescription),
                 TargetHandler.ForConstructingInvocation.INSTANCE,
                 Collections.<ArgumentLoader.Factory>emptyList(),
+                Collections.<InstrumentedType.Prepareable>emptyList(),
                 MethodInvoker.ForContextualInvocation.INSTANCE,
                 TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
@@ -546,6 +554,7 @@ public class MethodCall implements Implementation.Composable {
         return new MethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, argumentLoaders),
+                preparables,
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -567,6 +576,7 @@ public class MethodCall implements Implementation.Composable {
         return new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
+                preparables,
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -580,6 +590,7 @@ public class MethodCall implements Implementation.Composable {
         return new Implementation.Compound(new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
+                preparables,
                 methodInvoker,
                 TerminationHandler.DROPPING,
                 assigner,
@@ -593,6 +604,7 @@ public class MethodCall implements Implementation.Composable {
         return new Implementation.Compound.Composable(new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
+                preparables,
                 methodInvoker,
                 TerminationHandler.DROPPING,
                 assigner,
@@ -740,15 +752,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * A factory that produces {@link ArgumentLoader}s for a given instrumented method.
          */
-        interface Factory {
-
-            /**
-             * Prepares the instrumented type in order to allow the loading of the represented argument.
-             *
-             * @param instrumentedType The instrumented type.
-             * @return The prepared instrumented type.
-             */
-            InstrumentedType prepare(InstrumentedType instrumentedType);
+        interface Factory extends InstrumentedType.Prepareable {
 
             /**
              * Creates any number of argument loaders for an instrumentation.
@@ -2237,6 +2241,7 @@ public class MethodCall implements Implementation.Composable {
             super(methodLocator,
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     Collections.<ArgumentLoader.Factory>emptyList(),
+                    Collections.<InstrumentedType.Prepareable>emptyList(),
                     MethodInvoker.ForContextualInvocation.INSTANCE,
                     TerminationHandler.RETURNING,
                     Assigner.DEFAULT,
@@ -2266,6 +2271,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForValue(target, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(type)),
                     argumentLoaders,
+                    preparables,
                     new MethodInvoker.ForVirtualInvocation(type),
                     terminationHandler,
                     assigner,
@@ -2285,6 +2291,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForMethodParameter(index),
                     argumentLoaders,
+                    preparables,
                     MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                     terminationHandler,
                     assigner,
@@ -2312,6 +2319,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForField(name, fieldLocatorFactory),
                     argumentLoaders,
+                    preparables,
                     MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                     terminationHandler,
                     assigner,
@@ -2328,6 +2336,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForMethodCall(methodCall),
                     argumentLoaders,
+                    CompoundList.of(preparables, methodCall.argumentLoaders, methodCall.preparables),
                     MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                     terminationHandler,
                     assigner,
@@ -2346,6 +2355,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     argumentLoaders,
+                    preparables,
                     MethodInvoker.ForSuperMethodInvocation.INSTANCE,
                     terminationHandler,
                     assigner,
@@ -2361,6 +2371,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     argumentLoaders,
+                    preparables,
                     MethodInvoker.ForDefaultMethodInvocation.INSTANCE,
                     terminationHandler,
                     assigner,
