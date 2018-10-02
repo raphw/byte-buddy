@@ -16,8 +16,7 @@ import java.util.jar.Manifest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PluginEngineTargetForFolderTest {
 
@@ -91,6 +90,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO + "/" + BAR);
+        when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
         File original = File.createTempFile("qux", "baz");
         try {
             FileOutputStream outputStream = new FileOutputStream(original);
@@ -119,6 +119,7 @@ public class PluginEngineTargetForFolderTest {
         } finally {
             assertThat(original.delete(), is(true));
         }
+        verify(element, times(Plugin.Engine.Target.ForFolder.DISPATCHER.isAlive() ? 0 : 1)).getInputStream();
     }
 
     @Test
