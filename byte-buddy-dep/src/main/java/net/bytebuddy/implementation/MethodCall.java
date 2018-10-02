@@ -615,8 +615,8 @@ public class MethodCall implements Implementation.Composable {
      * {@inheritDoc}
      */
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        for (ArgumentLoader.Factory argumentLoader : argumentLoaders) {
-            instrumentedType = argumentLoader.prepare(instrumentedType);
+        for (InstrumentedType.Prepareable prepareable : CompoundList.of(argumentLoaders, preparables)) {
+            instrumentedType = prepareable.prepare(instrumentedType);
         }
         return targetHandler.prepare(instrumentedType);
     }

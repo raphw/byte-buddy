@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.io.PrintStream;
 
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -68,6 +69,12 @@ public class BuildLoggerTest {
         verifyNoMoreInteractions(printStream);
         verify(throwable, times(4)).printStackTrace(printStream);
         verifyNoMoreInteractions(throwable);
+    }
+
+    @Test
+    public void testStreamWritingDefaults() {
+        assertThat(BuildLogger.StreamWriting.toSystemOut(), hasPrototype((BuildLogger) new BuildLogger.StreamWriting(System.out)));
+        assertThat(BuildLogger.StreamWriting.toSystemError(), hasPrototype((BuildLogger) new BuildLogger.StreamWriting(System.err)));
     }
 
     @Test

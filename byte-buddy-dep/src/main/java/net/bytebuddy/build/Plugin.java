@@ -14,10 +14,9 @@ import net.bytebuddy.utility.CompoundList;
 
 import java.io.*;
 import java.lang.annotation.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -610,6 +609,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         String MANIFEST_LOCATION = "META-INF/MANIFEST.MF";
 
         /**
+         * Defines a new Byte Buddy instance for usage for type creation.
+         *
+         * @param byteBuddy The Byte Buddy instance to use.
+         * @return A new plugin engine that is equal to this engine but uses the supplied Byte Buddy instance.
+         */
+        Engine with(ByteBuddy byteBuddy);
+
+        /**
          * Defines a new type strategy which determines the transformation mode for any instrumented type.
          *
          * @param typeStrategy The type stategy to use.
@@ -958,6 +965,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             void onUnresolved(String typeName);
 
             /**
+             * Invoked when a manifest was found or found missing.
+             *
+             * @param manifest The located manifest or {@code null} if no manifest was found.
+             */
+            void onManifest(Manifest manifest);
+
+            /**
+             * Invoked if a resource that is not a class file is discovered.
+             *
+             * @param name The name of the discovered resource.
+             */
+            void onResource(String name);
+
+            /**
              * An implementation of an error handler that fails the plugin engine application.
              */
             enum Failing implements ErrorHandler {
@@ -1060,6 +1081,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public void onUnresolved(String typeName) {
                     /* do nothing */
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onManifest(Manifest manifest) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onResource(String name) {
+                    /* do nothing */
+                }
             }
 
             /**
@@ -1084,6 +1119,25 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     @Override
                     public void onLiveInitializer(TypeDescription typeDescription, TypeDescription initializedType) {
                         throw new IllegalStateException("Failed to instrument " + typeDescription + " due to live initializer for " + initializedType);
+                    }
+                },
+
+                /**
+                 * Enforces that a source only produces class files.
+                 */
+                CLASS_FILES_ONLY {
+                    @Override
+                    public void onResource(String name) {
+                        throw new IllegalStateException("Discovered a resource when only class files were allowed: " + name);
+                    }
+                },
+
+                MANIFEST_REQUIRED {
+                    @Override
+                    public void onManifest(Manifest manifest) {
+                        if (manifest == null) {
+                            throw new IllegalStateException("Required a manifest but no manifest was found");
+                        }
                     }
                 };
 
@@ -1126,6 +1180,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void onUnresolved(String typeName) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onManifest(Manifest manifest) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onResource(String name) {
                     /* do nothing */
                 }
             }
@@ -1219,6 +1287,24 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         errorHandler.onUnresolved(typeName);
                     }
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onManifest(Manifest manifest) {
+                    for (ErrorHandler errorHandler : errorHandlers) {
+                        errorHandler.onManifest(manifest);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onResource(String name) {
+                    for (ErrorHandler errorHandler : errorHandlers) {
+                        errorHandler.onResource(name);
+                    }
+                }
             }
         }
 
@@ -1274,13 +1360,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @param typeDescription The type that was transformed.
              */
             void onComplete(TypeDescription typeDescription);
-
-            /**
-             * Invoked upon discovering a non-class file.
-             *
-             * @param name The name of the resource.
-             */
-            void onResource(String name);
 
             /**
              * A non-operational listener.
@@ -1379,6 +1458,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                public void onManifest(Manifest manifest) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onResource(String name) {
                     /* do nothing */
                 }
@@ -1470,6 +1556,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void onUnresolved(String typeName) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onManifest(Manifest manifest) {
                     /* do nothing */
                 }
 
@@ -1607,6 +1700,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
+                public void onManifest(Manifest manifest) {
+                    printStream.printf(PREFIX + " MANIFEST %b", manifest != null);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public void onResource(String name) {
                     printStream.printf(PREFIX + " RESOURCE %s", name);
                 }
@@ -1615,6 +1715,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * A decorator for another listener to only print transformation and error events.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class WithTransformationsOnly extends Adapter {
 
                 /**
@@ -1665,6 +1766,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * A decorator for another listener to only print error events.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class WithErrorsOnly extends Adapter {
 
                 /**
@@ -1705,6 +1807,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * A listener decorator that forwards events to an error handler if they are applicable.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class ForErrorHandler extends Adapter {
 
                 /**
@@ -1750,11 +1853,22 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public void onUnresolved(String typeName) {
                     errorHandler.onUnresolved(typeName);
                 }
+
+                @Override
+                public void onManifest(Manifest manifest) {
+                    errorHandler.onManifest(manifest);
+                }
+
+                @Override
+                public void onResource(String name) {
+                    errorHandler.onResource(name);
+                }
             }
 
             /**
              * A compound listener.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class Compound implements Listener {
 
                 /**
@@ -1892,6 +2006,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public void onUnresolved(String typeName) {
                     for (Listener listener : listeners) {
                         listener.onUnresolved(typeName);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void onManifest(Manifest manifest) {
+                    for (Listener listener : listeners) {
+                        listener.onManifest(manifest);
                     }
                 }
 
@@ -2151,6 +2274,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * A source that represents a collection of in-memory resources that are represented as byte arrays.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class InMemory implements Source {
 
                 /**
@@ -2486,17 +2610,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         interface Target {
 
             /**
-             * Initializes this target prior to writing without supplying a manifest.
-             *
-             * @return The sink to write to.
-             * @throws IOException If an I/O error occurs.
-             */
-            Sink write() throws IOException;
-
-            /**
              * Initializes this target prior to writing.
              *
-             * @param manifest The manifest for the target.
+             * @param manifest The manifest for the target or {@code null} if no manifest was found.
              * @return The sink to write to.
              * @throws IOException If an I/O error occurs.
              */
@@ -2596,13 +2712,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write() {
-                    return this;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 public Sink write(Manifest manifest) {
                     return this;
                 }
@@ -2632,6 +2741,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * A sink that stores all elements in a memory map.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             class InMemory implements Target, Sink {
 
                 /**
@@ -2658,21 +2768,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write() {
-                    return this;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 public Sink write(Manifest manifest) throws IOException {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    try {
-                        manifest.write(outputStream);
-                    } finally {
-                        outputStream.close();
+                    if (manifest != null) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        try {
+                            manifest.write(outputStream);
+                        } finally {
+                            outputStream.close();
+                        }
+                        storage.put(MANIFEST_LOCATION, outputStream.toByteArray());
                     }
-                    storage.put(MANIFEST_LOCATION, outputStream.toByteArray());
                     return this;
                 }
 
@@ -2748,6 +2853,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             class ForFolder implements Target, Sink {
 
                 /**
+                 * A dispatcher for using NIO2 if the current VM supports it.
+                 */
+                private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+                /**
                  * The folder that is represented by this instance.
                  */
                 private final File folder;
@@ -2764,23 +2874,18 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write() {
-                    return this;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 public Sink write(Manifest manifest) throws IOException {
-                    File target = new File(folder, MANIFEST_LOCATION);
-                    if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
-                        throw new IOException("Could not create directory: " + target.getParent());
-                    }
-                    OutputStream outputStream = new FileOutputStream(target);
-                    try {
-                        manifest.write(outputStream);
-                    } finally {
-                        outputStream.close();
+                    if (manifest != null) {
+                        File target = new File(folder, MANIFEST_LOCATION);
+                        if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
+                            throw new IOException("Could not create directory: " + target.getParent());
+                        }
+                        OutputStream outputStream = new FileOutputStream(target);
+                        try {
+                            manifest.write(outputStream);
+                        } finally {
+                            outputStream.close();
+                        }
                     }
                     return this;
                 }
@@ -2808,11 +2913,13 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void retain(Source.Element element) throws IOException {
                     File target = new File(folder, element.getName()), resolved = element.resolveAs(File.class);
-                    if (!target.getAbsolutePath().startsWith(folder.getAbsolutePath())) {
-                        throw new IllegalStateException(target + " is not a subdirectory of " + folder);
+                    if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath())) {
+                        throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
                     } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                         throw new IOException("Could not create directory: " + target.getParent());
-                    } else if (resolved == null || !resolved.equals(target)) {
+                    } else if (DISPATCHER.isAlive() && resolved != null && !resolved.equals(target)) {
+                        DISPATCHER.copy(resolved, target);
+                    } else if (!target.equals(resolved)) {
                         InputStream inputStream = element.getInputStream();
                         try {
                             OutputStream outputStream = new FileOutputStream(target);
@@ -2836,6 +2943,140 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public void close() {
                     /* do nothing */
+                }
+
+                /**
+                 * A dispatcher that allows for file copy operations based on NIO2 if available.
+                 */
+                protected interface Dispatcher {
+
+                    /**
+                     * Returns {@code true} if this dispatcher is alive.
+                     *
+                     * @return {@code true} if this dispatcher is alive.
+                     */
+                    boolean isAlive();
+
+                    /**
+                     * Copies the source file to the target location.
+                     *
+                     * @param source The source file.
+                     * @param target The target file.
+                     * @throws IOException If an I/O error occurs.
+                     */
+                    void copy(File source, File target) throws IOException;
+
+                    /**
+                     * An action for creating a dispatcher.
+                     */
+                    enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        @SuppressWarnings("unchecked")
+                        public Dispatcher run() {
+                            try {
+                                Class<?> path = Class.forName("java.nio.file.Path");
+                                Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
+                                arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
+                                return new ForJava7CapableVm(File.class.getMethod("toPath"),
+                                    Class.forName("java.nio.file.Files").getMethod("copy", path, path, arguments.getClass()),
+                                    arguments);
+                            } catch (Throwable ignored) {
+                                return ForLegacyVm.INSTANCE;
+                            }
+                        }
+                    }
+
+                    /**
+                     * A legacy dispatcher that is not capable of NIO.
+                     */
+                    enum ForLegacyVm implements Dispatcher {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean isAlive() {
+                            return false;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void copy(File source, File target) {
+                            throw new IllegalStateException();
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for VMs that are capable of NIO2.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    class ForJava7CapableVm implements Dispatcher {
+
+                        /**
+                         * The {@code java.io.File#toPath()} method.
+                         */
+                        private final Method toPath;
+
+                        /**
+                         * The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
+                         */
+                        private final Method copy;
+
+                        /**
+                         * The copy options to apply.
+                         */
+                        private final Object[] copyOptions;
+
+                        /**
+                         * Creates a new NIO2 capable dispatcher.
+                         * @param toPath The {@code java.io.File#toPath()} method.
+                         * @param copy The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
+                         * @param copyOptions The copy options to apply.
+                         */
+                        protected ForJava7CapableVm(Method toPath, Method copy, Object[] copyOptions) {
+                            this.toPath = toPath;
+                            this.copy = copy;
+                            this.copyOptions = copyOptions;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean isAlive() {
+                            return true;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void copy(File source, File target) throws IOException {
+                            try {
+                                copy.invoke(null, toPath.invoke(source), toPath.invoke(target), copyOptions);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access NIO file copy", exception);
+                            } catch (InvocationTargetException exception) {
+                                Throwable cause = exception.getCause();
+                                if (cause instanceof IOException) {
+                                    throw (IOException) cause;
+                                } else {
+                                    throw new IllegalStateException("Cannot execute NIO file copy", cause);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -2862,15 +3103,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * {@inheritDoc}
                  */
-                public Sink write() throws IOException {
-                    return new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)));
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 public Sink write(Manifest manifest) throws IOException {
-                    return new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
+                    return manifest == null
+                        ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
+                        : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
                 }
             }
         }
@@ -2936,28 +3172,24 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) {
-                    return true;
-                } else if (object == null || getClass() != object.getClass()) {
-                    return false;
-                }
-                Summary summary = (Summary) object;
-                if (!transformed.equals(summary.transformed)) {
-                    return false;
-                }
-                if (!failed.equals(summary.failed)) {
-                    return false;
-                }
-                return unresolved.equals(summary.unresolved);
-            }
-
-            @Override
             public int hashCode() {
                 int result = transformed.hashCode();
                 result = 31 * result + failed.hashCode();
                 result = 31 * result + unresolved.hashCode();
                 return result;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) {
+                    return true;
+                } else if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
+                Summary summary = (Summary) other;
+                return transformed.equals(summary.transformed)
+                    && failed.equals(summary.failed)
+                    && unresolved.equals(summary.unresolved);
             }
         }
 
@@ -3124,13 +3356,26 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             @SuppressWarnings("unchecked")
             public static void main(String... argument) throws ClassNotFoundException, IOException {
                 if (argument.length < 2) {
-                    throw new IllegalArgumentException("Expected arguments of type: <source> <target> [<plugin>, ...]");
+                    throw new IllegalArgumentException("Expected arguments: <source> <target> [<plugin>, ...]");
                 }
                 List<Plugin.Factory> factories = new ArrayList<Factory>(argument.length - 2);
                 for (String plugin : Arrays.asList(argument).subList(2, argument.length)) {
                     factories.add(new Factory.UsingReflection((Class<? extends Plugin>) Class.forName(plugin)));
                 }
                 new Default().apply(new File(argument[0]), new File(argument[1]), factories);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Engine with(ByteBuddy byteBuddy) {
+                return new Default(byteBuddy,
+                    typeStrategy,
+                    poolStrategy,
+                    classFileLocator,
+                    listener,
+                    errorHandler,
+                    ignoredTypeMatcher);
             }
 
             /**
@@ -3241,9 +3486,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     ClassFileLocator classFileLocator = new ClassFileLocator.Compound(source.getClassFileLocator(), this.classFileLocator);
                     TypePool typePool = poolStrategy.typePool(classFileLocator);
                     Manifest manifest = source.getManifest();
-                    Target.Sink sink = manifest == null
-                            ? target.write()
-                            : target.write(manifest);
+                    listener.onManifest(manifest);
+                    Target.Sink sink = target.write(manifest);
                     try {
                         for (Source.Element element : source) {
                             String name = element.getName();
