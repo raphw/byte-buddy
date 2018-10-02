@@ -1,10 +1,13 @@
 package net.bytebuddy.build;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 
 import java.io.*;
 import java.util.Collections;
@@ -19,6 +22,9 @@ import static org.mockito.Mockito.when;
 public class PluginEngineTargetForFolderTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private File folder;
 
@@ -39,7 +45,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
         try {
-            sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[] { 1, 2, 3 }));
+            sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
         } finally {
             sink.close();
         }
@@ -47,7 +53,7 @@ public class PluginEngineTargetForFolderTest {
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {
-            assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[] { 1, 2, 3 }));
+            assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
         } finally {
             inputStream.close();
         }
@@ -61,7 +67,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO + "/" + BAR);
-        when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] { 1, 2, 3 }));
+        when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
         try {
             sink.retain(element);
@@ -72,7 +78,7 @@ public class PluginEngineTargetForFolderTest {
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {
-            assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[] { 1, 2, 3 }));
+            assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
         } finally {
             inputStream.close();
         }
@@ -89,7 +95,7 @@ public class PluginEngineTargetForFolderTest {
         try {
             FileOutputStream outputStream = new FileOutputStream(original);
             try {
-                outputStream.write(new byte[] { 1, 2, 3 });
+                outputStream.write(new byte[]{1, 2, 3});
             } finally {
                 outputStream.close();
             }
@@ -104,7 +110,7 @@ public class PluginEngineTargetForFolderTest {
             assertThat(file.isFile(), is(true));
             InputStream inputStream = new FileInputStream(file);
             try {
-                assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[] { 1, 2, 3 }));
+                assertThat(StreamDrainer.DEFAULT.drain(inputStream), is(new byte[]{1, 2, 3}));
             } finally {
                 inputStream.close();
             }
@@ -140,5 +146,11 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn("../illegal");
         target.write(Plugin.Engine.Source.NO_MANIFEST).retain(element);
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testCanUseNio2() {
+        assertThat(Plugin.Engine.Target.ForFolder.DISPATCHER.isAlive(), is(true));
     }
 }

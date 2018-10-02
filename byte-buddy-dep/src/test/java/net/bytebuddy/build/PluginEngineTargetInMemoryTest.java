@@ -21,12 +21,12 @@ public class PluginEngineTargetInMemoryTest {
     public void testWriteType() throws Exception {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
-        sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[] { 1, 2, 3 }));
+        sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
         sink.close();
         assertThat(target.getStorage().size(), is(1));
-        assertThat(target.getStorage().get(TypeDescription.OBJECT.getInternalName() + ".class"), is(new byte[] { 1, 2, 3 }));
+        assertThat(target.getStorage().get(TypeDescription.OBJECT.getInternalName() + ".class"), is(new byte[]{1, 2, 3}));
         assertThat(target.toTypeMap().size(), is(1));
-        assertThat(target.toTypeMap().get(TypeDescription.OBJECT.getName()), is(new byte[] { 1, 2, 3 }));
+        assertThat(target.toTypeMap().get(TypeDescription.OBJECT.getName()), is(new byte[]{1, 2, 3}));
     }
 
     @Test
@@ -35,11 +35,11 @@ public class PluginEngineTargetInMemoryTest {
         Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO);
-        when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[] { 1, 2, 3 }));
+        when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
         sink.retain(element);
         sink.close();
         assertThat(target.getStorage().size(), is(1));
-        assertThat(target.getStorage().get(FOO), is(new byte[] { 1, 2, 3 }));
+        assertThat(target.getStorage().get(FOO), is(new byte[]{1, 2, 3}));
         assertThat(target.toTypeMap().size(), is(0));
     }
 

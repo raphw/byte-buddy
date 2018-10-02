@@ -18,6 +18,24 @@ public class PluginArgument {
     private Object value;
 
     /**
+     * Creats a new plugin argument with default initialization.
+     */
+    public PluginArgument() {
+        /* empty */
+    }
+
+    /**
+     * Creates a new plugin argument assignment.
+     *
+     * @param index The argument index.
+     * @param value The argument value.
+     */
+    public PluginArgument(int index, Object value) {
+        this.index = index;
+        this.value = value;
+    }
+
+    /**
      * Sets the argument index.
      *
      * @param index The argument index.

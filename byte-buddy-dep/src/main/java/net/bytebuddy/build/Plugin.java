@@ -1132,6 +1132,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     }
                 },
 
+                /**
+                 * Enforces that a manifest is written to a target.
+                 */
                 MANIFEST_REQUIRED {
                     @Override
                     public void onManifest(Manifest manifest) {
@@ -2855,7 +2858,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * A dispatcher for using NIO2 if the current VM supports it.
                  */
-                private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+                protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
                 /**
                  * The folder that is represented by this instance.
@@ -2986,8 +2989,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                 Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
                                 arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
                                 return new ForJava7CapableVm(File.class.getMethod("toPath"),
-                                    Class.forName("java.nio.file.Files").getMethod("copy", path, path, arguments.getClass()),
-                                    arguments);
+                                        Class.forName("java.nio.file.Files").getMethod("copy", path, path, arguments.getClass()),
+                                        arguments);
                             } catch (Throwable ignored) {
                                 return ForLegacyVm.INSTANCE;
                             }
@@ -3042,8 +3045,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
 
                         /**
                          * Creates a new NIO2 capable dispatcher.
-                         * @param toPath The {@code java.io.File#toPath()} method.
-                         * @param copy The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
+                         *
+                         * @param toPath      The {@code java.io.File#toPath()} method.
+                         * @param copy        The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
                          * @param copyOptions The copy options to apply.
                          */
                         protected ForJava7CapableVm(Method toPath, Method copy, Object[] copyOptions) {
@@ -3105,8 +3109,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public Sink write(Manifest manifest) throws IOException {
                     return manifest == null
-                        ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
-                        : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
+                            ? new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file)))
+                            : new Sink.ForJarOutputStream(new JarOutputStream(new FileOutputStream(file), manifest));
                 }
             }
         }
@@ -3188,8 +3192,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
                 Summary summary = (Summary) other;
                 return transformed.equals(summary.transformed)
-                    && failed.equals(summary.failed)
-                    && unresolved.equals(summary.unresolved);
+                        && failed.equals(summary.failed)
+                        && unresolved.equals(summary.unresolved);
             }
         }
 
@@ -3370,12 +3374,12 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              */
             public Engine with(ByteBuddy byteBuddy) {
                 return new Default(byteBuddy,
-                    typeStrategy,
-                    poolStrategy,
-                    classFileLocator,
-                    listener,
-                    errorHandler,
-                    ignoredTypeMatcher);
+                        typeStrategy,
+                        poolStrategy,
+                        classFileLocator,
+                        listener,
+                        errorHandler,
+                        ignoredTypeMatcher);
             }
 
             /**
