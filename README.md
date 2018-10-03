@@ -28,7 +28,7 @@ possible and as a result, Byte Buddy does not leave any trace in the classes tha
 reason, the generated classes can exist without requiring Byte Buddy on the class path. Because of this feature, 
 Byte Buddy’s mascot was chosen to be a ghost.
 
-Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
+Byte Buddy is written in Java 5 but supports the generation of classes for any Java version. Byte Buddy is a
 light-weight library and only depends on the visitor API of the Java byte code parser library 
 [ASM](http://asm.ow2.org/) which does itself 
 [not require any further dependencies](https://repo1.maven.org/maven2/org/ow2/asm/asm/5.0.4/asm-5.0.4.pom).
