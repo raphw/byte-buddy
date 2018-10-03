@@ -2455,6 +2455,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     return new InMemory(storage);
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public Origin read() {
                     return this;
                 }
@@ -2485,6 +2488,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     return new MapEntryIterator(storage.entrySet().iterator());
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public void close() {
                     /* do nothing */
                 }
@@ -2592,6 +2598,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     return new FolderIterator(folder);
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public void close() {
                     /* do nothing */
                 }
