@@ -2035,27 +2035,131 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         /**
          * A source for a plugin engine provides binary elements to consider for transformation.
          */
-        interface Source extends Iterable<Source.Element> {
+        interface Source {
 
             /**
-             * Indicates that no manifest exists.
-             */
-            Manifest NO_MANIFEST = null;
-
-            /**
-             * Returns a class file locator for the represented source.
+             * Initiates reading from a source.
              *
-             * @return A class file locator for locating class files of this instance.
-             */
-            ClassFileLocator getClassFileLocator();
-
-            /**
-             * Returns the manifest file of the source location or {@code null} if no manifest exists.
-             *
-             * @return This source's manifest or {@code null}.
+             * @return The origin to read from.
              * @throws IOException If an I/O error occurs.
              */
-            Manifest getManifest() throws IOException;
+            Origin read() throws IOException;
+
+            /**
+             * An origin for elements.
+             */
+            interface Origin extends Iterable<Element>, Closeable {
+
+                /**
+                 * Indicates that no manifest exists.
+                 */
+                Manifest NO_MANIFEST = null;
+
+                /**
+                 * Returns the manifest file of the source location or {@code null} if no manifest exists.
+                 *
+                 * @return This source's manifest or {@code null}.
+                 * @throws IOException If an I/O error occurs.
+                 */
+                Manifest getManifest() throws IOException;
+
+                /**
+                 * Returns a class file locator for the represented source. If the class file locator needs to be closed, it is the responsibility
+                 * of this origin to close the locator or its underlying resources.
+                 *
+                 * @return A class file locator for locating class files of this instance..
+                 */
+                ClassFileLocator getClassFileLocator();
+
+                /**
+                 * An origin implementation for a jar file.
+                 */
+                class ForJarFile implements Origin {
+
+                    /**
+                     * The represented file.
+                     */
+                    private final JarFile file;
+
+                    /**
+                     * Creates a new origin for a jar file.
+                     *
+                     * @param file The represented file.
+                     */
+                    public ForJarFile(JarFile file) {
+                        this.file = file;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Manifest getManifest() throws IOException {
+                        return file.getManifest();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassFileLocator getClassFileLocator() {
+                        return new ClassFileLocator.ForJarFile(file);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void close() throws IOException {
+                        file.close();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Iterator<Element> iterator() {
+                        return new JarFileIterator(file.entries());
+                    }
+
+                    /**
+                     * An iterator for jar file entries.
+                     */
+                    protected class JarFileIterator implements Iterator<Element> {
+
+                        /**
+                         * The represented enumeration.
+                         */
+                        private final Enumeration<JarEntry> enumeration;
+
+                        /**
+                         * Creates a new jar file iterator.
+                         *
+                         * @param enumeration The represented enumeration.
+                         */
+                        protected JarFileIterator(Enumeration<JarEntry> enumeration) {
+                            this.enumeration = enumeration;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public boolean hasNext() {
+                            return enumeration.hasMoreElements();
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Element next() {
+                            return new Element.ForJarEntry(file, enumeration.nextElement());
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+                    }
+                }
+            }
 
             /**
              * Represents a binary element found in a source location.
@@ -2245,12 +2349,19 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * An empty source that does not contain any elements or a manifest.
              */
-            enum Empty implements Source {
+            enum Empty implements Source, Origin {
 
                 /**
                  * The singleton instance.
                  */
                 INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Origin read() {
+                    return this;
+                }
 
                 /**
                  * {@inheritDoc}
@@ -2272,13 +2383,20 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 public Iterator<Element> iterator() {
                     return Collections.<Element>emptySet().iterator();
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    /* do nothing */
+                }
             }
 
             /**
              * A source that represents a collection of in-memory resources that are represented as byte arrays.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class InMemory implements Source {
+            class InMemory implements Source, Origin {
 
                 /**
                  * A mapping of resource names to their binary representation.
@@ -2332,6 +2450,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     return new InMemory(storage);
                 }
 
+                public Origin read() {
+                    return this;
+                }
+
                 /**
                  * {@inheritDoc}
                  */
@@ -2356,6 +2478,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public Iterator<Element> iterator() {
                     return new MapEntryIterator(storage.entrySet().iterator());
+                }
+
+                public void close() {
+                    /* do nothing */
                 }
 
                 /**
@@ -2405,7 +2531,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * Represents the contents of a folder as class files.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class ForFolder implements Source {
+            class ForFolder implements Source, Origin {
 
                 /**
                  * The folder to represent.
@@ -2419,6 +2545,15 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public ForFolder(File folder) {
                     this.folder = folder;
+                }
+
+                /**
+                 * Initializes a reading from this source.
+                 *
+                 * @return A source that represents the resource of this origin.
+                 */
+                public Origin read() {
+                    return this;
                 }
 
                 /**
@@ -2450,6 +2585,10 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public Iterator<Element> iterator() {
                     return new FolderIterator(folder);
+                }
+
+                public void close() {
+                    /* do nothing */
                 }
 
                 /**
@@ -2522,87 +2661,22 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 /**
                  * The jar file being represented by this source.
                  */
-                private final JarFile file;
-
-                /**
-                 * Creates a new source for a jar file.
-                 *
-                 * @param file The jar file being represented by this source.
-                 * @throws IOException If an I/O error occurs.
-                 */
-                public ForJarFile(File file) throws IOException {
-                    this(new JarFile(file));
-                }
+                private final File file;
 
                 /**
                  * Creates a new source for a jar file.
                  *
                  * @param file The jar file being represented by this source.
                  */
-                public ForJarFile(JarFile file) {
+                public ForJarFile(File file) {
                     this.file = file;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public ClassFileLocator getClassFileLocator() {
-                    return new ClassFileLocator.ForJarFile(file);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Manifest getManifest() throws IOException {
-                    return file.getManifest();
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Iterator<Element> iterator() {
-                    return new JarEntryIterator(file);
-                }
-
-                /**
-                 * An iterator that represents all entries of a jar file.
-                 */
-                protected class JarEntryIterator implements Iterator<Element> {
-
-                    /**
-                     * An enumeration of all jar file entries.
-                     */
-                    private final Enumeration<? extends JarEntry> enumeration;
-
-                    /**
-                     * Creates a new jar entry iterator.
-                     *
-                     * @param file The jar file to represent.
-                     */
-                    protected JarEntryIterator(JarFile file) {
-                        enumeration = file.entries();
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public boolean hasNext() {
-                        return enumeration.hasMoreElements();
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Element next() {
-                        return new Element.ForJarEntry(file, enumeration.nextElement());
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void remove() {
-                        throw new UnsupportedOperationException("remove");
-                    }
+                public Origin read() throws IOException {
+                    return new Origin.ForJarFile(new JarFile(file));
                 }
             }
         }
@@ -3487,80 +3561,85 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                     for (Plugin.Factory factory : factories) {
                         plugins.add(factory.make());
                     }
-                    ClassFileLocator classFileLocator = new ClassFileLocator.Compound(source.getClassFileLocator(), this.classFileLocator);
-                    TypePool typePool = poolStrategy.typePool(classFileLocator);
-                    Manifest manifest = source.getManifest();
-                    listener.onManifest(manifest);
-                    Target.Sink sink = target.write(manifest);
+                    Source.Origin origin = source.read();
                     try {
-                        for (Source.Element element : source) {
-                            String name = element.getName();
-                            while (name.startsWith("/")) {
-                                name = name.substring(1);
-                            }
-                            if (name.endsWith(CLASS_FILE_EXTENSION)) {
-                                String typeName = name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.');
-                                listener.onDiscovery(typeName);
-                                TypePool.Resolution resolution = typePool.describe(typeName);
-                                if (resolution.isResolved()) {
-                                    TypeDescription typeDescription = resolution.resolve();
-                                    if (!ignoredTypeMatcher.matches(typeDescription)) {
-                                        List<Plugin> applied = new ArrayList<Plugin>(), ignored = new ArrayList<Plugin>();
-                                        List<Throwable> errored = new ArrayList<Throwable>();
-                                        DynamicType.Builder<?> builder = typeStrategy.builder(byteBuddy, typeDescription, classFileLocator);
-                                        for (Plugin plugin : plugins) {
-                                            try {
-                                                if (plugin.matches(typeDescription)) {
-                                                    builder = plugin.apply(builder, typeDescription, classFileLocator);
-                                                    listener.onTransformation(typeDescription, plugin);
-                                                    applied.add(plugin);
-                                                } else {
-                                                    listener.onIgnored(typeDescription, plugin);
-                                                    ignored.add(plugin);
-                                                }
-                                            } catch (Throwable throwable) {
-                                                listener.onError(typeDescription, plugin, throwable);
-                                                errored.add(throwable);
-                                            }
-                                        }
-                                        if (!errored.isEmpty()) {
-                                            listener.onError(typeDescription, errored);
-                                            sink.retain(element);
-                                            failed.put(typeDescription, errored);
-                                        } else if (!applied.isEmpty()) {
-                                            DynamicType dynamicType = builder.make();
-                                            listener.onTransformation(typeDescription, applied);
-                                            for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
-                                                if (entry.getValue().isAlive()) {
-                                                    listener.onLiveInitializer(typeDescription, entry.getKey());
-                                                }
-                                            }
-                                            sink.store(dynamicType.getAllTypes());
-                                            transformed.add(dynamicType.getTypeDescription());
-                                        } else {
-                                            listener.onIgnored(typeDescription, ignored);
-                                            sink.retain(element);
-                                        }
-                                    } else {
-                                        listener.onIgnored(typeDescription, plugins);
-                                        sink.retain(element);
-                                    }
-                                    listener.onComplete(typeDescription);
-                                } else {
-                                    listener.onUnresolved(typeName);
-                                    sink.retain(element);
-                                    unresolved.add(typeName);
+                        ClassFileLocator classFileLocator = new ClassFileLocator.Compound(origin.getClassFileLocator(), this.classFileLocator);
+                        TypePool typePool = poolStrategy.typePool(classFileLocator);
+                        Manifest manifest = origin.getManifest();
+                        listener.onManifest(manifest);
+                        Target.Sink sink = target.write(manifest);
+                        try {
+                            for (Source.Element element : origin) {
+                                String name = element.getName();
+                                while (name.startsWith("/")) {
+                                    name = name.substring(1);
                                 }
-                            } else if (!name.equals(MANIFEST_LOCATION)) {
-                                listener.onResource(name);
-                                sink.retain(element);
+                                if (name.endsWith(CLASS_FILE_EXTENSION)) {
+                                    String typeName = name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.');
+                                    listener.onDiscovery(typeName);
+                                    TypePool.Resolution resolution = typePool.describe(typeName);
+                                    if (resolution.isResolved()) {
+                                        TypeDescription typeDescription = resolution.resolve();
+                                        if (!ignoredTypeMatcher.matches(typeDescription)) {
+                                            List<Plugin> applied = new ArrayList<Plugin>(), ignored = new ArrayList<Plugin>();
+                                            List<Throwable> errored = new ArrayList<Throwable>();
+                                            DynamicType.Builder<?> builder = typeStrategy.builder(byteBuddy, typeDescription, classFileLocator);
+                                            for (Plugin plugin : plugins) {
+                                                try {
+                                                    if (plugin.matches(typeDescription)) {
+                                                        builder = plugin.apply(builder, typeDescription, classFileLocator);
+                                                        listener.onTransformation(typeDescription, plugin);
+                                                        applied.add(plugin);
+                                                    } else {
+                                                        listener.onIgnored(typeDescription, plugin);
+                                                        ignored.add(plugin);
+                                                    }
+                                                } catch (Throwable throwable) {
+                                                    listener.onError(typeDescription, plugin, throwable);
+                                                    errored.add(throwable);
+                                                }
+                                            }
+                                            if (!errored.isEmpty()) {
+                                                listener.onError(typeDescription, errored);
+                                                sink.retain(element);
+                                                failed.put(typeDescription, errored);
+                                            } else if (!applied.isEmpty()) {
+                                                DynamicType dynamicType = builder.make();
+                                                listener.onTransformation(typeDescription, applied);
+                                                for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
+                                                    if (entry.getValue().isAlive()) {
+                                                        listener.onLiveInitializer(typeDescription, entry.getKey());
+                                                    }
+                                                }
+                                                sink.store(dynamicType.getAllTypes());
+                                                transformed.add(dynamicType.getTypeDescription());
+                                            } else {
+                                                listener.onIgnored(typeDescription, ignored);
+                                                sink.retain(element);
+                                            }
+                                        } else {
+                                            listener.onIgnored(typeDescription, plugins);
+                                            sink.retain(element);
+                                        }
+                                        listener.onComplete(typeDescription);
+                                    } else {
+                                        listener.onUnresolved(typeName);
+                                        sink.retain(element);
+                                        unresolved.add(typeName);
+                                    }
+                                } else if (!name.equals(MANIFEST_LOCATION)) {
+                                    listener.onResource(name);
+                                    sink.retain(element);
+                                }
                             }
-                        }
-                        if (!failed.isEmpty()) {
-                            listener.onError(failed);
+                            if (!failed.isEmpty()) {
+                                listener.onError(failed);
+                            }
+                        } finally {
+                            sink.close();
                         }
                     } finally {
-                        sink.close();
+                        origin.close();
                     }
                 } finally {
                     for (Plugin plugin : plugins) {

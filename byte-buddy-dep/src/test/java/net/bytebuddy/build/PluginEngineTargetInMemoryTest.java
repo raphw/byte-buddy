@@ -20,7 +20,7 @@ public class PluginEngineTargetInMemoryTest {
     @Test
     public void testWriteType() throws Exception {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
         sink.close();
         assertThat(target.getStorage().size(), is(1));
@@ -32,7 +32,7 @@ public class PluginEngineTargetInMemoryTest {
     @Test
     public void testWriteResource() throws Exception {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO);
         when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));

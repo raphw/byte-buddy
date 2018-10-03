@@ -52,7 +52,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), plugin);
         verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
@@ -76,7 +76,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(Sample.class), plugin);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
@@ -101,7 +101,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
         verify(listener).onComplete(TypeDescription.ForLoadedType.of(Sample.class));
@@ -137,7 +137,7 @@ public class PluginEngineDefaultTest {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
         assertThat(type.getDeclaredFields().length, is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onError(TypeDescription.ForLoadedType.of(Sample.class), plugin, exception);
         verify(listener).onError(TypeDescription.ForLoadedType.of(Sample.class), Collections.<Throwable>singletonList(exception));
@@ -164,7 +164,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getTransformed(), hasItems(TypeDescription.ForLoadedType.of(Sample.class)));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), plugin);
         verify(listener).onTransformation(TypeDescription.ForLoadedType.of(Sample.class), Collections.singletonList(plugin));
@@ -197,7 +197,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(1));
         assertThat(summary.getUnresolved().contains(Sample.class.getName()), is(true));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onDiscovery(Sample.class.getName());
         verify(listener).onUnresolved(Sample.class.getName());
         verifyNoMoreInteractions(listener);
@@ -215,7 +215,7 @@ public class PluginEngineDefaultTest {
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
-        verify(listener).onManifest(Plugin.Engine.Source.NO_MANIFEST);
+        verify(listener).onManifest(Plugin.Engine.Source.Origin.NO_MANIFEST);
         verify(listener).onResource(FOO);
         verifyNoMoreInteractions(listener);
     }

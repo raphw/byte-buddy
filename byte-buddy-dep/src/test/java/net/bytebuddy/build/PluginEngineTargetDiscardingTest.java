@@ -15,11 +15,11 @@ public class PluginEngineTargetDiscardingTest {
 
     @Test
     public void testDiscarding() throws Exception {
-        assertThat(Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.NO_MANIFEST), is((Plugin.Engine.Target.Sink) Plugin.Engine.Target.Discarding.INSTANCE));
+        assertThat(Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST), is((Plugin.Engine.Target.Sink) Plugin.Engine.Target.Discarding.INSTANCE));
         assertThat(Plugin.Engine.Target.Discarding.INSTANCE.write(new Manifest()), is((Plugin.Engine.Target.Sink) Plugin.Engine.Target.Discarding.INSTANCE));
         Plugin.Engine.Source.Element eleement = mock(Plugin.Engine.Source.Element.class);
-        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.NO_MANIFEST).retain(eleement);
+        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(eleement);
         verifyZeroInteractions(eleement);
-        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.NO_MANIFEST).store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+        Plugin.Engine.Target.Discarding.INSTANCE.write(Plugin.Engine.Source.Origin.NO_MANIFEST).store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
     }
 }

@@ -41,7 +41,7 @@ public class PluginEngineTargetForJarFileTest {
     @Test
     public void testWriteType() throws Exception {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForJarFile(file);
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
             sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
         } finally {
@@ -65,7 +65,7 @@ public class PluginEngineTargetForJarFileTest {
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO + "/" + BAR);
         when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
             sink.retain(element);
         } finally {
@@ -90,7 +90,7 @@ public class PluginEngineTargetForJarFileTest {
         when(element.getName()).thenReturn(FOO + "/" + BAR);
         when(element.resolveAs(JarEntry.class)).thenReturn(new JarEntry(FOO + "/" + BAR));
         when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
             sink.retain(element);
         } finally {

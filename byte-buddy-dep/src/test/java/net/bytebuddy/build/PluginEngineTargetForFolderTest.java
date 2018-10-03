@@ -42,7 +42,7 @@ public class PluginEngineTargetForFolderTest {
     @Test
     public void testWriteType() throws Exception {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
             sink.store(Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
         } finally {
@@ -67,7 +67,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn(FOO + "/" + BAR);
         when(element.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
-        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+        Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
         try {
             sink.retain(element);
         } finally {
@@ -100,7 +100,7 @@ public class PluginEngineTargetForFolderTest {
                 outputStream.close();
             }
             when(element.resolveAs(File.class)).thenReturn(original);
-            Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.NO_MANIFEST);
+            Plugin.Engine.Target.Sink sink = target.write(Plugin.Engine.Source.Origin.NO_MANIFEST);
             try {
                 sink.retain(element);
             } finally {
@@ -146,7 +146,7 @@ public class PluginEngineTargetForFolderTest {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
         when(element.getName()).thenReturn("../illegal");
-        target.write(Plugin.Engine.Source.NO_MANIFEST).retain(element);
+        target.write(Plugin.Engine.Source.Origin.NO_MANIFEST).retain(element);
     }
 
     @Test
