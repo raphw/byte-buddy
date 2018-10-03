@@ -2,6 +2,7 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.test.utility.MockitoRule;
 import org.gradle.api.GradleException;
+import org.gradle.api.Project;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -25,33 +26,36 @@ public class TransformationTest {
     @Mock
     private File file, explicit, other;
 
+    @Mock
+    private Project project;
+
     @Test
     public void testPlugin() throws Exception {
-        Transformation transformation = new Transformation();
+        Transformation transformation = new Transformation(project);
         transformation.setPlugin(FOO);
         assertThat(transformation.getPlugin(), is(FOO));
     }
 
     @Test(expected = GradleException.class)
     public void testEmptyPlugin() throws Exception {
-        new Transformation().getPlugin();
+        new Transformation(project).getPlugin();
     }
 
     @Test(expected = GradleException.class)
     public void testUnnamedPlugin() throws Exception {
-        Transformation transformation = new Transformation();
+        Transformation transformation = new Transformation(project);
         transformation.setPlugin("");
         transformation.getPlugin();
     }
 
     @Test
     public void testRawPlugin() throws Exception {
-        assertThat(new Transformation().getRawPlugin(), nullValue(String.class));
+        assertThat(new Transformation(project).getRawPlugin(), nullValue(String.class));
     }
 
     @Test
     public void testExplicitClassPath() throws Exception {
-        Transformation transformation = new Transformation();
+        Transformation transformation = new Transformation(project);
         transformation.setClassPath(Collections.singleton(file));
         Iterator<? extends File> iterator = transformation.getClassPath(explicit, Collections.singleton(other)).iterator();
         assertThat(iterator.hasNext(), is(true));
@@ -61,7 +65,7 @@ public class TransformationTest {
 
     @Test
     public void testImplicitClassPath() throws Exception {
-        Transformation transformation = new Transformation();
+        Transformation transformation = new Transformation(project);
         Iterator<? extends File> iterator = transformation.getClassPath(explicit, Collections.singleton(other)).iterator();
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is(explicit));

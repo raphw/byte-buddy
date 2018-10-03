@@ -73,8 +73,7 @@ public class ByteBuddyExtension {
      * @param closure The closure for configuring the transformation.
      */
     public void transformation(Closure<?> closure) {
-        Transformation transformation = (Transformation) project.configure(new Transformation(), closure);
-        transformations.add(transformation);
+        transformations.add((Transformation) project.configure(new Transformation(project), closure));
     }
 
     /**

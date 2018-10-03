@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -243,7 +244,12 @@ public class PluginEngineDefaultTest {
     public void testImplicitFileInput() throws Exception {
         File file = File.createTempFile("foo", "bar");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
-        outputStream.close();
+        try {
+            outputStream.putNextEntry(new JarEntry("dummy"));
+            outputStream.write(new byte[]{1, 2, 3});
+        } finally {
+            outputStream.close();
+        }
         Plugin.Engine engine = spy(new Plugin.Engine.Default());
         doAnswer(new Answer<Plugin.Engine.Summary>() {
             public Plugin.Engine.Summary answer(InvocationOnMock invocationOnMock) {
@@ -291,7 +297,6 @@ public class PluginEngineDefaultTest {
                 .with(new Plugin.Engine.TypeStrategy.ForEntryPoint(entryPoint, methodNameTransformer))));
         verify(entryPoint).byteBuddy(classFileVersion);
         verifyNoMoreInteractions(entryPoint);
-
     }
 
     @Test
@@ -299,7 +304,12 @@ public class PluginEngineDefaultTest {
         File source = File.createTempFile("foo", "bar"), target = File.createTempFile("qux", "baz");
         assertThat(target.delete(), is(true));
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(source));
-        outputStream.close();
+        try {
+            outputStream.putNextEntry(new JarEntry("dummy"));
+            outputStream.write(new byte[]{1, 2, 3});
+        } finally {
+            outputStream.close();
+        }
         Plugin.Engine.Default.main(source.getAbsolutePath(), target.getAbsolutePath(), Plugin.NoOp.class.getName());
         assertThat(target.isFile(), is(true));
         assertThat(target.delete(), is(true));

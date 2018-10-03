@@ -1,7 +1,9 @@
 package net.bytebuddy.build.gradle;
 
+import groovy.lang.Closure;
 import net.bytebuddy.build.Plugin;
 import org.gradle.api.GradleException;
+import org.gradle.api.Project;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,14 +15,38 @@ import java.util.List;
 public class Transformation extends AbstractUserConfiguration {
 
     /**
+     * The current project.
+     */
+    private final Project project;
+
+    /**
+     * A list of arguments that are provided to the plugin for construction.
+     */
+    private final List<PluginArgument> arguments;
+
+    /**
      * The fully-qualified name of the plugin type.
      */
     private String plugin;
 
     /**
-     * A list of arguments that are provided to the plugin for construction.
+     * Creates a new transformation.
+     *
+     * @param project The current project.
      */
-    private List<PluginArgument> arguments;
+    public Transformation(Project project) {
+        this.project = project;
+        arguments = new ArrayList<PluginArgument>();
+    }
+
+    /**
+     * Adds a plugin argument to consider during instantiation.
+     *
+     * @param closure The closure for configuring the argument.
+     */
+    public void argument(Closure<?> closure) {
+        arguments.add((PluginArgument) project.configure(new PluginArgument(), closure));
+    }
 
     /**
      * Returns the plugin type name.
@@ -67,14 +93,5 @@ public class Transformation extends AbstractUserConfiguration {
             }
             return argumentResolvers;
         }
-    }
-
-    /**
-     * Sets the plugin arguments.
-     *
-     * @param arguments A list of arguments that are provided to the plugin during construction.
-     */
-    public void setArguments(List<PluginArgument> arguments) {
-        this.arguments = arguments;
     }
 }

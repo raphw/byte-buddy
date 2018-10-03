@@ -34,16 +34,6 @@ public class PluginEngineForJarFileTest {
     }
 
     @Test
-    public void testEmpty() throws Exception {
-        JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
-        outputStream.close();
-        Plugin.Engine.Source source = new Plugin.Engine.Source.ForJarFile(file);
-        assertThat(source.getManifest(), nullValue(Manifest.class));
-        assertThat(source.getClassFileLocator().locate(Object.class.getName()).isResolved(), is(false));
-        assertThat(source.iterator().hasNext(), is(false));
-    }
-
-    @Test
     public void testFile() throws Exception {
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
         try {
