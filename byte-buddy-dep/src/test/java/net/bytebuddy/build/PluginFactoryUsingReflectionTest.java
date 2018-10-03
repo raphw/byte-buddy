@@ -95,6 +95,11 @@ public class PluginFactoryUsingReflectionTest {
         assertThat(argumentResolver.resolve(0, Void.class).isResolved(), is(false));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testArgumentResolverUnresolvedResolution() {
+        Plugin.Factory.UsingReflection.ArgumentResolver.Resolution.Unresolved.INSTANCE.getArgument();
+    }
+
     public static class SimplePlugin implements Plugin {
 
         public boolean matches(TypeDescription target) {

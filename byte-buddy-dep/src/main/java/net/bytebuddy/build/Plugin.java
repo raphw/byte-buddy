@@ -536,7 +536,8 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
 
                     /**
                      * An argument resolver that resolves an argument for a specific parameter index by attempting a conversion via
-                     * invoking a static {@code valueOf} method on the target type, if it exists.
+                     * invoking a static {@code valueOf} method on the target type, if it exists. As an exception, the {@code char}
+                     * and {@link Character} types are resolved if the string value represents a single character.
                      */
                     @HashCodeAndEqualsPlugin.Enhance
                     public static class WithDynamicType implements ArgumentResolver {
@@ -568,10 +569,14 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         public Resolution resolve(int index, Class<?> type) {
                             if (this.index != index) {
                                 return Resolution.Unresolved.INSTANCE;
-                            } else if (type.isPrimitive()) {
-                                type = WRAPPER_TYPES.get(type);
+                            } else if (type == char.class || type == Character.class) {
+                                return value.length() == 1
+                                        ? new Resolution.Resolved(value.charAt(0))
+                                        : Resolution.Unresolved.INSTANCE;
                             } else if (type == String.class) {
                                 return new Resolution.Resolved(value);
+                            } else if (type.isPrimitive()) {
+                                type = WRAPPER_TYPES.get(type);
                             }
                             try {
                                 Method valueOf = type.getMethod("valueOf", String.class);
