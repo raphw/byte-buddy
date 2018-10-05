@@ -778,6 +778,9 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
+                    if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
+                        return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
+                    }
                     Class<?> unsafe = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
@@ -1002,13 +1005,33 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 protected static Initializable make() throws Exception {
+                    if (Boolean.getBoolean(UsingUnsafe.SAFE_PROPERTY)) {
+                        return new Initializable.Unavailable("Use of Unsafe was disabled by system property");
+                    }
                     Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
                     Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
                     theUnsafe.setAccessible(true);
                     Object unsafe = theUnsafe.get(null);
+                    Field override;
+                    try {
+                        override = AccessibleObject.class.getDeclaredField("override");
+                    } catch (NoSuchFieldException ignored) {
+                        // Since Java 12, the override field is hidden from the reflection API. To circumvent this, we
+                        // create a mirror class of AccessibleObject that defines the same fields and has the same field
+                        // layout such that the override field will receive the same class offset. Doing so, we can write to
+                        // the offset location and still set a value to it, despite it being hidden from the reflection API.
+                        override = new ByteBuddy()
+                                .redefine(AccessibleObject.class)
+                                .name("net.bytebuddy.mirror." + AccessibleObject.class.getSimpleName())
+                                .visit(new MemberRemoval().stripInvokables(any()))
+                                .make()
+                                .load(AccessibleObject.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                                .getLoaded()
+                                .getDeclaredField("override");
+                    }
                     long offset = (Long) unsafeType
                             .getMethod("objectFieldOffset", Field.class)
-                            .invoke(unsafe, AccessibleObject.class.getDeclaredField("override"));
+                            .invoke(unsafe, override);
                     Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
                     Method getPackage;
                     if (JavaModule.isSupported()) { // Avoid accidental lookup of method with same name in Java 8 J9 VM.
