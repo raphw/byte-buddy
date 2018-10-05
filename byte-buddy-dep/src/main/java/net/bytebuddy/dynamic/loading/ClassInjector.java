@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.MemberRemoval;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
@@ -31,6 +32,8 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+
+import static net.bytebuddy.matcher.ElementMatchers.any;
 
 /**
  * <p>
@@ -1661,6 +1664,11 @@ public interface ClassInjector {
     class UsingUnsafe extends AbstractBase {
 
         /**
+         * If this property is set, Byte Buddy does not make use of any {@code Unsafe} class.
+         */
+        public static final String SAFE_PROPERTY = "net.bytebuddy.safe";
+
+        /**
          * The dispatcher to use.
          */
         private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
@@ -1817,10 +1825,14 @@ public interface ClassInjector {
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Initializable run() {
+                    if (Boolean.getBoolean(SAFE_PROPERTY)) {
+                        return new Unavailable("Use of Unsafe was disabled by system property");
+                    }
                     try {
                         Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
                         Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
                         theUnsafe.setAccessible(true);
+                        Object unsafe = theUnsafe.get(null);
                         try {
                             Method defineClass = unsafeType.getMethod("defineClass",
                                     String.class,
@@ -1830,13 +1842,29 @@ public interface ClassInjector {
                                     ClassLoader.class,
                                     ProtectionDomain.class);
                             defineClass.setAccessible(true);
-                            return new Enabled(theUnsafe, defineClass);
+                            return new Enabled(unsafe, defineClass);
                         } catch (Exception exception) {
                             try {
-                                Object unsafe = theUnsafe.get(null);
+                                Field override;
+                                try {
+                                    override = AccessibleObject.class.getDeclaredField("override");
+                                } catch (NoSuchFieldException ignored) {
+                                    // Since Java 12, the override field is hidden from the reflection API. To circumvent this, we
+                                    // create a mirror class of AccessibleObject that defines the same fields and has the same field
+                                    // layout such that the override field will receive the same class offset. Doing so, we can write to
+                                    // the offset location and still set a value to it, despite it being hidden from the reflection API.
+                                    override = new ByteBuddy()
+                                            .redefine(AccessibleObject.class)
+                                            .name("net.bytebuddy.mirror." + AccessibleObject.class.getSimpleName())
+                                            .visit(new MemberRemoval().stripInvokables(any()))
+                                            .make()
+                                            .load(AccessibleObject.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                                            .getLoaded()
+                                            .getDeclaredField("override");
+                                }
                                 long offset = (Long) unsafeType
                                         .getMethod("objectFieldOffset", Field.class)
-                                        .invoke(unsafe, AccessibleObject.class.getDeclaredField("override"));
+                                        .invoke(unsafe, override);
                                 Method putBoolean = unsafeType.getMethod("putBoolean", Object.class, long.class, boolean.class);
                                 Class<?> internalUnsafe = Class.forName("jdk.internal.misc.Unsafe");
                                 Field theUnsafeInternal = internalUnsafe.getDeclaredField("theUnsafe");
@@ -1849,7 +1877,7 @@ public interface ClassInjector {
                                         ClassLoader.class,
                                         ProtectionDomain.class);
                                 putBoolean.invoke(unsafe, defineClassInternal, offset, true);
-                                return new Enabled(theUnsafeInternal, defineClassInternal);
+                                return new Enabled(theUnsafeInternal.get(null), defineClassInternal);
                             } catch (Exception ignored) {
                                 throw exception;
                             }
@@ -1867,9 +1895,9 @@ public interface ClassInjector {
             class Enabled implements Dispatcher, Initializable {
 
                 /**
-                 * A field containing {@code sun.misc.Unsafe}.
+                 * An instance of {@code sun.misc.Unsafe}.
                  */
-                private final Field theUnsafe;
+                private final Object unsafe;
 
                 /**
                  * The {@code sun.misc.Unsafe#defineClass} method.
@@ -1879,11 +1907,11 @@ public interface ClassInjector {
                 /**
                  * Creates an enabled dispatcher.
                  *
-                 * @param theUnsafe   A field containing {@code sun.misc.Unsafe}.
+                 * @param unsafe      An instance of {@code sun.misc.Unsafe}.
                  * @param defineClass The {@code sun.misc.Unsafe#defineClass} method.
                  */
-                protected Enabled(Field theUnsafe, Method defineClass) {
-                    this.theUnsafe = theUnsafe;
+                protected Enabled(Object unsafe, Method defineClass) {
+                    this.unsafe = unsafe;
                     this.defineClass = defineClass;
                 }
 
@@ -1914,7 +1942,7 @@ public interface ClassInjector {
                  */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
-                        return (Class<?>) defineClass.invoke(theUnsafe.get(null),
+                        return (Class<?>) defineClass.invoke(unsafe,
                                 name,
                                 binaryRepresentation,
                                 0,
