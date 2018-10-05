@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. October 2018: version 1.9.1
+
+- Minor API change of `Plugin.Engine.Source` to allow for closing resources that need to be opened.
+- Reinstantiate class injection on Java 12 with new Unsafe use.
+- Allow for disabling use of Unsafe alltogether.
+- Adjust Gradle build plugin to use closure for argument instantiation.
+- Prepare method arguments on `MethodCall`.
+
 ### 29. September 2018: version 1.9.0
 
 - Update to ASM 7 for non-experimental Java 11 support.
@@ -10,6 +18,7 @@ Byte Buddy release notes
 - Add visitor to allow adjustment of inner class attribute.
 - Refactor agent builder API to use decoration by default and rather require explicit termination.
 - Add `Plugin.Engine` to allow simple static enhancements and rework build plugins for Maven and Gradle to use it.
+- Refactor `AsmVisitorWrapper.ForDeclaredMethods` to only instrument methods on `.method` but offer `.invokable` for anthing.
 
 ### 8. September 2018: version 1.8.22
 
