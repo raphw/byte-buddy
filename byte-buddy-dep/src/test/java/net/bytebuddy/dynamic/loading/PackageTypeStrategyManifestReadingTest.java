@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -77,7 +78,7 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getMainAttributes().put(Attributes.Name.IMPLEMENTATION_VERSION, FOO + BAR);
         manifest.getMainAttributes().put(Attributes.Name.IMPLEMENTATION_VENDOR, QUX + BAZ);
         manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.FALSE.toString());
-        when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
+        when(classLoader.getResourceAsStream(JarFile.MANIFEST_NAME)).then(new Answer<InputStream>() {
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -117,7 +118,7 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.IMPLEMENTATION_VERSION, FOO + BAR);
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.IMPLEMENTATION_VENDOR, QUX + BAZ);
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.SEALED, Boolean.FALSE.toString());
-        when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
+        when(classLoader.getResourceAsStream(JarFile.MANIFEST_NAME)).then(new Answer<InputStream>() {
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -144,7 +145,7 @@ public class PackageTypeStrategyManifestReadingTest {
         final Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.SEALED, Boolean.TRUE.toString());
-        when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
+        when(classLoader.getResourceAsStream(JarFile.MANIFEST_NAME)).then(new Answer<InputStream>() {
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);
@@ -167,7 +168,7 @@ public class PackageTypeStrategyManifestReadingTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getEntries().put(FOO + "/" + BAR + "/", new Attributes());
         manifest.getAttributes(FOO + "/" + BAR + "/").put(Attributes.Name.SEALED, Boolean.TRUE.toString());
-        when(classLoader.getResourceAsStream("/META-INF/MANIFEST.MF")).then(new Answer<InputStream>() {
+        when(classLoader.getResourceAsStream(JarFile.MANIFEST_NAME)).then(new Answer<InputStream>() {
             public InputStream answer(InvocationOnMock invocationOnMock) throws Throwable {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 manifest.write(outputStream);

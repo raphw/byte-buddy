@@ -59,7 +59,7 @@
         <asm.javadoc>http://asm.ow2.io/javadoc</asm.javadoc>
         <version.asm>7.0-beta</version.asm>
         <version.junit>4.12</version.junit>
-        <version.mockito>2.21.0</version.mockito>
+        <version.mockito>2.23.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
         <version.plugin.bundle>3.5.0</version.plugin.bundle>
         <version.plugin.compiler>3.8.0</version.plugin.compiler>
@@ -84,7 +84,7 @@
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.8</version.plugin.clirr>
         <version.plugin.spotbugs>3.1.3</version.plugin.spotbugs>
-        <version.plugin.modulemaker>1.2</version.plugin.modulemaker>
+        <version.plugin.modulemaker>1.4</version.plugin.modulemaker>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>

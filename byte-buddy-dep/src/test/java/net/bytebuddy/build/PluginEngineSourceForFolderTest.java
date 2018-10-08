@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -118,7 +119,7 @@ public class PluginEngineSourceForFolderTest {
 
     @Test
     public void testManifest() throws Exception {
-        File file = new File(folder, Plugin.Engine.MANIFEST_LOCATION);
+        File file = new File(folder, JarFile.MANIFEST_NAME);
         assertThat(file.getParentFile().mkdir(), is(true));
         Manifest manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");

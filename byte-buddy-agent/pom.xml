@@ -61,7 +61,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.9.0</version>
+            <version>1.9.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -94,6 +94,7 @@
                 </executions>
                 <configuration>
                     <instructions>
+                        <Multi-Release>true</Multi-Release>
                         <Premain-Class>${bytebuddy.agent}</Premain-Class>
                         <Agent-Class>${bytebuddy.agent}</Agent-Class>
                         <Can-Redefine-Classes>true</Can-Redefine-Classes>
@@ -129,6 +130,7 @@
                 </executions>
                 <configuration>
                     <name>net.bytebuddy.agent</name>
+                    <multirelease>true</multirelease>
                     <packages>${packages.list}</packages>
                     <exports>${packages.list}</exports>
                     <requires>java.instrument</requires>

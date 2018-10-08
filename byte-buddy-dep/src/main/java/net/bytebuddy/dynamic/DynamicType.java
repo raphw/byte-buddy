@@ -31,6 +31,8 @@ import net.bytebuddy.utility.CompoundList;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.jar.*;
 
@@ -5181,6 +5183,11 @@ public interface DynamicType {
         private static final String TEMP_SUFFIX = "tmp";
 
         /**
+         * A dispacher for applying a file copy.
+         */
+        protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
+
+        /**
          * A type description of this dynamic type.
          */
         protected final TypeDescription typeDescription;
@@ -5286,7 +5293,7 @@ public interface DynamicType {
          * {@inheritDoc}
          */
         public Map<TypeDescription, File> saveIn(File folder) throws IOException {
-            Map<TypeDescription, File> savedFiles = new HashMap<TypeDescription, File>();
+            Map<TypeDescription, File> files = new HashMap<TypeDescription, File>();
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null && !target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                 throw new IllegalArgumentException("Could not create directory: " + target.getParentFile());
@@ -5297,26 +5304,56 @@ public interface DynamicType {
             } finally {
                 outputStream.close();
             }
-            savedFiles.put(typeDescription, target);
+            files.put(typeDescription, target);
             for (DynamicType auxiliaryType : auxiliaryTypes) {
-                savedFiles.putAll(auxiliaryType.saveIn(folder));
+                files.putAll(auxiliaryType.saveIn(folder));
             }
-            return savedFiles;
+            return files;
         }
 
         /**
          * {@inheritDoc}
          */
         public File inject(File sourceJar, File targetJar) throws IOException {
-            JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
+            return sourceJar.equals(targetJar)
+                ? inject(sourceJar)
+                : doInject(sourceJar, targetJar);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public File inject(File jar) throws IOException {
+            File temporary = doInject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX));
+            boolean delete = true;
+            try {
+                delete = DISPATCHER.copy(temporary, jar);
+            } finally {
+                if (delete && !temporary.delete()) {
+                    temporary.deleteOnExit();
+                }
+            }
+            return jar;
+        }
+
+        /**
+         * Injects this dynamic type into a source jar and writes the result to the target jar.
+         *
+         * @param sourceJar The source jar.
+         * @param targetJar The target jar.
+         * @return The jar file that was written to.
+         * @throws IOException If an I/O error occurs.
+         */
+        private File doInject(File sourceJar, File targetJar) throws IOException {
+            JarInputStream inputStream = new JarInputStream(new FileInputStream(sourceJar));
             try {
                 if (!targetJar.isFile() && !targetJar.createNewFile()) {
                     throw new IllegalArgumentException("Could not create file: " + targetJar);
                 }
-                Manifest manifest = jarInputStream.getManifest();
-                JarOutputStream jarOutputStream = manifest == null
-                        ? new JarOutputStream(new FileOutputStream(targetJar))
-                        : new JarOutputStream(new FileOutputStream(targetJar), manifest);
+                Manifest manifest = inputStream.getManifest();
+                JarOutputStream outputStream = manifest == null
+                    ? new JarOutputStream(new FileOutputStream(targetJar))
+                    : new JarOutputStream(new FileOutputStream(targetJar), manifest);
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>();
@@ -5325,63 +5362,34 @@ public interface DynamicType {
                     }
                     files.put(typeDescription.getInternalName() + CLASS_FILE_EXTENSION, binaryRepresentation);
                     JarEntry jarEntry;
-                    while ((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+                    while ((jarEntry = inputStream.getNextJarEntry()) != null) {
                         byte[] replacement = files.remove(jarEntry.getName());
                         if (replacement == null) {
-                            jarOutputStream.putNextEntry(jarEntry);
+                            outputStream.putNextEntry(jarEntry);
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int index;
-                            while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
-                                jarOutputStream.write(buffer, FROM_BEGINNING, index);
+                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                                outputStream.write(buffer, FROM_BEGINNING, index);
                             }
                         } else {
-                            jarOutputStream.putNextEntry(new JarEntry(jarEntry.getName()));
-                            jarOutputStream.write(replacement);
+                            outputStream.putNextEntry(new JarEntry(jarEntry.getName()));
+                            outputStream.write(replacement);
                         }
-                        jarInputStream.closeEntry();
-                        jarOutputStream.closeEntry();
+                        inputStream.closeEntry();
+                        outputStream.closeEntry();
                     }
                     for (Map.Entry<String, byte[]> entry : files.entrySet()) {
-                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey()));
-                        jarOutputStream.write(entry.getValue());
-                        jarOutputStream.closeEntry();
+                        outputStream.putNextEntry(new JarEntry(entry.getKey()));
+                        outputStream.write(entry.getValue());
+                        outputStream.closeEntry();
                     }
                 } finally {
-                    jarOutputStream.close();
+                    outputStream.close();
                 }
             } finally {
-                jarInputStream.close();
+                inputStream.close();
             }
             return targetJar;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public File inject(File jar) throws IOException {
-            File temporary = inject(jar, File.createTempFile(jar.getName(), TEMP_SUFFIX));
-            try {
-                InputStream jarInputStream = new BufferedInputStream(new FileInputStream(temporary));
-                try {
-                    OutputStream jarOutputStream = new BufferedOutputStream(new FileOutputStream(jar));
-                    try {
-                        byte[] buffer = new byte[BUFFER_SIZE];
-                        int index;
-                        while ((index = jarInputStream.read(buffer)) != END_OF_FILE) {
-                            jarOutputStream.write(buffer, FROM_BEGINNING, index);
-                        }
-                    } finally {
-                        jarOutputStream.close();
-                    }
-                } finally {
-                    jarInputStream.close();
-                }
-            } finally {
-                if (!temporary.delete()) {
-                    temporary.deleteOnExit();
-                }
-            }
-            return jar;
         }
 
         /**
@@ -5414,6 +5422,137 @@ public interface DynamicType {
                 outputStream.close();
             }
             return file;
+        }
+
+        /**
+         * A dispatcher that allows for file copy operations based on NIO2 if available.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Copies the source file to the target location.
+             *
+             * @param source The source file.
+             * @param target The target file.
+             * @return {@code true} if the source file needs to be deleted.
+             * @throws IOException If an I/O error occurs.
+             */
+            boolean copy(File source, File target) throws IOException;
+
+            /**
+             * An action for creating a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressWarnings("unchecked")
+                public Dispatcher run() {
+                    try {
+                        Class<?> path = Class.forName("java.nio.file.Path");
+                        Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
+                        arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
+                        return new ForJava7CapableVm(File.class.getMethod("toPath"),
+                            Class.forName("java.nio.file.Files").getMethod("move", path, path, arguments.getClass()),
+                            arguments);
+                    } catch (Throwable ignored) {
+                        return ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A legacy dispatcher that is not capable of NIO.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean copy(File source, File target) throws IOException {
+                    InputStream inputStream = new FileInputStream(source);
+                    try {
+                        OutputStream outputStream = new FileOutputStream(target);
+                        try {
+                            byte[] buffer = new byte[BUFFER_SIZE];
+                            int index;
+                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                                outputStream.write(buffer, FROM_BEGINNING, index);
+                            }
+                        } finally {
+                            outputStream.close();
+                        }
+                    } finally {
+                        inputStream.close();
+                    }
+                    return true;
+                }
+            }
+
+            /**
+             * A dispatcher for VMs that are capable of NIO2.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForJava7CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code java.io.File#toPath()} method.
+                 */
+                private final Method toPath;
+
+                /**
+                 * The {@code java.nio.Files#copy(Path,Path,CopyOption[])} method.
+                 */
+                private final Method move;
+
+                /**
+                 * The copy options to apply.
+                 */
+                private final Object[] copyOptions;
+
+                /**
+                 * Creates a new NIO2 capable dispatcher.
+                 *
+                 * @param toPath      The {@code java.io.File#toPath()} method.
+                 * @param move        The {@code java.nio.Files#move(Path,Path,CopyOption[])} method.
+                 * @param copyOptions The copy options to apply.
+                 */
+                protected ForJava7CapableVm(Method toPath, Method move, Object[] copyOptions) {
+                    this.toPath = toPath;
+                    this.move = move;
+                    this.copyOptions = copyOptions;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean copy(File source, File target) throws IOException {
+                    try {
+                        move.invoke(null, toPath.invoke(source), toPath.invoke(target), copyOptions);
+                        return false;
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access NIO file copy", exception);
+                    } catch (InvocationTargetException exception) {
+                        Throwable cause = exception.getCause();
+                        if (cause instanceof IOException) {
+                            throw (IOException) cause;
+                        } else {
+                            throw new IllegalStateException("Cannot execute NIO file copy", cause);
+                        }
+                    }
+                }
+            }
         }
 
         /**

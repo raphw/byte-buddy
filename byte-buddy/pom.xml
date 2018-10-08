@@ -63,6 +63,7 @@
             net.bytebuddy.utility.privilege,
             net.bytebuddy.utility.visitor,
             ${shade.target},
+            ${shade.target}.signature,
             ${shade.target}.commons
         </packages.list>
     </properties>
@@ -184,6 +185,7 @@
                 </executions>
                 <configuration>
                     <instructions>
+                        <Multi-Release>true</Multi-Release>
                         <!-- Cannot use wildcards because of use of the shade plugin which imports from 'byte-buddy-dep'. -->
                         <Export-Package>${packages.list}</Export-Package>
                     </instructions>
@@ -211,6 +213,7 @@
                 </executions>
                 <configuration>
                     <name>net.bytebuddy</name>
+                    <multirelease>true</multirelease>
                     <packages>${packages.list}</packages>
                     <exports>${packages.list}</exports>
                     <static-requires>

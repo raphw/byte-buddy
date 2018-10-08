@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /**
@@ -472,11 +473,6 @@ public interface PackageDefinitionStrategy {
     class ManifestReading implements PackageDefinitionStrategy {
 
         /**
-         * The path to the manifest file.
-         */
-        private static final String MANIFEST_FILE = "/META-INF/MANIFEST.MF";
-
-        /**
          * A URL defined a non-sealed package.
          */
         private static final URL NOT_SEALED = null;
@@ -519,7 +515,7 @@ public interface PackageDefinitionStrategy {
          * {@inheritDoc}
          */
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
-            InputStream inputStream = classLoader.getResourceAsStream(MANIFEST_FILE);
+            InputStream inputStream = classLoader.getResourceAsStream(JarFile.MANIFEST_NAME);
             if (inputStream != null) {
                 try {
                     try {

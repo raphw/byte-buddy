@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -63,7 +64,7 @@ public class PluginEngineSourceInMemoryTest {
         manifest.getMainAttributes().putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         manifest.write(outputStream);
-        Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.InMemory(Collections.singletonMap(Plugin.Engine.MANIFEST_LOCATION, outputStream.toByteArray())).read();
+        Plugin.Engine.Source.Origin origin = new Plugin.Engine.Source.InMemory(Collections.singletonMap(JarFile.MANIFEST_NAME, outputStream.toByteArray())).read();
         try {
             assertThat(origin.getClassFileLocator().locate("foo.Bar").isResolved(), is(false));
             assertThat(origin.getManifest(), notNullValue(Manifest.class));

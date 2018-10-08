@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -50,7 +51,7 @@ public class PluginEngineTargetInMemoryTest {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         target.write(manifest).close();
         assertThat(target.getStorage().size(), is(1));
-        Manifest readManifest = new Manifest(new ByteArrayInputStream(target.getStorage().get(Plugin.Engine.MANIFEST_LOCATION)));
+        Manifest readManifest = new Manifest(new ByteArrayInputStream(target.getStorage().get(JarFile.MANIFEST_NAME)));
         assertThat(readManifest.getMainAttributes().get(Attributes.Name.MANIFEST_VERSION), is((Object) "1.0"));
     }
 }

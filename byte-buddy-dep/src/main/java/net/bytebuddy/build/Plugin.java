@@ -609,11 +609,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         String CLASS_FILE_EXTENSION = ".class";
 
         /**
-         * The standard location of a Java manifest file.
-         */
-        String MANIFEST_LOCATION = "META-INF/MANIFEST.MF";
-
-        /**
          * Defines a new Byte Buddy instance for usage for type creation.
          *
          * @param byteBuddy The Byte Buddy instance to use.
@@ -2473,7 +2468,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public Manifest getManifest() throws IOException {
-                    byte[] binaryRepresentation = storage.get(MANIFEST_LOCATION);
+                    byte[] binaryRepresentation = storage.get(JarFile.MANIFEST_NAME);
                     if (binaryRepresentation == null) {
                         return NO_MANIFEST;
                     } else {
@@ -2578,7 +2573,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public Manifest getManifest() throws IOException {
-                    File file = new File(folder, MANIFEST_LOCATION);
+                    File file = new File(folder, JarFile.MANIFEST_NAME);
                     if (file.exists()) {
                         InputStream inputStream = new FileInputStream(file);
                         try {
@@ -2629,7 +2624,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                             if (file != null) {
                                 files.addAll(0, Arrays.asList(file));
                             }
-                        } while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, MANIFEST_LOCATION))));
+                        } while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, JarFile.MANIFEST_NAME))));
                     }
 
                     /**
@@ -2647,7 +2642,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         try {
                             return new Element.ForFile(folder, files.removeFirst());
                         } finally {
-                            while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, MANIFEST_LOCATION)))) {
+                            while (!files.isEmpty() && (files.peek().isDirectory() || files.peek().equals(new File(folder, JarFile.MANIFEST_NAME)))) {
                                 File folder = files.removeFirst();
                                 File[] file = folder.listFiles();
                                 if (file != null) {
@@ -2867,7 +2862,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } finally {
                             outputStream.close();
                         }
-                        storage.put(MANIFEST_LOCATION, outputStream.toByteArray());
+                        storage.put(JarFile.MANIFEST_NAME, outputStream.toByteArray());
                     }
                     return this;
                 }
@@ -2967,7 +2962,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  */
                 public Sink write(Manifest manifest) throws IOException {
                     if (manifest != null) {
-                        File target = new File(folder, MANIFEST_LOCATION);
+                        File target = new File(folder, JarFile.MANIFEST_NAME);
                         if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
                             throw new IOException("Could not create directory: " + target.getParent());
                         }
@@ -3106,7 +3101,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                          * {@inheritDoc}
                          */
                         public void copy(File source, File target) {
-                            throw new IllegalStateException();
+                            throw new UnsupportedOperationException("Cannot use NIO2 copy on current VM");
                         }
                     }
 
@@ -3641,7 +3636,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                         sink.retain(element);
                                         unresolved.add(typeName);
                                     }
-                                } else if (!name.equals(MANIFEST_LOCATION)) {
+                                } else if (!name.equals(JarFile.MANIFEST_NAME)) {
                                     listener.onResource(name);
                                     sink.retain(element);
                                 }

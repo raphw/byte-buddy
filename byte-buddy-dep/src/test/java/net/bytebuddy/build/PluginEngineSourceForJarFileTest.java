@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -107,7 +108,7 @@ public class PluginEngineSourceForJarFileTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file));
         try {
-            outputStream.putNextEntry(new JarEntry(Plugin.Engine.MANIFEST_LOCATION));
+            outputStream.putNextEntry(new JarEntry(JarFile.MANIFEST_NAME));
             manifest.write(outputStream);
             outputStream.closeEntry();
         } finally {

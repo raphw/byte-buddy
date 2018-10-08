@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -227,7 +228,7 @@ public class PluginEngineDefaultTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         manifest.write(outputStream);
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
-        Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(Plugin.Engine.MANIFEST_LOCATION, outputStream.toByteArray()));
+        Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(JarFile.MANIFEST_NAME, outputStream.toByteArray()));
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)

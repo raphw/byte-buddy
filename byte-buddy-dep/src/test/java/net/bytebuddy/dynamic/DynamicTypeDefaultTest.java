@@ -2,11 +2,15 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.RandomString;
+
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -17,6 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.jar.*;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,6 +35,8 @@ public class DynamicTypeDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private static final byte[] BINARY_FIRST = new byte[]{1, 2, 3}, BINARY_SECOND = new byte[]{4, 5, 6}, BINARY_THIRD = new byte[]{7, 8, 9};
 
@@ -279,6 +286,39 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
+    public void testJarSelfInjectionWithDuplicateSpecification() throws Exception {
+        File file = File.createTempFile(BAR, TEMP);
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, BAR);
+        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), manifest);
+        try {
+            jarOutputStream.putNextEntry(new JarEntry(BARBAZ + CLASS_FILE_EXTENSION));
+            jarOutputStream.write(BINARY_THIRD);
+            jarOutputStream.closeEntry();
+            jarOutputStream.putNextEntry(new JarEntry(FOOBAR + CLASS_FILE_EXTENSION));
+            jarOutputStream.write(BINARY_THIRD);
+            jarOutputStream.closeEntry();
+        } finally {
+            jarOutputStream.close();
+        }
+        boolean fileDeletion;
+        try {
+            assertThat(dynamicType.inject(file, file), is(file));
+            assertThat(file.exists(), is(true));
+            assertThat(file.isFile(), is(true));
+            assertThat(file.length() > 0L, is(true));
+            Map<String, byte[]> bytes = new HashMap<String, byte[]>();
+            bytes.put(FOOBAR + CLASS_FILE_EXTENSION, BINARY_FIRST);
+            bytes.put(QUXBAZ + CLASS_FILE_EXTENSION, BINARY_SECOND);
+            bytes.put(BARBAZ + CLASS_FILE_EXTENSION, BINARY_THIRD);
+            assertJarFile(file, manifest, bytes);
+        } finally {
+            fileDeletion = file.delete();
+        }
+        assertThat(fileDeletion, is(true));
+    }
+
+    @Test
     public void testIterationOrder() throws Exception {
         Iterator<TypeDescription> types = dynamicType.getAllTypes().keySet().iterator();
         assertThat(types.hasNext(), is(true));
@@ -286,5 +326,11 @@ public class DynamicTypeDefaultTest {
         assertThat(types.hasNext(), is(true));
         assertThat(types.next(), is(auxiliaryTypeDescription));
         assertThat(types.hasNext(), is(false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(7)
+    public void testDispatcher() {
+        assertThat(DynamicType.Default.DISPATCHER, instanceOf(DynamicType.Default.Dispatcher.ForJava7CapableVm.class));
     }
 }

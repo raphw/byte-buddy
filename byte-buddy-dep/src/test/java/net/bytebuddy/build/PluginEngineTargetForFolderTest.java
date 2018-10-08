@@ -12,6 +12,7 @@ import org.junit.rules.MethodRule;
 import java.io.*;
 import java.util.Collections;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -128,7 +129,7 @@ public class PluginEngineTargetForFolderTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);
         target.write(manifest).close();
-        File file = new File(folder, Plugin.Engine.MANIFEST_LOCATION);
+        File file = new File(folder, JarFile.MANIFEST_NAME);
         assertThat(file.isFile(), is(true));
         InputStream inputStream = new FileInputStream(file);
         try {
