@@ -292,8 +292,9 @@ public class ByteBuddyAgent {
      * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
      * into a Jigsaw module and the runtime installation is always possible.</li>
      * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
-     * possible when bundled with a JDK up until Java version 8. It is not possible for runtime-only
-     * installations of HotSpot or J9 for these versions.</li>
+     * possible when bundled with a JDK and requires the {@code jdk.attach} module since Java 9, if this
+     * package is placed on the module path. It is not possible for runtime-only installations of HotSpot
+     * or J9 for these versions.</li>
      * </ul>
      * <p>
      * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
@@ -520,7 +521,7 @@ public class ByteBuddyAgent {
         /**
          * The default attachment provider to be used.
          */
-        AttachmentProvider DEFAULT = new Compound(ForJigsawVm.INSTANCE,
+        AttachmentProvider DEFAULT = new Compound(ForModularizedVm.INSTANCE,
                 ForJ9Vm.INSTANCE,
                 ForStandardToolsJarVm.JVM_ROOT,
                 ForStandardToolsJarVm.JDK_ROOT,
@@ -777,9 +778,10 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider that locates the attach API directly from the system class loader.
+         * An attachment provider that locates the attach API directly from the system class loader, as possible since
+         * introducing the Java module system via the {@code jdk.attach} module.
          */
-        enum ForJigsawVm implements AttachmentProvider {
+        enum ForModularizedVm implements AttachmentProvider {
 
             /**
              * The singleton instance.

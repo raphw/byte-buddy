@@ -134,8 +134,8 @@ public interface DynamicType {
 
     /**
      * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
-     * is overridden during injection. The {@code target} file's folder must exist prior to calling this method. The
-     * file itself is overwritten or created depending on its prior existence.
+     * is overridden during injection. The resulting jar is going to be a recreation of the original jar and not a
+     * patched version with a new central directory. No directory entries are added to the generated jar.
      *
      * @param sourceJar The original jar file.
      * @param targetJar The {@code source} jar file with the injected contents.
@@ -146,7 +146,8 @@ public interface DynamicType {
 
     /**
      * Injects the types of this dynamic type into a given <i>jar</i> file. Any pre-existent type with the same name
-     * is overridden during injection.
+     * is overridden during injection. The resulting jar is going to be a recreation of the original jar and not a
+     * patched version with a new central directory. No directory entries are added to the generated jar.
      *
      * @param jar The jar file to replace with an injected version.
      * @return The {@code jar} file.
@@ -157,7 +158,7 @@ public interface DynamicType {
     /**
      * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
      * exist prior to calling this method. The jar file is created with a simple manifest that only contains a version
-     * number.
+     * number. No directory entries are added to the generated jar.
      *
      * @param file The target file to which the <i>jar</i> is written to.
      * @return The given {@code file}.
@@ -167,7 +168,7 @@ public interface DynamicType {
 
     /**
      * Saves the contents of this dynamic type inside a <i>jar</i> file. The folder of the given {@code file} must
-     * exist prior to calling this method.
+     * exist prior to calling this method. No directory entries are added to the generated jar.
      *
      * @param file     The target file to which the <i>jar</i> is written to.
      * @param manifest The manifest of the created <i>jar</i>.

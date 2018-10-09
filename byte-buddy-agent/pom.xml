@@ -134,6 +134,7 @@
                     <packages>${packages.list}</packages>
                     <exports>${packages.list}</exports>
                     <requires>java.instrument</requires>
+                    <static-requires>jdk.attach</static-requires>
                 </configuration>
             </plugin>
         </plugins>
