@@ -22,6 +22,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
+
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -489,11 +490,11 @@ public class MethodDelegation implements Implementation.Composable {
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
      * a delegation target if the delegation is targeting the instrumented type.
      *
-     * @param method Method to call.
-     * @return A delegation that redirects invocations to a method of the specified field's instance.
+     * @param methodName Method name to call.
+     * @return A delegation that redirects invocations to a method of the specified method's result.
      */
-    public static MethodDelegation toGetter(MethodDescription method) {
-        return withDefaultConfiguration().toGetter(method);
+    public static MethodDelegation toGetter(String methodName) {
+        return withDefaultConfiguration().toGetter(methodName);
     }
 
     /**
@@ -503,12 +504,12 @@ public class MethodDelegation implements Implementation.Composable {
      * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
      * a delegation target if the delegation is targeting the instrumented type.
      *
-     * @param method              Method to call
+     * @param methodName          Method to call
      * @param methodGraphCompiler The method graph compiler to use.
-     * @return A delegation that redirects invocations to a method of the specified field's instance.
+     * @return A delegation that redirects invocations to a method of the specified method's result.
      */
-    public static MethodDelegation toGetter(MethodDescription method, MethodGraph.Compiler methodGraphCompiler) {
-        return withDefaultConfiguration().toGetter(method, methodGraphCompiler);
+    public static MethodDelegation toGetter(String methodName, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().toGetter(methodName, methodGraphCompiler);
     }
 
     /**
@@ -1067,7 +1068,7 @@ public class MethodDelegation implements Implementation.Composable {
         @HashCodeAndEqualsPlugin.Enhance
         class ForGetter implements ImplementationDelegate {
 
-        	protected final MethodDescription method;
+        	protected final String methodName;
             /**
              * The method graph compiler to use.
              */
@@ -1091,19 +1092,27 @@ public class MethodDelegation implements Implementation.Composable {
              * @param parameterBinders    The parameter binders to use.
              * @param matcher             The matcher to use for filtering methods.
              */
-            protected ForGetter(MethodDescription method,
+            protected ForGetter(String methodName,
                                MethodGraph.Compiler methodGraphCompiler,
                                List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                                ElementMatcher<? super MethodDescription> matcher) {
-                this.method = method;
+                this.methodName = methodName;
                 this.methodGraphCompiler = methodGraphCompiler;
                 this.parameterBinders = parameterBinders;
                 this.matcher = matcher;
             }
 
-            @Override
+            @SuppressWarnings("unchecked")
+			@Override
             public Compiled compile(TypeDescription instrumentedType) {
-            	if(method.getParameters().size()!=0) throw new IllegalStateException(method + " cannot have any parameters.");
+            	List<MethodDescription> methods=(List<MethodDescription>)methodGraphCompiler.compile(instrumentedType).listNodes().asMethodList().filter(
+            			named(methodName).and(takesArguments(0)).and(not(returns(TypeDescription.VOID)))
+            		);
+            	if(methods.size()!=1) {
+            		throw new IllegalStateException(instrumentedType + " does not define method without arguments with name " + methodName);
+            	}
+            	MethodDescription method=methods.get(0);
+            	
                 if (!method.getReturnType().asErasure().isVisibleTo(instrumentedType)) {
                     throw new IllegalStateException(method + " is not visible to " + instrumentedType);
                 } else {
@@ -1647,11 +1656,11 @@ public class MethodDelegation implements Implementation.Composable {
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
          * a delegation target if the delegation is targeting the instrumented type.
          *
-         * @param name Method to call description
-         * @return A delegation that redirects invocations to a method of the specified field's instance.
+         * @param methodName Method name to call
+         * @return A delegation that redirects invocations to a method of the specified method's result.
          */
-        public MethodDelegation toGetter(MethodDescription method) {
-            return toGetter(method, MethodGraph.Compiler.DEFAULT);
+        public MethodDelegation toGetter(String methodName) {
+            return toGetter(methodName, MethodGraph.Compiler.DEFAULT);
         }
 
         /**
@@ -1661,14 +1670,14 @@ public class MethodDelegation implements Implementation.Composable {
          * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
          * a delegation target if the delegation is targeting the instrumented type.
          *
-         * @param method              Method to call description
+         * @param methodName Method name to call
          * @param fieldLocatorFactory The field locator factory to use.
          * @param methodGraphCompiler The method graph compiler to use.
-         * @return A delegation that redirects invocations to a method of the specified field's instance.
+         * @return A delegation that redirects invocations to a method of the specified method's result.
          */
-        public MethodDelegation toGetter(MethodDescription method, MethodGraph.Compiler methodGraphCompiler) {
+        public MethodDelegation toGetter(String methodName, MethodGraph.Compiler methodGraphCompiler) {
             return new MethodDelegation(new ImplementationDelegate.ForGetter(
-            		method,
+            		methodName,
                     methodGraphCompiler,
                     parameterBinders,
                     matcher), parameterBinders, ambiguityResolver, bindingResolver);
