@@ -9,6 +9,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
@@ -1217,6 +1218,20 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.ofType(ElementMatchers.is(URLClassLoader.class)).matches(classLoader), is(true));
         assertThat(ElementMatchers.ofType(ElementMatchers.is(ClassLoader.class)).matches(classLoader), is(false));
         assertThat(ElementMatchers.ofType(ElementMatchers.is(URLClassLoader.class)).matches(null), is(false));
+    }
+
+    @Test
+    public void testIsPrimitive() {
+        assertThat(ElementMatchers.isPrimitive().matches(TypeDescription.VOID), is(true));
+        assertThat(ElementMatchers.isPrimitive().matches(TypeDescription.ForLoadedType.of(int.class)), is(true));
+        assertThat(ElementMatchers.isPrimitive().matches(TypeDescription.OBJECT), is(false));
+    }
+
+    @Test
+    public void testIsArray() {
+        assertThat(ElementMatchers.isArray().matches(TypeDescription.VOID), is(false));
+        assertThat(ElementMatchers.isArray().matches(TypeDescription.ForLoadedType.of(int[].class)), is(true));
+        assertThat(ElementMatchers.isArray().matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
