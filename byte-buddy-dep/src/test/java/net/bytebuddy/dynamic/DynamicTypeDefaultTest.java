@@ -36,6 +36,7 @@ public class DynamicTypeDefaultTest {
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
+    @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     private static final byte[] BINARY_FIRST = new byte[]{1, 2, 3}, BINARY_SECOND = new byte[]{4, 5, 6}, BINARY_THIRD = new byte[]{7, 8, 9};
