@@ -23,7 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class MethodDelegationTest<T extends CallTraceable> {
 
-    private static final String FOO = "foo", BAR = "bar", FIELD_NAME = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final byte BYTE_MULTIPLICATOR = 3;
 
@@ -138,18 +138,46 @@ public class MethodDelegationTest<T extends CallTraceable> {
     public void testInstanceFieldBinding() throws Exception {
         DynamicType.Loaded<T> loaded = new ByteBuddy()
                 .subclass(sourceType)
-                .defineField(FIELD_NAME, targetType, Visibility.PUBLIC)
+                .defineField(QUX, targetType, Visibility.PUBLIC)
                 .method(isDeclaredBy(sourceType))
                 .intercept(MethodDelegation.withDefaultConfiguration()
                         .filter(isDeclaredBy(targetType))
-                        .toField(FIELD_NAME))
+                        .toField(QUX))
                 .make()
                 .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         T instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        Field field = loaded.getLoaded().getDeclaredField(FIELD_NAME);
+        Field field = loaded.getLoaded().getDeclaredField(QUX);
+        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
+        assertThat(field.getType(), CoreMatchers.<Class<?>>is(targetType));
+        field.setAccessible(true);
+        field.set(instance, targetType.getDeclaredConstructor().newInstance());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(sourceType)));
+        assertThat(instance, instanceOf(sourceType));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
+        instance.assertZeroCalls();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMethodReturnBinding() throws Exception {
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(sourceType)
+                .defineField(QUX, targetType, Visibility.PUBLIC)
+                .defineMethod(QUX, targetType, Visibility.PUBLIC).intercept(FieldAccessor.ofField(QUX))
+                .method(isDeclaredBy(sourceType))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .filter(isDeclaredBy(targetType))
+                        .toMethodReturnOf(QUX))
+                .make()
+                .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        T instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        Field field = loaded.getLoaded().getDeclaredField(QUX);
         assertThat(field.getModifiers(), is(Modifier.PUBLIC));
         assertThat(field.getType(), CoreMatchers.<Class<?>>is(targetType));
         field.setAccessible(true);

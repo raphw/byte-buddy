@@ -1983,6 +1983,26 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a type if it is primitive.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that determines if a type is primitive.
+     */
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> isPrimitive() {
+        return new PrimitiveTypeMatcher<T>();
+    }
+
+    /**
+     * Matches a type if it is an array type.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that determines if a type is an array type.
+     */
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> isArray() {
+        return new ArrayTypeMatcher<T>();
+    }
+
+    /**
      * Matches a field's generic type against the provided matcher.
      *
      * @param fieldType The field type to match.
