@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. October 2018: version 1.9.2
+
+- Allow for delegation to method result for `MethodDelegation`.
+- Extend `MemberSubstitution` to allow for delegating to matched member.
+- Create multi-release jar for module-info carrying artifacts.
+- Properly handle directory elements in plugin engine with in-memory or folder target.
+
 ### 5. October 2018: version 1.9.1
 
 - Minor API change of `Plugin.Engine.Source` to allow for closing resources that need to be opened.
