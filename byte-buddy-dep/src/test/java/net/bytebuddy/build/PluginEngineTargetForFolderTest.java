@@ -142,6 +142,20 @@ public class PluginEngineTargetForFolderTest {
         assertThat(file.getParentFile().delete(), is(true));
     }
 
+    @Test
+    public void testIgnoreFolderElement() throws Exception {
+        Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
+        when(element.getName()).thenReturn(FOO + "/");
+        Plugin.Engine.Target.Sink sink = new Plugin.Engine.Target.ForFolder(folder).write(Plugin.Engine.Source.Origin.NO_MANIFEST);
+        try {
+            sink.retain(element);
+        } finally {
+            sink.close();
+        }
+        verify(element).getName();
+        verifyNoMoreInteractions(element);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testCannotWriteRelativeLocation() throws Exception {
         Plugin.Engine.Target target = new Plugin.Engine.Target.ForFolder(folder);

@@ -567,6 +567,47 @@ public class MemberSubstitutionTest {
         }), is((Object) FOO));
     }
 
+    @Test
+    public void testFieldMatched() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithField(named(BAR)).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
+        assertThat(type.getDeclaredField(BAR).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testMethodMatched() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithMethod(named(BAR)).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(0));
+        assertThat(type.getDeclaredField(BAR).getInt(instance), is(1));
+    }
+
+    @Test
+    public void testMethodSelfDelegationSample() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(MatcherSelfInvokeSample.class)
+                .visit(MemberSubstitution.strict().method(named(BAR)).replaceWithInstrumentedMethod().on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object instance = type.getConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO, int.class).invoke(instance, 0), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(instance), is(1));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
@@ -674,6 +715,70 @@ public class MemberSubstitutionTest {
                 .redefine(OptionalTarget.class)
                 .visit(MemberSubstitution.relaxed().method(named(BAR)).stub().on(named(RUN)))
                 .make(TypePool.Empty.INSTANCE), notNullValue(DynamicType.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoParametersNoMemberFieldMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWithField(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoParametersNoMemberMethodMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(FOO)).replaceWithMethod(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrimitiveParametersNoMemberFieldMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(FOO + BAR)).replaceWithField(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPrimitiveParametersNoMemberMethodMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(FOO + BAR)).replaceWithMethod(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayParametersNoMemberFieldMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(QUX + BAZ)).replaceWithField(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayParametersNoMemberMethodMatch() throws Exception {
+        new ByteBuddy()
+                .redefine(ValidationTarget.class)
+                .visit(MemberSubstitution.strict().method(named(QUX + BAZ)).replaceWithMethod(any()).on(named(BAZ)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldMatchedNoTarget() throws Exception {
+        new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithField(none()).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodMatchedNoTarget() throws Exception {
+        new ByteBuddy()
+                .redefine(MatcherSample.class)
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWithMethod(none()).on(named(FOO)))
+                .make();
     }
 
     public static class FieldAccessSample {
@@ -819,6 +924,36 @@ public class MemberSubstitutionTest {
         }
     }
 
+    public static class MatcherSample {
+
+        public int foo, bar;
+
+        public void foo() {
+            foo = 1;
+        }
+
+        public void bar(int value) {
+            bar = value;
+        }
+    }
+
+    public static class MatcherSelfInvokeSample {
+
+        public int foo;
+
+        public void foo(int value) {
+            if (value == 0) {
+                bar(value + 1);
+            } else {
+                foo = value;
+            }
+        }
+
+        public void bar(int value) {
+            throw new AssertionError();
+        }
+    }
+
     @SuppressWarnings("unused")
     public static class ValidationTarget {
 
@@ -842,6 +977,20 @@ public class MemberSubstitutionTest {
 
         public String qux() {
             return null;
+        }
+
+        public static void foobar(int value) {
+            /* empty */
+        }
+
+        public static void quxbaz(Object[] value) {
+            /* empty */
+        }
+
+        public static String baz() {
+            foobar(0);
+            quxbaz(null);
+            return foo();
         }
     }
 

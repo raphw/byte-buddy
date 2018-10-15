@@ -2880,22 +2880,25 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void retain(Source.Element element) throws IOException {
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    try {
-                        InputStream inputStream = element.getInputStream();
+                    String name = element.getName();
+                    if (!name.endsWith("/")) {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                         try {
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = inputStream.read(buffer)) != -1) {
-                                outputStream.write(buffer, 0, length);
+                            InputStream inputStream = element.getInputStream();
+                            try {
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = inputStream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, length);
+                                }
+                            } finally {
+                                inputStream.close();
                             }
                         } finally {
-                            inputStream.close();
+                            outputStream.close();
                         }
-                    } finally {
-                        outputStream.close();
+                        storage.put(element.getName(), outputStream.toByteArray());
                     }
-                    storage.put(element.getName(), outputStream.toByteArray());
                 }
 
                 /**
@@ -2998,28 +3001,31 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                  * {@inheritDoc}
                  */
                 public void retain(Source.Element element) throws IOException {
-                    File target = new File(folder, element.getName()), resolved = element.resolveAs(File.class);
-                    if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath())) {
-                        throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
-                    } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
-                        throw new IOException("Could not create directory: " + target.getParent());
-                    } else if (DISPATCHER.isAlive() && resolved != null && !resolved.equals(target)) {
-                        DISPATCHER.copy(resolved, target);
-                    } else if (!target.equals(resolved)) {
-                        InputStream inputStream = element.getInputStream();
-                        try {
-                            OutputStream outputStream = new FileOutputStream(target);
+                    String name = element.getName();
+                    if (!name.endsWith("/")) {
+                        File target = new File(folder, name), resolved = element.resolveAs(File.class);
+                        if (!target.getCanonicalPath().startsWith(folder.getCanonicalPath())) {
+                            throw new IllegalArgumentException(target + " is not a subdirectory of " + folder);
+                        } else if (!target.getParentFile().isDirectory() && !target.getParentFile().mkdirs()) {
+                            throw new IOException("Could not create directory: " + target.getParent());
+                        } else if (DISPATCHER.isAlive() && resolved != null && !resolved.equals(target)) {
+                            DISPATCHER.copy(resolved, target);
+                        } else if (!target.equals(resolved)) {
+                            InputStream inputStream = element.getInputStream();
                             try {
-                                byte[] buffer = new byte[1024];
-                                int length;
-                                while ((length = inputStream.read(buffer)) != -1) {
-                                    outputStream.write(buffer, 0, length);
+                                OutputStream outputStream = new FileOutputStream(target);
+                                try {
+                                    byte[] buffer = new byte[1024];
+                                    int length;
+                                    while ((length = inputStream.read(buffer)) != -1) {
+                                        outputStream.write(buffer, 0, length);
+                                    }
+                                } finally {
+                                    outputStream.close();
                                 }
                             } finally {
-                                outputStream.close();
+                                inputStream.close();
                             }
-                        } finally {
-                            inputStream.close();
                         }
                     }
                 }

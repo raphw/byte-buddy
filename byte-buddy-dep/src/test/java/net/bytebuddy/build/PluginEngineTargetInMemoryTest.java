@@ -11,8 +11,7 @@ import java.util.jar.Manifest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PluginEngineTargetInMemoryTest {
 
@@ -53,5 +52,19 @@ public class PluginEngineTargetInMemoryTest {
         assertThat(target.getStorage().size(), is(1));
         Manifest readManifest = new Manifest(new ByteArrayInputStream(target.getStorage().get(JarFile.MANIFEST_NAME)));
         assertThat(readManifest.getMainAttributes().get(Attributes.Name.MANIFEST_VERSION), is((Object) "1.0"));
+    }
+
+    @Test
+    public void testIgnoreFolderElement() throws Exception {
+        Plugin.Engine.Source.Element element = mock(Plugin.Engine.Source.Element.class);
+        when(element.getName()).thenReturn(FOO + "/");
+        Plugin.Engine.Target.Sink sink = new Plugin.Engine.Target.InMemory().write(Plugin.Engine.Source.Origin.NO_MANIFEST);
+        try {
+            sink.retain(element);
+        } finally {
+            sink.close();
+        }
+        verify(element).getName();
+        verifyNoMoreInteractions(element);
     }
 }
