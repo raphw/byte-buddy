@@ -958,7 +958,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             } else if (fields.size() > 1) {
                                 throw new IllegalStateException("Ambiguous field location of " + fields);
                             }
-                            current = instrumentedType.getSuperClass();
+                            current = current.getSuperClass();
                         } while (current != null);
                         throw new IllegalStateException("Cannot locate field matching " + matcher + " on " + targetType);
                     }
