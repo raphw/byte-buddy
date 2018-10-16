@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -33,26 +34,23 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
      * {@inheritDoc}
      */
     public boolean matches(T target) {
-        Set<TypeDescription> checkedInterfaces = new HashSet<TypeDescription>();
+        Set<TypeDescription> previous = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
-            if (matcher.matches(typeDefinition.asGenericType()) || hasInterface(typeDefinition, checkedInterfaces)) {
+            if (!previous.add(typeDefinition.asErasure()) { // Main type can be an interface.
+                return false; // Avoids a life-lock when encountering a recursive type-definition.
+            } else if (matcher.matches(typeDefinition.asGenericType())) {
                 return true;
             }
-        }
-        return false;
-    }
-
-    /**
-     * Matches a type's interfaces against the provided matcher.
-     *
-     * @param typeDefinition    The type for which to check all implemented interfaces.
-     * @param checkedInterfaces The interfaces that have already been checked.
-     * @return {@code true} if any interface matches the supplied matcher.
-     */
-    private boolean hasInterface(TypeDefinition typeDefinition, Set<TypeDescription> checkedInterfaces) {
-        for (TypeDefinition interfaceType : typeDefinition.getInterfaces()) {
-            if (checkedInterfaces.add(interfaceType.asErasure()) && (matcher.matches(interfaceType.asGenericType()) || hasInterface(interfaceType, checkedInterfaces))) {
-                return true;
+            LinkedList<TypeDefinition> interfaceTypes = new LinkedList<TypeDefinition>(typeDefinition.getInterfaces());
+            while (!interfaceTypes.isEmpty()) {
+                TypeDefinition interfaceType = interfaceTypes.removeFirst();
+                if (previous.add(interfaceType.asErasure())) {
+                    if (matcher.matches(interfaceType.asGenericType())) {
+                        return true;
+                    } else {
+                        interfaceTypes.addAll(interfaceType.getInterfaces());
+                    }
+                }
             }
         }
         return false;
