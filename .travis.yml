@@ -3,6 +3,10 @@ language: java
 sudo: false
 dist: trusty
 
+branches:
+  except:
+  - gh-pages
+
 before_install:
   - unset _JAVA_OPTIONS
 
