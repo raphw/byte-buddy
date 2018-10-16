@@ -33,9 +33,7 @@ public class DeclaringAnnotationMatcher<T extends AnnotationSource> extends Elem
         return matcher.matches(target.getDeclaredAnnotations());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "declaresAnnotations(" + matcher + ")";
     }

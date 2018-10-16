@@ -43,9 +43,7 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "ofSize(" + size + ')';
     }

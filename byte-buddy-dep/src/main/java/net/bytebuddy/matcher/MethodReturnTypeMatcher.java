@@ -33,9 +33,7 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
         return matcher.matches(target.getReturnType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "returns(" + matcher + ")";
     }

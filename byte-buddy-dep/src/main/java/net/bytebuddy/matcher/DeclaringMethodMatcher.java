@@ -34,9 +34,7 @@ public class DeclaringMethodMatcher<T extends TypeDefinition> extends ElementMat
         return matcher.matches(target.getDeclaredMethods());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "declaresMethods(" + matcher + ")";
     }

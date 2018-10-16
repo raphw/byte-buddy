@@ -33,9 +33,7 @@ public class MethodParameterTypeMatcher<T extends ParameterDescription> extends 
         return matcher.matches(target.getType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "hasType(" + matcher + ")";
     }

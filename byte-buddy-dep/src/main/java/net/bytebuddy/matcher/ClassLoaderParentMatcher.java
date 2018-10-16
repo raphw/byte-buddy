@@ -38,9 +38,7 @@ public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatc
         return target == null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isParentOf(" + classLoader + ')';
     }

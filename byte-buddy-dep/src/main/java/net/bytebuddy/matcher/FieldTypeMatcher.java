@@ -33,9 +33,7 @@ public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher
         return matcher.matches(target.getType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "ofType(" + matcher + ")";
     }

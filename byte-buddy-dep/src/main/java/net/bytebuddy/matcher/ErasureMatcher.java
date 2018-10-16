@@ -35,9 +35,7 @@ public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Jun
         return matcher.matches(target.asErasure());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "erasure(" + matcher + ")";
     }

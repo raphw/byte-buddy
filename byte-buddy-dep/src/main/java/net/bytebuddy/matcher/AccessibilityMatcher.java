@@ -33,9 +33,7 @@ public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatc
         return target.isAccessibleTo(typeDescription);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isAccessibleTo(" + typeDescription + ")";
     }

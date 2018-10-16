@@ -37,9 +37,7 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "whereOne(" + matcher + ")";
     }

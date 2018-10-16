@@ -83,9 +83,7 @@ public class MethodOverrideMatcher<T extends MethodDescription> extends ElementM
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isOverriddenFrom(" + matcher + ")";
     }

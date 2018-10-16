@@ -33,9 +33,7 @@ public class MethodExceptionTypeMatcher<T extends MethodDescription> extends Ele
         return matcher.matches(target.getExceptionTypes());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "exceptions(" + matcher + ")";
     }

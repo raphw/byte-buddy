@@ -38,9 +38,7 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
         return mode.matches(value, target);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return mode.getDescription() + '(' + value + ')';
     }

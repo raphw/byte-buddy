@@ -33,9 +33,7 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
         return sort.isSort(target);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return sort.getDescription();
     }
@@ -125,13 +123,6 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
          */
         protected String getDescription() {
             return description;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public String toString() {
-            return "MethodSortMatcher.Sort." + name();
         }
     }
 }

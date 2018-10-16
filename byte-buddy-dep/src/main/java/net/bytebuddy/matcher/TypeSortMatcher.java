@@ -32,9 +32,7 @@ public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Ju
         return matcher.matches(target.getSort());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "ofSort(" + matcher + ')';
     }

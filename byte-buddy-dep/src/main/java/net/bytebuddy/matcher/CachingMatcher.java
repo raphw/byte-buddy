@@ -60,9 +60,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         return cached;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "cached(" + matcher + ")";
     }

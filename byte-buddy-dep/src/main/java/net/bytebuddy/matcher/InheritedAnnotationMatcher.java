@@ -33,9 +33,7 @@ public class InheritedAnnotationMatcher<T extends TypeDescription> extends Eleme
         return matcher.matches(target.getInheritedAnnotations());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "inheritsAnnotations(" + matcher + ")";
     }

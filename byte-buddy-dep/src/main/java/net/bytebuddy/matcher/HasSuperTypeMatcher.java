@@ -36,7 +36,7 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
     public boolean matches(T target) {
         Set<TypeDescription> previous = new HashSet<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
-            if (!previous.add(typeDefinition.asErasure()) { // Main type can be an interface.
+            if (!previous.add(typeDefinition.asErasure())) { // Main type can be an interface.
                 return false; // Avoids a life-lock when encountering a recursive type-definition.
             } else if (matcher.matches(typeDefinition.asGenericType())) {
                 return true;
@@ -56,9 +56,7 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "hasSuperType(" + matcher + ")";
     }

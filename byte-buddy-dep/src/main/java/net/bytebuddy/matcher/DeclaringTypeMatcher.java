@@ -36,9 +36,7 @@ public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatch
         return declaringType != null && matcher.matches(declaringType.asGenericType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "declaredBy(" + matcher + ")";
     }

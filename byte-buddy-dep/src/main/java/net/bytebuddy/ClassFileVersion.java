@@ -348,9 +348,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 : getMajorVersion() - other.getMajorVersion());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "Java " + getJavaVersion();
     }

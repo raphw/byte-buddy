@@ -42,9 +42,7 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "failSafe(try(" + matcher + ") or " + fallback + ")";
     }

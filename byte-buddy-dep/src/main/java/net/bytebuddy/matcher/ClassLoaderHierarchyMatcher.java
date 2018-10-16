@@ -39,9 +39,7 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
         return matcher.matches(null);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "hasChild(" + matcher + ')';
     }

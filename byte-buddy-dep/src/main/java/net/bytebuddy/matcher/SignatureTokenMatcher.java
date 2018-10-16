@@ -32,9 +32,7 @@ public class SignatureTokenMatcher<T extends MethodDescription> extends ElementM
         return matcher.matches(target.asSignatureToken());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "signature(" + matcher + ")";
     }

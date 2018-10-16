@@ -33,9 +33,7 @@ public class AnnotationTypeMatcher<T extends AnnotationDescription> extends Elem
         return matcher.matches(target.getAnnotationType());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "ofAnnotationType(" + matcher + ')';
     }

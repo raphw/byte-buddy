@@ -17,9 +17,7 @@ public class NullMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         return target == null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isNull()";
     }

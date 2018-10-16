@@ -39,9 +39,7 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
         return matcher.matches(target.getActualName());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "name(" + matcher + ")";
     }

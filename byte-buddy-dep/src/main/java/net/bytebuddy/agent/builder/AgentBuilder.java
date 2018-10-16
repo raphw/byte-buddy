@@ -9435,13 +9435,6 @@ public interface AgentBuilder {
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     return new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain);
                 }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String toString() {
-                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe." + name();
-                }
             }
 
             /**

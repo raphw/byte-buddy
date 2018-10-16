@@ -32,9 +32,7 @@ public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase
         return target != null && matcher.matches(TypeDescription.ForLoadedType.of(target.getClass()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "ofType(" + matcher + ")";
     }

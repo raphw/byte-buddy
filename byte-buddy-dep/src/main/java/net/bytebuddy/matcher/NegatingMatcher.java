@@ -31,9 +31,7 @@ public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         return !matcher.matches(target);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "not(" + matcher + ')';
     }

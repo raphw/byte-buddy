@@ -32,9 +32,7 @@ public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher
         return matcher.matches(target.getDescriptor());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "hasDescriptor(" + matcher + ")";
     }

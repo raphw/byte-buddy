@@ -34,9 +34,7 @@ public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatc
         return matcher.matches(target.getDeclaredFields());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "declaresFields(" + matcher + ")";
     }

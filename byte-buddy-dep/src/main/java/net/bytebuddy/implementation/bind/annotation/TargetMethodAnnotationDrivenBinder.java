@@ -128,9 +128,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return methodDelegationBindingBuilder.build(methodTermination);
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        @Override
         public String toString() {
             return candidate.toString();
         }

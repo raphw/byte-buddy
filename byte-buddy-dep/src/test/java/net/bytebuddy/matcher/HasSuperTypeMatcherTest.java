@@ -65,4 +65,11 @@ public class HasSuperTypeMatcherTest extends AbstractElementMatcherTest<HasSuper
     public void testNoMatch() throws Exception {
         assertThat(new HasSuperTypeMatcher<TypeDescription>(typeMatcher).matches(typeDescription), is(false));
     }
+
+    @Test
+    public void testNoMatchRecursive() throws Exception {
+        when(typeDescription.getSuperClass()).thenReturn(superType);
+        when(superType.getSuperClass()).thenReturn(superType);
+        assertThat(new HasSuperTypeMatcher<TypeDescription>(typeMatcher).matches(typeDescription), is(false));
+    }
 }

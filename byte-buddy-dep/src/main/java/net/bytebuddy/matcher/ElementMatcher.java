@@ -107,9 +107,7 @@ public interface ElementMatcher<T> {
                 return left.matches(target) && right.matches(target);
             }
 
-            /**
-             * {@inheritDoc}
-             */
+            @Override
             public String toString() {
                 return "(" + left + " and " + right + ')';
             }
@@ -147,9 +145,7 @@ public interface ElementMatcher<T> {
                 return left.matches(target) || right.matches(target);
             }
 
-            /**
-             * {@inheritDoc}
-             */
+            @Override
             public String toString() {
                 return "(" + left + " or " + right + ')';
             }

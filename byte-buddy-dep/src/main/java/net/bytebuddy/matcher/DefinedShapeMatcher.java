@@ -34,9 +34,7 @@ public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, 
         return matcher.matches(target.asDefined());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isDefinedAs(" + matcher + ')';
     }

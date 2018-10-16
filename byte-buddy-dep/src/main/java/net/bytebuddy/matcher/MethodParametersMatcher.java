@@ -34,9 +34,7 @@ public class MethodParametersMatcher<T extends MethodDescription> extends Elemen
         return matcher.matches(target.getParameters());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "hasParameter(" + matcher + ")";
     }

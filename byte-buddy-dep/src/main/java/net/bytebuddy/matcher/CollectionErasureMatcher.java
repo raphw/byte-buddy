@@ -40,9 +40,7 @@ public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinitio
         return matcher.matches(typeDescriptions);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "erasures(" + matcher + ')';
     }

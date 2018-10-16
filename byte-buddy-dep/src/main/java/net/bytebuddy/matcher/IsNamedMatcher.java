@@ -18,9 +18,7 @@ public class IsNamedMatcher<T extends NamedElement.WithOptionalName> extends Ele
         return target.isNamed();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isNamed()";
     }

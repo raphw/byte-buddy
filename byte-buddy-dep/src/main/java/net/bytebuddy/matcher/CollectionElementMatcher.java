@@ -49,9 +49,7 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
         return iterator.hasNext() && matcher.matches(iterator.next());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "with(" + index + " matches " + matcher + ")";
     }

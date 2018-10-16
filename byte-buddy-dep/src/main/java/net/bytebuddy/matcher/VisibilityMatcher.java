@@ -33,9 +33,7 @@ public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher
         return target.isVisibleTo(typeDescription);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "isVisibleTo(" + typeDescription + ")";
     }

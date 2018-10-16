@@ -31,9 +31,7 @@ public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         return value.equals(target);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return "is(" + value + ")";
     }

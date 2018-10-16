@@ -48,9 +48,7 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("containing(");
         boolean first = true;

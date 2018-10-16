@@ -31,9 +31,7 @@ public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
         return matches;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return Boolean.toString(matches);
     }

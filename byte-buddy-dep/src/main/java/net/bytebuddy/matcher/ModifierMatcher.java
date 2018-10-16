@@ -33,9 +33,7 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         return (mode.getModifiers() & target.getModifiers()) != 0;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public String toString() {
         return mode.getDescription();
     }
@@ -172,13 +170,6 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
          */
         protected int getModifiers() {
             return modifiers;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public String toString() {
-            return "ModifierMatcher.Mode." + name();
         }
     }
 }
