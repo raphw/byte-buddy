@@ -71,6 +71,7 @@
         <version.plugin.shade>3.2.0</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
+        <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <version.plugin.jar>3.0.2</version.plugin.jar>
         <version.plugin.plugin>3.5.2</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
@@ -224,7 +225,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.12</version>
+                <version>${version.plugin.buildhelp}</version>
                 <executions>
                     <execution>
                         <id>timestamp-property</id>

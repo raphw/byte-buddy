@@ -23,7 +23,6 @@
 
     <properties>
         <version.plugin.antrun>1.8</version.plugin.antrun>
-        <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <version.plugin.gradlerun>1.0.10</version.plugin.gradlerun>
         <version.plugin.directory>0.2</version.plugin.directory>
         <version.gradle>4.5</version.gradle>
