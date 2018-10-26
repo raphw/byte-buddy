@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 
 public class MethodCallTest {
 
-    private static final String FOO = "foo", BAR = "bar", INVOKE_FOO = "invokeFoo";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", INVOKE_FOO = "invokeFoo";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
@@ -1020,6 +1020,56 @@ public class MethodCallTest {
         traceable.assertOnlyCall(FOO);
     }
 
+    @Test
+    public void testFieldSetting() throws Exception {
+        DynamicType.Loaded<FieldSetting> loaded = new ByteBuddy()
+                .subclass(FieldSetting.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(FieldSetting.class.getMethod(BAR)).setsField(FieldSetting.class.getField(FOO)))
+                .make()
+                .load(FieldSetting.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        FieldSetting instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.foo();
+        assertThat(instance.foo, is((Object) instance.bar()));
+    }
+
+    @Test
+    public void testFieldSettingWithMatcher() throws Exception {
+        DynamicType.Loaded<FieldSetting> loaded = new ByteBuddy()
+                .subclass(FieldSetting.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(FieldSetting.class.getMethod(BAR)).setsField(ElementMatchers.is(FieldSetting.class.getField(FOO))))
+                .make()
+                .load(FieldSetting.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        FieldSetting instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        instance.foo();
+        assertThat(instance.foo, is((Object) instance.bar()));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldSettingLast() throws Exception {
+        new ByteBuddy()
+                .subclass(FieldSetting.class)
+                .method(named(QUX))
+                .intercept(MethodCall.invoke(FieldSetting.class.getMethod(BAR)).setsField(FieldSetting.class.getField(FOO)))
+                .make();
+    }
+
+    @Test
+    public void testFieldSettingLastChained() throws Exception {
+        DynamicType.Loaded<FieldSetting> loaded = new ByteBuddy()
+                .subclass(FieldSetting.class)
+                .method(named(QUX))
+                .intercept(MethodCall.invoke(FieldSetting.class.getMethod(BAR))
+                        .setsField(ElementMatchers.is(FieldSetting.class.getField(FOO)))
+                        .andThen(StubMethod.INSTANCE))
+                .make()
+                .load(FieldSetting.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        FieldSetting instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.qux(), nullValue(Object.class));
+        assertThat(instance.foo, is((Object) instance.bar()));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testDefaultMethodNotCompatible() throws Exception {
         new ByteBuddy()
@@ -1425,6 +1475,23 @@ public class MethodCallTest {
 
         public String bar(String[] arg) {
             return arg[0] + arg[1];
+        }
+    }
+
+    public static class FieldSetting {
+
+        public String foo;
+
+        public void foo() {
+            throw new AssertionError();
+        }
+
+        public String bar() {
+            return FOO;
+        }
+
+        public String qux() {
+            throw new AssertionError();
         }
     }
 }

@@ -18,6 +18,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
@@ -44,13 +45,13 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * This {@link Implementation} allows the invocation of a specified method while
@@ -87,7 +88,7 @@ public class MethodCall implements Implementation.Composable {
     /**
      * The termination handler to use.
      */
-    protected final TerminationHandler terminationHandler;
+    protected final TerminationHandler.Factory terminationHandler;
 
     /**
      * The assigner to use.
@@ -116,7 +117,7 @@ public class MethodCall implements Implementation.Composable {
                          List<ArgumentLoader.Factory> argumentLoaders,
                          List<InstrumentedType.Prepareable> preparables,
                          MethodInvoker methodInvoker,
-                         TerminationHandler terminationHandler,
+                         TerminationHandler.Factory terminationHandler,
                          Assigner assigner,
                          Assigner.Typing typing) {
         this.methodLocator = methodLocator;
@@ -280,7 +281,7 @@ public class MethodCall implements Implementation.Composable {
                 Collections.<ArgumentLoader.Factory>emptyList(),
                 Collections.<InstrumentedType.Prepareable>emptyList(),
                 MethodInvoker.ForContextualInvocation.INSTANCE,
-                TerminationHandler.RETURNING,
+                TerminationHandler.Simple.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
     }
@@ -577,6 +578,53 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
+     * Sets the result of the method call as a value of the specified field. If the instrumented method does not
+     * return {@code void}, this instrumentation must be chained with another instrumentation.
+     *
+     * @param field The field to set.
+     * @return A new instance of this method call that sets the resulting value as the specified field's value.
+     */
+    public FieldSetting setsField(Field field) {
+        return setsField(new FieldDescription.ForLoadedField(field));
+    }
+
+    /**
+     * Sets the result of the method call as a value of the specified field. If the instrumented method does not
+     * return {@code void}, this instrumentation must be chained with another instrumentation.
+     *
+     * @param fieldDescription The field to set.
+     * @return A new instance of this method call that sets the resulting value as the specified field's value.
+     */
+    public FieldSetting setsField(FieldDescription fieldDescription) {
+        return new FieldSetting(new MethodCall(methodLocator,
+                targetHandler,
+                argumentLoaders,
+                preparables,
+                methodInvoker,
+                new TerminationHandler.FieldSetting.Explicit(fieldDescription),
+                assigner,
+                typing));
+    }
+
+    /**
+     * Sets the result of the method call as a value of the specified field. If the instrumented method does not
+     * return {@code void}, this instrumentation must be chained with another instrumentation.
+     *
+     * @param matcher A matcher that locates a field in the instrumented type's hierarchy.
+     * @return A new instance of this method call that sets the resulting value as the specified field's value.
+     */
+    public FieldSetting setsField(ElementMatcher<? super FieldDescription> matcher) {
+        return new FieldSetting(new MethodCall(methodLocator,
+                targetHandler,
+                argumentLoaders,
+                preparables,
+                methodInvoker,
+                new TerminationHandler.FieldSetting.Implicit(matcher),
+                assigner,
+                typing));
+    }
+
+    /**
      * Defines an assigner to be used for assigning values to the parameters of the invoked method. This assigner
      * is also used for assigning the invoked method's return value to the return type of the instrumented method,
      * if this method is not chained with
@@ -587,7 +635,7 @@ public class MethodCall implements Implementation.Composable {
      * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
      * @return This method call using the provided assigner.
      */
-    public Implementation.Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
+    public Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
@@ -607,7 +655,7 @@ public class MethodCall implements Implementation.Composable {
                 argumentLoaders,
                 preparables,
                 methodInvoker,
-                TerminationHandler.DROPPING,
+                TerminationHandler.Simple.DROPPING,
                 assigner,
                 typing), implementation);
     }
@@ -621,7 +669,7 @@ public class MethodCall implements Implementation.Composable {
                 argumentLoaders,
                 preparables,
                 methodInvoker,
-                TerminationHandler.DROPPING,
+                TerminationHandler.Simple.DROPPING,
                 assigner,
                 typing), implementation);
     }
@@ -640,7 +688,7 @@ public class MethodCall implements Implementation.Composable {
      * {@inheritDoc}
      */
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(implementationTarget);
+        return new Appender(implementationTarget, terminationHandler.make(implementationTarget.getInstrumentedType()));
     }
 
     /**
@@ -1076,7 +1124,7 @@ public class MethodCall implements Implementation.Composable {
                 } else if (target.getType().isArray()) {
                     componentType = target.getType().getComponentType();
                 } else {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot set method parameter array for non-array type: " + target);
                 }
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
                 for (ParameterDescription parameter : parameters) {
@@ -1482,7 +1530,7 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot access non-static " + methodDescription + " from " + instrumentedMethod);
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false),
+                        methodCall.toStackManipulation(implementationTarget, instrumentedMethod, TerminationHandler.Simple.IGNORING),
                         assigner.assign(methodDescription.getReturnType(), target.getType(), typing)
                 );
                 if (!stackManipulation.isValid()) {
@@ -2011,7 +2059,9 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + methodDescription.getReturnType());
                 }
 
-                return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget, instrumentedMethod, false), stackManipulation);
+                return new StackManipulation.Compound(methodCall.toStackManipulation(implementationTarget,
+                        instrumentedMethod,
+                        TerminationHandler.Simple.IGNORING), stackManipulation);
             }
 
             /**
@@ -2193,35 +2243,14 @@ public class MethodCall implements Implementation.Composable {
      * A termination handler is responsible to handle the return value of a method that is invoked via a
      * {@link net.bytebuddy.implementation.MethodCall}.
      */
-    protected enum TerminationHandler {
+    protected interface TerminationHandler {
 
         /**
-         * A termination handler that returns the invoked method's return value.
+         * Returns a preparing stack manipulation to apply prior to the method call.
+         *
+         * @return The stack manipulation to apply prior to the method call.
          */
-        RETURNING {
-            @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType().asGenericType()
-                        : invokedMethod.getReturnType(), instrumentedMethod.getReturnType(), typing);
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + instrumentedMethod);
-                }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(instrumentedMethod.getReturnType()));
-            }
-        },
-
-        /**
-         * A termination handler that drops the invoked method's return value.
-         */
-        DROPPING {
-            @Override
-            protected StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                return Removal.of(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType()
-                        : invokedMethod.getReturnType());
-            }
-        };
+        StackManipulation prepare();
 
         /**
          * Returns a stack manipulation that handles the method return.
@@ -2232,10 +2261,195 @@ public class MethodCall implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return A stack manipulation that handles the method return.
          */
-        protected abstract StackManipulation resolve(MethodDescription invokedMethod,
-                                                     MethodDescription instrumentedMethod,
-                                                     Assigner assigner,
-                                                     Assigner.Typing typing);
+        StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing);
+
+        /**
+         * A factory for creating a termination handler.
+         */
+        interface Factory {
+
+            /**
+             * Creates a termination handler for a given instrumented type.
+             *
+             * @param instrumentedType The instrumented type.
+             * @return A termination handler to apply for the instrumented type.
+             */
+            TerminationHandler make(TypeDescription instrumentedType);
+        }
+
+        /**
+         * Simple termination handler implementations.
+         */
+        enum Simple implements TerminationHandler, Factory {
+
+            /**
+             * A termination handler that returns the invoked method's return value.
+             */
+            RETURNING {
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+                    StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
+                            ? invokedMethod.getDeclaringType().asGenericType()
+                            : invokedMethod.getReturnType(), instrumentedMethod.getReturnType(), typing);
+                    if (!stackManipulation.isValid()) {
+                        throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + instrumentedMethod);
+                    }
+                    return new StackManipulation.Compound(stackManipulation, MethodReturn.of(instrumentedMethod.getReturnType()));
+                }
+            },
+
+            /**
+             * A termination handler that drops the invoked method's return value.
+             */
+            DROPPING {
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+                    return Removal.of(invokedMethod.isConstructor()
+                            ? invokedMethod.getDeclaringType()
+                            : invokedMethod.getReturnType());
+                }
+            },
+
+            /**
+             * A termination handler that does not apply any change.
+             */
+            IGNORING {
+                /**
+                 * {@inheritDoc}
+                 */
+                public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+                    return StackManipulation.Trivial.INSTANCE;
+                }
+            };
+
+            /**
+             * {@inheritDoc}
+             */
+            public TerminationHandler make(TypeDescription instrumentedType) {
+                return this;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation prepare() {
+                return StackManipulation.Trivial.INSTANCE;
+            }
+        }
+
+        /**
+         * A termination handler that sets a field.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class FieldSetting implements TerminationHandler {
+
+            /**
+             * The field to set.
+             */
+            private final FieldDescription fieldDescription;
+
+            /**
+             * Creates a new field-setting termination handler.
+             *
+             * @param fieldDescription The field to set.
+             */
+            protected FieldSetting(FieldDescription fieldDescription) {
+                this.fieldDescription = fieldDescription;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation prepare() {
+                return fieldDescription.isStatic()
+                        ? StackManipulation.Trivial.INSTANCE
+                        : MethodVariableAccess.loadThis();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = assigner.assign(invokedMethod.getReturnType(), fieldDescription.getType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign result of " + invokedMethod + " to " + fieldDescription);
+                }
+                return new StackManipulation.Compound(stackManipulation, FieldAccess.forField(fieldDescription).write());
+            }
+
+            /**
+             * A factory for a field-setting termination handler that locates a given field.
+             */
+            protected static class Explicit implements TerminationHandler.Factory {
+
+                /**
+                 * The matcher being used for locating a field.
+                 */
+                private final FieldDescription fieldDescription;
+
+                /**
+                 * Creates a factory for a field-setting termination handler.
+                 *
+                 * @param fieldDescription The field to set.
+                 */
+                protected Explicit(FieldDescription fieldDescription) {
+                    this.fieldDescription = fieldDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TerminationHandler make(TypeDescription instrumentedType) {
+                    if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+                        throw new IllegalStateException("Cannot set " + fieldDescription + " from " + instrumentedType);
+                    } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
+                        throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                    }
+                    return new FieldSetting(fieldDescription);
+                }
+            }
+
+            /**
+             * A factory for a field-setting termination handler that uses a matcher to locate the target field on the insturmented type.
+             */
+            protected static class Implicit implements TerminationHandler.Factory {
+
+                /**
+                 * The matcher being used for locating a field.
+                 */
+                private final ElementMatcher<? super FieldDescription> matcher;
+
+                /**
+                 * Creates a factory for a field-setting termination handler.
+                 *
+                 * @param matcher The matcher being used for locating a field.
+                 */
+                protected Implicit(ElementMatcher<? super FieldDescription> matcher) {
+                    this.matcher = matcher;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TerminationHandler make(TypeDescription instrumentedType) {
+                    TypeDefinition current = instrumentedType;
+                    do {
+                        FieldList<?> candidates = current.getDeclaredFields().filter(isAccessibleTo(instrumentedType).and(matcher));
+                        if (candidates.size() == 1) {
+                            return new FieldSetting(candidates.getOnly());
+                        } else if (candidates.size() == 2) {
+                            throw new IllegalStateException(matcher + " is ambigous and resolved: " + candidates);
+                        }
+                        current = current.getSuperClass();
+                    } while (current != null);
+                    throw new IllegalStateException(matcher + " does not locate any accessible fields for " + instrumentedType);
+                }
+            }
+        }
     }
 
     /**
@@ -2258,7 +2472,7 @@ public class MethodCall implements Implementation.Composable {
                     Collections.<ArgumentLoader.Factory>emptyList(),
                     Collections.<InstrumentedType.Prepareable>emptyList(),
                     MethodInvoker.ForContextualInvocation.INSTANCE,
-                    TerminationHandler.RETURNING,
+                    TerminationHandler.Simple.RETURNING,
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         }
@@ -2399,10 +2613,10 @@ public class MethodCall implements Implementation.Composable {
      *
      * @param implementationTarget The implementation target.
      * @param instrumentedMethod   The instrumented method.
-     * @param terminate            Determines whether the {@link MethodCall#terminationHandler} should be called.
+     * @param terminationHandler   The termination handler to apply.
      * @return The method call's stack manipulation.
      */
-    protected StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, boolean terminate) {
+    private StackManipulation toStackManipulation(Target implementationTarget, MethodDescription instrumentedMethod, TerminationHandler terminationHandler) {
         MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(),
                 targetHandler.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod),
                 instrumentedMethod);
@@ -2422,15 +2636,94 @@ public class MethodCall implements Implementation.Composable {
         for (ArgumentLoader argumentLoader : argumentLoaders) {
             argumentInstructions.add(argumentLoader.resolve(parameterIterator.next(), assigner, typing));
         }
-
         return new StackManipulation.Compound(
                 targetHandler.resolve(implementationTarget, invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(), assigner, typing),
                 new StackManipulation.Compound(argumentInstructions),
                 methodInvoker.invoke(invokedMethod, implementationTarget),
-                terminate ?
-                        terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
-                        : StackManipulation.Trivial.INSTANCE
+                terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
         );
+    }
+
+    /**
+     * A {@link MethodCall} that sets the call's result as the value of a field.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    public static class FieldSetting implements Composable {
+
+        /**
+         * The represented method call.
+         */
+        private final MethodCall methodCall;
+
+        /**
+         * Creates a new field setting method call.
+         *
+         * @param methodCall The represented method call.
+         */
+        protected FieldSetting(MethodCall methodCall) {
+            this.methodCall = methodCall;
+        }
+
+        /**
+         * Defines an assigner to be used for assigning values to the parameters of the invoked method. This assigner
+         * is also used for assigning the invoked method's return value to the field being set.
+         *
+         * @param assigner The assigner to use.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @return This field-setting method call using the provided assigner.
+         */
+        public Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new FieldSetting((MethodCall) methodCall.withAssigner(assigner, typing));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return methodCall.prepare(instrumentedType);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new ByteCodeAppender.Compound(methodCall.appender(implementationTarget), Appender.INSTANCE);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Implementation andThen(Implementation implementation) {
+            return new Compound(methodCall, implementation);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Composable andThen(Composable implementation) {
+            return new Compound.Composable(methodCall, implementation);
+        }
+
+        /**
+         * A byte code appender to implement a field-setting method call.
+         */
+        protected enum Appender implements ByteCodeAppender {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    throw new IllegalStateException("Instrumented method " + instrumentedMethod + " does not return void for field setting method call");
+                }
+                return new Size(MethodReturn.VOID.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+        }
     }
 
     /**
@@ -2445,21 +2738,28 @@ public class MethodCall implements Implementation.Composable {
         private final Target implementationTarget;
 
         /**
+         * The termination handler to apply.
+         */
+        private final TerminationHandler terminationHandler;
+
+        /**
          * Creates a new appender.
          *
          * @param implementationTarget The implementation target of the current implementation.
+         * @param terminationHandler   The termination handler to apply.
          */
-        protected Appender(Target implementationTarget) {
+        protected Appender(Target implementationTarget, TerminationHandler terminationHandler) {
             this.implementationTarget = implementationTarget;
+            this.terminationHandler = terminationHandler;
         }
 
         /**
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            return new Size(toStackManipulation(implementationTarget,
+            return new Size(new StackManipulation.Compound(terminationHandler.prepare(), toStackManipulation(implementationTarget,
                     instrumentedMethod,
-                    true).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                    terminationHandler)).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
         }
     }
 }

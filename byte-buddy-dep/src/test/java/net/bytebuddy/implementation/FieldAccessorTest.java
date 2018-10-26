@@ -27,7 +27,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         X extends CallTraceable,
         Y extends CallTraceable> {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final String GET = "get", SET = "set";
 
@@ -81,17 +81,25 @@ public class FieldAccessorTest<T extends CallTraceable,
 
     private final Class<?> propertyType;
 
+    private final Class<?> instanceSwap;
+
+    private final Class<?> staticSwap;
+
     public FieldAccessorTest(Object value,
                              Class<T> instanceGetter,
                              Class<S> instanceSetter,
+                             Class<?> instanceSwap,
                              Class<U> staticGetter,
                              Class<V> staticSetter,
+                             Class<?> staticSwap,
                              Class<?> propertyType) {
         this.value = value;
         this.instanceGetter = instanceGetter;
         this.instanceSetter = instanceSetter;
+        this.instanceSwap = instanceSwap;
         this.staticGetter = staticGetter;
         this.staticSetter = staticSetter;
+        this.staticSwap = staticSwap;
         this.propertyType = propertyType;
     }
 
@@ -99,40 +107,40 @@ public class FieldAccessorTest<T extends CallTraceable,
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {BOOLEAN_VALUE,
-                        BooleanInstanceGetter.class, BooleanInstanceSetter.class,
-                        BooleanClassGetter.class, BooleanClassSetter.class,
+                        BooleanInstanceGetter.class, BooleanInstanceSetter.class, BooleanInstanceSwap.class,
+                        BooleanClassGetter.class, BooleanClassSetter.class, BooleanClassSwap.class,
                         boolean.class},
                 {BYTE_VALUE,
-                        ByteInstanceGetter.class, ByteInstanceSetter.class,
-                        ByteClassGetter.class, ByteClassSetter.class,
+                        ByteInstanceGetter.class, ByteInstanceSetter.class, ByteInstanceSwap.class,
+                        ByteClassGetter.class, ByteClassSetter.class, ByteClassSwap.class,
                         byte.class},
                 {SHORT_VALUE,
-                        ShortInstanceGetter.class, ShortInstanceSetter.class,
-                        ShortClassGetter.class, ShortClassSetter.class,
+                        ShortInstanceGetter.class, ShortInstanceSetter.class, ShortInstanceSwap.class,
+                        ShortClassGetter.class, ShortClassSetter.class, ShortClassSwap.class,
                         short.class},
                 {CHAR_VALUE,
-                        CharacterInstanceGetter.class, CharacterInstanceSetter.class,
-                        CharacterClassGetter.class, CharacterClassSetter.class,
+                        CharacterInstanceGetter.class, CharacterInstanceSetter.class, CharacterInstanceSwap.class,
+                        CharacterClassGetter.class, CharacterClassSetter.class, CharacterClassSwap.class,
                         char.class},
                 {INT_VALUE,
-                        IntegerInstanceGetter.class, IntegerInstanceSetter.class,
-                        IntegerClassGetter.class, IntegerClassSetter.class,
+                        IntegerInstanceGetter.class, IntegerInstanceSetter.class, IntegerInstanceSwap.class,
+                        IntegerClassGetter.class, IntegerClassSetter.class, IntegerClassSwap.class,
                         int.class},
                 {LONG_VALUE,
-                        LongInstanceGetter.class, LongInstanceSetter.class,
-                        LongClassGetter.class, LongClassSetter.class,
+                        LongInstanceGetter.class, LongInstanceSetter.class, LongInstanceSwap.class,
+                        LongClassGetter.class, LongClassSetter.class, LongClassSwap.class,
                         long.class},
                 {FLOAT_VALUE,
-                        FloatInstanceGetter.class, FloatInstanceSetter.class,
-                        FloatClassGetter.class, FloatClassSetter.class,
+                        FloatInstanceGetter.class, FloatInstanceSetter.class, FloatInstanceSwap.class,
+                        FloatClassGetter.class, FloatClassSetter.class, FloatClassSwap.class,
                         float.class},
                 {DOUBLE_VALUE,
-                        DoubleInstanceGetter.class, DoubleInstanceSetter.class,
-                        DoubleClassGetter.class, DoubleClassSetter.class,
+                        DoubleInstanceGetter.class, DoubleInstanceSetter.class, DoubleInstanceSwap.class,
+                        DoubleClassGetter.class, DoubleClassSetter.class, DoubleClassSwap.class,
                         double.class},
                 {STRING_VALUE,
-                        ObjectInstanceGetter.class, ObjectInstanceSetter.class,
-                        ObjectClassGetter.class, ObjectClassSetter.class,
+                        ObjectInstanceGetter.class, ObjectInstanceSetter.class, ObjectInstanceSwap.class,
+                        ObjectClassGetter.class, ObjectClassSetter.class, ObjectClassSwap.class,
                         Object.class}
         });
     }
@@ -195,6 +203,108 @@ public class FieldAccessorTest<T extends CallTraceable,
     @Test
     public void testInstanceSetterField() throws Exception {
         testSetter(instanceSetter, FieldAccessor.of(instanceSetter.getDeclaredField(FOO)));
+    }
+
+    @Test
+    public void testInstanceSwap() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(instanceSwap)
+                .method(isDeclaredBy(instanceSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsFieldValueOf(FOO))
+                .make()
+                .load(instanceSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(FOO).get(instance), is(value));
+        assertThat(loaded.getLoaded().getField(BAR).get(instance), is(value));
+    }
+
+    @Test
+    public void testStaticSwap() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(staticSwap)
+                .method(isDeclaredBy(staticSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsFieldValueOf(FOO))
+                .make()
+                .load(staticSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(loaded.getLoaded().getConstructor().newInstance()), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(FOO).get(null), is(value));
+        assertThat(loaded.getLoaded().getField(BAR).get(null), is(value));
+    }
+
+    @Test
+    public void testInstanceValue() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(instanceSwap)
+                .method(isDeclaredBy(instanceSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsValue(value))
+                .make()
+                .load(instanceSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(BAR).get(instance), is(value));
+    }
+
+    @Test
+    public void testStaticValue() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(staticSwap)
+                .method(isDeclaredBy(staticSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsValue(value))
+                .make()
+                .load(staticSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(loaded.getLoaded().getConstructor().newInstance()), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(BAR).get(null), is(value));
+    }
+
+    @Test
+    public void testInstanceReference() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(instanceSwap)
+                .method(isDeclaredBy(instanceSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsReference(value))
+                .make()
+                .load(instanceSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(BAR).get(instance), is(value));
+    }
+
+    @Test
+    public void testStaticReference() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(staticSwap)
+                .method(isDeclaredBy(staticSwap))
+                .intercept(FieldAccessor.ofField(BAR).setsReference(value))
+                .make()
+                .load(staticSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(loaded.getLoaded().getConstructor().newInstance()), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(BAR).get(null), is(value));
+    }
+
+    @Test
+    public void testInstanceDefault() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(instanceSwap)
+                .method(isDeclaredBy(instanceSwap))
+                .intercept(FieldAccessor.ofField(FOO).setsDefaultValue())
+                .make()
+                .load(instanceSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(instance), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(FOO).get(instance), not(value));
+    }
+
+    @Test
+    public void testStaticDefault() throws Exception {
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(staticSwap)
+                .method(isDeclaredBy(staticSwap))
+                .intercept(FieldAccessor.ofField(FOO).setsDefaultValue())
+                .make()
+                .load(staticSwap.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getMethod(FOO).invoke(loaded.getLoaded().getConstructor().newInstance()), nullValue(Object.class));
+        assertThat(loaded.getLoaded().getField(FOO).get(null), not(value));
     }
 
     @SuppressWarnings("unchecked")
@@ -294,6 +404,25 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
     }
 
+    public static class BooleanInstanceSwap {
+
+        public boolean foo = BOOLEAN_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+
+    public static class BooleanClassSwap {
+
+        public static boolean foo = BOOLEAN_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
     public static class ByteInstanceSetter extends CallTraceable {
 
         protected byte foo = BYTE_DEFAULT_VALUE;
@@ -319,6 +448,24 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(byte foo) {
             register(FOO, foo);
+        }
+    }
+
+    public static class ByteInstanceSwap {
+
+        public byte foo = BYTE_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class ByteClassSwap {
+
+        public static byte foo = BYTE_VALUE, bar;
+
+        public void foo() {
+            /* empty */
         }
     }
 
@@ -360,6 +507,24 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
     }
 
+    public static class ShortInstanceSwap {
+
+        public short foo = SHORT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class ShortClassSwap {
+
+        public static short foo = INT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
     public static class IntegerInstanceGetter extends CallTraceable {
 
         protected int foo = INT_VALUE;
@@ -395,6 +560,24 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(int foo) {
             register(FOO, foo);
+        }
+    }
+
+    public static class IntegerInstanceSwap {
+
+        public int foo = INT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class IntegerClassSwap {
+
+        public static int foo = INT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
         }
     }
 
@@ -436,6 +619,24 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
     }
 
+    public static class CharacterInstanceSwap {
+
+        public char foo = CHAR_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class CharacterClassSwap {
+
+        public static char foo = CHAR_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
     public static class LongInstanceGetter extends CallTraceable {
 
         protected long foo = LONG_VALUE;
@@ -471,6 +672,24 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(long foo) {
             register(FOO, foo);
+        }
+    }
+
+    public static class LongInstanceSwap {
+
+        public long foo = LONG_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class LongClassSwap {
+
+        public static long foo = LONG_VALUE, bar;
+
+        public void foo() {
+            /* empty */
         }
     }
 
@@ -512,6 +731,24 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
     }
 
+    public static class FloatInstanceSwap {
+
+        public float foo = FLOAT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class FloatClassSwap {
+
+        public static float foo = FLOAT_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
     public static class DoubleInstanceGetter extends CallTraceable {
 
         protected double foo = DOUBLE_VALUE;
@@ -550,6 +787,24 @@ public class FieldAccessorTest<T extends CallTraceable,
         }
     }
 
+    public static class DoubleInstanceSwap {
+
+        public double foo = DOUBLE_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class DoubleClassSwap {
+
+        public static double foo = DOUBLE_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
     public static class ObjectInstanceGetter extends CallTraceable {
 
         protected Object foo = STRING_VALUE;
@@ -585,6 +840,24 @@ public class FieldAccessorTest<T extends CallTraceable,
 
         public void setFoo(Object foo) {
             register(FOO, foo);
+        }
+    }
+
+    public static class ObjectInstanceSwap {
+
+        public Object foo = STRING_VALUE, bar;
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class ObjectClassSwap {
+
+        public static String foo = STRING_VALUE, bar;
+
+        public void foo() {
+            /* empty */
         }
     }
 }
