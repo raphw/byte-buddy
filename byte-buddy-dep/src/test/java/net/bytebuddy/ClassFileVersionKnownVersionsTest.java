@@ -144,6 +144,18 @@ public class ClassFileVersionKnownVersionsTest {
     }
 
     @Test
+    public void testNotPreview() throws Exception {
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isPreviewVersion(), is(false));
+    }
+
+    @Test
+    public void testPreview() throws Exception {
+        ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersion(javaVersion).asPreviewVersion();
+        assertThat(classFileVersion.getJavaVersion(), is(javaVersion));
+        assertThat(classFileVersion.isPreviewVersion(), is(true));
+    }
+
+    @Test
     public void testToString() {
         assertThat(ClassFileVersion.ofJavaVersion(javaVersion).toString(), is("Java " + derivedVersion));
     }

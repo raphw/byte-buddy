@@ -355,6 +355,24 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
+     * Returns this class file version indicating a class using preview features.
+     *
+     * @return This class file version but indicating the use of preview features.
+     */
+    public ClassFileVersion asPreviewVersion() {
+        return new ClassFileVersion(versionNumber | Opcodes.V_PREVIEW);
+    }
+
+    /**
+     * Returns {@code true} if this class file version indicates the use of preview features.
+     *
+     * @return {@code true} if this class file version indicates the use of preview features.
+     */
+    public boolean isPreviewVersion() {
+        return (versionNumber & Opcodes.V_PREVIEW) == Opcodes.V_PREVIEW;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public int compareTo(ClassFileVersion other) {
