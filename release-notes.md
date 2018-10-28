@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. October 2018: version 1.9.3
+
+- Update to ASM 7.0 final
+- Improve field setting capabilities of `FieldAccessor` and `MethodCall`.
+
 ### 15. October 2018: version 1.9.2
 
 - Allow for delegation to method result for `MethodDelegation`.
