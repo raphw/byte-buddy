@@ -295,6 +295,23 @@ public class MethodCallTest {
     }
 
     @Test
+    public void testStaticFieldExplicit() throws Exception {
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .invokable(isTypeInitializer())
+                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                        .onField(System.class.getField("out"))
+                        .with(""))
+                .make()
+                .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(0));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance, instanceOf(Object.class));
+    }
+
+    @Test
     public void testOnStaticFieldFromAnotherClass() throws Exception {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)

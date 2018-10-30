@@ -1892,26 +1892,10 @@ public class MethodCall implements Implementation.Composable {
         @HashCodeAndEqualsPlugin.Enhance
         class ForField implements TargetHandler {
 
-            /**
-             * The name of the field.
-             */
-            private final String name;
+            private final Location location;
 
-            /**
-             * The field locator factory to use.
-             */
-            private final FieldLocator.Factory fieldLocatorFactory;
-
-            /**
-             * Creates a new target handler for storing a method invocation target in an
-             * instance field.
-             *
-             * @param name                The name of the field.
-             * @param fieldLocatorFactory The field locator factory to use.
-             */
-            protected ForField(String name, FieldLocator.Factory fieldLocatorFactory) {
-                this.name = name;
-                this.fieldLocatorFactory = fieldLocatorFactory;
+            protected ForField(Location location) {
+                this.location = location;
             }
 
             /**
@@ -1923,37 +1907,33 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
-                if (!resolution.isResolved()) {
-                    throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
-                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
-                    throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
-                } else if (!invokedMethod.isInvokableOn(resolution.getField().getType().asErasure())) {
-                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + resolution.getField());
+                FieldDescription fieldDescription = location.resolve(instrumentedType);
+                if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+                    throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                } else if (!invokedMethod.isInvokableOn(fieldDescription.getType().asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + fieldDescription);
                 } else if (!invokedMethod.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException("Cannot access " + invokedMethod + " from " + instrumentedType);
                 }
-                StackManipulation stackManipulation = assigner.assign(resolution.getField().getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + resolution.getField());
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + fieldDescription);
                 }
-                return new StackManipulation.Compound(invokedMethod.isStatic() || resolution.getField().isStatic()
+                return new StackManipulation.Compound(invokedMethod.isStatic() || fieldDescription.isStatic()
                         ? StackManipulation.Trivial.INSTANCE
                         : MethodVariableAccess.loadThis(),
-                        FieldAccess.forField(resolution.getField()).read(), stackManipulation);
+                        FieldAccess.forField(fieldDescription).read(), stackManipulation);
             }
 
             /**
              * {@inheritDoc}
              */
             public TypeDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
-                if (!resolution.isResolved()) {
-                    throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
-                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
-                    throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
+                FieldDescription fieldDescription = location.resolve(instrumentedType);
+                if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+                    throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                 }
-                return resolution.getField().getType().asErasure();
+                return fieldDescription.getType().asErasure();
             }
 
             /**
@@ -1961,6 +1941,90 @@ public class MethodCall implements Implementation.Composable {
              */
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
+            }
+
+            /**
+             * A location of a field.
+             */
+            protected interface Location {
+
+                /**
+                 * Resolves the field to invoke the method upon.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @return The field to invoke the method upon.
+                 */
+                FieldDescription resolve(TypeDescription instrumentedType);
+
+                /**
+                 * An implicit field location.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForImplicitField implements Location {
+
+                    /**
+                     * The name of the field.
+                     */
+                    private final String name;
+
+                    /**
+                     * The field locator factory to use.
+                     */
+                    private final FieldLocator.Factory fieldLocatorFactory;
+
+                    /**
+                     * Creates an implicit field location.
+                     *
+                     * @param name                The name of the field.
+                     * @param fieldLocatorFactory The field locator factory to use.
+                     */
+                    protected ForImplicitField(String name, FieldLocator.Factory fieldLocatorFactory) {
+                        this.name = name;
+                        this.fieldLocatorFactory = fieldLocatorFactory;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public FieldDescription resolve(TypeDescription instrumentedType) {
+                        FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
+                        if (!resolution.isResolved()) {
+                            throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
+                        }
+                        return resolution.getField();
+                    }
+                }
+
+                /**
+                 * An explicit field location.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForExplicitField implements Location {
+
+                    /**
+                     * The field to resolve.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates an explicit field location.
+                     *
+                     * @param fieldDescription The field to resolve.
+                     */
+                    protected ForExplicitField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public FieldDescription resolve(TypeDescription instrumentedType) {
+                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getType().asErasure())) {
+                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                        }
+                        return fieldDescription;
+                    }
+                }
             }
         }
 
@@ -2546,7 +2610,34 @@ public class MethodCall implements Implementation.Composable {
          */
         public MethodCall onField(String name, FieldLocator.Factory fieldLocatorFactory) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForField(name, fieldLocatorFactory),
+                    new TargetHandler.ForField(new TargetHandler.ForField.Location.ForImplicitField(name, fieldLocatorFactory)),
+                    argumentLoaders,
+                    preparables,
+                    MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+                    terminationHandler,
+                    assigner,
+                    typing);
+        }
+
+        /**
+         * Invokes a method on the object stored in the specified field.
+         *
+         * @param field The field on which to invoke the method upon.
+         * @return A method call that invokes the given method on an instance that is read from a field.
+         */
+        public MethodCall onField(Field field) {
+            return onField(new FieldDescription.ForLoadedField(field));
+        }
+
+        /**
+         * Invokes a method on the object stored in the specified field.
+         *
+         * @param fieldDescription The field on which to invoke the method upon.
+         * @return A method call that invokes the given method on an instance that is read from a field.
+         */
+        public MethodCall onField(FieldDescription fieldDescription) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.ForField(new TargetHandler.ForField.Location.ForExplicitField(fieldDescription)),
                     argumentLoaders,
                     preparables,
                     MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
