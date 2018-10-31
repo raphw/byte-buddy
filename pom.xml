@@ -75,7 +75,7 @@
         <version.plugin.plugin>3.5.2</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.0.2</version.plugin.resources>
-        <version.plugin.surefire>2.21.0</version.plugin.surefire>
+        <version.plugin.surefire>2.22.1</version.plugin.surefire>
         <version.plugin.pitest>1.2.0</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.16</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
