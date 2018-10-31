@@ -1892,8 +1892,16 @@ public class MethodCall implements Implementation.Composable {
         @HashCodeAndEqualsPlugin.Enhance
         class ForField implements TargetHandler {
 
+            /**
+             * The field's location.
+             */
             private final Location location;
 
+            /**
+             * Creates a new target handler for a field.
+             *
+             * @param location The field's location.
+             */
             protected ForField(Location location) {
                 this.location = location;
             }
