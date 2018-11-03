@@ -205,7 +205,7 @@ public abstract class FieldAccessor implements Implementation {
              * {@inheritDoc}
              */
             public Prepared prepare(TypeDescription instrumentedType) {
-                if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+                if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
                     throw new IllegalStateException(fieldDescription + " is not declared by " + instrumentedType);
                 } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
                     throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
@@ -862,11 +862,7 @@ public abstract class FieldAccessor implements Implementation {
                     throw new IllegalArgumentException(instrumentedMethod + " does not describe a field getter or setter");
                 }
                 FieldDescription fieldDescription = fieldLocation.resolve(instrumentedMethod);
-                if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
-                    throw new IllegalStateException(fieldDescription + " is not declared in the hierarchy of " + instrumentedType);
-                } else if (!fieldDescription.isAccessibleTo(instrumentedType)) {
-                    throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
-                } else if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
                     throw new IllegalStateException("Cannot set instance field " + fieldDescription + " from " + instrumentedMethod);
                 }
                 StackManipulation implementation, initialization = fieldDescription.isStatic()

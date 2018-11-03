@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -158,6 +159,19 @@ public class FieldAccessorOtherTest {
         assertThat(instance.foo, instanceOf(JavaType.METHOD_TYPE.load()));
     }
 
+    @Test
+    public void testStaticFieldOfOtherClass() throws Exception {
+        DynamicType.Loaded<Callable> loaded = new ByteBuddy()
+                .subclass(Callable.class)
+                .method(named("call"))
+                .intercept(FieldAccessor.of(StaticFieldHolder.class.getField(FOO.toUpperCase())))
+                .make()
+                .load(StaticFieldHolder.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Callable<?> instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.call(), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testNotAssignable() throws Exception {
         new ByteBuddy()
@@ -250,10 +264,6 @@ public class FieldAccessorOtherTest {
         }
     }
 
-    public static class BarSub extends Bar {
-        /* empty */
-    }
-
     @SuppressWarnings("unused")
     public static class Qux {
 
@@ -317,5 +327,10 @@ public class FieldAccessorOtherTest {
         public void bar(Object foo) {
             register(FOO, foo);
         }
+    }
+
+    public static class StaticFieldHolder {
+
+        public static final String FOO = "foo";
     }
 }
