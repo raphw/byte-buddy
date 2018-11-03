@@ -1913,7 +1913,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             default:
                                 throw new AssertionError();
                         }
-                        binding.make(parameters, result).apply(mv, implementationContext);
+                        stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters, result)
+                                .apply(mv, implementationContext)
+                                .getMaximalSize() - result.getStackSize().getSize());
                         return;
                     }
                 } else if (strict) {
@@ -1952,22 +1954,25 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 if (!candidates.isEmpty()) {
                     Replacement.Binding binding = replacement.bind(resolution.resolve(), candidates.getOnly(), Replacement.InvocationType.of(opcode, candidates.getOnly()));
                     if (binding.isBound()) {
-                        binding.make(
+                        stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(
                                 candidates.getOnly().isStatic() || candidates.getOnly().isConstructor()
                                         ? candidates.getOnly().getParameters().asTypeList()
                                         : new TypeList.Generic.Explicit(CompoundList.of(resolution.resolve(), candidates.getOnly().getParameters().asTypeList())),
                                 candidates.getOnly().isConstructor()
                                         ? candidates.getOnly().getDeclaringType().asGenericType()
-                                        : candidates.getOnly().getReturnType()).apply(mv, implementationContext);
+                                        : candidates.getOnly().getReturnType())
+                                .apply(mv, implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
+                                ? StackSize.SINGLE
+                                : candidates.getOnly().getReturnType().getStackSize()).getSize());
                         if (candidates.getOnly().isConstructor()) {
-                            stackSizeBuffer = new StackManipulation.Compound(
+                            stackSizeBuffer = Math.max(stackSizeBuffer, new StackManipulation.Compound(
                                     Duplication.SINGLE.flipOver(TypeDescription.OBJECT),
                                     Removal.SINGLE,
                                     Removal.SINGLE,
                                     Duplication.SINGLE.flipOver(TypeDescription.OBJECT),
                                     Removal.SINGLE,
                                     Removal.SINGLE
-                            ).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize();
+                            ).apply(mv, implementationContext).getMaximalSize() + StackSize.SINGLE.getSize());
                         }
                         return;
                     }
