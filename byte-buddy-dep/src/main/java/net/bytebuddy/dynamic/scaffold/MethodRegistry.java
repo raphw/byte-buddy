@@ -454,13 +454,13 @@ public interface MethodRegistry {
                 if (handlers.add(entry.getHandler())) {
                     InstrumentedType typeDescription = entry.getHandler().prepare(instrumentedType);
                     if (instrumentedType != typeDescription) { // Avoid unnecessary scanning for helper methods if instrumented type was not changed.
-                        instrumentedType = typeDescription;
-                        for (MethodDescription methodDescription : instrumentedType.getDeclaredMethods()) {
+                        for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
                             if (!declaredMethods.contains(methodDescription)) {
                                 implementations.put(methodDescription, entry.asSupplementaryEntry(methodDescription));
                                 declaredMethods.add(methodDescription);
                             }
                         }
+                        instrumentedType = typeDescription;
                     }
                 }
             }
