@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. November 2018: version 1.9.4
+
+- Add API for explicit field access from `FieldAccessor`.
+- Fix stack size adjustment for custom `MemberSubstitution`s.
+- Performance improvement for classes with many methods.
+
 ### 28. October 2018: version 1.9.3
 
 - Update to ASM 7.0 final
