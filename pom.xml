@@ -382,6 +382,7 @@
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
                 <version.plugin.spotbugs>3.1.0-RC8</version.plugin.spotbugs>
                 <version.plugin.shade>3.1.1</version.plugin.shade>
+                <version.plugin.surefire>2.22.1</version.plugin.surefire>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
