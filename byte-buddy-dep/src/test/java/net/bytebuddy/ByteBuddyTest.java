@@ -1,11 +1,16 @@
 package net.bytebuddy;
 
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -105,6 +110,22 @@ public class ByteBuddyTest {
                 .load(classLoader)
                 .getLoaded();
         assertThat(type.getClassLoader(), is(classLoader));
+    }
+
+    @Test
+    public void testClassWithManyMethods() throws Exception {
+        DynamicType.Builder<?> builder = new ByteBuddy().subclass(Object.class);
+        for (int index = 0; index < 1000; index++) {
+            builder = builder.defineMethod("method" + index, void.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE);
+        }
+        Class<?> type = builder.make().load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(type.getDeclaredMethods().length, is(1000));
+        DynamicType.Builder<?> subclassBuilder = new ByteBuddy().subclass(type);
+        for (Method method : type.getDeclaredMethods()) {
+            subclassBuilder = subclassBuilder.method(ElementMatchers.is(method)).intercept(StubMethod.INSTANCE);
+        }
+        Class<?> subclass = subclassBuilder.make().load(type.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        assertThat(subclass.getDeclaredMethods().length, is(1000));
     }
 
     public static class Recorder {
