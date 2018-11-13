@@ -449,14 +449,18 @@ public interface MethodRegistry {
                                                LatentMatcher<? super MethodDescription> ignoredMethods) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>();
-            MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
+            Set<MethodDescription> declaredMethods = new HashSet<MethodDescription>(instrumentedType.getDeclaredMethods());
             for (Entry entry : entries) {
                 if (handlers.add(entry.getHandler())) {
-                    instrumentedType = entry.getHandler().prepare(instrumentedType);
-                    ElementMatcher<? super MethodDescription> handledMethods = noneOf(helperMethods);
-                    helperMethods = instrumentedType.getDeclaredMethods();
-                    for (MethodDescription helperMethod : helperMethods.filter(handledMethods)) {
-                        implementations.put(helperMethod, entry.asSupplementaryEntry(helperMethod));
+                    InstrumentedType typeDescription = entry.getHandler().prepare(instrumentedType);
+                    if (instrumentedType != typeDescription) { // Avoid unnecessary scanning for helper methods if instrumented type was not changed.
+                        instrumentedType = typeDescription;
+                        for (MethodDescription methodDescription : instrumentedType.getDeclaredMethods()) {
+                            if (!declaredMethods.contains(methodDescription)) {
+                                implementations.put(methodDescription, entry.asSupplementaryEntry(methodDescription));
+                                declaredMethods.add(methodDescription);
+                            }
+                        }
                     }
                 }
             }
