@@ -348,17 +348,13 @@ public final class ElementMatchers {
     public static <T> ElementMatcher.Junction<T> anyOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            if (matcher == null) {
-                matcher = is(value);
-            } else {
-                matcher = matcher.or(is(value));
-            }
+            matcher = matcher == null
+                    ? ElementMatchers.<T>is(value)
+                    : matcher.or(is(value));
         }
-        if (matcher == null) {
-            return none();
-        } else {
-            return matcher;
-        }
+        return matcher == null
+                ? ElementMatchers.<T>none()
+                : matcher;
     }
 
     /**
@@ -444,17 +440,13 @@ public final class ElementMatchers {
     public static <T> ElementMatcher.Junction<T> noneOf(Iterable<?> values) {
         ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            if (matcher == null) {
-                matcher = not(is(value));
-            } else {
-                matcher = matcher.and(not(is(value)));
-            }
+            matcher = matcher == null
+                    ? ElementMatchers.<T>not(is(value))
+                    : matcher.and(not(is(value)));
         }
-        if (matcher == null) {
-            return any();
-        } else {
-            return matcher;
-        }
+        return matcher == null
+                ? ElementMatchers.<T>any()
+                : matcher;
     }
 
     /**
