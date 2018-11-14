@@ -346,11 +346,15 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> anyOf(Iterable<?> values) {
-        ElementMatcher.Junction<T> matcher = none();
+        ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            matcher = matcher.or(is(value));
+            matcher = matcher == null
+                    ? ElementMatchers.<T>is(value)
+                    : matcher.or(is(value));
         }
-        return matcher;
+        return matcher == null
+                ? ElementMatchers.<T>none()
+                : matcher;
     }
 
     /**
@@ -434,11 +438,15 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> noneOf(Iterable<?> values) {
-        ElementMatcher.Junction<T> matcher = any();
+        ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            matcher = matcher.and(not(is(value)));
+            matcher = matcher == null
+                    ? ElementMatchers.<T>not(is(value))
+                    : matcher.and(not(is(value)));
         }
-        return matcher;
+        return matcher == null
+                ? ElementMatchers.<T>any()
+                : matcher;
     }
 
     /**

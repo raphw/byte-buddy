@@ -9,7 +9,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
@@ -380,18 +379,18 @@ public class ElementMatchersTest {
 
     @Test
     public void testAnyOf() throws Exception {
-        Object value = new Object(), otherValue = new Object();
-        assertThat(ElementMatchers.anyOf(value, otherValue).matches(value), is(true));
-        assertThat(ElementMatchers.anyOf(value, otherValue).matches(otherValue), is(true));
-        assertThat(ElementMatchers.anyOf(value, otherValue).matches(new Object()), is(false));
+        assertThat(ElementMatchers.anyOf(FOO, BAR).matches(FOO), is(true));
+        assertThat(ElementMatchers.anyOf(FOO, BAR).matches(BAR), is(true));
+        assertThat(ElementMatchers.anyOf(FOO, BAR).matches(new Object()), is(false));
+        assertThat(ElementMatchers.anyOf(FOO, BAR).toString(), is("(is(" + FOO + ") or is(" + BAR + "))"));
     }
 
     @Test
     public void testNoneOf() throws Exception {
-        Object value = new Object(), otherValue = new Object();
-        assertThat(ElementMatchers.noneOf(value, otherValue).matches(value), is(false));
-        assertThat(ElementMatchers.noneOf(value, otherValue).matches(otherValue), is(false));
-        assertThat(ElementMatchers.noneOf(value, otherValue).matches(new Object()), is(true));
+        assertThat(ElementMatchers.noneOf(FOO, BAR).matches(FOO), is(false));
+        assertThat(ElementMatchers.noneOf(FOO, BAR).matches(BAR), is(false));
+        assertThat(ElementMatchers.noneOf(FOO, BAR).matches(new Object()), is(true));
+        assertThat(ElementMatchers.noneOf(FOO, BAR).toString(), is("(not(is(" + FOO + ")) and not(is(" + BAR + ")))"));
     }
 
     @Test
