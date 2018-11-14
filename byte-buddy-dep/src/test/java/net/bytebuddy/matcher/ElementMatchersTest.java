@@ -389,10 +389,11 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneOf() throws Exception {
-        Object value = new Object(), otherValue = new Object();
+        final Object value = "object1", otherValue = "object2";
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(value), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(otherValue), is(false));
         assertThat(ElementMatchers.noneOf(value, otherValue).matches(new Object()), is(true));
+        assertThat(ElementMatchers.noneOf(value, otherValue).toString(), is("(not(is(object1)) and not(is(object2)))"));
     }
 
     @Test

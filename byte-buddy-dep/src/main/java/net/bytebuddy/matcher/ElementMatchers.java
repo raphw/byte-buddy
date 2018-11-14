@@ -442,11 +442,19 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> noneOf(Iterable<?> values) {
-        ElementMatcher.Junction<T> matcher = any();
+        ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            matcher = matcher.and(not(is(value)));
+            if (matcher == null) {
+                matcher = not(is(value));
+            } else {
+                matcher = matcher.and(not(is(value)));
+            }
         }
-        return matcher;
+        if (matcher == null) {
+            return any();
+        } else {
+            return matcher;
+        }
     }
 
     /**
