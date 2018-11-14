@@ -380,10 +380,11 @@ public class ElementMatchersTest {
 
     @Test
     public void testAnyOf() throws Exception {
-        Object value = new Object(), otherValue = new Object();
+        final Object value = "object1", otherValue = "object2";
         assertThat(ElementMatchers.anyOf(value, otherValue).matches(value), is(true));
         assertThat(ElementMatchers.anyOf(value, otherValue).matches(otherValue), is(true));
         assertThat(ElementMatchers.anyOf(value, otherValue).matches(new Object()), is(false));
+        assertThat(ElementMatchers.anyOf(value, otherValue).toString(), is("(is(object1) or is(object2))"));
     }
 
     @Test

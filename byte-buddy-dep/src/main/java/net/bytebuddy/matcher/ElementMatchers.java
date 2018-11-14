@@ -346,11 +346,19 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> anyOf(Iterable<?> values) {
-        ElementMatcher.Junction<T> matcher = none();
+        ElementMatcher.Junction<T> matcher = null;
         for (Object value : values) {
-            matcher = matcher.or(is(value));
+            if (matcher == null) {
+                matcher = is(value);
+            } else {
+                matcher = matcher.or(is(value));
+            }
         }
-        return matcher;
+        if (matcher == null) {
+            return none();
+        } else {
+            return matcher;
+        }
     }
 
     /**
