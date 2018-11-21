@@ -1409,7 +1409,9 @@ public interface ClassInjector {
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
                 int index = entry.getKey().lastIndexOf('.');
-                if (index == -1 || !entry.getKey().substring(0, index).equals(TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName())) {
+                String expectedPackage = TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName();
+                String actualPackage = index == -1 ? "" : entry.getKey().substring(0, index);
+                if (!expectedPackage.equals(actualPackage)) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 result.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));
