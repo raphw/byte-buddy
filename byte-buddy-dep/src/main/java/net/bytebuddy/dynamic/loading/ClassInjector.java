@@ -60,7 +60,8 @@ import static net.bytebuddy.matcher.ElementMatchers.any;
  * the user of this injector is responsible for providing access to non-public properties.
  * </p>
  */
-public interface ClassInjector {
+public interface
+ClassInjector {
 
     /**
      * A permission for the {@code suppressAccessChecks} permission.
@@ -1406,10 +1407,11 @@ public interface ClassInjector {
          * {@inheritDoc}
          */
         public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
+            String expectedPackage = TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
                 int index = entry.getKey().lastIndexOf('.');
-                if (index == -1 || !entry.getKey().substring(0, index).equals(TypeDescription.ForLoadedType.of(lookupType()).getPackage().getName())) {
+                if (!expectedPackage.equals(index == -1 ? "" : entry.getKey().substring(0, index))) {
                     throw new IllegalArgumentException(entry.getKey() + " must be defined in the same package as " + lookup);
                 }
                 result.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));

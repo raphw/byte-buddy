@@ -22,6 +22,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.InjectionStrategyResolver;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,6 +45,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
 
