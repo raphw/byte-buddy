@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. November 2018: version 1.9.5
+
+- Fixed lookup injection for classes in the default package in Java 9.
+
 ### 13. November 2018: version 1.9.4
 
 - Add API for explicit field access from `FieldAccessor`.
