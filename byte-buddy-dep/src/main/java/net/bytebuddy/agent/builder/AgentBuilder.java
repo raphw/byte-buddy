@@ -59,6 +59,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
@@ -8347,7 +8348,7 @@ public interface AgentBuilder {
                     ClassFileBufferStrategy.Default.RETAINING,
                     InstallationListener.NoOp.INSTANCE,
                     new RawMatcher.Disjunction(
-                            new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader()),
+                            new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader().or(isExtensionClassLoader())),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()))),
                     Transformation.Ignored.INSTANCE);
         }
