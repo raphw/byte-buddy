@@ -229,6 +229,10 @@ Getting support
 
 The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the library or to secure an easy start, it is however possible to purchase training, development hours or support plans. Rates are dependent on the scope and duration of an engagement. Please get in touch with <rafael.wth@gmail.com> for further information.
 
+#### Tidelift ####
+
+Byte Buddy is [listed on Tidelift](https://tidelift.com/lifter/search/maven/net.bytebuddy:byte-buddy). If you are not using Byte Buddy to an extend where you want to purchase explicit support and want to support the open source community in general, please consider a subscription.
+
 #### Free ####
 
 General questions can be asked on [Stack Overflow](http://stackoverflow.com/questions/tagged/byte-buddy) or on the [Byte Buddy mailing list](https://groups.google.com/forum/#!forum/byte-buddy) which also serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into use.
