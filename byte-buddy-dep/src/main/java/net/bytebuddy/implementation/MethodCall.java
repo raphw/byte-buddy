@@ -1956,7 +1956,7 @@ public class MethodCall implements Implementation.Composable {
              * A resolved target handler for a static or self-declared invocation.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            protected class Resolved implements TargetHandler.Resolved {
+            protected static class Resolved implements TargetHandler.Resolved {
 
                 /**
                  * The instrumented type.
