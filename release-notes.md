@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. December 2018: version 1.9.6
+
+- Add the JVM extension / platform class loaders to the default excludes for the `AgentBuilder`.
+- Refactor `MethodCall` to better reuse intermediates. This implies some API changes in the customization API.
+- Add hook to `AgentBuilder` to customize class file transformer.
+
 ### 22. November 2018: version 1.9.5
 
 - Fixed lookup injection for classes in the default package in Java 9.
