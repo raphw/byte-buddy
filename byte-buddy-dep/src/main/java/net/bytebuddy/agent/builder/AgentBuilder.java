@@ -4453,7 +4453,7 @@ public interface AgentBuilder {
     }
 
     /**
-     * A decorator that allows to change the class file transformer that is registered
+     * A decorator that allows to change the class file transformer that is registered.
      */
     interface TransformerDecorator {
 
