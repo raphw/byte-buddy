@@ -654,6 +654,23 @@ public interface AgentBuilder {
     ResettableClassFileTransformer installOn(Instrumentation instrumentation);
 
     /**
+     * <p>
+     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
+     * @return The installed class file transformer.
+     */
+    ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator);
+
+    /**
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
      * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
      *
@@ -661,6 +678,16 @@ public interface AgentBuilder {
      * @see AgentBuilder#installOn(Instrumentation)
      */
     ResettableClassFileTransformer installOnByteBuddyAgent();
+
+    /**
+     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
+     *
+     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
+     * @return The installed class file transformer.
+     * @see AgentBuilder#installOn(Instrumentation)
+     */
+    ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator);
 
     /**
      * An abstraction for extending a matcher.
@@ -4423,6 +4450,38 @@ public interface AgentBuilder {
             }
         }
 
+    }
+
+    /**
+     * A decorator that allows to change the class file transformer that is registered
+     */
+    interface TransformerDecorator {
+
+        /**
+         * Decorates the applied class file transformer.
+         *
+         * @param classFileTransformer The original transformer created by the agent builder.
+         * @return The class file transformer that is actually being registered.
+         */
+        ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer);
+
+        /**
+         * A transformer decorator that retains the original transformer.
+         */
+        enum NoOp implements TransformerDecorator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer) {
+                return classFileTransformer;
+            }
+        }
     }
 
     /**
@@ -9172,6 +9231,13 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
+            return installOn(instrumentation, TransformerDecorator.NoOp.INSTANCE);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
             if (!circularityLock.acquire()) {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
@@ -9185,7 +9251,8 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener);
-                ResettableClassFileTransformer classFileTransformer = makeRaw(installation.getListener(), installation.getInstallationListener());
+                ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
+                        installation.getInstallationListener()));
                 installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
                 try {
                     DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
@@ -9226,11 +9293,18 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
+            return installOnByteBuddyAgent(TransformerDecorator.NoOp.INSTANCE);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
             try {
                 return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getMethod(INSTRUMENTATION_GETTER)
-                        .invoke(STATIC_MEMBER));
+                        .invoke(STATIC_MEMBER), transformerDecorator);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -11155,8 +11229,22 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
+                return materialize().installOn(instrumentation, transformerDecorator);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
+                return materialize().installOnByteBuddyAgent(transformerDecorator);
             }
         }
 
