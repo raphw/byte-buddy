@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -28,7 +29,10 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getName(), is("java.lang.invoke.MethodHandle"));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
-        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getInterfaces().size(), is(0));
+        // Java 12 Constable API is not yet supported.
+        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getInterfaces().size(), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12)
+                ? 1
+                : 0));
     }
 
     @Test
@@ -44,7 +48,10 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getName(), is("java.lang.invoke.MethodType"));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().size(), is(1));
+        // Java 12 Constable API is not yet supported.
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().size(), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12)
+                ? 3
+                : 1));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(Serializable.class)), is(true));
     }
 
@@ -69,7 +76,10 @@ public class JavaTypeTest {
         assertThat(JavaType.VAR_HANDLE.getTypeStub().getName(), is("java.lang.invoke.VarHandle"));
         assertThat(JavaType.VAR_HANDLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
         assertThat(JavaType.VAR_HANDLE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
-        assertThat(JavaType.VAR_HANDLE.getTypeStub().getInterfaces().size(), is(0));
+        // Java 12 Constable API is not yet supported.
+        assertThat(JavaType.VAR_HANDLE.getTypeStub().getInterfaces().size(), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12)
+                ? 1
+                : 0));
     }
 
     @Test
