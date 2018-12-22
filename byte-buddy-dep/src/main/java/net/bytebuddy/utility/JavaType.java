@@ -15,15 +15,13 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.Member;
+import java.lang.reflect.*;
 
 /**
  * Representations of Java types that do not exist in Java 6 but that have a special meaning to the JVM.
@@ -31,9 +29,35 @@ import java.lang.reflect.Member;
 public enum JavaType {
 
     /**
+     * The Java 12 {@code java.lang.Constable} type.
+     */
+    CONSTABLE("java.lang.constant.Constable", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE, TypeDescription.UNDEFINED),
+
+    /**
+     * The Java 12 {@code java.lang.invoke.TypeDescriptor} type.
+     */
+    TYPE_DESCRIPTOR("java.lang.invoke.TypeDescriptor", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE, TypeDescription.UNDEFINED),
+
+    /**
+     * The Java 12 {@code java.lang.invoke.TypeDescriptor$OfMethod} type.
+     */
+    TYPE_DESCRIPTOR_OF_FIELD("java.lang.invoke.TypeDescriptor$OfField",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            TYPE_DESCRIPTOR.getTypeStub()),
+
+    /**
+     * The Java 12 {@code java.lang.invoke.TypeDescriptor$OfMethod} type.
+     */
+    TYPE_DESCRIPTOR_OF_METHOD("java.lang.invoke.TypeDescriptor$OfMethod",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            TYPE_DESCRIPTOR.getTypeStub()),
+
+    /**
      * The Java 7 {@code java.lang.invoke.MethodHandle} type.
      */
-    METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
+    METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.OBJECT, CONSTABLE.getTypeStub()),
 
     /**
      * The Java 7 {@code java.lang.invoke.MethodHandles} type.
@@ -43,7 +67,12 @@ public enum JavaType {
     /**
      * The Java 7 {@code java.lang.invoke.MethodType} type.
      */
-    METHOD_TYPE("java.lang.invoke.MethodType", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, Serializable.class),
+    METHOD_TYPE("java.lang.invoke.MethodType",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+            TypeDescription.OBJECT,
+            CONSTABLE.getTypeStub(),
+            TYPE_DESCRIPTOR_OF_METHOD.getTypeStub(),
+            TypeDescription.ForLoadedType.of(Serializable.class)),
 
     /**
      * The Java 7 {@code java.lang.invoke.MethodTypes.Lookup} type.
@@ -58,7 +87,7 @@ public enum JavaType {
     /**
      * The Java 9 {@code java.lang.invoke.VarHandle} type.
      */
-    VAR_HANDLE("java.lang.invoke.VarHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
+    VAR_HANDLE("java.lang.invoke.VarHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OBJECT, CONSTABLE.getTypeStub()),
 
     /**
      * The Java 8 {@code java.lang.reflect.Parameter} type.
@@ -66,12 +95,12 @@ public enum JavaType {
     PARAMETER("java.lang.reflect.Parameter", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class),
 
     /**
-     * The {@code java.lang.reflect.Executable} type.
+     * The Java 7 {@code java.lang.reflect.Executable} type.
      */
     EXECUTABLE("java.lang.reflect.Executable", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, AccessibleObject.class, Member.class, GenericDeclaration.class),
 
     /**
-     * The {@code java.lang.Module} type.
+     * The Java 9 {@code java.lang.Module} type.
      */
     MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class);
 
@@ -83,22 +112,41 @@ public enum JavaType {
     /**
      * Creates a new java type representation.
      *
+     * @param typeName    The binary name of this type.
+     * @param modifiers   The modifiers of this type when creating a stub.
+     * @param superClass  The super class of this type when creating a stub.
+     * @param anInterface The interfaces of this type when creating a stub.
+     */
+    JavaType(String typeName, int modifiers, Type superClass, Type... anInterface) {
+        this(typeName, modifiers, superClass == null
+                ? TypeDescription.Generic.UNDEFINED
+                : TypeDescription.Generic.Sort.describe(superClass), new TypeList.Generic.ForLoadedTypes(anInterface));
+    }
+
+    /**
+     * Creates a new java type representation.
+     *
+     * @param typeName    The binary name of this type.
+     * @param modifiers   The modifiers of this type when creating a stub.
+     * @param superClass  The super class of this type when creating a stub.
+     * @param anInterface The interfaces of this type when creating a stub.
+     */
+    JavaType(String typeName, int modifiers, TypeDefinition superClass, TypeDefinition... anInterface) {
+        this(typeName, modifiers, superClass == null
+                ? TypeDescription.Generic.UNDEFINED
+                : superClass.asGenericType(), new TypeList.Generic.Explicit(anInterface));
+    }
+
+    /**
+     * Creates a new java type representation.
+     *
      * @param typeName   The binary name of this type.
      * @param modifiers  The modifiers of this type when creating a stub.
      * @param superClass The super class of this type when creating a stub.
      * @param interfaces The interfaces of this type when creating a stub.
      */
-    JavaType(String typeName, int modifiers, Class<?> superClass, Class<?>... interfaces) {
-        TypeDescription typeDescription;
-        try {
-            typeDescription = TypeDescription.ForLoadedType.of(Class.forName(typeName));
-        } catch (Exception ignored) {
-            typeDescription = new TypeDescription.Latent(typeName,
-                    modifiers,
-                    TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(superClass),
-                    new TypeList.Generic.ForLoadedTypes(interfaces));
-        }
-        this.typeDescription = typeDescription;
+    JavaType(String typeName, int modifiers, TypeDescription.Generic superClass, TypeList.Generic interfaces) {
+        typeDescription = new TypeDescription.Latent(typeName, modifiers, superClass, interfaces);
     }
 
     /**
@@ -119,5 +167,15 @@ public enum JavaType {
      */
     public Class<?> load() throws ClassNotFoundException {
         return Class.forName(typeDescription.getName());
+    }
+
+    /**
+     * Loads the class that is represented by this Java type and represents it as a {@link TypeDescription}.
+     *
+     * @return A loaded type of this Java type.
+     * @throws ClassNotFoundException If the represented type cannot be loaded.
+     */
+    public TypeDescription loadAsDescription() throws ClassNotFoundException {
+        return TypeDescription.ForLoadedType.of(load());
     }
 }
