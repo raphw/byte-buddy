@@ -53,6 +53,8 @@ import java.util.jar.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+import org.objectweb.asm.Opcodes;
+
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
  * {@link net.bytebuddy.dynamic.DynamicType.Builder} or as the result of an
@@ -1959,7 +1961,8 @@ public interface DynamicType {
                 MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation);
 
                 /**
-                 * Defines the previously defined or matched method to be {@code abstract}.
+                 * Defines the previously defined or matched method not to declare a method body. This implies the
+                 * method to be {@code abstract} unless it was already declared to be {@code native}.
                  *
                  * @return A new builder where the previously defined or matched method is implemented to be abstract.
                  */
@@ -4591,7 +4594,9 @@ public interface DynamicType {
                      */
                     public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
-                                ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
+                                (token.getModifiers() & Opcodes.ACC_NATIVE) == 0
+                                    ? ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers())
+                                    : token.getModifiers(),
                                 token.getTypeVariableTokens(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
