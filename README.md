@@ -1,7 +1,7 @@
 Byte Buddy
 ==========
 
-<a href="http://bytebuddy.net">
+<a href="https://bytebuddy.net">
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/logo-bg.png" alt="Byte Buddy logo" height="180px" align="right" />
 </a>
 
@@ -10,18 +10,18 @@ runtime code generation for the Java virtual machine
 [![Build Status (Travis CI)](https://circleci.com/gh/raphw/byte-buddy.svg?style=shield)](https://circleci.com/gh/raphw/byte-buddy)
 [![Build Status (AppVeyor CI)](https://ci.appveyor.com/api/projects/status/github/raphw/byte-buddy?branch=master&svg=true)](https://ci.appveyor.com/project/raphw/byte-buddy)
 [![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
-[![Coverage Status](http://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
+[![Coverage Status](https://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg#)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
-[![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
+[![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
 Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during the 
 runtime of a Java application and without the help of a compiler. Other than the code generation utilities 
-that [ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html), 
+that [ship with the Java Class Library](https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html), 
 Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the 
 creation of runtime proxies. Furthermore, Byte Buddy offers a convenient API for changing classes either 
 manually, using a Java agent or during a build.
 
-In order to use Byte Buddy, one does not require an understanding of Java byte code or the [class file format](http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API aims for code 
+In order to use Byte Buddy, one does not require an understanding of Java byte code or the [class file format](https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API aims for code 
 that is concise and easy to understand for everybody. Nevertheless, Byte Buddy remains fully customizable down 
 to the possibility of defining custom byte code. Furthermore, the API was designed to be as non-intrusive as 
 possible and as a result, Byte Buddy does not leave any trace in the classes that were created by it. For this 
@@ -30,7 +30,7 @@ Byte Buddy’s mascot was chosen to be a ghost.
 
 Byte Buddy is written in Java 5 but supports the generation of classes for any Java version. Byte Buddy is a
 light-weight library and only depends on the visitor API of the Java byte code parser library 
-[ASM](http://asm.ow2.org/) which does itself 
+[ASM](https://asm.ow2.io/) which does itself 
 [not require any further dependencies](https://repo1.maven.org/maven2/org/ow2/asm/asm/5.0.4/asm-5.0.4.pom).
 
 At first sight, runtime code generation can appear to be some sort of black magic that should be avoided and only
@@ -39,13 +39,13 @@ creating libraries that need to interact with arbitrary code and types that are 
 context, a library implementer must often choose between either requiring a user to implement library-proprietary
 interfaces or to generate code at runtime when the user’s types becomes first known to the library. Many known libraries
 such as for example *Spring* or *Hibernate* choose the latter approach which is popular among their users under the term
-of using [*Plain Old Java Objects*](http://en.wikipedia.org/wiki/Plain_Old_Java_Object). As a result, code generation
+of using [*Plain Old Java Objects*](https://en.wikipedia.org/wiki/Plain_Old_Java_Object). As a result, code generation
 has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate the runtime creation of Java
 types in order to provide a better tool set to those relying on code generation.
 
 ___
 
-<a href="http://bytebuddy.net">
+<a href="https://bytebuddy.net">
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/dukeschoice.jpg" alt="Duke's Choice award" height="110px" align="left" />
 </a>
 
@@ -57,7 +57,7 @@ making Byte Buddy the success it has become. We really appreciate it!
 
 ___
 
-Byte Buddy offers excellent performance at production quality. It is stable and in use by distinguished frameworks and tools such as [Mockito](http://mockito.org), [Hibernate](http://hibernate.org), [Jackson](https://github.com/FasterXML/jackson), [Google's Bazel build system](http://bazel.io) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over 75 million times a year.
+Byte Buddy offers excellent performance at production quality. It is stable and in use by distinguished frameworks and tools such as [Mockito](https://site.mockito.org/), [Hibernate](https://hibernate.org/), [Jackson](https://github.com/FasterXML/jackson), [Google's Bazel build system](https://bazel.build/) and [many others](https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy). Byte Buddy is also used by a large number of commercial products to great result. It is currently downloaded over 75 million times a year.
 
 Hello World
 -----------
@@ -83,7 +83,7 @@ return a fixed value of `Hello World!`. The method to be overridden is identifie
 the above example, a predefined element matcher `named(String)` is used which identifies methods by their exact names.
 Byte Buddy comes with numerous predefined and well-tested matchers which are collected in the `ElementMatchers`
 class and which can be easily composed. The creation of custom matchers is however as simple as implementing the
-([functional](http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html)) `ElementMatcher` interface.
+([functional](https://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html)) `ElementMatcher` interface.
 
 For implementing the `toString` method, the `FixedValue` class defines a constant return value for the overridden
 method. Defining a constant value is only one example of many method interceptors that ship with Byte Buddy. By
@@ -215,9 +215,9 @@ Where to go from here?
 Byte Buddy is a comprehensive library and we only scratched the surface of Byte Buddy's capabilities. However, Byte
 Buddy aims for being easy to use by providing a domain-specific language for creating classes. Most runtime code
 generation can be done by writing readable code and without any knowledge of Java's class file format. If you want
-to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](http://bytebuddy.net/#/tutorial) (There is also [a Chinese translation available](http://notes.diguage.com/byte-buddy-tutorial)).
+to learn more about Byte Buddy, you can find such a [tutorial on Byte Buddy's web page](https://bytebuddy.net/#/tutorial) (There is also [a Chinese translation available](https://notes.diguage.com/byte-buddy-tutorial/)).
 
-Furthermore, Byte Buddy comes with a [detailed in-code documentation](http://bytebuddy.net/#/javadoc) and extensive
+Furthermore, Byte Buddy comes with a [detailed in-code documentation](https://bytebuddy.net/#/javadoc) and extensive
 test case coverage which can also serve as example code. Finally, you can find an up-to-date list of articles and
 presentations on Byte Buddy [in the wiki](https://github.com/raphw/byte-buddy/wiki/Web-Resources). When using Byte
 Buddy, make also sure to read the following information on maintaining a project dependency.
@@ -235,12 +235,12 @@ Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-n
 
 #### Free ####
 
-General questions can be asked on [Stack Overflow](http://stackoverflow.com/questions/tagged/byte-buddy) or on the [Byte Buddy mailing list](https://groups.google.com/forum/#!forum/byte-buddy) which also serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into use.
+General questions can be asked on [Stack Overflow](https://stackoverflow.com/questions/tagged/byte-buddy) or on the [Byte Buddy mailing list](https://groups.google.com/forum/#!forum/byte-buddy) which also serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into use.
 
 Dependency and API evolution
 ----------------------------
 
-Byte Buddy is written on top of [ASM](http://asm.ow2.org/), a mature and well-tested library for reading and writing
+Byte Buddy is written on top of [ASM](https://asm.ow2.io/), a mature and well-tested library for reading and writing
 compiled Java classes. In order to allow for advanced type manipulations, Byte Buddy is intentionally exposing the
 ASM API to its users. Of course, the direct use of ASM remains fully optional and most users will most likely never
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
@@ -252,9 +252,9 @@ License and development
 -----------------------
 
 Byte Buddy is licensed under the liberal and business-friendly
-[*Apache Licence, Version 2.0*](http://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on
+[*Apache Licence, Version 2.0*](https://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on
 GitHub. Byte Buddy is further released to the repositories of Maven Central and on JCenter. The project is built
-using <a href="http://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go
+using <a href="https://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go
 something like this:
 
 ```shell
