@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2018 Rafael Winterhalter
+ * Copyright 2014 - 2019 Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
@@ -29,7 +31,7 @@ import java.lang.reflect.*;
 public enum JavaType {
 
     /**
-     * The Java 12 {@code java.lang.Constable} type.
+     * The Java 12 {@code java.lang.constant.Constable} type.
      */
     CONSTABLE("java.lang.constant.Constable", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE, TypeDescription.UNDEFINED),
 
@@ -53,6 +55,45 @@ public enum JavaType {
             Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
             TypeDescription.UNDEFINED,
             TYPE_DESCRIPTOR.getTypeStub()),
+
+    /**
+     * The Java 12 {@code java.lang.constant.ConstableDesc} type.
+     */
+    CONSTANT_DESCRIPTION("java.lang.constant.ConstantDesc", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE, TypeDescription.UNDEFINED),
+
+    /**
+     * The Java 12 {@code java.lang.constant.DynamicConstantDesc} type.
+     */
+    DYNAMIC_CONSTANT_DESCRIPTION("java.lang.constant.DynamicConstantDesc",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+            TypeDescription.OBJECT,
+            CONSTANT_DESCRIPTION.getTypeStub()),
+
+    /**
+     * The Java 12 {@code java.lang.constant.ClassDesc} type.
+     */
+    CLASS_DESCRIPTION("java.lang.constant.ClassDesc",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            CONSTANT_DESCRIPTION.getTypeStub(),
+            TYPE_DESCRIPTOR_OF_FIELD.getTypeStub()),
+
+    /**
+     * The Java 12 {@code java.lang.constant.MethodTypeDesc} type.
+     */
+    METHOD_TYPE_DESCRIPTION("java.lang.constant.MethodTypeDesc",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            CONSTANT_DESCRIPTION.getTypeStub(),
+            TYPE_DESCRIPTOR_OF_METHOD.getTypeStub()),
+
+    /**
+     * The Java 12 {@code java.lang.constant.MethodHandleDesc} type.
+     */
+    METHOD_HANDLE_DESCRIPTION("java.lang.constant.MethodHandleDesc",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            CONSTANT_DESCRIPTION.getTypeStub()),
 
     /**
      * The Java 7 {@code java.lang.invoke.MethodHandle} type.
@@ -165,8 +206,9 @@ public enum JavaType {
      * @return A loaded type of this Java type.
      * @throws ClassNotFoundException If the represented type cannot be loaded.
      */
+    @CachedReturnPlugin.Enhance
     public Class<?> load() throws ClassNotFoundException {
-        return Class.forName(typeDescription.getName());
+        return Class.forName(typeDescription.getName(), false, ClassLoadingStrategy.BOOTSTRAP_LOADER);
     }
 
     /**

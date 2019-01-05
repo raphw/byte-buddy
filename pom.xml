@@ -434,10 +434,10 @@
                 <jdk>11</jdk>
             </activation>
             <properties>
-                <sourcecode.main.version>1.8</sourcecode.main.version>
-                <sourcecode.test.version>1.8</sourcecode.test.version>
-                <bytecode.main.version>1.8</bytecode.main.version>
-                <bytecode.test.version>1.8</bytecode.test.version>
+                <sourcecode.main.version>1.7</sourcecode.main.version>
+                <sourcecode.test.version>1.7</sourcecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
             </properties>
         </profile>
@@ -449,10 +449,26 @@
                 <jdk>12</jdk>
             </activation>
             <properties>
-                <sourcecode.main.version>9</sourcecode.main.version>
-                <sourcecode.test.version>9</sourcecode.test.version>
-                <bytecode.main.version>9</bytecode.main.version>
-                <bytecode.test.version>9</bytecode.test.version>
+                <sourcecode.main.version>1.7</sourcecode.main.version>
+                <sourcecode.test.version>1.7</sourcecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+                <bytebuddy.experimental>true</bytebuddy.experimental>
+            </properties>
+        </profile>
+        <!-- Runs the build with compatibility for Java 13 JVMs. -->
+        <profile>
+            <id>java13-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>13</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.7</sourcecode.main.version>
+                <sourcecode.test.version>1.7</sourcecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
                 <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
@@ -533,6 +549,18 @@
             <properties>
                 <bytecode.main.version>12</bytecode.main.version>
                 <bytecode.test.version>12</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 13. -->
+        <profile>
+            <id>java13</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>13</bytecode.main.version>
+                <bytecode.test.version>13</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>
