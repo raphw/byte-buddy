@@ -96,6 +96,14 @@ public enum JavaType {
             CONSTANT_DESCRIPTION.getTypeStub()),
 
     /**
+     * The Java 12 {@code java.lang.constant.DirectMethodHandleDesc} type.
+     */
+    DIRECT_METHOD_HANDLE_DESCRIPTION("java.lang.constant.DirectMethodHandleDesc",
+            Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE,
+            TypeDescription.UNDEFINED,
+            METHOD_HANDLE_DESCRIPTION.getTypeStub()),
+
+    /**
      * The Java 7 {@code java.lang.invoke.MethodHandle} type.
      */
     METHOD_HANDLE("java.lang.invoke.MethodHandle", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, TypeDescription.OBJECT, CONSTABLE.getTypeStub()),
@@ -219,5 +227,37 @@ public enum JavaType {
      */
     public TypeDescription loadAsDescription() throws ClassNotFoundException {
         return TypeDescription.ForLoadedType.of(load());
+    }
+
+    /**
+     * Returns {@code true} if this type is available on the current JVM.
+     *
+     * @return {@code true} if this type is available on the current JVM.
+     */
+    @CachedReturnPlugin.Enhance
+    public boolean isAvailable() {
+        try {
+            load();
+            return true;
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * Checks if the supplied object is an instance of this type.
+     *
+     * @param instance The instance to check.
+     * @return {@code true} if the supplied object is an instance of this type.
+     */
+    public boolean isInstance(Object instance) {
+        if (!isAvailable()) {
+            return false;
+        }
+        try {
+            return load().isInstance(instance);
+        } catch (ClassNotFoundException ignored) {
+            return false;
+        }
     }
 }

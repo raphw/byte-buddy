@@ -1827,9 +1827,9 @@ public class MethodCall implements Implementation.Composable {
                     return new ForStackManipulation(DoubleConstant.forValue((Double) value), double.class);
                 } else if (value instanceof Class) {
                     return new ForStackManipulation(ClassConstant.of(TypeDescription.ForLoadedType.of((Class<?>) value)), Class.class);
-                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                     return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(value)), JavaType.METHOD_HANDLE.getTypeStub());
-                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                     return new ForStackManipulation(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value)), JavaType.METHOD_TYPE.getTypeStub());
                 } else if (value instanceof Enum<?>) {
                     EnumerationDescription enumerationDescription = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);

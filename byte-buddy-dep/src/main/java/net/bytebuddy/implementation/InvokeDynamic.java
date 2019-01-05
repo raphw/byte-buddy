@@ -236,9 +236,9 @@ public class InvokeDynamic implements Implementation.Composable {
                         : TypeDescription.ForLoadedType.of((Class<?>) argument);
             } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
                 argument = JavaConstant.Dynamic.ofPrimitiveType((TypeDescription) argument);
-            } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+            } else if (JavaType.METHOD_HANDLE.isInstance(argument)) {
                 argument = JavaConstant.MethodHandle.ofLoaded(argument);
-            } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+            } else if (JavaType.METHOD_TYPE.isInstance(argument)) {
                 argument = JavaConstant.MethodType.ofLoaded(argument);
             }
             arguments.add(argument);
@@ -1320,9 +1320,9 @@ public class InvokeDynamic implements Implementation.Composable {
                         return new ForClassConstant(TypeDescription.ForLoadedType.of((Class<?>) value));
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
-                    } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                    } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
                         return new ForJavaConstant(JavaConstant.MethodHandle.ofLoaded(value));
-                    } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                    } else if (JavaType.METHOD_TYPE.isInstance(value)) {
                         return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
                     } else {
                         return ForInstance.of(value);

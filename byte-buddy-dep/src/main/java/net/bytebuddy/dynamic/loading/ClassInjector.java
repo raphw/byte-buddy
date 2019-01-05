@@ -1369,7 +1369,7 @@ ClassInjector {
         public static UsingLookup of(Object lookup) {
             if (!DISPATCHER.isAlive()) {
                 throw new IllegalStateException("The current VM does not support class definition via method handle lookups");
-            } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
+            } else if (!JavaType.METHOD_HANDLES_LOOKUP.isInstance(lookup)) {
                 throw new IllegalArgumentException("Not a method handle lookup: " + lookup);
             } else if ((DISPATCHER.lookupModes(lookup) & PACKAGE_LOOKUP) == 0) {
                 throw new IllegalArgumentException("Lookup does not imply package-access: " + lookup);

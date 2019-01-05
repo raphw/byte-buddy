@@ -93,7 +93,7 @@ public interface JavaConstant {
          * @return The method type represented as a {@link MethodType}.
          */
         public static MethodType ofLoaded(Object methodType) {
-            if (!JavaType.METHOD_TYPE.getTypeStub().isInstance(methodType)) {
+            if (!JavaType.METHOD_TYPE.isInstance(methodType)) {
                 throw new IllegalArgumentException("Expected method type object: " + methodType);
             }
             return of(DISPATCHER.returnType(methodType), DISPATCHER.parameterArray(methodType));
@@ -501,9 +501,9 @@ public interface JavaConstant {
          * @return A representation of the loaded method handle
          */
         public static MethodHandle ofLoaded(Object methodHandle, Object lookup) {
-            if (!JavaType.METHOD_HANDLE.getTypeStub().isInstance(methodHandle)) {
+            if (!JavaType.METHOD_HANDLE.isInstance(methodHandle)) {
                 throw new IllegalArgumentException("Expected method handle object: " + methodHandle);
-            } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
+            } else if (!JavaType.METHOD_HANDLES_LOOKUP.isInstance(lookup)) {
                 throw new IllegalArgumentException("Expected method handle lookup object: " + lookup);
             }
             Dispatcher dispatcher = DISPATCHER.initialize();
@@ -1591,9 +1591,9 @@ public interface JavaConstant {
                             : TypeDescription.ForLoadedType.of((Class<?>) argument);
                 } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
                     argument = ofPrimitiveType((TypeDescription) argument);
-                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+                } else if (JavaType.METHOD_HANDLE.isInstance(argument)) {
                     argument = MethodHandle.ofLoaded(argument);
-                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+                } else if (JavaType.METHOD_TYPE.isInstance(argument)) {
                     argument = MethodType.ofLoaded(argument);
                 }
                 TypeDescription targetType;
@@ -1784,9 +1784,9 @@ public interface JavaConstant {
                             : TypeDescription.ForLoadedType.of((Class<?>) argument);
                 } else if (argument instanceof TypeDescription && ((TypeDescription) argument).isPrimitive()) {
                     argument = ofPrimitiveType((TypeDescription) argument);
-                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
+                } else if (JavaType.METHOD_HANDLE.isInstance(argument)) {
                     argument = MethodHandle.ofLoaded(argument);
-                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
+                } else if (JavaType.METHOD_TYPE.isInstance(argument)) {
                     argument = MethodType.ofLoaded(argument);
                 }
                 arguments.add(argument);
