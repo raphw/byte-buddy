@@ -63,7 +63,7 @@ public class MultipleParentClassLoaderTest {
     @Test
     public void testSingleParentReturnsOriginal() throws Exception {
         assertThat(new MultipleParentClassLoader.Builder()
-                .append(getClass().getClassLoader(), getClass().getClassLoader())
+                .append(ClassLoader.getSystemClassLoader(), ClassLoader.getSystemClassLoader())
                 .build(), is(ClassLoader.getSystemClassLoader()));
     }
 
@@ -81,6 +81,36 @@ public class MultipleParentClassLoaderTest {
                 .append(getClass().getClassLoader(), null)
                 .filter(not(isBootstrapClassLoader()))
                 .build(), is(getClass().getClassLoader()));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyFirst() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(ClassLoader.getSystemClassLoader(), ClassLoader.getSystemClassLoader().getParent())
+                .build(), is(ClassLoader.getSystemClassLoader()));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyFirstChained() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(ClassLoader.getSystemClassLoader())
+                .appendMostSpecific(ClassLoader.getSystemClassLoader().getParent())
+                .build(), is(ClassLoader.getSystemClassLoader()));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyLast() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(ClassLoader.getSystemClassLoader().getParent(), ClassLoader.getSystemClassLoader())
+                .build(), is(ClassLoader.getSystemClassLoader()));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyFirstLast() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(ClassLoader.getSystemClassLoader().getParent())
+                .appendMostSpecific(ClassLoader.getSystemClassLoader())
+                .build(), is(ClassLoader.getSystemClassLoader()));
     }
 
     @Test

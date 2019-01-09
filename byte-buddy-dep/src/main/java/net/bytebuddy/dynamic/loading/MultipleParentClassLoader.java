@@ -25,6 +25,7 @@ import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.whereAny;
 
 /**
  * <p>
@@ -259,12 +260,89 @@ public class MultipleParentClassLoader extends ClassLoader {
          */
         public Builder append(List<? extends ClassLoader> classLoaders) {
             List<ClassLoader> filtered = new ArrayList<ClassLoader>(this.classLoaders.size() + classLoaders.size());
-            Set<ClassLoader> registered = new HashSet<ClassLoader>(this.classLoaders);
             filtered.addAll(this.classLoaders);
+            Set<ClassLoader> registered = new HashSet<ClassLoader>(this.classLoaders);
             for (ClassLoader classLoader : classLoaders) {
                 if (classLoader != null && registered.add(classLoader)) {
                     filtered.add(classLoader);
                 }
+            }
+            return new Builder(filtered);
+        }
+
+        /**
+         * Appends the class loaders of the given types but filters any duplicates within the hierarchy of class loaders.
+         * The bootstrap class loader is implicitly skipped as it is an implicit parent of any class loader. Class loaders
+         * are prepended to the list of class loaders.
+         *
+         * @param type The types of which to collect the class loaders.
+         * @return A new builder instance with the additional class loaders of the provided types if they were not
+         * yet collected.
+         */
+        public Builder appendMostSpecific(Class<?>... type) {
+            return appendMostSpecific(Arrays.asList(type));
+        }
+
+        /**
+         * Appends the class loaders of the given types but filters any duplicates within the hierarchy of class loaders.
+         * The bootstrap class loader is implicitly skipped as it is an implicit parent of any class loader. Class loaders
+         * are prepended to the list of class loaders.
+         *
+         * @param types The types of which to collect the class loaders.
+         * @return A new builder instance with the additional class loaders.
+         */
+        public Builder appendMostSpecific(Collection<? extends Class<?>> types) {
+            List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(types.size());
+            for (Class<?> type : types) {
+                classLoaders.add(type.getClassLoader());
+            }
+            return appendMostSpecific(classLoaders);
+        }
+
+        /**
+         * Appends the given class loaders but removes any class loaders that are the parent of any previously registered class loader.
+         * The bootstrap class loader is implicitly skipped as it is an implicit parent of any class loader.
+         *
+         * @param classLoader The class loaders to be collected.
+         * @return A new builder instance with the additional class loaders.
+         */
+        public Builder appendMostSpecific(ClassLoader... classLoader) {
+            return appendMostSpecific(Arrays.asList(classLoader));
+        }
+
+        /**
+         * Appends the given class loaders but removes any class loaders that are the parent of any previously registered class loader.
+         * The bootstrap class loader is implicitly skipped as it is an implicit parent of any class loader.
+         *
+         * @param classLoaders The class loaders to collected.
+         * @return A new builder instance with the additional class loaders.
+         */
+        public Builder appendMostSpecific(List<? extends ClassLoader> classLoaders) {
+            List<ClassLoader> filtered = new ArrayList<ClassLoader>(this.classLoaders.size() + classLoaders.size());
+            filtered.addAll(this.classLoaders);
+            consideration:
+            for (ClassLoader classLoader : classLoaders) {
+                if (classLoader == null) {
+                    continue;
+                }
+                ClassLoader candidate = classLoader;
+                do {
+                    Iterator<ClassLoader> iterator = filtered.iterator();
+                    while (iterator.hasNext()) {
+                        ClassLoader previous = iterator.next();
+                        if (previous.equals(candidate)) {
+                            iterator.remove();
+                        }
+                    }
+                } while ((candidate = candidate.getParent()) != null);
+                for (ClassLoader previous : filtered) {
+                    do {
+                        if (previous.equals(classLoader)) {
+                            continue consideration;
+                        }
+                    } while ((previous = previous.getParent()) != null);
+                }
+                filtered.add(classLoader);
             }
             return new Builder(filtered);
         }
