@@ -16,6 +16,7 @@ import java.util.NoSuchElementException;
 
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static net.bytebuddy.matcher.ElementMatchers.not;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -78,9 +79,9 @@ public class MultipleParentClassLoaderTest {
     @Test
     public void testClassLoaderFilter() throws Exception {
         assertThat(new MultipleParentClassLoader.Builder()
-                .append(getClass().getClassLoader(), null)
+                .append(ClassLoader.getSystemClassLoader(), null)
                 .filter(not(isBootstrapClassLoader()))
-                .build(), is(getClass().getClassLoader()));
+                .build(), is(ClassLoader.getSystemClassLoader()));
     }
 
     @Test
@@ -111,6 +112,21 @@ public class MultipleParentClassLoaderTest {
                 .appendMostSpecific(ClassLoader.getSystemClassLoader().getParent())
                 .appendMostSpecific(ClassLoader.getSystemClassLoader())
                 .build(), is(ClassLoader.getSystemClassLoader()));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyUnique() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(first, second)
+                .build(), instanceOf(MultipleParentClassLoader.class));
+    }
+
+    @Test
+    public void testMostSpecificInHierarchyFirstUnique() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .appendMostSpecific(first)
+                .appendMostSpecific(second)
+                .build(), instanceOf(MultipleParentClassLoader.class));
     }
 
     @Test
