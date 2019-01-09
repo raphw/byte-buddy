@@ -25,7 +25,6 @@ import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.not;
-import static net.bytebuddy.matcher.ElementMatchers.whereAny;
 
 /**
  * <p>
