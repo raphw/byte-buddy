@@ -175,10 +175,20 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         } else if (javaVersionString.equals("1.13") || javaVersionString.equals("13")) {
             return JAVA_V13;
         } else {
+            if (OpenedClassReader.EXPERIMENTAL) {
+                try {
+                    int version = Integer.parseInt(javaVersionString.startsWith("1.")
+                            ? javaVersionString.substring(2)
+                            : javaVersionString);
+                    if (version > 0) {
+                        return new ClassFileVersion(BASE_VERSION + version);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
             throw new IllegalArgumentException("Unknown Java version string: " + javaVersionString);
         }
     }
-
 
     /**
      * Creates a class file version for a given major release of Java. Currently, all versions reaching from
@@ -216,7 +226,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             case 13:
                 return JAVA_V13;
             default:
-                throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
+                if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
+                    return new ClassFileVersion(BASE_VERSION + javaVersion);
+                } else {
+                    throw new IllegalArgumentException("Unknown Java version: " + javaVersion);
+                }
         }
     }
 
