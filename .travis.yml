@@ -30,8 +30,8 @@ matrix:
     - env: TARGET='-Pjava10'
       jdk: openjdk-ea
       script:
-        - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin' -Dnet.bytebuddy.experimental=true
-        - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin' -Dnet.bytebuddy.experimental=true
+        - ./mvnw install ${TARGET} -DskipTests=true -Dnet.bytebuddy.experimental=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+        - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Dnet.bytebuddy.experimental=true -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
 
 script:
   - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'

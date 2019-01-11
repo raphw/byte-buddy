@@ -71,10 +71,10 @@ public class OpenedClassReader {
     public static ClassReader of(byte[] binaryRepresentation) {
         if (EXPERIMENTAL) {
             byte[] actualVersion = new byte[]{binaryRepresentation[4], binaryRepresentation[5], binaryRepresentation[6], binaryRepresentation[7]};
-            binaryRepresentation[4] = (byte) (Opcodes.V11 >>> 24);
-            binaryRepresentation[5] = (byte) (Opcodes.V11 >>> 16);
-            binaryRepresentation[6] = (byte) (Opcodes.V11 >>> 8);
-            binaryRepresentation[7] = (byte) Opcodes.V11;
+            binaryRepresentation[4] = (byte) (Opcodes.V12 >>> 24);
+            binaryRepresentation[5] = (byte) (Opcodes.V12 >>> 16);
+            binaryRepresentation[6] = (byte) (Opcodes.V12 >>> 8);
+            binaryRepresentation[7] = (byte) Opcodes.V12;
             ClassReader classReader = new ClassReader(binaryRepresentation);
             System.arraycopy(actualVersion, 0, binaryRepresentation, 4, actualVersion.length);
             return classReader;
