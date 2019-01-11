@@ -1925,6 +1925,69 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
+         * A simple target handler that applies a given stack manipulation.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class Simple implements TargetHandler, Factory, Resolved {
+
+            /**
+             * The type resolved by the stack manipulation.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * The stack manipulation that loads a target for the method call.
+             */
+            private final StackManipulation stackManipulation;
+
+            /**
+             * Creates a simple target handler.
+             *
+             * @param typeDescription   The type resolved by the stack manipulation.
+             * @param stackManipulation The stack manipulation that loads a target for the method call.
+             */
+            protected Simple(TypeDescription typeDescription, StackManipulation stackManipulation) {
+                this.typeDescription = typeDescription;
+                this.stackManipulation = stackManipulation;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TargetHandler make(Target implementationTarget) {
+                return this;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Resolved resolve(MethodDescription instrumentedMethod) {
+                return this;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeDescription getTypeDescription() {
+                return typeDescription;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
+                return stackManipulation;
+            }
+        }
+
+        /**
          * A target handler that invokes a method either on the instance of the instrumented
          * type or as a static method.
          */
@@ -3142,6 +3205,34 @@ public class MethodCall implements Implementation.Composable {
                     new TargetHandler.ForValue.Factory(target, TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(type)),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation.Factory(TypeDescription.ForLoadedType.of(type)),
+                    terminationHandler,
+                    assigner,
+                    typing);
+        }
+
+        /**
+         * Invokes the specified method on an instance that is loaded by the provided stack manipulation.
+         *
+         * @param stackManipulation The stack manipulation that loads the instance that the method is invoked upon.
+         * @param type              The type of the loaded instance.
+         * @return A method call that invokes the provided method on the value of the provided stack manipulation.
+         */
+        public MethodCall on(StackManipulation stackManipulation, Class<?> type) {
+            return on(stackManipulation, TypeDescription.ForLoadedType.of(type));
+        }
+
+        /**
+         * Invokes the specified method on an instance that is loaded by the provided stack manipulation.
+         *
+         * @param stackManipulation The stack manipulation that loads the instance that the method is invoked upon.
+         * @param typeDescription   The type of the loaded instance.
+         * @return A method call that invokes the provided method on the value of the provided stack manipulation.
+         */
+        public MethodCall on(StackManipulation stackManipulation, TypeDescription typeDescription) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.Simple(typeDescription, stackManipulation),
+                    argumentLoaders,
+                    new MethodInvoker.ForVirtualInvocation.Factory(typeDescription),
                     terminationHandler,
                     assigner,
                     typing);

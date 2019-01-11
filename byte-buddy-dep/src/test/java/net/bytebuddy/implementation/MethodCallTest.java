@@ -138,6 +138,23 @@ public class MethodCallTest {
         assertThat(instance, instanceOf(InstanceMethod.class));
     }
 
+    @Test
+    public void testMethodInvocationUsingStackManipulation() throws Exception {
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+            .subclass(SimpleMethod.class)
+            .method(named(FOO))
+            .intercept(MethodCall.invoke(String.class.getMethod("toUpperCase")).on(new TextConstant(FOO), String.class))
+            .make()
+            .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        SimpleMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foo(), is(FOO.toUpperCase()));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
+        assertThat(instance, instanceOf(SimpleMethod.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testMatchedCallAmbiguous() throws Exception {
         new ByteBuddy()
