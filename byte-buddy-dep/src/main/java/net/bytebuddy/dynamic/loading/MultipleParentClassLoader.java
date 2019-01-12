@@ -243,6 +243,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          * Creates a new builder.
          *
          * @param classLoaders The class loaders that were collected until now.
+         * @param sealed       {@code true} if the created class loader is sealed.
          */
         private Builder(List<? extends ClassLoader> classLoaders, boolean sealed) {
             this.classLoaders = classLoaders;
