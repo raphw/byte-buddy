@@ -46,7 +46,7 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
  * by loading classes with child class loaders of this class loader.
  * </p>
  */
-public class MultipleParentClassLoader extends ClassLoader {
+public class MultipleParentClassLoader extends InjectionClassLoader {
 
     /**
      * The parents of this class loader in their application order.
@@ -72,7 +72,20 @@ public class MultipleParentClassLoader extends ClassLoader {
      *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
      */
     public MultipleParentClassLoader(ClassLoader parent, List<? extends ClassLoader> parents) {
-        super(parent);
+        this(parent, parents, true);
+    }
+
+    /**
+     * Creates a new class loader with multiple parents.
+     *
+     * @param parent  An explicit parent in compliance with the class loader API. This explicit parent should only be set if
+     *                the current platform does not allow creating a class loader that extends the bootstrap loader.
+     * @param parents The parents of this class loader in their application order. This list must not contain {@code null},
+     *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
+     * @param sealed  {@code true} if the class loader is sealed for injection of additional classes.
+     */
+    public MultipleParentClassLoader(ClassLoader parent, List<? extends ClassLoader> parents, boolean sealed) {
+        super(parent, sealed);
         this.parents = parents;
     }
 
@@ -117,6 +130,15 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
         enumerations.add(super.getResources(name));
         return new CompoundEnumeration(enumerations);
+    }
+
+    @Override
+    protected Map<String, Class<?>> doDefineClasses(Map<String, byte[]> typeDefinitions) {
+        Map<String, Class<?>> types = new HashMap<String, Class<?>>();
+        for (Map.Entry<String, byte[]> entry : typeDefinitions.entrySet()) {
+            types.put(entry.getKey(), defineClass(entry.getKey(), entry.getValue(), 0, entry.getValue().length));
+        }
+        return types;
     }
 
     /**
@@ -399,7 +421,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          * @return A suitable class loader.
          */
         public ClassLoader build(ClassLoader parent) {
-            return classLoaders.isEmpty() || (classLoaders.size() == 1 && classLoaders.contains(parent))
+            return classLoaders.isEmpty() || classLoaders.size() == 1 && classLoaders.contains(parent)
                     ? parent
                     : filter(not(is(parent))).doBuild(parent);
         }

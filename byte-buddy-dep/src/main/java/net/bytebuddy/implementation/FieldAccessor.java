@@ -653,7 +653,7 @@ public abstract class FieldAccessor implements Implementation {
          * {@inheritDoc}
          */
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getInstrumentedType(), fieldLocation.prepare(implementationTarget.getInstrumentedType()));
+            return new Appender(fieldLocation.prepare(implementationTarget.getInstrumentedType()));
         }
 
         /**
@@ -834,11 +834,6 @@ public abstract class FieldAccessor implements Implementation {
         protected class Appender implements ByteCodeAppender {
 
             /**
-             * The instrumented type.
-             */
-            private final TypeDescription instrumentedType;
-
-            /**
              * The field's location.
              */
             private final FieldLocation.Prepared fieldLocation;
@@ -846,11 +841,9 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * Creates a new byte code appender for a field accessor implementation.
              *
-             * @param instrumentedType The instrumented type.
              * @param fieldLocation    The field's location.
              */
-            protected Appender(TypeDescription instrumentedType, FieldLocation.Prepared fieldLocation) {
-                this.instrumentedType = instrumentedType;
+            protected Appender(FieldLocation.Prepared fieldLocation) {
                 this.fieldLocation = fieldLocation;
             }
 
@@ -887,7 +880,7 @@ public abstract class FieldAccessor implements Implementation {
                             MethodReturn.VOID
                     );
                 } else {
-                    throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");
+                    throw new IllegalArgumentException("Method " + instrumentedMethod + " is no bean accessor");
                 }
                 if (!implementation.isValid()) {
                     throw new IllegalStateException("Cannot set or get value of " + instrumentedMethod + " using " + fieldDescription);
