@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 10. January 2019: version 1.9.7
+
+- Retain native modifier when defining a method without method body.
+- Allow appending class loader to multiple parent class loader with hierarchy check.
+- Add support for Java 13.
+- Extend experimental property to allow for detection of unknown versions.
+
 ### 13. December 2018: version 1.9.6
 
 - Add the JVM extension / platform class loaders to the default excludes for the `AgentBuilder`.
