@@ -214,6 +214,11 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
         private static final int ONLY = 0;
 
         /**
+         * {@code true} if the created class loader is sealed.
+         */
+        private final boolean sealed;
+
+        /**
          * The class loaders that were collected.
          */
         private final List<? extends ClassLoader> classLoaders;
@@ -222,7 +227,16 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          * Creates a new builder without any class loaders.
          */
         public Builder() {
-            this(Collections.<ClassLoader>emptyList());
+            this(true);
+        }
+
+        /**
+         * Creates a new builder without any class loaders.
+         *
+         * @param sealed {@code true} if the created class loader is sealed.
+         */
+        public Builder(boolean sealed) {
+            this(Collections.<ClassLoader>emptyList(), sealed);
         }
 
         /**
@@ -230,8 +244,9 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          *
          * @param classLoaders The class loaders that were collected until now.
          */
-        private Builder(List<? extends ClassLoader> classLoaders) {
+        private Builder(List<? extends ClassLoader> classLoaders, boolean sealed) {
             this.classLoaders = classLoaders;
+            this.sealed = sealed;
         }
 
         /**
@@ -288,7 +303,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
                     filtered.add(classLoader);
                 }
             }
-            return new Builder(filtered);
+            return new Builder(filtered, sealed);
         }
 
         /**
@@ -365,7 +380,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
                 }
                 filtered.add(classLoader);
             }
-            return new Builder(filtered);
+            return new Builder(filtered, sealed);
         }
 
         /**
@@ -381,7 +396,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
                     classLoaders.add(classLoader);
                 }
             }
-            return new Builder(classLoaders);
+            return new Builder(classLoaders, sealed);
         }
 
         /**
@@ -434,7 +449,7 @@ public class MultipleParentClassLoader extends InjectionClassLoader {
          */
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
         private ClassLoader doBuild(ClassLoader parent) {
-            return new MultipleParentClassLoader(parent, classLoaders);
+            return new MultipleParentClassLoader(parent, classLoaders, sealed);
         }
     }
 }
