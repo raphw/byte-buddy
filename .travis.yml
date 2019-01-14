@@ -15,24 +15,21 @@ install: echo "The default Travis install script is being skipped!"
 matrix:
   include:
     # Java 9
-    - env: TARGET='-Pjava9'
+    - env: TARGET='-Pjava9' EXPERIMENTAL='false'
       jdk: openjdk9
     # Java 10
-    - env: TARGET='-Pjava10'
+    - env: TARGET='-Pjava10' EXPERIMENTAL='false'
       jdk: openjdk10
     # Java 11
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava11' EXPERIMENTAL='false'
       jdk: openjdk11
     # Java 12
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava11' EXPERIMENTAL='true'
       jdk: openjdk12
     # Java 13
-    - env: TARGET='-Pjava11'
+    - env: TARGET='-Pjava11' EXPERIMENTAL='true'
       jdk: openjdk-ea
-      script:
-        - ./mvnw install ${TARGET} -DskipTests=true -Dnet.bytebuddy.experimental=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-        - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Dnet.bytebuddy.experimental=true -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
 
 script:
-  - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
-  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.experimental=${EXPERIMENTAL} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
+  - ./mvnw jacoco:prepare-agent verify jacoco:report ${TARGET} -Pintegration -Dnet.bytebuddy.experimental=${EXPERIMENTAL} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
