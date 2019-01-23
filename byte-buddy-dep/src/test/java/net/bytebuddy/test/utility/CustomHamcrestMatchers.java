@@ -16,7 +16,7 @@ public class CustomHamcrestMatchers {
     @SuppressWarnings("unchecked")
     public static <T> Matcher<Iterable<T>> containsAllOf(Collection<T> items) {
         // The Java compiler only accepts this type casting when it is confused by the additional object type casting
-        return (Matcher<Iterable<T>>) (Object) hasItems(items.toArray(new Object[items.size()]));
+        return (Matcher<Iterable<T>>) (Object) hasItems(items.toArray(new Object[0]));
     }
 
     @Test

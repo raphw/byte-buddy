@@ -34,7 +34,7 @@ public class TypePoolDefaultLazyAnnotationListTest extends AbstractAnnotationLis
     }
 
     protected AnnotationList asList(List<Annotation> elements) {
-        return typePool.describe(Holder.class.getName()).resolve().getDeclaredAnnotations().filter(anyOf(elements.toArray(new Annotation[elements.size()])));
+        return typePool.describe(Holder.class.getName()).resolve().getDeclaredAnnotations().filter(anyOf(elements.toArray(new Annotation[0])));
     }
 
     protected AnnotationDescription asElement(Annotation element) {

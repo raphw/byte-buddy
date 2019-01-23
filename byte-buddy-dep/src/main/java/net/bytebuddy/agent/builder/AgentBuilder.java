@@ -6978,7 +6978,7 @@ public interface AgentBuilder {
                     if (!classDefinitions.isEmpty()) {
                         circularityLock.release();
                         try {
-                            instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                            instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[0]));
                         } finally {
                             circularityLock.acquire();
                         }
@@ -7000,7 +7000,7 @@ public interface AgentBuilder {
                     if (!types.isEmpty()) {
                         circularityLock.release();
                         try {
-                            DISPATCHER.retransformClasses(instrumentation, types.toArray(new Class<?>[types.size()]));
+                            DISPATCHER.retransformClasses(instrumentation, types.toArray(new Class<?>[0]));
                         } finally {
                             circularityLock.acquire();
                         }

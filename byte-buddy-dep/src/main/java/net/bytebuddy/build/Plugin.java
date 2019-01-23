@@ -288,7 +288,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                      */
                     public Plugin instantiate() {
                         try {
-                            return constructor.newInstance(arguments.toArray(new Object[arguments.size()]));
+                            return constructor.newInstance(arguments.toArray(new Object[0]));
                         } catch (InstantiationException exception) {
                             throw new IllegalStateException("Failed to instantiate plugin via " + constructor, exception);
                         } catch (IllegalAccessException exception) {

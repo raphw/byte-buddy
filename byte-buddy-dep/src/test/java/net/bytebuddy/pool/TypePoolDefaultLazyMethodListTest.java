@@ -34,7 +34,7 @@ public class TypePoolDefaultLazyMethodListTest extends AbstractMethodListTest<Me
     }
 
     protected MethodList<MethodDescription.InDefinedShape> asList(List<Method> elements) {
-        return typePool.describe(Foo.class.getName()).resolve().getDeclaredMethods().filter(anyOf(elements.toArray(new Method[elements.size()])));
+        return typePool.describe(Foo.class.getName()).resolve().getDeclaredMethods().filter(anyOf(elements.toArray(new Method[0])));
     }
 
     protected MethodDescription.InDefinedShape asElement(Method element) {

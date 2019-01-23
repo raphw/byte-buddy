@@ -1070,7 +1070,7 @@ public interface AnnotationDescription {
         public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
             return defineAnnotationArray(property,
                     TypeDescription.ForLoadedType.of(annotationType),
-                    new AnnotationList.ForLoadedAnnotations(annotation).toArray(new AnnotationDescription[annotation.length]));
+                    new AnnotationList.ForLoadedAnnotations(annotation).toArray(new AnnotationDescription[0]));
         }
 
         /**
@@ -1093,7 +1093,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional type array property.
          */
         public Builder defineTypeArray(String property, Class<?>... type) {
-            return defineTypeArray(property, new TypeList.ForLoadedTypes(type).toArray(new TypeDescription[type.length]));
+            return defineTypeArray(property, new TypeList.ForLoadedTypes(type).toArray(new TypeDescription[0]));
         }
 
         /**

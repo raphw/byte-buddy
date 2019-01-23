@@ -34,7 +34,7 @@ public class TypePoolDefaultLazyFieldListTest extends AbstractFieldListTest<Fiel
     }
 
     protected FieldList<FieldDescription.InDefinedShape> asList(List<Field> elements) {
-        return typePool.describe(Foo.class.getName()).resolve().getDeclaredFields().filter(anyOf(elements.toArray(new Field[elements.size()])));
+        return typePool.describe(Foo.class.getName()).resolve().getDeclaredFields().filter(anyOf(elements.toArray(new Field[0])));
     }
 
     protected FieldDescription.InDefinedShape asElement(Field element) {

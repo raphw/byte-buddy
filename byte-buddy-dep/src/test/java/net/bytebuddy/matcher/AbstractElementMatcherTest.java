@@ -51,7 +51,7 @@ public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
                     arguments.add(null);
                 }
             }
-            assertThat(constructor.newInstance(arguments.toArray(new Object[arguments.size()])).toString(), startsWith(startsWith));
+            assertThat(constructor.newInstance(arguments.toArray(new Object[0])).toString(), startsWith(startsWith));
         }
     }
 }
