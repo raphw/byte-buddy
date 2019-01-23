@@ -1108,7 +1108,7 @@ public interface ClassFileLocator extends Closeable {
          * @param urls The URLs to search for class files.
          */
         public ForUrl(Collection<? extends URL> urls) {
-            this(urls.toArray(new URL[urls.size()]));
+            this(urls.toArray(new URL[0]));
         }
 
         /**

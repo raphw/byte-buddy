@@ -132,7 +132,7 @@ public class ClassLoaderResolver implements Closeable {
         } catch (MalformedURLException exception) {
             throw new MojoFailureException("Could not resolve file as URL for " + mavenCoordinate, exception);
         }
-        return new URLClassLoader(urls.toArray(new URL[urls.size()]), ByteBuddy.class.getClassLoader());
+        return new URLClassLoader(urls.toArray(new URL[0]), ByteBuddy.class.getClassLoader());
     }
 
     /**

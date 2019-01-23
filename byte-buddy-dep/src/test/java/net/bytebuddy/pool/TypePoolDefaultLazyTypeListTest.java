@@ -33,7 +33,7 @@ public class TypePoolDefaultLazyTypeListTest extends AbstractTypeListTest<Class<
     }
 
     protected TypeList asList(List<Class<?>> elements) {
-        return typePool.describe(Holder.class.getName()).resolve().getInterfaces().asErasures().filter(anyOf(elements.toArray(new Class<?>[elements.size()])));
+        return typePool.describe(Holder.class.getName()).resolve().getInterfaces().asErasures().filter(anyOf(elements.toArray(new Class<?>[0])));
     }
 
     protected TypeDescription asElement(Class<?> element) {

@@ -518,11 +518,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     private void assertAnnotations(Class<?> type) {
         assertThat(describe(type).getDeclaredAnnotations(),
                 hasItems(new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations())
-                        .toArray(new AnnotationDescription[type.getDeclaredAnnotations().length])));
+                        .toArray(new AnnotationDescription[0])));
         assertThat(describe(type).getDeclaredAnnotations().size(), is(type.getDeclaredAnnotations().length));
         assertThat(describe(type).getInheritedAnnotations(),
                 hasItems(new AnnotationList.ForLoadedAnnotations(type.getAnnotations())
-                        .toArray(new AnnotationDescription[type.getAnnotations().length])));
+                        .toArray(new AnnotationDescription[0])));
         assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
     }
 

@@ -35,7 +35,7 @@ public class TypePoolDefaultGenericTypeListTest extends AbstractTypeListGenericT
     }
 
     protected TypeList.Generic asList(List<Type> elements) {
-        return typePool.describe(Holder.class.getName()).resolve().getInterfaces().filter(anyOf(elements.toArray(new Type[elements.size()])));
+        return typePool.describe(Holder.class.getName()).resolve().getInterfaces().filter(anyOf(elements.toArray(new Type[0])));
     }
 
     protected TypeDescription.Generic asElement(Type element) {

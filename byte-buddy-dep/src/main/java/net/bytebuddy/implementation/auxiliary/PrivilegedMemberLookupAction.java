@@ -163,7 +163,7 @@ public enum PrivilegedMemberLookupAction implements AuxiliaryType {
                 .method(named("run"))
                 .intercept(MethodCall.invoke(methodDescription)
                         .onField(TYPE_FIELD)
-                        .withField(fields.keySet().toArray(new String[fields.size()])))
+                        .withField(fields.keySet().toArray(new String[0])))
                 .defineField(TYPE_FIELD, Class.class, Visibility.PRIVATE);
         for (Map.Entry<String, Class<?>> entry : fields.entrySet()) {
             builder = builder.defineField(entry.getKey(), entry.getValue(), Visibility.PRIVATE);

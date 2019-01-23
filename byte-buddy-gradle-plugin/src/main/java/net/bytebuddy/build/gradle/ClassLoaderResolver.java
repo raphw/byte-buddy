@@ -94,7 +94,7 @@ public class ClassLoaderResolver implements Closeable {
                 throw new GradleException("Cannot resolve " + file + " as URL", exception);
             }
         }
-        return new URLClassLoader(urls.toArray(new URL[urls.size()]), ByteBuddy.class.getClassLoader());
+        return new URLClassLoader(urls.toArray(new URL[0]), ByteBuddy.class.getClassLoader());
     }
 
     /**

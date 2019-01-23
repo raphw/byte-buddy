@@ -522,7 +522,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             @Override
             protected void apply(Instrumentation instrumentation, Map<Class<?>, ClassDefinition> classDefinitions)
                     throws UnmodifiableClassException, ClassNotFoundException {
-                instrumentation.redefineClasses(classDefinitions.values().toArray(new ClassDefinition[classDefinitions.size()]));
+                instrumentation.redefineClasses(classDefinitions.values().toArray(new ClassDefinition[0]));
             }
 
             @Override
@@ -562,7 +562,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
                 synchronized (this) {
                     DISPATCHER.addTransformer(instrumentation, classRedefinitionTransformer, REDEFINE_CLASSES);
                     try {
-                        DISPATCHER.retransformClasses(instrumentation, classDefinitions.keySet().toArray(new Class<?>[classDefinitions.size()]));
+                        DISPATCHER.retransformClasses(instrumentation, classDefinitions.keySet().toArray(new Class<?>[0]));
                     } finally {
                         instrumentation.removeTransformer(classRedefinitionTransformer);
                     }
@@ -587,7 +587,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
                 }
                 DISPATCHER.addTransformer(instrumentation, ClassResettingTransformer.INSTANCE, REDEFINE_CLASSES);
                 try {
-                    DISPATCHER.retransformClasses(instrumentation, types.toArray(new Class<?>[types.size()]));
+                    DISPATCHER.retransformClasses(instrumentation, types.toArray(new Class<?>[0]));
                 } finally {
                     instrumentation.removeTransformer(ClassResettingTransformer.INSTANCE);
                 }

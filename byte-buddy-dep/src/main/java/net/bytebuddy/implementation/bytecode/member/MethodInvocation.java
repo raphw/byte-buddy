@@ -510,7 +510,7 @@ public enum MethodInvocation {
                             bootstrapMethod.getInternalName(),
                             bootstrapMethod.getDescriptor(),
                             bootstrapMethod.getDeclaringType().isInterface()),
-                    arguments.toArray(new Object[arguments.size()]));
+                    arguments.toArray(new Object[0]));
             int stackSize = returnType.getStackSize().getSize() - StackSize.of(parameterTypes);
             return new Size(stackSize, Math.max(stackSize, 0));
         }
