@@ -26,6 +26,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -162,6 +163,11 @@ public class ByteBuddy {
     protected final TypeValidation typeValidation;
 
     /**
+     * The visibility bridge strategy to apply.
+     */
+    protected final VisibilityBridgeStrategy visibilityBridgeStrategy;
+
+    /**
      * The class writer strategy to use.
      */
     protected final ClassWriterStrategy classWriterStrategy;
@@ -196,6 +202,7 @@ public class ByteBuddy {
                 MethodGraph.Compiler.DEFAULT,
                 InstrumentedType.Factory.Default.MODIFIABLE,
                 TypeValidation.ENABLED,
+                VisibilityBridgeStrategy.Default.ALWAYS,
                 ClassWriterStrategy.Default.CONSTANT_POOL_RETAINING,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
@@ -212,6 +219,7 @@ public class ByteBuddy {
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param instrumentedTypeFactory      The instrumented type factory to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
@@ -224,6 +232,7 @@ public class ByteBuddy {
                         MethodGraph.Compiler methodGraphCompiler,
                         InstrumentedType.Factory instrumentedTypeFactory,
                         TypeValidation typeValidation,
+                        VisibilityBridgeStrategy visibilityBridgeStrategy,
                         ClassWriterStrategy classWriterStrategy,
                         LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
@@ -235,6 +244,7 @@ public class ByteBuddy {
         this.methodGraphCompiler = methodGraphCompiler;
         this.instrumentedTypeFactory = instrumentedTypeFactory;
         this.typeValidation = typeValidation;
+        this.visibilityBridgeStrategy = visibilityBridgeStrategy;
         this.classWriterStrategy = classWriterStrategy;
         this.ignoredMethods = ignoredMethods;
     }
@@ -411,6 +421,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 constructorStrategy);
@@ -565,6 +576,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
@@ -593,6 +605,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
@@ -641,6 +654,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
@@ -736,6 +750,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 type,
@@ -841,6 +856,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 type,
@@ -968,6 +984,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -991,6 +1008,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1013,6 +1031,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1036,6 +1055,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1066,6 +1086,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1091,6 +1112,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1116,6 +1138,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1137,6 +1160,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1160,8 +1184,31 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that applies the supplied visibility bridge strategy. By default, visibility bridges
+     * are create for all methods for which a visibility bridge is normally necessary.
+     *
+     * @param visibilityBridgeStrategy The visibility bridge strategy to apply.
+     * @return A new Byte Buddy instance that applies the supplied visibility bridge strategy.
+     */
+    public ByteBuddy with(VisibilityBridgeStrategy visibilityBridgeStrategy) {
+        return new ByteBuddy(classFileVersion,
+            namingStrategy,
+            auxiliaryTypeNamingStrategy,
+            annotationValueFilterFactory,
+            annotationRetention,
+            implementationContextFactory,
+            methodGraphCompiler,
+            instrumentedTypeFactory,
+            typeValidation,
+            visibilityBridgeStrategy,
+            classWriterStrategy,
+            ignoredMethods);
     }
 
     /**
@@ -1181,6 +1228,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }
@@ -1218,6 +1266,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 instrumentedTypeFactory,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods);
     }

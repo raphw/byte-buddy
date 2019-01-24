@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -85,6 +86,7 @@ public class AgentBuilderTypeStrategyTest {
     @SuppressWarnings("unchecked")
     public void testRedefineFrozen() throws Exception {
         when(byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)).thenReturn(byteBuddy);
+        when(byteBuddy.with(VisibilityBridgeStrategy.Default.NEVER)).thenReturn(byteBuddy);
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
         when(dynamicTypeBuilder.ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
         assertThat(AgentBuilder.TypeStrategy.Default.REDEFINE_FROZEN.builder(typeDescription,
@@ -95,6 +97,7 @@ public class AgentBuilderTypeStrategyTest {
                 module,
                 protectionDomain), is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).with(InstrumentedType.Factory.Default.FROZEN);
+        verify(byteBuddy).with(VisibilityBridgeStrategy.Default.NEVER);
         verify(byteBuddy).redefine(typeDescription, classFileLocator);
         verifyNoMoreInteractions(byteBuddy);
         verify(dynamicTypeBuilder).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);

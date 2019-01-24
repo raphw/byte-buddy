@@ -23,6 +23,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
@@ -67,6 +68,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param auxiliaryTypes               A list of explicitly defined auxiliary types.
@@ -85,6 +87,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 VisibilityBridgeStrategy visibilityBridgeStrategy,
                                                  ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods,
                                                  List<? extends DynamicType> auxiliaryTypes,
@@ -102,6 +105,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 auxiliaryTypes);

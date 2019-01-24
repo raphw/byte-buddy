@@ -22,6 +22,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
@@ -61,6 +62,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
@@ -73,6 +75,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       Implementation.Context.Factory implementationContextFactory,
                                       MethodGraph.Compiler methodGraphCompiler,
                                       TypeValidation typeValidation,
+                                      VisibilityBridgeStrategy visibilityBridgeStrategy,
                                       ClassWriterStrategy classWriterStrategy,
                                       LatentMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
@@ -88,6 +91,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 Collections.<DynamicType>emptyList(),
@@ -109,6 +113,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
      * @param classWriterStrategy          The class writer strategy to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
@@ -126,6 +131,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          Implementation.Context.Factory implementationContextFactory,
                                          MethodGraph.Compiler methodGraphCompiler,
                                          TypeValidation typeValidation,
+                                         VisibilityBridgeStrategy visibilityBridgeStrategy,
                                          ClassWriterStrategy classWriterStrategy,
                                          LatentMatcher<? super MethodDescription> ignoredMethods,
                                          List<? extends DynamicType> auxiliaryTypes,
@@ -142,6 +148,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 auxiliaryTypes);
@@ -161,6 +168,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
                                                  TypeValidation typeValidation,
+                                                 VisibilityBridgeStrategy visibilityBridgeStrategy,
                                                  ClassWriterStrategy classWriterStrategy,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods,
                                                  List<? extends DynamicType> auxiliaryTypes) {
@@ -176,6 +184,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
+                visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
                 auxiliaryTypes,
@@ -195,7 +204,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Compiled methodRegistry = constructorStrategy
                 .inject(instrumentedType, this.methodRegistry)
-                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
+                .prepare(applyConstructorStrategy(instrumentedType),
+                    methodGraphCompiler,
+                    typeValidation,
+                    visibilityBridgeStrategy,
+                    new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_CLASS, classFileVersion);
         return TypeWriter.Default.<T>forCreation(methodRegistry,
                 auxiliaryTypes,

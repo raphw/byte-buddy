@@ -32,6 +32,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.NexusAccessor;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -2059,6 +2060,7 @@ public interface AgentBuilder {
                                                       JavaModule module,
                                                       ProtectionDomain protectionDomain) {
                     return byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)
+                            .with(VisibilityBridgeStrategy.Default.NEVER)
                             .redefine(typeDescription, classFileLocator)
                             .ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }

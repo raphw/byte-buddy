@@ -3684,6 +3684,11 @@ public interface DynamicType {
                 protected final TypeValidation typeValidation;
 
                 /**
+                 * The visibility bridge strategy to apply.
+                 */
+                protected final VisibilityBridgeStrategy visibilityBridgeStrategy;
+
+                /**
                  * The class writer strategy to use.
                  */
                 protected final ClassWriterStrategy classWriterStrategy;
@@ -3713,6 +3718,7 @@ public interface DynamicType {
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               Determines if a type should be explicitly validated.
+                 * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
                  * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @param auxiliaryTypes               A list of explicitly defined auxiliary types.
@@ -3729,6 +3735,7 @@ public interface DynamicType {
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
                                   TypeValidation typeValidation,
+                                  VisibilityBridgeStrategy visibilityBridgeStrategy,
                                   ClassWriterStrategy classWriterStrategy,
                                   LatentMatcher<? super MethodDescription> ignoredMethods,
                                   List<? extends DynamicType> auxiliaryTypes) {
@@ -3744,6 +3751,7 @@ public interface DynamicType {
                     this.implementationContextFactory = implementationContextFactory;
                     this.methodGraphCompiler = methodGraphCompiler;
                     this.typeValidation = typeValidation;
+                    this.visibilityBridgeStrategy = visibilityBridgeStrategy;
                     this.classWriterStrategy = classWriterStrategy;
                     this.ignoredMethods = ignoredMethods;
                     this.auxiliaryTypes = auxiliaryTypes;
@@ -3808,6 +3816,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
                             auxiliaryTypes);
@@ -3829,6 +3838,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3850,6 +3860,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3871,6 +3882,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3892,6 +3904,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3913,6 +3926,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3937,6 +3951,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3974,6 +3989,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -3995,6 +4011,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4016,6 +4033,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4044,6 +4062,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4065,6 +4084,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4086,6 +4106,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4107,6 +4128,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
@@ -4128,6 +4150,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
+                            visibilityBridgeStrategy,
                             classWriterStrategy,
                             ignoredMethods,
                             CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)));
@@ -4148,6 +4171,7 @@ public interface DynamicType {
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param typeValidation               The type validation state.
+                 * @param visibilityBridgeStrategy     The visibility bridge strategy to apply.
                  * @param classWriterStrategy          The class writer strategy to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @param auxiliaryTypes               A list of explicitly required auxiliary types.
@@ -4165,6 +4189,7 @@ public interface DynamicType {
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           TypeValidation typeValidation,
+                                                          VisibilityBridgeStrategy visibilityBridgeStrategy,
                                                           ClassWriterStrategy classWriterStrategy,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                                           List<? extends DynamicType> auxiliaryTypes);
@@ -4208,6 +4233,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4233,6 +4259,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4255,6 +4282,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4300,6 +4328,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4322,6 +4351,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4371,6 +4401,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4440,6 +4471,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4513,6 +4545,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);
@@ -4866,6 +4899,7 @@ public interface DynamicType {
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     typeValidation,
+                                    visibilityBridgeStrategy,
                                     classWriterStrategy,
                                     ignoredMethods,
                                     auxiliaryTypes);
@@ -5000,6 +5034,7 @@ public interface DynamicType {
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     typeValidation,
+                                    visibilityBridgeStrategy,
                                     classWriterStrategy,
                                     ignoredMethods,
                                     auxiliaryTypes);
@@ -5041,6 +5076,7 @@ public interface DynamicType {
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 typeValidation,
+                                visibilityBridgeStrategy,
                                 classWriterStrategy,
                                 ignoredMethods,
                                 auxiliaryTypes);

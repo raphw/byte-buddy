@@ -10,6 +10,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -17,6 +18,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
+
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -98,6 +101,9 @@ public class MethodRegistryDefaultTest {
     @Mock
     private ParameterDescription.InDefinedShape parameterDescription;
 
+    @Mock
+    private VisibilityBridgeStrategy visibilityBridgeStrategy;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -141,7 +147,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
@@ -157,7 +163,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
@@ -174,7 +180,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
@@ -191,7 +197,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
@@ -215,7 +221,7 @@ public class MethodRegistryDefaultTest {
                 .append(firstMatcher, secondHandler, secondFactory, transformer)
                 .append(firstMatcher, firstHandler, secondFactory, transformer)
                 .append(firstMatcher, secondHandler, firstFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
@@ -234,7 +240,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter)
                 .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
@@ -257,7 +263,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
                 .prepend(firstMatcher, firstHandler, firstFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter)
                 .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
@@ -280,7 +286,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter)
                 .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
@@ -305,7 +311,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter)
                 .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
@@ -344,7 +350,7 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
-                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.ALWAYS, methodFilter)
                 .compile(implementationTargetFactory, classFileVersion);
         assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(1));
@@ -355,5 +361,44 @@ public class MethodRegistryDefaultTest {
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
         assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testVisibilityBridgeIfNotMatchedAndVisibleBridgesDisabled() throws Exception {
+        when(instrumentedMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
+        when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
+        TypeDescription declaringType = mock(TypeDescription.class);
+        when(declaringType.asErasure()).thenReturn(declaringType);
+        when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
+        when(thirdType.isPublic()).thenReturn(true);
+        when(instrumentedMethod.isPublic()).thenReturn(true);
+        when(declaringType.isPackagePrivate()).thenReturn(true);
+        TypeDescription.Generic superClass = mock(TypeDescription.Generic.class);
+        TypeDescription rawSuperClass = mock(TypeDescription.class);
+        when(superClass.asErasure()).thenReturn(rawSuperClass);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
+        MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
+        when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
+        when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
+        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
+        MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
+            .append(firstMatcher, firstHandler, firstFactory, transformer)
+            .append(secondMatcher, secondHandler, secondFactory, transformer)
+            .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, VisibilityBridgeStrategy.Default.NEVER, methodFilter)
+            .compile(implementationTargetFactory, classFileVersion);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
+        assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
+        assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
+        verify(firstHandler).prepare(firstType);
+        verify(secondHandler).prepare(secondType);
+        verifyZeroInteractions(firstFactory);
+        verifyZeroInteractions(secondFactory);
+        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.ForNonImplementedMethod.class));
     }
 }

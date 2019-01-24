@@ -23,6 +23,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
+import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -71,15 +72,17 @@ public interface MethodRegistry {
     /**
      * Prepares this method registry.
      *
-     * @param instrumentedType    The instrumented type that should be created.
-     * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
-     * @param typeValidation      Determines if a type should be explicitly validated.
-     * @param ignoredMethods      A filter that only matches methods that should be instrumented.
+     * @param instrumentedType         The instrumented type that should be created.
+     * @param methodGraphCompiler      The method graph compiler to be used for analyzing the fully assembled instrumented type.
+     * @param typeValidation           Determines if a type should be explicitly validated.
+     * @param visibilityBridgeStrategy The visibility bridge strategy to apply.
+     * @param ignoredMethods           A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
     Prepared prepare(InstrumentedType instrumentedType,
                      MethodGraph.Compiler methodGraphCompiler,
                      TypeValidation typeValidation,
+                     VisibilityBridgeStrategy visibilityBridgeStrategy,
                      LatentMatcher<? super MethodDescription> ignoredMethods);
 
     /**
@@ -446,6 +449,7 @@ public interface MethodRegistry {
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
                                                TypeValidation typeValidation,
+                                               VisibilityBridgeStrategy visibilityBridgeStrategy,
                                                LatentMatcher<? super MethodDescription> ignoredMethods) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>();
@@ -490,7 +494,8 @@ public interface MethodRegistry {
                         && !node.getSort().isMadeVisible()
                         && methodDescription.isPublic()
                         && !(methodDescription.isAbstract() || methodDescription.isFinal())
-                        && methodDescription.getDeclaringType().isPackagePrivate()) {
+                        && methodDescription.getDeclaringType().isPackagePrivate()
+                        && visibilityBridgeStrategy.generateVisibilityBridge(methodDescription)) {
                     // Visibility bridges are required for public classes that inherit a public method from a package-private class.
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getVisibility()));
                 }
