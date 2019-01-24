@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. January 2019: version 1.9.8
+
+- Extend `MethodCall` to allow for loading target from `StackManipulation`.
+- Allow for injection into `MultipleParentClassLoader`.
+- Performance improvement on array creation.
+- Allow for custom strategy for visibility bridge creation.
+
 ### 10. January 2019: version 1.9.7
 
 - Retain native modifier when defining a method without method body.
