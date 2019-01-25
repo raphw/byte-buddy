@@ -79,7 +79,7 @@ public interface ModifierContributor {
         /**
          * A mask for all legal modifiers of a Java field.
          */
-        int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
+        int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE
                 | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC
                 | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE;
     }
@@ -94,7 +94,7 @@ public interface ModifierContributor {
          */
         int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
                 | Opcodes.ACC_BRIDGE | Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT
-                | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT | Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC
+                | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT | Opcodes.ACC_SYNCHRONIZED
                 | Opcodes.ACC_VARARGS;
     }
 
