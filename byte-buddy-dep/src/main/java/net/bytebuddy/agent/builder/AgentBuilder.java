@@ -6369,12 +6369,18 @@ public interface AgentBuilder {
                         try {
                             Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
                             List<Class<?>> types = new ArrayList<Class<?>>();
-                            while (!Thread.interrupted() && entries.hasNext()) {
+                            while (entries.hasNext()) {
+                                if (Thread.interrupted()) {
+                                    return;
+                                }
                                 Map.Entry<StorageKey, Set<String>> entry = entries.next();
                                 ClassLoader classLoader = entry.getKey().get();
                                 if (classLoader != null || entry.getKey().isBootstrapLoader()) {
                                     Iterator<String> iterator = entry.getValue().iterator();
                                     while (iterator.hasNext()) {
+                                        if (Thread.interrupted()) {
+                                            return;
+                                        }
                                         try {
                                             Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                             try {
