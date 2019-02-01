@@ -2764,9 +2764,7 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public StackManipulation toStackManipulation(MethodDescription invokedMethod, Implementation.Target implementationTarget) {
-                if (!invokedMethod.isVirtual()) {
-                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
-                } else if (!invokedMethod.isInvokableOn(typeDescription)) {
+                if (!invokedMethod.isInvokableOn(typeDescription)) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + typeDescription);
                 }
                 return MethodInvocation.invoke(invokedMethod).virtual(typeDescription);
@@ -2793,7 +2791,7 @@ public class MethodCall implements Implementation.Composable {
                  * {@inheritDoc}
                  */
                 public StackManipulation toStackManipulation(MethodDescription invokedMethod, Implementation.Target implementationTarget) {
-                    if (!invokedMethod.isVirtual()) {
+                    if (!invokedMethod.isAccessibleTo(implementationTarget.getInstrumentedType()) || !invokedMethod.isVirtual()) {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
                     }
                     return MethodInvocation.invoke(invokedMethod);
@@ -3526,9 +3524,6 @@ public class MethodCall implements Implementation.Composable {
          * @return A stack manipulation that represents this method call.
          */
         protected StackManipulation toStackManipulation(MethodDescription instrumentedMethod, MethodDescription invokedMethod, TargetHandler.Resolved targetHandler) {
-            if (!invokedMethod.isAccessibleTo(implementationTarget.getInstrumentedType())) {
-                throw new IllegalStateException("Cannot access " + invokedMethod + " from " + implementationTarget.getInstrumentedType());
-            }
             List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>();
             for (ArgumentLoader.ArgumentProvider argumentProvider : argumentProviders) {
                 argumentLoaders.addAll(argumentProvider.resolve(instrumentedMethod, invokedMethod));

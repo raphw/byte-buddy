@@ -1104,6 +1104,19 @@ public class MethodCallTest {
         assertThat(instance.foo, is((Object) instance.bar()));
     }
 
+    @Test
+    public void testConstructorIsAccessibleFromDifferentPackage() throws Exception {
+        assertThat(new ByteBuddy()
+            .subclass(ProtectedConstructor.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+            .name("foo.Bar")
+            .defineConstructor(Visibility.PUBLIC)
+            .intercept(MethodCall.invoke(ProtectedConstructor.class.getDeclaredConstructor()).onSuper())
+            .make()
+            .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+            .getLoaded()
+            .newInstance(), instanceOf(ProtectedConstructor.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testDefaultMethodNotCompatible() throws Exception {
         new ByteBuddy()
@@ -1526,6 +1539,13 @@ public class MethodCallTest {
 
         public String qux() {
             throw new AssertionError();
+        }
+    }
+
+    public static class ProtectedConstructor {
+
+        protected ProtectedConstructor() {
+            /* empty */
         }
     }
 }
