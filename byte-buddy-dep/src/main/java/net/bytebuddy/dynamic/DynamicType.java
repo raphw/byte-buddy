@@ -42,6 +42,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import org.objectweb.asm.Opcodes;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
@@ -52,8 +53,6 @@ import java.util.*;
 import java.util.jar.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-
-import org.objectweb.asm.Opcodes;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -4628,8 +4627,8 @@ public interface DynamicType {
                     public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 (token.getModifiers() & Opcodes.ACC_NATIVE) == 0
-                                    ? ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers())
-                                    : token.getModifiers(),
+                                        ? ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers())
+                                        : token.getModifiers(),
                                 token.getTypeVariableTokens(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
@@ -5136,10 +5135,9 @@ public interface DynamicType {
     interface Unloaded<T> extends DynamicType {
 
         /**
-         * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader
-         * is the bootstrap class loader, a new class loader is created for loading those types. If the class loader
-         * is an instance of {@link InjectionClassLoader}, the class is injected. And otherwise, the types are injected
-         * into the provided class loader.
+         * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader is an
+         * unsealed instance of {@link InjectionClassLoader}, the classes are injected directy into the class loader, otherwise,
+         * a new class loader is created where the supplied class loader is set as parent.
          *
          * @param classLoader The class loader to use for this class loading.
          * @return This dynamic type in its loaded state.
@@ -5373,8 +5371,8 @@ public interface DynamicType {
          */
         public File inject(File sourceJar, File targetJar) throws IOException {
             return sourceJar.equals(targetJar)
-                ? inject(sourceJar)
-                : doInject(sourceJar, targetJar);
+                    ? inject(sourceJar)
+                    : doInject(sourceJar, targetJar);
         }
 
         /**
@@ -5409,8 +5407,8 @@ public interface DynamicType {
                 }
                 Manifest manifest = inputStream.getManifest();
                 JarOutputStream outputStream = manifest == null
-                    ? new JarOutputStream(new FileOutputStream(targetJar))
-                    : new JarOutputStream(new FileOutputStream(targetJar), manifest);
+                        ? new JarOutputStream(new FileOutputStream(targetJar))
+                        : new JarOutputStream(new FileOutputStream(targetJar), manifest);
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>();
@@ -5516,8 +5514,8 @@ public interface DynamicType {
                         Object[] arguments = (Object[]) Array.newInstance(Class.forName("java.nio.file.CopyOption"), 1);
                         arguments[0] = Enum.valueOf((Class) Class.forName("java.nio.file.StandardCopyOption"), "REPLACE_EXISTING");
                         return new ForJava7CapableVm(File.class.getMethod("toPath"),
-                            Class.forName("java.nio.file.Files").getMethod("move", path, path, arguments.getClass()),
-                            arguments);
+                                Class.forName("java.nio.file.Files").getMethod("move", path, path, arguments.getClass()),
+                                arguments);
                     } catch (Throwable ignored) {
                         return ForLegacyVm.INSTANCE;
                     }
