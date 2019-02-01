@@ -1,5 +1,6 @@
 package net.bytebuddy.description.field;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -144,7 +145,7 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FirstSample.class)), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))

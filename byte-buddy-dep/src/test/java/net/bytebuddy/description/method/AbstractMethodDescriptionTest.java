@@ -410,7 +410,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredMethod("packagePrivateMethod"))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("privateMethod"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredMethod("publicMethod"))
                 .isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredMethod("protectedMethod"))
@@ -462,7 +462,7 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredConstructor(Object.class))
                 .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(String.class))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(Sample.class)), is(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V11)));
         assertThat(describe(PublicType.class.getDeclaredConstructor())
                 .isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(PublicType.class.getDeclaredConstructor(Void.class))
