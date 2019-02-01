@@ -150,8 +150,9 @@ public interface FieldDescription extends ByteCodeElement,
             return getDeclaringType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
-                    || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+                    || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())
+                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure()));
         }
 
         /**
@@ -160,7 +161,8 @@ public interface FieldDescription extends ByteCodeElement,
         public boolean isAccessibleTo(TypeDescription typeDescription) {
             return isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
-                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())
+                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure());
         }
 
         /**

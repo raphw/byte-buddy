@@ -531,7 +531,8 @@ public interface MethodDescription extends TypeVariableSource,
                     && (isPublic()
                     || typeDescription.equals(getDeclaringType().asErasure())
                     || isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription)
-                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
+                    || !isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())
+                    || isPrivate() && typeDescription.isNestMateOf(getDeclaringType().asErasure()));
         }
 
         /**
