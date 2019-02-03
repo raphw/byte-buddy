@@ -7,6 +7,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -612,7 +613,7 @@ public class MemberSubstitutionTest {
     public void testFieldNotAccessible() throws Exception {
         new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
-                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWith(ValidationTarget.class.getDeclaredField(FOO)).on(named(RUN)))
+                .visit(MemberSubstitution.strict().field(named(FOO)).replaceWith(MemberSubstitutionTestHelper.class.getDeclaredField(FOO)).on(named(RUN)))
                 .make();
     }
 

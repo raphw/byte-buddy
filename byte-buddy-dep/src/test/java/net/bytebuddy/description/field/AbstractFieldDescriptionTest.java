@@ -4,7 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
+import net.bytebuddy.test.packaging.FieldDescriptionTestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
@@ -155,13 +155,13 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("publicField"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("protectedField"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(true));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(true));
         assertThat(describe(PublicType.class.getDeclaredField("packagePrivateField"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(false));
         assertThat(describe(PublicType.class.getDeclaredField("privateField"))
-                .isVisibleTo(TypeDescription.ForLoadedType.of(VisibilityFieldTestHelper.class)), is(false));
+                .isVisibleTo(TypeDescription.ForLoadedType.of(FieldDescriptionTestHelper.class)), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("publicField"))
                 .isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(PackagePrivateType.class.getDeclaredField("protectedField"))

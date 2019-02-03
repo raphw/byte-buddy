@@ -9,6 +9,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.packaging.AdviceTestHelper;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
@@ -1403,7 +1404,7 @@ public class AdviceTest {
     public void testInvisibleField() throws Exception {
         new ByteBuddy()
                 .redefine(SampleExtension.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(CustomAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, AdviceTestHelper.class.getDeclaredField("object")).to(CustomAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -1728,7 +1729,7 @@ public class AdviceTest {
     public void testInvisibleDelegationAdvice() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.to(NonVisibleAdvice.class).on(named(FOO)))
+                .visit(Advice.to(AdviceTestHelper.class).on(named(FOO)))
                 .make();
     }
 
