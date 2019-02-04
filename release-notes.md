@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. February 2019: version 1.9.9
+
+- Properly interrupt resubmission process in agent builder.
+- Fix visibility checks for nest mates.
+
 ### 24. January 2019: version 1.9.8
 
 - Extend `MethodCall` to allow for loading target from `StackManipulation`.
