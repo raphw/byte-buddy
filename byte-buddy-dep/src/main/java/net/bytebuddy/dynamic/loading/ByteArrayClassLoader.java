@@ -16,6 +16,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -439,7 +440,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 methodHandle.getMethod("bindTo", Object.class),
                                 methodHandle.getMethod("invokeWithArguments", Object[].class));
                     } catch (Exception ignored) {
-                        return new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                        // On the bootstrap class loader, a lookup instance cannot be located reflectively. To avoid issuing a warning for accessing
+                        // a protected method from outside of a class that is caused if the module system does not offer accessing the method.
+                        return ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9) && ByteArrayClassLoader.class.getClassLoader() == null
+                                ? SynchronizationStrategy.ForLegacyVm.INSTANCE
+                                : new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
                     }
                 } catch (Exception ignored) {
                     return SynchronizationStrategy.ForLegacyVm.INSTANCE;
