@@ -1328,7 +1328,7 @@ void foo(@Argument(0) Object o1, @Argument(1) Object o2)
         is now instrumented or a reference to the dynamically created <code>Class</code>. When using Java 8, it is also
         possible to receive either a method or constructor reference by using the <code>Executable</code> type in the
         interceptor. If the annotated parameter is a <code>String</code>, the parameter is assigned the value that the
-        <code>Method></code>'s <code>toString</code> method would have returned. In general, we recommend the use of
+        <code>Method</code>'s <code>toString</code> method would have returned. In general, we recommend the use of
         these <code>String</code> values as method identifiers wherever possible and discourage the use of
         <code>Method</code> objects as their lookup introduces a significant runtime overhead. To avoid this overhead,
         the <code>@Origin</code> annotation also offers a property for caching such instances for reuse. Note that
