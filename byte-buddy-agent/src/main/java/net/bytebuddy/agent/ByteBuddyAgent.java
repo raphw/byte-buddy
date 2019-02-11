@@ -304,12 +304,14 @@ public class ByteBuddyAgent {
      * not always work. The runtime installation of a Java agent is supported for:
      * </p>
      * <ul>
-     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
-     * into a Jigsaw module and the runtime installation is always possible.</li>
+     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was moved
+     * into a module and the runtime installation is possible if the {@code jdk.attach} module is
+     * available to Byte Buddy which is typically only available for VMs shipped with a JDK.</li>
      * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
-     * possible when bundled with a JDK and requires the {@code jdk.attach} module since Java 9, if this
-     * package is placed on the module path. It is not possible for runtime-only installations of HotSpot
-     * or J9 for these versions.</li>
+     * possible when bundled with a JDK and requires a {@code tools.jar} bundled with the VM which
+     * is typically only available for JDK-versions of the JVM.</li>
+     * <li>When running Linux and including the optional <i>junixsocket-native-common</i> depedency,
+     * Byte Buddy emulates a Unix socket connection to attach to the target VM.</li>
      * </ul>
      * <p>
      * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
@@ -329,11 +331,20 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied attachment provider, an
-     * {@link IllegalStateException} is thrown. The same happens if the default process provider
-     * cannot resolve a process id for the current VM.
+     * <p>
+     * Installs an agent on the currently running Java virtual machine using the supplied
+     * attachment provider.
+     * </p>
+     * <p>
+     * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is
+     * not repeated after an agent was successfully installed for the first time. Instead, the previous
+     * instrumentation instance is returned. However, invoking this method requires synchronization
+     * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
+     * be invoked instead.
+     * </p>
      *
      * @param attachmentProvider The attachment provider to use for the installation.
      * @return An instrumentation instance representing the currently running JVM.
@@ -342,12 +353,25 @@ public class ByteBuddyAgent {
         return install(attachmentProvider, ProcessProvider.ForCurrentVm.INSTANCE);
     }
 
+
     /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied process provider, an
-     * {@link IllegalStateException} is thrown. The same happens if the default attachment
-     * provider cannot be used.
+     * <p>
+     * Installs an agent on the Java virtual machine resolved by the process provider. Unfortunately, this does
+     * not always work. The runtime installation of a Java agent is supported for:
+     * </p>
+     * <ul>
+     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was moved
+     * into a module and the runtime installation is possible if the {@code jdk.attach} module is
+     * available to Byte Buddy which is typically only available for VMs shipped with a JDK.</li>
+     * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
+     * possible when bundled with a JDK and requires a {@code tools.jar} bundled with the VM which
+     * is typically only available for JDK-versions of the JVM.</li>
+     * <li>When running Linux and including the optional <i>junixsocket-native-common</i> depedency,
+     * Byte Buddy emulates a Unix socket connection to attach to the target VM.</li>
+     * </ul>
+     * <p>
+     * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
+     * </p>
      *
      * @param processProvider The provider for the current JVM's process id.
      * @return An instrumentation instance representing the currently running JVM.
@@ -357,10 +381,13 @@ public class ByteBuddyAgent {
     }
 
     /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied attachment provider and process
-     * provider, an {@link IllegalStateException} is thrown.
+     * <p>
+     * Installs an agent on the currently running Java virtual machine using the supplied
+     * attachment provider and process provider.
+     * </p>
+     * <p>
+     * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
+     * </p>
      *
      * @param attachmentProvider The attachment provider to use for the installation.
      * @param processProvider    The provider for the current JVM's process id.
