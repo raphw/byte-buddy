@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. February 2019: version 1.9.10
+
+- Fixed `ByteArrayClassLoader` when used from boot class loader.
+- Fixed shading to include ASM class required during renaming.
+
 ### 4. February 2019: version 1.9.9
 
 - Properly interrupt resubmission process in agent builder.
