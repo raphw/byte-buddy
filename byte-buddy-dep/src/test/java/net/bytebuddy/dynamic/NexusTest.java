@@ -84,7 +84,7 @@ public class NexusTest {
         } finally {
             Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, null, BAR));
             assertThat(value, nullValue());
         }
     }
@@ -119,7 +119,7 @@ public class NexusTest {
         } finally {
             Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, null, BAR));
             assertThat(value, is((Object) loadedTypeInitializer));
         }
     }
@@ -154,7 +154,7 @@ public class NexusTest {
         } finally {
             Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, null, BAR));
             assertThat(value, is((Object) loadedTypeInitializer));
         }
     }
@@ -188,7 +188,7 @@ public class NexusTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testUnavailableDispatcherRegisterThrowsException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable("unavailable").register(FOO, classLoader, Nexus.NO_QUEUE, BAR, loadedTypeInitializer);
+        new NexusAccessor.Dispatcher.Unavailable("unavailable").register(FOO, classLoader, null, BAR, loadedTypeInitializer);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -201,10 +201,10 @@ public class NexusTest {
     public void testNexusEquality() throws Exception {
         Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
         constructor.setAccessible(true);
-        assertThat(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR),
-                is(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR)));
-        assertThat(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode(),
-                is(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode()));
+        assertThat(constructor.newInstance(FOO, classLoader, null, BAR),
+                is(constructor.newInstance(FOO, classLoader, null, BAR)));
+        assertThat(constructor.newInstance(FOO, classLoader, null, BAR).hashCode(),
+                is(constructor.newInstance(FOO, classLoader, null, BAR).hashCode()));
 
     }
 }

@@ -50,7 +50,7 @@ public class Nexus extends WeakReference<ClassLoader> {
     /**
      * An type-safe constant for a non-operational reference queue.
      */
-    protected static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
+    private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**
      * A map of keys identifying a loaded type by its name and class loader mapping their

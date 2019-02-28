@@ -56,6 +56,11 @@ public class NexusAccessor {
     private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
+     * An type-safe constant for a non-operational reference queue.
+     */
+    private static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
+
+    /**
      * The reference queue that is notified upon a GC eligible {@link Nexus} entry or {@code null} if no such queue should be notified.
      */
     @HashCodeAndEqualsPlugin.ValueHandling(HashCodeAndEqualsPlugin.ValueHandling.Sort.REVERSE_NULLABILITY)
@@ -65,7 +70,7 @@ public class NexusAccessor {
      * Creates a new accessor for the {@link Nexus} without any active management of stale references within a nexus.
      */
     public NexusAccessor() {
-        this(Nexus.NO_QUEUE);
+        this(NO_QUEUE);
     }
 
     /**
