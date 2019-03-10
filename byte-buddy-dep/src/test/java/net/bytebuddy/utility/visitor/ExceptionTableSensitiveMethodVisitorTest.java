@@ -78,7 +78,7 @@ public class ExceptionTableSensitiveMethodVisitorTest {
 
         private boolean called;
 
-        public PseudoVisitor(int api, MethodVisitor methodVisitor) {
+        private PseudoVisitor(int api, MethodVisitor methodVisitor) {
             super(api, methodVisitor);
         }
 
@@ -89,6 +89,12 @@ public class ExceptionTableSensitiveMethodVisitorTest {
             }
             called = true;
             verifyZeroInteractions(mv);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation") // avoid redirection implementation for redirection to work.
+        protected void onVisitMethodInsn(int opcode, String owner, String name, String descriptor) {
+            mv.visitMethodInsn(opcode, owner, name, descriptor);
         }
 
         protected void check() {

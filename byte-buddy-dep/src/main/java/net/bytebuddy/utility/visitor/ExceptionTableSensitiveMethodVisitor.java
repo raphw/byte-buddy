@@ -158,7 +158,6 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     @Deprecated
     @SuppressWarnings("deprecation")
     protected void onVisitMethodInsn(int opcode, String owner, String name, String descriptor) {
-        considerEndOfExceptionTable();
         super.visitMethodInsn(opcode, owner, name, descriptor);
     }
 
