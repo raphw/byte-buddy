@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. March 2019: version 1.9.11
+
+- Remove field reference in injected class due to possibility of loading Byte Buddy on the boot loader.
+- Updated to ASM 7.1.
+- Fix unsafe injection on Java 12/13.
+
 ### 11. February 2019: version 1.9.10
 
 - Fixed `ByteArrayClassLoader` when used from boot class loader.
