@@ -5930,7 +5930,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public void injectCompletionFrame(MethodVisitor methodVisitor) {
-                    if (!expandFrames && currentFrameDivergence == 0 && endTypes.size() < 4) {
+                    if (expandFrames) {
+                        injectFullFrame(methodVisitor, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
+                    } else if (currentFrameDivergence == 0 && endTypes.size() < 4) {
                         if (endTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
@@ -5941,6 +5943,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
+                    //} else if (currentFrameDivergence < 3 && endTypes.isEmpty()) {
+                    //    methodVisitor.visitFrame(Opcodes.F_CHOP, currentFrameDivergence, EMPTY, EMPTY.length, EMPTY);
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     }
