@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
@@ -1336,6 +1337,28 @@ public class AdviceTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testConstructorEnterFrame() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ConstructorEnterFrameAdvice.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
+    }
+
+    @Test
+    public void testConstructorEnterFrameLarge() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ConstructorEnterFrameLargeAdvice.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
     }
 
     @Test
@@ -3260,6 +3283,28 @@ public class AdviceTest {
             RuntimeException exception = new RuntimeException();
             exception.setStackTrace(new StackTraceElement[0]);
             throw exception;
+        }
+    }
+
+    public static class ConstructorEnterFrameAdvice {
+
+        @Advice.OnMethodEnter
+        public static void advice() {
+            String foo = "foo";
+            if (foo.equals("xxx")) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class ConstructorEnterFrameLargeAdvice {
+
+        @Advice.OnMethodEnter
+        public static void advice() {
+            String foo = "foo", bar = "bar", qux = "qux", baz = "baz";
+            if (foo.equals("xxx") || bar.equals("xxx") || qux.equals("xxx") || baz.equals("xxx")) {
+                throw new AssertionError();
+            }
         }
     }
 }
