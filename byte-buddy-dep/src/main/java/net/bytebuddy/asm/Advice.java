@@ -5179,34 +5179,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * Translates a type into a representation of its form inside a stack map frame.
-             *
-             * @param typeDescription The type to translate.
-             * @return A stack entry representation of the supplied type.
-             */
-            protected static Object toFrame(TypeDescription typeDescription) {
-                if (typeDescription.represents(boolean.class)
-                        || typeDescription.represents(byte.class)
-                        || typeDescription.represents(short.class)
-                        || typeDescription.represents(char.class)
-                        || typeDescription.represents(int.class)) {
-                    return Opcodes.INTEGER;
-                } else if (typeDescription.represents(long.class)) {
-                    return Opcodes.LONG;
-                } else if (typeDescription.represents(float.class)) {
-                    return Opcodes.FLOAT;
-                } else if (typeDescription.represents(double.class)) {
-                    return Opcodes.DOUBLE;
-                } else {
-                    return typeDescription.getInternalName();
-                }
-            }
-
-            /**
              * {@inheritDoc}
              */
             public StackMapFrameHandler.ForAdvice bindEnter(MethodDescription.InDefinedShape adviceMethod) {
-                return new ForAdvice(adviceMethod, initialTypes, preMethodTypes, TranslationMode.ENTER);
+                return new ForAdvice(adviceMethod, initialTypes, preMethodTypes, TranslationMode.ENTER, instrumentedMethod.isConstructor()
+                        ? Initialization.UNITIALIZED
+                        : Initialization.INITIALIZED);
             }
 
             /**
@@ -5268,7 +5246,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             offset = 1;
                         }
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
-                            if (!toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
+                            if (!Initialization.INITIALIZED.toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
                                 throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
                             }
                         }
@@ -5280,7 +5258,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 + additionalTypes.size()];
                         int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
                         for (TypeDescription typeDescription : additionalTypes) {
-                            translated[index++] = toFrame(typeDescription);
+                            translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
                         System.arraycopy(localVariable,
                                 methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
@@ -5300,11 +5278,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Injects a full stack map frame after the instrumented method has completed.
              *
-             * @param methodVisitor The method visitor onto which to write the stack map frame.
-             * @param typesInArray  The types that were added to the local variable array additionally to the values of the instrumented method.
-             * @param typesOnStack  The types currently on the operand stack.
+             * @param methodVisitor  The method visitor onto which to write the stack map frame.
+             * @param initialization The initialization to apply when resolving a reference to the instance on which a non-static method is invoked.
+             * @param typesInArray   The types that were added to the local variable array additionally to the values of the instrumented method.
+             * @param typesOnStack   The types currently on the operand stack.
              */
             protected void injectFullFrame(MethodVisitor methodVisitor,
+                                           Initialization initialization,
                                            List<? extends TypeDescription> typesInArray,
                                            List<? extends TypeDescription> typesOnStack) {
                 Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
@@ -5312,18 +5292,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         + typesInArray.size()];
                 int index = 0;
                 if (!instrumentedMethod.isStatic()) {
-                    localVariable[index++] = toFrame(instrumentedType);
+                    localVariable[index++] = initialization.toFrame(instrumentedType);
                 }
                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                    localVariable[index++] = toFrame(typeDescription);
+                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                 }
                 for (TypeDescription typeDescription : typesInArray) {
-                    localVariable[index++] = toFrame(typeDescription);
+                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                 }
                 index = 0;
                 Object[] stackType = new Object[typesOnStack.size()];
                 for (TypeDescription typeDescription : typesOnStack) {
-                    stackType[index++] = toFrame(typeDescription);
+                    stackType[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                 }
                 methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, stackType.length, stackType);
                 currentFrameDivergence = 0;
@@ -5351,7 +5331,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
-                        return instrumentedMethod.isConstructor() && Opcodes.UNINITIALIZED_THIS.equals(frame) || toFrame(instrumentedType).equals(frame);
+                        return instrumentedMethod.isConstructor() && Opcodes.UNINITIALIZED_THIS.equals(frame) || Initialization.INITIALIZED.toFrame(instrumentedType).equals(frame);
                     }
                 },
 
@@ -5369,10 +5349,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!instrumentedMethod.isStatic()) {
                             translated[index++] = instrumentedMethod.isConstructor()
                                     ? Opcodes.UNINITIALIZED_THIS
-                                    : toFrame(instrumentedType);
+                                    : Initialization.INITIALIZED.toFrame(instrumentedType);
                         }
                         for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                            translated[index++] = toFrame(typeDescription);
+                            translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
                         return index;
                     }
@@ -5381,7 +5361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
                         return instrumentedMethod.isConstructor()
                                 ? Opcodes.UNINITIALIZED_THIS.equals(frame)
-                                : toFrame(instrumentedType).equals(frame);
+                                : Initialization.INITIALIZED.toFrame(instrumentedType).equals(frame);
                     }
                 },
 
@@ -5397,17 +5377,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                        Object[] translated) {
                         int index = 0;
                         if (!instrumentedMethod.isStatic()) {
-                            translated[index++] = toFrame(instrumentedType);
+                            translated[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                         }
                         for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                            translated[index++] = toFrame(typeDescription);
+                            translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
                         return index;
                     }
 
                     @Override
                     protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
-                        return toFrame(instrumentedType).equals(frame);
+                        return Initialization.INITIALIZED.toFrame(instrumentedType).equals(frame);
                     }
                 };
 
@@ -5436,6 +5416,58 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if the value is a legal representation of the {@code this} reference.
                  */
                 protected abstract boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame);
+            }
+
+            /**
+             * Represents the initialization state of a stack value that can either be initialized or uninitialized.
+             */
+            protected enum Initialization {
+
+                /**
+                 * Represents an uninitialized frame value within a constructor before invoking the super constructor.
+                 */
+                UNITIALIZED {
+                    /**
+                     * {@inheritDoc}
+                     */
+                    protected Object toFrame(TypeDescription typeDescription) {
+                        return Opcodes.UNINITIALIZED_THIS;
+                    }
+                },
+
+                /**
+                 * Represents an initialized frame value.
+                 */
+                INITIALIZED {
+                    /**
+                     * {@inheritDoc}
+                     */
+                    protected Object toFrame(TypeDescription typeDescription) {
+                        if (typeDescription.represents(boolean.class)
+                                || typeDescription.represents(byte.class)
+                                || typeDescription.represents(short.class)
+                                || typeDescription.represents(char.class)
+                                || typeDescription.represents(int.class)) {
+                            return Opcodes.INTEGER;
+                        } else if (typeDescription.represents(long.class)) {
+                            return Opcodes.LONG;
+                        } else if (typeDescription.represents(float.class)) {
+                            return Opcodes.FLOAT;
+                        } else if (typeDescription.represents(double.class)) {
+                            return Opcodes.DOUBLE;
+                        } else {
+                            return typeDescription.getInternalName();
+                        }
+                    }
+                };
+
+                /**
+                 * Initializes a frame value to its frame type.
+                 *
+                 * @param typeDescription The type being resolved.
+                 * @return The frame value.
+                 */
+                protected abstract Object toFrame(TypeDescription typeDescription);
             }
 
             /**
@@ -5552,7 +5584,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return new ForAdvice(adviceMethod,
                             CompoundList.of(initialTypes, preMethodTypes, postMethodTypes),
                             Collections.<TypeDescription>emptyList(),
-                            TranslationMode.EXIT);
+                            TranslationMode.EXIT,
+                            Initialization.INITIALIZED);
                 }
 
                 /**
@@ -5563,10 +5596,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (instrumentedMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
+                            methodVisitor.visitFrame(Opcodes.F_SAME1,
+                                    EMPTY.length,
+                                    EMPTY,
+                                    1,
+                                    new Object[]{Initialization.INITIALIZED.toFrame(instrumentedMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(initialTypes, preMethodTypes), instrumentedMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), instrumentedMethod.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
                     }
@@ -5579,7 +5616,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(initialTypes, preMethodTypes), Collections.singletonList(TypeDescription.THROWABLE));
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes), Collections.singletonList(TypeDescription.THROWABLE));
                     }
                 }
 
@@ -5591,11 +5628,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Object[] local = new Object[postMethodTypes.size()];
                         int index = 0;
                         for (TypeDescription typeDescription : postMethodTypes) {
-                            local[index++] = toFrame(typeDescription);
+                            local[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                         }
                         methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
 
@@ -5606,7 +5643,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
 
@@ -5619,7 +5656,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Object[] localVariable = new Object[initialTypes.size()];
                             int index = 0;
                             for (TypeDescription typeDescription : initialTypes) {
-                                localVariable[index++] = toFrame(typeDescription);
+                                localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
                         } else {
@@ -5630,13 +5667,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (instrumentedMethod.isConstructor()) {
                                 localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
                             } else if (!instrumentedMethod.isStatic()) {
-                                localVariable[index++] = toFrame(instrumentedType);
+                                localVariable[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                             }
                             for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                localVariable[index++] = toFrame(typeDescription);
+                                localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                             }
                             for (TypeDescription typeDescription : initialTypes) {
-                                localVariable[index++] = toFrame(typeDescription);
+                                localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                             }
                             methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
                         }
@@ -5730,10 +5767,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 if (instrumentedMethod.isConstructor()) {
                                     localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
                                 } else if (!instrumentedMethod.isStatic()) {
-                                    localVariable[index++] = toFrame(instrumentedType);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
                                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                    localVariable[index++] = toFrame(typeDescription);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 methodVisitor.visitFrame(Opcodes.F_APPEND, localVariable.length, localVariable, EMPTY.length, EMPTY);
                             } else {
@@ -5745,24 +5782,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 if (instrumentedMethod.isConstructor()) {
                                     localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
                                 } else if (!instrumentedMethod.isStatic()) {
-                                    localVariable[index++] = toFrame(instrumentedType);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
                                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                    localVariable[index++] = toFrame(typeDescription);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 for (TypeDescription typeDescription : initialTypes) {
-                                    localVariable[index++] = toFrame(typeDescription);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 for (TypeDescription typeDescription : preMethodTypes) {
-                                    localVariable[index++] = toFrame(typeDescription);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 if (instrumentedMethod.isConstructor()) {
                                     localVariable[index++] = Opcodes.UNINITIALIZED_THIS;
                                 } else if (!instrumentedMethod.isStatic()) {
-                                    localVariable[index++] = toFrame(instrumentedType);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
                                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                    localVariable[index++] = toFrame(typeDescription);
+                                    localVariable[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, EMPTY.length, EMPTY);
                             }
@@ -5799,27 +5836,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         + preMethodTypes.size()];
                                 int index = 0;
                                 if (instrumentedMethod.isConstructor()) {
-                                    boolean uninitializedThis = false;
+                                    Initialization initialization = Initialization.INITIALIZED;
                                     for (int variableIndex = 0; variableIndex < localVariableLength; variableIndex++) {
                                         if (localVariable[variableIndex] == Opcodes.UNINITIALIZED_THIS) {
-                                            uninitializedThis = true;
+                                            initialization = Initialization.UNITIALIZED;
                                             break;
                                         }
                                     }
-                                    translated[index++] = uninitializedThis
-                                            ? Opcodes.UNINITIALIZED_THIS
-                                            : toFrame(instrumentedType);
+                                    translated[index++] = initialization.toFrame(instrumentedType);
                                 } else if (!instrumentedMethod.isStatic()) {
-                                    translated[index++] = toFrame(instrumentedType);
+                                    translated[index++] = Initialization.INITIALIZED.toFrame(instrumentedType);
                                 }
                                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                                    translated[index++] = toFrame(typeDescription);
+                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 for (TypeDescription typeDescription : initialTypes) {
-                                    translated[index++] = toFrame(typeDescription);
+                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 for (TypeDescription typeDescription : preMethodTypes) {
-                                    translated[index++] = toFrame(typeDescription);
+                                    translated[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                                 }
                                 System.arraycopy(localVariable, 0, translated, index, localVariableLength);
                                 localVariableLength = translated.length;
@@ -5860,6 +5895,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final TranslationMode translationMode;
 
                 /**
+                 * The initialization to apply when resolving a reference to the instance on which a non-static method is invoked.
+                 */
+                private final Initialization initialization;
+
+                /**
                  * Creates a new meta data handler for an advice method.
                  *
                  * @param adviceMethod    The method description for which frames are translated.
@@ -5867,15 +5907,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param endTypes        The types provided after execution of the advice code.
                  * @param translationMode The translation mode to apply for this advice method. Should be
                  *                        either {@link TranslationMode#ENTER} or {@link TranslationMode#EXIT}.
+                 * @param initialization  The initialization to apply when resolving a reference to the instance on which a non-static method is invoked.
                  */
                 protected ForAdvice(MethodDescription.InDefinedShape adviceMethod,
                                     List<? extends TypeDescription> startTypes,
                                     List<? extends TypeDescription> endTypes,
-                                    TranslationMode translationMode) {
+                                    TranslationMode translationMode,
+                                    Initialization initialization) {
                     this.adviceMethod = adviceMethod;
                     this.startTypes = startTypes;
                     this.endTypes = endTypes;
                     this.translationMode = translationMode;
+                    this.initialization = initialization;
                 }
 
                 /**
@@ -5906,10 +5949,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
+                            methodVisitor.visitFrame(Opcodes.F_SAME1,
+                                    EMPTY.length,
+                                    EMPTY,
+                                    1,
+                                    new Object[]{Initialization.INITIALIZED.toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, startTypes, adviceMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, initialization, startTypes, adviceMethod.getReturnType().represents(void.class)
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
@@ -5922,7 +5969,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!expandFrames && currentFrameDivergence == 0) {
                         methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
-                        injectFullFrame(methodVisitor, startTypes, Collections.singletonList(TypeDescription.THROWABLE));
+                        injectFullFrame(methodVisitor, initialization, startTypes, Collections.singletonList(TypeDescription.THROWABLE));
                     }
                 }
 
@@ -5931,7 +5978,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 public void injectCompletionFrame(MethodVisitor methodVisitor) {
                     if (expandFrames) {
-                        injectFullFrame(methodVisitor, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     } else if (currentFrameDivergence == 0 && endTypes.size() < 4) {
                         if (endTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
@@ -5939,14 +5986,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Object[] local = new Object[endTypes.size()];
                             int index = 0;
                             for (TypeDescription typeDescription : endTypes) {
-                                local[index++] = toFrame(typeDescription);
+                                local[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
                             }
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
                     } else if (currentFrameDivergence < 3 && endTypes.isEmpty()) {
                         methodVisitor.visitFrame(Opcodes.F_CHOP, currentFrameDivergence, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
+                        injectFullFrame(methodVisitor, initialization, CompoundList.of(startTypes, endTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
             }
