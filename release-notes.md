@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. March 2019: version 1.9.12
+
+- Fixed stack map frame generation during constructor advice.
+- Improves frame generation for cropping-capable frames.
+
 ### 21. March 2019: version 1.9.11
 
 - Remove field reference in injected class due to possibility of loading Byte Buddy on the boot loader.
