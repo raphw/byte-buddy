@@ -10588,11 +10588,12 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public synchronized boolean reset(Instrumentation instrumentation,
+                                              ResettableClassFileTransformer classFileTransformer,
                                               RedefinitionStrategy redefinitionStrategy,
                                               RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
                                               RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                               RedefinitionStrategy.Listener redefinitionListener) {
-                if (instrumentation.removeTransformer(this)) {
+                if (instrumentation.removeTransformer(classFileTransformer)) {
                     redefinitionStrategy.apply(instrumentation,
                             Listener.NoOp.INSTANCE,
                             CircularityLock.Inactive.INSTANCE,
@@ -10606,7 +10607,7 @@ public interface AgentBuilder {
                             fallbackStrategy,
                             transformation,
                             ignoredTypeMatcher);
-                    installationListener.onReset(instrumentation, this);
+                    installationListener.onReset(instrumentation, classFileTransformer);
                     return true;
                 } else {
                     return false;
