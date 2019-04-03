@@ -31,6 +31,7 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -45,10 +46,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -1305,28 +1303,76 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
         class Chain implements Substitution {
 
+            public static final int RETURN_VALUE_OFFSET = -1;
+
+            private final Assigner assigner;
+
+            private final Assigner.Typing typing;
+
+            private final List<Step> steps;
+
+            protected Chain(Assigner assigner, Assigner.Typing typing, List<Step> steps) {
+                this.assigner = assigner;
+                this.typing = typing;
+                this.steps = steps;
+            }
+
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             int freeOffset) {
-                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
+                                             int freeOffset) { // TODO: Record offset changes.
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size()
+                        + steps.size() * 2
+                        + (result.represents(void.class) ? 0 : 2)
+                        + ((steps.isEmpty() ? result : steps.get(steps.size() - 1).getReturnType()).represents(void.class) ? 1 : 0));
+                Map<Integer, Integer> offsets = new HashMap<Integer, Integer>();
                 for (int index = parameters.size() - 1; index >= 0; index--) {
                     stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).storeAt(freeOffset));
+                    offsets.put(index, freeOffset);
                     freeOffset += parameters.get(index).getStackSize().getSize();
                 }
-                return null; // TODO
+                offsets.put(RETURN_VALUE_OFFSET, freeOffset);
+                if (!result.represents(void.class)) {
+                    stackManipulations.add(DefaultValue.of(result));
+                    stackManipulations.add(MethodVariableAccess.of(result).storeAt(freeOffset));
+                }
+                TypeDescription.Generic current = result;
+                for (Step step : steps) {
+                    stackManipulations.add(step.apply(assigner,
+                            typing,
+                            instrumentedType,
+                            instrumentedMethod,
+                            targetType,
+                            target,
+                            parameters,
+                            current,
+                            offsets));
+                    current = step.getReturnType();
+                    stackManipulations.add(MethodVariableAccess.of(current).storeAt(freeOffset));
+                }
+                if (!current.represents(void.class)) {
+                    stackManipulations.add(MethodVariableAccess.of(current).loadFrom(freeOffset));
+                }
+                stackManipulations.add(assigner.assign(current, result, typing));
+                return new StackManipulation.Compound(stackManipulations);
             }
 
-            protected interface Element {
+            protected interface Step {
 
-                StackManipulation apply(TypeDescription targetType,
+                StackManipulation apply(Assigner assigner,
+                                        Assigner.Typing typing,
+                                        TypeDescription instrumentedType,
+                                        MethodDescription instrumentedMethod,
+                                        TypeDescription targetType,
                                         ByteCodeElement target,
                                         TypeList.Generic parameters,
                                         TypeDescription.Generic result,
                                         Map<Integer, Integer> offsets);
+
+                TypeDescription.Generic getReturnType();
             }
         }
     }
@@ -1443,11 +1489,12 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                 /**
                  * Creates a new resolved binding.
+                 *
                  * @param instrumentedType
                  * @param instrumentedMethod
-                 * @param targetType   The type on which a field or method was accessed.
-                 * @param target       The field or method that was accessed.
-                 * @param substitution The substitution to apply.
+                 * @param targetType         The type on which a field or method was accessed.
+                 * @param target             The field or method that was accessed.
+                 * @param substitution       The substitution to apply.
                  */
                 protected Resolved(TypeDescription instrumentedType,
                                    MethodDescription instrumentedMethod,
@@ -1962,7 +2009,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
         /**
          * Creates a new substituting method visitor.
-         *  @param methodVisitor         The method visitor to delegate to.
+         *
+         * @param methodVisitor         The method visitor to delegate to.
          * @param instrumentedType      The instrumented type.
          * @param methodGraphCompiler   The method graph compiler to use.
          * @param strict                {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
