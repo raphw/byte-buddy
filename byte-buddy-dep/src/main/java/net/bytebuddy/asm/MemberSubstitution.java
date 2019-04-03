@@ -1317,13 +1317,29 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 this.steps = steps;
             }
 
+            public static Chain withDefaultAssigner() {
+                return with(Assigner.DEFAULT, Assigner.Typing.STATIC);
+            }
+
+            public static Chain with(Assigner assigner, Assigner.Typing typing) {
+                return new Chain(assigner, typing, Collections.<Step>emptyList());
+            }
+
+            public Chain executing(Step... step) {
+                return executing(Arrays.asList(step));
+            }
+
+            public Chain executing(List<Step> steps) {
+                return new Chain(assigner, typing, CompoundList.of(this.steps, steps));
+            }
+
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             int freeOffset) { // TODO: Record offset changes.
+                                             int freeOffset) { // TODO: Record offset changes in return.
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size()
                         + steps.size() * 2
                         + (result.represents(void.class) ? 0 : 2)
@@ -1373,6 +1389,72 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         Map<Integer, Integer> offsets);
 
                 TypeDescription.Generic getReturnType();
+
+                class ForMethodCall implements Step {
+
+                    private final MethodDescription methodDescription;
+
+                    protected ForMethodCall(MethodDescription methodDescription) {
+                        this.methodDescription = methodDescription;
+                    }
+
+                    public StackManipulation apply(Assigner assigner,
+                                                   Assigner.Typing typing,
+                                                   TypeDescription instrumentedType,
+                                                   MethodDescription instrumentedMethod,
+                                                   TypeDescription targetType,
+                                                   ByteCodeElement target,
+                                                   TypeList.Generic parameters,
+                                                   TypeDescription.Generic result,
+                                                   Map<Integer, Integer> offsets) {
+                        return null;
+                    }
+
+                    public TypeDescription.Generic getReturnType() {
+                        return methodDescription.getReturnType();
+                    }
+                }
+
+                class ForFieldAccess implements Step {
+
+                    private final FieldDescription fieldDescription;
+
+                    private final boolean read;
+
+                    public ForFieldAccess(FieldDescription fieldDescription, boolean read) {
+                        this.fieldDescription = fieldDescription;
+                        this.read = read;
+                    }
+
+                    public StackManipulation apply(Assigner assigner,
+                                                   Assigner.Typing typing,
+                                                   TypeDescription instrumentedType,
+                                                   MethodDescription instrumentedMethod,
+                                                   TypeDescription targetType,
+                                                   ByteCodeElement target,
+                                                   TypeList.Generic parameters,
+                                                   TypeDescription.Generic result,
+                                                   Map<Integer, Integer> offsets) {
+                        if (read) {
+                            return new StackManipulation.Compound(
+                                    fieldDescription.isStatic()
+                                            ? StackManipulation.Trivial.INSTANCE
+                                            :
+                                    FieldAccess.forField(fieldDescription).read()
+                            );
+                        } else {
+                            return new StackManipulation.Compound(
+                                    FieldAccess.forField(fieldDescription).write()
+                            );
+                        }
+                    }
+
+                    public TypeDescription.Generic getReturnType() {
+                        return read
+                                ? fieldDescription.getType()
+                                : TypeDescription.Generic.VOID;
+                    }
+                }
             }
         }
     }
