@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.asm;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.field.FieldDescription;
@@ -42,7 +43,6 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -233,7 +233,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 replacementFactory.make(instrumentedType, instrumentedMethod, typePool),
                 implementationContext,
                 typePool,
-                (writerFlags & ClassWriter.COMPUTE_MAXS) != 0);
+                implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V11));
     }
 
     /**
@@ -1309,39 +1309,83 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
         }
 
+        /**
+         * A substitution chain allows for chaining multiple substitution steps for a byte code element being replaced.
+         */
         @HashCodeAndEqualsPlugin.Enhance
         class Chain implements Substitution {
 
-            public static final int RETURN_VALUE_OFFSET = -1;
-
+            /**
+             * The assigner to use.
+             */
             private final Assigner assigner;
 
+            /**
+             * The typing of the assignment to use.
+             */
             private final Assigner.Typing typing;
 
+            /**
+             * The substitution steps to apply.
+             */
             private final List<Step> steps;
 
+            /**
+             * Creates a new substitution chain.
+             *
+             * @param assigner The assigner to use.
+             * @param typing   The typing of the assignment to use.
+             * @param steps    The substitution steps to apply.
+             */
             protected Chain(Assigner assigner, Assigner.Typing typing, List<Step> steps) {
                 this.assigner = assigner;
                 this.typing = typing;
                 this.steps = steps;
             }
 
+            /**
+             * Creates a new substitution chain that uses a default assigner and static typing.
+             *
+             * @return A new substitution chain.
+             */
             public static Chain withDefaultAssigner() {
                 return with(Assigner.DEFAULT, Assigner.Typing.STATIC);
             }
 
+            /**
+             * Creates a new substitution chain.
+             *
+             * @param assigner The assigner to use.
+             * @param typing   The typing of the assignment to use.
+             * @return A new substitution chain.
+             */
             public static Chain with(Assigner assigner, Assigner.Typing typing) {
                 return new Chain(assigner, typing, Collections.<Step>emptyList());
             }
 
+            /**
+             * Appends the supplied steps to the substitution chain.
+             *
+             * @param step The steps to append.
+             * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
+             */
             public Chain executing(Step... step) {
                 return executing(Arrays.asList(step));
             }
 
+            /**
+             * Appends the supplied steps to the substitution chain.
+             *
+             * @param steps The steps to append.
+             * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
+             */
             public Chain executing(List<Step> steps) {
                 return new Chain(assigner, typing, CompoundList.of(this.steps, steps));
             }
 
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              TypeDescription targetType,
@@ -1359,11 +1403,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     offsets.put(index, freeOffset);
                     freeOffset += parameters.get(index).getStackSize().getSize();
                 }
-                offsets.put(RETURN_VALUE_OFFSET, freeOffset);
-                if (!result.represents(void.class)) {
-                    stackManipulations.add(DefaultValue.of(result));
-                    stackManipulations.add(MethodVariableAccess.of(result).storeAt(freeOffset));
-                }
+                stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
                     Step.Resolution resulution = step.resolve(assigner,
@@ -1374,20 +1414,35 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             target,
                             parameters,
                             current,
-                            offsets);
+                            offsets,
+                            freeOffset);
                     stackManipulations.add(resulution.getStackManipulation());
                     current = resulution.getResultType();
-                    stackManipulations.add(MethodVariableAccess.of(current).storeAt(freeOffset));
-                }
-                if (!current.represents(void.class)) {
-                    stackManipulations.add(MethodVariableAccess.of(current).loadFrom(freeOffset));
                 }
                 stackManipulations.add(assigner.assign(current, result, typing));
                 return new StackManipulation.Compound(stackManipulations);
             }
 
+            /**
+             * Represents a step of a substitution chain.
+             */
             protected interface Step {
 
+                /**
+                 * Resolves this step of a substitution chain.
+                 *
+                 * @param assigner           The assigner to use.
+                 * @param typing             The typing to use.
+                 * @param instrumentedType   The instrumented type.
+                 * @param instrumentedMethod The instrumented method.
+                 * @param targetType         The target result type of the substitution.
+                 * @param target             The byte code element that is currently substituted.
+                 * @param parameters         The parameters of the substituted element.
+                 * @param current            The current type of the applied substitution that is the top element on the operand stack.
+                 * @param offsets            The arguments of the substituted byte code element mapped to their local variable offsets.
+                 * @param freeOffset         The first free offset in the local variable array.
+                 * @return A resolved substitution step for the supplied inputs.
+                 */
                 Resolution resolve(Assigner assigner,
                                    Assigner.Typing typing,
                                    TypeDescription instrumentedType,
@@ -1395,28 +1450,60 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                    TypeDescription targetType,
                                    ByteCodeElement target,
                                    TypeList.Generic parameters,
-                                   TypeDescription.Generic result,
-                                   Map<Integer, Integer> offsets);
+                                   TypeDescription.Generic current,
+                                   Map<Integer, Integer> offsets,
+                                   int freeOffset);
 
+                /**
+                 * A resolved substitution step.
+                 */
                 interface Resolution {
 
+                    /**
+                     * Returns the stack manipulation to apply the substitution.
+                     *
+                     * @return The stack manipulation to apply the substitution.
+                     */
                     StackManipulation getStackManipulation();
 
+                    /**
+                     * Returns the resulting type of the substitution or {@code void} if no resulting value is applied.
+                     *
+                     * @return The resulting type of the substitution or {@code void} if no resulting value is applied.
+                     */
                     TypeDescription.Generic getResultType();
                 }
 
+                /**
+                 * A simple substitution step within a substitution chain.
+                 */
                 @HashCodeAndEqualsPlugin.Enhance
                 class Simple implements Step, Resolution {
 
+                    /**
+                     * The stack manipulation to apply.
+                     */
                     private final StackManipulation stackManipulation;
 
+                    /**
+                     * The resulting type of applying the stack manipulation.
+                     */
                     private final TypeDescription.Generic resultType;
 
+                    /**
+                     * Creates a new simple substitution step.
+                     *
+                     * @param stackManipulation The stack manipulation to apply.
+                     * @param resultType        The resulting type of applying the stack manipulation.
+                     */
                     public Simple(StackManipulation stackManipulation, TypeDescription.Generic resultType) {
                         this.stackManipulation = stackManipulation;
                         this.resultType = resultType;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
                     public Resolution resolve(Assigner assigner,
                                               Assigner.Typing typing,
                                               TypeDescription instrumentedType,
@@ -1424,15 +1511,24 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                               TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
-                                              TypeDescription.Generic result,
-                                              Map<Integer, Integer> offsets) {
-                        return this;
+                                              TypeDescription.Generic current,
+                                              Map<Integer, Integer> offsets,
+                                              int freeOffset) {
+                        return targetType.represents(void.class)
+                                ? this
+                                : new Simple(new StackManipulation.Compound(Removal.of(targetType), stackManipulation), resultType);
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
                     public StackManipulation getStackManipulation() {
                         return stackManipulation;
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
                     public TypeDescription.Generic getResultType() {
                         return resultType;
                     }
@@ -1449,8 +1545,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Binds this replacement for a field that was discovered.
          *
-         * @param fieldDescription The field that was discovered.
-         * @param writeAccess      {@code true} if this field was written to.
+         * @param instrumentedType   The instrumented type.
+         * @param instrumentedMethod The instrumented method.
+         * @param fieldDescription   The field that was discovered.
+         * @param writeAccess        {@code true} if this field was written to.
          * @return A binding for the discovered field access.
          */
         Binding bind(TypeDescription instrumentedType,
@@ -1461,9 +1559,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Binds this replacement for a field that was discovered.
          *
-         * @param typeDescription   The type on which the method was invoked.
-         * @param methodDescription The method that was discovered.
-         * @param invocationType    The invocation type for this method.
+         * @param instrumentedType   The instrumented type.
+         * @param instrumentedMethod The instrumented method.
+         * @param typeDescription    The type on which the method was invoked.
+         * @param methodDescription  The method that was discovered.
+         * @param invocationType     The invocation type for this method.
          * @return A binding for the discovered method invocation.
          */
         Binding bind(TypeDescription instrumentedType,
@@ -1489,6 +1589,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @param parameters The parameters that are accessible to the substitution target.
              * @param result     The result that is expected from the substitution target or {@code void} if none is expected.
+             * @param freeOffset The first offset that can be used for storing local variables.
              * @return A stack manipulation that represents the replacement.
              */
             StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, int freeOffset);
@@ -2033,6 +2134,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         private final TypeDescription instrumentedType;
 
+        /**
+         * The instrumented method.
+         */
         private final MethodDescription instrumentedMethod;
 
         /**
@@ -2060,13 +2164,19 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         private final TypePool typePool;
 
-        private final MethodVisitor substitutionMethodVisitor;
+        /**
+         * If {@code true}, virtual method calls might target private methods in accordance to the nest mate specification.
+         */
+        private final boolean virtualPrivateCalls;
 
         /**
          * An additional buffer for the operand stack that is required.
          */
         private int stackSizeBuffer;
 
+        /**
+         * The minimum amount of local variable array slots that are required to apply substitutions.
+         */
         private int localVariableExtension;
 
         /**
@@ -2074,11 +2184,13 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          *
          * @param methodVisitor         The method visitor to delegate to.
          * @param instrumentedType      The instrumented type.
+         * @param instrumentedMethod    The instrumented method.
          * @param methodGraphCompiler   The method graph compiler to use.
          * @param strict                {@code true} if the method processing should be strict where an exception is raised if a member cannot be found.
          * @param replacement           The replacement to use for creating substitutions.
          * @param implementationContext The implementation context to use.
          * @param typePool              The type pool to use.
+         * @param virtualPrivateCalls   {@code true}, virtual method calls might target private methods in accordance to the nest mate specification.
          */
         protected SubstitutingMethodVisitor(MethodVisitor methodVisitor,
                                             TypeDescription instrumentedType,
@@ -2088,7 +2200,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             Replacement replacement,
                                             Implementation.Context implementationContext,
                                             TypePool typePool,
-                                            boolean computeMaximum) {
+                                            boolean virtualPrivateCalls) {
             super(methodVisitor, instrumentedMethod);
             this.instrumentedType = instrumentedType;
             this.instrumentedMethod = instrumentedMethod;
@@ -2097,9 +2209,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             this.replacement = replacement;
             this.implementationContext = implementationContext;
             this.typePool = typePool;
-            this.substitutionMethodVisitor = computeMaximum
-                    ? new LocalVariableTracingMethodVisitor(methodVisitor)
-                    : methodVisitor;
+            this.virtualPrivateCalls = virtualPrivateCalls;
             stackSizeBuffer = 0;
             localVariableExtension = 0;
         }
@@ -2140,7 +2250,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(parameters, result, getFreeOffset())
-                                .apply(substitutionMethodVisitor, implementationContext)
+                                .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext)
                                 .getMaximalSize() - result.getStackSize().getSize());
                         return;
                     }
@@ -2167,7 +2277,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
                             : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
-                } else { // Invokevirtual and invokeinterface can represent a private, non-static method from Java 11.
+                } else if (virtualPrivateCalls) {
                     candidates = resolution.resolve().getDeclaredMethods().filter(strict
                             ? ElementMatchers.<MethodDescription>isPrivate().and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))
                             : ElementMatchers.<MethodDescription>failSafe(isPrivate().<MethodDescription>and(not(isStatic())).and(named(internalName).and(hasDescriptor(descriptor)))));
@@ -2176,6 +2286,10 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
                                 : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                     }
+                } else {
+                    candidates = methodGraphCompiler.compile(resolution.resolve(), instrumentedType).listNodes().asMethodList().filter(strict
+                            ? ElementMatchers.<MethodDescription>named(internalName).and(hasDescriptor(descriptor))
+                            : ElementMatchers.<MethodDescription>failSafe(named(internalName).and(hasDescriptor(descriptor))));
                 }
                 if (!candidates.isEmpty()) {
                     Replacement.Binding binding = replacement.bind(instrumentedType,
@@ -2192,7 +2306,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         ? candidates.getOnly().getDeclaringType().asGenericType()
                                         : candidates.getOnly().getReturnType(),
                                 getFreeOffset())
-                                .apply(substitutionMethodVisitor, implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
+                                .apply(new LocalVariableTracingMethodVisitor(mv), implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
                                 ? StackSize.SINGLE
                                 : candidates.getOnly().getReturnType().getStackSize()).getSize());
                         if (candidates.getOnly().isConstructor()) {
@@ -2222,8 +2336,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             super.visitMaxs(stackSize + stackSizeBuffer, Math.max(localVariableExtension, localVariableLength));
         }
 
+        /**
+         * A method visitor that traces offsets of the local variable array being used.
+         */
         private class LocalVariableTracingMethodVisitor extends MethodVisitor {
 
+            /**
+             * Creates a new local variable tracing method visitor.
+             *
+             * @param methodVisitor The method visitor to delegate to.
+             */
             private LocalVariableTracingMethodVisitor(MethodVisitor methodVisitor) {
                 super(OpenedClassReader.ASM_API, methodVisitor);
             }
