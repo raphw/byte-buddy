@@ -1245,6 +1245,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A factory for a substitution that invokes a given method.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             public static class OfGivenMethod implements Factory {
 
                 /**
@@ -1272,6 +1273,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * A factory for a substitution that locates a method on the receiver type using a matcher.
              */
+            @HashCodeAndEqualsPlugin.Enhance
             public static class OfMatchedMethod implements Factory {
 
                 /**
@@ -1304,6 +1306,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
         }
 
+        @HashCodeAndEqualsPlugin.Enhance
         class Chain implements Substitution {
 
             public static final int RETURN_VALUE_OFFSET = -1;
@@ -1370,7 +1373,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             current,
                             offsets);
                     stackManipulations.add(resulution.getStackManipulation());
-                    current = resulution.getReturnType();
+                    current = resulution.getResultType();
                     stackManipulations.add(MethodVariableAccess.of(current).storeAt(freeOffset));
                 }
                 if (!current.represents(void.class)) {
@@ -1396,7 +1399,40 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
                     StackManipulation getStackManipulation();
 
-                    TypeDescription.Generic getReturnType();
+                    TypeDescription.Generic getResultType();
+                }
+
+                @HashCodeAndEqualsPlugin.Enhance
+                class Simple implements Step, Resolution {
+
+                    private final StackManipulation stackManipulation;
+
+                    private final TypeDescription.Generic resultType;
+
+                    public Simple(StackManipulation stackManipulation, TypeDescription.Generic resultType) {
+                        this.stackManipulation = stackManipulation;
+                        this.resultType = resultType;
+                    }
+
+                    public Resolution resolve(Assigner assigner,
+                                              Assigner.Typing typing,
+                                              TypeDescription instrumentedType,
+                                              MethodDescription instrumentedMethod,
+                                              TypeDescription targetType,
+                                              ByteCodeElement target,
+                                              TypeList.Generic parameters,
+                                              TypeDescription.Generic result,
+                                              Map<Integer, Integer> offsets) {
+                        return this;
+                    }
+
+                    public StackManipulation getStackManipulation() {
+                        return stackManipulation;
+                    }
+
+                    public TypeDescription.Generic getResultType() {
+                        return resultType;
+                    }
                 }
             }
         }
@@ -2068,6 +2104,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     ? new LocalVariableTracingMethodVisitor(methodVisitor)
                     : methodVisitor;
             stackSizeBuffer = 0;
+            localVariableExtension = 0;
         }
 
         @Override
