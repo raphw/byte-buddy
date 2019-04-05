@@ -1,3 +1,18 @@
+/*
+ * Copyright 2014 - 2019 Rafael Winterhalter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package net.bytebuddy.utility.visitor;
 
 import net.bytebuddy.description.method.MethodDescription;
@@ -5,11 +20,23 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+/**
+ * A method visitor that traces the amount of used local variable slots.
+ */
 public class LocalVariableAwareMethodVisitor extends MethodVisitor {
 
+    /**
+     * The first offset that was observed to not be used.
+     */
     private int freeOffset;
 
-    protected LocalVariableAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+    /**
+     * Creates a local variable aware method visitor.
+     *
+     * @param methodVisitor     The method visitor to delegate to.
+     * @param methodDescription The method being visited.
+     */
+    public LocalVariableAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription methodDescription) {
         super(OpenedClassReader.ASM_API, methodVisitor);
         freeOffset = methodDescription.getStackSize();
     }
@@ -30,7 +57,12 @@ public class LocalVariableAwareMethodVisitor extends MethodVisitor {
         super.visitVarInsn(opcode, offset);
     }
 
-    protected int getFreeOffset() {
+    /**
+     * Returns the first offset that was observed to be free.
+     *
+     * @return The first offset that was observed to be free.
+     */
+    public int getFreeOffset() {
         return freeOffset;
     }
 }
