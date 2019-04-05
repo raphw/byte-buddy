@@ -40,7 +40,9 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.LocalVariableAwareMethodVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -230,7 +232,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 strict,
                 replacementFactory.make(instrumentedType, instrumentedMethod, typePool),
                 implementationContext,
-                typePool);
+                typePool,
+                (writerFlags & ClassWriter.COMPUTE_MAXS) != 0);
     }
 
     /**
@@ -1339,11 +1342,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
-                                             int freeOffset) { // TODO: Record offset changes in return.
-                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size()
+                                             int freeOffset) {
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(1
+                        + parameters.size()
                         + steps.size() * 2
-                        + (result.represents(void.class) ? 0 : 2)
-                        + ((steps.isEmpty() ? result : steps.get(steps.size() - 1).getReturnType()).represents(void.class) ? 1 : 0));
+                        + (result.represents(void.class) ? 0 : 2));
                 Map<Integer, Integer> offsets = new HashMap<Integer, Integer>();
                 for (int index = parameters.size() - 1; index >= 0; index--) {
                     stackManipulations.add(MethodVariableAccess.of(parameters.get(index)).storeAt(freeOffset));
@@ -1357,7 +1360,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
-                    stackManipulations.add(step.apply(assigner,
+                    Step.Resolution resulution = step.resolve(assigner,
                             typing,
                             instrumentedType,
                             instrumentedMethod,
@@ -1365,8 +1368,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                             target,
                             parameters,
                             current,
-                            offsets));
-                    current = step.getReturnType();
+                            offsets);
+                    stackManipulations.add(resulution.getStackManipulation());
+                    current = resulution.getReturnType();
                     stackManipulations.add(MethodVariableAccess.of(current).storeAt(freeOffset));
                 }
                 if (!current.represents(void.class)) {
@@ -1378,82 +1382,21 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
 
             protected interface Step {
 
-                StackManipulation apply(Assigner assigner,
-                                        Assigner.Typing typing,
-                                        TypeDescription instrumentedType,
-                                        MethodDescription instrumentedMethod,
-                                        TypeDescription targetType,
-                                        ByteCodeElement target,
-                                        TypeList.Generic parameters,
-                                        TypeDescription.Generic result,
-                                        Map<Integer, Integer> offsets);
+                Resolution resolve(Assigner assigner,
+                                   Assigner.Typing typing,
+                                   TypeDescription instrumentedType,
+                                   MethodDescription instrumentedMethod,
+                                   TypeDescription targetType,
+                                   ByteCodeElement target,
+                                   TypeList.Generic parameters,
+                                   TypeDescription.Generic result,
+                                   Map<Integer, Integer> offsets);
 
-                TypeDescription.Generic getReturnType();
+                interface Resolution {
 
-                class ForMethodCall implements Step {
+                    StackManipulation getStackManipulation();
 
-                    private final MethodDescription methodDescription;
-
-                    protected ForMethodCall(MethodDescription methodDescription) {
-                        this.methodDescription = methodDescription;
-                    }
-
-                    public StackManipulation apply(Assigner assigner,
-                                                   Assigner.Typing typing,
-                                                   TypeDescription instrumentedType,
-                                                   MethodDescription instrumentedMethod,
-                                                   TypeDescription targetType,
-                                                   ByteCodeElement target,
-                                                   TypeList.Generic parameters,
-                                                   TypeDescription.Generic result,
-                                                   Map<Integer, Integer> offsets) {
-                        return null;
-                    }
-
-                    public TypeDescription.Generic getReturnType() {
-                        return methodDescription.getReturnType();
-                    }
-                }
-
-                class ForFieldAccess implements Step {
-
-                    private final FieldDescription fieldDescription;
-
-                    private final boolean read;
-
-                    public ForFieldAccess(FieldDescription fieldDescription, boolean read) {
-                        this.fieldDescription = fieldDescription;
-                        this.read = read;
-                    }
-
-                    public StackManipulation apply(Assigner assigner,
-                                                   Assigner.Typing typing,
-                                                   TypeDescription instrumentedType,
-                                                   MethodDescription instrumentedMethod,
-                                                   TypeDescription targetType,
-                                                   ByteCodeElement target,
-                                                   TypeList.Generic parameters,
-                                                   TypeDescription.Generic result,
-                                                   Map<Integer, Integer> offsets) {
-                        if (read) {
-                            return new StackManipulation.Compound(
-                                    fieldDescription.isStatic()
-                                            ? StackManipulation.Trivial.INSTANCE
-                                            :
-                                    FieldAccess.forField(fieldDescription).read()
-                            );
-                        } else {
-                            return new StackManipulation.Compound(
-                                    FieldAccess.forField(fieldDescription).write()
-                            );
-                        }
-                    }
-
-                    public TypeDescription.Generic getReturnType() {
-                        return read
-                                ? fieldDescription.getType()
-                                : TypeDescription.Generic.VOID;
-                    }
+                    TypeDescription.Generic getReturnType();
                 }
             }
         }
@@ -2084,10 +2027,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         private final TypePool typePool;
 
+        private final MethodVisitor substitutionMethodVisitor;
+
         /**
          * An additional buffer for the operand stack that is required.
          */
         private int stackSizeBuffer;
+
+        private int localVariableExtension;
 
         /**
          * Creates a new substituting method visitor.
@@ -2107,7 +2054,8 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                             boolean strict,
                                             Replacement replacement,
                                             Implementation.Context implementationContext,
-                                            TypePool typePool) {
+                                            TypePool typePool,
+                                            boolean computeMaximum) {
             super(methodVisitor, instrumentedMethod);
             this.instrumentedType = instrumentedType;
             this.instrumentedMethod = instrumentedMethod;
@@ -2116,6 +2064,9 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             this.replacement = replacement;
             this.implementationContext = implementationContext;
             this.typePool = typePool;
+            this.substitutionMethodVisitor = computeMaximum
+                    ? new LocalVariableTracingMethodVisitor(methodVisitor)
+                    : methodVisitor;
             stackSizeBuffer = 0;
         }
 
@@ -2155,7 +2106,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
                         stackSizeBuffer = Math.max(stackSizeBuffer, binding.make(instrumentedType, instrumentedMethod, parameters, result, getFreeOffset())
-                                .apply(mv, implementationContext)
+                                .apply(substitutionMethodVisitor, implementationContext)
                                 .getMaximalSize() - result.getStackSize().getSize());
                         return;
                     }
@@ -2209,7 +2160,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                                         ? candidates.getOnly().getDeclaringType().asGenericType()
                                         : candidates.getOnly().getReturnType(),
                                 getFreeOffset())
-                                .apply(mv, implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
+                                .apply(substitutionMethodVisitor, implementationContext).getMaximalSize() - (candidates.getOnly().isConstructor()
                                 ? StackSize.SINGLE
                                 : candidates.getOnly().getReturnType().getStackSize()).getSize());
                         if (candidates.getOnly().isConstructor()) {
@@ -2235,8 +2186,31 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         @Override
-        public void visitMaxs(int maxStack, int maxLocals) {
-            super.visitMaxs(maxStack + stackSizeBuffer, maxLocals);
+        public void visitMaxs(int stackSize, int localVariableLength) {
+            super.visitMaxs(stackSize + stackSizeBuffer, Math.max(localVariableExtension, localVariableLength));
+        }
+
+        private class LocalVariableTracingMethodVisitor extends MethodVisitor {
+
+            private LocalVariableTracingMethodVisitor(MethodVisitor methodVisitor) {
+                super(OpenedClassReader.ASM_API, methodVisitor);
+            }
+
+            @Override
+            public void visitVarInsn(int opcode, int offset) {
+                switch (opcode) {
+                    case Opcodes.ISTORE:
+                    case Opcodes.FSTORE:
+                    case Opcodes.ASTORE:
+                        localVariableExtension = Math.max(localVariableExtension, offset + 1);
+                        break;
+                    case Opcodes.LSTORE:
+                    case Opcodes.DSTORE:
+                        localVariableExtension = Math.max(localVariableExtension, offset + 2);
+                        break;
+                }
+                super.visitVarInsn(opcode, offset);
+            }
         }
     }
 }

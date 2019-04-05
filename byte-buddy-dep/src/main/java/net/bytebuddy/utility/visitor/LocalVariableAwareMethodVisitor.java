@@ -5,7 +5,7 @@ import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public abstract class LocalVariableAwareMethodVisitor extends MethodVisitor {
+public class LocalVariableAwareMethodVisitor extends MethodVisitor {
 
     private int freeOffset;
 
