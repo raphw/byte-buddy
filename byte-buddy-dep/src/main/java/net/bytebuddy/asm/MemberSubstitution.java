@@ -421,6 +421,17 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         }
 
         /**
+         * Replaces the matched byte code elements with a chain of substitutions that can operate on the same values as the substituted element. This is a
+         * shortcut for creating a substitution chain with a default assigner.
+         *
+         * @param step The steps to apply for a substitution.
+         * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
+         */
+        public MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory... step) {
+            return replaceWith(Substitution.Chain.withDefaultAssigner().executing(step));
+        }
+
+        /**
          * Replaces any interaction with the supplied substitution.
          *
          * @param factory The substitution factory to use for creating the applied substitution.
@@ -781,18 +792,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
         /**
          * Resolves this substitution into a stack manipulation.
          *
-         * @param instrumentedType   The instrumented type.
-         * @param instrumentedMethod The instrumented method.
-         * @param targetType         The target type on which a member is accessed.
-         * @param target             The target field, method or constructor that is substituted,
-         * @param parameters         All parameters that serve as input to this access.
-         * @param result             The result that is expected from the interaction or {@code void} if no result is expected.
-         * @param freeOffset         The first free offset of the local variable array that can be used for storing values.
+         * @param targetType The target type on which a member is accessed.
+         * @param target     The target field, method or constructor that is substituted,
+         * @param parameters All parameters that serve as input to this access.
+         * @param result     The result that is expected from the interaction or {@code void} if no result is expected.
+         * @param freeOffset The first free offset of the local variable array that can be used for storing values.
          * @return A stack manipulation that represents the access.
          */
-        StackManipulation resolve(TypeDescription instrumentedType,
-                                  MethodDescription instrumentedMethod,
-                                  TypeDescription targetType,
+        StackManipulation resolve(TypeDescription targetType,
                                   ByteCodeElement target,
                                   TypeList.Generic parameters,
                                   TypeDescription.Generic result,
@@ -834,9 +841,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             TypeDescription targetType,
+            public StackManipulation resolve(TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
@@ -879,9 +884,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             TypeDescription targetType,
+            public StackManipulation resolve(TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
@@ -1097,9 +1100,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             TypeDescription targetType,
+            public StackManipulation resolve(TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
@@ -1348,7 +1349,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              *
              * @return A new substitution chain.
              */
-            public static Chain withDefaultAssigner() {
+            public static Chain.Factory withDefaultAssigner() {
                 return with(Assigner.DEFAULT, Assigner.Typing.STATIC);
             }
 
@@ -1359,36 +1360,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
              * @param typing   The typing of the assignment to use.
              * @return A new substitution chain.
              */
-            public static Chain with(Assigner assigner, Assigner.Typing typing) {
-                return new Chain(assigner, typing, Collections.<Step>emptyList());
-            }
-
-            /**
-             * Appends the supplied steps to the substitution chain.
-             *
-             * @param step The steps to append.
-             * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
-             */
-            public Chain executing(Step... step) {
-                return executing(Arrays.asList(step));
-            }
-
-            /**
-             * Appends the supplied steps to the substitution chain.
-             *
-             * @param steps The steps to append.
-             * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
-             */
-            public Chain executing(List<Step> steps) {
-                return new Chain(assigner, typing, CompoundList.of(this.steps, steps));
+            public static Chain.Factory with(Assigner assigner, Assigner.Typing typing) {
+                return new Chain.Factory(assigner, typing, Collections.<Step.Factory>emptyList());
             }
 
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             TypeDescription targetType,
+            public StackManipulation resolve(TypeDescription targetType,
                                              ByteCodeElement target,
                                              TypeList.Generic parameters,
                                              TypeDescription.Generic result,
@@ -1406,11 +1385,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 stackManipulations.add(DefaultValue.of(result));
                 TypeDescription.Generic current = result;
                 for (Step step : steps) {
-                    Step.Resolution resulution = step.resolve(assigner,
-                            typing,
-                            instrumentedType,
-                            instrumentedMethod,
-                            targetType,
+                    Step.Resolution resulution = step.resolve(targetType,
                             target,
                             parameters,
                             current,
@@ -1431,23 +1406,15 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 /**
                  * Resolves this step of a substitution chain.
                  *
-                 * @param assigner           The assigner to use.
-                 * @param typing             The typing to use.
-                 * @param instrumentedType   The instrumented type.
-                 * @param instrumentedMethod The instrumented method.
-                 * @param targetType         The target result type of the substitution.
-                 * @param target             The byte code element that is currently substituted.
-                 * @param parameters         The parameters of the substituted element.
-                 * @param current            The current type of the applied substitution that is the top element on the operand stack.
-                 * @param offsets            The arguments of the substituted byte code element mapped to their local variable offsets.
-                 * @param freeOffset         The first free offset in the local variable array.
+                 * @param targetType The target result type of the substitution.
+                 * @param target     The byte code element that is currently substituted.
+                 * @param parameters The parameters of the substituted element.
+                 * @param current    The current type of the applied substitution that is the top element on the operand stack.
+                 * @param offsets    The arguments of the substituted byte code element mapped to their local variable offsets.
+                 * @param freeOffset The first free offset in the local variable array.
                  * @return A resolved substitution step for the supplied inputs.
                  */
-                Resolution resolve(Assigner assigner,
-                                   Assigner.Typing typing,
-                                   TypeDescription instrumentedType,
-                                   MethodDescription instrumentedMethod,
-                                   TypeDescription targetType,
+                Resolution resolve(TypeDescription targetType,
                                    ByteCodeElement target,
                                    TypeList.Generic parameters,
                                    TypeDescription.Generic current,
@@ -1475,10 +1442,30 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 }
 
                 /**
+                 * Resolves a substitution for an instrumented method.
+                 */
+                interface Factory {
+
+                    /**
+                     * Creates a substitution step for an instrumented method.
+                     *
+                     * @param assigner           The assigner to use.
+                     * @param typing             The typing to use.
+                     * @param instrumentedType   The instrumented type.
+                     * @param instrumentedMethod The instrumented method.
+                     * @return The substitution step to apply.
+                     */
+                    Step make(Assigner assigner,
+                              Assigner.Typing typing,
+                              TypeDescription instrumentedType,
+                              MethodDescription instrumentedMethod);
+                }
+
+                /**
                  * A simple substitution step within a substitution chain.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class Simple implements Step, Resolution {
+                class Simple implements Step, Resolution, Factory {
 
                     /**
                      * The stack manipulation to apply.
@@ -1504,11 +1491,14 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     /**
                      * {@inheritDoc}
                      */
-                    public Resolution resolve(Assigner assigner,
-                                              Assigner.Typing typing,
-                                              TypeDescription instrumentedType,
-                                              MethodDescription instrumentedMethod,
-                                              TypeDescription targetType,
+                    public Step make(Assigner assigner, Assigner.Typing typing, TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                        return this;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Resolution resolve(TypeDescription targetType,
                                               ByteCodeElement target,
                                               TypeList.Generic parameters,
                                               TypeDescription.Generic current,
@@ -1532,6 +1522,74 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     public TypeDescription.Generic getResultType() {
                         return resultType;
                     }
+                }
+            }
+
+            /**
+             * A factory for creating a substitution chain.
+             */
+            public static class Factory implements Substitution.Factory {
+
+                /**
+                 * The assigner to use.
+                 */
+                private final Assigner assigner;
+
+                /**
+                 * The typing of the assignment to use.
+                 */
+                private final Assigner.Typing typing;
+
+                /**
+                 * The substitution steps to apply.
+                 */
+                private final List<Step.Factory> steps;
+
+                /**
+                 * Creates a new factory for a substitution chain.
+                 *
+                 * @param assigner The assigner to use.
+                 * @param typing   The typing of the assignment to use.
+                 * @param steps    The substitution steps to apply.
+                 */
+                protected Factory(Assigner assigner, Assigner.Typing typing, List<Step.Factory> steps) {
+                    this.assigner = assigner;
+                    this.typing = typing;
+                    this.steps = steps;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Substitution make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, TypePool typePool) {
+                    if (steps.isEmpty()) {
+                        return Stubbing.INSTANCE;
+                    }
+                    List<Step> steps = new ArrayList<Step>(this.steps.size());
+                    for (Step.Factory step : this.steps) {
+                        steps.add(step.make(assigner, typing, instrumentedType, instrumentedMethod));
+                    }
+                    return new Chain(assigner, typing, steps);
+                }
+
+                /**
+                 * Appends the supplied steps to the substitution chain.
+                 *
+                 * @param step The steps to append.
+                 * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
+                 */
+                public Factory executing(Step.Factory... step) {
+                    return executing(Arrays.asList(step));
+                }
+
+                /**
+                 * Appends the supplied steps to the substitution chain.
+                 *
+                 * @param steps The steps to append.
+                 * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
+                 */
+                public Factory executing(List<Step.Factory> steps) {
+                    return new Factory(assigner, typing, CompoundList.of(this.steps, steps));
                 }
             }
         }
@@ -1682,7 +1740,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * {@inheritDoc}
                  */
                 public StackManipulation make(TypeList.Generic parameters, TypeDescription.Generic result, int freeOffset) {
-                    return substitution.resolve(instrumentedType, instrumentedMethod, targetType, target, parameters, result, freeOffset);
+                    return substitution.resolve(targetType, target, parameters, result, freeOffset);
                 }
             }
         }
