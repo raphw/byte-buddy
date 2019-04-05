@@ -246,6 +246,13 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
+    public DynamicType.Builder<T> suffix(String suffix) {
+        throw new UnsupportedOperationException("Cannot change name of decorated type: " + instrumentedType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> name(String name) {
         throw new UnsupportedOperationException("Cannot change name of decorated type: " + instrumentedType);
     }

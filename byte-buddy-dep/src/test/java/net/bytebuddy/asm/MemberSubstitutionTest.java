@@ -12,6 +12,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;

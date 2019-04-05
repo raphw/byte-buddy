@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility.visitor;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.MethodVisitor;
@@ -42,6 +43,7 @@ public class LocalVariableAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
+    @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "No action required on default option.")
     public void visitVarInsn(int opcode, int offset) {
         switch (opcode) {
             case Opcodes.ISTORE:

@@ -222,6 +222,14 @@ public interface DynamicType {
         Builder<T> name(String name);
 
         /**
+         * Adds a suffix to the current type name without changing the type's package.
+         *
+         * @param suffix The suffix to append to the current type name.
+         * @return A new builder that is equal to this builder but with the instrumented type named suffixed by the supplied suffix.
+         */
+        Builder<T> suffix(String suffix);
+
+        /**
          * Defines the supplied modifiers as the modifiers of the instrumented type.
          *
          * @param modifierContributor The modifiers of the instrumented type.
@@ -3448,6 +3456,13 @@ public interface DynamicType {
                 /**
                  * {@inheritDoc}
                  */
+                public Builder<U> suffix(String suffix) {
+                    return materialize().suffix(suffix);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> name(String name) {
                     return materialize().name(name);
                 }
@@ -3756,6 +3771,8 @@ public interface DynamicType {
                     this.auxiliaryTypes = auxiliaryTypes;
                 }
 
+
+
                 /**
                  * {@inheritDoc}
                  */
@@ -3885,6 +3902,13 @@ public interface DynamicType {
                             classWriterStrategy,
                             ignoredMethods,
                             auxiliaryTypes);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder<U> suffix(String suffix) {
+                    return name(instrumentedType.getName() + "$" + suffix);
                 }
 
                 /**

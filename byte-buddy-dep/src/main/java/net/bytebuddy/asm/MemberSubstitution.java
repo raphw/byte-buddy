@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.asm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
@@ -428,7 +429,18 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
          */
         public MemberSubstitution replaceWithChain(Substitution.Chain.Step.Factory... step) {
-            return replaceWith(Substitution.Chain.withDefaultAssigner().executing(step));
+            return replaceWithChain(Arrays.asList(step));
+        }
+
+        /**
+         * Replaces the matched byte code elements with a chain of substitutions that can operate on the same values as the substituted element. This is a
+         * shortcut for creating a substitution chain with a default assigner.
+         *
+         * @param steps The steps to apply for a substitution.
+         * @return A member substitution that replaces any matched byte code element with the provided substitution chain.
+         */
+        public MemberSubstitution replaceWithChain(List<? extends Substitution.Chain.Step.Factory> steps) {
+            return replaceWith(Substitution.Chain.withDefaultAssigner().executing(steps));
         }
 
         /**
@@ -1588,7 +1600,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                  * @param steps The steps to append.
                  * @return A new substitution chain that is equal to this substitution chain but with the supplied steps appended.
                  */
-                public Factory executing(List<Step.Factory> steps) {
+                public Factory executing(List<? extends Step.Factory> steps) {
                     return new Factory(assigner, typing, CompoundList.of(this.steps, steps));
                 }
             }
@@ -2409,6 +2421,7 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             }
 
             @Override
+            @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "No action required on default option.")
             public void visitVarInsn(int opcode, int offset) {
                 switch (opcode) {
                     case Opcodes.ISTORE:
