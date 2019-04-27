@@ -523,7 +523,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                    exceptionHandler.resolve(implementationContext.getClassFileVersion(), instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -533,7 +533,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                    exceptionHandler.resolve(implementationContext.getClassFileVersion(), instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -546,7 +546,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
-                    exceptionHandler.resolve(instrumentedMethod, instrumentedType),
+                    exceptionHandler.resolve(implementationContext.getClassFileVersion(), instrumentedMethod, instrumentedType),
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -6008,11 +6008,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Resolves a stack manipulation to apply.
          *
+         * @param classFileVersion   The class file version of the instrumented type.
          * @param instrumentedMethod The instrumented method.
          * @param instrumentedType   The instrumented type.
          * @return The stack manipulation to use.
          */
-        StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType);
+        StackManipulation resolve(ClassFileVersion classFileVersion, MethodDescription instrumentedMethod, TypeDescription instrumentedType);
 
         /**
          * Default implementations for commonly used exception handlers.
@@ -6024,7 +6025,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             SUPPRESSING {
                 /** {@inheritDoc} */
-                public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                public StackManipulation resolve(ClassFileVersion classFileVersion, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                     return Removal.SINGLE;
                 }
             },
@@ -6034,7 +6035,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             PRINTING {
                 /** {@inheritDoc} */
-                public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                public StackManipulation resolve(ClassFileVersion classFileVersion, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                     try {
                         return MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getMethod("printStackTrace")));
                     } catch (NoSuchMethodException exception) {
@@ -6067,7 +6068,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+            public StackManipulation resolve(ClassFileVersion classFileVersion, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                 return stackManipulation;
             }
         }
