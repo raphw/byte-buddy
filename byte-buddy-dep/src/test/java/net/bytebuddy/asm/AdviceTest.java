@@ -49,7 +49,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -60,7 +60,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithEntrySuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -71,7 +71,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithExitSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -82,7 +82,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithSuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -93,7 +93,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithExceptionHandling() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithExceptionHandling.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithExceptionHandling.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -104,7 +104,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndEntrySuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndEntrySuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -115,7 +115,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndExitSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndExitSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndExitSuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -126,7 +126,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndSuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -137,7 +137,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntry() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -148,7 +148,7 @@ public class AdviceTest {
     public void testEmptyAdviceEntryWithSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceEntryWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceEntryWithSuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -159,7 +159,7 @@ public class AdviceTest {
     public void testEmptyAdviceExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -170,7 +170,7 @@ public class AdviceTest {
     public void testEmptyAdviceExitAndSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdviceExitAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .visit(Advice.to(EmptyAdviceExitAndSuppression.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
