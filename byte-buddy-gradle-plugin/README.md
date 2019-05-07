@@ -1,4 +1,4 @@
-# Byte Buddy Maven Plugin
+# Byte Buddy Gradle Plugin
 
 The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. To activate this process, add the following sections to your project Gradle build file:
 
