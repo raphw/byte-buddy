@@ -289,9 +289,7 @@ public interface MethodAttributeAppender {
          * @return A method attribute appender factory for an appender that writes all annotations of the supplied method.
          */
         public static Factory of(MethodDescription methodDescription) {
-            Factory ofMethodAnnotations = fromMethodAnnotationsOf(methodDescription);
-            Factory ofParametersAnnotations = fromParameterAnnotationsOf(methodDescription);
-            return new Factory.Compound(ofMethodAnnotations, ofParametersAnnotations);
+            return new Factory.Compound(ofMethodAnnotations(methodDescription), ofParameterAnnotations(methodDescription));
         }
     
         /**
@@ -300,7 +298,7 @@ public interface MethodAttributeAppender {
          * @param methodDescription The method from which to extract the method annotations.
          * @return A method attribute appender factory for an appender that writes all method annotations of the supplied method.
          */
-        public static Factory fromMethodAnnotationsOf(MethodDescription methodDescription) {
+        public static Factory ofMethodAnnotations(MethodDescription methodDescription) {
             return new Explicit(methodDescription.getDeclaredAnnotations());
         }
     
@@ -311,13 +309,13 @@ public interface MethodAttributeAppender {
          * @param methodDescription The method from which to extract the parameter annotations.
          * @return A method attribute appender factory for an appender that writes all parameter annotations of the supplied method.
          */
-        public static Factory fromParameterAnnotationsOf(MethodDescription methodDescription) {
+        public static Factory ofParameterAnnotations(MethodDescription methodDescription) {
             ParameterList<?> parameters = methodDescription.getParameters();
-            List<MethodAttributeAppender.Factory> methodAttributeAppenders = new ArrayList<MethodAttributeAppender.Factory>(parameters.size());
+            List<MethodAttributeAppender.Factory> factories = new ArrayList<MethodAttributeAppender.Factory>(parameters.size());
             for (ParameterDescription parameter : parameters) {
-                methodAttributeAppenders.add(new Explicit(parameter.getIndex(), parameter.getDeclaredAnnotations()));
+                factories.add(new Explicit(parameter.getIndex(), parameter.getDeclaredAnnotations()));
             }
-            return new Factory.Compound(methodAttributeAppenders);
+            return new Factory.Compound(factories);
         }
 
         /**

@@ -8,8 +8,6 @@ import net.bytebuddy.description.method.ParameterList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.internal.verification.Times;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
@@ -124,10 +122,10 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
     }
     
     @Test
-    public void testFromMethodAnnotationsOf() throws Exception {
+    public void testOfMethodAnnotations() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
-        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.fromMethodAnnotationsOf(methodDescription).make(instrumentedType);
+        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.ofMethodAnnotations(methodDescription).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor, times(0)).visitParameterAnnotation(anyInt(), anyString(), anyBoolean());
@@ -140,10 +138,10 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
     }
     
     @Test
-    public void testFromParameterAnnotationsOf() throws Exception {
+    public void testOfParameterAnnotations() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
-        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.fromParameterAnnotationsOf(methodDescription).make(instrumentedType);
+        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.ofParameterAnnotations(methodDescription).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor, times(0)).visitAnnotation(anyString(), anyBoolean());
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
