@@ -14,6 +14,7 @@ import java.lang.annotation.Annotation;
 
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttributeAppenderTest {
@@ -101,7 +102,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         assertThat(methodAttributeAppender.make(instrumentedType), sameInstance((MethodAttributeAppender) methodAttributeAppender));
         verifyZeroInteractions(instrumentedType);
     }
-
+    
     @Test
     public void testOfMethod() throws Exception {
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
@@ -113,6 +114,40 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
         verifyNoMoreInteractions(methodVisitor);
         verify(methodDescription, times(2)).getParameters();
         verify(methodDescription).getDeclaredAnnotations();
+        verifyNoMoreInteractions(methodDescription);
+        verify(parameterDescription).getIndex();
+        verify(parameterDescription).getDeclaredAnnotations();
+        verifyNoMoreInteractions(parameterDescription);
+        verifyZeroInteractions(instrumentedType);
+    }
+    
+    @Test
+    public void testOfMethodAnnotations() throws Exception {
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.ofMethodAnnotations(methodDescription).make(instrumentedType);
+        methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
+        verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
+        verify(methodVisitor, times(0)).visitParameterAnnotation(anyInt(), anyString(), anyBoolean());
+        verifyNoMoreInteractions(methodVisitor);
+        verify(methodDescription, times(0)).getParameters();
+        verify(methodDescription).getDeclaredAnnotations();
+        verifyNoMoreInteractions(methodDescription);
+        verifyZeroInteractions(parameterDescription);
+        verifyZeroInteractions(instrumentedType);
+    }
+    
+    @Test
+    public void testOfParameterAnnotations() throws Exception {
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.ofParameterAnnotations(methodDescription).make(instrumentedType);
+        methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
+        verify(methodVisitor, times(0)).visitAnnotation(anyString(), anyBoolean());
+        verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
+        verifyNoMoreInteractions(methodVisitor);
+        verify(methodDescription, times(2)).getParameters();
+        verify(methodDescription, times(0)).getDeclaredAnnotations();
         verifyNoMoreInteractions(methodDescription);
         verify(parameterDescription).getIndex();
         verify(parameterDescription).getDeclaredAnnotations();
