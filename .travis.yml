@@ -29,6 +29,10 @@ matrix:
     # Java 13
     - env: TARGET='-Pjava11' EXPERIMENTAL='true'
       jdk: openjdk-ea
+    # OpenJ9 11
+    - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='true'
+      before_script:
+        - . ci/install-jdk.sh -W ~/custom-java --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
 
 script:
   - ./mvnw install ${TARGET} -DskipTests=true -Dmaven.javadoc.skip=true -Dnet.bytebuddy.experimental=${EXPERIMENTAL} -Dnet.bytebuddy.test.ci=true -pl '!byte-buddy-gradle-plugin'
