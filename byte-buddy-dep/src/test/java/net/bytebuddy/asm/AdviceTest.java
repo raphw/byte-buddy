@@ -10,14 +10,13 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
-import net.bytebuddy.test.utility.DebuggingWrapper;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -32,8 +31,8 @@ import java.util.Map;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -1310,22 +1309,13 @@ public class AdviceTest {
     @Test
     public void testExceptionPrinting() throws Exception {
         Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
+                .redefine(ExceptionWriterSample.class)
                 .visit(Advice.to(ExceptionWriterTest.class).withExceptionPrinting().on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        PrintStream printStream = mock(PrintStream.class);
-        PrintStream err = System.err;
-        synchronized (System.err) {
-            System.setErr(printStream);
-            try {
-                assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-            } finally {
-                System.setErr(err);
-            }
-        }
-        verify(printStream, times(2)).println(Mockito.any(RuntimeException.class));
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField("exception").getBoolean(null), is(true));
     }
 
     @Test
@@ -3274,15 +3264,27 @@ public class AdviceTest {
             value = new Object[0];
         }
     }
+    
+    public static class ExceptionWriterSample extends RuntimeException {
+
+        public static boolean exception;
+        
+        public String foo() {
+            return FOO;
+        }
+
+        @Override
+        public void printStackTrace() {
+            exception = true;
+        }
+    }
 
     public static class ExceptionWriterTest {
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
         @Advice.OnMethodExit(suppress = RuntimeException.class)
         private static void advice() {
-            RuntimeException exception = new RuntimeException();
-            exception.setStackTrace(new StackTraceElement[0]);
-            throw exception;
+            throw new ExceptionWriterSample();
         }
     }
 
