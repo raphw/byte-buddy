@@ -280,7 +280,7 @@ public interface MethodAttributeAppender {
             this.target = target;
             this.annotations = annotations;
         }
-    
+
         /**
          * Creates a method attribute appender factory that writes all annotations of a given method, both the method
          * annotations themselves and all annotations that are defined for every parameter.
@@ -291,7 +291,7 @@ public interface MethodAttributeAppender {
         public static Factory of(MethodDescription methodDescription) {
             return new Factory.Compound(ofMethodAnnotations(methodDescription), ofParameterAnnotations(methodDescription));
         }
-    
+
         /**
          * Creates a method attribute appender factory that writes all method annotations that are defined on the given method.
          *
@@ -301,7 +301,7 @@ public interface MethodAttributeAppender {
         public static Factory ofMethodAnnotations(MethodDescription methodDescription) {
             return new Explicit(methodDescription.getDeclaredAnnotations());
         }
-    
+
         /**
          * Creates a method attribute appender factory that writes all annotations that are defined for every parameter
          * of the given method.

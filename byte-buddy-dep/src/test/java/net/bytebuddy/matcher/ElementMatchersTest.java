@@ -1121,6 +1121,14 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testHasSuperClass() throws Exception {
+        assertThat(ElementMatchers.hasSuperClass(ElementMatchers.is(Object.class)).matches(TypeDescription.STRING), is(true));
+        assertThat(ElementMatchers.hasSuperClass(ElementMatchers.is(String.class)).matches(TypeDescription.OBJECT), is(false));
+        assertThat(ElementMatchers.hasSuperClass(ElementMatchers.is(Serializable.class)).matches(TypeDescription.STRING), is(false));
+        assertThat(ElementMatchers.hasSuperClass(ElementMatchers.is(Serializable.class)).matches(TypeDescription.OBJECT), is(false));
+    }
+
+    @Test
     public void testHasSuperType() throws Exception {
         assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(Object.class)).matches(TypeDescription.STRING), is(true));
         assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(String.class)).matches(TypeDescription.OBJECT), is(false));

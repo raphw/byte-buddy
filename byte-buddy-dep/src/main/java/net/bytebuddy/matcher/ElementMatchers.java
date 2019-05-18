@@ -1892,6 +1892,28 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches any type description that declares a super class (but not interface) that matches the provided matcher.
+     *
+     * @param matcher The type to be checked for being a super class of the matched type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches any type description that declares a super class that matches the provided matcher.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasSuperClass(ElementMatcher<? super TypeDescription> matcher) {
+        return hasGenericSuperClass(erasure(matcher));
+    }
+
+    /**
+     * Matches any type description that declares a super class (but not interface) that matches the provided matcher.
+     *
+     * @param matcher The type to be checked for being a super class of the matched type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches any type description that declares a super class that matches the provided matcher.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasGenericSuperClass(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        return new HasSuperClassMatcher<T>(matcher);
+    }
+
+    /**
      * Matches any type description that declares a super type that matches the provided matcher.
      *
      * @param matcher The type to be checked for being a super type of the matched type.
