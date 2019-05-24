@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. May 2019: version 1.9.13
+
+- Added matcher for super class hierarchy that ignores interfaces.
+- Extend API for member substitution.
+- Minor API extensions.
+
 ### 26. March 2019: version 1.9.12
 
 - Fixed stack map frame generation during constructor advice.
