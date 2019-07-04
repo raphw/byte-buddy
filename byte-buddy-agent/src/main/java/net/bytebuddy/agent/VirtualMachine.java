@@ -346,6 +346,7 @@ public interface VirtualMachine {
                             throw new IllegalStateException("Target VM did not respond: " + processId);
                         }
                     } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
                         throw new IllegalStateException("Interrupted during wait for process", exception);
                     } finally {
                         if (!attachFile.delete()) {
