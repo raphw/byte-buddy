@@ -479,6 +479,22 @@
                 <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 14 JVMs. -->
+        <profile>
+            <id>java14-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>14</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>1.7</sourcecode.main.version>
+                <sourcecode.test.version>1.7</sourcecode.test.version>
+                <bytecode.main.version>1.7</bytecode.main.version>
+                <bytecode.test.version>1.7</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+                <bytebuddy.experimental>true</bytebuddy.experimental>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -567,6 +583,18 @@
             <properties>
                 <bytecode.main.version>13</bytecode.main.version>
                 <bytecode.test.version>13</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 14. -->
+        <profile>
+            <id>java14</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>14</bytecode.main.version>
+                <bytecode.test.version>14</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>

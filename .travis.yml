@@ -28,7 +28,10 @@ matrix:
       jdk: openjdk12
     # OpenJDK - Java 13
     - env: TARGET='-Pjava11' EXPERIMENTAL='true'
-      jdk: openjdk-ea
+      jdk: openjdk13
+    # OpenJDK - Java 14
+     - env: TARGET='-Pjava11' EXPERIMENTAL='true'
+       jdk: openjdk-ea
     # OpenJ9 - Java 11
     - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='false'
       before_script:
