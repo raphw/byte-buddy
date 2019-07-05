@@ -179,6 +179,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             return JAVA_V12;
         } else if (javaVersionString.equals("1.13") || javaVersionString.equals("13")) {
             return JAVA_V13;
+        } else if (javaVersionString.equals("1.14") || javaVersionString.equals("14")) {
+            return JAVA_V14;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -230,6 +232,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 return JAVA_V12;
             case 13:
                 return JAVA_V13;
+            case 14:
+                return JAVA_V14;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);
