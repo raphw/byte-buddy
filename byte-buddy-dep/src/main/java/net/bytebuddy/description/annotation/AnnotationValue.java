@@ -142,7 +142,59 @@ public interface AnnotationValue<T, S> {
             @Override
             public String toSourceString(float value) {
                 return Math.abs(value) <= Float.MAX_VALUE // Float.isFinite(value)
-                        ? Float.toString(value) + "f"
+                        ? value + "f"
+                        : (Float.isInfinite(value) ? (value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f") : "0.0f/0.0f");
+            }
+
+            @Override
+            public String toSourceString(double value) {
+                return Math.abs(value) <= Double.MAX_VALUE // Double.isFinite(value)
+                        ? Double.toString(value)
+                        : (Double.isInfinite(value) ? (value < 0.0d ? "-1.0/0.0" : "1.0/0.0") : "0.0/0.0");
+            }
+
+            @Override
+            public String toSourceString(String value) {
+                return "\"" + (value.indexOf('"') == -1
+                        ? value
+                        : value.replace("\"", "\\\"")) + "\"";
+            }
+
+            @Override
+            public String toSourceString(TypeDescription value) {
+                return value.getActualName() + ".class";
+            }
+        },
+
+        /**
+         * A rendering dispatcher for Java 14 onward.
+         */
+        JAVA_14_CAPABLE_VM('{', '}') {
+            @Override
+            public String toSourceString(byte value) {
+                return "(byte)" + String.format("0x%02x", value);
+            }
+
+            @Override
+            public String toSourceString(char value) {
+                StringBuilder stringBuilder = new StringBuilder().append('\'');
+                if (value == '\'') {
+                    stringBuilder.append("\\\'");
+                } else {
+                    stringBuilder.append(value);
+                }
+                return stringBuilder.append('\'').toString();
+            }
+
+            @Override
+            public String toSourceString(long value) {
+                return value + "L";
+            }
+
+            @Override
+            public String toSourceString(float value) {
+                return Math.abs(value) <= Float.MAX_VALUE // Float.isFinite(value)
+                        ? value + "f"
                         : (Float.isInfinite(value) ? (value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f") : "0.0f/0.0f");
             }
 
@@ -169,9 +221,18 @@ public interface AnnotationValue<T, S> {
         /**
          * The rendering dispatcher for the current VM.
          */
-        public static final RenderingDispatcher CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
-                ? JAVA_9_CAPABLE_VM
-                : LEGACY_VM;
+        public static final RenderingDispatcher CURRENT;
+
+        static {
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6);
+            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
+                CURRENT = RenderingDispatcher.JAVA_14_CAPABLE_VM;
+            } else if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V9)) {
+                CURRENT = RenderingDispatcher.JAVA_9_CAPABLE_VM;
+            } else {
+                CURRENT = RenderingDispatcher.LEGACY_VM;
+            }
+        }
 
         /**
          * The opening brace of an array {@link String} representation.

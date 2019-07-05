@@ -186,8 +186,8 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(second), is(describe(second)));
         assertThat(describe(first), not(describe(second)));
         assertThat(describe(first).getAnnotationType(), is(describe(second).getAnnotationType()));
-        assertThat(describe(first).getAnnotationType(), not((TypeDescription) TypeDescription.ForLoadedType.of(Other.class)));
-        assertThat(describe(second).getAnnotationType(), not((TypeDescription) TypeDescription.ForLoadedType.of(Other.class)));
+        assertThat(describe(first).getAnnotationType(), not(TypeDescription.ForLoadedType.of(Other.class)));
+        assertThat(describe(second).getAnnotationType(), not(TypeDescription.ForLoadedType.of(Other.class)));
         assertThat(describe(first).getAnnotationType().represents(first.annotationType()), is(true));
         assertThat(describe(second).getAnnotationType().represents(second.annotationType()), is(true));
     }

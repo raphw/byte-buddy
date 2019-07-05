@@ -109,6 +109,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V13 = new ClassFileVersion(Opcodes.V13);
 
     /**
+     * The class file version of Java 14.
+     */
+    public static final ClassFileVersion JAVA_V14 = new ClassFileVersion(Opcodes.V13 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.CreationAction.INSTANCE);

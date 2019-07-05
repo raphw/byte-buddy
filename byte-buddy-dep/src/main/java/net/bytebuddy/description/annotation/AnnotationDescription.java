@@ -16,6 +16,7 @@
 package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -136,6 +137,57 @@ public interface AnnotationDescription {
          * @return A loaded version of this annotation description.
          */
         S loadSilent();
+    }
+
+    /**
+     * A rendering dispatcher is responsible for resolving annotation descriptions to {@link String} representations.
+     */
+    enum RenderingDispatcher {
+
+        /**
+         * A rendering dispatcher for any VM previous to Java 14.
+         */
+        LEGACY_VM,
+
+        /**
+         * A rendering dispatcher for Java 14 onward.
+         */
+        JAVA_14_CAPABLE_VM {
+            @Override
+            public void appendPrefix(StringBuilder toString, String key, int count) {
+                if (count > 1 || !key.equals("value")) {
+                    super.appendPrefix(toString, key, count);
+                }
+            }
+        };
+
+        /**
+         * The rendering dispatcher for the current VM.
+         */
+        public static final RenderingDispatcher CURRENT;
+
+        /*
+         * Initializes the rendering dispatcher.
+         */
+        static {
+            ClassFileVersion classFileVersion = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6);
+            if (classFileVersion.isAtLeast(ClassFileVersion.JAVA_V14)) {
+                CURRENT = RenderingDispatcher.JAVA_14_CAPABLE_VM;
+            } else {
+                CURRENT = RenderingDispatcher.LEGACY_VM;
+            }
+        }
+
+        /**
+         * Appends the key property prefix to a string builder representing an annotation's string representation.
+         *
+         * @param toString The {@link Object#toString()} representation of the annotation being handled.
+         * @param key      The key's name.
+         * @param count    The property count.
+         */
+        public void appendPrefix(StringBuilder toString, String key, int count) {
+            toString.append(key).append('=');
+        }
     }
 
     /**
@@ -294,9 +346,11 @@ public interface AnnotationDescription {
                 } else {
                     toString.append(", ");
                 }
-                toString.append(entry.getKey().getName())
-                        .append('=')
-                        .append(entry.getValue().toString());
+                RenderingDispatcher.CURRENT.appendPrefix(toString, entry.getKey().getName(), values.entrySet().size());
+                if (!entry.getKey().getName().equals("value") || values.entrySet().size() != 1) {
+                    toString.append(entry.getKey().getName()).append('=');
+                }
+                toString.append(entry.getValue().toString());
             }
             toString.append(')');
             return toString.toString();
@@ -546,7 +600,11 @@ public interface AnnotationDescription {
                 } else {
                     toString.append(", ");
                 }
-                toString.append(methodDescription.getName()).append('=').append(getValue(methodDescription));
+                String name = methodDescription.getName();
+                if (!name.equals("value") || annotationType.getDeclaredMethods().size() != 1) {
+                    toString.append(name).append('=');
+                }
+                toString.append(getValue(methodDescription));
             }
             return toString.append(')').toString();
         }
