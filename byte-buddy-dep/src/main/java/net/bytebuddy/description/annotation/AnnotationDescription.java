@@ -347,9 +347,6 @@ public interface AnnotationDescription {
                     toString.append(", ");
                 }
                 RenderingDispatcher.CURRENT.appendPrefix(toString, entry.getKey().getName(), values.entrySet().size());
-                if (!entry.getKey().getName().equals("value") || values.entrySet().size() != 1) {
-                    toString.append(entry.getKey().getName()).append('=');
-                }
                 toString.append(entry.getValue().toString());
             }
             toString.append(')');
@@ -600,10 +597,7 @@ public interface AnnotationDescription {
                 } else {
                     toString.append(", ");
                 }
-                String name = methodDescription.getName();
-                if (!name.equals("value") || annotationType.getDeclaredMethods().size() != 1) {
-                    toString.append(name).append('=');
-                }
+                RenderingDispatcher.CURRENT.appendPrefix(toString, methodDescription.getName(), annotationType.getDeclaredMethods().size());
                 toString.append(getValue(methodDescription));
             }
             return toString.append(')').toString();
@@ -757,7 +751,6 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
-        @SuppressWarnings("deprecation") // Due to isAccessible() call.
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {
