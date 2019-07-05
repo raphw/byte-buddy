@@ -1927,20 +1927,20 @@ public interface TypeWriter<T> {
          */
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-            ClassDumpAction.Factory factory = ClassDumpAction.factory(DUMP_FOLDER);
-            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer), factory);
-            factory.dump(instrumentedType, false, unresolvedType.getBinaryRepresentation());
+            ClassDumpAction.Factory classDump = ClassDumpAction.factory(DUMP_FOLDER);
+            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer), classDump);
+            classDump.dump(instrumentedType, false, unresolvedType.getBinaryRepresentation());
             return unresolvedType.toDynamicType(typeResolutionStrategy);
         }
 
         /**
          * Creates an unresolved version of the dynamic type.
          *
-         * @param typeInitializer        The type initializer to use.
-         * @param classDumpActionFactory The class dump action factory to use.
+         * @param typeInitializer The type initializer to use.
+         * @param classDump       The class dump action factory to use.
          * @return An unresolved type.
          */
-        protected abstract UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory);
+        protected abstract UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump);
 
         /**
          * An unresolved type.
@@ -3383,12 +3383,12 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump) {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                     byte[] binaryRepresentation = classFileLocator.locate(originalType.getName()).resolve();
-                    classDumpActionFactory.dump(instrumentedType, true, binaryRepresentation);
+                    classDump.dump(instrumentedType, true, binaryRepresentation);
                     ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
                     ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool, classReader);
                     ContextRegistry contextRegistry = new ContextRegistry();
@@ -5088,7 +5088,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
