@@ -1927,9 +1927,11 @@ public interface TypeWriter<T> {
          */
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-            ClassDumpAction.Factory classDump = ClassDumpAction.factory(DUMP_FOLDER);
-            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer), classDump);
-            classDump.dump(instrumentedType, false, unresolvedType.getBinaryRepresentation());
+            ClassDumpAction.Dispatcher dispatcher = DUMP_FOLDER == null
+                    ? ClassDumpAction.Dispatcher.Disabled.INSTANCE
+                    : new ClassDumpAction.Dispatcher.Enabled(DUMP_FOLDER, System.currentTimeMillis());
+            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer), dispatcher);
+            dispatcher.dump(instrumentedType, false, unresolvedType.getBinaryRepresentation());
             return unresolvedType.toDynamicType(typeResolutionStrategy);
         }
 
@@ -1937,10 +1939,10 @@ public interface TypeWriter<T> {
          * Creates an unresolved version of the dynamic type.
          *
          * @param typeInitializer The type initializer to use.
-         * @param classDump       The class dump action factory to use.
+         * @param dispatcher      A dispatcher for dumping class files.
          * @return An unresolved type.
          */
-        protected abstract UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump);
+        protected abstract UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher);
 
         /**
          * An unresolved type.
@@ -3383,12 +3385,12 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                     byte[] binaryRepresentation = classFileLocator.locate(originalType.getName()).resolve();
-                    classDump.dump(instrumentedType, true, binaryRepresentation);
+                    dispatcher.dump(instrumentedType, true, binaryRepresentation);
                     ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
                     ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool, classReader);
                     ContextRegistry contextRegistry = new ContextRegistry();
@@ -5088,7 +5090,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDump) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Dispatcher dispatcher) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
@@ -5224,18 +5226,6 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * Creates a factory for this JVM for dumping class files.
-             *
-             * @param folder The folder to dump class files to.
-             * @return A factory for handling class file dumpings.
-             */
-            protected static Factory factory(String folder) {
-                return folder == null
-                        ? Factory.Disabled.INSTANCE
-                        : new Factory.Enabled(folder, System.currentTimeMillis());
-            }
-
-            /**
              * {@inheritDoc}
              */
             public Void run() throws Exception {
@@ -5252,9 +5242,9 @@ public interface TypeWriter<T> {
             }
 
             /**
-             * A factory for dumping class files to the file system.
+             * A dispatcher for dumping class files to the file system.
              */
-            protected interface Factory {
+            protected interface Dispatcher {
 
                 /**
                  * Dumps a class file to the file system.
@@ -5266,9 +5256,9 @@ public interface TypeWriter<T> {
                 void dump(TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation);
 
                 /**
-                 * A disabled factory that does not dump any class files.
+                 * A disabled dispatcher that does not dump any class files.
                  */
-                enum Disabled implements Factory {
+                enum Disabled implements Dispatcher {
 
                     /**
                      * The singleton instance.
@@ -5284,10 +5274,10 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * An enabled factory that dumps class files to a given folder.
+                 * An enabled dispatcher that dumps class files to a given folder.
                  */
                 @HashCodeAndEqualsPlugin.Enhance
-                class Enabled implements Factory {
+                class Enabled implements Dispatcher {
 
                     /**
                      * The folder to write class files to.
@@ -5300,7 +5290,7 @@ public interface TypeWriter<T> {
                     private final long timestamp;
 
                     /**
-                     * Creates a new factory for dumping class files.
+                     * Creates a new dispatcher for dumping class files.
                      *
                      * @param folder    The folder to write class files to.
                      * @param timestamp The timestamp to append.

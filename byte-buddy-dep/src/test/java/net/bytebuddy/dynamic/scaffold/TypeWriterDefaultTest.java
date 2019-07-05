@@ -586,7 +586,7 @@ public class TypeWriterDefaultTest {
     
     @Test
     public void testClassNoDump() throws Exception {
-        TypeWriter.Default.ClassDumpAction.factory(null).dump(null, false, null);
+        TypeWriter.Default.ClassDumpAction.Dispatcher.Disabled.INSTANCE.dump(null, false, null);
     }
 
     @Test
@@ -598,7 +598,7 @@ public class TypeWriterDefaultTest {
         file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
         assertThat(file.mkdir(), is(true));
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
-        TypeWriter.Default.ClassDumpAction.factory(file.getAbsolutePath()).dump(instrumentedType, false, binaryRepresentation);
+        new TypeWriter.Default.ClassDumpAction.Dispatcher.Enabled(file.getAbsolutePath(), 123).dump(instrumentedType, false, binaryRepresentation);
         File[] child = file.listFiles();
         assertThat(child, notNullValue(File[].class));
         assertThat(child.length, is(1));
@@ -616,7 +616,7 @@ public class TypeWriterDefaultTest {
         file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
         assertThat(file.mkdir(), is(true));
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
-        TypeWriter.Default.ClassDumpAction.factory(file.getAbsolutePath()).dump(instrumentedType, true, binaryRepresentation);
+        new TypeWriter.Default.ClassDumpAction.Dispatcher.Enabled(file.getAbsolutePath(), 123).dump(instrumentedType, true, binaryRepresentation);
         File[] child = file.listFiles();
         assertThat(child, notNullValue(File[].class));
         assertThat(child.length, is(1));
