@@ -1927,18 +1927,20 @@ public interface TypeWriter<T> {
          */
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
-            ClassDumpAction.dump(DUMP_FOLDER, instrumentedType, false, unresolvedType.getBinaryRepresentation());
+            ClassDumpAction.Factory factory = ClassDumpAction.factory(DUMP_FOLDER);
+            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer), factory);
+            factory.dump(instrumentedType, false, unresolvedType.getBinaryRepresentation());
             return unresolvedType.toDynamicType(typeResolutionStrategy);
         }
 
         /**
          * Creates an unresolved version of the dynamic type.
          *
-         * @param typeInitializer The type initializer to use.
+         * @param typeInitializer        The type initializer to use.
+         * @param classDumpActionFactory The class dump action factory to use.
          * @return An unresolved type.
          */
-        protected abstract UnresolvedType create(TypeInitializer typeInitializer);
+        protected abstract UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory);
 
         /**
          * An unresolved type.
@@ -3381,12 +3383,12 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory) {
                 try {
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                     int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                     byte[] binaryRepresentation = classFileLocator.locate(originalType.getName()).resolve();
-                    ClassDumpAction.dump(DUMP_FOLDER, instrumentedType, true, binaryRepresentation);
+                    classDumpActionFactory.dump(instrumentedType, true, binaryRepresentation);
                     ClassReader classReader = OpenedClassReader.of(binaryRepresentation);
                     ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool, classReader);
                     ContextRegistry contextRegistry = new ContextRegistry();
@@ -5086,7 +5088,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType create(TypeInitializer typeInitializer) {
+            protected UnresolvedType create(TypeInitializer typeInitializer, ClassDumpAction.Factory classDumpActionFactory) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = classWriterStrategy.resolve(writerFlags, typePool);
                 Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
@@ -5195,6 +5197,11 @@ public interface TypeWriter<T> {
             private final boolean original;
 
             /**
+             * The suffix to append to the dumped class file.
+             */
+            private final long suffix;
+
+            /**
              * The type's binary representation.
              */
             private final byte[] binaryRepresentation;
@@ -5205,31 +5212,27 @@ public interface TypeWriter<T> {
              * @param target               The target folder for writing the class file to.
              * @param instrumentedType     The instrumented type.
              * @param original             {@code true} if the dumped class file is an input to a class transformation.
+             * @param suffix               The suffix to append to the dumped class file.
              * @param binaryRepresentation The type's binary representation.
              */
-            protected ClassDumpAction(String target, TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
+            protected ClassDumpAction(String target, TypeDescription instrumentedType, boolean original, long suffix, byte[] binaryRepresentation) {
                 this.target = target;
                 this.instrumentedType = instrumentedType;
                 this.original = original;
+                this.suffix = suffix;
                 this.binaryRepresentation = binaryRepresentation;
             }
 
             /**
-             * Dumps the instrumented type if a {@link TypeWriter.Default#DUMP_FOLDER} is configured.
+             * Creates a factory for this JVM for dumping class files.
              *
-             * @param dumpFolder           The dump folder.
-             * @param instrumentedType     The instrumented type.
-             * @param original             {@code true} if the dumped class file is an input to a class transformation.
-             * @param binaryRepresentation The binary representation.
+             * @param folder The folder to dump class files to.
+             * @return A factory for handling class file dumpings.
              */
-            protected static void dump(String dumpFolder, TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
-                if (dumpFolder != null) {
-                    try {
-                        AccessController.doPrivileged(new ClassDumpAction(dumpFolder, instrumentedType, original, binaryRepresentation));
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-                }
+            protected static Factory factory(String folder) {
+                return folder == null
+                        ? Factory.Disabled.INSTANCE
+                        : new Factory.Enabled(folder, System.currentTimeMillis());
             }
 
             /**
@@ -5238,12 +5241,85 @@ public interface TypeWriter<T> {
             public Void run() throws Exception {
                 OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName()
                         + (original ? "-original." : ".")
-                        + System.currentTimeMillis()));
+                        + suffix
+                        + ".class"));
                 try {
                     outputStream.write(binaryRepresentation);
                     return NOTHING;
                 } finally {
                     outputStream.close();
+                }
+            }
+
+            /**
+             * A factory for dumping class files to the file system.
+             */
+            protected interface Factory {
+
+                /**
+                 * Dumps a class file to the file system.
+                 *
+                 * @param instrumentedType     The type to dump.
+                 * @param original             {@code true} if the class file is in its original state.
+                 * @param binaryRepresentation The class file's binary representation.
+                 */
+                void dump(TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation);
+
+                /**
+                 * A disabled factory that does not dump any class files.
+                 */
+                enum Disabled implements Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void dump(TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
+                        /* do nothing */
+                    }
+                }
+
+                /**
+                 * An enabled factory that dumps class files to a given folder.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class Enabled implements Factory {
+
+                    /**
+                     * The folder to write class files to.
+                     */
+                    private final String folder;
+
+                    /**
+                     * The timestamp to append.
+                     */
+                    private final long timestamp;
+
+                    /**
+                     * Creates a new factory for dumping class files.
+                     *
+                     * @param folder    The folder to write class files to.
+                     * @param timestamp The timestamp to append.
+                     */
+                    protected Enabled(String folder, long timestamp) {
+                        this.folder = folder;
+                        this.timestamp = timestamp;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void dump(TypeDescription instrumentedType, boolean original, byte[] binaryRepresentation) {
+                        try {
+                            AccessController.doPrivileged(new ClassDumpAction(folder, instrumentedType, original, timestamp, binaryRepresentation));
+                        } catch (Exception exception) {
+                            exception.printStackTrace();
+                        }
+                    }
                 }
             }
         }

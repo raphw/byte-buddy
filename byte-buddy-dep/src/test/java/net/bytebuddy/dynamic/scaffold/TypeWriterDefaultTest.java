@@ -582,7 +582,11 @@ public class TypeWriterDefaultTest {
         assertThat(subclass.getDeclaredMethods().length, is(1));
         assertThat(subclass.getDeclaredMethod(FOO).isBridge(), is(false));
         assertThat(subclass.getDeclaredMethod(FOO).getReturnType(), is((Object) Object.class));
-
+    }
+    
+    @Test
+    public void testClassNoDump() throws Exception {
+        TypeWriter.Default.ClassDumpAction.factory(null).dump(null, false, null);
     }
 
     @Test
@@ -594,7 +598,7 @@ public class TypeWriterDefaultTest {
         file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
         assertThat(file.mkdir(), is(true));
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
-        TypeWriter.Default.ClassDumpAction.dump(file.getAbsolutePath(), instrumentedType, false, binaryRepresentation);
+        TypeWriter.Default.ClassDumpAction.factory(file.getAbsolutePath()).dump(instrumentedType, false, binaryRepresentation);
         File[] child = file.listFiles();
         assertThat(child, notNullValue(File[].class));
         assertThat(child.length, is(1));
@@ -612,7 +616,7 @@ public class TypeWriterDefaultTest {
         file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
         assertThat(file.mkdir(), is(true));
         when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
-        TypeWriter.Default.ClassDumpAction.dump(file.getAbsolutePath(), instrumentedType, true, binaryRepresentation);
+        TypeWriter.Default.ClassDumpAction.factory(file.getAbsolutePath()).dump(instrumentedType, true, binaryRepresentation);
         File[] child = file.listFiles();
         assertThat(child, notNullValue(File[].class));
         assertThat(child.length, is(1));
