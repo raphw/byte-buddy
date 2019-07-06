@@ -42,6 +42,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${version.plugin.compiler}</version>
                 <configuration>
                     <skipMain>true</skipMain>
                     <skip>true</skip>
