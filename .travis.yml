@@ -16,7 +16,10 @@ matrix:
   include:
     # OpenJDK - Java 9
     - env: TARGET='-Pjava9' EXPERIMENTAL='false'
-      jdk: openjdk9
+      #jdk: openjdk9 - Use 'raw mode' for now due to incorrect configuration of JAVA_HOME in JDK9 image.
+      before_script:
+        - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+        - source install-jdk.sh --feature 9
     # OpenJDK - Java 10
     - env: TARGET='-Pjava10' EXPERIMENTAL='false'
       jdk: openjdk10
