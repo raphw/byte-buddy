@@ -15,13 +15,18 @@
  */
 package net.bytebuddy.agent;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Structure;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.newsclub.net.unix.AFUNIXSocket;
-import org.newsclub.net.unix.AFUNIXSocketAddress;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -175,7 +180,7 @@ public interface VirtualMachine {
         /**
          * A virtual machine implementation for a HotSpot VM running on Unix.
          */
-        public static class OnUnix extends ForHotSpot {
+        public static class OnPosix extends ForHotSpot {
 
             /**
              * The default amount of attempts to connect.
@@ -186,11 +191,6 @@ public interface VirtualMachine {
              * The default pause between two attempts.
              */
             private static final long DEFAULT_PAUSE = 200;
-
-            /**
-             * The default socket timeout.
-             */
-            private static final long DEFAULT_TIMEOUT = 5000;
 
             /**
              * The temporary directory on Unix systems.
@@ -207,10 +207,6 @@ public interface VirtualMachine {
              */
             private static final String ATTACH_FILE_PREFIX = ".attach_pid";
 
-            /**
-             * The Unix socket to use for communication. The containing object is supposed to be an instance
-             * of {@link AFUNIXSocket} which is however not set to avoid eager loading
-             */
             private final Object socket;
 
             /**
@@ -224,14 +220,11 @@ public interface VirtualMachine {
             private final long pause;
 
             /**
-             * The socket timeout.
-             */
-            private final long timeout;
-
-            /**
              * The time unit of the pause time.
              */
             private final TimeUnit timeUnit;
+
+            private int address;
 
             /**
              * Creates a new VM implementation for a HotSpot VM running on Unix.
@@ -239,16 +232,14 @@ public interface VirtualMachine {
              * @param processId The process id of the target VM.
              * @param socket    The Unix socket to use for communication.
              * @param attempts  The number of attempts to connect.
-             * @param pause     The pause time between two VMs.
-             * @param timeout   The socket timeout.
+             * @param pause     The pause time between two checks against the target VM.
              * @param timeUnit  The time unit of the pause time.
              */
-            public OnUnix(String processId, Object socket, int attempts, long pause, long timeout, TimeUnit timeUnit) {
+            public OnPosix(String processId, Object socket, int attempts, long pause, TimeUnit timeUnit) {
                 super(processId);
                 this.socket = socket;
                 this.attempts = attempts;
                 this.pause = pause;
-                this.timeout = timeout;
                 this.timeUnit = timeUnit;
             }
 
@@ -263,7 +254,7 @@ public interface VirtualMachine {
                 try {
                     Class<?> moduleType = Class.forName("java.lang.Module");
                     Method getModule = Class.class.getMethod("getModule"), canRead = moduleType.getMethod("canRead", moduleType);
-                    Object thisModule = getModule.invoke(OnUnix.class), otherModule = getModule.invoke(AFUNIXSocket.class);
+                    Object thisModule = getModule.invoke(OnPosix.class), otherModule = getModule.invoke(Platform.class);
                     if (!(Boolean) canRead.invoke(thisModule, otherModule)) {
                         moduleType.getMethod("addReads", moduleType).invoke(thisModule, otherModule);
                     }
@@ -279,12 +270,12 @@ public interface VirtualMachine {
              * @return This virtual machine type.
              */
             private static Class<?> doAssertAvailability() {
-                if (!AFUNIXSocket.isSupported()) {
+                if (Platform.isWindows() || Platform.isWindowsCE()) {
                     throw new IllegalStateException("POSIX sockets are not supported on the current system");
                 } else if (!System.getProperty("java.vm.name").toLowerCase(Locale.US).contains("hotspot")) {
                     throw new IllegalStateException("Cannot apply attachment on non-Hotspot compatible VM");
                 } else {
-                    return OnUnix.class;
+                    return OnPosix.class;
                 }
             }
 
@@ -296,7 +287,7 @@ public interface VirtualMachine {
              * @throws IOException If an I/O exception occurs.
              */
             public static VirtualMachine attach(String processId) throws IOException {
-                return new OnUnix(processId, AFUNIXSocket.newInstance(), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
+                return new OnPosix(processId, Native.loadLibrary("c", JNAUnixSocket.class), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, TimeUnit.MILLISECONDS);
             }
 
             /**
@@ -354,31 +345,72 @@ public interface VirtualMachine {
                         }
                     }
                 }
-                if (timeout != 0) {
-                    ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));
+                JNAUnixSocket socket = (JNAUnixSocket) this.socket;
+                address = socket.socket(1, 1, 0);
+                if (address == 0) {
+                    throw new IllegalStateException();
                 }
-                ((AFUNIXSocket) socket).connect(new AFUNIXSocketAddress(socketFile));
+                JNAUnixSocket.SockAddr sockAddr = new JNAUnixSocket.SockAddr();
+                sockAddr.setPath(socketFile.getAbsolutePath());
+                if (socket.connect(address, sockAddr, sockAddr.size()) != 0) {
+                    throw new IllegalStateException();
+                }
             }
 
             /**
              * {@inheritDoc}
              */
             public int read(byte[] buffer) throws IOException {
-                return ((AFUNIXSocket) this.socket).getInputStream().read(buffer);
+                return ((JNAUnixSocket) this.socket).read(address, ByteBuffer.wrap(buffer), buffer.length);
             }
 
             /**
              * {@inheritDoc}
              */
             public void write(byte[] buffer) throws IOException {
-                ((AFUNIXSocket) this.socket).getOutputStream().write(buffer);
+                int write = ((JNAUnixSocket) this.socket).write(address, ByteBuffer.wrap(buffer), buffer.length);
+                if (write != buffer.length) {
+                    throw new IllegalStateException();
+                }
             }
 
             /**
              * {@inheritDoc}
              */
             public void detach() throws IOException {
-                ((AFUNIXSocket) this.socket).close();
+                ((JNAUnixSocket) this.socket).close(address);
+            }
+
+            interface JNAUnixSocket extends Library {
+
+                class SockAddr extends Structure {
+
+                    public short family = 1;
+
+                    public byte[] path = new byte[100];
+
+                    public void setPath(String path) {
+                        System.arraycopy(path.getBytes(), 0, this.path, 0, path.length());
+                        System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                    }
+
+                    @Override
+                    protected List<String> getFieldOrder() {
+                        return Arrays.asList("family", "path");
+                    }
+                }
+
+                int socket(int domain, int type, int protocol);
+
+                int connect(int sockfd, SockAddr sockaddr, int addrlen);
+
+                int read(int fd, ByteBuffer buffer, int count);
+
+                int write(int fd, ByteBuffer buffer, int count);
+
+                int close(int fd);
+
+                String strerror(int errno);
             }
         }
     }
