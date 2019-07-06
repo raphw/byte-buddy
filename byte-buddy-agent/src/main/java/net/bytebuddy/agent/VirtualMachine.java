@@ -51,6 +51,15 @@ public interface VirtualMachine {
     void loadAgent(String jarFile, String argument) throws IOException;
 
     /**
+     * Loads a native agent into the represented virtual machine.
+     *
+     * @param library  The agent library.
+     * @param argument The argument to provide or {@code null} if no argument should be provided.
+     * @throws IOException If an I/O exception occurs.
+     */
+    void loadAgentPath(String library, String argument) throws IOException;
+
+    /**
      * Detaches this virtual machine representation.
      *
      * @throws IOException If an I/O exception occurs.
@@ -148,17 +157,36 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public void loadAgent(String jarFile, String argument) throws IOException {
+            load(jarFile, false, argument);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void loadAgentPath(String library, String argument) throws IOException {
+            load(library, true, argument);
+        }
+
+        /**
+         * Loads an agent by the given command.
+         *
+         * @param file     The Java agent or library to be loaded.
+         * @param isNative {@code true} if the agent is native.
+         * @param argument The argument to the agent or {@code null} if no argument is given.
+         * @throws IOException If an I/O exception occurs.
+         */
+        protected void load(String file, boolean isNative, String argument) throws IOException {
             connection.write(PROTOCOL_VERSION.getBytes(UTF_8));
             connection.write(BLANK);
             connection.write(LOAD_COMMAND.getBytes(UTF_8));
             connection.write(BLANK);
             connection.write(INSTRUMENT_COMMAND.getBytes(UTF_8));
             connection.write(BLANK);
-            connection.write(Boolean.FALSE.toString().getBytes(UTF_8));
+            connection.write(Boolean.toString(isNative).getBytes(UTF_8));
             connection.write(BLANK);
             connection.write((argument == null
-                    ? jarFile
-                    : jarFile + ARGUMENT_DELIMITER + argument).getBytes(UTF_8));
+                    ? file
+                    : file + ARGUMENT_DELIMITER + argument).getBytes(UTF_8));
             connection.write(BLANK);
             byte[] buffer = new byte[1];
             StringBuilder stringBuilder = new StringBuilder();

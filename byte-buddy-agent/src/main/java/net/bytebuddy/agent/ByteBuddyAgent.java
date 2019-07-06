@@ -245,7 +245,7 @@ public class ByteBuddyAgent {
      * @param attachmentProvider The attachment provider to use.
      */
     public static void attach(File agentJar, String processId, String argument, AttachmentProvider attachmentProvider) {
-        install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentJar));
+        install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentJar), false);
     }
 
     /**
@@ -295,7 +295,107 @@ public class ByteBuddyAgent {
      * @param attachmentProvider The attachment provider to use.
      */
     public static void attach(File agentJar, ProcessProvider processProvider, String argument, AttachmentProvider attachmentProvider) {
-        install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentJar));
+        install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentJar), false);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     *
+     * @param agentLibrary The agent jar file.
+     * @param processId    The target process id.
+     */
+    public static void attachNative(File agentLibrary, String processId) {
+        attachNative(agentLibrary, processId, WITHOUT_ARGUMENT);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     *
+     * @param agentLibrary The agent library.
+     * @param processId    The target process id.
+     * @param argument     The argument to provide to the agent.
+     */
+    public static void attachNative(File agentLibrary, String processId, String argument) {
+        attachNative(agentLibrary, processId, argument, AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete. The agent is not provided an argument.
+     *
+     * @param agentLibrary       The agent library.
+     * @param processId          The target process id.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attachNative(File agentLibrary, String processId, AttachmentProvider attachmentProvider) {
+        attachNative(agentLibrary, processId, WITHOUT_ARGUMENT, attachmentProvider);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete.
+     *
+     * @param agentLibrary       The agent library.
+     * @param processId          The target process id.
+     * @param argument           The argument to provide to the agent.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attachNative(File agentLibrary, String processId, String argument, AttachmentProvider attachmentProvider) {
+        install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentLibrary), true);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     *
+     * @param agentLibrary    The agent library.
+     * @param processProvider A provider of the target process id.
+     */
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider) {
+        attachNative(agentLibrary, processProvider, WITHOUT_ARGUMENT);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     *
+     * @param agentLibrary    The agent library.
+     * @param processProvider A provider of the target process id.
+     * @param argument        The argument to provide to the agent.
+     */
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider, String argument) {
+        attachNative(agentLibrary, processProvider, argument, AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete. The agent is not provided an argument.
+     *
+     * @param agentLibrary       The agent library.
+     * @param processProvider    A provider of the target process id.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider, AttachmentProvider attachmentProvider) {
+        attachNative(agentLibrary, processProvider, WITHOUT_ARGUMENT, attachmentProvider);
+    }
+
+    /**
+     * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete.
+     *
+     * @param agentLibrary       The agent library.
+     * @param processProvider    A provider of the target process id.
+     * @param argument           The argument to provide to the agent.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attachNative(File agentLibrary, ProcessProvider processProvider, String argument, AttachmentProvider attachmentProvider) {
+        install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentLibrary), true);
     }
 
     /**
@@ -398,7 +498,7 @@ public class ByteBuddyAgent {
         if (instrumentation != null) {
             return instrumentation;
         }
-        install(attachmentProvider, processProvider.resolve(), WITHOUT_ARGUMENT, AgentProvider.ForByteBuddyAgent.INSTANCE);
+        install(attachmentProvider, processProvider.resolve(), WITHOUT_ARGUMENT, AgentProvider.ForByteBuddyAgent.INSTANCE, false);
         return doGetInstrumentation();
     }
 
@@ -408,18 +508,19 @@ public class ByteBuddyAgent {
      * @param attachmentProvider The attachment provider to use.
      * @param processId          The process id of the target JVM process.
      * @param argument           The argument to provide to the agent.
-     * @param agentProvider      The agent provider for the agent jar.
+     * @param agentProvider      The agent provider for the agent jar or library.
+     * @param isNative           {@code true} if the agent is native.
      */
-    private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider) {
+    private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider, boolean isNative) {
         AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
             throw new IllegalStateException("No compatible attachment provider is available");
         }
         try {
             if (ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
-                installExternal(attachmentAccessor.getExternalAttachment(), processId, agentProvider.resolve(), argument);
+                installExternal(attachmentAccessor.getExternalAttachment(), processId, agentProvider.resolve(), isNative, argument);
             } else {
-                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve().getAbsolutePath(), argument);
+                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve().getAbsolutePath(), isNative, argument);
             }
         } catch (RuntimeException exception) {
             throw exception;
@@ -435,12 +536,14 @@ public class ByteBuddyAgent {
      * @param externalAttachment A description of the external attachment.
      * @param processId          The process id of the current process.
      * @param agent              The Java agent to install.
+     * @param isNative           {@code true} if the agent is native.
      * @param argument           The argument to provide to the agent or {@code null} if no argument should be supplied.
      * @throws Exception If an exception occurs during the attachment or the external process fails the attachment.
      */
     private static void installExternal(AttachmentProvider.Accessor.ExternalAttachment externalAttachment,
                                         String processId,
                                         File agent,
+                                        boolean isNative,
                                         String argument) throws Exception {
         File selfResolvedJar = trySelfResolve(), attachmentJar = null;
         try {
@@ -482,6 +585,7 @@ public class ByteBuddyAgent {
                     externalAttachment.getVirtualMachineType(),
                     processId,
                     quote(agent.getAbsolutePath()),
+                    Boolean.toString(isNative),
                     argument == null ? "" : ("=" + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
                 throw new IllegalStateException("Could not self-attach to current VM using external process");
             }

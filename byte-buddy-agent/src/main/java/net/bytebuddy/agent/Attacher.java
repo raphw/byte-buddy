@@ -40,6 +40,11 @@ public class Attacher {
     private static final String LOAD_AGENT_METHOD_NAME = "loadAgent";
 
     /**
+     * The name of the {@code loadAgentPath} method of the  {@code VirtualMachine} class.
+     */
+    private static final String LOAD_AGENT_PATH_METHOD_NAME = "loadAgentPath";
+
+    /**
      * The name of the {@code detach} method of the  {@code VirtualMachine} class.
      */
     private static final String DETACH_METHOD_NAME = "detach";
@@ -64,17 +69,17 @@ public class Attacher {
     public static void main(String[] args) {
         try {
             String argument;
-            if (args.length < 4 || args[3].length() == 0) {
+            if (args.length < 5 || args[4].length() == 0) {
                 argument = null;
             } else {
-                StringBuilder stringBuilder = new StringBuilder(args[3].substring(1));
-                for (int index = 4; index < args.length; index++) {
+                StringBuilder stringBuilder = new StringBuilder(args[4].substring(1));
+                for (int index = 5; index < args.length; index++) {
                     stringBuilder.append(' ').append(args[index]);
                 }
                 argument = stringBuilder.toString();
             }
-            install(Class.forName(args[0]), args[1], args[2], argument);
-        } catch (Exception ignored) {
+            install(Class.forName(args[0]), args[1], args[2], Boolean.parseBoolean(args[3]), argument);
+        } catch (Throwable ignored) {
             System.exit(1);
         }
     }
@@ -85,6 +90,7 @@ public class Attacher {
      * @param virtualMachineType The virtual machine type to use for the external attachment.
      * @param processId          The id of the process being target of the external attachment.
      * @param agent              The Java agent to attach.
+     * @param isNative           {@code true} if the agent is native.
      * @param argument           The argument to provide or {@code null} if no argument is provided.
      * @throws NoSuchMethodException     If the virtual machine type does not define an expected method.
      * @throws InvocationTargetException If the virtual machine type raises an error.
@@ -93,13 +99,14 @@ public class Attacher {
     protected static void install(Class<?> virtualMachineType,
                                   String processId,
                                   String agent,
+                                  boolean isNative,
                                   String argument) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object virtualMachineInstance = virtualMachineType
                 .getMethod(ATTACH_METHOD_NAME, String.class)
                 .invoke(STATIC_MEMBER, processId);
         try {
             virtualMachineType
-                    .getMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                    .getMethod(isNative ? LOAD_AGENT_PATH_METHOD_NAME : LOAD_AGENT_METHOD_NAME, String.class, String.class)
                     .invoke(virtualMachineInstance, agent, argument);
         } finally {
             virtualMachineType
