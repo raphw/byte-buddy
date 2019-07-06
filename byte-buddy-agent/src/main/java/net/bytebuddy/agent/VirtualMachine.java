@@ -107,6 +107,21 @@ public interface VirtualMachine {
         }
 
         /**
+         * Asserts if this virtual machine type is available on the current VM.
+         *
+         * @return The virtual machine type if available.
+         * @throws Throwable If this virtual machine is not available.
+         */
+        public static Class<?> assertAvailability() throws Throwable {
+            if (Platform.isWindows() || Platform.isWindowsCE()) {
+                throw new IllegalStateException("POSIX sockets are not available on Windows");
+            } else {
+                Class.forName(Native.class.getName()); // Attempt loading the JNA class to check availability.
+                return Default.class;
+            }
+        }
+
+        /**
          * Attaches to the supplied process id using the default JNA implementation.
          *
          * @param processId The process id.
@@ -127,19 +142,6 @@ public interface VirtualMachine {
          */
         public static VirtualMachine attach(String processId, Connection.Factory connectionFactory) throws IOException {
             return new Default(connectionFactory.connect(processId));
-        }
-
-        /**
-         * Asserts this virtual machine's availability.
-         *
-         * @return The virtual machine type to connect to.
-         */
-        public static Class<?> assertAvailability() {
-            if (Platform.isWindows() || Platform.isWindowsCE()) {
-                throw new IllegalStateException("POSIX sockets are not supported on the current system");
-            } else {
-                return Default.class;
-            }
         }
 
         /**
@@ -230,7 +232,7 @@ public interface VirtualMachine {
                 /**
                  * A factory for attaching on a POSIX-compatible VM.
                  */
-                abstract class ForPosixAttachment implements Factory {
+                abstract class ForPosixSocket implements Factory {
 
                     /**
                      * The temporary directory on Unix systems.
@@ -269,7 +271,7 @@ public interface VirtualMachine {
                      * @param pause    The pause between two checks for an existing socket.
                      * @param timeUnit The time unit of the pause time.
                      */
-                    protected ForPosixAttachment(int attempts, long pause, TimeUnit timeUnit) {
+                    protected ForPosixSocket(int attempts, long pause, TimeUnit timeUnit) {
                         this.attempts = attempts;
                         this.pause = pause;
                         this.timeUnit = timeUnit;
@@ -329,7 +331,7 @@ public interface VirtualMachine {
                                 }
                             }
                         }
-                        return connect(socket);
+                        return doConnect(socket);
                     }
 
                     /**
@@ -337,8 +339,9 @@ public interface VirtualMachine {
                      *
                      * @param socket The socket to connect to.
                      * @return An active connection to the supplied socket.
+                     * @throws IOException If an error occurs during connection.
                      */
-                    protected abstract Connection connect(File socket);
+                    protected abstract Connection doConnect(File socket) throws IOException;
                 }
             }
 
@@ -402,11 +405,22 @@ public interface VirtualMachine {
                      */
                     class SocketAddress extends Structure {
 
+                        /**
+                         * The socket family.
+                         */
                         @SuppressWarnings("unused")
                         public short family = 1;
 
+                        /**
+                         * The socket path.
+                         */
                         public byte[] path = new byte[100];
 
+                        /**
+                         * Sets the socket path.
+                         *
+                         * @param path The socket path.
+                         */
                         public void setPath(String path) {
                             System.arraycopy(path.getBytes(), 0, this.path, 0, path.length());
                             System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
@@ -466,11 +480,11 @@ public interface VirtualMachine {
                      */
                     int close(int handle);
                 }
-                
+
                 /**
                  * A factory for a POSIX socket connection to a JVM using JNA.
                  */
-                public static class Factory extends Connection.Factory.ForPosixAttachment {
+                public static class Factory extends Connection.Factory.ForPosixSocket {
 
                     /**
                      * The socket library API.
@@ -492,7 +506,7 @@ public interface VirtualMachine {
                     /**
                      * {@inheritDoc}
                      */
-                    public Connection connect(File socket) {
+                    public Connection doConnect(File socket) {
                         int handle = library.socket(1, 1, 0);
                         if (handle == 0) {
                             throw new IllegalStateException("Could not open POSIX socket");

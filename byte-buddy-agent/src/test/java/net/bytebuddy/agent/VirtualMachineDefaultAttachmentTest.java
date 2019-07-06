@@ -21,7 +21,7 @@ import static org.hamcrest.core.Is.is;
 public class VirtualMachineDefaultAttachmentTest {
 
     private static final String FOO = "foo";
-    
+
     @Rule
     public MethodRule unixRule = new UnixRule();
 
@@ -49,6 +49,7 @@ public class VirtualMachineDefaultAttachmentTest {
     }
 
     @Test
+    @UnixRule.Enforce
     public void canAttachViaPosixSocket() throws Exception {
         VirtualMachine virtualMachine = VirtualMachine.Default.attach(ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
         try {
