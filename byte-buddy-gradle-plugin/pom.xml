@@ -91,6 +91,8 @@
                                 <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
+                                <argument>-Dnet.bytebuddy.version.source=${sourcecode.main.version}</argument>
+                                <argument>-Dnet.bytebuddy.version.target=${bytecode.main.version}</argument>
                             </arguments>
                         </configuration>
                     </execution>

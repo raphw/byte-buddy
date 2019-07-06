@@ -9,8 +9,26 @@ version = pom.parent.version.text().toString()
 
 description = pom.description.text().toString()
 
-sourceCompatibility = JavaVersion.VERSION_1_5
-targetCompatibility = JavaVersion.VERSION_1_5
+def sourceVersion = System.getProperty("net.bytebuddy.version.source")
+if (sourceVersion != null) {
+    targetCompatibility = JavaVersion.toVersion(sourceVersion)
+} else if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+} else if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+    sourceCompatibility = JavaVersion.VERSION_1_6
+} else {
+    sourceCompatibility = JavaVersion.VERSION_1_5
+}
+def targetVersion = System.getProperty("net.bytebuddy.version.target")
+if (targetVersion != null) {
+    targetCompatibility = JavaVersion.toVersion(targetVersion)
+} else if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+    targetCompatibility = JavaVersion.VERSION_1_7
+} else if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+    targetCompatibility = JavaVersion.VERSION_1_6
+} else {
+    targetCompatibility = JavaVersion.VERSION_1_5
+}
 
 repositories {
     mavenLocal()
@@ -29,7 +47,7 @@ dependencies {
     }
     testCompile gradleTestKit()
     testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-    testCompile (group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+    testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
         exclude group: 'net.bytebuddy'
     }
 }
