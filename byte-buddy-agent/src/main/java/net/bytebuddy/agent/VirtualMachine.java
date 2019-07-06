@@ -19,15 +19,13 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Structure;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -50,7 +48,6 @@ public interface VirtualMachine {
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    @SuppressWarnings("unused")
     void loadAgent(String jarFile, String argument) throws IOException;
 
     /**
@@ -58,13 +55,12 @@ public interface VirtualMachine {
      *
      * @throws IOException If an I/O exception occurs.
      */
-    @SuppressWarnings("unused")
     void detach() throws IOException;
 
     /**
      * A virtual machine implementation for a HotSpot VM or any compatible VM.
      */
-    abstract class ForHotSpot implements VirtualMachine {
+    class Default implements VirtualMachine {
 
         /**
          * The UTF-8 charset name.
@@ -97,40 +93,75 @@ public interface VirtualMachine {
         private static final byte[] BLANK = new byte[]{0};
 
         /**
-         * The target process's id.
+         * The virtual machine connection.
          */
-        protected final String processId;
+        private final Connection connection;
 
         /**
-         * Creates a new HotSpot-compatible VM implementation.
+         * Creates a default virtual machine implementation.
          *
-         * @param processId The target process's id.
+         * @param connection The virtual machine connection.
          */
-        protected ForHotSpot(String processId) {
-            this.processId = processId;
+        protected Default(Connection connection) {
+            this.connection = connection;
+        }
+
+        /**
+         * Attaches to the supplied process id using the default JNA implementation.
+         *
+         * @param processId The process id.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId) throws IOException {
+            return attach(processId, new Connection.Factory.ForPosixAttachment.UsingJna(10, 100, TimeUnit.MILLISECONDS));
+        }
+
+        /**
+         * Attaches to the supplied process id using the supplied connection factory.
+         *
+         * @param processId         The process id.
+         * @param connectionFactory The connection factory to use.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId, Connection.Factory connectionFactory) throws IOException {
+            return new Default(connectionFactory.connect(processId));
+        }
+
+        /**
+         * Asserts this virtual machine's availability.
+         *
+         * @return The virtual machine type to connect to.
+         */
+        public static Class<?> assertAvailability() {
+            if (Platform.isWindows() || Platform.isWindowsCE()) {
+                throw new IllegalStateException("POSIX sockets are not supported on the current system");
+            } else {
+                return Default.class;
+            }
         }
 
         /**
          * {@inheritDoc}
          */
         public void loadAgent(String jarFile, String argument) throws IOException {
-            connect();
-            write(PROTOCOL_VERSION.getBytes(UTF_8));
-            write(BLANK);
-            write(LOAD_COMMAND.getBytes(UTF_8));
-            write(BLANK);
-            write(INSTRUMENT_COMMAND.getBytes(UTF_8));
-            write(BLANK);
-            write(Boolean.FALSE.toString().getBytes(UTF_8));
-            write(BLANK);
-            write((argument == null
+            connection.write(PROTOCOL_VERSION.getBytes(UTF_8));
+            connection.write(BLANK);
+            connection.write(LOAD_COMMAND.getBytes(UTF_8));
+            connection.write(BLANK);
+            connection.write(INSTRUMENT_COMMAND.getBytes(UTF_8));
+            connection.write(BLANK);
+            connection.write(Boolean.FALSE.toString().getBytes(UTF_8));
+            connection.write(BLANK);
+            connection.write((argument == null
                     ? jarFile
                     : jarFile + ARGUMENT_DELIMITER + argument).getBytes(UTF_8));
-            write(BLANK);
+            connection.write(BLANK);
             byte[] buffer = new byte[1];
             StringBuilder stringBuilder = new StringBuilder();
             int length;
-            while ((length = read(buffer)) != -1) {
+            while ((length = connection.read(buffer)) != -1) {
                 if (length > 0) {
                     if (buffer[0] == 10) {
                         break;
@@ -146,7 +177,7 @@ public interface VirtualMachine {
                 default:
                     buffer = new byte[1024];
                     stringBuilder = new StringBuilder();
-                    while ((length = read(buffer)) != -1) {
+                    while ((length = connection.read(buffer)) != -1) {
                         stringBuilder.append(new String(buffer, 0, length, UTF_8));
                     }
                     throw new IllegalStateException(stringBuilder.toString());
@@ -154,263 +185,326 @@ public interface VirtualMachine {
         }
 
         /**
-         * Connects to the target VM.
-         *
-         * @throws IOException If an I/O exception occurs.
+         * {@inheritDoc}
          */
-        protected abstract void connect() throws IOException;
+        public void detach() throws IOException {
+            connection.close();
+        }
 
         /**
-         * Reads from the communication channel.
-         *
-         * @param buffer The buffer to read into.
-         * @return The amount of bytes read.
-         * @throws IOException If an I/O exception occurs.
+         * Represents a connection to a virtual machine.
          */
-        protected abstract int read(byte[] buffer) throws IOException;
-
-        /**
-         * Writes to the communication channel.
-         *
-         * @param buffer The buffer to write from.
-         * @throws IOException If an I/O exception occurs.
-         */
-        protected abstract void write(byte[] buffer) throws IOException;
-
-        /**
-         * A virtual machine implementation for a HotSpot VM running on Unix.
-         */
-        public static class OnPosix extends ForHotSpot {
+        public interface Connection extends Closeable {
 
             /**
-             * The default amount of attempts to connect.
-             */
-            private static final int DEFAULT_ATTEMPTS = 10;
-
-            /**
-             * The default pause between two attempts.
-             */
-            private static final long DEFAULT_PAUSE = 200;
-
-            /**
-             * The temporary directory on Unix systems.
-             */
-            private static final String TEMPORARY_DIRECTORY = "/tmp";
-
-            /**
-             * The name prefix for a socket.
-             */
-            private static final String SOCKET_FILE_PREFIX = ".java_pid";
-
-            /**
-             * The name prefix for an attachment file indicator.
-             */
-            private static final String ATTACH_FILE_PREFIX = ".attach_pid";
-
-            private final Object socket;
-
-            /**
-             * The number of attempts to connect.
-             */
-            private final int attempts;
-
-            /**
-             * The time to pause between attempts.
-             */
-            private final long pause;
-
-            /**
-             * The time unit of the pause time.
-             */
-            private final TimeUnit timeUnit;
-
-            private int address;
-
-            /**
-             * Creates a new VM implementation for a HotSpot VM running on Unix.
+             * Reads from the connected virtual machine.
              *
-             * @param processId The process id of the target VM.
-             * @param socket    The Unix socket to use for communication.
-             * @param attempts  The number of attempts to connect.
-             * @param pause     The pause time between two checks against the target VM.
-             * @param timeUnit  The time unit of the pause time.
+             * @param buffer The buffer to read from.
+             * @return The amount of bytes that were read.
+             * @throws IOException If an I/O exception occurs during reading.
              */
-            public OnPosix(String processId, Object socket, int attempts, long pause, TimeUnit timeUnit) {
-                super(processId);
-                this.socket = socket;
-                this.attempts = attempts;
-                this.pause = pause;
-                this.timeUnit = timeUnit;
-            }
+            int read(byte[] buffer) throws IOException;
 
             /**
-             * Asserts the availability of this virtual machine implementation. If the Unix socket library is missing or
-             * if this VM does not support Unix socket communication, a {@link Throwable} is thrown.
+             * Writes to the connected virtual machine.
              *
-             * @return This virtual machine type.
-             * @throws Throwable If this attachment method is not available.
+             * @param buffer The buffer to write to.
+             * @throws IOException If an I/O exception occurs during writing.
              */
-            public static Class<?> assertAvailability() throws Throwable {
-                try {
-                    Class<?> moduleType = Class.forName("java.lang.Module");
-                    Method getModule = Class.class.getMethod("getModule"), canRead = moduleType.getMethod("canRead", moduleType);
-                    Object thisModule = getModule.invoke(OnPosix.class), otherModule = getModule.invoke(Platform.class);
-                    if (!(Boolean) canRead.invoke(thisModule, otherModule)) {
-                        moduleType.getMethod("addReads", moduleType).invoke(thisModule, otherModule);
+            void write(byte[] buffer) throws IOException;
+
+            /**
+             * A factory for creating connections to virtual machines.
+             */
+            interface Factory {
+
+                /**
+                 * Connects to the supplied process.
+                 *
+                 * @param processId The process id.
+                 * @return The connection to the virtual machine with the supplied process id.
+                 * @throws IOException If an I/O exception occurs during connecting to the targeted VM.
+                 */
+                Connection connect(String processId) throws IOException;
+
+                /**
+                 * A factory for attaching on a POSIX-compatible VM.
+                 */
+                abstract class ForPosixAttachment implements Factory {
+
+                    /**
+                     * The temporary directory on Unix systems.
+                     */
+                    private static final String TEMPORARY_DIRECTORY = "/tmp";
+
+                    /**
+                     * The name prefix for a socket.
+                     */
+                    private static final String SOCKET_FILE_PREFIX = ".java_pid";
+
+                    /**
+                     * The name prefix for an attachment file indicator.
+                     */
+                    private static final String ATTACH_FILE_PREFIX = ".attach_pid";
+
+                    /**
+                     * The maximum amount of attempts to establish a POSIX socket connection to the target VM.
+                     */
+                    private final int attempts;
+
+                    /**
+                     * The pause between two checks for an existing socket.
+                     */
+                    private final long pause;
+
+                    /**
+                     * The time unit of the pause time.
+                     */
+                    private final TimeUnit timeUnit;
+
+                    /**
+                     * Creates a new connection factory for creating a connection to a JVM via a POSIX socket.
+                     *
+                     * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
+                     * @param pause    The pause between two checks for an existing socket.
+                     * @param timeUnit The time unit of the pause time.
+                     */
+                    protected ForPosixAttachment(int attempts, long pause, TimeUnit timeUnit) {
+                        this.attempts = attempts;
+                        this.pause = pause;
+                        this.timeUnit = timeUnit;
                     }
-                    return doAssertAvailability();
-                } catch (ClassNotFoundException ignored) {
-                    return doAssertAvailability();
-                }
-            }
 
-            /**
-             * Asserts the availability of this virtual machine implementation.
-             *
-             * @return This virtual machine type.
-             */
-            private static Class<?> doAssertAvailability() {
-                if (Platform.isWindows() || Platform.isWindowsCE()) {
-                    throw new IllegalStateException("POSIX sockets are not supported on the current system");
-                } else if (!System.getProperty("java.vm.name").toLowerCase(Locale.US).contains("hotspot")) {
-                    throw new IllegalStateException("Cannot apply attachment on non-Hotspot compatible VM");
-                } else {
-                    return OnPosix.class;
-                }
-            }
-
-            /**
-             * Attaches to the supplied VM process.
-             *
-             * @param processId The process id of the target VM.
-             * @return An appropriate virtual machine implementation.
-             * @throws IOException If an I/O exception occurs.
-             */
-            public static VirtualMachine attach(String processId) throws IOException {
-                return new OnPosix(processId, Native.loadLibrary("c", JNAUnixSocket.class), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, TimeUnit.MILLISECONDS);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME", justification = "This is a Unix-specific implementation")
-            protected void connect() throws IOException {
-                File socketFile = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
-                if (!socketFile.exists()) {
-                    String target = ATTACH_FILE_PREFIX + processId, path = "/proc/" + processId + "/cwd/" + target;
-                    File attachFile = new File(path);
-                    try {
-                        if (!attachFile.createNewFile() && !attachFile.isFile()) {
-                            throw new IllegalStateException("Could not create attach file: " + attachFile);
-                        }
-                    } catch (IOException ignored) {
-                        attachFile = new File(TEMPORARY_DIRECTORY, target);
-                        if (!attachFile.createNewFile() && !attachFile.isFile()) {
-                            throw new IllegalStateException("Could not create attach file: " + attachFile);
-                        }
-                    }
-                    try {
-                        // The HotSpot attachment API attempts to send the signal to all children of a process
-                        Process process = Runtime.getRuntime().exec("kill -3 " + processId);
-                        int attempts = this.attempts;
-                        boolean killed = false;
-                        do {
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Connection connect(String processId) throws IOException {
+                        File socket = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
+                        if (!socket.exists()) {
+                            String target = ATTACH_FILE_PREFIX + processId, path = "/proc/" + processId + "/cwd/" + target;
+                            File attachFile = new File(path);
                             try {
-                                if (process.exitValue() != 0) {
-                                    throw new IllegalStateException("Error while sending signal to target VM: " + processId);
+                                if (!attachFile.createNewFile() && !attachFile.isFile()) {
+                                    throw new IllegalStateException("Could not create attach file: " + attachFile);
                                 }
-                                killed = true;
-                                break;
-                            } catch (IllegalThreadStateException ignored) {
-                                attempts -= 1;
-                                Thread.sleep(timeUnit.toMillis(pause));
+                            } catch (IOException ignored) {
+                                attachFile = new File(TEMPORARY_DIRECTORY, target);
+                                if (!attachFile.createNewFile() && !attachFile.isFile()) {
+                                    throw new IllegalStateException("Could not create attach file: " + attachFile);
+                                }
                             }
-                        } while (attempts > 0);
-                        if (!killed) {
-                            throw new IllegalStateException("Target VM did not respond to signal: " + processId);
+                            try {
+                                // The HotSpot attachment API attempts to send the signal to all children of a process
+                                Process process = Runtime.getRuntime().exec("kill -3 " + processId);
+                                int attempts = this.attempts;
+                                boolean killed = false;
+                                do {
+                                    try {
+                                        if (process.exitValue() != 0) {
+                                            throw new IllegalStateException("Error while sending signal to target VM: " + processId);
+                                        }
+                                        killed = true;
+                                        break;
+                                    } catch (IllegalThreadStateException ignored) {
+                                        attempts -= 1;
+                                        Thread.sleep(timeUnit.toMillis(pause));
+                                    }
+                                } while (attempts > 0);
+                                if (!killed) {
+                                    throw new IllegalStateException("Target VM did not respond to signal: " + processId);
+                                }
+                                attempts = this.attempts;
+                                while (attempts-- > 0 && !socket.exists()) {
+                                    Thread.sleep(timeUnit.toMillis(pause));
+                                }
+                                if (!socket.exists()) {
+                                    throw new IllegalStateException("Target VM did not respond: " + processId);
+                                }
+                            } catch (InterruptedException exception) {
+                                Thread.currentThread().interrupt();
+                                throw new IllegalStateException("Interrupted during wait for process", exception);
+                            } finally {
+                                if (!attachFile.delete()) {
+                                    attachFile.deleteOnExit();
+                                }
+                            }
                         }
-                        attempts = this.attempts;
-                        while (attempts-- > 0 && !socketFile.exists()) {
-                            Thread.sleep(timeUnit.toMillis(pause));
+                        return connect(socket);
+                    }
+
+                    /**
+                     * Connects to the supplied POSIX socket.
+                     *
+                     * @param socket The socket to connect to.
+                     * @return An active connection to the supplied socket.
+                     */
+                    protected abstract Connection connect(File socket);
+
+                    /**
+                     * A factory for a POSIX socket connection to a JVM using JNA.
+                     */
+                    public static class UsingJna extends ForPosixAttachment {
+
+                        /**
+                         * The socket library API.
+                         */
+                        private final ForJnaPosixSocket.PosixSocketLibrary library;
+
+                        /**
+                         * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
+                         *
+                         * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
+                         * @param pause    The pause between two checks for an existing socket.
+                         * @param timeUnit The time unit of the pause time.
+                         */
+                        public UsingJna(int attempts, long pause, TimeUnit timeUnit) {
+                            super(attempts, pause, timeUnit);
+                            library = Native.load("c", ForJnaPosixSocket.PosixSocketLibrary.class);
                         }
-                        if (!socketFile.exists()) {
-                            throw new IllegalStateException("Target VM did not respond: " + processId);
-                        }
-                    } catch (InterruptedException exception) {
-                        Thread.currentThread().interrupt();
-                        throw new IllegalStateException("Interrupted during wait for process", exception);
-                    } finally {
-                        if (!attachFile.delete()) {
-                            attachFile.deleteOnExit();
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Connection connect(File socket) {
+                            int handle = library.socket(1, 1, 0);
+                            if (handle == 0) {
+                                throw new IllegalStateException("Could not open POSIX socket");
+                            }
+                            ForJnaPosixSocket.PosixSocketLibrary.SocketAddress address = new ForJnaPosixSocket.PosixSocketLibrary.SocketAddress();
+                            address.setPath(socket.getAbsolutePath());
+                            if (library.connect(handle, address, address.size()) != 0) {
+                                throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                            }
+                            return new Connection.ForJnaPosixSocket(library, handle);
                         }
                     }
-                }
-                JNAUnixSocket socket = (JNAUnixSocket) this.socket;
-                address = socket.socket(1, 1, 0);
-                if (address == 0) {
-                    throw new IllegalStateException();
-                }
-                JNAUnixSocket.SockAddr sockAddr = new JNAUnixSocket.SockAddr();
-                sockAddr.setPath(socketFile.getAbsolutePath());
-                if (socket.connect(address, sockAddr, sockAddr.size()) != 0) {
-                    throw new IllegalStateException();
                 }
             }
 
             /**
-             * {@inheritDoc}
+             * Implements a connection for a Posix socket in JNA.
              */
-            public int read(byte[] buffer) throws IOException {
-                return ((JNAUnixSocket) this.socket).read(address, ByteBuffer.wrap(buffer), buffer.length);
-            }
+            class ForJnaPosixSocket implements Connection {
 
-            /**
-             * {@inheritDoc}
-             */
-            public void write(byte[] buffer) throws IOException {
-                int write = ((JNAUnixSocket) this.socket).write(address, ByteBuffer.wrap(buffer), buffer.length);
-                if (write != buffer.length) {
-                    throw new IllegalStateException();
-                }
-            }
+                /**
+                 * The JNA library to use.
+                 */
+                private final PosixSocketLibrary library;
 
-            /**
-             * {@inheritDoc}
-             */
-            public void detach() throws IOException {
-                ((JNAUnixSocket) this.socket).close(address);
-            }
+                /**
+                 * The socket's handle.
+                 */
+                private final int handle;
 
-            interface JNAUnixSocket extends Library {
-
-                class SockAddr extends Structure {
-
-                    public short family = 1;
-
-                    public byte[] path = new byte[100];
-
-                    public void setPath(String path) {
-                        System.arraycopy(path.getBytes(), 0, this.path, 0, path.length());
-                        System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
-                    }
-
-                    @Override
-                    protected List<String> getFieldOrder() {
-                        return Arrays.asList("family", "path");
-                    }
+                /**
+                 * Creates a new connection for a Posix socket.
+                 *
+                 * @param library The JNA library to use.
+                 * @param handle  The socket's handle.
+                 */
+                protected ForJnaPosixSocket(PosixSocketLibrary library, int handle) {
+                    this.library = library;
+                    this.handle = handle;
                 }
 
-                int socket(int domain, int type, int protocol);
+                /**
+                 * {@inheritDoc}
+                 */
+                public int read(byte[] buffer) {
+                    return library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
+                }
 
-                int connect(int sockfd, SockAddr sockaddr, int addrlen);
+                /**
+                 * {@inheritDoc}
+                 */
+                public void write(byte[] buffer) {
+                    int write = library.write(handle, ByteBuffer.wrap(buffer), buffer.length);
+                    if (write != buffer.length) {
+                        throw new IllegalStateException("Could not write entire buffer to socket");
+                    }
+                }
 
-                int read(int fd, ByteBuffer buffer, int count);
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    library.close(handle);
+                }
 
-                int write(int fd, ByteBuffer buffer, int count);
+                /**
+                 * A JNA library binding for Posix sockets.
+                 */
+                protected interface PosixSocketLibrary extends Library {
 
-                int close(int fd);
+                    /**
+                     * Represents an address for a POSIX socket.
+                     */
+                    class SocketAddress extends Structure {
 
-                String strerror(int errno);
+                        @SuppressWarnings("unused")
+                        public short family = 1;
+
+                        public byte[] path = new byte[100];
+
+                        public void setPath(String path) {
+                            System.arraycopy(path.getBytes(), 0, this.path, 0, path.length());
+                            System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                        }
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("family", "path");
+                        }
+                    }
+
+                    /**
+                     * Creates a POSIX socket connection.
+                     *
+                     * @param domain   The socket's domain.
+                     * @param type     The socket's type.
+                     * @param protocol The protocol version.
+                     * @return A handle to the socket that was created or {@code 0} if no socket could be created.
+                     */
+                    int socket(int domain, int type, int protocol);
+
+                    /**
+                     * Connects a socket connection.
+                     *
+                     * @param handle  The socket's handle.
+                     * @param address The address of the POSIX socket.
+                     * @param length  The length of the socket value.
+                     * @return {@code 0} if the socket was connected or an error code.
+                     */
+                    int connect(int handle, SocketAddress address, int length);
+
+                    /**
+                     * Reads from a POSIX socket.
+                     *
+                     * @param handle The socket's handle.
+                     * @param buffer The buffer to read from.
+                     * @param count  The bytes being read.
+                     * @return The amount of bytes that could be read.
+                     */
+                    int read(int handle, ByteBuffer buffer, int count);
+
+                    /**
+                     * Writes to a POSIX socket.
+                     *
+                     * @param handle The socket's handle.
+                     * @param buffer The buffer to write to.
+                     * @param count  The bytes being written.
+                     * @return The amount of bytes that could be written.
+                     */
+                    int write(int handle, ByteBuffer buffer, int count);
+
+                    /**
+                     * Closes the socket connection.
+                     *
+                     * @param handle The handle of the connection.
+                     * @return {@code 0} if the socket was closed or an error code.
+                     */
+                    int close(int handle);
+                }
             }
         }
     }

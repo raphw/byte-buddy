@@ -16,8 +16,7 @@
         <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
-        <!-- Newer versions require Java 8. Since this dependency is only provided, the exact version is neither important. -->
-        <version.unixsocket>2.0.4</version.unixsocket>
+        <jna.version>5.3.1</jna.version>
         <packages.list>net.bytebuddy.agent</packages.list>
     </properties>
 
@@ -25,28 +24,22 @@
     <description>The Byte Buddy Java agent allows to access the JVM's HotSwap feature.</description>
 
     <!--
-      The Unix socket dependency can be excluded safely. Byte Buddy will safely discover the
+      The JNA dependency can be excluded safely. Byte Buddy will safely discover the
       non-availability and not use the corresponding virtual machine implementation. The
       implementation requires Java 7+ and is deactivated on Java 6 VMs.
     -->
 
     <dependencies>
         <dependency>
-            <groupId>com.kohlschutter.junixsocket</groupId>
-            <artifactId>junixsocket-common</artifactId>
-            <version>${version.unixsocket}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>3.5.1</version>
+            <version>${jna.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
-            <artifactId>platform</artifactId>
-            <version>3.5.1</version>
+            <artifactId>jna-platform</artifactId>
+            <version>${jna.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -1,7 +1,7 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.UnixSocketRule;
+import net.bytebuddy.test.utility.UnixRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -18,12 +18,12 @@ import java.util.jar.Manifest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-public class VirtualMachineForHotSpotOnPosixTest {
+public class VirtualMachineDefaultAttachmentTest {
 
     private static final String FOO = "foo";
     
     @Rule
-    public MethodRule unixSocketRule = new UnixSocketRule();
+    public MethodRule unixRule = new UnixRule();
 
     private File agent;
 
@@ -50,7 +50,7 @@ public class VirtualMachineForHotSpotOnPosixTest {
 
     @Test
     public void canAttachViaPosixSocket() throws Exception {
-        VirtualMachine virtualMachine = VirtualMachine.ForHotSpot.OnPosix.attach(ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
+        VirtualMachine virtualMachine = VirtualMachine.Default.attach(ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
         try {
             virtualMachine.loadAgent(agent.getAbsolutePath(), FOO);
         } finally {

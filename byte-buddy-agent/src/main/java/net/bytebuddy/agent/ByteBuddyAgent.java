@@ -965,7 +965,7 @@ public class ByteBuddyAgent {
              */
             public Accessor attempt() {
                 try {
-                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.ForHotSpot.OnPosix.assertAvailability());
+                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.Default.assertAvailability());
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }
