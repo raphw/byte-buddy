@@ -5,7 +5,7 @@ dist: trusty
 
 branches:
   except:
-  - gh-pages
+    - gh-pages
 
 before_install:
   - unset _JAVA_OPTIONS
@@ -30,8 +30,8 @@ matrix:
     - env: TARGET='-Pjava11' EXPERIMENTAL='true'
       jdk: openjdk13
     # OpenJDK - Java 14
-     - env: TARGET='-Pjava11' EXPERIMENTAL='true'
-       jdk: openjdk-ea
+    - env: TARGET='-Pjava11' EXPERIMENTAL='true'
+      jdk: openjdk-ea
     # OpenJ9 - Java 11
     - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='false'
       before_script:
