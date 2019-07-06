@@ -26,6 +26,7 @@
         <version.plugin.gradlerun>1.0.10</version.plugin.gradlerun>
         <version.plugin.directory>0.2</version.plugin.directory>
         <version.gradle>4.5</version.gradle>
+        <exec.gradle>gradlew</exec.gradle>
     </properties>
 
     <dependencies>
@@ -70,7 +71,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.basedir}/gradlew</executable>
+                            <executable>${project.basedir}/${exec.gradle}</executable>
                             <arguments>
                                 <argument>clean</argument>
                                 <argument>--info</argument>
@@ -84,7 +85,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.basedir}/gradlew</executable>
+                            <executable>${project.basedir}/${exec.gradle}</executable>
                             <arguments>
                                 <argument>build</argument>
                                 <argument>javadocJar</argument>
@@ -131,6 +132,19 @@
             <properties>
                 <version.plugin.gradlerun>1.0.9</version.plugin.gradlerun>
                 <version.gradle>2.14.1</version.gradle>
+            </properties>
+        </profile>
+        
+        <profile>
+            <id>gradle-windows</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <properties>
+                <exec.gradle>gradlew.bat</exec.gradle>
             </properties>
         </profile>
 
