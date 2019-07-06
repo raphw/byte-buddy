@@ -114,7 +114,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, new Connection.Factory.ForPosixAttachment.UsingJna(10, 100, TimeUnit.MILLISECONDS));
+            return attach(processId, new Connection.ForJnaPosixSocket.Factory(10, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -339,45 +339,6 @@ public interface VirtualMachine {
                      * @return An active connection to the supplied socket.
                      */
                     protected abstract Connection connect(File socket);
-
-                    /**
-                     * A factory for a POSIX socket connection to a JVM using JNA.
-                     */
-                    public static class UsingJna extends ForPosixAttachment {
-
-                        /**
-                         * The socket library API.
-                         */
-                        private final ForJnaPosixSocket.PosixSocketLibrary library;
-
-                        /**
-                         * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
-                         *
-                         * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
-                         * @param pause    The pause between two checks for an existing socket.
-                         * @param timeUnit The time unit of the pause time.
-                         */
-                        public UsingJna(int attempts, long pause, TimeUnit timeUnit) {
-                            super(attempts, pause, timeUnit);
-                            library = Native.load("c", ForJnaPosixSocket.PosixSocketLibrary.class);
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public Connection connect(File socket) {
-                            int handle = library.socket(1, 1, 0);
-                            if (handle == 0) {
-                                throw new IllegalStateException("Could not open POSIX socket");
-                            }
-                            ForJnaPosixSocket.PosixSocketLibrary.SocketAddress address = new ForJnaPosixSocket.PosixSocketLibrary.SocketAddress();
-                            address.setPath(socket.getAbsolutePath());
-                            if (library.connect(handle, address, address.size()) != 0) {
-                                throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
-                            }
-                            return new Connection.ForJnaPosixSocket(library, handle);
-                        }
-                    }
                 }
             }
 
@@ -504,6 +465,45 @@ public interface VirtualMachine {
                      * @return {@code 0} if the socket was closed or an error code.
                      */
                     int close(int handle);
+                }
+                
+                /**
+                 * A factory for a POSIX socket connection to a JVM using JNA.
+                 */
+                public static class Factory extends Connection.Factory.ForPosixAttachment {
+
+                    /**
+                     * The socket library API.
+                     */
+                    private final ForJnaPosixSocket.PosixSocketLibrary library;
+
+                    /**
+                     * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
+                     *
+                     * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
+                     * @param pause    The pause between two checks for an existing socket.
+                     * @param timeUnit The time unit of the pause time.
+                     */
+                    public Factory(int attempts, long pause, TimeUnit timeUnit) {
+                        super(attempts, pause, timeUnit);
+                        library = Native.load("c", ForJnaPosixSocket.PosixSocketLibrary.class);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Connection connect(File socket) {
+                        int handle = library.socket(1, 1, 0);
+                        if (handle == 0) {
+                            throw new IllegalStateException("Could not open POSIX socket");
+                        }
+                        ForJnaPosixSocket.PosixSocketLibrary.SocketAddress address = new ForJnaPosixSocket.PosixSocketLibrary.SocketAddress();
+                        address.setPath(socket.getAbsolutePath());
+                        if (library.connect(handle, address, address.size()) != 0) {
+                            throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                        }
+                        return new Connection.ForJnaPosixSocket(library, handle);
+                    }
                 }
             }
         }
