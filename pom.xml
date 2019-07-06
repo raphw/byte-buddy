@@ -72,6 +72,7 @@
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <version.plugin.jar>3.0.2</version.plugin.jar>
+        <version.plugin.exec>1.6.0</version.plugin.exec>
         <version.plugin.plugin>3.6.0</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>3.0.2</version.plugin.resources>

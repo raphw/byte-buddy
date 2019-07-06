@@ -56,48 +56,41 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
             <!-- Tie Maven executions into the Gradle life-cycle. -->
             <plugin>
-                <groupId>codes.rafael.gradlemavenplugin</groupId>
-                <artifactId>gradle-maven-plugin</artifactId>
-                <version>${version.plugin.gradlerun}</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${version.plugin.exec}</version>
                 <executions>
                     <execution>
                         <id>gradle-clean</id>
                         <phase>clean</phase>
                         <goals>
-                            <goal>invoke</goal>
+                            <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <tasks>
-                                <task>clean</task>
-                            </tasks>
-                            <args>
-                                <arg>--info</arg>
-                            </args>
-                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <executable>${project.basedir}/gradlew</executable>
+                            <arguments>
+                                <argument>clean</argument>
+                                <argument>--info</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                     <execution>
                         <id>gradle-build</id>
                         <phase>compile</phase>
                         <goals>
-                            <goal>invoke</goal>
+                            <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <tasks>
-                                <task>build</task>
-                                <task>javadocJar</task>
-                            </tasks>
-                            <args>
-                                <arg>--info</arg>
-                            </args>
-                            <jvmArgs>
-                                <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
-                                <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
-                            </jvmArgs>
-                            <gradleDistributionFile>${project.basedir}/gradle/${version.gradle}/gradle-${version.gradle}-bin.zip</gradleDistributionFile>
+                            <executable>${project.basedir}/gradlew</executable>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>javadocJar</argument>
+                                <argument>--info</argument>
+                                <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
+                                <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
