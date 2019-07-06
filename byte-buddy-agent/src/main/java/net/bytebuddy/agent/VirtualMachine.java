@@ -19,10 +19,12 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Structure;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -308,6 +310,7 @@ public interface VirtualMachine {
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME", justification = "File name convention is specified.")
                     public Connection connect(String processId) throws IOException {
                         File socket = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
                         if (!socket.exists()) {
@@ -437,6 +440,7 @@ public interface VirtualMachine {
                          * The socket family.
                          */
                         @SuppressWarnings("unused")
+                        @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Field required by native implementation.")
                         public short family = 1;
 
                         /**
@@ -450,8 +454,12 @@ public interface VirtualMachine {
                          * @param path The socket path.
                          */
                         public void setPath(String path) {
-                            System.arraycopy(path.getBytes(), 0, this.path, 0, path.length());
-                            System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                            try {
+                                System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
+                                System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                            } catch (UnsupportedEncodingException exception) {
+                                throw new IllegalStateException(exception);
+                            }
                         }
 
                         @Override
