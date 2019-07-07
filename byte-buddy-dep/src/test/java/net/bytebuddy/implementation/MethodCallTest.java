@@ -32,9 +32,9 @@ import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -316,7 +316,7 @@ public class MethodCallTest {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .invokable(isTypeInitializer())
-                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                .intercept(MethodCall.invoke(isEquals())
                         .onField(System.class.getField("out"))
                         .with(""))
                 .make()
@@ -333,7 +333,7 @@ public class MethodCallTest {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .defineMethod("foo", void.class)
-                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                .intercept(MethodCall.invoke(isEquals())
                         .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class)))
                         .with("fooCall"))
                 .make()
