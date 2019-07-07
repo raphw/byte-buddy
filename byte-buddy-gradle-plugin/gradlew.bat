@@ -64,7 +64,7 @@ set CMD_LINE_ARGS=%*
 @rem Setup the command line
 
 for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
-IF "%JAVA_VERSION_STRING:~0,3%"=="1.6" (set "GRADLE_VERSION=2.14.1") ELSE (set "GRADLE_VERSION=4.5")
+IF "%JAVA_VERSION_STRING:~0,3%"=="160" (set "GRADLE_VERSION=2.14.1") ELSE (set "GRADLE_VERSION=4.5")
 
 set CLASSPATH=%APP_HOME%\gradle\%GRADLE_VERSION%\gradle-wrapper.jar
 
