@@ -17,7 +17,7 @@ if (!raw.startsWith("1.") && raw.contains(".")) {
     current = JavaVersion.toVersion(raw)
 }
 
-def sourceVersion = System.getProperty("net.bytebuddy.version.source")
+def sourceVersion = System.getProperty("net.bytebuddy.gradle.version.source")
 if (sourceVersion != null) {
     sourceCompatibility = JavaVersion.toVersion(sourceVersion)
 } else if (current > JavaVersion.VERSION_1_9) {
@@ -27,7 +27,7 @@ if (sourceVersion != null) {
 } else {
     sourceCompatibility = JavaVersion.VERSION_1_5
 }
-def targetVersion = System.getProperty("net.bytebuddy.version.target")
+def targetVersion = System.getProperty("net.bytebuddy.gradle.version.target")
 if (targetVersion != null) {
     targetCompatibility = JavaVersion.toVersion(targetVersion)
 } else if (current > JavaVersion.VERSION_1_9) {
