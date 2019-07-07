@@ -9,12 +9,23 @@ version = pom.parent.version.text().toString()
 
 description = pom.description.text().toString()
 
+// Gradle cannot process all version strings such that JavaVersion.current() fails.
+def version = System.getProperty("java.version")
+def current;
+if (version.startsWith("1.")) {
+    current = JavaVersion.current()
+} else if (version.contains(".")) {
+    current = JavaVersion.toVersion(version.substring(0, version.indexOf('.')))
+} else {
+    current = JavaVersion.toVersion(version)
+}
+
 def sourceVersion = System.getProperty("net.bytebuddy.version.source")
 if (sourceVersion != null) {
-    targetCompatibility = JavaVersion.toVersion(sourceVersion)
-} else if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+    sourceCompatibility = JavaVersion.toVersion(sourceVersion)
+} else if (current > JavaVersion.VERSION_1_9) {
     sourceCompatibility = JavaVersion.VERSION_1_7
-} else if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+} else if (current > JavaVersion.VERSION_1_8) {
     sourceCompatibility = JavaVersion.VERSION_1_6
 } else {
     sourceCompatibility = JavaVersion.VERSION_1_5
@@ -22,13 +33,15 @@ if (sourceVersion != null) {
 def targetVersion = System.getProperty("net.bytebuddy.version.target")
 if (targetVersion != null) {
     targetCompatibility = JavaVersion.toVersion(targetVersion)
-} else if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+} else if (current > JavaVersion.VERSION_1_9) {
     targetCompatibility = JavaVersion.VERSION_1_7
-} else if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+} else if (current > JavaVersion.VERSION_1_8) {
     targetCompatibility = JavaVersion.VERSION_1_6
 } else {
     targetCompatibility = JavaVersion.VERSION_1_5
 }
+
+logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
 
 repositories {
     mavenLocal()
