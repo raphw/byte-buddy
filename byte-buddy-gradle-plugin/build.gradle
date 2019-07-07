@@ -12,9 +12,7 @@ description = pom.description.text().toString()
 // Gradle cannot process all version strings such that JavaVersion.current() fails.
 def version = System.getProperty("java.version")
 def current;
-if (version.startsWith("1.")) {
-    current = JavaVersion.current()
-} else if (version.contains(".")) {
+if (!version.startsWith("1.") && version.contains(".")) {
     current = JavaVersion.toVersion(version.substring(0, version.indexOf('.')))
 } else {
     current = JavaVersion.toVersion(version)
