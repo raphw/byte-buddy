@@ -71,7 +71,7 @@ public interface VirtualMachine {
     /**
      * A virtual machine implementation for a HotSpot VM or any compatible VM.
      */
-    class Default implements VirtualMachine {
+    class ForHotSpotVm implements VirtualMachine {
 
         /**
          * The UTF-8 charset name.
@@ -113,7 +113,7 @@ public interface VirtualMachine {
          *
          * @param connection The virtual machine connection.
          */
-        protected Default(Connection connection) {
+        protected ForHotSpotVm(Connection connection) {
             this.connection = connection;
         }
 
@@ -128,7 +128,7 @@ public interface VirtualMachine {
                 throw new IllegalStateException("POSIX sockets are not available on Windows");
             } else {
                 Class.forName(Native.class.getName()); // Attempt loading the JNA class to check availability.
-                return Default.class;
+                return ForHotSpotVm.class;
             }
         }
 
@@ -152,7 +152,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, Connection.Factory connectionFactory) throws IOException {
-            return new Default(connectionFactory.connect(processId));
+            return new ForHotSpotVm(connectionFactory.connect(processId));
         }
 
         /**

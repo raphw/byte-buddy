@@ -1069,7 +1069,7 @@ public class ByteBuddyAgent {
              */
             public Accessor attempt() {
                 try {
-                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.Default.assertAvailability());
+                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.ForHotSpotVm.assertAvailability());
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }

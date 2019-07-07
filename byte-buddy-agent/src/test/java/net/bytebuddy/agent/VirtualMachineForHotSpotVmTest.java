@@ -12,7 +12,7 @@ import java.io.IOException;
 
 import static org.mockito.Mockito.*;
 
-public class VirtualMachineDefaultTest {
+public class VirtualMachineForHotSpotVmTest {
 
     @Rule
     public MethodRule unixRule = new UnixRule();
@@ -20,9 +20,9 @@ public class VirtualMachineDefaultTest {
     @Test
     @UnixRule.Enforce
     public void testAttachment() throws Exception {
-        VirtualMachine.Default.Connection connection = mock(VirtualMachine.Default.Connection.class);
+        VirtualMachine.ForHotSpotVm.Connection connection = mock(VirtualMachine.ForHotSpotVm.Connection.class);
         when(connection.read(any(byte[].class))).then(new ByteAnswer("0".getBytes("UTF-8"))).then(new ByteAnswer((byte) 10));
-        VirtualMachine virtualMachine = new VirtualMachine.Default(connection);
+        VirtualMachine virtualMachine = new VirtualMachine.ForHotSpotVm(connection);
         virtualMachine.loadAgent("foo", "bar");
         InOrder order = inOrder(connection);
         order.verify(connection).write("1".getBytes("UTF-8"));
@@ -42,9 +42,9 @@ public class VirtualMachineDefaultTest {
     @Test
     @UnixRule.Enforce
     public void testAttachmentWithoutArgument() throws Exception {
-        VirtualMachine.Default.Connection connection = mock(VirtualMachine.Default.Connection.class);
+        VirtualMachine.ForHotSpotVm.Connection connection = mock(VirtualMachine.ForHotSpotVm.Connection.class);
         when(connection.read(any(byte[].class))).then(new ByteAnswer("0".getBytes("UTF-8"))).then(new ByteAnswer((byte) 10));
-        VirtualMachine virtualMachine = new VirtualMachine.Default(connection);
+        VirtualMachine virtualMachine = new VirtualMachine.ForHotSpotVm(connection);
         virtualMachine.loadAgent("foo", null);
         InOrder order = inOrder(connection);
         order.verify(connection).write("1".getBytes("UTF-8"));
@@ -65,25 +65,25 @@ public class VirtualMachineDefaultTest {
     @Test(expected = IOException.class)
     @UnixRule.Enforce
     public void testAttachmentIncompatibleProtocol() throws Exception {
-        VirtualMachine.Default.Connection connection = mock(VirtualMachine.Default.Connection.class);
+        VirtualMachine.ForHotSpotVm.Connection connection = mock(VirtualMachine.ForHotSpotVm.Connection.class);
         when(connection.read(any(byte[].class)))
                 .then(new ByteAnswer("1".getBytes("UTF-8")))
                 .then(new ByteAnswer("0".getBytes("UTF-8")))
                 .then(new ByteAnswer("1".getBytes("UTF-8")))
                 .then(new ByteAnswer((byte) 10));
-        new VirtualMachine.Default(connection).loadAgent("foo", null);
+        new VirtualMachine.ForHotSpotVm(connection).loadAgent("foo", null);
     }
 
     @Test(expected = IllegalStateException.class)
     @UnixRule.Enforce
     public void testAttachmentUnknownError() throws Exception {
-        VirtualMachine.Default.Connection connection = mock(VirtualMachine.Default.Connection.class);
+        VirtualMachine.ForHotSpotVm.Connection connection = mock(VirtualMachine.ForHotSpotVm.Connection.class);
         when(connection.read(any(byte[].class)))
                 .then(new ByteAnswer("1".getBytes("UTF-8")))
                 .then(new ByteAnswer((byte) 10))
                 .then(new ByteAnswer("foo".getBytes("UTF-8")))
                 .thenReturn(-1);
-        new VirtualMachine.Default(connection).loadAgent("foo", null);
+        new VirtualMachine.ForHotSpotVm(connection).loadAgent("foo", null);
     }
     
     private static class ByteAnswer implements Answer<Integer> {
