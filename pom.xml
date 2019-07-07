@@ -14,7 +14,7 @@
         Byte Buddy is a Java library for creating Java classes at run time.
         The parent artifact contains configuration information that concern all modules.
     </description>
-    <url>http://bytebuddy.net</url>
+    <url>https://bytebuddy.net</url>
 
     <!--
       There are several build profiles available:
@@ -147,7 +147,7 @@
                 <version>${version.plugin.release}</version>
                 <configuration>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>extras,gpg</releaseProfiles>
+                    <releaseProfiles>extras,gpg,gradle</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>
                 </configuration>

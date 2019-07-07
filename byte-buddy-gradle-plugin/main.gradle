@@ -1,0 +1,78 @@
+def pom = new XmlSlurper().parse(file('./pom.xml'))
+def outerPom = new XmlSlurper().parse(file('../pom.xml'))
+
+group = pom.parent.groupId.text().toString()
+version = pom.parent.version.text().toString()
+description = pom.description.text().toString()
+
+// Gradle cannot process all version strings such that JavaVersion.current() fails.
+def raw = System.getProperty("java.version")
+def current;
+if (!raw.startsWith("1.") && raw.contains(".")) {
+    current = JavaVersion.toVersion(raw.substring(0, raw.indexOf('.')))
+} else {
+    current = JavaVersion.toVersion(raw)
+}
+
+def sourceVersion = System.getProperty("net.bytebuddy.gradle.version.source")
+if (sourceVersion != null) {
+    sourceCompatibility = JavaVersion.toVersion(sourceVersion)
+} else if (current > JavaVersion.VERSION_1_9) {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+} else if (current > JavaVersion.VERSION_1_8) {
+    sourceCompatibility = JavaVersion.VERSION_1_6
+} else {
+    sourceCompatibility = JavaVersion.VERSION_1_5
+}
+def targetVersion = System.getProperty("net.bytebuddy.gradle.version.target")
+if (targetVersion != null) {
+    targetCompatibility = JavaVersion.toVersion(targetVersion)
+} else if (current > JavaVersion.VERSION_1_9) {
+    targetCompatibility = JavaVersion.VERSION_1_7
+} else if (current > JavaVersion.VERSION_1_8) {
+    targetCompatibility = JavaVersion.VERSION_1_6
+} else {
+    targetCompatibility = JavaVersion.VERSION_1_5
+}
+
+logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+    def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+    logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+    if (location.exists()) {
+        compile files(location.absolutePath)
+    } else {
+        logger.warn("${location.absolutePath} does not exist, can clean but not build project")
+    }
+    testCompile gradleTestKit()
+    testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
+}
+
+// Without the extras property, creating a javadoc artifact is not necessary.
+if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+} else {
+    task javadocJar {
+        logger.info('javadoc is only generated if net.bytebuddy.misc.extras is set to true')
+    }
+}
+
+test {
+    systemProperty('net.bytebuddy.test.version', version)
+    systemProperty('net.bytebuddy.test.integration', Boolean.getBoolean('net.bytebuddy.test.integration'))
+}
+

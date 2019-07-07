@@ -27,6 +27,9 @@
         <version.plugin.directory>0.2</version.plugin.directory>
         <version.gradle>4.5</version.gradle>
         <exec.gradle>gradlew</exec.gradle>
+        <!-- Actual values are set via settings.xml on the 'gradle' profile since they cannot be published. -->
+        <gradle.publish.key/>
+        <gradle.publish.secret/>
     </properties>
 
     <dependencies>
@@ -94,6 +97,25 @@
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.source=${sourcecode.main.version}</argument>
                                 <argument>-Dnet.bytebuddy.gradle.target=${bytecode.main.version}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>gradle-publish</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${project.basedir}/${exec.gradle}</executable>
+                            <arguments>
+                                <argument>publishPlugins</argument>
+                                <argument>--build-file release.gradle</argument>
+                                <argument>--info</argument>
+                                <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
+                                <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
+                                <argument>-Pgradle.publish.key=${gradle.publish.key}</argument>
+                                <argument>-Pgradle.publish.secret=${gradle.publish.secret}</argument>
                             </arguments>
                         </configuration>
                     </execution>

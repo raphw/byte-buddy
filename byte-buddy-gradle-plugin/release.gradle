@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '0.10.0'
+}
+
+apply from: './main.gradle'
+
+def pom = new XmlSlurper().parse(file('./pom.xml'))
+
+pluginBundle {
+    website = 'https://bytebuddy.net'
+    vcsUrl = 'https://github.com/raphw/byte-buddy'
+    tags = ['Byte Buddy', 'bytecode', 'enhancement']
+}
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+            displayName = 'Byte Buddy Gradle plugin'
+            description = pom.description.text().toString()
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+        }
+    }
+}
