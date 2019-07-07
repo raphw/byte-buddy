@@ -70,7 +70,7 @@ if case `$JAVA_HOME/bin/java -version 2>&1 >/dev/null | grep 'java version' | aw
 elif case `$JAVA_HOME/bin/java -version 2>&1 >/dev/null | grep 'java version' | awk '{print $3}'` in "\"1.7."*) ;; *) false;; esac; then
   GRADLE_VERSION="2.14.1"
 else
-  GRADLE_VERSION="5.0"
+  GRADLE_VERSION="5.4.1"
 fi
 
 CLASSPATH=$APP_HOME/gradle/${GRADLE_VERSION}/gradle-wrapper.jar
