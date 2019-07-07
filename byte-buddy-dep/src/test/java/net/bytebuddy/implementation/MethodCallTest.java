@@ -299,7 +299,7 @@ public class MethodCallTest {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .invokable(isTypeInitializer())
-                .intercept(MethodCall.invoke(named("println").and(takesArguments(Object.class)))
+                .intercept(MethodCall.invoke(isEquals())
                         .onField("out", new FieldLocator.ForExactType.Factory(TypeDescription.ForLoadedType.of(System.class)))
                         .with(""))
                 .make()
