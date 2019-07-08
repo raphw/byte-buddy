@@ -3,7 +3,7 @@
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
-        <version>1.9.14-SNAPSHOT</version>
+        <version>1.9.14</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,8 +28,8 @@
         <version.gradle>4.5</version.gradle>
         <exec.gradle>gradlew</exec.gradle>
         <!-- Actual values are set via settings.xml on the 'gradle' profile since they cannot be published. -->
-        <gradle.publish.key/>
-        <gradle.publish.secret/>
+        <gradle.publish.key />
+        <gradle.publish.secret />
     </properties>
 
     <dependencies>
