@@ -102,7 +102,7 @@
                     </execution>
                     <execution>
                         <id>gradle-publish</id>
-                        <phase>deploy</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -110,7 +110,7 @@
                             <executable>${project.basedir}/${exec.gradle}</executable>
                             <arguments>
                                 <argument>publishPlugins</argument>
-                                <argument>--build-file release.gradle</argument>
+                                <argument>--build-file=release.gradle</argument>
                                 <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
