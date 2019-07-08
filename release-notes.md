@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. July 2019: version 1.9.14
+
+- Add Java 14 compatibility.
+- Refactor emulated attach mechanism and use JNA in order to prepare supporting other mechanisms in the future.
+- Reinterrupt threads if interruption exceptions are catched in threads not owned by Byte Buddy.
+- Refactor class file dumping. 
+- Publish Gradle plugin to Gradle plugin repository.
+
 ### 24. May 2019: version 1.9.13
 
 - Added matcher for super class hierarchy that ignores interfaces.
