@@ -4,15 +4,9 @@ The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements duri
 
 ###### build.gradle
 ```groovy
-buildscript {
-  repositories {
-    jCenter()
-  }
-  dependencies {
-    classpath "net.bytebuddy:byte-buddy-gradle-plugin:+"
-  }
+plugins {
+  id 'net.bytebuddy.byte-buddy-gradle-plugin'
 }
-apply plugin: "net.bytebuddy.byte-buddy"
 
 configurations {
   examplePlugin "foo:bar:1.0"
