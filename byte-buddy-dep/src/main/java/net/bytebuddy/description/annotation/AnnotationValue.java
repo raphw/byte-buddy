@@ -172,7 +172,7 @@ public interface AnnotationValue<T, S> {
         JAVA_14_CAPABLE_VM('{', '}') {
             @Override
             public String toSourceString(byte value) {
-                return "(byte)" + String.format("0x%02x", value);
+                return "(byte)0x" + Integer.toHexString(value);
             }
 
             @Override

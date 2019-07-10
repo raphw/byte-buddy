@@ -517,7 +517,7 @@ public class ByteBuddyAgent {
             throw new IllegalStateException("No compatible attachment provider is available");
         }
         try {
-            if (ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
+            if (attachmentAccessor.isExternalAttachmentRequired() && ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
                 installExternal(attachmentAccessor.getExternalAttachment(), processId, agentProvider.resolve(), isNative, argument);
             } else {
                 Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve().getAbsolutePath(), isNative, argument);
@@ -705,6 +705,13 @@ public class ByteBuddyAgent {
             boolean isAvailable();
 
             /**
+             * Returns {@code true} if this accessor prohibits attachment to the same virtual machine in Java 9 and later.
+             *
+             * @return {@code true} if this accessor prohibits attachment to the same virtual machine in Java 9 and later.
+             */
+            boolean isExternalAttachmentRequired();
+
+            /**
              * Returns a {@code VirtualMachine} class. This method must only be called for available accessors.
              *
              * @return The virtual machine type.
@@ -733,6 +740,13 @@ public class ByteBuddyAgent {
                  */
                 public boolean isAvailable() {
                     return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isExternalAttachmentRequired() {
+                    throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
 
                 /**
@@ -894,6 +908,13 @@ public class ByteBuddyAgent {
                     /**
                      * {@inheritDoc}
                      */
+                    public boolean isExternalAttachmentRequired() {
+                        return true;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExternalAttachment getExternalAttachment() {
                         return new ExternalAttachment(virtualMachineType.getName(), classPath);
                     }
@@ -916,8 +937,15 @@ public class ByteBuddyAgent {
                     /**
                      * {@inheritDoc}
                      */
+                    public boolean isExternalAttachmentRequired() {
+                        return false;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
                     public ExternalAttachment getExternalAttachment() {
-                        throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
+                        throw new IllegalStateException("Cannot apply external attachment");
                     }
                 }
             }
