@@ -15,19 +15,17 @@
  */
 package net.bytebuddy.agent;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.channels.FileLock;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -384,7 +382,7 @@ public interface VirtualMachine {
                 /**
                  * The JNA library to use.
                  */
-                private final PosixSocketLibrary library;
+                private final PosixLibrary library;
 
                 /**
                  * The socket's handle.
@@ -397,7 +395,7 @@ public interface VirtualMachine {
                  * @param library The JNA library to use.
                  * @param handle  The socket's handle.
                  */
-                protected ForJnaPosixSocket(PosixSocketLibrary library, int handle) {
+                protected ForJnaPosixSocket(PosixLibrary library, int handle) {
                     this.library = library;
                     this.handle = handle;
                 }
@@ -429,44 +427,7 @@ public interface VirtualMachine {
                 /**
                  * A JNA library binding for Posix sockets.
                  */
-                protected interface PosixSocketLibrary extends Library {
-
-                    /**
-                     * Represents an address for a POSIX socket.
-                     */
-                    class SocketAddress extends Structure {
-
-                        /**
-                         * The socket family.
-                         */
-                        @SuppressWarnings("unused")
-                        @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Field required by native implementation.")
-                        public short family = 1;
-
-                        /**
-                         * The socket path.
-                         */
-                        public byte[] path = new byte[100];
-
-                        /**
-                         * Sets the socket path.
-                         *
-                         * @param path The socket path.
-                         */
-                        public void setPath(String path) {
-                            try {
-                                System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
-                                System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
-                            } catch (UnsupportedEncodingException exception) {
-                                throw new IllegalStateException(exception);
-                            }
-                        }
-
-                        @Override
-                        protected List<String> getFieldOrder() {
-                            return Arrays.asList("family", "path");
-                        }
-                    }
+                protected interface PosixLibrary extends Library {
 
                     /**
                      * Creates a POSIX socket connection.
@@ -515,6 +476,43 @@ public interface VirtualMachine {
                      * @return {@code 0} if the socket was closed or an error code.
                      */
                     int close(int handle);
+
+                    /**
+                     * Represents an address for a POSIX socket.
+                     */
+                    class SocketAddress extends Structure {
+
+                        /**
+                         * The socket family.
+                         */
+                        @SuppressWarnings("unused")
+                        @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Field required by native implementation.")
+                        public short family = 1;
+
+                        /**
+                         * The socket path.
+                         */
+                        public byte[] path = new byte[100];
+
+                        /**
+                         * Sets the socket path.
+                         *
+                         * @param path The socket path.
+                         */
+                        public void setPath(String path) {
+                            try {
+                                System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
+                                System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                            } catch (UnsupportedEncodingException exception) {
+                                throw new IllegalStateException(exception);
+                            }
+                        }
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("family", "path");
+                        }
+                    }
                 }
 
                 /**
@@ -525,7 +523,7 @@ public interface VirtualMachine {
                     /**
                      * The socket library API.
                      */
-                    private final ForJnaPosixSocket.PosixSocketLibrary library;
+                    private final PosixLibrary library;
 
                     /**
                      * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
@@ -536,7 +534,7 @@ public interface VirtualMachine {
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
                         super(attempts, pause, timeUnit);
-                        library = Native.load("c", ForJnaPosixSocket.PosixSocketLibrary.class);
+                        library = Native.load("c", PosixLibrary.class);
                     }
 
                     /**
@@ -547,13 +545,360 @@ public interface VirtualMachine {
                         if (handle == 0) {
                             throw new IllegalStateException("Could not open POSIX socket");
                         }
-                        ForJnaPosixSocket.PosixSocketLibrary.SocketAddress address = new ForJnaPosixSocket.PosixSocketLibrary.SocketAddress();
+                        PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
                         address.setPath(socket.getAbsolutePath());
                         if (library.connect(handle, address, address.size()) != 0) {
                             throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
                         }
                         return new Connection.ForJnaPosixSocket(library, handle);
                     }
+                }
+            }
+        }
+    }
+
+    class ForOpenJ9Vm implements VirtualMachine {
+
+        private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
+
+        private final Socket socket;
+
+        protected ForOpenJ9Vm(Socket socket) {
+            this.socket = socket;
+        }
+
+        public static VirtualMachine attach(String processId) throws IOException {
+            return attach(processId, 5000, new Connector.ForJnaPosixEnvironment());
+        }
+
+        public static VirtualMachine attach(String processId, int timeout, Connector connector) throws IOException {
+            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, connector.getTemporaryFolder()), ".com_ibm_tools_attach");
+            RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
+            try {
+                FileLock attachLockLock = attachLock.getChannel().lock();
+                try {
+                    List<Properties> virtualMachines;
+                    RandomAccessFile master = new RandomAccessFile(new File(directory, "_master"), "rw");
+                    try {
+                        FileLock masterLock = master.getChannel().lock();
+                        try {
+                            File[] vmFolder = directory.listFiles();
+                            if (vmFolder == null) {
+                                throw new IllegalStateException("No descriptor files found in " + directory);
+                            }
+                            long userId = connector.userId();
+                            virtualMachines = new ArrayList<Properties>();
+                            for (File aVmFolder : vmFolder) {
+                                if (aVmFolder.isDirectory() && (userId == 0 || connector.getOwnerOf(aVmFolder) == userId)) {
+                                    File attachInfo = new File(aVmFolder, "attachInfo");
+                                    if (attachInfo.isFile()) {
+                                        Properties virtualMachine = new Properties();
+                                        FileInputStream inputStream = new FileInputStream(attachInfo);
+                                        try {
+                                            virtualMachine.load(inputStream);
+                                        } finally {
+                                            inputStream.close();
+                                        }
+                                        long targetProcessId = Long.parseLong(virtualMachine.getProperty("processId"));
+                                        long targetUserId;
+                                        try {
+                                            targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
+                                        } catch (NumberFormatException ignored) {
+                                            targetUserId = 0L;
+                                        }
+                                        if (userId != 0L && targetProcessId == 0L) {
+                                            targetUserId = connector.getOwnerOf(attachInfo);
+                                        }
+                                        if (targetProcessId == 0L || connector.isExistingProcess(targetProcessId)) {
+                                            virtualMachines.add(virtualMachine);
+                                        } else if (userId == 0L || targetUserId == userId) {
+                                            File[] vmFile = aVmFolder.listFiles();
+                                            if (vmFile != null) {
+                                                for (File aVmFile : vmFile) {
+                                                    if (!aVmFile.delete()) {
+                                                        aVmFile.deleteOnExit();
+                                                    }
+                                                }
+                                            }
+                                            if (!aVmFolder.delete()) {
+                                                aVmFolder.deleteOnExit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } finally {
+                            masterLock.release();
+                        }
+                    } finally {
+                        master.close();
+                    }
+                    Properties target = null;
+                    for (Properties virtualMachine : virtualMachines) {
+                        if (virtualMachine.getProperty("processId").equalsIgnoreCase(processId)) {
+                            target = virtualMachine;
+                            break;
+                        }
+                    }
+                    if (target == null) {
+                        throw new IllegalStateException("Could not locate target process info in " + directory);
+                    }
+                    ServerSocket serverSocket = new ServerSocket(0);
+                    serverSocket.setSoTimeout(timeout);
+                    try {
+                        File receiver = new File(directory, target.getProperty("vmId"));
+                        String key = Long.toHexString(new SecureRandom().nextLong());
+                        File reply = new File(receiver, "replyInfo");
+                        try {
+                            if (reply.createNewFile()) {
+                                connector.setPermissions(reply, 0600);
+                            }
+                            FileOutputStream outputStream = new FileOutputStream(reply);
+                            try {
+                                outputStream.write(key.getBytes("UTF-8"));
+                                outputStream.write("\n".getBytes("UTF-8"));
+                                outputStream.write(Long.toString(serverSocket.getLocalPort()).getBytes("UTF-8"));
+                                outputStream.write("\n".getBytes("UTF-8"));
+                            } finally {
+                                outputStream.close();
+                            }
+                            Map<RandomAccessFile, FileLock> locks = new HashMap<RandomAccessFile, FileLock>();
+                            try {
+                                String pid = Long.toString(connector.pid());
+                                for (Properties virtualMachine : virtualMachines) {
+                                    if (!virtualMachine.getProperty("processId").equalsIgnoreCase(pid)) {
+                                        String attachNotificationSync = virtualMachine.getProperty("attachNotificationSync");
+                                        RandomAccessFile syncFile = new RandomAccessFile(attachNotificationSync == null
+                                                ? new File(directory, "attachNotificationSync")
+                                                : new File(attachNotificationSync), "rw");
+                                        try {
+                                            locks.put(syncFile, syncFile.getChannel().lock());
+                                        } catch (IOException ignored) {
+                                            syncFile.close();
+                                        }
+                                    }
+                                }
+                                int notifications = 0;
+                                File[] item = directory.listFiles();
+                                if (item != null) {
+                                    for (File anItem : item) {
+                                        String name = anItem.getName();
+                                        if (!name.startsWith(".trash_")
+                                                && !name.equalsIgnoreCase("_attachlock")
+                                                && !name.equalsIgnoreCase("_master")
+                                                && !name.equalsIgnoreCase("_notifier")) {
+                                            notifications += 1;
+                                        }
+                                    }
+                                }
+                                connector.incrementSemaphore(directory, "_notifier", notifications);
+                                try {
+                                    Socket socket = serverSocket.accept();
+                                    String answer = read(socket);
+                                    if (answer.contains(' ' + key + ' ')) {
+                                        return new ForOpenJ9Vm(socket);
+                                    } else {
+                                        throw new IllegalStateException("Unexpected answered to attachment: " + answer);
+                                    }
+                                } finally {
+                                    connector.decrementSemaphore(directory, "_notifier", notifications);
+                                }
+                            } finally {
+                                for (Map.Entry<RandomAccessFile, FileLock> entry : locks.entrySet()) {
+                                    try {
+                                        try {
+                                            entry.getValue().release();
+                                        } finally {
+                                            entry.getKey().close();
+                                        }
+                                    } catch (Throwable ignored) {
+                                        /* do nothing */
+                                    }
+                                }
+                            }
+                        } finally {
+                            if (!reply.delete()) {
+                                reply.deleteOnExit();
+                            }
+                        }
+                    } finally {
+                        serverSocket.close();
+                    }
+                } finally {
+                    attachLockLock.release();
+                }
+            } finally {
+                attachLock.close();
+            }
+        }
+
+        public void loadAgent(String jarFile, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
+            String answer = read(socket);
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target agent failed loading agent: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        public void loadAgentPath(String library, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENTPATH(" + library + (argument == null ? "" : (',' + argument)) + ')');
+            String answer = read(socket);
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target agent failed loading library: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        public void detach() throws IOException {
+            try {
+                write(socket, "ATTACH_DETACH");
+                read(socket); // The answer is intentionally ignored.
+            } finally {
+                socket.close();
+            }
+        }
+
+        private static void write(Socket socket, String value) throws IOException {
+            socket.getOutputStream().write(value.getBytes("UTF-8"));
+            socket.getOutputStream().write(0);
+            socket.getOutputStream().flush();
+        }
+
+        private static String read(Socket socket) throws IOException {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = socket.getInputStream().read(buffer)) != -1) {
+                if (length > 0 && buffer[length - 1] == 0) {
+                    outputStream.write(buffer, 0, length - 1);
+                    break;
+                } else {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            return outputStream.toString("UTF-8");
+        }
+
+        public interface Connector {
+
+            String getTemporaryFolder();
+
+            long pid();
+
+            long userId();
+
+            boolean isExistingProcess(long targetProcessId);
+
+            long getOwnerOf(File folder);
+
+            void setPermissions(File reply, int permissions);
+
+            void incrementSemaphore(File directory, String name, int notifications);
+
+            void decrementSemaphore(File directory, String name, int notifications);
+
+            class ForJnaPosixEnvironment implements Connector {
+
+                private static final int O_CREAT = 0x40;
+
+                private static final int ESRCH = 3;
+
+                private final PosixLibrary library = Native.load("c", PosixLibrary.class);
+
+                public String getTemporaryFolder() {
+                    return "/tmp";
+                }
+
+                public long pid() {
+                    return library.getpid();
+                }
+
+                public long userId() {
+                    return library.getuid();
+                }
+
+                public boolean isExistingProcess(long processId) {
+                    return library.kill(processId, 0) != ESRCH;
+                }
+
+                public long getOwnerOf(File folder) {
+                    // TODO: Is there an easy way of getting the uid of the file owner?
+                    try {
+                        Method method = Class
+                                .forName("com.ibm.tools.attach.target.CommonDirectory")
+                                .getMethod("getFileOwner", String.class);
+                        return (Long) method.invoke(null, folder.getAbsolutePath());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                public void setPermissions(File reply, int permissions) {
+                    library.chmod(reply.getAbsolutePath(), permissions);
+                }
+
+                public void incrementSemaphore(File directory, String name, int count) {
+                    // TODO: Why is this an illegal call?
+//                    Pointer semaphore = library.sem_open(name, O_CREAT, 0666, 0);
+//                    try {
+//                        while (count-- > 0) {
+//                            library.sem_post(semaphore);
+//                        }
+//                    } finally {
+//                        library.sem_close(semaphore);
+//                    }
+                    try {
+                        Method method = Class
+                                .forName("com.ibm.tools.attach.target.IPC")
+                                .getDeclaredMethod("notifyVm", String.class, String.class, int.class);
+                        method.setAccessible(true);
+                        method.invoke(null, directory.getAbsolutePath(), name, count);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                public void decrementSemaphore(File directory, String name, int count) {
+                    // TODO: Why is this an illegal call?
+//                    Pointer semaphore = library.sem_open(name, 0, 0666, 0);
+//                    try {
+//                        while (count-- > 0) {
+//                            library.sem_wait(semaphore);
+//                        }
+//                    } finally {
+//                        library.sem_close(semaphore);
+//                    }
+                    try {
+                        Method method = Class
+                                .forName("com.ibm.tools.attach.target.IPC")
+                                .getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
+                        method.setAccessible(true);
+                        method.invoke(null, directory.getAbsolutePath(), name, count);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                protected interface PosixLibrary extends Library {
+
+                    int getpid() throws LastErrorException;
+
+                    int getuid() throws LastErrorException;
+
+                    int kill(long processId, int signal) throws LastErrorException;
+
+                    void chmod(String name, int mode) throws LastErrorException;
+
+                    Pointer sem_open(String name, int flags, int mode, int value) throws LastErrorException;
+
+                    int sem_post(Pointer pointer) throws LastErrorException;
+
+                    int sem_wait(Pointer pointer) throws LastErrorException;
+
+                    int sem_close(Pointer pointer) throws LastErrorException;
                 }
             }
         }

@@ -15,6 +15,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -51,7 +52,8 @@ public class VirtualMachineForHotSpotVmAttachmentTest {
     @Test
     @UnixRule.Enforce
     public void canAttachViaPosixSocket() throws Exception {
-        VirtualMachine virtualMachine = VirtualMachine.ForHotSpotVm.attach(ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
+        assertThat(SampleAgent.argument, nullValue(String.class));
+        VirtualMachine virtualMachine = VirtualMachine.ForOpenJ9Vm.attach(ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
         try {
             virtualMachine.loadAgent(agent.getAbsolutePath(), FOO);
         } finally {
