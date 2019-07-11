@@ -16,13 +16,12 @@
 package net.bytebuddy.agent;
 
 import com.sun.jna.*;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.Win32Exception;
-import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.*;
+import com.sun.jna.ptr.IntByReference;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -86,22 +85,23 @@ public interface VirtualMachine {
         public Class<? extends VirtualMachine> run() {
             try {
                 Class<?> platform = Class.forName("com.sun.jna.Platform");
-                if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
+                /*if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
                     throw new UnsupportedOperationException("Attachment emulation is not currently available on Windows");
-                } else if (System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")) {
+                } else*/
+                if (System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")) {
                     return ForOpenJ9.class;
                 } else {
                     return ForHotSpot.class;
                 }
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Optional JNA dependency is not available", exception);
-            } catch (NoSuchMethodException exception) {
+            }/* catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("The signature of the included JNA distribution is incompatible", exception);
             } catch (IllegalAccessException exception) {
                 throw new UnsupportedOperationException("Could not access JNA", exception);
             } catch (InvocationTargetException exception) {
                 throw new UnsupportedOperationException("Could not invoke JNA method", exception);
-            }
+            }*/
         }
     }
 
@@ -645,7 +645,7 @@ public interface VirtualMachine {
                             long userId = connector.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && (userId == 0 || connector.getOwnerIdOf(aVmFolder) == userId)) {
+                                if (aVmFolder.isDirectory() && connector.getOwnerIdOf(aVmFolder) == userId) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
@@ -1216,17 +1216,7 @@ public interface VirtualMachine {
              */
             class ForJnaWindowsEnvironment implements Connector {
 
-                /**
-                 * The library being used.
-                 */
-                private final WindowsLibrary library;
-
-                /**
-                 * Creates a new connector for a JVM on Windows.
-                 */
-                public ForJnaWindowsEnvironment() {
-                    library = Native.load("c", WindowsLibrary.class);
-                }
+                private static final long NO_USER_ID = 0;
 
                 /**
                  * {@inheritDoc}
@@ -1244,28 +1234,36 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public long pid() {
-                    return library.getpid();
+                    return Kernel32.INSTANCE.GetCurrentProcessId();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public long userId() {
-                    return 0;
+                    return NO_USER_ID;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public boolean isExistingProcess(long processId) {
-                    return false;
+                    WinNT.HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_QUERY_INFORMATION, false, (int) processId);
+                    if (handle == null) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    IntByReference exists = new IntByReference();
+                    if (!Kernel32.INSTANCE.GetExitCodeProcess(handle, exists)) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    return exists.getValue() == WinBase.STILL_ACTIVE;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public long getOwnerIdOf(File file) {
-                    return 0;
+                    return NO_USER_ID;
                 }
 
                 /**
@@ -1279,11 +1277,11 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void incrementSemaphore(File directory, String name, int count) {
-                    // TODO: Reimplement
+                    // TODO: Reimplement in JNA.
                     try {
-                        Class.forName("com.ibm.tools.attach.target.IPC")
-                                .getDeclaredMethod("notifyVm", String.class, String.class, int.class)
-                                .invoke(null, directory.getAbsolutePath(), name, count);
+                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
+                        method.setAccessible(true);
+                        method.invoke(null, directory.getAbsolutePath(), name, count);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -1293,22 +1291,14 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void decrementSemaphore(File directory, String name, int count) {
-                    // TODO: Reimplement
+                    // TODO: Reimplement in JNA.
                     try {
-                        Class.forName("com.ibm.tools.attach.target.IPC")
-                                .getDeclaredMethod("cancelNotify", String.class, String.class, int.class)
-                                .invoke(null, directory.getAbsolutePath(), name, count);
+                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
+                        method.setAccessible(true);
+                        method.invoke(null, directory.getAbsolutePath(), name, count);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                }
-
-                /**
-                 * A library for interacting with Windows native functions.
-                 */
-                protected interface WindowsLibrary extends Library {
-
-                    int getpid();
                 }
             }
         }
