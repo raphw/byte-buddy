@@ -19,11 +19,13 @@ import com.sun.jna.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
+import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -67,9 +69,44 @@ public interface VirtualMachine {
     void detach() throws IOException;
 
     /**
+     * A resolver for the current VM's virtual machine attachment emulation.
+     */
+    enum Resolver implements PrivilegedAction<Class<?>> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public Class<?> run() {
+            try {
+                Class<?> platform = Class.forName("com.sun.jna.Platform");
+                if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
+                    throw new UnsupportedOperationException("Attachment emulation is not currently available on Windows");
+                } else if (System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")) {
+                    return ForOpenJ9.class;
+                } else {
+                    return ForHotSpot.class;
+                }
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Optional JNA dependency is not available", exception);
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("The signature of the included JNA distribution is incompatible", exception);
+            } catch (IllegalAccessException exception) {
+                throw new UnsupportedOperationException("Could not access JNA", exception);
+            } catch (InvocationTargetException exception) {
+                throw new UnsupportedOperationException("Could not invoke JNA method", exception);
+            }
+        }
+    }
+
+    /**
      * A virtual machine attachment implementation for a HotSpot VM or any compatible JVM.
      */
-    class ForHotSpotVm implements VirtualMachine {
+    class ForHotSpot implements VirtualMachine {
 
         /**
          * The UTF-8 charset name.
@@ -111,25 +148,10 @@ public interface VirtualMachine {
          *
          * @param connection The virtual machine connection.
          */
-        protected ForHotSpotVm(Connection connection) {
+        protected ForHotSpot(Connection connection) {
             this.connection = connection;
         }
-
-        /**
-         * Asserts if this virtual machine type is available on the current VM.
-         *
-         * @return The virtual machine type if available.
-         * @throws Throwable If this virtual machine is not available.
-         */
-        public static Class<?> assertAvailability() throws Throwable {
-            if (Platform.isWindows() || Platform.isWindowsCE()) {
-                throw new IllegalStateException("POSIX sockets are not available on Windows");
-            } else {
-                Class.forName(Native.class.getName()); // Attempt loading the JNA class to check availability.
-                return ForHotSpotVm.class;
-            }
-        }
-
+        
         /**
          * Attaches to the supplied process id using the default JNA implementation.
          *
@@ -150,7 +172,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, Connection.Factory connectionFactory) throws IOException {
-            return new ForHotSpotVm(connectionFactory.connect(processId));
+            return new ForHotSpot(connectionFactory.connect(processId));
         }
 
         /**
@@ -564,7 +586,7 @@ public interface VirtualMachine {
     /**
      * A virtual machine attachment implementation for OpenJ9 or any compatible JVM.
      */
-    class ForOpenJ9Vm implements VirtualMachine {
+    class ForOpenJ9 implements VirtualMachine {
 
         /**
          * The temporary folder for attachment files for OpenJ9 VMs.
@@ -581,7 +603,7 @@ public interface VirtualMachine {
          *
          * @param socket The socket on which this VM and the target VM communicate.
          */
-        protected ForOpenJ9Vm(Socket socket) {
+        protected ForOpenJ9(Socket socket) {
             this.socket = socket;
         }
 
@@ -730,7 +752,7 @@ public interface VirtualMachine {
                                     Socket socket = serverSocket.accept();
                                     String answer = read(socket);
                                     if (answer.contains(' ' + key + ' ')) {
-                                        return new ForOpenJ9Vm(socket);
+                                        return new ForOpenJ9(socket);
                                     } else {
                                         throw new IllegalStateException("Unexpected answered to attachment: " + answer);
                                     }

@@ -921,16 +921,16 @@ public class ByteBuddyAgent {
                 }
 
                 /**
-                 * A simple implementation of an accessible accessor that does not allow for external attachment.
+                 * A simple implementation of an accessible accessor that attaches using a virtual machine emulation that does not require external attachment.
                  */
-                protected static class WithoutExternalAttachment extends Simple {
+                protected static class WithDirectAttachment extends Simple {
 
                     /**
-                     * Creates a new simple accessor that does not allow for external attachment.
+                     * Creates a new simple accessor that implements direct attachment.
                      *
                      * @param virtualMachineType A {@code VirtualMachine} class.
                      */
-                    public WithoutExternalAttachment(Class<?> virtualMachineType) {
+                    public WithDirectAttachment(Class<?> virtualMachineType) {
                         super(virtualMachineType);
                     }
 
@@ -1097,7 +1097,7 @@ public class ByteBuddyAgent {
              */
             public Accessor attempt() {
                 try {
-                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.ForHotSpotVm.assertAvailability());
+                    return new Accessor.Simple.WithDirectAttachment(AccessController.doPrivileged(VirtualMachine.Resolver.INSTANCE));
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }

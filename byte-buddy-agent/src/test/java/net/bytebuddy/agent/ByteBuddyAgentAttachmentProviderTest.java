@@ -25,7 +25,7 @@ public class ByteBuddyAgentAttachmentProviderTest {
 
     @Test(expected = IllegalStateException.class)
     public void testSimpleAccessorWithoutExternalAttachment() throws Exception {
-        new ByteBuddyAgent.AttachmentProvider.Accessor.Simple.WithoutExternalAttachment(Void.class).getExternalAttachment();
+        new ByteBuddyAgent.AttachmentProvider.Accessor.Simple.WithDirectAttachment(Void.class).getExternalAttachment();
     }
 
     @Test
