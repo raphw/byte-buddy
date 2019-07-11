@@ -162,7 +162,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, new Connection.ForJnaPosixSocket.Factory(10, 100, TimeUnit.MILLISECONDS));
+            return attach(processId, new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -302,12 +302,12 @@ public interface VirtualMachine {
                     private static final String ATTACH_FILE_PREFIX = ".attach_pid";
 
                     /**
-                     * The maximum amount of attempts to establish a POSIX socket connection to the target VM.
+                     * The maximum amount of attempts for checking the establishment of a socket connection.
                      */
                     private final int attempts;
 
                     /**
-                     * The pause between two checks for an existing socket.
+                     * The pause between two checks for an established socket connection.
                      */
                     private final long pause;
 
@@ -317,10 +317,10 @@ public interface VirtualMachine {
                     private final TimeUnit timeUnit;
 
                     /**
-                     * Creates a new connection factory for creating a connection to a JVM via a POSIX socket.
+                     * Creates a connection factory for creating a POSIX socket connection.
                      *
-                     * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
-                     * @param pause    The pause between two checks for an existing socket.
+                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause    The pause between two checks for an established socket connection.
                      * @param timeUnit The time unit of the pause time.
                      */
                     protected ForPosixSocket(int attempts, long pause, TimeUnit timeUnit) {
@@ -349,36 +349,16 @@ public interface VirtualMachine {
                                 }
                             }
                             try {
-                                // The HotSpot attachment API attempts to send the signal to all children of a process
-                                Process process = Runtime.getRuntime().exec("kill -3 " + processId);
+                                kill(processId, 3, socket);
                                 int attempts = this.attempts;
-                                boolean exited = false;
-                                do {
-                                    try {
-                                        if (process.exitValue() != 0) {
-                                            throw new IllegalStateException("Error while sending signal to target VM: " + processId);
-                                        }
-                                        exited = true;
-                                        break;
-                                    } catch (IllegalThreadStateException ignored) {
-                                        attempts -= 1;
-                                        Thread.sleep(timeUnit.toMillis(pause));
-                                    }
-                                } while (attempts > 0);
-                                if (!exited) {
-                                    process.destroy();
-                                    throw new IllegalStateException("Target VM did not respond to signal: " + processId);
-                                }
-                                attempts = this.attempts;
-                                while (attempts-- > 0 && !socket.exists()) {
-                                    Thread.sleep(timeUnit.toMillis(pause));
+                                while (!socket.exists() && attempts-- > 0) {
+                                    timeUnit.sleep(pause);
                                 }
                                 if (!socket.exists()) {
                                     throw new IllegalStateException("Target VM did not respond: " + processId);
                                 }
-                            } catch (InterruptedException exception) {
-                                Thread.currentThread().interrupt();
-                                throw new IllegalStateException("Interrupted during wait for process", exception);
+                            } catch (InterruptedException e) {
+                                throw new UnsupportedOperationException("Not yet implemented");
                             } finally {
                                 if (!attachFile.delete()) {
                                     attachFile.deleteOnExit();
@@ -387,6 +367,15 @@ public interface VirtualMachine {
                         }
                         return doConnect(socket);
                     }
+
+                    /**
+                     * Sends a kill signal to the target process.
+                     *
+                     * @param processId The process id.
+                     * @param signal    The signal to send.
+                     * @param socket    The socket to read from.
+                     */
+                    protected abstract void kill(String processId, int signal, File socket);
 
                     /**
                      * Connects to the supplied POSIX socket.
@@ -436,10 +425,7 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void write(byte[] buffer) {
-                    int write = library.write(handle, ByteBuffer.wrap(buffer), buffer.length);
-                    if (write != buffer.length) {
-                        throw new IllegalStateException("Could not write entire buffer to socket");
-                    }
+                    library.write(handle, ByteBuffer.wrap(buffer), buffer.length);
                 }
 
                 /**
@@ -455,6 +441,14 @@ public interface VirtualMachine {
                 protected interface PosixLibrary extends Library {
 
                     /**
+                     * Sends a kill command.
+                     *
+                     * @param processId The process id to kill.
+                     * @param signal    The signal to send.
+                     */
+                    void kill(int processId, int signal) throws LastErrorException;
+
+                    /**
                      * Creates a POSIX socket connection.
                      *
                      * @param domain   The socket's domain.
@@ -462,7 +456,7 @@ public interface VirtualMachine {
                      * @param protocol The protocol version.
                      * @return A handle to the socket that was created or {@code 0} if no socket could be created.
                      */
-                    int socket(int domain, int type, int protocol);
+                    int socket(int domain, int type, int protocol) throws LastErrorException;
 
                     /**
                      * Connects a socket connection.
@@ -472,7 +466,7 @@ public interface VirtualMachine {
                      * @param length  The length of the socket value.
                      * @return {@code 0} if the socket was connected or an error code.
                      */
-                    int connect(int handle, SocketAddress address, int length);
+                    void connect(int handle, SocketAddress address, int length) throws LastErrorException;
 
                     /**
                      * Reads from a POSIX socket.
@@ -482,7 +476,7 @@ public interface VirtualMachine {
                      * @param count  The bytes being read.
                      * @return The amount of bytes that could be read.
                      */
-                    int read(int handle, ByteBuffer buffer, int count);
+                    int read(int handle, ByteBuffer buffer, int count) throws LastErrorException;
 
                     /**
                      * Writes to a POSIX socket.
@@ -492,7 +486,7 @@ public interface VirtualMachine {
                      * @param count  The bytes being written.
                      * @return The amount of bytes that could be written.
                      */
-                    int write(int handle, ByteBuffer buffer, int count);
+                    void write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
 
                     /**
                      * Closes the socket connection.
@@ -500,7 +494,7 @@ public interface VirtualMachine {
                      * @param handle The handle of the connection.
                      * @return {@code 0} if the socket was closed or an error code.
                      */
-                    int close(int handle);
+                    void close(int handle) throws LastErrorException;
 
                     /**
                      * Represents an address for a POSIX socket.
@@ -551,10 +545,10 @@ public interface VirtualMachine {
                     private final PosixLibrary library;
 
                     /**
-                     * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
+                     * Creates a connection factory for a POSIX socket using JNA.
                      *
-                     * @param attempts The maximum amount of attempts to establish a POSIX socket connection to the target VM.
-                     * @param pause    The pause between two checks for an existing socket.
+                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause    The pause between two checks for an established socket connection.
                      * @param timeUnit The time unit of the pause time.
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
@@ -562,20 +556,18 @@ public interface VirtualMachine {
                         library = Native.load("c", PosixLibrary.class);
                     }
 
-                    /**
-                     * {@inheritDoc}
-                     */
+                    @Override
+                    protected void kill(String processId, int signal, File socket) {
+                        library.kill(Integer.parseInt(processId), signal);
+                    }
+
+                    @Override
                     public Connection doConnect(File socket) {
                         int handle = library.socket(1, 1, 0);
-                        if (handle == 0) {
-                            throw new IllegalStateException("Could not open POSIX socket");
-                        }
                         PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
                         try {
                             address.setPath(socket.getAbsolutePath());
-                            if (library.connect(handle, address, address.size()) != 0) {
-                                throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
-                            }
+                            library.connect(handle, address, address.size());
                             return new Connection.ForJnaPosixSocket(library, handle);
                         } finally {
                             address.clear();
@@ -940,7 +932,7 @@ public interface VirtualMachine {
                 /**
                  * The JNA library to use.
                  */
-                private final PosixLibrary library = Native.load("c", PosixLibrary.class);
+                private final PosixLibrary library;
 
                 /**
                  * The maximum amount of attempts for checking the result of a foreign process.
@@ -968,6 +960,7 @@ public interface VirtualMachine {
                     this.attempts = attempts;
                     this.pause = pause;
                     this.timeUnit = timeUnit;
+                    library = Native.load("c", PosixLibrary.class);
                 }
 
                 /**
