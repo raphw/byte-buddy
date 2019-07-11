@@ -11,7 +11,6 @@ public class AttacherTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-
     @Test
     public void testPseudoAttachment() throws Exception {
         PseudoAttacher.ERROR.set(null);

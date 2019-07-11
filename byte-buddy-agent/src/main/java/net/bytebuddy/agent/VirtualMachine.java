@@ -15,19 +15,21 @@
  */
 package net.bytebuddy.agent;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
 import com.sun.jna.Structure;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.channels.FileLock;
+import java.security.PrivilegedAction;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -69,9 +71,44 @@ public interface VirtualMachine {
     void detach() throws IOException;
 
     /**
-     * A virtual machine implementation for a HotSpot VM or any compatible VM.
+     * A resolver for the current VM's virtual machine attachment emulation.
      */
-    class ForHotSpotVm implements VirtualMachine {
+    enum Resolver implements PrivilegedAction<Class<? extends VirtualMachine>> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public Class<? extends VirtualMachine> run() {
+            try {
+                Class<?> platform = Class.forName("com.sun.jna.Platform");
+                if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
+                    throw new UnsupportedOperationException("Attachment emulation is not currently available on Windows");
+                } else if (System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")) {
+                    return ForOpenJ9.class;
+                } else {
+                    return ForHotSpot.class;
+                }
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Optional JNA dependency is not available", exception);
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("The signature of the included JNA distribution is incompatible", exception);
+            } catch (IllegalAccessException exception) {
+                throw new UnsupportedOperationException("Could not access JNA", exception);
+            } catch (InvocationTargetException exception) {
+                throw new UnsupportedOperationException("Could not invoke JNA method", exception);
+            }
+        }
+    }
+
+    /**
+     * A virtual machine attachment implementation for a HotSpot VM or any compatible JVM.
+     */
+    class ForHotSpot implements VirtualMachine {
 
         /**
          * The UTF-8 charset name.
@@ -109,27 +146,12 @@ public interface VirtualMachine {
         private final Connection connection;
 
         /**
-         * Creates a default virtual machine implementation.
+         * Creates a new virtual machine connection for HotSpot.
          *
          * @param connection The virtual machine connection.
          */
-        protected ForHotSpotVm(Connection connection) {
+        protected ForHotSpot(Connection connection) {
             this.connection = connection;
-        }
-
-        /**
-         * Asserts if this virtual machine type is available on the current VM.
-         *
-         * @return The virtual machine type if available.
-         * @throws Throwable If this virtual machine is not available.
-         */
-        public static Class<?> assertAvailability() throws Throwable {
-            if (Platform.isWindows() || Platform.isWindowsCE()) {
-                throw new IllegalStateException("POSIX sockets are not available on Windows");
-            } else {
-                Class.forName(Native.class.getName()); // Attempt loading the JNA class to check availability.
-                return ForHotSpotVm.class;
-            }
         }
 
         /**
@@ -152,7 +174,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId, Connection.Factory connectionFactory) throws IOException {
-            return new ForHotSpotVm(connectionFactory.connect(processId));
+            return new ForHotSpot(connectionFactory.connect(processId));
         }
 
         /**
@@ -330,20 +352,21 @@ public interface VirtualMachine {
                                 // The HotSpot attachment API attempts to send the signal to all children of a process
                                 Process process = Runtime.getRuntime().exec("kill -3 " + processId);
                                 int attempts = this.attempts;
-                                boolean killed = false;
+                                boolean exited = false;
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
                                             throw new IllegalStateException("Error while sending signal to target VM: " + processId);
                                         }
-                                        killed = true;
+                                        exited = true;
                                         break;
                                     } catch (IllegalThreadStateException ignored) {
                                         attempts -= 1;
                                         Thread.sleep(timeUnit.toMillis(pause));
                                     }
                                 } while (attempts > 0);
-                                if (!killed) {
+                                if (!exited) {
+                                    process.destroy();
                                     throw new IllegalStateException("Target VM did not respond to signal: " + processId);
                                 }
                                 attempts = this.attempts;
@@ -384,7 +407,7 @@ public interface VirtualMachine {
                 /**
                  * The JNA library to use.
                  */
-                private final PosixSocketLibrary library;
+                private final PosixLibrary library;
 
                 /**
                  * The socket's handle.
@@ -397,7 +420,7 @@ public interface VirtualMachine {
                  * @param library The JNA library to use.
                  * @param handle  The socket's handle.
                  */
-                protected ForJnaPosixSocket(PosixSocketLibrary library, int handle) {
+                protected ForJnaPosixSocket(PosixLibrary library, int handle) {
                     this.library = library;
                     this.handle = handle;
                 }
@@ -429,44 +452,7 @@ public interface VirtualMachine {
                 /**
                  * A JNA library binding for Posix sockets.
                  */
-                protected interface PosixSocketLibrary extends Library {
-
-                    /**
-                     * Represents an address for a POSIX socket.
-                     */
-                    class SocketAddress extends Structure {
-
-                        /**
-                         * The socket family.
-                         */
-                        @SuppressWarnings("unused")
-                        @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Field required by native implementation.")
-                        public short family = 1;
-
-                        /**
-                         * The socket path.
-                         */
-                        public byte[] path = new byte[100];
-
-                        /**
-                         * Sets the socket path.
-                         *
-                         * @param path The socket path.
-                         */
-                        public void setPath(String path) {
-                            try {
-                                System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
-                                System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
-                            } catch (UnsupportedEncodingException exception) {
-                                throw new IllegalStateException(exception);
-                            }
-                        }
-
-                        @Override
-                        protected List<String> getFieldOrder() {
-                            return Arrays.asList("family", "path");
-                        }
-                    }
+                protected interface PosixLibrary extends Library {
 
                     /**
                      * Creates a POSIX socket connection.
@@ -515,6 +501,43 @@ public interface VirtualMachine {
                      * @return {@code 0} if the socket was closed or an error code.
                      */
                     int close(int handle);
+
+                    /**
+                     * Represents an address for a POSIX socket.
+                     */
+                    class SocketAddress extends Structure {
+
+                        /**
+                         * The socket family.
+                         */
+                        @SuppressWarnings("unused")
+                        @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Field required by native implementation.")
+                        public short family = 1;
+
+                        /**
+                         * The socket path.
+                         */
+                        public byte[] path = new byte[100];
+
+                        /**
+                         * Sets the socket path.
+                         *
+                         * @param path The socket path.
+                         */
+                        protected void setPath(String path) {
+                            try {
+                                System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
+                                System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
+                            } catch (UnsupportedEncodingException exception) {
+                                throw new IllegalStateException(exception);
+                            }
+                        }
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("family", "path");
+                        }
+                    }
                 }
 
                 /**
@@ -525,7 +548,7 @@ public interface VirtualMachine {
                     /**
                      * The socket library API.
                      */
-                    private final ForJnaPosixSocket.PosixSocketLibrary library;
+                    private final PosixLibrary library;
 
                     /**
                      * Creates a new connection factory for creating a connection to a JVM via a POSIX socket using JNA.
@@ -536,7 +559,7 @@ public interface VirtualMachine {
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
                         super(attempts, pause, timeUnit);
-                        library = Native.load("c", ForJnaPosixSocket.PosixSocketLibrary.class);
+                        library = Native.load("c", PosixLibrary.class);
                     }
 
                     /**
@@ -547,12 +570,645 @@ public interface VirtualMachine {
                         if (handle == 0) {
                             throw new IllegalStateException("Could not open POSIX socket");
                         }
-                        ForJnaPosixSocket.PosixSocketLibrary.SocketAddress address = new ForJnaPosixSocket.PosixSocketLibrary.SocketAddress();
-                        address.setPath(socket.getAbsolutePath());
-                        if (library.connect(handle, address, address.size()) != 0) {
-                            throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                        PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
+                        try {
+                            address.setPath(socket.getAbsolutePath());
+                            if (library.connect(handle, address, address.size()) != 0) {
+                                throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                            }
+                            return new Connection.ForJnaPosixSocket(library, handle);
+                        } finally {
+                            address.clear();
                         }
-                        return new Connection.ForJnaPosixSocket(library, handle);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * A virtual machine attachment implementation for OpenJ9 or any compatible JVM.
+     */
+    class ForOpenJ9 implements VirtualMachine {
+
+        /**
+         * The temporary folder for attachment files for OpenJ9 VMs.
+         */
+        private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
+
+        /**
+         * The socket on which this VM and the target VM communicate.
+         */
+        private final Socket socket;
+
+        /**
+         * Creates a new virtual machine connection for OpenJ9.
+         *
+         * @param socket The socket on which this VM and the target VM communicate.
+         */
+        protected ForOpenJ9(Socket socket) {
+            this.socket = socket;
+        }
+
+        /**
+         * Attaches to the supplied process id using the default JNA implementation.
+         *
+         * @param processId The process id.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId) throws IOException {
+            return attach(processId, 5000, new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
+        }
+
+        /**
+         * Attaches to the supplied process id.
+         *
+         * @param processId The process id.
+         * @param timeout   The timeout for establishing the socket connection.
+         * @param connector The connector to use to communicate with the target VM.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
+        public static VirtualMachine attach(String processId, int timeout, Connector connector) throws IOException {
+            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, connector.getTemporaryFolder()), ".com_ibm_tools_attach");
+            RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
+            try {
+                FileLock attachLockLock = attachLock.getChannel().lock();
+                try {
+                    List<Properties> virtualMachines;
+                    RandomAccessFile master = new RandomAccessFile(new File(directory, "_master"), "rw");
+                    try {
+                        FileLock masterLock = master.getChannel().lock();
+                        try {
+                            File[] vmFolder = directory.listFiles();
+                            if (vmFolder == null) {
+                                throw new IllegalStateException("No descriptor files found in " + directory);
+                            }
+                            long userId = connector.userId();
+                            virtualMachines = new ArrayList<Properties>();
+                            for (File aVmFolder : vmFolder) {
+                                if (aVmFolder.isDirectory() && (userId == 0 || connector.getOwnerIdOf(aVmFolder) == userId)) {
+                                    File attachInfo = new File(aVmFolder, "attachInfo");
+                                    if (attachInfo.isFile()) {
+                                        Properties virtualMachine = new Properties();
+                                        FileInputStream inputStream = new FileInputStream(attachInfo);
+                                        try {
+                                            virtualMachine.load(inputStream);
+                                        } finally {
+                                            inputStream.close();
+                                        }
+                                        long targetProcessId = Long.parseLong(virtualMachine.getProperty("processId"));
+                                        long targetUserId;
+                                        try {
+                                            targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
+                                        } catch (NumberFormatException ignored) {
+                                            targetUserId = 0L;
+                                        }
+                                        if (userId != 0L && targetUserId == 0L) {
+                                            targetUserId = connector.getOwnerIdOf(attachInfo);
+                                        }
+                                        if (targetProcessId == 0L || connector.isExistingProcess(targetProcessId)) {
+                                            virtualMachines.add(virtualMachine);
+                                        } else if (userId == 0L || targetUserId == userId) {
+                                            File[] vmFile = aVmFolder.listFiles();
+                                            if (vmFile != null) {
+                                                for (File aVmFile : vmFile) {
+                                                    if (!aVmFile.delete()) {
+                                                        aVmFile.deleteOnExit();
+                                                    }
+                                                }
+                                            }
+                                            if (!aVmFolder.delete()) {
+                                                aVmFolder.deleteOnExit();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } finally {
+                            masterLock.release();
+                        }
+                    } finally {
+                        master.close();
+                    }
+                    Properties target = null;
+                    for (Properties virtualMachine : virtualMachines) {
+                        if (virtualMachine.getProperty("processId").equalsIgnoreCase(processId)) {
+                            target = virtualMachine;
+                            break;
+                        }
+                    }
+                    if (target == null) {
+                        throw new IllegalStateException("Could not locate target process info in " + directory);
+                    }
+                    ServerSocket serverSocket = new ServerSocket(0);
+                    try {
+                        serverSocket.setSoTimeout(timeout);
+                        File receiver = new File(directory, target.getProperty("vmId"));
+                        String key = Long.toHexString(new SecureRandom().nextLong());
+                        File reply = new File(receiver, "replyInfo");
+                        try {
+                            if (reply.createNewFile()) {
+                                connector.setPermissions(reply, 0600);
+                            }
+                            FileOutputStream outputStream = new FileOutputStream(reply);
+                            try {
+                                outputStream.write(key.getBytes("UTF-8"));
+                                outputStream.write("\n".getBytes("UTF-8"));
+                                outputStream.write(Long.toString(serverSocket.getLocalPort()).getBytes("UTF-8"));
+                                outputStream.write("\n".getBytes("UTF-8"));
+                            } finally {
+                                outputStream.close();
+                            }
+                            Map<RandomAccessFile, FileLock> locks = new HashMap<RandomAccessFile, FileLock>();
+                            try {
+                                String pid = Long.toString(connector.pid());
+                                for (Properties virtualMachine : virtualMachines) {
+                                    if (!virtualMachine.getProperty("processId").equalsIgnoreCase(pid)) {
+                                        String attachNotificationSync = virtualMachine.getProperty("attachNotificationSync");
+                                        RandomAccessFile syncFile = new RandomAccessFile(attachNotificationSync == null
+                                                ? new File(directory, "attachNotificationSync")
+                                                : new File(attachNotificationSync), "rw");
+                                        try {
+                                            locks.put(syncFile, syncFile.getChannel().lock());
+                                        } catch (IOException ignored) {
+                                            syncFile.close();
+                                        }
+                                    }
+                                }
+                                int notifications = 0;
+                                File[] item = directory.listFiles();
+                                if (item != null) {
+                                    for (File anItem : item) {
+                                        String name = anItem.getName();
+                                        if (!name.startsWith(".trash_")
+                                                && !name.equalsIgnoreCase("_attachlock")
+                                                && !name.equalsIgnoreCase("_master")
+                                                && !name.equalsIgnoreCase("_notifier")) {
+                                            notifications += 1;
+                                        }
+                                    }
+                                }
+                                connector.incrementSemaphore(directory, "_notifier", notifications);
+                                try {
+                                    Socket socket = serverSocket.accept();
+                                    String answer = read(socket);
+                                    if (answer.contains(' ' + key + ' ')) {
+                                        return new ForOpenJ9(socket);
+                                    } else {
+                                        throw new IllegalStateException("Unexpected answered to attachment: " + answer);
+                                    }
+                                } finally {
+                                    connector.decrementSemaphore(directory, "_notifier", notifications);
+                                }
+                            } finally {
+                                for (Map.Entry<RandomAccessFile, FileLock> entry : locks.entrySet()) {
+                                    try {
+                                        try {
+                                            entry.getValue().release();
+                                        } finally {
+                                            entry.getKey().close();
+                                        }
+                                    } catch (Throwable ignored) {
+                                        /* do nothing */
+                                    }
+                                }
+                            }
+                        } finally {
+                            if (!reply.delete()) {
+                                reply.deleteOnExit();
+                            }
+                        }
+                    } finally {
+                        serverSocket.close();
+                    }
+                } finally {
+                    attachLockLock.release();
+                }
+            } finally {
+                attachLock.close();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void loadAgent(String jarFile, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
+            String answer = read(socket);
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target agent failed loading agent: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void loadAgentPath(String library, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENTPATH(" + library + (argument == null ? "" : (',' + argument)) + ')');
+            String answer = read(socket);
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target agent failed loading library: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void detach() throws IOException {
+            try {
+                write(socket, "ATTACH_DETACH");
+                read(socket); // The answer is intentionally ignored.
+            } finally {
+                socket.close();
+            }
+        }
+
+        /**
+         * Writes the supplied value to the target socket.
+         *
+         * @param socket The socket to write to.
+         * @param value  The value being written.
+         * @throws IOException If an I/O exception occurs.
+         */
+        private static void write(Socket socket, String value) throws IOException {
+            socket.getOutputStream().write(value.getBytes("UTF-8"));
+            socket.getOutputStream().write(0);
+            socket.getOutputStream().flush();
+        }
+
+        /**
+         * Reads a {©code 0}-terminated value from the target socket.
+         *
+         * @param socket The socket to read from.
+         * @return The value that was read.
+         * @throws IOException If an I/O exception occurs.
+         */
+        private static String read(Socket socket) throws IOException {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = socket.getInputStream().read(buffer)) != -1) {
+                if (length > 0 && buffer[length - 1] == 0) {
+                    outputStream.write(buffer, 0, length - 1);
+                    break;
+                } else {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            return outputStream.toString("UTF-8");
+        }
+
+        /**
+         * A connector for native operations being used for communication with an OpenJ9 virtual machine.
+         */
+        public interface Connector {
+
+            /**
+             * Returns this machine's temporary folder.
+             *
+             * @return The temporary folder.
+             */
+            String getTemporaryFolder();
+
+            /**
+             * Returns the process id of this process.
+             *
+             * @return The process id of this process.
+             */
+            long pid();
+
+            /**
+             * Returns the user id of this process.
+             *
+             * @return The user id of this process
+             */
+            long userId();
+
+            /**
+             * Returns {@code true} if the supplied process id is a running process.
+             *
+             * @param processId The process id to evaluate.
+             * @return {@code true} if the supplied process id is currently running.
+             */
+            boolean isExistingProcess(long processId);
+
+            /**
+             * Returns the user id of the owner of the supplied file.
+             *
+             * @param file The file for which to locate the owner.
+             * @return The owner id of the supplied file.
+             */
+            long getOwnerIdOf(File file);
+
+            /**
+             * Sets permissions for the supplied file.
+             *
+             * @param file        The file for which to set the permissions.
+             * @param permissions The permission bits to set.
+             */
+            void setPermissions(File file, int permissions);
+
+            /**
+             * Increments a semaphore.
+             *
+             * @param directory The sempahore's control directory.
+             * @param name      The semaphore's name.
+             * @param count     The amount of increments.
+             */
+            void incrementSemaphore(File directory, String name, int count);
+
+            /**
+             * Decrements a semaphore.
+             *
+             * @param directory The sempahore's control directory.
+             * @param name      The semaphore's name.
+             * @param count     The amount of decrements.
+             */
+            void decrementSemaphore(File directory, String name, int count);
+
+            /**
+             * A connector implementation for a POSIX environment using JNA.
+             */
+            class ForJnaPosixEnvironment implements Connector {
+
+                /**
+                 * The JNA library to use.
+                 */
+                private final PosixLibrary library = Native.load("c", PosixLibrary.class);
+
+                /**
+                 * The maximum amount of attempts for checking the result of a foreign process.
+                 */
+                private final int attempts;
+
+                /**
+                 * The pause between two checks for another process to return.
+                 */
+                private final long pause;
+
+                /**
+                 * The time unit of the pause time.
+                 */
+                private final TimeUnit timeUnit;
+
+                /**
+                 * Creates a new connector for a POSIX enviornment using JNA.
+                 *
+                 * @param attempts The maximum amount of attempts for checking the result of a foreign process.
+                 * @param pause    The pause between two checks for another process to return.
+                 * @param timeUnit The time unit of the pause time.
+                 */
+                public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                    this.attempts = attempts;
+                    this.pause = pause;
+                    this.timeUnit = timeUnit;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getTemporaryFolder() {
+                    return "/tmp";
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public long pid() {
+                    return library.getpid();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public long userId() {
+                    return library.getuid();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isExistingProcess(long processId) {
+                    return library.kill(processId, PosixLibrary.NULL_SIGNAL) != PosixLibrary.ESRCH;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
+                public long getOwnerIdOf(File file) {
+                    try {
+                        Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
+                        int attempts = this.attempts;
+                        boolean exited = false;
+                        String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                        do {
+                            try {
+                                if (process.exitValue() != 0) {
+                                    throw new IllegalStateException("Error while executing stat");
+                                }
+                                exited = true;
+                                break;
+                            } catch (IllegalThreadStateException ignored) {
+                                try {
+                                    Thread.sleep(timeUnit.toMillis(pause));
+                                } catch (InterruptedException exception) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IllegalStateException("Interrupted while waiting for stat", exception);
+                                }
+                            }
+                        } while (--attempts > 0);
+                        if (!exited) {
+                            process.destroy();
+                            throw new IllegalStateException("Command for stat did not exit in time");
+                        }
+                        return Long.parseLong(line.substring(1));
+                    } catch (IOException exception) {
+                        throw new IllegalStateException("Unable to execute stat command", exception);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void setPermissions(File file, int permissions) {
+                    library.chmod(file.getAbsolutePath(), permissions);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void incrementSemaphore(File directory, String name, int count) {
+                    notifySemaphore(directory, name, count, (short) 1, (short) 0, false);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void decrementSemaphore(File directory, String name, int count) {
+                    notifySemaphore(directory, name, count, (short) -1, (short) (PosixLibrary.SEM_UNDO | PosixLibrary.IPC_NOWAIT), true);
+                }
+
+                /**
+                 * Notifies a POSIX semaphore.
+                 *
+                 * @param directory         The semaphore's directory.
+                 * @param name              The semaphore's name.
+                 * @param count             The amount of notifications to send.
+                 * @param operation         The operation to apply.
+                 * @param flags             The flags to set.
+                 * @param acceptUnavailable {@code true} if a {@code EAGAIN} code should be accepted.
+                 */
+                @SuppressFBWarnings(value = {"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"}, justification = "Modifier is required by JNA.")
+                private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptUnavailable) {
+                    int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
+                    PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
+                    buffer.semOp = operation;
+                    buffer.semFlg = flags;
+                    try {
+                        while (count-- > 0) {
+                            try {
+                                library.semop(semaphore, buffer, 1);
+                            } catch (LastErrorException exception) {
+                                if (acceptUnavailable && Native.getLastError() == PosixLibrary.EAGAIN) {
+                                    break;
+                                } else {
+                                    throw exception;
+                                }
+                            }
+                        }
+                    } finally {
+                        buffer.clear();
+                    }
+                }
+
+                /**
+                 * An API for interaction with POSIX systems.
+                 */
+                protected interface PosixLibrary extends Library {
+
+                    /**
+                     * A null signal.
+                     */
+                    int NULL_SIGNAL = 0;
+
+                    /**
+                     * Indicates that a process does not exist.
+                     */
+                    int ESRCH = 3;
+
+                    /**
+                     * Indicates that a request timed out.
+                     */
+                    int EAGAIN = 11;
+
+                    /**
+                     * Indicates that a semaphore's operations should be undone at process shutdown.
+                     */
+                    short SEM_UNDO = 0x1000;
+
+                    /**
+                     * Indicates that one should not wait for the release of a semaphore if it is not currently available.
+                     */
+                    short IPC_NOWAIT = 04000;
+
+                    /**
+                     * Runs the {@code getpid} command.
+                     *
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int getpid() throws LastErrorException;
+
+                    /**
+                     * Runs the {@code getuid} command.
+                     *
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int getuid() throws LastErrorException;
+
+                    /**
+                     * Runs the {@code kill} command.
+                     *
+                     * @param processId The target process id.
+                     * @param signal    The signal to send.
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int kill(long processId, int signal) throws LastErrorException;
+
+                    /**
+                     * Runs the {@code chmod} command.
+                     *
+                     * @param path The file path.
+                     * @param mode The mode to set.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    void chmod(String path, int mode) throws LastErrorException;
+
+                    /**
+                     * Runs the {@code ftok} command.
+                     *
+                     * @param path The file path.
+                     * @param id   The id being used for creating the generated key.
+                     * @return The generated key.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int ftok(String path, int id) throws LastErrorException;
+
+                    /**
+                     * Runs the {@code semget} command.
+                     *
+                     * @param key   The key of the semaphore.
+                     * @param count The initial count of the semaphore.
+                     * @param flags The flags to set.
+                     * @return The id of the semaphore.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int semget(int key, int count, int flags) throws LastErrorException;
+
+                    /**
+                     * Runs the {@code semop} command.
+                     *
+                     * @param id        The id of the semaphore.
+                     * @param operation The initial count of the semaphore.
+                     * @param flags     The flags to set.
+                     * @throws LastErrorException If the operation was not successful.
+                     */
+                    void semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
+
+                    /**
+                     * A structure to represent a semaphore operation for {@code semop}.
+                     */
+                    class SemaphoreOperation extends Structure {
+
+                        /**
+                         * The semaphore number.
+                         */
+                        @SuppressWarnings("unused")
+                        public short semNum;
+
+                        /**
+                         * The operation to execute.
+                         */
+                        public short semOp;
+
+                        /**
+                         * The flags being set for the operation.
+                         */
+                        public short semFlg;
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("semNum", "semOp", "semFlg");
+                        }
                     }
                 }
             }

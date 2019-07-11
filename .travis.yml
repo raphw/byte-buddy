@@ -33,7 +33,7 @@ matrix:
     - env: TARGET='-Pjava11' EXPERIMENTAL='true' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
       jdk: openjdk-ea
     # OpenJ9 - Java 11
-    - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='false' EXCLUDE =''
+    - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='false' EXCLUDE=''
       before_script:
         - . ci/install-jdk.sh -W ~/custom-java --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
 

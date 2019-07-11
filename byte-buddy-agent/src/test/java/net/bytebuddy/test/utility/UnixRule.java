@@ -16,7 +16,7 @@ public class UnixRule implements MethodRule {
     private final boolean enabled;
 
     public UnixRule() {
-        this.enabled = !Platform.isWindows() && !Platform.isWindowsCE() && !System.getProperty("java.vm.vendor").contains("OpenJ9");
+        this.enabled = !Platform.isWindows() && !Platform.isWindowsCE();
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
