@@ -972,11 +972,12 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
                 public long getOwnerIdOf(File file) {
                     try {
                         Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
                         try {
-                            String line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();
+                            String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
                             if (process.exitValue() != 0) {
                                 throw new IllegalStateException("Unexpected return by stat command: " + line);
                             }
@@ -1021,6 +1022,7 @@ public interface VirtualMachine {
                  * @param flags             The flags to set.
                  * @param acceptUnavailable {@code true} if a {@code EAGAIN} code should be accepted.
                  */
+                @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Modifier is required by JNA.")
                 private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptUnavailable) {
                     int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
                     PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
