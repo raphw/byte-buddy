@@ -51,7 +51,7 @@ public class VirtualMachineAttachmentTest {
 
     @Test
     @UnixRule.Enforce
-    public void canAttachViaPosixSocket() throws Exception {
+    public void testAttachment() throws Exception {
         assertThat(SampleAgent.argument, nullValue(String.class));
         VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()
                 .getMethod("attach", String.class)

@@ -352,20 +352,21 @@ public interface VirtualMachine {
                                 // The HotSpot attachment API attempts to send the signal to all children of a process
                                 Process process = Runtime.getRuntime().exec("kill -3 " + processId);
                                 int attempts = this.attempts;
-                                boolean killed = false;
+                                boolean exited = false;
                                 do {
                                     try {
                                         if (process.exitValue() != 0) {
                                             throw new IllegalStateException("Error while sending signal to target VM: " + processId);
                                         }
-                                        killed = true;
+                                        exited = true;
                                         break;
                                     } catch (IllegalThreadStateException ignored) {
                                         attempts -= 1;
                                         Thread.sleep(timeUnit.toMillis(pause));
                                     }
                                 } while (attempts > 0);
-                                if (!killed) {
+                                if (!exited) {
+                                    process.destroy();
                                     throw new IllegalStateException("Target VM did not respond to signal: " + processId);
                                 }
                                 attempts = this.attempts;
@@ -617,7 +618,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, 5000, new Connector.ForJnaPosixEnvironment());
+            return attach(processId, 5000, new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -942,6 +943,34 @@ public interface VirtualMachine {
                 private final PosixLibrary library = Native.load("c", PosixLibrary.class);
 
                 /**
+                 * The maximum amount of attempts for checking the result of a foreign process.
+                 */
+                private final int attempts;
+
+                /**
+                 * The pause between two checks for another process to return.
+                 */
+                private final long pause;
+
+                /**
+                 * The time unit of the pause time.
+                 */
+                private final TimeUnit timeUnit;
+
+                /**
+                 * Creates a new connector for a POSIX enviornment using JNA.
+                 *
+                 * @param attempts The maximum amount of attempts for checking the result of a foreign process.
+                 * @param pause    The pause between two checks for another process to return.
+                 * @param timeUnit The time unit of the pause time.
+                 */
+                public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
+                    this.attempts = attempts;
+                    this.pause = pause;
+                    this.timeUnit = timeUnit;
+                }
+
+                /**
                  * {@inheritDoc}
                  */
                 public String getTemporaryFolder() {
@@ -976,16 +1005,30 @@ public interface VirtualMachine {
                 public long getOwnerIdOf(File file) {
                     try {
                         Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
-                        try {
-                            String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
-                            if (process.exitValue() != 0) {
-                                throw new IllegalStateException("Unexpected return by stat command: " + line);
+                        int attempts = this.attempts;
+                        boolean exited = false;
+                        String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
+                        do {
+                            try {
+                                if (process.exitValue() != 0) {
+                                    throw new IllegalStateException("Error while executing stat");
+                                }
+                                exited = true;
+                                break;
+                            } catch (IllegalThreadStateException ignored) {
+                                try {
+                                    Thread.sleep(timeUnit.toMillis(pause));
+                                } catch (InterruptedException exception) {
+                                    Thread.currentThread().interrupt();
+                                    throw new IllegalStateException("Interrupted while waiting for stat", exception);
+                                }
                             }
-                            return Long.parseLong(line.substring(1));
-                        } catch (IOException exception) {
+                        } while (--attempts > 0);
+                        if (!exited) {
                             process.destroy();
-                            throw exception;
+                            throw new IllegalStateException("Command for stat did not exit in time");
                         }
+                        return Long.parseLong(line.substring(1));
                     } catch (IOException exception) {
                         throw new IllegalStateException("Unable to execute stat command", exception);
                     }
