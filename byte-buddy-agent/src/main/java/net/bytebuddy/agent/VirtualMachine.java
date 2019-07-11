@@ -71,7 +71,7 @@ public interface VirtualMachine {
     /**
      * A resolver for the current VM's virtual machine attachment emulation.
      */
-    enum Resolver implements PrivilegedAction<Class<?>> {
+    enum Resolver implements PrivilegedAction<Class<? extends VirtualMachine>> {
 
         /**
          * The singleton instance.
@@ -81,7 +81,7 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public Class<?> run() {
+        public Class<? extends VirtualMachine> run() {
             try {
                 Class<?> platform = Class.forName("com.sun.jna.Platform");
                 if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
