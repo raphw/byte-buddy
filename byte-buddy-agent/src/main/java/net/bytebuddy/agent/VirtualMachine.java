@@ -15,10 +15,10 @@
  */
 package net.bytebuddy.agent;
 
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Structure;
+import com.sun.jna.*;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.Win32Exception;
+import com.sun.jna.platform.win32.WinDef;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
@@ -616,7 +616,9 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, 5000, new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
+            return attach(processId, 5000, Platform.isWindows() || Platform.isWindowsCE()
+                    ? new Connector.ForJnaWindowsEnvironment()
+                    : new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -1209,6 +1211,107 @@ public interface VirtualMachine {
                             return Arrays.asList("semNum", "semOp", "semFlg");
                         }
                     }
+                }
+            }
+
+            /**
+             * A connector implementation for a Windows environment using JNA.
+             */
+            class ForJnaWindowsEnvironment implements Connector {
+
+                /**
+                 * The library being used.
+                 */
+                private final WindowsLibrary library;
+
+                /**
+                 * Creates a new connector for a JVM on Windows.
+                 */
+                public ForJnaWindowsEnvironment() {
+                    library = Native.load("c", WindowsLibrary.class);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getTemporaryFolder() {
+                    WinDef.DWORD length = new WinDef.DWORD(WinDef.MAX_PATH);
+                    char[] path = new char[length.intValue()];
+                    if (Kernel32.INSTANCE.GetTempPath(length, path).intValue() == 0) {
+                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                    }
+                    return Native.toString(path);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public long pid() {
+                    return library.getpid();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public long userId() {
+                    return 0;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isExistingProcess(long processId) {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public long getOwnerIdOf(File file) {
+                    return 0;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void setPermissions(File file, int permissions) {
+                    /* do nothing */
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void incrementSemaphore(File directory, String name, int count) {
+                    // TODO: Reimplement
+                    try {
+                        Class.forName("com.ibm.tools.attach.target.IPC")
+                                .getDeclaredMethod("notifyVm", String.class, String.class, int.class)
+                                .invoke(null, directory.getAbsolutePath(), name, count);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void decrementSemaphore(File directory, String name, int count) {
+                    // TODO: Reimplement
+                    try {
+                        Class.forName("com.ibm.tools.attach.target.IPC")
+                                .getDeclaredMethod("cancelNotify", String.class, String.class, int.class)
+                                .invoke(null, directory.getAbsolutePath(), name, count);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                /**
+                 * A library for interacting with Windows native functions.
+                 */
+                protected interface WindowsLibrary extends Library {
+
+                    int getpid();
                 }
             }
         }
