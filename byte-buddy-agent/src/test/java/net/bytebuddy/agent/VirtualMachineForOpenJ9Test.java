@@ -3,6 +3,8 @@ package net.bytebuddy.agent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -14,10 +16,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class VirtualMachineForOpenJ9Test {
+    
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final long PROCESS_ID = 42L, USER_ID = 84L, VM_ID = 168L;
 
@@ -138,5 +141,63 @@ public class VirtualMachineForOpenJ9Test {
             assertThat(file.isFile(), is(true));
             assertThat(file.delete(), is(true));
         }
+    }
+
+    @Test
+    public void testLoadAgent() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgent(FOO, BAR);
+        verify(outputStream).write(("ATTACH_LOADAGENT(instrument," + FOO + '=' + BAR + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testLoadAgentPath() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgentPath(FOO, BAR);
+        verify(outputStream).write(("ATTACH_LOADAGENTPATH(" + FOO + ',' + BAR + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testDetach() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] buffer = invocation.getArgument(0);
+                buffer[0] = 0;
+                return 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).detach();
+        verify(outputStream).write("ATTACH_DETACH".getBytes("UTF-8"));
     }
 }
