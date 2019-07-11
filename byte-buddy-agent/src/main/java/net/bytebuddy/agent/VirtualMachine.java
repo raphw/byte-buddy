@@ -445,6 +445,7 @@ public interface VirtualMachine {
                      *
                      * @param processId The process id to kill.
                      * @param signal    The signal to send.
+                     * @throws LastErrorException If an error occurs.
                      */
                     void kill(int processId, int signal) throws LastErrorException;
 
@@ -455,6 +456,7 @@ public interface VirtualMachine {
                      * @param type     The socket's type.
                      * @param protocol The protocol version.
                      * @return A handle to the socket that was created or {@code 0} if no socket could be created.
+                     * @throws LastErrorException If an error occurs.
                      */
                     int socket(int domain, int type, int protocol) throws LastErrorException;
 
@@ -465,6 +467,7 @@ public interface VirtualMachine {
                      * @param address The address of the POSIX socket.
                      * @param length  The length of the socket value.
                      * @return {@code 0} if the socket was connected or an error code.
+                     * @throws LastErrorException If an error occurs.
                      */
                     void connect(int handle, SocketAddress address, int length) throws LastErrorException;
 
@@ -475,6 +478,7 @@ public interface VirtualMachine {
                      * @param buffer The buffer to read from.
                      * @param count  The bytes being read.
                      * @return The amount of bytes that could be read.
+                     * @throws LastErrorException If an error occurs.
                      */
                     int read(int handle, ByteBuffer buffer, int count) throws LastErrorException;
 
@@ -485,6 +489,7 @@ public interface VirtualMachine {
                      * @param buffer The buffer to write to.
                      * @param count  The bytes being written.
                      * @return The amount of bytes that could be written.
+                     * @throws LastErrorException If an error occurs.
                      */
                     void write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
 
@@ -493,6 +498,7 @@ public interface VirtualMachine {
                      *
                      * @param handle The handle of the connection.
                      * @return {@code 0} if the socket was closed or an error code.
+                     * @throws LastErrorException If an error occurs.
                      */
                     void close(int handle) throws LastErrorException;
 
