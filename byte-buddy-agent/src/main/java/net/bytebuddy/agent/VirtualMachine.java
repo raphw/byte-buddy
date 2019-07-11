@@ -466,7 +466,6 @@ public interface VirtualMachine {
                      * @param handle  The socket's handle.
                      * @param address The address of the POSIX socket.
                      * @param length  The length of the socket value.
-                     * @return {@code 0} if the socket was connected or an error code.
                      * @throws LastErrorException If an error occurs.
                      */
                     void connect(int handle, SocketAddress address, int length) throws LastErrorException;
@@ -488,7 +487,6 @@ public interface VirtualMachine {
                      * @param handle The socket's handle.
                      * @param buffer The buffer to write to.
                      * @param count  The bytes being written.
-                     * @return The amount of bytes that could be written.
                      * @throws LastErrorException If an error occurs.
                      */
                     void write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
@@ -497,7 +495,6 @@ public interface VirtualMachine {
                      * Closes the socket connection.
                      *
                      * @param handle The handle of the connection.
-                     * @return {@code 0} if the socket was closed or an error code.
                      * @throws LastErrorException If an error occurs.
                      */
                     void close(int handle) throws LastErrorException;
