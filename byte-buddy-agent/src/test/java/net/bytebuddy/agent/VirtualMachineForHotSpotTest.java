@@ -1,9 +1,6 @@
 package net.bytebuddy.agent;
 
-import net.bytebuddy.test.utility.UnixRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -14,11 +11,7 @@ import static org.mockito.Mockito.*;
 
 public class VirtualMachineForHotSpotTest {
 
-    @Rule
-    public MethodRule unixRule = new UnixRule();
-
     @Test
-    @UnixRule.Enforce
     public void testAttachment() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         when(connection.read(any(byte[].class))).then(new ByteAnswer("0".getBytes("UTF-8"))).then(new ByteAnswer((byte) 10));
@@ -40,7 +33,6 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test
-    @UnixRule.Enforce
     public void testAttachmentWithoutArgument() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         when(connection.read(any(byte[].class))).then(new ByteAnswer("0".getBytes("UTF-8"))).then(new ByteAnswer((byte) 10));
@@ -63,7 +55,6 @@ public class VirtualMachineForHotSpotTest {
 
 
     @Test(expected = IOException.class)
-    @UnixRule.Enforce
     public void testAttachmentIncompatibleProtocol() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         when(connection.read(any(byte[].class)))
@@ -75,7 +66,6 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    @UnixRule.Enforce
     public void testAttachmentUnknownError() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         when(connection.read(any(byte[].class)))
@@ -85,7 +75,7 @@ public class VirtualMachineForHotSpotTest {
                 .thenReturn(-1);
         new VirtualMachine.ForHotSpot(connection).loadAgent("foo", null);
     }
-    
+
     private static class ByteAnswer implements Answer<Integer> {
 
         private final byte[] value;

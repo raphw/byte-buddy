@@ -662,7 +662,7 @@ public interface VirtualMachine {
                                         } catch (NumberFormatException ignored) {
                                             targetUserId = 0L;
                                         }
-                                        if (userId != 0L && targetProcessId == 0L) {
+                                        if (userId != 0L && targetUserId == 0L) {
                                             targetUserId = connector.getOwnerOf(attachInfo);
                                         }
                                         if (targetProcessId == 0L || connector.isExistingProcess(targetProcessId)) {
@@ -700,8 +700,8 @@ public interface VirtualMachine {
                         throw new IllegalStateException("Could not locate target process info in " + directory);
                     }
                     ServerSocket serverSocket = new ServerSocket(0);
-                    serverSocket.setSoTimeout(timeout);
                     try {
+                        serverSocket.setSoTimeout(timeout);
                         File receiver = new File(directory, target.getProperty("vmId"));
                         String key = Long.toHexString(new SecureRandom().nextLong());
                         File reply = new File(receiver, "replyInfo");
