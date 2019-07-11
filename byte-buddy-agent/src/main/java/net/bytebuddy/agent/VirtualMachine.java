@@ -1012,19 +1012,28 @@ public interface VirtualMachine {
                 }
 
                 /**
-                 * {@inheritDoc}
+                 * Notifies a POSIX semaphore.
+                 *
+                 * @param directory         The semaphore's directory.
+                 * @param name              The semaphore's name.
+                 * @param count             The amount of notifications to send.
+                 * @param operation         The operation to apply.
+                 * @param flags             The flags to set.
+                 * @param acceptUnavailable {@code true} if a {@code EAGAIN} code should be accepted.
                  */
-                private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptError) {
+                private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptUnavailable) {
                     int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
                     PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
-                    buffer.sem_op = operation;
-                    buffer.sem_flg = flags;
+                    buffer.semOp = operation;
+                    buffer.semFlg = flags;
                     try {
                         while (count-- > 0) {
                             try {
                                 library.semop(semaphore, buffer, 1);
                             } catch (LastErrorException exception) {
-                                if (!acceptError && Native.getLastError() != PosixLibrary.EAGAIN) {
+                                if (acceptUnavailable && Native.getLastError() == PosixLibrary.EAGAIN) {
+                                    break;
+                                } else {
                                     throw exception;
                                 }
                             }
@@ -1104,6 +1113,7 @@ public interface VirtualMachine {
                      *
                      * @param path The file path.
                      * @param id   The id being used for creating the generated key.
+                     * @return The generated key.
                      * @throws LastErrorException If an error occurred.
                      */
                     int ftok(String path, int id) throws LastErrorException;
@@ -1125,9 +1135,9 @@ public interface VirtualMachine {
                      * @param id        The id of the semaphore.
                      * @param operation The initial count of the semaphore.
                      * @param flags     The flags to set.
-                     * @throws LastErrorException If an error occurred.
+                     * @throws LastErrorException If the operation was not successful.
                      */
-                    int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
+                    void semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
 
                     /**
                      * A structure to represent a semaphore operation for {@code semop}.
@@ -1138,21 +1148,21 @@ public interface VirtualMachine {
                          * The semaphore number.
                          */
                         @SuppressWarnings("unused")
-                        public short sem_num;
+                        public short semNum;
 
                         /**
                          * The operation to execute.
                          */
-                        public short sem_op;
+                        public short semOp;
 
                         /**
                          * The flags being set for the operation.
                          */
-                        public short sem_flg;
+                        public short semFlg;
 
                         @Override
                         protected List<String> getFieldOrder() {
-                            return Arrays.asList("sem_num", "sem_op", "sem_flg");
+                            return Arrays.asList("semNum", "semOp", "semFlg");
                         }
                     }
                 }
