@@ -1022,7 +1022,7 @@ public interface VirtualMachine {
                  * @param flags             The flags to set.
                  * @param acceptUnavailable {@code true} if a {@code EAGAIN} code should be accepted.
                  */
-                @SuppressFBWarnings(value = "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", justification = "Modifier is required by JNA.")
+                @SuppressFBWarnings(value = {"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"}, justification = "Modifier is required by JNA.")
                 private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptUnavailable) {
                     int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
                     PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
