@@ -65,7 +65,7 @@ public class VirtualMachineForOpenJ9Test {
                 assertThat(sourceFolder.mkdir(), is(true));
                 try {
                     when(connector.userId()).thenReturn(USER_ID);
-                    when(connector.getOwnerOf(targetFolder)).thenReturn(USER_ID);
+                    when(connector.getOwnerIdOf(targetFolder)).thenReturn(USER_ID);
                     when(connector.isExistingProcess(PROCESS_ID)).thenReturn(true);
                     Thread attachmentThread = new Thread() {
                         @Override

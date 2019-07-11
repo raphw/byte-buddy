@@ -647,7 +647,7 @@ public interface VirtualMachine {
                             long userId = connector.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && (userId == 0 || connector.getOwnerOf(aVmFolder) == userId)) {
+                                if (aVmFolder.isDirectory() && (userId == 0 || connector.getOwnerIdOf(aVmFolder) == userId)) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
@@ -665,7 +665,7 @@ public interface VirtualMachine {
                                             targetUserId = 0L;
                                         }
                                         if (userId != 0L && targetUserId == 0L) {
-                                            targetUserId = connector.getOwnerOf(attachInfo);
+                                            targetUserId = connector.getOwnerIdOf(attachInfo);
                                         }
                                         if (targetProcessId == 0L || connector.isExistingProcess(targetProcessId)) {
                                             virtualMachines.add(virtualMachine);
@@ -903,7 +903,7 @@ public interface VirtualMachine {
              * @param file The file for which to locate the owner.
              * @return The owner id of the supplied file.
              */
-            long getOwnerOf(File file);
+            long getOwnerIdOf(File file);
 
             /**
              * Sets permissions for the supplied file.
@@ -972,16 +972,21 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public long getOwnerOf(File file) {
+                public long getOwnerIdOf(File file) {
                     try {
                         Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
                         try {
-                            return Long.parseLong(new BufferedReader(new InputStreamReader(process.getInputStream())).readLine().substring(1));
-                        } finally {
+                            String line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();
+                            if (process.exitValue() != 0) {
+                                throw new IllegalStateException("Unexpected return by stat command: " + line);
+                            }
+                            return Long.parseLong(line.substring(1));
+                        } catch (IOException exception) {
                             process.destroy();
+                            throw exception;
                         }
                     } catch (IOException exception) {
-                        throw new IllegalStateException(exception);
+                        throw new IllegalStateException("Unable to execute stat command", exception);
                     }
                 }
 
@@ -1029,6 +1034,9 @@ public interface VirtualMachine {
                     }
                 }
 
+                /**
+                 * An API for interaction with POSIX systems.
+                 */
                 protected interface PosixLibrary extends Library {
 
                     /**
