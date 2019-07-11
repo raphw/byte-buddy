@@ -199,9 +199,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar  The agent jar file.
      * @param processId The target process id.
@@ -211,9 +216,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar  The agent jar file.
      * @param processId The target process id.
@@ -224,8 +234,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar           The agent jar file.
      * @param processId          The target process id.
@@ -236,8 +251,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar           The agent jar file.
      * @param processId          The target process id.
@@ -249,9 +269,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar        The agent jar file.
      * @param processProvider A provider of the target process id.
@@ -261,9 +286,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar        The agent jar file.
      * @param processProvider A provider of the target process id.
@@ -274,8 +304,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar           The agent jar file.
      * @param processProvider    A provider of the target process id.
@@ -286,8 +321,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentJar           The agent jar file.
      * @param processProvider    A provider of the target process id.
@@ -299,9 +339,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary The agent jar file.
      * @param processId    The target process id.
@@ -311,9 +356,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary The agent library.
      * @param processId    The target process id.
@@ -324,8 +374,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary       The agent library.
      * @param processId          The target process id.
@@ -336,8 +391,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary       The agent library.
      * @param processId          The target process id.
@@ -349,9 +409,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary    The agent library.
      * @param processProvider A provider of the target process id.
@@ -361,9 +426,14 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
      * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary    The agent library.
      * @param processProvider A provider of the target process id.
@@ -374,8 +444,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete. The agent is not provided an argument.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary       The agent library.
      * @param processProvider    A provider of the target process id.
@@ -386,8 +461,13 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * <p>
      * Attaches the given agent library on the target process which must be a virtual machine process. This operation blocks until the
      * attachment is complete.
+     * </p>
+     * <p>
+     * <b>Important</b>: It is only possible to attach to processes that are executed by the same operating system user.
+     * </p>
      *
      * @param agentLibrary       The agent library.
      * @param processProvider    A provider of the target process id.
