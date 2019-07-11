@@ -15,12 +15,14 @@
  */
 package net.bytebuddy.agent;
 
-import com.sun.jna.*;
+import com.sun.jna.LastErrorException;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Structure;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -151,7 +153,7 @@ public interface VirtualMachine {
         protected ForHotSpot(Connection connection) {
             this.connection = connection;
         }
-        
+
         /**
          * Attaches to the supplied process id using the default JNA implementation.
          *
@@ -971,14 +973,15 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public long getOwnerOf(File file) {
-                    // TODO: Is there an easy way of getting the uid of the file owner?
                     try {
-                        Method method = Class
-                                .forName("com.ibm.tools.attach.target.CommonDirectory")
-                                .getMethod("getFileOwner", String.class);
-                        return (Long) method.invoke(null, file.getAbsolutePath());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
+                        try {
+                            return Long.parseLong(new BufferedReader(new InputStreamReader(process.getInputStream())).readLine().substring(1));
+                        } finally {
+                            process.destroy();
+                        }
+                    } catch (IOException exception) {
+                        throw new IllegalStateException(exception);
                     }
                 }
 
