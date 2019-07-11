@@ -67,7 +67,7 @@ public interface VirtualMachine {
     void detach() throws IOException;
 
     /**
-     * A virtual machine implementation for a HotSpot VM or any compatible VM.
+     * A virtual machine attachment implementation for a HotSpot VM or any compatible JVM.
      */
     class ForHotSpotVm implements VirtualMachine {
 
@@ -107,7 +107,7 @@ public interface VirtualMachine {
         private final Connection connection;
 
         /**
-         * Creates a default virtual machine implementation.
+         * Creates a new virtual machine connection for HotSpot.
          *
          * @param connection The virtual machine connection.
          */
@@ -499,7 +499,7 @@ public interface VirtualMachine {
                          *
                          * @param path The socket path.
                          */
-                        public void setPath(String path) {
+                        protected void setPath(String path) {
                             try {
                                 System.arraycopy(path.getBytes("UTF-8"), 0, this.path, 0, path.length());
                                 System.arraycopy(new byte[]{0}, 0, this.path, path.length(), 1);
@@ -546,31 +546,65 @@ public interface VirtualMachine {
                             throw new IllegalStateException("Could not open POSIX socket");
                         }
                         PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
-                        address.setPath(socket.getAbsolutePath());
-                        if (library.connect(handle, address, address.size()) != 0) {
-                            throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                        try {
+                            address.setPath(socket.getAbsolutePath());
+                            if (library.connect(handle, address, address.size()) != 0) {
+                                throw new IllegalStateException("Could not connect to POSIX socket on " + socket);
+                            }
+                            return new Connection.ForJnaPosixSocket(library, handle);
+                        } finally {
+                            address.clear();
                         }
-                        return new Connection.ForJnaPosixSocket(library, handle);
                     }
                 }
             }
         }
     }
 
+    /**
+     * A virtual machine attachment implementation for OpenJ9 or any compatible JVM.
+     */
     class ForOpenJ9Vm implements VirtualMachine {
 
+        /**
+         * The temporary folder for attachment files for OpenJ9 VMs.
+         */
         private static final String IBM_TEMPORARY_FOLDER = "com.ibm.tools.attach.directory";
 
+        /**
+         * The socket on which this VM and the target VM communicate.
+         */
         private final Socket socket;
 
+        /**
+         * Creates a new virtual machine connection for OpenJ9.
+         *
+         * @param socket The socket on which this VM and the target VM communicate.
+         */
         protected ForOpenJ9Vm(Socket socket) {
             this.socket = socket;
         }
 
+        /**
+         * Attaches to the supplied process id using the default JNA implementation.
+         *
+         * @param processId The process id.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, new Connector.ForJnaPosixEnvironment());
         }
 
+        /**
+         * Attaches to the supplied process id.
+         *
+         * @param processId The process id.
+         * @param timeout   The timeout for establishing the socket connection.
+         * @param connector The connector to use to communicate with the target VM.
+         * @return A suitable virtual machine implementation.
+         * @throws IOException If an IO exception occurs during establishing the connection.
+         */
         public static VirtualMachine attach(String processId, int timeout, Connector connector) throws IOException {
             File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, connector.getTemporaryFolder()), ".com_ibm_tools_attach");
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
@@ -732,6 +766,9 @@ public interface VirtualMachine {
             }
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgent(String jarFile, String argument) throws IOException {
             write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
             String answer = read(socket);
@@ -742,6 +779,9 @@ public interface VirtualMachine {
             }
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgentPath(String library, String argument) throws IOException {
             write(socket, "ATTACH_LOADAGENTPATH(" + library + (argument == null ? "" : (',' + argument)) + ')');
             String answer = read(socket);
@@ -752,6 +792,9 @@ public interface VirtualMachine {
             }
         }
 
+        /**
+         * {@inheritDoc}
+         */
         public void detach() throws IOException {
             try {
                 write(socket, "ATTACH_DETACH");
@@ -761,12 +804,26 @@ public interface VirtualMachine {
             }
         }
 
+        /**
+         * Writes the supplied value to the target socket.
+         *
+         * @param socket The socket to write to.
+         * @param value  The value being written.
+         * @throws IOException If an I/O exception occurs.
+         */
         private static void write(Socket socket, String value) throws IOException {
             socket.getOutputStream().write(value.getBytes("UTF-8"));
             socket.getOutputStream().write(0);
             socket.getOutputStream().flush();
         }
 
+        /**
+         * Reads a {©code 0}-terminated value from the target socket.
+         *
+         * @param socket The socket to read from.
+         * @return The value that was read.
+         * @throws IOException If an I/O exception occurs.
+         */
         private static String read(Socket socket) throws IOException {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
@@ -782,123 +839,289 @@ public interface VirtualMachine {
             return outputStream.toString("UTF-8");
         }
 
+        /**
+         * A connector for native operations being used for communication with an OpenJ9 virtual machine.
+         */
         public interface Connector {
 
+            /**
+             * Returns this machine's temporary folder.
+             *
+             * @return The temporary folder.
+             */
             String getTemporaryFolder();
 
+            /**
+             * Returns the process id of this process.
+             *
+             * @return The process id of this process.
+             */
             long pid();
 
+            /**
+             * Returns the user id of this process.
+             *
+             * @return The user id of this process
+             */
             long userId();
 
-            boolean isExistingProcess(long targetProcessId);
+            /**
+             * Returns {@code true} if the supplied process id is a running process.
+             *
+             * @param processId The process id to evaluate.
+             * @return {@code true} if the supplied process id is currently running.
+             */
+            boolean isExistingProcess(long processId);
 
-            long getOwnerOf(File folder);
+            /**
+             * Returns the user id of the owner of the supplied file.
+             *
+             * @param file The file for which to locate the owner.
+             * @return The owner id of the supplied file.
+             */
+            long getOwnerOf(File file);
 
-            void setPermissions(File reply, int permissions);
+            /**
+             * Sets permissions for the supplied file.
+             *
+             * @param file        The file for which to set the permissions.
+             * @param permissions The permission bits to set.
+             */
+            void setPermissions(File file, int permissions);
 
-            void incrementSemaphore(File directory, String name, int notifications);
+            /**
+             * Increments a semaphore.
+             *
+             * @param directory The sempahore's control directory.
+             * @param name      The semaphore's name.
+             * @param count     The amount of increments.
+             */
+            void incrementSemaphore(File directory, String name, int count);
 
-            void decrementSemaphore(File directory, String name, int notifications);
+            /**
+             * Decrements a semaphore.
+             *
+             * @param directory The sempahore's control directory.
+             * @param name      The semaphore's name.
+             * @param count     The amount of decrements.
+             */
+            void decrementSemaphore(File directory, String name, int count);
 
+            /**
+             * A connector implementation for a POSIX environment using JNA.
+             */
             class ForJnaPosixEnvironment implements Connector {
 
-                private static final int O_CREAT = 0x40;
-
-                private static final int ESRCH = 3;
-
+                /**
+                 * The JNA library to use.
+                 */
                 private final PosixLibrary library = Native.load("c", PosixLibrary.class);
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public String getTemporaryFolder() {
                     return "/tmp";
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public long pid() {
                     return library.getpid();
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public long userId() {
                     return library.getuid();
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public boolean isExistingProcess(long processId) {
-                    return library.kill(processId, 0) != ESRCH;
+                    return library.kill(processId, PosixLibrary.NULL_SIGNAL) != PosixLibrary.ESRCH;
                 }
 
-                public long getOwnerOf(File folder) {
+                /**
+                 * {@inheritDoc}
+                 */
+                public long getOwnerOf(File file) {
                     // TODO: Is there an easy way of getting the uid of the file owner?
                     try {
                         Method method = Class
                                 .forName("com.ibm.tools.attach.target.CommonDirectory")
                                 .getMethod("getFileOwner", String.class);
-                        return (Long) method.invoke(null, folder.getAbsolutePath());
+                        return (Long) method.invoke(null, file.getAbsolutePath());
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
 
-                public void setPermissions(File reply, int permissions) {
-                    library.chmod(reply.getAbsolutePath(), permissions);
+                /**
+                 * {@inheritDoc}
+                 */
+                public void setPermissions(File file, int permissions) {
+                    library.chmod(file.getAbsolutePath(), permissions);
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public void incrementSemaphore(File directory, String name, int count) {
-                    // TODO: Why is this an illegal call?
-//                    Pointer semaphore = library.sem_open(name, O_CREAT, 0666, 0);
-//                    try {
-//                        while (count-- > 0) {
-//                            library.sem_post(semaphore);
-//                        }
-//                    } finally {
-//                        library.sem_close(semaphore);
-//                    }
-                    try {
-                        Method method = Class
-                                .forName("com.ibm.tools.attach.target.IPC")
-                                .getDeclaredMethod("notifyVm", String.class, String.class, int.class);
-                        method.setAccessible(true);
-                        method.invoke(null, directory.getAbsolutePath(), name, count);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    notifySemaphore(directory, name, count, (short) 1, (short) 0, false);
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
                 public void decrementSemaphore(File directory, String name, int count) {
-                    // TODO: Why is this an illegal call?
-//                    Pointer semaphore = library.sem_open(name, 0, 0666, 0);
-//                    try {
-//                        while (count-- > 0) {
-//                            library.sem_wait(semaphore);
-//                        }
-//                    } finally {
-//                        library.sem_close(semaphore);
-//                    }
+                    notifySemaphore(directory, name, count, (short) -1, (short) (PosixLibrary.SEM_UNDO | PosixLibrary.IPC_NOWAIT), true);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptError) {
+                    int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
+                    PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
+                    buffer.sem_op = operation;
+                    buffer.sem_flg = flags;
                     try {
-                        Method method = Class
-                                .forName("com.ibm.tools.attach.target.IPC")
-                                .getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
-                        method.setAccessible(true);
-                        method.invoke(null, directory.getAbsolutePath(), name, count);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        while (count-- > 0) {
+                            try {
+                                library.semop(semaphore, buffer, 1);
+                            } catch (LastErrorException exception) {
+                                if (!acceptError && Native.getLastError() != PosixLibrary.EAGAIN) {
+                                    throw exception;
+                                }
+                            }
+                        }
+                    } finally {
+                        buffer.clear();
                     }
                 }
 
                 protected interface PosixLibrary extends Library {
 
+                    /**
+                     * A null signal.
+                     */
+                    int NULL_SIGNAL = 0;
+
+                    /**
+                     * Indicates that a process does not exist.
+                     */
+                    int ESRCH = 3;
+
+                    /**
+                     * Indicates that a request timed out.
+                     */
+                    int EAGAIN = 11;
+
+                    /**
+                     * Indicates that a semaphore's operations should be undone at process shutdown.
+                     */
+                    short SEM_UNDO = 0x1000;
+
+                    /**
+                     * Indicates that one should not wait for the release of a semaphore if it is not currently available.
+                     */
+                    short IPC_NOWAIT = 04000;
+
+                    /**
+                     * Runs the {@code getpid} command.
+                     *
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
                     int getpid() throws LastErrorException;
 
+                    /**
+                     * Runs the {@code getuid} command.
+                     *
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
                     int getuid() throws LastErrorException;
 
+                    /**
+                     * Runs the {@code kill} command.
+                     *
+                     * @param processId The target process id.
+                     * @param signal    The signal to send.
+                     * @return The command's return value.
+                     * @throws LastErrorException If an error occurred.
+                     */
                     int kill(long processId, int signal) throws LastErrorException;
 
-                    void chmod(String name, int mode) throws LastErrorException;
+                    /**
+                     * Runs the {@code chmod} command.
+                     *
+                     * @param path The file path.
+                     * @param mode The mode to set.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    void chmod(String path, int mode) throws LastErrorException;
 
-                    Pointer sem_open(String name, int flags, int mode, int value) throws LastErrorException;
+                    /**
+                     * Runs the {@code ftok} command.
+                     *
+                     * @param path The file path.
+                     * @param id   The id being used for creating the generated key.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int ftok(String path, int id) throws LastErrorException;
 
-                    int sem_post(Pointer pointer) throws LastErrorException;
+                    /**
+                     * Runs the {@code semget} command.
+                     *
+                     * @param key   The key of the semaphore.
+                     * @param count The initial count of the semaphore.
+                     * @param flags The flags to set.
+                     * @return The id of the semaphore.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int semget(int key, int count, int flags) throws LastErrorException;
 
-                    int sem_wait(Pointer pointer) throws LastErrorException;
+                    /**
+                     * Runs the {@code semop} command.
+                     *
+                     * @param id        The id of the semaphore.
+                     * @param operation The initial count of the semaphore.
+                     * @param flags     The flags to set.
+                     * @throws LastErrorException If an error occurred.
+                     */
+                    int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
 
-                    int sem_close(Pointer pointer) throws LastErrorException;
+                    /**
+                     * A structure to represent a semaphore operation for {@code semop}.
+                     */
+                    class SemaphoreOperation extends Structure {
+
+                        /**
+                         * The semaphore number.
+                         */
+                        @SuppressWarnings("unused")
+                        public short sem_num;
+
+                        /**
+                         * The operation to execute.
+                         */
+                        public short sem_op;
+
+                        /**
+                         * The flags being set for the operation.
+                         */
+                        public short sem_flg;
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("sem_num", "sem_op", "sem_flg");
+                        }
+                    }
                 }
             }
         }
