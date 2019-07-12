@@ -18,6 +18,7 @@ package net.bytebuddy.agent;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
@@ -1221,10 +1222,10 @@ public interface VirtualMachine {
 
                 private static final String CREATION_MUTEX_NAME = "j9shsemcreationMutex";
 
-                private final Win32Library library;
+                private final WindowsLibrary library;
 
                 public ForJnaWindowsEnvironment() {
-                    library = Native.load("synchapi", Win32Library.class);
+                    library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                 }
 
                 /**
@@ -1290,7 +1291,7 @@ public interface VirtualMachine {
                     Win32AttachHandle handle = openSemaphore(directory, name);
                     try {
                         while (count-- > 0) {
-                            if (!library.ReleaseSemaphore(handle.getChild(), 1, null)) {
+                            if (!library.ReleaseSemaphore(handle.getHandle(), 1, null)) {
                                 throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                             }
                         }
@@ -1315,7 +1316,7 @@ public interface VirtualMachine {
                     Win32AttachHandle handle = openSemaphore(directory, name);
                     try {
                         while (count-- > 0) {
-                            switch (Kernel32.INSTANCE.WaitForSingleObject(handle.getChild(), 0)) {
+                            switch (Kernel32.INSTANCE.WaitForSingleObject(handle.getHandle(), 0)) {
                                 case WinBase.WAIT_ABANDONED:
                                 case WinBase.WAIT_OBJECT_0:
                                     continue;
@@ -1376,7 +1377,7 @@ public interface VirtualMachine {
                                         // TODO: Not using global for now due to testing with 'old' JVM 8.
                                         String target = (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "") + "_semaphore";
                                         System.err.println("Target semaphorename: " + target);
-                                        WinNT.HANDLE parent = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, target);
+                                        WinNT.HANDLE parent = library.OpenSemaphoreW(WindowsLibrary.SEMAPHORE_ALL_ACCESS, false, target);
                                         if (parent == null) {
                                             System.err.println("Parent semaphore did not exist");
                                             parent = library.CreateSemaphoreW(null, 0, Integer.MAX_VALUE, target);
@@ -1391,7 +1392,7 @@ public interface VirtualMachine {
                                             return new Win32AttachHandle(parent, child);
                                         } else {
                                             System.err.println("Parent semaphore did exist");
-                                            WinNT.HANDLE child = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, target + "_set0");
+                                            WinNT.HANDLE child = library.OpenSemaphoreW(WindowsLibrary.SEMAPHORE_ALL_ACCESS, false, target + "_set0");
                                             if (child == null) {
                                                 throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                                             }
@@ -1410,7 +1411,7 @@ public interface VirtualMachine {
                     }
                 }
 
-                protected interface Win32Library extends Library {
+                protected interface WindowsLibrary extends Library {
 
                     int SEMAPHORE_ALL_ACCESS = 0x1F0003;
 
@@ -1432,11 +1433,7 @@ public interface VirtualMachine {
                         this.child = child;
                     }
 
-                    protected WinNT.HANDLE getParent() {
-                        return parent;
-                    }
-
-                    protected WinNT.HANDLE getChild() {
+                    protected WinNT.HANDLE getHandle() {
                         return child;
                     }
 
