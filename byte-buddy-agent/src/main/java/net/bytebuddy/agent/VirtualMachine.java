@@ -1302,6 +1302,41 @@ public interface VirtualMachine {
                         throw new RuntimeException(e);
                     }
                 }
+
+                private void notifySemaphore(File directory, String name, int count) {
+//                    String semaphore = "Global\\\\" + (directory.getAbsolutePath() + '_' + name)
+//                            .replaceAll("[\\\\:_]", "")
+//                            .replaceAll("[^A-Za-z0-9]", "") + "_semaphore";
+                    WinNT.SECURITY_DESCRIPTOR securityDescriptor = new WinNT.SECURITY_DESCRIPTOR();
+                    try {
+                        Advapi32.INSTANCE.InitializeSecurityDescriptor(securityDescriptor, WinNT.SECURITY_DESCRIPTOR_REVISION); // return
+                        Advapi32.INSTANCE.SetSecurityDescriptorDacl(securityDescriptor, true, null, true);
+                        WinBase.SECURITY_ATTRIBUTES securityAttributes = new WinBase.SECURITY_ATTRIBUTES();
+                        try {
+                            securityAttributes.dwLength = new WinDef.DWORD(securityAttributes.size());
+                            securityAttributes.lpSecurityDescriptor = securityDescriptor.getPointer();
+                            securityAttributes.bInheritHandle = false;
+                            WinNT.HANDLE mutex = Kernel32.INSTANCE.CreateMutex(securityAttributes, false, "j9shsemcreationMutex");
+                            if (mutex == null) {
+                                int lastError = Kernel32.INSTANCE.GetLastError();
+                                if (lastError == WinError.ERROR_ALREADY_EXISTS) {
+                                    mutex = Kernel32.INSTANCE.OpenMutex(WinBase.MUTEX_ALL_ACCESS, false, "j9shsemcreationMutex");
+                                } else {
+                                    throw new Win32Exception(lastError);
+                                }
+                            }
+                            try {
+
+                            } finally {
+                                Kernel32.INSTANCE.ReleaseMutex(mutex);
+                            }
+                        } finally {
+                            securityAttributes.clear();
+                        }
+                    } finally {
+                        securityDescriptor.clear();
+                    }
+                }
             }
         }
     }
