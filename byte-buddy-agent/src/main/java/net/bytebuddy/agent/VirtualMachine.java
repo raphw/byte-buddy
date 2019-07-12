@@ -840,7 +840,7 @@ public interface VirtualMachine {
         }
 
         /**
-         * Reads a {©code 0}-terminated value from the target socket.
+         * Reads a {@code '\0'}-terminated value from the target socket.
          *
          * @param socket The socket to read from.
          * @return The value that was read.
