@@ -1246,6 +1246,7 @@ public interface VirtualMachine {
                  */
                 public static Connector withInferredNamespace() {
                     try {
+                        // This method is bundled with any OpenJ9 VM and is guaranteed to exist for any VM that does not use the non-global namespace.
                         Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
                         return new ForJnaWindowsEnvironment(false);
                     } catch (Exception ignored) {
