@@ -614,7 +614,7 @@ public interface VirtualMachine {
          */
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, Platform.isWindows() || Platform.isWindowsCE()
-                    ? new Connector.ForJnaWindowsEnvironment()
+                    ? Connector.ForJnaWindowsEnvironment.withInferredNamespace()
                     : new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
@@ -1229,14 +1229,38 @@ public interface VirtualMachine {
                 private static final String CREATION_MUTEX_NAME = "j9shsemcreationMutex";
 
                 /**
+                 * Indicates if the global namespace should be used.
+                 */
+                private final boolean globalNamespace;
+
+                /**
                  * A library to use for interacting with Windows.
                  */
                 private final WindowsLibrary library;
 
                 /**
-                 * Creates a new connector for a Windows environment using JNA.
+                 * Returns a connector that uses the global namespace unless this VM indicates that the global namespace is not used by the current VM.
+                 * This inference will only work reliably if the current VM is the same VM that the subsequent attachment targets.
+                 *
+                 * @return An appropriate connector.
                  */
-                public ForJnaWindowsEnvironment() {
+                public static Connector withInferredNamespace() {
+                    try {
+                        Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
+                        return new ForJnaWindowsEnvironment(false);
+                    } catch (Exception ignored) {
+                        return new ForJnaWindowsEnvironment(true);
+                    }
+                }
+
+                /**
+                 * Creates a new connector for a Windows environment using JNA.
+                 *
+                 * @param globalNamespace {@code true} if the communication with the target VM should be applied on the global namespace. OpenJ9
+                 *                        communicates on the global namespace since Java 11.
+                 */
+                public ForJnaWindowsEnvironment(boolean globalNamespace) {
+                    this.globalNamespace = globalNamespace;
                     library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                 }
 
@@ -1374,8 +1398,9 @@ public interface VirtualMachine {
                                     throw new Win32Exception(result);
                                 default:
                                     try {
-                                        // TODO: Not using global for now due to testing with 'old' JVM 8.
-                                        String target = (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "") + "_semaphore";
+                                        String target = (globalNamespace ? "Global\\" : "")
+                                                + (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "")
+                                                + "_semaphore";
                                         WinNT.HANDLE parent = library.OpenSemaphoreW(WindowsLibrary.SEMAPHORE_ALL_ACCESS, false, target);
                                         if (parent == null) {
                                             parent = library.CreateSemaphoreW(null, 0, Integer.MAX_VALUE, target);
