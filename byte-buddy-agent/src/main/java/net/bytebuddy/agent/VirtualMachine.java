@@ -1286,15 +1286,16 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void incrementSemaphore(File directory, String name, int count) {
-                    WinNT.HANDLE semaphore = openSemaphore(directory, name);
+                    System.err.println("Increment semaphore: enter");
+                    Win32AttachHandle handle = openSemaphore(directory, name);
                     try {
                         while (count-- > 0) {
-                            if (!library.ReleaseSemaphore(semaphore, 1, null)) {
+                            if (!library.ReleaseSemaphore(handle.getChild(), 1, null)) {
                                 throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                             }
                         }
                     } finally {
-                        Kernel32.INSTANCE.CloseHandle(semaphore);
+                        handle.close();
                     }
 //                    try {
 //                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
@@ -1303,26 +1304,27 @@ public interface VirtualMachine {
 //                    } catch (Exception e) {
 //                        throw new RuntimeException(e);
 //                    }
+                    System.err.println("Increment semaphore: exit");
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public void decrementSemaphore(File directory, String name, int count) {
-                    WinNT.HANDLE semaphore = openSemaphore(directory, name);
+                    System.err.println("Decrement semaphore: enter");
+                    Win32AttachHandle handle = openSemaphore(directory, name);
                     try {
                         while (count-- > 0) {
-                            int result = Kernel32.INSTANCE.WaitForSingleObject(semaphore, 0);
-                            switch (result) {
+                            switch (Kernel32.INSTANCE.WaitForSingleObject(handle.getChild(), 0)) {
                                 case WinBase.WAIT_ABANDONED:
                                 case WinBase.WAIT_OBJECT_0:
                                     continue;
                                 default:
-                                    throw new Win32Exception(result);
+                                    throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                             }
                         }
                     } finally {
-                        Kernel32.INSTANCE.CloseHandle(semaphore);
+                        handle.close();
                     }
 //                    try {
 //                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
@@ -1331,10 +1333,11 @@ public interface VirtualMachine {
 //                    } catch (Exception e) {
 //                        throw new RuntimeException(e);
 //                    }
+                    System.err.println("Decrement semaphore: exit");
                 }
 
-                private WinNT.HANDLE openSemaphore(File directory, String name) {
-                    WinNT.SECURITY_DESCRIPTOR securityDescriptor = new WinNT.SECURITY_DESCRIPTOR();
+                private Win32AttachHandle openSemaphore(File directory, String name) {
+                    WinNT.SECURITY_DESCRIPTOR securityDescriptor = new WinNT.SECURITY_DESCRIPTOR(64 * 1024);
                     try {
                         if (!Advapi32.INSTANCE.InitializeSecurityDescriptor(securityDescriptor, WinNT.SECURITY_DESCRIPTOR_REVISION)) {
                             throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
@@ -1349,31 +1352,55 @@ public interface VirtualMachine {
                             securityAttributes.bInheritHandle = false;
                             WinNT.HANDLE mutex = Kernel32.INSTANCE.CreateMutex(securityAttributes, false, CREATION_MUTEX_NAME);
                             if (mutex == null) {
+                                System.err.println("Did not create global mutex - attempting opening");
                                 int lastError = Kernel32.INSTANCE.GetLastError();
                                 if (lastError == WinError.ERROR_ALREADY_EXISTS) {
                                     mutex = Kernel32.INSTANCE.OpenMutex(WinBase.MUTEX_ALL_ACCESS, false, CREATION_MUTEX_NAME);
+                                    if (mutex == null) {
+                                        throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                    }
                                 } else {
                                     throw new Win32Exception(lastError);
                                 }
                             }
-                            try {
-                                int lock = Kernel32.INSTANCE.WaitForSingleObject(mutex, 2000);
-                                switch (lock) {
-                                    case WinBase.WAIT_FAILED:
-                                        throw new IllegalStateException("Could not lock creation mutex");
-                                    case WinError.WAIT_TIMEOUT:
-                                        throw new IllegalStateException("Timeout during wait for creation mutex");
-                                    default:
-                                        WinNT.HANDLE semaphore = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, "Global\\"
-                                                + (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "")
-                                                + "_semaphore");
-                                        if (semaphore == null) {
-                                            throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                            System.err.println("Successfully received global mutex");
+                            int lock = Kernel32.INSTANCE.WaitForSingleObject(mutex, 2000);
+                            switch (lock) {
+                                case WinBase.WAIT_FAILED:
+                                    throw new IllegalStateException("Could not lock creation mutex");
+                                case WinError.WAIT_TIMEOUT:
+                                    throw new IllegalStateException("Timeout during wait for creation mutex");
+                                default:
+                                    try {
+                                        System.err.println("Successfully locked global mutex");
+                                        // TODO: Not using global for now due to testing with 'old' JVM 8.
+                                        String target = (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "") + "_semaphore";
+                                        System.err.println("Target semaphorename: " + target);
+                                        WinNT.HANDLE parent = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, target);
+                                        if (parent == null) {
+                                            System.err.println("Parent semaphore did not exist");
+                                            parent = library.CreateSemaphoreW(null, 0, Integer.MAX_VALUE, target);
+                                            if (parent == null) {
+                                                throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                            }
+                                            WinNT.HANDLE child = library.CreateSemaphoreW(null, 0, Integer.MAX_VALUE, target + "_set0");
+                                            if (child == null) {
+                                                throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                            }
+                                            System.err.println("Created child semaphore");
+                                            return new Win32AttachHandle(parent, child);
+                                        } else {
+                                            System.err.println("Parent semaphore did exist");
+                                            WinNT.HANDLE child = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, target + "_set0");
+                                            if (child == null) {
+                                                throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                            }
+                                            System.err.println("Opened child semaphore");
+                                            return new Win32AttachHandle(parent, child);
                                         }
-                                        return semaphore;
-                                }
-                            } finally {
-                                Kernel32.INSTANCE.ReleaseMutex(mutex);
+                                    } finally {
+                                        Kernel32.INSTANCE.ReleaseMutex(mutex);
+                                    }
                             }
                         } finally {
                             securityAttributes.clear();
@@ -1389,7 +1416,43 @@ public interface VirtualMachine {
 
                     WinNT.HANDLE OpenSemaphoreW(int access, boolean inheritHandle, String name);
 
+                    WinNT.HANDLE CreateSemaphoreW(WinBase.SECURITY_ATTRIBUTES securityAttributes, long count, long previousCount, String name);
+
                     boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, Long previousCount);
+                }
+
+                protected static class Win32AttachHandle implements Closeable {
+
+                    private final WinNT.HANDLE parent;
+
+                    private final WinNT.HANDLE child;
+
+                    protected Win32AttachHandle(WinNT.HANDLE parent, WinNT.HANDLE child) {
+                        this.parent = parent;
+                        this.child = child;
+                    }
+
+                    protected WinNT.HANDLE getParent() {
+                        return parent;
+                    }
+
+                    protected WinNT.HANDLE getChild() {
+                        return child;
+                    }
+
+                    public void close() {
+                        boolean closed;
+                        try {
+                            if (!Kernel32.INSTANCE.CloseHandle(child)) {
+                                throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                            }
+                        } finally {
+                            closed = Kernel32.INSTANCE.CloseHandle(parent);
+                        }
+                        if (!closed) {
+                            throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                        }
+                    }
                 }
             }
         }
