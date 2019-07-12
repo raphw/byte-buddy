@@ -21,7 +21,6 @@ import com.sun.jna.ptr.IntByReference;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -1220,6 +1219,14 @@ public interface VirtualMachine {
 
                 private static final long NO_USER_ID = 0;
 
+                private static final String CREATION_MUTEX_NAME = "j9shsemcreationMutex";
+
+                private final Win32Library library;
+
+                public ForJnaWindowsEnvironment() {
+                    library = Native.load("synchapi", Win32Library.class);
+                }
+
                 /**
                  * {@inheritDoc}
                  */
@@ -1279,54 +1286,92 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void incrementSemaphore(File directory, String name, int count) {
-                    // TODO: Reimplement in JNA.
+                    WinNT.HANDLE semaphore = openSemaphore(directory, name);
                     try {
-                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
-                        method.setAccessible(true);
-                        method.invoke(null, directory.getAbsolutePath(), name, count);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        while (count-- > 0) {
+                            if (!library.ReleaseSemaphore(semaphore, 1, null)) {
+                                throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                            }
+                        }
+                    } finally {
+                        Kernel32.INSTANCE.CloseHandle(semaphore);
                     }
+//                    try {
+//                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
+//                        method.setAccessible(true);
+//                        method.invoke(null, directory.getAbsolutePath(), name, count);
+//                    } catch (Exception e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public void decrementSemaphore(File directory, String name, int count) {
-                    // TODO: Reimplement in JNA.
+                    WinNT.HANDLE semaphore = openSemaphore(directory, name);
                     try {
-                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
-                        method.setAccessible(true);
-                        method.invoke(null, directory.getAbsolutePath(), name, count);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        while (count-- > 0) {
+                            int result = Kernel32.INSTANCE.WaitForSingleObject(semaphore, 0);
+                            switch (result) {
+                                case WinBase.WAIT_ABANDONED:
+                                case WinBase.WAIT_OBJECT_0:
+                                    continue;
+                                default:
+                                    throw new Win32Exception(result);
+                            }
+                        }
+                    } finally {
+                        Kernel32.INSTANCE.CloseHandle(semaphore);
                     }
+//                    try {
+//                        Method method = Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("cancelNotify", String.class, String.class, int.class);
+//                        method.setAccessible(true);
+//                        method.invoke(null, directory.getAbsolutePath(), name, count);
+//                    } catch (Exception e) {
+//                        throw new RuntimeException(e);
+//                    }
                 }
 
-                private void notifySemaphore(File directory, String name, int count) {
-//                    String semaphore = "Global\\\\" + (directory.getAbsolutePath() + '_' + name)
-//                            .replaceAll("[\\\\:_]", "")
-//                            .replaceAll("[^A-Za-z0-9]", "") + "_semaphore";
+                private WinNT.HANDLE openSemaphore(File directory, String name) {
                     WinNT.SECURITY_DESCRIPTOR securityDescriptor = new WinNT.SECURITY_DESCRIPTOR();
                     try {
-                        Advapi32.INSTANCE.InitializeSecurityDescriptor(securityDescriptor, WinNT.SECURITY_DESCRIPTOR_REVISION); // return
-                        Advapi32.INSTANCE.SetSecurityDescriptorDacl(securityDescriptor, true, null, true);
+                        if (!Advapi32.INSTANCE.InitializeSecurityDescriptor(securityDescriptor, WinNT.SECURITY_DESCRIPTOR_REVISION)) {
+                            throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                        }
+                        if (!Advapi32.INSTANCE.SetSecurityDescriptorDacl(securityDescriptor, true, null, true)) {
+                            throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                        }
                         WinBase.SECURITY_ATTRIBUTES securityAttributes = new WinBase.SECURITY_ATTRIBUTES();
                         try {
                             securityAttributes.dwLength = new WinDef.DWORD(securityAttributes.size());
                             securityAttributes.lpSecurityDescriptor = securityDescriptor.getPointer();
                             securityAttributes.bInheritHandle = false;
-                            WinNT.HANDLE mutex = Kernel32.INSTANCE.CreateMutex(securityAttributes, false, "j9shsemcreationMutex");
+                            WinNT.HANDLE mutex = Kernel32.INSTANCE.CreateMutex(securityAttributes, false, CREATION_MUTEX_NAME);
                             if (mutex == null) {
                                 int lastError = Kernel32.INSTANCE.GetLastError();
                                 if (lastError == WinError.ERROR_ALREADY_EXISTS) {
-                                    mutex = Kernel32.INSTANCE.OpenMutex(WinBase.MUTEX_ALL_ACCESS, false, "j9shsemcreationMutex");
+                                    mutex = Kernel32.INSTANCE.OpenMutex(WinBase.MUTEX_ALL_ACCESS, false, CREATION_MUTEX_NAME);
                                 } else {
                                     throw new Win32Exception(lastError);
                                 }
                             }
                             try {
-
+                                int lock = Kernel32.INSTANCE.WaitForSingleObject(mutex, 2000);
+                                switch (lock) {
+                                    case WinBase.WAIT_FAILED:
+                                        throw new IllegalStateException("Could not lock creation mutex");
+                                    case WinError.WAIT_TIMEOUT:
+                                        throw new IllegalStateException("Timeout during wait for creation mutex");
+                                    default:
+                                        WinNT.HANDLE semaphore = library.OpenSemaphoreW(Win32Library.SEMAPHORE_ALL_ACCESS, false, "Global\\"
+                                                + (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "")
+                                                + "_semaphore");
+                                        if (semaphore == null) {
+                                            throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                        }
+                                        return semaphore;
+                                }
                             } finally {
                                 Kernel32.INSTANCE.ReleaseMutex(mutex);
                             }
@@ -1336,6 +1381,15 @@ public interface VirtualMachine {
                     } finally {
                         securityDescriptor.clear();
                     }
+                }
+
+                protected interface Win32Library extends Library {
+
+                    int SEMAPHORE_ALL_ACCESS = 0x1F0003;
+
+                    WinNT.HANDLE OpenSemaphoreW(int access, boolean inheritHandle, String name);
+
+                    boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, Long previousCount);
                 }
             }
         }
