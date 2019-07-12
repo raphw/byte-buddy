@@ -1,7 +1,7 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.UnixRule;
+import net.bytebuddy.test.utility.AttachmentEmulationRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,7 +24,7 @@ public class VirtualMachineAttachmentTest {
     private static final String FOO = "foo";
 
     @Rule
-    public MethodRule unixRule = new UnixRule();
+    public MethodRule attachmentEmulationRule = new AttachmentEmulationRule();
 
     private File agent;
 
@@ -50,7 +50,7 @@ public class VirtualMachineAttachmentTest {
     }
 
     @Test
-    @UnixRule.Enforce
+    @AttachmentEmulationRule.Enforce
     public void testAttachment() throws Exception {
         assertThat(SampleAgent.argument, nullValue(String.class));
         VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()

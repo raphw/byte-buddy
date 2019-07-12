@@ -1,6 +1,6 @@
 package net.bytebuddy.test.utility;
 
-import com.sun.jna.Platform;
+import net.bytebuddy.agent.VirtualMachine;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -11,12 +11,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.logging.Logger;
 
-public class UnixRule implements MethodRule {
+public class AttachmentEmulationRule implements MethodRule {
 
     private final boolean enabled;
 
-    public UnixRule() {
-        this.enabled = !Platform.isWindows() && !Platform.isWindowsCE();
+    public AttachmentEmulationRule() {
+        boolean enabled;
+        try {
+            VirtualMachine.Resolver.INSTANCE.run();
+            enabled = true;
+        } catch (UnsupportedOperationException ignored) {
+            enabled = false;
+        }
+        this.enabled = enabled;
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
@@ -34,7 +41,7 @@ public class UnixRule implements MethodRule {
     private static class NoOpStatement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring Unix sockets on this machine");
+            Logger.getLogger("net.bytebuddy").warning("Cannot emulate attach API on this machine");
         }
     }
 }
