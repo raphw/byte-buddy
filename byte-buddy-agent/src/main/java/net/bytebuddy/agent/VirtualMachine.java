@@ -1244,6 +1244,7 @@ public interface VirtualMachine {
                  *
                  * @return An appropriate connector.
                  */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "The Exception is intentionally suppressed as it indicates incompatibility.")
                 public static Connector withInferredNamespace() {
                     try {
                         // This method is bundled with any OpenJ9 VM and is guaranteed to exist for any VM that does not use the non-global namespace.
