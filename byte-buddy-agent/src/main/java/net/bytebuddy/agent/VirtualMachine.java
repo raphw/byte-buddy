@@ -1002,6 +1002,8 @@ public interface VirtualMachine {
                 @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
                 public long getOwnerIdOf(File file) {
                     try {
+                        // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
+                        // stat is called as a separate command. This is less efficient but more portable.
                         Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
                         int attempts = this.attempts;
                         boolean exited = false;
