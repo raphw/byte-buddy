@@ -1422,6 +1422,7 @@ public interface VirtualMachine {
                      * @param name          The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
+                    @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE OpenSemaphoreW(int access, boolean inheritHandle, String name);
 
                     /**
@@ -1433,6 +1434,7 @@ public interface VirtualMachine {
                      * @param name               The semaphore's name.
                      * @return The handle or {@code null} if the handle could not be created.
                      */
+                    @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateSemaphoreW(WinBase.SECURITY_ATTRIBUTES securityAttributes, long count, long maximumCount, String name);
 
                     /**
@@ -1443,6 +1445,7 @@ public interface VirtualMachine {
                      * @param previousCount The previous count of the semaphore or {@code null}.
                      * @return {@code true} if the semaphore was successfully released.
                      */
+                    @SuppressWarnings("checkstyle:methodname")
                     boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, Long previousCount);
                 }
 
