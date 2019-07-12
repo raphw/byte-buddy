@@ -1318,12 +1318,15 @@ public interface VirtualMachine {
                     AttachmentHandle handle = openSemaphore(directory, name);
                     try {
                         while (count-- > 0) {
-                            switch (Kernel32.INSTANCE.WaitForSingleObject(handle.getHandle(), 0)) {
+                            int result = Kernel32.INSTANCE.WaitForSingleObject(handle.getHandle(), 0);
+                            switch (result) {
                                 case WinBase.WAIT_ABANDONED:
                                 case WinBase.WAIT_OBJECT_0:
                                     break;
+                                case WinError.WAIT_TIMEOUT:
+                                    return;
                                 default:
-                                    throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
+                                    throw new Win32Exception(result);
                             }
                         }
                     } finally {
@@ -1364,12 +1367,11 @@ public interface VirtualMachine {
                                     throw new Win32Exception(lastError);
                                 }
                             }
-                            int lock = Kernel32.INSTANCE.WaitForSingleObject(mutex, 2000);
-                            switch (lock) {
+                            int result = Kernel32.INSTANCE.WaitForSingleObject(mutex, 2000);
+                            switch (result) {
                                 case WinBase.WAIT_FAILED:
-                                    throw new IllegalStateException("Could not lock creation mutex");
                                 case WinError.WAIT_TIMEOUT:
-                                    throw new IllegalStateException("Timeout during wait for creation mutex");
+                                    throw new Win32Exception(result);
                                 default:
                                     try {
                                         // TODO: Not using global for now due to testing with 'old' JVM 8.
