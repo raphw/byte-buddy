@@ -4,9 +4,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.AttachmentEmulationRule;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.MethodRule;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,9 +20,6 @@ import static org.hamcrest.core.Is.is;
 public class VirtualMachineAttachmentTest {
 
     private static final String FOO = "foo";
-
-    @Rule
-    public MethodRule attachmentEmulationRule = new AttachmentEmulationRule();
 
     private File agent;
 

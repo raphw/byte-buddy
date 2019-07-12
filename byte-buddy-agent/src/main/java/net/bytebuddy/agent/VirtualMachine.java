@@ -22,7 +22,6 @@ import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -85,23 +84,14 @@ public interface VirtualMachine {
          */
         public Class<? extends VirtualMachine> run() {
             try {
-                Class<?> platform = Class.forName("com.sun.jna.Platform");
-                if (System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")) {
-                    return ForOpenJ9.class;
-                } else if ((Boolean) platform.getMethod("isWindows").invoke(null) || (Boolean) platform.getMethod("isWindowsCE").invoke(null)) {
-                    throw new UnsupportedOperationException("Attachment emulation is not currently available for HotSpot on Windows");
-                } else {
-                    return ForHotSpot.class;
-                }
+                Class.forName("com.sun.jna.Platform");
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Optional JNA dependency is not available", exception);
-            } catch (NoSuchMethodException exception) {
-                throw new IllegalStateException("The signature of the included JNA distribution is incompatible", exception);
-            } catch (IllegalAccessException exception) {
-                throw new UnsupportedOperationException("Could not access JNA", exception);
-            } catch (InvocationTargetException exception) {
-                throw new UnsupportedOperationException("Could not invoke JNA method", exception);
             }
+            return System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")
+                    ? ForOpenJ9.class
+                    : ForHotSpot.class;
+
         }
     }
 
@@ -574,6 +564,131 @@ public interface VirtualMachine {
                             return new Connection.ForJnaPosixSocket(library, handle);
                         } finally {
                             address.clear();
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Implements a connection for a Windows named pipe in JNA.
+             */
+            class ForJnaWindowsNamedPipe implements Connection {
+
+                /**
+                 * The handle of the pipe being used.
+                 */
+                private final WinNT.HANDLE pipe;
+
+                /**
+                 * Creates a new connection to a JVM using a named pipe.
+                 *
+                 * @param pipe The handle of the pipe being used.
+                 */
+                protected ForJnaWindowsNamedPipe(WinNT.HANDLE pipe) {
+                    this.pipe = pipe;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public int read(byte[] buffer) {
+                    IntByReference read = new IntByReference();
+                    if (!Kernel32.INSTANCE.ReadFile(pipe, buffer, buffer.length, read, null)) {
+                        throw new Win32Exception(Native.getLastError());
+                    }
+                    return read.getValue();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void write(byte[] buffer) {
+                    IntByReference written = new IntByReference();
+                    if (!Kernel32.INSTANCE.WriteFile(pipe, buffer, buffer.length, written, null)) {
+                        throw new Win32Exception(Native.getLastError());
+                    } else if (written.getValue() != buffer.length) {
+                        throw new IllegalStateException("Unexpected number of bytes was written");
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    try {
+                        if (!Kernel32.INSTANCE.DisconnectNamedPipe(pipe)) {
+                            throw new Win32Exception(Native.getLastError());
+                        }
+                    } finally {
+                        if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                            throw new Win32Exception(Native.getLastError());
+                        }
+                    }
+                }
+
+                /**
+                 * A factory for establishing a connection to a JVM using a named pipe in JNA.
+                 */
+                public static class Factory implements Connection.Factory {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Connection connect(String processId) {
+                        WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe("\\\\.\\pipe\\javatool" + Math.abs(System.nanoTime()),
+                                WinBase.PIPE_ACCESS_INBOUND,
+                                WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
+                                1,
+                                4096,
+                                8192,
+                                WinBase.NMPWAIT_USE_DEFAULT_WAIT,
+                                null);
+                        if (pipe == null) {
+                            throw new Win32Exception(Native.getLastError());
+                        }
+                        try {
+                            WinNT.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_ALL_ACCESS, false, Integer.parseInt(processId));
+                            if (process == null) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
+                            try {
+                                // TODO: allocate code and data.
+                                WinBase.FOREIGN_THREAD_START_ROUTINE code = null;
+                                Pointer data = null;
+                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, code, data, null, null);
+                                if (thread == null) {
+                                    throw new Win32Exception(Native.getLastError());
+                                }
+                                try {
+                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                    if (result != 0) {
+                                        throw new Win32Exception(result);
+                                    }
+                                    IntByReference exitCode = new IntByReference();
+                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    } else if (exitCode.getValue() != 0) {
+                                        throw new IllegalStateException(processId + " does not support the attach mechanism");
+                                    }
+                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                    return new ForJnaWindowsNamedPipe(pipe);
+                                } finally {
+                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                }
+                            } finally {
+                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                    throw new Win32Exception(Native.getLastError());
+                                }
+                            }
+                        } catch (Throwable throwable) {
+                            if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
+                            throw new IllegalStateException(throwable);
                         }
                     }
                 }
@@ -1422,7 +1537,9 @@ public interface VirtualMachine {
                                             return new AttachmentHandle(parent, child);
                                         }
                                     } finally {
-                                        Kernel32.INSTANCE.ReleaseMutex(mutex);
+                                        if (!Kernel32.INSTANCE.ReleaseMutex(mutex)) {
+                                            throw new Win32Exception(Native.getLastError());
+                                        }
                                     }
                             }
                         } finally {
