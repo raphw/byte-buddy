@@ -44,8 +44,8 @@ public class VirtualMachineForOpenJ9Test {
     @Test(timeout = 10000L)
     public void testAttachment() throws Exception {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
-        VirtualMachine.ForOpenJ9.Connector connector = mock(VirtualMachine.ForOpenJ9.Connector.class);
-        when(connector.getTemporaryFolder()).thenReturn(temporaryFolder.getAbsolutePath());
+        VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
+        when(dispatcher.getTemporaryFolder()).thenReturn(temporaryFolder.getAbsolutePath());
         File targetFolder = new File(attachFolder, Long.toString(PROCESS_ID));
         assertThat(targetFolder.mkdir(), is(true));
         try {
@@ -64,9 +64,9 @@ public class VirtualMachineForOpenJ9Test {
                 final File sourceFolder = new File(attachFolder, Long.toString(VM_ID)), replyInfo = new File(sourceFolder, "replyInfo");
                 assertThat(sourceFolder.mkdir(), is(true));
                 try {
-                    when(connector.userId()).thenReturn(USER_ID);
-                    when(connector.getOwnerIdOf(targetFolder)).thenReturn(USER_ID);
-                    when(connector.isExistingProcess(PROCESS_ID)).thenReturn(true);
+                    when(dispatcher.userId()).thenReturn(USER_ID);
+                    when(dispatcher.getOwnerIdOf(targetFolder)).thenReturn(USER_ID);
+                    when(dispatcher.isExistingProcess(PROCESS_ID)).thenReturn(true);
                     Thread attachmentThread = new Thread() {
                         @Override
                         public void run() {
@@ -121,7 +121,7 @@ public class VirtualMachineForOpenJ9Test {
                     attachmentThread.setName("attachment-thread-emulation");
                     attachmentThread.start();
                     try {
-                        VirtualMachine.ForOpenJ9.attach(Long.toString(PROCESS_ID), 5000, connector).detach();
+                        VirtualMachine.ForOpenJ9.attach(Long.toString(PROCESS_ID), 5000, dispatcher).detach();
                         attachmentThread.join(5000);
                     } finally {
                         attachmentThread.interrupt();

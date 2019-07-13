@@ -130,11 +130,6 @@ public interface VirtualMachine {
         private static final String ARGUMENT_DELIMITER = "=";
 
         /**
-         * A blank line argument.
-         */
-        private static final byte[] BLANK = new byte[]{0};
-
-        /**
          * The virtual machine connection.
          */
         private final Connection connection;
@@ -196,41 +191,36 @@ public interface VirtualMachine {
          * @throws IOException If an I/O exception occurs.
          */
         protected void load(String file, boolean isNative, String argument) throws IOException {
-            connection.write(PROTOCOL_VERSION.getBytes(UTF_8));
-            connection.write(BLANK);
-            connection.write(LOAD_COMMAND.getBytes(UTF_8));
-            connection.write(BLANK);
-            connection.write(INSTRUMENT_COMMAND.getBytes(UTF_8));
-            connection.write(BLANK);
-            connection.write(Boolean.toString(isNative).getBytes(UTF_8));
-            connection.write(BLANK);
-            connection.write((argument == null
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, LOAD_COMMAND, INSTRUMENT_COMMAND, Boolean.toString(isNative), (argument == null
                     ? file
-                    : file + ARGUMENT_DELIMITER + argument).getBytes(UTF_8));
-            connection.write(BLANK);
-            byte[] buffer = new byte[1];
-            StringBuilder stringBuilder = new StringBuilder();
-            int length;
-            while ((length = connection.read(buffer)) != -1) {
-                if (length > 0) {
-                    if (buffer[0] == 10) {
-                        break;
+                    : file + ARGUMENT_DELIMITER + argument));
+            try {
+                byte[] buffer = new byte[1];
+                StringBuilder stringBuilder = new StringBuilder();
+                int length;
+                while ((length = response.read(buffer)) != -1) {
+                    if (length > 0) {
+                        if (buffer[0] == 10) {
+                            break;
+                        }
+                        stringBuilder.append((char) buffer[0]);
                     }
-                    stringBuilder.append((char) buffer[0]);
                 }
-            }
-            switch (Integer.parseInt(stringBuilder.toString())) {
-                case 0:
-                    return;
-                case 101:
-                    throw new IOException("Protocol mismatch with target VM");
-                default:
-                    buffer = new byte[1024];
-                    stringBuilder = new StringBuilder();
-                    while ((length = connection.read(buffer)) != -1) {
-                        stringBuilder.append(new String(buffer, 0, length, UTF_8));
-                    }
-                    throw new IllegalStateException(stringBuilder.toString());
+                switch (Integer.parseInt(stringBuilder.toString())) {
+                    case 0:
+                        return;
+                    case 101:
+                        throw new IOException("Protocol mismatch with target VM");
+                    default:
+                        buffer = new byte[1024];
+                        stringBuilder = new StringBuilder();
+                        while ((length = response.read(buffer)) != -1) {
+                            stringBuilder.append(new String(buffer, 0, length, UTF_8));
+                        }
+                        throw new IllegalStateException(stringBuilder.toString());
+                }
+            } finally {
+                response.release();
             }
         }
 
@@ -247,21 +237,35 @@ public interface VirtualMachine {
         public interface Connection extends Closeable {
 
             /**
-             * Reads from the connected virtual machine.
+             * Executes a command on the current connection.
              *
-             * @param buffer The buffer to read from.
-             * @return The amount of bytes that were read.
-             * @throws IOException If an I/O exception occurs during reading.
+             * @param argument The arguments to send to the target VM.
+             * @return The response of the target JVM.
+             * @throws IOException If an I/O error occurred.
              */
-            int read(byte[] buffer) throws IOException;
+            Response execute(String... argument) throws IOException;
 
             /**
-             * Writes to the connected virtual machine.
-             *
-             * @param buffer The buffer to write to.
-             * @throws IOException If an I/O exception occurs during writing.
+             * A response to an execution command to a VM.
              */
-            void write(byte[] buffer) throws IOException;
+            interface Response {
+
+                /**
+                 * Reads a buffer from the target VM.
+                 *
+                 * @param buffer The buffer to read to.
+                 * @return The bytes read or {@code -1} if no more bytes could be read.
+                 * @throws IOException If an I/O exception occurred.
+                 */
+                int read(byte[] buffer) throws IOException;
+
+                /**
+                 * Releases this response.
+                 *
+                 * @throws IOException If an I/O exception occurred.
+                 */
+                void release() throws IOException;
+            }
 
             /**
              * A factory for creating connections to virtual machines.
@@ -385,9 +389,46 @@ public interface VirtualMachine {
             }
 
             /**
+             * A connection that is represented by a byte channel that is persistent during communication.
+             */
+            abstract class OnPersistentByteChannel implements Connection, Response {
+
+                /**
+                 * A blank line argument.
+                 */
+                private static final byte[] BLANK = new byte[]{0};
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Response execute(String... argument) throws IOException {
+                    for (String anArgument : argument) {
+                        write(anArgument.getBytes("UTF-8"));
+                        write(BLANK);
+                    }
+                    return this;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void release() {
+                    /* do nothing */
+                }
+
+                /**
+                 * Writes to the connected virtual machine.
+                 *
+                 * @param buffer The buffer to write to.
+                 * @throws IOException If an I/O exception occurs during writing.
+                 */
+                public abstract void write(byte[] buffer) throws IOException;
+            }
+
+            /**
              * Implements a connection for a Posix socket in JNA.
              */
-            class ForJnaPosixSocket implements Connection {
+            class ForJnaPosixSocket extends OnPersistentByteChannel {
 
                 /**
                  * The JNA library to use.
@@ -581,44 +622,124 @@ public interface VirtualMachine {
             class ForJnaWindowsNamedPipe implements Connection {
 
                 /**
+                 * The error that was raised while loading the native library or {@code null} if no error occurred.
+                 */
+                private static final String ERROR;
+
+                /*
+                 * Loads the DLL file that is required for invoking functions that cannot be represented in JNA.
+                 */
+                static {
+                    String error;
+                    try {
+                        AccessController.doPrivileged(new LibraryLoadAction(true));
+                        error = null;
+                    } catch (PrivilegedActionException exception) {
+                        error = exception.getMessage();
+                    }
+                    ERROR = error;
+                }
+
+                /**
                  * Indicates a memory release.
                  */
                 private static final int MEM_RELEASE = 0x8000;
 
                 /**
-                 * The handle of the pipe being used.
+                 * The library to use for communicating with Windows native functions.
                  */
-                private final WinNT.HANDLE pipe;
+                private final WindowsLibrary library;
 
                 /**
-                 * Creates a new connection to a JVM using a named pipe.
-                 *
-                 * @param pipe The handle of the pipe being used.
+                 * The handle of the target VM's process.
                  */
-                protected ForJnaWindowsNamedPipe(WinNT.HANDLE pipe) {
-                    this.pipe = pipe;
+                private final WinNT.HANDLE process;
+
+                private final Pointer code;
+
+                /**
+                 * A source of random values being used for generating pipe names.
+                 */
+                private final SecureRandom random;
+
+                /**
+                 * Creates a new connection via a named pipe.
+                 *
+                 * @param library The library to use for communicating with Windows native functions.
+                 * @param process The handle of the target VM's process.
+                 */
+                protected ForJnaWindowsNamedPipe(WindowsLibrary library, WinNT.HANDLE process, Pointer code) {
+                    this.library = library;
+                    this.process = process;
+                    this.code = code;
+                    random = new SecureRandom();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public int read(byte[] buffer) {
-                    IntByReference read = new IntByReference();
-                    if (!Kernel32.INSTANCE.ReadFile(pipe, buffer, buffer.length, read, null)) {
+                public Response execute(String... argument) {
+                    String name = "\\\\.\\pipe\\javatool" + Long.toHexString(random.nextLong());
+                    WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
+                            WinBase.PIPE_ACCESS_INBOUND,
+                            WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
+                            1,
+                            4096,
+                            8192,
+                            WinBase.NMPWAIT_USE_DEFAULT_WAIT,
+                            null);
+                    if (pipe == null) {
                         throw new Win32Exception(Native.getLastError());
                     }
-                    return read.getValue();
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void write(byte[] buffer) {
-                    IntByReference written = new IntByReference();
-                    if (!Kernel32.INSTANCE.WriteFile(pipe, buffer, buffer.length, written, null)) {
-                        throw new Win32Exception(Native.getLastError());
-                    } else if (written.getValue() != buffer.length) {
-                        throw new IllegalStateException("Unexpected number of bytes was written");
+                    try {
+                        Pointer data = new Pointer(allocateRemoteArgument(Pointer.nativeValue(process.getPointer()), name));
+                        if (Pointer.nativeValue(data) == 0L) {
+                            throw new IllegalStateException("Could not allocate data on remote VM");
+                        }
+                        try {
+                            WinBase.FOREIGN_THREAD_START_ROUTINE execution = new WinBase.FOREIGN_THREAD_START_ROUTINE();
+                            try {
+                                execution.foreignLocation = new WinDef.LPVOID(code);
+                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data, null, null);
+                                if (thread == null) {
+                                    throw new Win32Exception(Native.getLastError());
+                                }
+                                try {
+                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                    if (result != 0) {
+                                        throw new Win32Exception(result);
+                                    }
+                                    IntByReference exitCode = new IntByReference();
+                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    } else if (exitCode.getValue() != 0) {
+                                        throw new IllegalStateException("Target could not dispatch command successfully");
+                                    }
+                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                    return new NamedPipeResponse(pipe);
+                                } finally {
+                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                }
+                            } finally {
+                                execution.clear();
+                            }
+                        } finally {
+                            if (!library.VirtualFreeEx(process, data, 0, MEM_RELEASE)) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
+                        }
+                    } catch (Throwable throwable) {
+                        if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                            throw new Win32Exception(Native.getLastError());
+                        } else if (throwable instanceof RuntimeException) {
+                            throw (RuntimeException) throwable;
+                        } else {
+                            throw new IllegalStateException(throwable);
+                        }
                     }
                 }
 
@@ -627,12 +748,173 @@ public interface VirtualMachine {
                  */
                 public void close() {
                     try {
-                        if (!Kernel32.INSTANCE.DisconnectNamedPipe(pipe)) {
+                        if (!library.VirtualFreeEx(process, code, 0, MEM_RELEASE)) {
                             throw new Win32Exception(Native.getLastError());
                         }
                     } finally {
-                        if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                        if (!Kernel32.INSTANCE.CloseHandle(process)) {
                             throw new Win32Exception(Native.getLastError());
+                        }
+                    }
+                }
+
+                /**
+                 * Allocates the code block that is to be executed by the remote JVM. The memory must be
+                 * allocated using {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and
+                 * will be freed by the allocator.
+                 *
+                 * @param process The process pointer address.
+                 * @return The pointer address of the allocated code or {@code 0} if the code could not be allocated.
+                 */
+                private static native long allocateRemoteCode(long process);
+
+                /**
+                 * Allocates the argument that is to be received by the remote argument when executing a code block
+                 * on the remote JVM. The memory must be allocated using
+                 * {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and will be freed by
+                 * the allocator.
+                 *
+                 * @param process  The process pointer address.
+                 * @param name     The name of the pipe being used for communication.
+                 * @param argument The arguments being sent to the target virtual machine.
+                 * @return The pointer address of the allocated argument or {@code 0} if the argument could not be allocated.
+                 */
+                private static native long allocateRemoteArgument(long process, String name, String... argument);
+
+                /**
+                 * A library for interacting with Windows.
+                 */
+                protected interface WindowsLibrary extends Library {
+
+                    /**
+                     * Changes the state of memory in a given process.
+                     *
+                     * @param process        The process in which to change the memory.
+                     * @param address        The address of the memory to allocate.
+                     * @param size           The size of the allocated region.
+                     * @param allocationType The allocation type.
+                     * @param protect        The memory protection.
+                     * @return A pointer to the allocated memory.
+                     */
+                    @SuppressWarnings({"unused", "checkstyle:methodname"})
+                    Pointer VirtualAllocEx(WinNT.HANDLE process, Pointer address, int size, int allocationType, int protect);
+
+                    /**
+                     * Frees memory in the given process.
+                     *
+                     * @param process  The process in which to change the memory.
+                     * @param address  The address of the memory to free.
+                     * @param size     The size of the freed region.
+                     * @param freeType The freeing type.
+                     * @return {@code true} if the operation succeeded.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
+                }
+
+                /**
+                 * Loads the DLL that is required for performing attachment emulation on HotSpot.
+                 */
+                protected static class LibraryLoadAction implements PrivilegedExceptionAction<File> {
+
+                    /**
+                     * {@code true} if the library should be loaded.
+                     */
+                    private final boolean load;
+
+                    /**
+                     * Creates a new library load action.
+                     *
+                     * @param load {@code true} if the library should be loaded.
+                     */
+                    protected LibraryLoadAction(boolean load) {
+                        this.load = load;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public File run() throws IOException {
+                        String file = "attach_hotspot_windows" + (Platform.is64Bit() ? "64" : "32") + ".dll";
+                        InputStream inputStream = Factory.class.getResourceAsStream("/" + file);
+                        if (inputStream == null) {
+                            throw new IllegalStateException("Could not find attach_hotspot_win32.dll in resource root");
+                        }
+                        File target;
+                        try {
+                            String folder = System.getProperty(NATIVE_TARGET_DIRECTORY);
+                            if (folder == null) {
+                                target = File.createTempFile("byte_buddy_hot_spot_attach", ".dll");
+                            } else {
+                                target = new File(folder, file);
+                                if (!target.getParentFile().isDirectory()) {
+                                    throw new IOException("Could not create target directory: " + target.getParentFile());
+                                } else if (!target.isFile() && !target.createNewFile()) {
+                                    throw new IOException("Could not create target file: " + target);
+                                }
+                            }
+                            OutputStream outputStream = new FileOutputStream(target);
+                            try {
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = inputStream.read(buffer)) != -1) {
+                                    outputStream.write(buffer, 0, length);
+                                }
+                            } finally {
+                                outputStream.close();
+                            }
+                        } finally {
+                            inputStream.close();
+                        }
+                        if (load) {
+                            System.load(target.getAbsolutePath());
+                        }
+                        return target;
+                    }
+                }
+
+                /**
+                 * A response that is sent via a named pipe.
+                 */
+                protected static class NamedPipeResponse implements Response {
+
+                    /**
+                     * A handle of the named pipe.
+                     */
+                    private final WinNT.HANDLE pipe;
+
+                    /**
+                     * Creates a new response via a named pipe.
+                     *
+                     * @param pipe The handle of the named pipe.
+                     */
+                    protected NamedPipeResponse(WinNT.HANDLE pipe) {
+                        this.pipe = pipe;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public int read(byte[] buffer) {
+                        IntByReference read = new IntByReference();
+                        if (!Kernel32.INSTANCE.ReadFile(pipe, buffer, buffer.length, read, null)) {
+                            throw new Win32Exception(Native.getLastError());
+                        }
+                        return read.getValue();
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void release() {
+                        try {
+                            if (!Kernel32.INSTANCE.DisconnectNamedPipe(pipe)) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
+                        } finally {
+                            if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
                         }
                     }
                 }
@@ -641,25 +923,6 @@ public interface VirtualMachine {
                  * A factory for establishing a connection to a JVM using a named pipe in JNA.
                  */
                 public static class Factory implements Connection.Factory {
-
-                    /**
-                     * The error that was raised while loading the native library or {@code null} if no error occurred.
-                     */
-                    private static final String ERROR;
-
-                    /*
-                     * Loads the DLL file that is required for invoking functions that cannot be represented in JNA.
-                     */
-                    static {
-                        String error;
-                        try {
-                            AccessController.doPrivileged(new LibraryLoadAction(true));
-                            error = null;
-                        } catch (PrivilegedActionException exception) {
-                            error = exception.getMessage();
-                        }
-                        ERROR = error;
-                    }
 
                     /**
                      * The library to use for communicating with Windows native functions.
@@ -680,201 +943,24 @@ public interface VirtualMachine {
                         if (ERROR != null) {
                             throw new IllegalStateException(ERROR);
                         }
-                        String name = "\\\\.\\pipe\\javatool" + Long.toHexString(new SecureRandom().nextLong());
-                        WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
-                                WinBase.PIPE_ACCESS_DUPLEX,
-                                WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
-                                1,
-                                4096,
-                                8192,
-                                WinBase.NMPWAIT_USE_DEFAULT_WAIT,
-                                null);
-                        if (pipe == null) {
+                        WinNT.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_ALL_ACCESS, false, Integer.parseInt(processId));
+                        if (process == null) {
                             throw new Win32Exception(Native.getLastError());
                         }
                         try {
-                            WinNT.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_ALL_ACCESS, false, Integer.parseInt(processId));
-                            if (process == null) {
-                                throw new Win32Exception(Native.getLastError());
+                            Pointer code = new Pointer(allocateRemoteCode(Pointer.nativeValue(process.getPointer())));
+                            if (Pointer.nativeValue(code) == 0L) {
+                                throw new IllegalStateException("Could not allocate code on remote VM");
                             }
-                            try {
-                                Pointer code = new Pointer(allocateRemoteCode(Pointer.nativeValue(process.getPointer())));
-                                if (Pointer.nativeValue(code) == 0L) {
-                                    throw new IllegalStateException("Could not allocate code on remote VM");
-                                }
-                                try {
-                                    Pointer data = new Pointer(allocateRemoteArgument(Pointer.nativeValue(process.getPointer()), name));
-                                    if (Pointer.nativeValue(data) == 0L) {
-                                        throw new IllegalStateException("Could not allocate data on remote VM");
-                                    }
-                                    try {
-                                        WinBase.FOREIGN_THREAD_START_ROUTINE execution = new WinBase.FOREIGN_THREAD_START_ROUTINE();
-                                        try {
-                                            execution.foreignLocation = new WinDef.LPVOID(code);
-                                            WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data, null, null);
-                                            if (thread == null) {
-                                                throw new Win32Exception(Native.getLastError());
-                                            }
-                                            try {
-                                                int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                                if (result != 0) {
-                                                    throw new Win32Exception(result);
-                                                }
-                                                IntByReference exitCode = new IntByReference();
-                                                if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                                    throw new Win32Exception(Native.getLastError());
-                                                } else if (exitCode.getValue() != 0) {
-                                                    throw new IllegalStateException(processId + " does not support the attach mechanism");
-                                                }
-                                                if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
-                                                    throw new Win32Exception(Native.getLastError());
-                                                }
-                                                return new ForJnaWindowsNamedPipe(pipe);
-                                            } finally {
-                                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
-                                                    throw new Win32Exception(Native.getLastError());
-                                                }
-                                            }
-                                        } finally {
-                                            execution.clear();
-                                        }
-                                    } finally {
-                                        if (!library.VirtualFreeEx(process, data, 0, MEM_RELEASE)) {
-                                            throw new Win32Exception(Native.getLastError());
-                                        }
-                                    }
-                                } finally {
-                                    if (!library.VirtualFreeEx(process, code, 0, MEM_RELEASE)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    }
-                                }
-                            } finally {
-                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
-                                    throw new Win32Exception(Native.getLastError());
-                                }
-                            }
+                            return new ForJnaWindowsNamedPipe(library, process, code);
                         } catch (Throwable throwable) {
-                            if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
+                            if (!Kernel32.INSTANCE.CloseHandle(process)) {
                                 throw new Win32Exception(Native.getLastError());
                             } else if (throwable instanceof RuntimeException) {
                                 throw (RuntimeException) throwable;
                             } else {
                                 throw new IllegalStateException(throwable);
                             }
-                        }
-                    }
-
-                    /**
-                     * Allocates the code block that is to be executed by the remote JVM. The memory must be
-                     * allocated using {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and
-                     * will be freed by the allocator.
-                     *
-                     * @param process The process pointer address.
-                     * @return The pointer address of the allocated code or {@code 0} if the code could not be allocated.
-                     */
-                    private static native long allocateRemoteCode(long process);
-
-                    /**
-                     * Allocates the argument that is to be received by the remote argument when executing a code block
-                     * on the remote JVM. The memory must be allocated using
-                     * {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and will be freed by
-                     * the allocator.
-                     *
-                     * @param process The process pointer address.
-                     * @param name    The name of the pipe being used for communication.
-                     * @return The pointer address of the allocated argument or {@code 0} if the argument could not be allocated.
-                     */
-                    private static native long allocateRemoteArgument(long process, String name);
-
-                    /**
-                     * A library for interacting with Windows.
-                     */
-                    protected interface WindowsLibrary extends Library {
-
-                        /**
-                         * Changes the state of memory in a given process.
-                         *
-                         * @param process        The process in which to change the memory.
-                         * @param address        The address of the memory to allocate.
-                         * @param size           The size of the allocated region.
-                         * @param allocationType The allocation type.
-                         * @param protect        The memory protection.
-                         * @return A pointer to the allocated memory.
-                         */
-                        @SuppressWarnings({"unused", "checkstyle:methodname"})
-                        Pointer VirtualAllocEx(WinNT.HANDLE process, Pointer address, int size, int allocationType, int protect);
-
-                        /**
-                         * Frees memory in the given process.
-                         *
-                         * @param process  The process in which to change the memory.
-                         * @param address  The address of the memory to free.
-                         * @param size     The size of the freed region.
-                         * @param freeType The freeing type.
-                         * @return {@code true} if the operation succeeded.
-                         */
-                        @SuppressWarnings("checkstyle:methodname")
-                        boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
-                    }
-
-                    /**
-                     * Loads the DLL that is required for performing attachment emulation on HotSpot.
-                     */
-                    protected static class LibraryLoadAction implements PrivilegedExceptionAction<File> {
-
-                        /**
-                         * {@code true} if the library should be loaded.
-                         */
-                        private final boolean load;
-
-                        /**
-                         * Creates a new library load action.
-                         *
-                         * @param load {@code true} if the library should be loaded.
-                         */
-                        protected LibraryLoadAction(boolean load) {
-                            this.load = load;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public File run() throws IOException {
-                            String file = "attach_hotspot_windows" + (Platform.is64Bit() ? "64" : "32") + ".dll";
-                            InputStream inputStream = Factory.class.getResourceAsStream("/" + file);
-                            if (inputStream == null) {
-                                throw new IllegalStateException("Could not find attach_hotspot_win32.dll in resource root");
-                            }
-                            File target;
-                            try {
-                                String folder = System.getProperty(NATIVE_TARGET_DIRECTORY);
-                                if (folder == null) {
-                                    target = File.createTempFile("byte_buddy_hot_spot_attach", ".dll");
-                                } else {
-                                    target = new File(folder, file);
-                                    if (!target.getParentFile().isDirectory()) {
-                                        throw new IOException("Could not create target directory: " + target.getParentFile());
-                                    } else if (!target.isFile() && !target.createNewFile()) {
-                                        throw new IOException("Could not create target file: " + target);
-                                    }
-                                }
-                                OutputStream outputStream = new FileOutputStream(target);
-                                try {
-                                    byte[] buffer = new byte[1024];
-                                    int length;
-                                    while ((length = inputStream.read(buffer)) != -1) {
-                                        outputStream.write(buffer, 0, length);
-                                    }
-                                } finally {
-                                    outputStream.close();
-                                }
-                            } finally {
-                                inputStream.close();
-                            }
-                            if (load) {
-                                System.load(target.getAbsolutePath());
-                            }
-                            return target;
                         }
                     }
                 }
@@ -915,21 +1001,21 @@ public interface VirtualMachine {
          */
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, Platform.isWindows() || Platform.isWindowsCE()
-                    ? Connector.ForJnaWindowsEnvironment.withInferredNamespace()
-                    : new Connector.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
+                    ? Dispatcher.ForJnaWindowsEnvironment.withInferredNamespace()
+                    : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
          * Attaches to the supplied process id.
          *
-         * @param processId The process id.
-         * @param timeout   The timeout for establishing the socket connection.
-         * @param connector The connector to use to communicate with the target VM.
+         * @param processId  The process id.
+         * @param timeout    The timeout for establishing the socket connection.
+         * @param dispatcher The connector to use to communicate with the target VM.
          * @return A suitable virtual machine implementation.
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
-        public static VirtualMachine attach(String processId, int timeout, Connector connector) throws IOException {
-            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, connector.getTemporaryFolder()), ".com_ibm_tools_attach");
+        public static VirtualMachine attach(String processId, int timeout, Dispatcher dispatcher) throws IOException {
+            File directory = new File(System.getProperty(IBM_TEMPORARY_FOLDER, dispatcher.getTemporaryFolder()), ".com_ibm_tools_attach");
             RandomAccessFile attachLock = new RandomAccessFile(new File(directory, "_attachlock"), "rw");
             try {
                 FileLock attachLockLock = attachLock.getChannel().lock();
@@ -943,10 +1029,10 @@ public interface VirtualMachine {
                             if (vmFolder == null) {
                                 throw new IllegalStateException("No descriptor files found in " + directory);
                             }
-                            long userId = connector.userId();
+                            long userId = dispatcher.userId();
                             virtualMachines = new ArrayList<Properties>();
                             for (File aVmFolder : vmFolder) {
-                                if (aVmFolder.isDirectory() && connector.getOwnerIdOf(aVmFolder) == userId) {
+                                if (aVmFolder.isDirectory() && dispatcher.getOwnerIdOf(aVmFolder) == userId) {
                                     File attachInfo = new File(aVmFolder, "attachInfo");
                                     if (attachInfo.isFile()) {
                                         Properties virtualMachine = new Properties();
@@ -964,9 +1050,9 @@ public interface VirtualMachine {
                                             targetUserId = 0L;
                                         }
                                         if (userId != 0L && targetUserId == 0L) {
-                                            targetUserId = connector.getOwnerIdOf(attachInfo);
+                                            targetUserId = dispatcher.getOwnerIdOf(attachInfo);
                                         }
-                                        if (targetProcessId == 0L || connector.isExistingProcess(targetProcessId)) {
+                                        if (targetProcessId == 0L || dispatcher.isExistingProcess(targetProcessId)) {
                                             virtualMachines.add(virtualMachine);
                                         } else if (userId == 0L || targetUserId == userId) {
                                             File[] vmFile = aVmFolder.listFiles();
@@ -1008,7 +1094,7 @@ public interface VirtualMachine {
                         File reply = new File(receiver, "replyInfo");
                         try {
                             if (reply.createNewFile()) {
-                                connector.setPermissions(reply, 0600);
+                                dispatcher.setPermissions(reply, 0600);
                             }
                             FileOutputStream outputStream = new FileOutputStream(reply);
                             try {
@@ -1021,7 +1107,7 @@ public interface VirtualMachine {
                             }
                             Map<RandomAccessFile, FileLock> locks = new HashMap<RandomAccessFile, FileLock>();
                             try {
-                                String pid = Long.toString(connector.pid());
+                                String pid = Long.toString(dispatcher.pid());
                                 for (Properties virtualMachine : virtualMachines) {
                                     if (!virtualMachine.getProperty("processId").equalsIgnoreCase(pid)) {
                                         String attachNotificationSync = virtualMachine.getProperty("attachNotificationSync");
@@ -1048,7 +1134,7 @@ public interface VirtualMachine {
                                         }
                                     }
                                 }
-                                connector.incrementSemaphore(directory, "_notifier", notifications);
+                                dispatcher.incrementSemaphore(directory, "_notifier", notifications);
                                 try {
                                     Socket socket = serverSocket.accept();
                                     String answer = read(socket);
@@ -1058,7 +1144,7 @@ public interface VirtualMachine {
                                         throw new IllegalStateException("Unexpected answered to attachment: " + answer);
                                     }
                                 } finally {
-                                    connector.decrementSemaphore(directory, "_notifier", notifications);
+                                    dispatcher.decrementSemaphore(directory, "_notifier", notifications);
                                 }
                             } finally {
                                 for (Map.Entry<RandomAccessFile, FileLock> entry : locks.entrySet()) {
@@ -1163,9 +1249,9 @@ public interface VirtualMachine {
         }
 
         /**
-         * A connector for native operations being used for communication with an OpenJ9 virtual machine.
+         * A dispatcher for native operations being used for communication with an OpenJ9 virtual machine.
          */
-        public interface Connector {
+        public interface Dispatcher {
 
             /**
              * Returns this machine's temporary folder.
@@ -1233,7 +1319,7 @@ public interface VirtualMachine {
             /**
              * A connector implementation for a POSIX environment using JNA.
              */
-            class ForJnaPosixEnvironment implements Connector {
+            class ForJnaPosixEnvironment implements Dispatcher {
 
                 /**
                  * The JNA library to use.
@@ -1517,7 +1603,7 @@ public interface VirtualMachine {
             /**
              * A connector implementation for a Windows environment using JNA.
              */
-            class ForJnaWindowsEnvironment implements Connector {
+            class ForJnaWindowsEnvironment implements Dispatcher {
 
                 /**
                  * Indicates a missing user id what is not supported on Windows.
@@ -1546,7 +1632,7 @@ public interface VirtualMachine {
                  * @return An appropriate connector.
                  */
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "The Exception is intentionally suppressed as it indicates incompatibility.")
-                public static Connector withInferredNamespace() {
+                public static Dispatcher withInferredNamespace() {
                     try {
                         // This method is bundled with any OpenJ9 VM and is guaranteed to exist for any VM that does not use the non-global namespace.
                         Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
