@@ -9,27 +9,19 @@ extern "C" {
 #endif
 /*
  * Class:     net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe_Factory
- * Method:    allocateRemoteData
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)J
+ * Method:    allocateRemoteCode
+ * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_00024Factory_allocateRemoteData
-  (JNIEnv *, jclass, jstring, jstring, jstring, jobjectArray);
+JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_00024Factory_allocateRemoteCode
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe_Factory
  * Method:    getRemoteDataSize
- * Signature: ()I
+ * Signature: (JLjava/lang/String;)J
  */
-JNIEXPORT jint JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_00024Factory_getRemoteDataSize
-  (JNIEnv *, jclass);
-
-/*
- * Class:     net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe_Factory
- * Method:    getRemoteEntryPointer
- * Signature: ()J
- */
-JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_00024Factory_getRemoteEntryPointer
-  (JNIEnv *, jclass);
+JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_00024Factory_allocateRemoteArgument
+  (JNIEnv *, jclass, jlong, jstring);
 
 #ifdef __cplusplus
 }

@@ -581,9 +581,9 @@ public interface VirtualMachine {
             class ForJnaWindowsNamedPipe implements Connection {
 
                 /**
-                 * The size of the code region being allocated.
+                 * Indicates a memory release.
                  */
-                private static final int CODE_SIZE = 1024;
+                private static final int MEM_RELEASE = 0x8000;
 
                 /**
                  * The handle of the pipe being used.
@@ -682,7 +682,7 @@ public interface VirtualMachine {
                         }
                         String name = "\\\\.\\pipe\\javatool" + Long.toHexString(new SecureRandom().nextLong());
                         WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
-                                WinBase.PIPE_ACCESS_INBOUND,
+                                WinBase.PIPE_ACCESS_DUPLEX,
                                 WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
                                 1,
                                 4096,
@@ -698,67 +698,53 @@ public interface VirtualMachine {
                                 throw new Win32Exception(Native.getLastError());
                             }
                             try {
-                                Pointer code = library.VirtualAllocEx(process, null, CODE_SIZE, WinNT.MEM_COMMIT, WinNT.PAGE_EXECUTE_READWRITE);
-                                if (code == null) {
-                                    throw new Win32Exception(Native.getLastError());
+                                Pointer code = new Pointer(allocateRemoteCode(Pointer.nativeValue(process.getPointer())));
+                                if (Pointer.nativeValue(code) == 0L) {
+                                    throw new IllegalStateException("Could not allocate code on remote VM");
                                 }
                                 try {
-                                    if (!Kernel32.INSTANCE.WriteProcessMemory(process, code, new Pointer(getRemoteEntryPointer()), CODE_SIZE, null)) {
-                                        throw new Win32Exception(Native.getLastError());
+                                    Pointer data = new Pointer(allocateRemoteArgument(Pointer.nativeValue(process.getPointer()), name));
+                                    if (Pointer.nativeValue(data) == 0L) {
+                                        throw new IllegalStateException("Could not allocate data on remote VM");
                                     }
-                                    Pointer data = new Pointer(allocateRemoteData("jvm", "JVM_EnqueueOperation", name));
                                     try {
-                                        int remoteDataSize = getRemoteDataSize();
-                                        Pointer remote = library.VirtualAllocEx(process, null, remoteDataSize, WinNT.MEM_COMMIT, WinNT.PAGE_READWRITE);
-                                        if (remote == null) {
-                                            throw new Win32Exception(Native.getLastError());
-                                        }
+                                        WinBase.FOREIGN_THREAD_START_ROUTINE execution = new WinBase.FOREIGN_THREAD_START_ROUTINE();
                                         try {
-                                            if (!Kernel32.INSTANCE.WriteProcessMemory(process, remote, data, remoteDataSize, null)) {
+                                            execution.foreignLocation = new WinDef.LPVOID(code);
+                                            WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data, null, null);
+                                            if (thread == null) {
                                                 throw new Win32Exception(Native.getLastError());
                                             }
-                                            WinBase.FOREIGN_THREAD_START_ROUTINE routine = new WinBase.FOREIGN_THREAD_START_ROUTINE();
                                             try {
-                                                routine.foreignLocation = new WinDef.LPVOID(code);
-                                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, routine, data, null, null);
-                                                if (thread == null) {
+                                                int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                                if (result != 0) {
+                                                    throw new Win32Exception(result);
+                                                }
+                                                IntByReference exitCode = new IntByReference();
+                                                if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                                    throw new Win32Exception(Native.getLastError());
+                                                } else if (exitCode.getValue() != 0) {
+                                                    throw new IllegalStateException(processId + " does not support the attach mechanism");
+                                                }
+                                                if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
                                                     throw new Win32Exception(Native.getLastError());
                                                 }
-                                                try {
-                                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                                    if (result != 0) {
-                                                        throw new Win32Exception(result);
-                                                    }
-                                                    IntByReference exitCode = new IntByReference();
-                                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                                        throw new Win32Exception(Native.getLastError());
-                                                    } else if (exitCode.getValue() != 0) {
-                                                        throw new IllegalStateException(processId + " does not support the attach mechanism");
-                                                    }
-                                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
-                                                        throw new Win32Exception(Native.getLastError());
-                                                    }
-                                                    return new ForJnaWindowsNamedPipe(pipe);
-                                                } finally {
-                                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
-                                                        throw new Win32Exception(Native.getLastError());
-                                                    }
-                                                }
+                                                return new ForJnaWindowsNamedPipe(pipe);
                                             } finally {
-                                                routine.clear();
+                                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                                    throw new Win32Exception(Native.getLastError());
+                                                }
                                             }
                                         } finally {
-                                            if (!library.VirtualFreeEx(process, remote, 0, 0x8000)) {
-                                                throw new Win32Exception(Native.getLastError());
-                                            }
+                                            execution.clear();
                                         }
                                     } finally {
-                                        if (!library.VirtualFreeEx(process, data, 0, 0x8000)) {
+                                        if (!library.VirtualFreeEx(process, data, 0, MEM_RELEASE)) {
                                             throw new Win32Exception(Native.getLastError());
                                         }
                                     }
                                 } finally {
-                                    if (!library.VirtualFreeEx(process, code, 0, 0x8000)) {
+                                    if (!library.VirtualFreeEx(process, code, 0, MEM_RELEASE)) {
                                         throw new Win32Exception(Native.getLastError());
                                     }
                                 }
@@ -770,35 +756,35 @@ public interface VirtualMachine {
                         } catch (Throwable throwable) {
                             if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
                                 throw new Win32Exception(Native.getLastError());
+                            } else if (throwable instanceof RuntimeException) {
+                                throw (RuntimeException) throwable;
+                            } else {
+                                throw new IllegalStateException(throwable);
                             }
-                            throw new IllegalStateException(throwable);
                         }
                     }
 
                     /**
-                     * Allocates remote data.
+                     * Allocates the code block that is to be executed by the remote JVM. The memory must be
+                     * allocated using {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and
+                     * will be freed by the allocator.
                      *
-                     * @param prefix    The JVM prefix.
-                     * @param operation The JVM operation.
-                     * @param pipeName  The name of the pipe used for communication.
-                     * @param arguments The arguments to the remote process.
-                     * @return The pointer to the allocated remote data.
+                     * @param process The process pointer address.
+                     * @return The pointer address of the allocated code or {@code 0} if the code could not be allocated.
                      */
-                    private static native long allocateRemoteData(String prefix, String operation, String pipeName, String... arguments);
+                    private static native long allocateRemoteCode(long process);
 
                     /**
-                     * Returns the remote data size.
+                     * Allocates the argument that is to be received by the remote argument when executing a code block
+                     * on the remote JVM. The memory must be allocated using
+                     * {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and will be freed by
+                     * the allocator.
                      *
-                     * @return The size of the remote data.
+                     * @param process The process pointer address.
+                     * @param name    The name of the pipe being used for communication.
+                     * @return The pointer address of the allocated argument or {@code 0} if the argument could not be allocated.
                      */
-                    private static native int getRemoteDataSize();
-
-                    /**
-                     * Returns the pointer address of the code to execute on the remote machine.
-                     *
-                     * @return The pointer address of the code to execute on the remote machine.
-                     */
-                    private static native long getRemoteEntryPointer();
+                    private static native long allocateRemoteArgument(long process, String name);
 
                     /**
                      * A library for interacting with Windows.
@@ -815,7 +801,7 @@ public interface VirtualMachine {
                          * @param protect        The memory protection.
                          * @return A pointer to the allocated memory.
                          */
-                        @SuppressWarnings("checkstyle:methodname")
+                        @SuppressWarnings({"unused", "checkstyle:methodname"})
                         Pointer VirtualAllocEx(WinNT.HANDLE process, Pointer address, int size, int allocationType, int protect);
 
                         /**
