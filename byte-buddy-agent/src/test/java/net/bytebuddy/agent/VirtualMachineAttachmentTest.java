@@ -1,7 +1,6 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.test.utility.AttachmentEmulationRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +44,6 @@ public class VirtualMachineAttachmentTest {
     }
 
     @Test
-    @AttachmentEmulationRule.Enforce
     public void testAttachment() throws Exception {
         assertThat(SampleAgent.argument, nullValue(String.class));
         VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()

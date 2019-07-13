@@ -26,8 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
-import java.security.PrivilegedAction;
-import java.security.SecureRandom;
+import java.security.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +42,11 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 public interface VirtualMachine {
+
+    /**
+     * A property for setting an optional target directory for storing native libraries. If not set, native files are stored in the temporary folder.
+     */
+    String NATIVE_TARGET_DIRECTORY = "net.bytebuddy.agent.store";
 
     /**
      * Loads an agent into the represented virtual machine.
@@ -152,7 +156,9 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
+            return attach(processId, Platform.isWindows() || Platform.isWindowsCE()
+                    ? new Connection.ForJnaWindowsNamedPipe.Factory()
+                    : new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
         }
 
         /**
@@ -575,6 +581,11 @@ public interface VirtualMachine {
             class ForJnaWindowsNamedPipe implements Connection {
 
                 /**
+                 * The size of the code region being allocated.
+                 */
+                private static final int CODE_SIZE = 1024;
+
+                /**
                  * The handle of the pipe being used.
                  */
                 private final WinNT.HANDLE pipe;
@@ -632,10 +643,45 @@ public interface VirtualMachine {
                 public static class Factory implements Connection.Factory {
 
                     /**
+                     * The error that was raised while loading the native library or {@code null} if no error occurred.
+                     */
+                    private static final String ERROR;
+
+                    /*
+                     * Loads the DLL file that is required for invoking functions that cannot be represented in JNA.
+                     */
+                    static {
+                        String error;
+                        try {
+                            AccessController.doPrivileged(new LibraryLoadAction(true));
+                            error = null;
+                        } catch (PrivilegedActionException exception) {
+                            error = exception.getMessage();
+                        }
+                        ERROR = error;
+                    }
+
+                    /**
+                     * The library to use for communicating with Windows native functions.
+                     */
+                    private final WindowsLibrary library;
+
+                    /**
+                     * Creates a new connection factory for Windows using JNA.
+                     */
+                    public Factory() {
+                        library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                    }
+
+                    /**
                      * {@inheritDoc}
                      */
                     public Connection connect(String processId) {
-                        WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe("\\\\.\\pipe\\javatool" + Math.abs(System.nanoTime()),
+                        if (ERROR != null) {
+                            throw new IllegalStateException(ERROR);
+                        }
+                        String name = "\\\\.\\pipe\\javatool" + Long.toHexString(new SecureRandom().nextLong());
+                        WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
                                 WinBase.PIPE_ACCESS_INBOUND,
                                 WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
                                 1,
@@ -652,30 +698,67 @@ public interface VirtualMachine {
                                 throw new Win32Exception(Native.getLastError());
                             }
                             try {
-                                // TODO: allocate code and data.
-                                WinBase.FOREIGN_THREAD_START_ROUTINE code = null;
-                                Pointer data = null;
-                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, code, data, null, null);
-                                if (thread == null) {
+                                Pointer code = library.VirtualAllocEx(process, null, CODE_SIZE, WinNT.MEM_COMMIT, WinNT.PAGE_EXECUTE_READWRITE);
+                                if (code == null) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
                                 try {
-                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                    if (result != 0) {
-                                        throw new Win32Exception(result);
-                                    }
-                                    IntByReference exitCode = new IntByReference();
-                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    } else if (exitCode.getValue() != 0) {
-                                        throw new IllegalStateException(processId + " does not support the attach mechanism");
-                                    }
-                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                    if (!Kernel32.INSTANCE.WriteProcessMemory(process, code, new Pointer(getRemoteEntryPointer()), CODE_SIZE, null)) {
                                         throw new Win32Exception(Native.getLastError());
                                     }
-                                    return new ForJnaWindowsNamedPipe(pipe);
+                                    Pointer data = new Pointer(allocateRemoteData("jvm", "JVM_EnqueueOperation", name));
+                                    try {
+                                        int remoteDataSize = getRemoteDataSize();
+                                        Pointer remote = library.VirtualAllocEx(process, null, remoteDataSize, WinNT.MEM_COMMIT, WinNT.PAGE_READWRITE);
+                                        if (remote == null) {
+                                            throw new Win32Exception(Native.getLastError());
+                                        }
+                                        try {
+                                            if (!Kernel32.INSTANCE.WriteProcessMemory(process, remote, data, remoteDataSize, null)) {
+                                                throw new Win32Exception(Native.getLastError());
+                                            }
+                                            WinBase.FOREIGN_THREAD_START_ROUTINE routine = new WinBase.FOREIGN_THREAD_START_ROUTINE();
+                                            try {
+                                                routine.foreignLocation = new WinDef.LPVOID(code);
+                                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, routine, data, null, null);
+                                                if (thread == null) {
+                                                    throw new Win32Exception(Native.getLastError());
+                                                }
+                                                try {
+                                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                                    if (result != 0) {
+                                                        throw new Win32Exception(result);
+                                                    }
+                                                    IntByReference exitCode = new IntByReference();
+                                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                                        throw new Win32Exception(Native.getLastError());
+                                                    } else if (exitCode.getValue() != 0) {
+                                                        throw new IllegalStateException(processId + " does not support the attach mechanism");
+                                                    }
+                                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                                        throw new Win32Exception(Native.getLastError());
+                                                    }
+                                                    return new ForJnaWindowsNamedPipe(pipe);
+                                                } finally {
+                                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                                        throw new Win32Exception(Native.getLastError());
+                                                    }
+                                                }
+                                            } finally {
+                                                routine.clear();
+                                            }
+                                        } finally {
+                                            if (!library.VirtualFreeEx(process, remote, 0, 0x8000)) {
+                                                throw new Win32Exception(Native.getLastError());
+                                            }
+                                        }
+                                    } finally {
+                                        if (!library.VirtualFreeEx(process, data, 0, 0x8000)) {
+                                            throw new Win32Exception(Native.getLastError());
+                                        }
+                                    }
                                 } finally {
-                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                    if (!library.VirtualFreeEx(process, code, 0, 0x8000)) {
                                         throw new Win32Exception(Native.getLastError());
                                     }
                                 }
@@ -689,6 +772,123 @@ public interface VirtualMachine {
                                 throw new Win32Exception(Native.getLastError());
                             }
                             throw new IllegalStateException(throwable);
+                        }
+                    }
+
+                    /**
+                     * Allocates remote data.
+                     *
+                     * @param prefix    The JVM prefix.
+                     * @param operation The JVM operation.
+                     * @param pipeName  The name of the pipe used for communication.
+                     * @param arguments The arguments to the remote process.
+                     * @return The pointer to the allocated remote data.
+                     */
+                    private static native long allocateRemoteData(String prefix, String operation, String pipeName, String... arguments);
+
+                    /**
+                     * Returns the remote data size.
+                     *
+                     * @return The size of the remote data.
+                     */
+                    private static native int getRemoteDataSize();
+
+                    /**
+                     * Returns the pointer address of the code to execute on the remote machine.
+                     *
+                     * @return The pointer address of the code to execute on the remote machine.
+                     */
+                    private static native long getRemoteEntryPointer();
+
+                    /**
+                     * A library for interacting with Windows.
+                     */
+                    protected interface WindowsLibrary extends Library {
+
+                        /**
+                         * Changes the state of memory in a given process.
+                         *
+                         * @param process        The process in which to change the memory.
+                         * @param address        The address of the memory to allocate.
+                         * @param size           The size of the allocated region.
+                         * @param allocationType The allocation type.
+                         * @param protect        The memory protection.
+                         * @return A pointer to the allocated memory.
+                         */
+                        @SuppressWarnings("checkstyle:methodname")
+                        Pointer VirtualAllocEx(WinNT.HANDLE process, Pointer address, int size, int allocationType, int protect);
+
+                        /**
+                         * Frees memory in the given process.
+                         *
+                         * @param process  The process in which to change the memory.
+                         * @param address  The address of the memory to free.
+                         * @param size     The size of the freed region.
+                         * @param freeType The freeing type.
+                         * @return {@code true} if the operation succeeded.
+                         */
+                        @SuppressWarnings("checkstyle:methodname")
+                        boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
+                    }
+
+                    /**
+                     * Loads the DLL that is required for performing attachment emulation on HotSpot.
+                     */
+                    protected static class LibraryLoadAction implements PrivilegedExceptionAction<File> {
+
+                        /**
+                         * {@code true} if the library should be loaded.
+                         */
+                        private final boolean load;
+
+                        /**
+                         * Creates a new library load action.
+                         *
+                         * @param load {@code true} if the library should be loaded.
+                         */
+                        protected LibraryLoadAction(boolean load) {
+                            this.load = load;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public File run() throws IOException {
+                            String file = "attach_hotspot_windows" + (Platform.is64Bit() ? "64" : "32") + ".dll";
+                            InputStream inputStream = Factory.class.getResourceAsStream("/" + file);
+                            if (inputStream == null) {
+                                throw new IllegalStateException("Could not find attach_hotspot_win32.dll in resource root");
+                            }
+                            File target;
+                            try {
+                                String folder = System.getProperty(NATIVE_TARGET_DIRECTORY);
+                                if (folder == null) {
+                                    target = File.createTempFile("byte_buddy_hot_spot_attach", ".dll");
+                                } else {
+                                    target = new File(folder, file);
+                                    if (!target.getParentFile().isDirectory()) {
+                                        throw new IOException("Could not create target directory: " + target.getParentFile());
+                                    } else if (!target.isFile() && !target.createNewFile()) {
+                                        throw new IOException("Could not create target file: " + target);
+                                    }
+                                }
+                                OutputStream outputStream = new FileOutputStream(target);
+                                try {
+                                    byte[] buffer = new byte[1024];
+                                    int length;
+                                    while ((length = inputStream.read(buffer)) != -1) {
+                                        outputStream.write(buffer, 0, length);
+                                    }
+                                } finally {
+                                    outputStream.close();
+                                }
+                            } finally {
+                                inputStream.close();
+                            }
+                            if (load) {
+                                System.load(target.getAbsolutePath());
+                            }
+                            return target;
                         }
                     }
                 }
