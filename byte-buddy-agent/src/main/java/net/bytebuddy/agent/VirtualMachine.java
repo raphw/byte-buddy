@@ -655,6 +655,9 @@ public interface VirtualMachine {
                  */
                 private final WinNT.HANDLE process;
 
+                /**
+                 * A pointer to the code that was injected into the target process.
+                 */
                 private final Pointer code;
 
                 /**
@@ -667,6 +670,7 @@ public interface VirtualMachine {
                  *
                  * @param library The library to use for communicating with Windows native functions.
                  * @param process The handle of the target VM's process.
+                 * @param code    A pointer to the code that was injected into the target process.
                  */
                 protected ForJnaWindowsNamedPipe(WindowsLibrary library, WinNT.HANDLE process, Pointer code) {
                     this.library = library;
