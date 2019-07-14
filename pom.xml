@@ -23,6 +23,7 @@
       - checks: Applies style checks to the source files. (activated by default, activated on release)
       - integration: Runs additional unit tests and executes static code analysis (activated on CI server)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
+      - native-compile: Compiles the native extensions required by Byte Buddy agent.
 
       It is also possible to build Byte Buddy against a specific byte code level. By default, Byte Buddy is Java 5 compatible
       but requires Java 6 to build and to run tests: By activating a profile javaX where X is a specific version number,
