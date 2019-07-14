@@ -5,6 +5,12 @@
 #define ENQUEUE_ERROR 0xffff
 #define CODE_SIZE 1024
 
+#if _WIN64
+#define POINTER_CAST
+#else
+#define POINTER_CAST (long)
+#endif
+
 typedef HMODULE (WINAPI *GetModuleHandle_t)(LPCTSTR);
 typedef FARPROC (WINAPI *GetProcAddress_t)(HMODULE, LPCSTR);
 typedef int (__stdcall *JVM_EnqueueOperation_t)(char *, char *, char *, char *, char *);
@@ -105,7 +111,7 @@ static LPVOID do_allocate_remote_argument
 JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_allocateRemoteCode
   (JNIEnv *env, jclass type, jlong process)
 {
-    return (jlong) (long) do_allocate_code((HANDLE) (long) process);
+    return (jlong) POINTER_CAST do_allocate_code((HANDLE) POINTER_CAST process);
 }
 
 /**
@@ -122,7 +128,7 @@ JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_
 {
     jsize size = (*env)->GetArrayLength(env, argument);
     if (size > 4) {
-        return (jlong) (long) NULL;
+        return (jlong) POINTER_CAST NULL;
     }
     const char *resolvedName = (*env)->GetStringUTFChars(env, pipe, 0);
     const char *resolvedArgument[4];
@@ -137,7 +143,7 @@ JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_
             resolvedArgument[index] = NULL;
         }
     }
-    jlong allocation = (jlong) (long) do_allocate_remote_argument((HANDLE) (long) process, resolvedName, resolvedArgument);
+    jlong allocation = (jlong) POINTER_CAST do_allocate_remote_argument((HANDLE) POINTER_CAST process, resolvedName, resolvedArgument);
     (*env)->ReleaseStringUTFChars(env, pipe, resolvedName);
     for (index = 0; index < 4; index++) {
         if (resolvedArgument[index] != NULL) {

@@ -18,6 +18,7 @@
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
         <jna.version>5.3.1</jna.version>
         <packages.list>net.bytebuddy.agent</packages.list>
+        <native.home>${java.home}</native.home>
         <native.compiler.32>i686-w64-mingw32-gcc</native.compiler.32>
         <native.compiler.64>x86_64-w64-mingw32-gcc</native.compiler.64>
         <native.name>net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe</native.name>
@@ -176,8 +177,8 @@
                                 <configuration>
                                     <executable>${native.compiler.32}</executable>
                                     <arguments>
-                                        <argument>-I"${java.home}/include"</argument>
-                                        <argument>-I"${java.home}/include/win32"</argument>
+                                        <argument>-I"${native.home}/include"</argument>
+                                        <argument>-I"${native.home}/include/win32"</argument>
                                         <argument>-shared</argument>
                                         <argument>-o</argument>
                                         <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_32.dll</argument>
@@ -194,8 +195,8 @@
                                 <configuration>
                                     <executable>${native.compiler.64}</executable>
                                     <arguments>
-                                        <argument>-I"${java.home}/include"</argument>
-                                        <argument>-I"${java.home}/include/win32"</argument>
+                                        <argument>-I"${native.home}/include"</argument>
+                                        <argument>-I"${native.home}/include/win32"</argument>
                                         <argument>-shared</argument>
                                         <argument>-o</argument>
                                         <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_64.dll</argument>
