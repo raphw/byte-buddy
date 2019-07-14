@@ -122,7 +122,7 @@ JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_
 {
     jsize size = (*env)->GetArrayLength(env, argument);
     if (size > 4) {
-        return NULL;
+        return (jlong) NULL;
     }
     const char *resolvedName = (*env)->GetStringUTFChars(env, pipe, 0);
     const char *resolvedArgument[4];
