@@ -18,6 +18,9 @@
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
         <jna.version>5.3.1</jna.version>
         <packages.list>net.bytebuddy.agent</packages.list>
+        <native.compiler.32>i686-w64-mingw32-gcc</native.compiler.32>
+        <native.compiler.64>x86_64-w64-mingw32-gcc</native.compiler.64>
+        <native.name>net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe</native.name>
     </properties>
 
     <name>Byte Buddy Java agent</name>
@@ -150,5 +153,61 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>windows-compile</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${version.plugin.exec}</version>
+                        <executions>
+                            <execution>
+                                <id>compile-32</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${native.compiler.32}</executable>
+                                    <arguments>
+                                        <argument>-I"${java.home}/include"</argument>
+                                        <argument>-I"${java.home}/include/win32"</argument>
+                                        <argument>-shared</argument>
+                                        <argument>-o</argument>
+                                        <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_32.dll</argument>
+                                        <argument>${project.basedir}/src/main/c/${native.name}.c</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>compile-64</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${native.compiler.64}</executable>
+                                    <arguments>
+                                        <argument>-I"${java.home}/include"</argument>
+                                        <argument>-I"${java.home}/include/win32"</argument>
+                                        <argument>-shared</argument>
+                                        <argument>-o</argument>
+                                        <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_64.dll</argument>
+                                        <argument>${project.basedir}/src/main/c/${native.name}.c</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
