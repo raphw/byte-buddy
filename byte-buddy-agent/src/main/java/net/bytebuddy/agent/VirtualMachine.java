@@ -632,9 +632,13 @@ public interface VirtualMachine {
                 static {
                     String error;
                     try {
-                        AccessController.doPrivileged(new LibraryLoadAction(true));
-                        error = null;
-                    } catch (PrivilegedActionException exception) {
+                        if (Platform.isWindows() || Platform.isWindowsCE()) {
+                            AccessController.doPrivileged(new LibraryLoadAction(true));
+                            error = null;
+                        } else {
+                            error = "Not running on a Windows environment";
+                        }
+                    } catch (Exception exception) {
                         error = exception.getMessage();
                     }
                     ERROR = error;
@@ -839,7 +843,7 @@ public interface VirtualMachine {
                      * {@inheritDoc}
                      */
                     public File run() throws IOException {
-                        String file = "attach_hotspot_windows" + (Platform.is64Bit() ? "64" : "32") + ".dll";
+                        String file = "attach_hotspot_windows_" + (Platform.is64Bit() ? "64" : "32") + ".dll";
                         InputStream inputStream = Factory.class.getResourceAsStream("/" + file);
                         if (inputStream == null) {
                             throw new IllegalStateException("Could not find attach_hotspot_win32.dll in resource root");

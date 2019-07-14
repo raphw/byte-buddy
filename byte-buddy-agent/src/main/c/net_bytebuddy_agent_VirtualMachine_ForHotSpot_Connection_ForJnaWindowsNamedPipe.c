@@ -1,5 +1,5 @@
 #include <jni.h>
-#include <Windows.h>
+#include <windows.h>
 #include "net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe.h"
 
 #define ENQUEUE_ERROR 0xffff
@@ -105,7 +105,7 @@ static LPVOID do_allocate_remote_argument
 JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_allocateRemoteCode
   (JNIEnv *env, jclass type, jlong process)
 {
-    return (jlong) do_allocate_code((HANDLE) process);
+    return (jlong) (long) do_allocate_code((HANDLE) (long) process);
 }
 
 /**
@@ -114,15 +114,15 @@ JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_
  * @param type A reference to the type that defines this native method.
  * @param process A raw pointer to the process to attach to.
  * @param pipe The name of the pipe to write the attachment result to.
- * @param arguments The arguments to provide to the attachment.
+ * @param argument The arguments to provide to the attachment.
  * @return A raw pointer to the allocated data or {@code 0} if an allocation was not possible.
  */
 JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_allocateRemoteArgument
-  (JNIEnv *env, jclass type, jlong process, jstring pipe, jobjectArray arguments)
+  (JNIEnv *env, jclass type, jlong process, jstring pipe, jobjectArray argument)
 {
     jsize size = (*env)->GetArrayLength(env, argument);
     if (size > 4) {
-        return (jlong) NULL;
+        return (jlong) (long) NULL;
     }
     const char *resolvedName = (*env)->GetStringUTFChars(env, pipe, 0);
     const char *resolvedArgument[4];
@@ -137,7 +137,7 @@ JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_
             resolvedArgument[index] = NULL;
         }
     }
-    jlong allocation = (jlong) do_allocate_remote_argument((HANDLE) process, resolvedName, resolvedArgument);
+    jlong allocation = (jlong) (long) do_allocate_remote_argument((HANDLE) (long) process, resolvedName, resolvedArgument);
     (*env)->ReleaseStringUTFChars(env, pipe, resolvedName);
     for (index = 0; index < 4; index++) {
         if (resolvedArgument[index] != NULL) {
