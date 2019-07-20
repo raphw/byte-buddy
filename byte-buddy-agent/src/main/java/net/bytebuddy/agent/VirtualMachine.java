@@ -678,7 +678,7 @@ public interface VirtualMachine {
                     } else if (argument.length > 4) {
                         throw new IllegalArgumentException("Cannot supply more then four arguments to Windows attach mechanism: " + Arrays.asList(argument));
                     }
-                    String name = "\\\\.\\pipe\\javatool" + Long.toHexString(random.nextLong());
+                    String name = "\\\\.\\pipe\\javatool" + Math.abs(random.nextInt() + 1);
                     WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
                             WinBase.PIPE_ACCESS_INBOUND,
                             WinBase.PIPE_TYPE_BYTE | WinBase.PIPE_READMODE_BYTE | WinBase.PIPE_WAIT,
