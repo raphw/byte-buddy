@@ -1,8 +1,7 @@
-#include <stdio.h>
 #include <windows.h>
 
 #define ENQUEUE_ERROR 0xffff
-#define CODE_SIZE 1024
+#define CODE_SIZE (SIZE_T) 1024
 
 typedef HMODULE (WINAPI *GetModuleHandle_t)(LPCTSTR);
 typedef FARPROC (WINAPI *GetProcAddress_t)(HMODULE, LPCSTR);
@@ -27,8 +26,6 @@ typedef struct {
 DWORD WINAPI execute_remote_attach
   (LPVOID argument) 
 {
-    printf("execute_remote_attach");
-    fflush(stdout);
     EnqueueOperation *operation = (EnqueueOperation *) argument;
     HMODULE library = operation->GetModuleHandleA(operation->library);
     if (library != NULL) {
@@ -58,7 +55,7 @@ LPVOID allocate_remote_code
     if (code == NULL) {
         return NULL;
     } else if (!WriteProcessMemory(process, code, execute_remote_attach, CODE_SIZE, NULL)) {
-        VirtualFreeEx(process, NULL, CODE_SIZE, MEM_RELEASE);
+        VirtualFreeEx(process, NULL, 0, MEM_RELEASE);
         return NULL;
     } else {
         return code;
@@ -92,7 +89,7 @@ LPVOID allocate_remote_argument
     if (allocation == NULL) {
         return NULL;
     } else if (!WriteProcessMemory(process, allocation, &operation, sizeof(operation), NULL)) {
-        VirtualFreeEx(process, NULL, sizeof(EnqueueOperation), MEM_RELEASE);
+        VirtualFreeEx(process, NULL, 0, MEM_RELEASE);
         return NULL;
     } else {
         return allocation;
