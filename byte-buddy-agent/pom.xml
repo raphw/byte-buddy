@@ -177,7 +177,7 @@
                                     <arguments>
                                         <argument>-shared</argument>
                                         <argument>-o</argument>
-                                        <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_32.dll</argument>
+                                        <argument>${project.basedir}/src/main/resources/win32-x86/attach_hotspot_windows.dll</argument>
                                         <argument>${project.basedir}/src/main/c/attach_hotspot_windows.c</argument>
                                     </arguments>
                                 </configuration>
@@ -193,7 +193,7 @@
                                     <arguments>
                                         <argument>-shared</argument>
                                         <argument>-o</argument>
-                                        <argument>${project.basedir}/src/main/resources/attach_hotspot_windows_64.dll</argument>
+                                        <argument>${project.basedir}/src/main/resources/win32-x86-64/attach_hotspot_windows.dll</argument>
                                         <argument>${project.basedir}/src/main/c/attach_hotspot_windows.c</argument>
                                     </arguments>
                                 </configuration>

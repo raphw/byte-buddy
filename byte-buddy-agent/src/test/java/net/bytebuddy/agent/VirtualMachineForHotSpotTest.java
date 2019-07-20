@@ -5,11 +5,8 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.File;
 import java.io.IOException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class VirtualMachineForHotSpotTest {
@@ -83,13 +80,6 @@ public class VirtualMachineForHotSpotTest {
                 .then(new ByteAnswer("foo".getBytes("UTF-8")))
                 .thenReturn(-1);
         new VirtualMachine.ForHotSpot(connection).loadAgent("foo", null);
-    }
-
-    @Test
-    public void testLibraryLoadAction() throws Exception{
-        File file = new VirtualMachine.ForHotSpot.Connection.ForJnaWindowsNamedPipe.LibraryLoadAction(false).run();
-        assertThat(file.isFile(), is(true));
-        assertThat(file.delete(), is(true));
     }
 
     private static class ByteAnswer implements Answer<Integer> {

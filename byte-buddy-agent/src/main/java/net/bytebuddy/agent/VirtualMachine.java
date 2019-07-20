@@ -26,9 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -45,11 +43,6 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 public interface VirtualMachine {
-
-    /**
-     * A property for setting an optional target directory for storing native libraries. If not set, native files are stored in the temporary folder.
-     */
-    String NATIVE_TARGET_DIRECTORY = "net.bytebuddy.agent.store";
 
     /**
      * Loads an agent into the represented virtual machine.
@@ -625,29 +618,6 @@ public interface VirtualMachine {
             class ForJnaWindowsNamedPipe implements Connection {
 
                 /**
-                 * The error that was raised while loading the native library or {@code null} if no error occurred.
-                 */
-                private static final String ERROR;
-
-                /*
-                 * Loads the DLL file that is required for invoking functions that cannot be represented in JNA.
-                 */
-                static {
-                    String error;
-                    try {
-                        if (Platform.isWindows() || Platform.isWindowsCE()) {
-                            AccessController.doPrivileged(new LibraryLoadAction(true));
-                            error = null;
-                        } else {
-                            error = "Not running on a Windows environment";
-                        }
-                    } catch (Exception exception) {
-                        error = exception.getMessage();
-                    }
-                    ERROR = error;
-                }
-
-                /**
                  * Indicates a memory release.
                  */
                 private static final int MEM_RELEASE = 0x8000;
@@ -656,7 +626,10 @@ public interface VirtualMachine {
                  * The library to use for communicating with Windows native functions.
                  */
                 private final WindowsLibrary library;
-                
+
+                /**
+                 * The library to use for communicating with Windows attachment extension that is included as a DLL.
+                 */
                 private final WindowsAttachLibrary attachLibrary;
 
                 /**
@@ -677,9 +650,10 @@ public interface VirtualMachine {
                 /**
                  * Creates a new connection via a named pipe.
                  *
-                 * @param library The library to use for communicating with Windows native functions.
-                 * @param process The handle of the target VM's process.
-                 * @param code    A pointer to the code that was injected into the target process.
+                 * @param library       The library to use for communicating with Windows native functions.
+                 * @param attachLibrary The library to use for communicating with Windows attachment extension that is included as a DLL.
+                 * @param process       The handle of the target VM's process.
+                 * @param code          A pointer to the code that was injected into the target process.
                  */
                 protected ForJnaWindowsNamedPipe(WindowsLibrary library, WindowsAttachLibrary attachLibrary, WinNT.HANDLE process, WinDef.LPVOID code) {
                     this.library = library;
@@ -709,8 +683,8 @@ public interface VirtualMachine {
                         throw new Win32Exception(Native.getLastError());
                     }
                     try {
-                        WinDef.LPVOID data = attachLibrary.allocate_remote_argument(process, 
-                                name, 
+                        WinDef.LPVOID data = attachLibrary.allocate_remote_argument(process,
+                                name,
                                 argument.length < 1 ? null : argument[0],
                                 argument.length < 2 ? null : argument[1],
                                 argument.length < 3 ? null : argument[2],
@@ -815,71 +789,29 @@ public interface VirtualMachine {
                  * A library for interacting with Windows.
                  */
                 protected interface WindowsAttachLibrary extends Library {
-                    
-                    WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process, String pipe, String arg0, String arg1, String arg2, String arg3);
-
-                    WinDef.LPVOID allocate_code(WinNT.HANDLE process);
-                }
-
-                /**
-                 * Loads the DLL that is required for performing attachment emulation on HotSpot.
-                 */
-                protected static class LibraryLoadAction implements PrivilegedExceptionAction<File> {
 
                     /**
-                     * {@code true} if the library should be loaded.
-                     */
-                    private final boolean load;
-
-                    /**
-                     * Creates a new library load action.
+                     * Allocates the code to invoke on the remote VM.
                      *
-                     * @param load {@code true} if the library should be loaded.
+                     * @param process A handle to the target process.
+                     * @return A pointer to the allocated code or {@code null} if the code could not be allocated.
                      */
-                    protected LibraryLoadAction(boolean load) {
-                        this.load = load;
-                    }
+                    @SuppressWarnings("checkstyle:methodname")
+                    WinDef.LPVOID allocate_code(WinNT.HANDLE process);
 
                     /**
-                     * {@inheritDoc}
+                     * Allocates the remote argument to supply to the remote code upon execution.
+                     *
+                     * @param process A handle to the target process.
+                     * @param pipe    The name of the pipe used for supplying an answer.
+                     * @param arg0    The first argument or {@code null} if no such argument is provided.
+                     * @param arg1    The second argument or {@code null} if no such argument is provided.
+                     * @param arg2    The third argument or {@code null} if no such argument is provided.
+                     * @param arg3    The forth  argument or {@code null} if no such argument is provided.
+                     * @return A pointer to the allocated argument or {@code null} if the argument could not be allocated.
                      */
-                    public File run() throws IOException {
-                        String file = "attach_hotspot_windows_" + (Platform.is64Bit() ? "64" : "32") + ".dll";
-                        InputStream inputStream = Factory.class.getResourceAsStream("/" + file);
-                        if (inputStream == null) {
-                            throw new IllegalStateException("Could not find attach_hotspot_win32.dll in resource root");
-                        }
-                        File target;
-                        try {
-                            String folder = System.getProperty(NATIVE_TARGET_DIRECTORY);
-                            if (folder == null) {
-                                target = File.createTempFile("byte_buddy_hot_spot_attach", ".dll");
-                            } else {
-                                target = new File(folder, file);
-                                if (!target.getParentFile().isDirectory()) {
-                                    throw new IOException("Could not create target directory: " + target.getParentFile());
-                                } else if (!target.isFile() && !target.createNewFile()) {
-                                    throw new IOException("Could not create target file: " + target);
-                                }
-                            }
-                            OutputStream outputStream = new FileOutputStream(target);
-                            try {
-                                byte[] buffer = new byte[1024];
-                                int length;
-                                while ((length = inputStream.read(buffer)) != -1) {
-                                    outputStream.write(buffer, 0, length);
-                                }
-                            } finally {
-                                outputStream.close();
-                            }
-                        } finally {
-                            inputStream.close();
-                        }
-                        if (load) {
-                            System.load(target.getAbsolutePath());
-                        }
-                        return target;
-                    }
+                    @SuppressWarnings("checkstyle:methodname")
+                    WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process, String pipe, String arg0, String arg1, String arg2, String arg3);
                 }
 
                 /**
@@ -937,7 +869,10 @@ public interface VirtualMachine {
                      * The library to use for communicating with Windows native functions.
                      */
                     private final WindowsLibrary library;
-                    
+
+                    /**
+                     * The library to use for communicating with Windows attachment extension that is included as a DLL.
+                     */
                     private final WindowsAttachLibrary attachLibrary;
 
                     /**
@@ -945,16 +880,13 @@ public interface VirtualMachine {
                      */
                     public Factory() {
                         library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
-                        attachLibrary = Native.load("attach_hotpot_windows", WindowsAttachLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                        attachLibrary = Native.load("attach_hotspot_windows", WindowsAttachLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
                     public Connection connect(String processId) {
-                        if (ERROR != null) {
-                            throw new IllegalStateException(ERROR);
-                        }
                         WinNT.HANDLE process = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_ALL_ACCESS, false, Integer.parseInt(processId));
                         if (process == null) {
                             throw new Win32Exception(Native.getLastError());
