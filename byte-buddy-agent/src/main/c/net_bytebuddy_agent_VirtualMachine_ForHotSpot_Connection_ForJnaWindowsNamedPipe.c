@@ -34,6 +34,7 @@ typedef struct {
 DWORD WINAPI execute_remote_attach
   (LPVOID argument) 
 {
+    printf("Executing remote procedure");
     EnqueueOperation *operation = (EnqueueOperation *) argument;
     HMODULE library = operation->GetModuleHandleA(operation->library);
     if (library != NULL) {
