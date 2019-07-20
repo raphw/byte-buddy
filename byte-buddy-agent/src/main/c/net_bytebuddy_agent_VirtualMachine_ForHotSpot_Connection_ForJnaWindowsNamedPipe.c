@@ -6,7 +6,7 @@
 #define CODE_SIZE 1024
 
 #if _WIN64
-#define POINTER_CAST
+#define POINTER_CAST (long long)
 #else
 #define POINTER_CAST (long)
 #endif
