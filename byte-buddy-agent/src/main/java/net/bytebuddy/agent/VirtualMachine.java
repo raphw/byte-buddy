@@ -235,11 +235,12 @@ public interface VirtualMachine {
             /**
              * Executes a command on the current connection.
              *
+             * @param protocol The target VMs protocol version for the attach API.
              * @param argument The arguments to send to the target VM.
              * @return The response of the target JVM.
              * @throws IOException If an I/O error occurred.
              */
-            Response execute(String... argument) throws IOException;
+            Response execute(String protocol, String... argument) throws IOException;
 
             /**
              * A response to an execution command to a VM.
@@ -397,7 +398,9 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public Response execute(String... argument) throws IOException {
+                public Response execute(String protocol, String... argument) throws IOException {
+                    write(protocol.getBytes("UTF-8"));
+                    write(BLANK);
                     for (String anArgument : argument) {
                         write(anArgument.getBytes("UTF-8"));
                         write(BLANK);
@@ -666,9 +669,11 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public Response execute(String... argument) {
-                    if (argument.length > 4) {
-                        throw new IllegalArgumentException("Cannot supply more then four arguments to Windows attach mechanism");
+                public Response execute(String protocol, String... argument) {
+                    if (!"1".equals(protocol)) {
+                        throw new IllegalArgumentException("Unknown protocol version: " + protocol);
+                    } else if (argument.length > 4) {
+                        throw new IllegalArgumentException("Cannot supply more then four arguments to Windows attach mechanism: " + Arrays.asList(argument));
                     }
                     String name = "\\\\.\\pipe\\javatool" + Long.toHexString(random.nextLong());
                     WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
@@ -802,16 +807,21 @@ public interface VirtualMachine {
                     /**
                      * Allocates the remote argument to supply to the remote code upon execution.
                      *
-                     * @param process A handle to the target process.
-                     * @param pipe    The name of the pipe used for supplying an answer.
-                     * @param arg0    The first argument or {@code null} if no such argument is provided.
-                     * @param arg1    The second argument or {@code null} if no such argument is provided.
-                     * @param arg2    The third argument or {@code null} if no such argument is provided.
-                     * @param arg3    The forth  argument or {@code null} if no such argument is provided.
+                     * @param process   A handle to the target process.
+                     * @param pipe      The name of the pipe used for supplying an answer.
+                     * @param argument0 The first argument or {@code null} if no such argument is provided.
+                     * @param argument1 The second argument or {@code null} if no such argument is provided.
+                     * @param argument2 The third argument or {@code null} if no such argument is provided.
+                     * @param argument3 The forth  argument or {@code null} if no such argument is provided.
                      * @return A pointer to the allocated argument or {@code null} if the argument could not be allocated.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process, String pipe, String arg0, String arg1, String arg2, String arg3);
+                    WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process,
+                                                           String pipe,
+                                                           String argument0,
+                                                           String argument1,
+                                                           String argument2,
+                                                           String argument3);
                 }
 
                 /**

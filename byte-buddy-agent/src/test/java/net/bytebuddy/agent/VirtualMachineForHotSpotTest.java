@@ -60,7 +60,7 @@ public class VirtualMachineForHotSpotTest {
     public void testAttachmentIncompatibleProtocol() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         VirtualMachine.ForHotSpot.Connection.Response response = mock(VirtualMachine.ForHotSpot.Connection.Response.class);
-        when(connection.execute(Mockito.<String[]>any())).thenReturn(response);
+        when(connection.execute(anyString(), Mockito.<String[]>any())).thenReturn(response);
         when(response.read(any(byte[].class)))
                 .then(new ByteAnswer("1".getBytes("UTF-8")))
                 .then(new ByteAnswer("0".getBytes("UTF-8")))
@@ -73,7 +73,7 @@ public class VirtualMachineForHotSpotTest {
     public void testAttachmentUnknownError() throws Exception {
         VirtualMachine.ForHotSpot.Connection connection = mock(VirtualMachine.ForHotSpot.Connection.class);
         VirtualMachine.ForHotSpot.Connection.Response response = mock(VirtualMachine.ForHotSpot.Connection.Response.class);
-        when(connection.execute(Mockito.<String[]>any())).thenReturn(response);
+        when(connection.execute(anyString(), Mockito.<String[]>any())).thenReturn(response);
         when(response.read(any(byte[].class)))
                 .then(new ByteAnswer("1".getBytes("UTF-8")))
                 .then(new ByteAnswer((byte) 10))

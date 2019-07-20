@@ -66,22 +66,25 @@ LPVOID allocate_code
  * Allocates the argument to the remote execution.
  * @param process A handle to the remote process to which to attach.
  * @param pipe The name of the pipe to which the attachment result is written
- * @param argument An array of arguments to provide to the {@code JVM_EnqueueOperation}.
+ * @param argument0 The first argument to provide to the {@code JVM_EnqueueOperation}.
+ * @param argument1 The second argument to provide to the {@code JVM_EnqueueOperation}.
+ * @param argument2 The third argument to provide to the {@code JVM_EnqueueOperation}.
+ * @param argument3 The forth argument to provide to the {@code JVM_EnqueueOperation}.
  * @return A pointer to the allocated argument or {@code NULL} if the allocation was not possible.
  */
 LPVOID allocate_remote_argument
-  (HANDLE process, const char *pipe, const char *arg0, const char *arg1, const char *arg2, const char *arg3) 
+  (HANDLE process, const char *pipe, const char *argument0, const char *argument1, const char *argument2, const char *argument3) 
 {
-    EnqueueOperation payload;
-    payload.GetModuleHandleA = GetModuleHandleA;
-    payload.GetProcAddress = GetProcAddress;
-    strcpy(payload.library, "jvm");
-    strcpy(payload.command, "JVM_EnqueueOperation");
-    strcpy(payload.pipe, pipe);
-    strcpy(payload.argument[0], arg0 == NULL ? "" : arg0);
-    strcpy(payload.argument[1], arg1 == NULL ? "" : arg1);
-    strcpy(payload.argument[2], arg2 == NULL ? "" : arg2);
-    strcpy(payload.argument[3], arg3 == NULL ? "" : arg3);
+    EnqueueOperation operation;
+    operation.GetModuleHandleA = GetModuleHandleA;
+    operation.GetProcAddress = GetProcAddress;
+    strcpy(operation.library, "jvm");
+    strcpy(operation.command, "JVM_EnqueueOperation");
+    strcpy(operation.pipe, pipe);
+    strcpy(operation.argument[0], argument0 == NULL ? "" : argument0);
+    strcpy(operation.argument[1], argument1 == NULL ? "" : argument1);
+    strcpy(operation.argument[2], argument2 == NULL ? "" : argument2);
+    strcpy(operation.argument[3], argument3 == NULL ? "" : argument3);
     LPVOID allocation = VirtualAllocEx(process, NULL, sizeof(EnqueueOperation), MEM_COMMIT, PAGE_READWRITE);
     if (allocation == NULL) {
         return NULL;
