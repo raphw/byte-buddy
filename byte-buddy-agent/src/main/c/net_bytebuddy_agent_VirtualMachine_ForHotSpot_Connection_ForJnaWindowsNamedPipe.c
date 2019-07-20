@@ -6,9 +6,9 @@
 #define CODE_SIZE 1024
 
 #if _WIN64
-#define POINTER_CAST (long long)
+#define POINTER_CAST (long long int)
 #else
-#define POINTER_CAST (long)
+#define POINTER_CAST (long int)
 #endif
 
 typedef HMODULE (WINAPI *GetModuleHandle_t)(LPCTSTR);
