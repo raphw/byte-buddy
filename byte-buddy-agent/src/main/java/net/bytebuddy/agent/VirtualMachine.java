@@ -643,7 +643,7 @@ public interface VirtualMachine {
                 /**
                  * A pointer to the code that was injected into the target process.
                  */
-                private final WinDef.LPVOID code;
+                private final WinBase.FOREIGN_THREAD_START_ROUTINE code;
 
                 /**
                  * A source of random values being used for generating pipe names.
@@ -658,7 +658,10 @@ public interface VirtualMachine {
                  * @param process       The handle of the target VM's process.
                  * @param code          A pointer to the code that was injected into the target process.
                  */
-                protected ForJnaWindowsNamedPipe(WindowsLibrary library, WindowsAttachLibrary attachLibrary, WinNT.HANDLE process, WinDef.LPVOID code) {
+                protected ForJnaWindowsNamedPipe(WindowsLibrary library,
+                                                 WindowsAttachLibrary attachLibrary,
+                                                 WinNT.HANDLE process,
+                                                 WinBase.FOREIGN_THREAD_START_ROUTINE code) {
                     this.library = library;
                     this.attachLibrary = attachLibrary;
                     this.process = process;
@@ -698,35 +701,29 @@ public interface VirtualMachine {
                             throw new Win32Exception(Native.getLastError());
                         }
                         try {
-                            WinBase.FOREIGN_THREAD_START_ROUTINE execution = new WinBase.FOREIGN_THREAD_START_ROUTINE();
+                            WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, code, data.getPointer(), null, null);
+                            if (thread == null) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
                             try {
-                                execution.foreignLocation = code;
-                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data.getPointer(), null, null);
-                                if (thread == null) {
+                                int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                if (result != 0) {
+                                    throw new Win32Exception(result);
+                                }
+                                IntByReference exitCode = new IntByReference();
+                                if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                    throw new Win32Exception(Native.getLastError());
+                                } else if (exitCode.getValue() != 0) {
+                                    throw new IllegalStateException("Target could not dispatch command successfully");
+                                }
+                                if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
-                                try {
-                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                    if (result != 0) {
-                                        throw new Win32Exception(result);
-                                    }
-                                    IntByReference exitCode = new IntByReference();
-                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    } else if (exitCode.getValue() != 0) {
-                                        throw new IllegalStateException("Target could not dispatch command successfully");
-                                    }
-                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    }
-                                    return new NamedPipeResponse(pipe);
-                                } finally {
-                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    }
-                                }
+                                return new NamedPipeResponse(pipe);
                             } finally {
-                                execution.clear();
+                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                    throw new Win32Exception(Native.getLastError());
+                                }
                             }
                         } finally {
                             if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
@@ -802,7 +799,7 @@ public interface VirtualMachine {
                      * @return A pointer to the allocated code or {@code null} if the code could not be allocated.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    WinDef.LPVOID allocate_code(WinNT.HANDLE process);
+                    WinBase.FOREIGN_THREAD_START_ROUTINE allocate_remote_code(WinNT.HANDLE process);
 
                     /**
                      * Allocates the remote argument to supply to the remote code upon execution.
@@ -902,7 +899,7 @@ public interface VirtualMachine {
                             throw new Win32Exception(Native.getLastError());
                         }
                         try {
-                            WinDef.LPVOID code = attachLibrary.allocate_code(process);
+                            WinBase.FOREIGN_THREAD_START_ROUTINE code = attachLibrary.allocate_remote_code(process);
                             if (code == null) {
                                 throw new Win32Exception(Native.getLastError());
                             }
