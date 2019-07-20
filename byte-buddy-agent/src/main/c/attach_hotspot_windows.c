@@ -73,7 +73,7 @@ LPVOID allocate_remote_code
  * @return A pointer to the allocated argument or {@code NULL} if the allocation was not possible.
  */
 LPVOID allocate_remote_argument
-  (HANDLE process, const char *pipe, const char *argument0, const char *argument1, const char *argument2, const char *argument3) 
+  (HANDLE process, LPCSTR pipe, LPCSTR argument0, LPCSTR argument1, LPCSTR argument2, LPCSTR argument3) 
 {
     EnqueueOperation operation;
     operation.GetModuleHandleA = GetModuleHandleA;
