@@ -34,7 +34,6 @@ typedef struct {
 DWORD WINAPI execute_remote_attach
   (LPVOID argument) 
 {
-    printf("execute_remote_attach");
     EnqueueOperation *operation = (EnqueueOperation *) argument;
     HMODULE library = operation->GetModuleHandleA(operation->library);
     if (library != NULL) {
@@ -60,7 +59,6 @@ DWORD WINAPI execute_remote_attach
 LPVOID do_allocate_code
   (HANDLE process) 
 {
-    printf("do_allocate_code");
     LPVOID code = VirtualAllocEx(process, NULL, CODE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (code == NULL) {
         return NULL;
@@ -82,7 +80,6 @@ LPVOID do_allocate_code
 static LPVOID do_allocate_remote_argument
   (HANDLE process, const char *pipe, const char *argument[4]) 
 {
-    printf("do_allocate_remote_argument");
     EnqueueOperation payload;
     payload.GetModuleHandleA = GetModuleHandleA;
     payload.GetProcAddress = GetProcAddress;
