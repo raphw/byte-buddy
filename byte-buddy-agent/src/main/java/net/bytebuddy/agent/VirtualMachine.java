@@ -26,7 +26,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
-import java.security.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -1009,7 +1012,7 @@ public interface VirtualMachine {
          */
         public static VirtualMachine attach(String processId) throws IOException {
             return attach(processId, 5000, Platform.isWindows() || Platform.isWindowsCE()
-                    ? Dispatcher.ForJnaWindowsEnvironment.withInferredNamespace()
+                    ? new Dispatcher.ForJnaWindowsEnvironment()
                     : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
 
@@ -1142,7 +1145,8 @@ public interface VirtualMachine {
                                         }
                                     }
                                 }
-                                dispatcher.incrementSemaphore(directory, "_notifier", notifications);
+                                boolean global = Boolean.parseBoolean(target.getProperty("globalSemaphore"));
+                                dispatcher.incrementSemaphore(directory, "_notifier", global, notifications);
                                 try {
                                     Socket socket = serverSocket.accept();
                                     String answer = read(socket);
@@ -1152,7 +1156,7 @@ public interface VirtualMachine {
                                         throw new IllegalStateException("Unexpected answered to attachment: " + answer);
                                     }
                                 } finally {
-                                    dispatcher.decrementSemaphore(directory, "_notifier", notifications);
+                                    dispatcher.decrementSemaphore(directory, "_notifier", global, notifications);
                                 }
                             } finally {
                                 for (Map.Entry<RandomAccessFile, FileLock> entry : locks.entrySet()) {
@@ -1311,18 +1315,20 @@ public interface VirtualMachine {
              *
              * @param directory The sempahore's control directory.
              * @param name      The semaphore's name.
+             * @param global    {@code true} if the semaphore is in the global namespace (only applicable on Windows).
              * @param count     The amount of increments.
              */
-            void incrementSemaphore(File directory, String name, int count);
+            void incrementSemaphore(File directory, String name, boolean global, int count);
 
             /**
              * Decrements a semaphore.
              *
              * @param directory The sempahore's control directory.
              * @param name      The semaphore's name.
+             * @param global    {@code true} if the semaphore is in the global namespace (only applicable on Windows).
              * @param count     The amount of decrements.
              */
-            void decrementSemaphore(File directory, String name, int count);
+            void decrementSemaphore(File directory, String name, boolean global, int count);
 
             /**
              * A connector implementation for a POSIX environment using JNA.
@@ -1439,14 +1445,14 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public void incrementSemaphore(File directory, String name, int count) {
+                public void incrementSemaphore(File directory, String name, boolean global, int count) {
                     notifySemaphore(directory, name, count, (short) 1, (short) 0, false);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public void decrementSemaphore(File directory, String name, int count) {
+                public void decrementSemaphore(File directory, String name, boolean global, int count) {
                     notifySemaphore(directory, name, count, (short) -1, (short) (PosixLibrary.SEM_UNDO | PosixLibrary.IPC_NOWAIT), true);
                 }
 
@@ -1463,13 +1469,13 @@ public interface VirtualMachine {
                 @SuppressFBWarnings(value = {"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"}, justification = "Modifier is required by JNA.")
                 private void notifySemaphore(File directory, String name, int count, short operation, short flags, boolean acceptUnavailable) {
                     int semaphore = library.semget(library.ftok(new File(directory, name).getAbsolutePath(), 0xA1), 2, 0666);
-                    PosixLibrary.SemaphoreOperation buffer = new PosixLibrary.SemaphoreOperation();
-                    buffer.semOp = operation;
-                    buffer.semFlg = flags;
+                    PosixLibrary.SemaphoreOperation target = new PosixLibrary.SemaphoreOperation();
+                    target.operation = operation;
+                    target.flags = flags;
                     try {
                         while (count-- > 0) {
                             try {
-                                library.semop(semaphore, buffer, 1);
+                                library.semop(semaphore, target, 1);
                             } catch (LastErrorException exception) {
                                 if (acceptUnavailable && Native.getLastError() == PosixLibrary.EAGAIN) {
                                     break;
@@ -1479,7 +1485,7 @@ public interface VirtualMachine {
                             }
                         }
                     } finally {
-                        buffer.clear();
+                        target.clear();
                     }
                 }
 
@@ -1588,21 +1594,21 @@ public interface VirtualMachine {
                          * The semaphore number.
                          */
                         @SuppressWarnings("unused")
-                        public short semNum;
+                        public short number;
 
                         /**
                          * The operation to execute.
                          */
-                        public short semOp;
+                        public short operation;
 
                         /**
                          * The flags being set for the operation.
                          */
-                        public short semFlg;
+                        public short flags;
 
                         @Override
                         protected List<String> getFieldOrder() {
-                            return Arrays.asList("semNum", "semOp", "semFlg");
+                            return Arrays.asList("number", "operation", "flags");
                         }
                     }
                 }
@@ -1624,40 +1630,14 @@ public interface VirtualMachine {
                 private static final String CREATION_MUTEX_NAME = "j9shsemcreationMutex";
 
                 /**
-                 * Indicates if the global namespace should be used.
-                 */
-                private final boolean globalNamespace;
-
-                /**
                  * A library to use for interacting with Windows.
                  */
                 private final WindowsLibrary library;
 
                 /**
-                 * Returns a connector that uses the global namespace unless this VM indicates that the global namespace is not used by the current VM.
-                 * This inference will only work reliably if the current VM is the same VM that the subsequent attachment targets.
-                 *
-                 * @return An appropriate connector.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "The Exception is intentionally suppressed as it indicates incompatibility.")
-                public static Dispatcher withInferredNamespace() {
-                    try {
-                        // This method is bundled with any OpenJ9 VM and is guaranteed to exist for any VM that does not use the non-global namespace.
-                        Class.forName("com.ibm.tools.attach.target.IPC").getDeclaredMethod("notifyVm", String.class, String.class, int.class);
-                        return new ForJnaWindowsEnvironment(false);
-                    } catch (Exception ignored) {
-                        return new ForJnaWindowsEnvironment(true);
-                    }
-                }
-
-                /**
                  * Creates a new connector for a Windows environment using JNA.
-                 *
-                 * @param globalNamespace {@code true} if the communication with the target VM should be applied on the global namespace. OpenJ9
-                 *                        communicates on the global namespace since Java 11.
                  */
-                public ForJnaWindowsEnvironment(boolean globalNamespace) {
-                    this.globalNamespace = globalNamespace;
+                public ForJnaWindowsEnvironment() {
                     library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                 }
 
@@ -1719,8 +1699,8 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public void incrementSemaphore(File directory, String name, int count) {
-                    AttachmentHandle handle = openSemaphore(directory, name);
+                public void incrementSemaphore(File directory, String name, boolean global, int count) {
+                    AttachmentHandle handle = openSemaphore(directory, name, global);
                     try {
                         while (count-- > 0) {
                             if (!library.ReleaseSemaphore(handle.getHandle(), 1, null)) {
@@ -1735,8 +1715,8 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public void decrementSemaphore(File directory, String name, int count) {
-                    AttachmentHandle handle = openSemaphore(directory, name);
+                public void decrementSemaphore(File directory, String name, boolean global, int count) {
+                    AttachmentHandle handle = openSemaphore(directory, name, global);
                     try {
                         while (count-- > 0) {
                             int result = Kernel32.INSTANCE.WaitForSingleObject(handle.getHandle(), 0);
@@ -1760,9 +1740,10 @@ public interface VirtualMachine {
                  *
                  * @param directory The control directory.
                  * @param name      The semaphore's name.
+                 * @param global    {@code true} if the semaphore is in the global namespace.
                  * @return A handle for signaling an attachment to the target process.
                  */
-                private AttachmentHandle openSemaphore(File directory, String name) {
+                private AttachmentHandle openSemaphore(File directory, String name, boolean global) {
                     WinNT.SECURITY_DESCRIPTOR securityDescriptor = new WinNT.SECURITY_DESCRIPTOR(64 * 1024);
                     try {
                         if (!Advapi32.INSTANCE.InitializeSecurityDescriptor(securityDescriptor, WinNT.SECURITY_DESCRIPTOR_REVISION)) {
@@ -1795,7 +1776,7 @@ public interface VirtualMachine {
                                     throw new Win32Exception(result);
                                 default:
                                     try {
-                                        String target = (globalNamespace ? "Global\\" : "")
+                                        String target = (global ? "Global\\" : "")
                                                 + (directory.getAbsolutePath() + '_' + name).replaceAll("[^a-zA-Z0-9_]", "")
                                                 + "_semaphore";
                                         WinNT.HANDLE parent = library.OpenSemaphoreW(WindowsLibrary.SEMAPHORE_ALL_ACCESS, false, target);
