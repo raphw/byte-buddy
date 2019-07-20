@@ -91,7 +91,7 @@ LPVOID allocate_remote_argument
     LPVOID allocation = VirtualAllocEx(process, NULL, sizeof(EnqueueOperation), MEM_COMMIT, PAGE_READWRITE);
     if (allocation == NULL) {
         return NULL;
-    } else if (!WriteProcessMemory(process, allocation, &process, sizeof(process), NULL)) {
+    } else if (!WriteProcessMemory(process, allocation, &operation, sizeof(operation), NULL)) {
         VirtualFreeEx(process, NULL, sizeof(EnqueueOperation), MEM_RELEASE);
         return NULL;
     } else {
