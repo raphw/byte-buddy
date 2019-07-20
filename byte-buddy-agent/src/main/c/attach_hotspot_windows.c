@@ -69,7 +69,7 @@ LPVOID allocate_code
  * @param argument An array of arguments to provide to the {@code JVM_EnqueueOperation}.
  * @return A pointer to the allocated argument or {@code NULL} if the allocation was not possible.
  */
-static LPVOID allocate_remote_argument
+LPVOID allocate_remote_argument
   (HANDLE process, const char *pipe, const char *arg0, const char *arg1, const char *arg2, const char *arg3) 
 {
     EnqueueOperation payload;

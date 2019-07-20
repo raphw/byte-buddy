@@ -656,6 +656,8 @@ public interface VirtualMachine {
                  * The library to use for communicating with Windows native functions.
                  */
                 private final WindowsLibrary library;
+                
+                private final WindowsAttachLibrary attachLibrary;
 
                 /**
                  * The handle of the target VM's process.
@@ -665,7 +667,7 @@ public interface VirtualMachine {
                 /**
                  * A pointer to the code that was injected into the target process.
                  */
-                private final Pointer code;
+                private final WinDef.LPVOID code;
 
                 /**
                  * A source of random values being used for generating pipe names.
@@ -679,8 +681,9 @@ public interface VirtualMachine {
                  * @param process The handle of the target VM's process.
                  * @param code    A pointer to the code that was injected into the target process.
                  */
-                protected ForJnaWindowsNamedPipe(WindowsLibrary library, WinNT.HANDLE process, Pointer code) {
+                protected ForJnaWindowsNamedPipe(WindowsLibrary library, WindowsAttachLibrary attachLibrary, WinNT.HANDLE process, WinDef.LPVOID code) {
                     this.library = library;
+                    this.attachLibrary = attachLibrary;
                     this.process = process;
                     this.code = code;
                     random = new SecureRandom();
@@ -690,6 +693,9 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public Response execute(String... argument) {
+                    if (argument.length > 4) {
+                        throw new IllegalArgumentException("Cannot supply more then four arguments to Windows attach mechanism");
+                    }
                     String name = "\\\\.\\pipe\\javatool" + Long.toHexString(random.nextLong());
                     WinNT.HANDLE pipe = Kernel32.INSTANCE.CreateNamedPipe(name,
                             WinBase.PIPE_ACCESS_INBOUND,
@@ -703,15 +709,20 @@ public interface VirtualMachine {
                         throw new Win32Exception(Native.getLastError());
                     }
                     try {
-                        Pointer data = new Pointer(allocateRemoteArgument(Pointer.nativeValue(process.getPointer()), name));
-                        if (Pointer.nativeValue(data) == 0L) {
-                            throw new IllegalStateException("Could not allocate data on remote VM");
+                        WinDef.LPVOID data = attachLibrary.allocate_remote_argument(process, 
+                                name, 
+                                argument.length < 1 ? null : argument[0],
+                                argument.length < 2 ? null : argument[1],
+                                argument.length < 3 ? null : argument[2],
+                                argument.length < 4 ? null : argument[3]);
+                        if (data == null) {
+                            throw new Win32Exception(Native.getLastError());
                         }
                         try {
                             WinBase.FOREIGN_THREAD_START_ROUTINE execution = new WinBase.FOREIGN_THREAD_START_ROUTINE();
                             try {
-                                execution.foreignLocation = new WinDef.LPVOID(code);
-                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data, null, null);
+                                execution.foreignLocation = code;
+                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, execution, data.getPointer(), null, null);
                                 if (thread == null) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
@@ -739,7 +750,7 @@ public interface VirtualMachine {
                                 execution.clear();
                             }
                         } finally {
-                            if (!library.VirtualFreeEx(process, data, 0, MEM_RELEASE)) {
+                            if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
                                 throw new Win32Exception(Native.getLastError());
                             }
                         }
@@ -759,7 +770,7 @@ public interface VirtualMachine {
                  */
                 public void close() {
                     try {
-                        if (!library.VirtualFreeEx(process, code, 0, MEM_RELEASE)) {
+                        if (!library.VirtualFreeEx(process, code.getPointer(), 0, MEM_RELEASE)) {
                             throw new Win32Exception(Native.getLastError());
                         }
                     } finally {
@@ -768,29 +779,6 @@ public interface VirtualMachine {
                         }
                     }
                 }
-
-                /**
-                 * Allocates the code block that is to be executed by the remote JVM. The memory must be
-                 * allocated using {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and
-                 * will be freed by the allocator.
-                 *
-                 * @param process The process pointer address.
-                 * @return The pointer address of the allocated code or {@code 0} if the code could not be allocated.
-                 */
-                private static native long allocateRemoteCode(long process);
-
-                /**
-                 * Allocates the argument that is to be received by the remote argument when executing a code block
-                 * on the remote JVM. The memory must be allocated using
-                 * {@link WindowsLibrary#VirtualAllocEx(WinNT.HANDLE, Pointer, int, int, int)} and will be freed by
-                 * the allocator.
-                 *
-                 * @param process  The process pointer address.
-                 * @param name     The name of the pipe being used for communication.
-                 * @param argument The arguments being sent to the target virtual machine.
-                 * @return The pointer address of the allocated argument or {@code 0} if the argument could not be allocated.
-                 */
-                private static native long allocateRemoteArgument(long process, String name, String... argument);
 
                 /**
                  * A library for interacting with Windows.
@@ -821,6 +809,16 @@ public interface VirtualMachine {
                      */
                     @SuppressWarnings("checkstyle:methodname")
                     boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
+                }
+
+                /**
+                 * A library for interacting with Windows.
+                 */
+                protected interface WindowsAttachLibrary extends Library {
+                    
+                    WinDef.LPVOID allocate_remote_argument(WinNT.HANDLE process, String pipe, String arg0, String arg1, String arg2, String arg3);
+
+                    WinDef.LPVOID allocate_code(WinNT.HANDLE process);
                 }
 
                 /**
@@ -939,12 +937,15 @@ public interface VirtualMachine {
                      * The library to use for communicating with Windows native functions.
                      */
                     private final WindowsLibrary library;
+                    
+                    private final WindowsAttachLibrary attachLibrary;
 
                     /**
                      * Creates a new connection factory for Windows using JNA.
                      */
                     public Factory() {
                         library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                        attachLibrary = Native.load("attach_hotpot_windows", WindowsAttachLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                     }
 
                     /**
@@ -959,11 +960,11 @@ public interface VirtualMachine {
                             throw new Win32Exception(Native.getLastError());
                         }
                         try {
-                            Pointer code = new Pointer(allocateRemoteCode(Pointer.nativeValue(process.getPointer())));
-                            if (Pointer.nativeValue(code) == 0L) {
-                                throw new IllegalStateException("Could not allocate code on remote VM");
+                            WinDef.LPVOID code = attachLibrary.allocate_code(process);
+                            if (code == null) {
+                                throw new Win32Exception(Native.getLastError());
                             }
-                            return new ForJnaWindowsNamedPipe(library, process, code);
+                            return new ForJnaWindowsNamedPipe(library, attachLibrary, process, code);
                         } catch (Throwable throwable) {
                             if (!Kernel32.INSTANCE.CloseHandle(process)) {
                                 throw new Win32Exception(Native.getLastError());
