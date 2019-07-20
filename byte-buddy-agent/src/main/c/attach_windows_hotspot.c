@@ -1,15 +1,7 @@
-#include <jni.h>
 #include <windows.h>
-#include "net_bytebuddy_agent_VirtualMachine_ForHotSpot_Connection_ForJnaWindowsNamedPipe.h"
 
 #define ENQUEUE_ERROR 0xffff
 #define CODE_SIZE 1024
-
-#if _WIN64
-#define POINTER_CAST (long long int)
-#else
-#define POINTER_CAST (long int)
-#endif
 
 typedef HMODULE (WINAPI *GetModuleHandle_t)(LPCTSTR);
 typedef FARPROC (WINAPI *GetProcAddress_t)(HMODULE, LPCSTR);
@@ -56,7 +48,7 @@ DWORD WINAPI execute_remote_attach
  * @param process The process handle of the remote process to which to attach.
  * @return A pointer to the allocated code or {@code NULL} if the allocation failed.
  */
-LPVOID do_allocate_code
+LPVOID allocate_code
   (HANDLE process) 
 {
     LPVOID code = VirtualAllocEx(process, NULL, CODE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -77,8 +69,8 @@ LPVOID do_allocate_code
  * @param argument An array of arguments to provide to the {@code JVM_EnqueueOperation}.
  * @return A pointer to the allocated argument or {@code NULL} if the allocation was not possible.
  */
-static LPVOID do_allocate_remote_argument
-  (HANDLE process, const char *pipe, const char *argument[4]) 
+static LPVOID allocate_remote_argument
+  (HANDLE process, const char *pipe, const char *arg0, const char *arg1, const char *arg2, const char *arg3) 
 {
     EnqueueOperation payload;
     payload.GetModuleHandleA = GetModuleHandleA;
@@ -86,10 +78,10 @@ static LPVOID do_allocate_remote_argument
     strcpy(payload.library, "jvm");
     strcpy(payload.command, "JVM_EnqueueOperation");
     strcpy(payload.pipe, pipe);
-    int index;
-    for (index = 0; index < 4; index++) {
-        strcpy(payload.argument[0], argument[index] == NULL ? "" : argument[index]);
-    }
+    strcpy(payload.argument[0], arg0 == NULL ? "" : arg0);
+    strcpy(payload.argument[1], arg1 == NULL ? "" : arg1);
+    strcpy(payload.argument[2], arg2 == NULL ? "" : arg2);
+    strcpy(payload.argument[3], arg3 == NULL ? "" : arg3);
     LPVOID allocation = VirtualAllocEx(process, NULL, sizeof(EnqueueOperation), MEM_COMMIT, PAGE_READWRITE);
     if (allocation == NULL) {
         return NULL;
@@ -99,56 +91,4 @@ static LPVOID do_allocate_remote_argument
     } else {
         return allocation;
     }
-}
-
-/**
- * Allocates the remote code that is executed on the target VM.
- * @param env The JNI environment.
- * @param type A reference to the type that defines this native method.
- * @param process A raw pointer to the process to attach to.
- * @return A raw pointer to the process to attach to or {@code 0} if an allocation was not possible.
- */
-JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_allocateRemoteCode
-  (JNIEnv *env, jclass type, jlong process)
-{
-    return (jlong) POINTER_CAST do_allocate_code((HANDLE) POINTER_CAST process);
-}
-
-/**
- * Allocates the argument that is provided to the remote JVM upon attachment.
- * @param env The JNI environment.
- * @param type A reference to the type that defines this native method.
- * @param process A raw pointer to the process to attach to.
- * @param pipe The name of the pipe to write the attachment result to.
- * @param argument The arguments to provide to the attachment.
- * @return A raw pointer to the allocated data or {@code 0} if an allocation was not possible.
- */
-JNIEXPORT jlong JNICALL Java_net_bytebuddy_agent_VirtualMachine_00024ForHotSpot_00024Connection_00024ForJnaWindowsNamedPipe_allocateRemoteArgument
-  (JNIEnv *env, jclass type, jlong process, jstring pipe, jobjectArray argument)
-{
-    jsize size = (*env)->GetArrayLength(env, argument);
-    if (size > 4) {
-        return (jlong) POINTER_CAST NULL;
-    }
-    const char *resolvedName = (*env)->GetStringUTFChars(env, pipe, 0);
-    const char *resolvedArgument[4];
-    jstring rawArgument[4];
-    int index;
-    for (index = 0; index < 4; index++) {
-        if (index < size) {
-            rawArgument[index] = (*env)->GetObjectArrayElement(env, argument, index);
-            resolvedArgument[index] = (*env)->GetStringUTFChars(env, rawArgument[index], 0);
-        } else {
-            rawArgument[index] = NULL;
-            resolvedArgument[index] = NULL;
-        }
-    }
-    jlong allocation = (jlong) POINTER_CAST do_allocate_remote_argument((HANDLE) POINTER_CAST process, resolvedName, resolvedArgument);
-    (*env)->ReleaseStringUTFChars(env, pipe, resolvedName);
-    for (index = 0; index < 4; index++) {
-        if (resolvedArgument[index] != NULL) {
-            (*env)->ReleaseStringUTFChars(env, rawArgument[index], resolvedArgument[index]);
-        }
-    }
-    return allocation;
 }
