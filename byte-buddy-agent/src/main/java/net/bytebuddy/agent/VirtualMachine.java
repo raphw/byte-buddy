@@ -643,7 +643,7 @@ public interface VirtualMachine {
                 /**
                  * A pointer to the code that was injected into the target process.
                  */
-                private final WinBase.FOREIGN_THREAD_START_ROUTINE code;
+                private final WinDef.LPVOID code;
 
                 /**
                  * A source of random values being used for generating pipe names.
@@ -661,7 +661,7 @@ public interface VirtualMachine {
                 protected ForJnaWindowsNamedPipe(WindowsLibrary library,
                                                  WindowsAttachLibrary attachLibrary,
                                                  WinNT.HANDLE process,
-                                                 WinBase.FOREIGN_THREAD_START_ROUTINE code) {
+                                                 WinDef.LPVOID code) {
                     this.library = library;
                     this.attachLibrary = attachLibrary;
                     this.process = process;
@@ -700,35 +700,41 @@ public interface VirtualMachine {
                         if (data == null) {
                             throw new Win32Exception(Native.getLastError());
                         }
+                        WinBase.FOREIGN_THREAD_START_ROUTINE routine = new WinBase.FOREIGN_THREAD_START_ROUTINE();
                         try {
-                            WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, code, data.getPointer(), null, null);
-                            if (thread == null) {
-                                throw new Win32Exception(Native.getLastError());
-                            }
+                            routine.foreignLocation = code;
                             try {
-                                int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                if (result != 0) {
-                                    throw new Win32Exception(result);
-                                }
-                                IntByReference exitCode = new IntByReference();
-                                if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                    throw new Win32Exception(Native.getLastError());
-                                } else if (exitCode.getValue() != 0) {
-                                    throw new IllegalStateException("Target could not dispatch command successfully");
-                                }
-                                if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, routine, data.getPointer(), null, null);
+                                if (thread == null) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
-                                return new NamedPipeResponse(pipe);
+                                try {
+                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                    if (result != 0) {
+                                        throw new Win32Exception(result);
+                                    }
+                                    IntByReference exitCode = new IntByReference();
+                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    } else if (exitCode.getValue() != 0) {
+                                        throw new IllegalStateException("Target could not dispatch command successfully");
+                                    }
+                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                    return new NamedPipeResponse(pipe);
+                                } finally {
+                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                        throw new Win32Exception(Native.getLastError());
+                                    }
+                                }
                             } finally {
-                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
                             }
                         } finally {
-                            if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
-                                throw new Win32Exception(Native.getLastError());
-                            }
+                            routine.clear();
                         }
                     } catch (Throwable throwable) {
                         if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
@@ -799,7 +805,7 @@ public interface VirtualMachine {
                      * @return A pointer to the allocated code or {@code null} if the code could not be allocated.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    WinBase.FOREIGN_THREAD_START_ROUTINE allocate_remote_code(WinNT.HANDLE process);
+                    WinDef.LPVOID allocate_remote_code(WinNT.HANDLE process);
 
                     /**
                      * Allocates the remote argument to supply to the remote code upon execution.
@@ -887,7 +893,7 @@ public interface VirtualMachine {
                      */
                     public Factory() {
                         library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
-                        attachLibrary = Native.load("attach_hotspot_windows", WindowsAttachLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                        attachLibrary = Native.load("attach_hotspot_windows", WindowsAttachLibrary.class);
                     }
 
                     /**
@@ -899,7 +905,7 @@ public interface VirtualMachine {
                             throw new Win32Exception(Native.getLastError());
                         }
                         try {
-                            WinBase.FOREIGN_THREAD_START_ROUTINE code = attachLibrary.allocate_remote_code(process);
+                            WinDef.LPVOID code = attachLibrary.allocate_remote_code(process);
                             if (code == null) {
                                 throw new Win32Exception(Native.getLastError());
                             }

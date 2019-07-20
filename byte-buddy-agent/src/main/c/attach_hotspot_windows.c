@@ -51,7 +51,7 @@ DWORD WINAPI execute_remote_attach
  * @param process The process handle of the remote process to which to attach.
  * @return A pointer to the allocated code or {@code NULL} if the allocation failed.
  */
-LPTHREAD_START_ROUTINE allocate_remote_code
+LPVOID allocate_remote_code
   (HANDLE process) 
 {
     LPVOID code = VirtualAllocEx(process, NULL, CODE_SIZE, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -61,7 +61,7 @@ LPTHREAD_START_ROUTINE allocate_remote_code
         VirtualFreeEx(process, NULL, CODE_SIZE, MEM_RELEASE);
         return NULL;
     } else {
-        return (LPTHREAD_START_ROUTINE) code;
+        return code;
     }
 }
 
