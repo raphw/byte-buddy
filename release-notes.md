@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. July 2019: version 1.9.14
+
+- Add emulated attach mechanism for HotSpot on Windows and for OpenJ9/J9 on POSIX and Windows (if JNA is present).
+- Reimplement POSIX attach mechanism for HotSpot to use JNA (if present).
+
 ### 8. July 2019: version 1.9.14
 
 - Add Java 14 compatibility.
