@@ -700,41 +700,38 @@ public interface VirtualMachine {
                         if (data == null) {
                             throw new Win32Exception(Native.getLastError());
                         }
-                        WinBase.FOREIGN_THREAD_START_ROUTINE routine = new WinBase.FOREIGN_THREAD_START_ROUTINE();
                         try {
-                            routine.foreignLocation = code;
+                            WinNT.HANDLE thread = library.CreateRemoteThread(process, null, 0, code.getPointer(), data.getPointer(), null, null);
+                            if (thread == null) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
                             try {
-                                WinNT.HANDLE thread = Kernel32.INSTANCE.CreateRemoteThread(process, null, 0, routine, data.getPointer(), null, null);
-                                if (thread == null) {
+                                int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
+                                if (result != 0) {
+                                    throw new Win32Exception(result);
+                                }
+                                IntByReference exitCode = new IntByReference();
+                                if (!library.GetExitCodeThread(thread, exitCode)) {
                                     throw new Win32Exception(Native.getLastError());
+                                } else if (exitCode.getValue() != 0) {
+                                    throw new IllegalStateException("Target could not dispatch command successfully");
                                 }
-                                try {
-                                    int result = Kernel32.INSTANCE.WaitForSingleObject(thread, WinBase.INFINITE);
-                                    if (result != 0) {
-                                        throw new Win32Exception(result);
-                                    }
-                                    IntByReference exitCode = new IntByReference();
-                                    if (!Kernel32.INSTANCE.GetExitCodeProcess(thread, exitCode)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    } else if (exitCode.getValue() != 0) {
-                                        throw new IllegalStateException("Target could not dispatch command successfully");
-                                    }
-                                    if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
-                                        throw new Win32Exception(Native.getLastError());
-                                    }
-                                    return new NamedPipeResponse(pipe);
-                                } finally {
-                                    if (!Kernel32.INSTANCE.CloseHandle(process)) {
-                                        throw new Win32Exception(Native.getLastError());
+                                if (!Kernel32.INSTANCE.ConnectNamedPipe(pipe, null)) {
+                                    int code = Native.getLastError();
+                                    if (code != WinError.ERROR_PIPE_CONNECTED) {
+                                        throw new Win32Exception(code);
                                     }
                                 }
+                                return new NamedPipeResponse(pipe);
                             } finally {
-                                if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
+                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
                             }
                         } finally {
-                            routine.clear();
+                            if (!library.VirtualFreeEx(process, data.getPointer(), 0, MEM_RELEASE)) {
+                                throw new Win32Exception(Native.getLastError());
+                            }
                         }
                     } catch (Throwable throwable) {
                         if (!Kernel32.INSTANCE.CloseHandle(pipe)) {
@@ -791,6 +788,16 @@ public interface VirtualMachine {
                      */
                     @SuppressWarnings("checkstyle:methodname")
                     boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
+
+                    WinNT.HANDLE CreateRemoteThread(WinNT.HANDLE process,
+                                                    WinBase.SECURITY_ATTRIBUTES securityAttributes,
+                                                    int stackSize,
+                                                    Pointer code,
+                                                    Pointer argument,
+                                                    WinDef.DWORD creationFlags,
+                                                    Pointer threadId);
+
+                    boolean GetExitCodeThread(WinNT.HANDLE process, IntByReference exitCode);
                 }
 
                 /**
