@@ -724,7 +724,7 @@ public interface VirtualMachine {
                                 }
                                 return new NamedPipeResponse(pipe);
                             } finally {
-                                if (!Kernel32.INSTANCE.CloseHandle(process)) {
+                                if (!Kernel32.INSTANCE.CloseHandle(thread)) {
                                     throw new Win32Exception(Native.getLastError());
                                 }
                             }
@@ -789,6 +789,21 @@ public interface VirtualMachine {
                     @SuppressWarnings("checkstyle:methodname")
                     boolean VirtualFreeEx(WinNT.HANDLE process, Pointer address, int size, int freeType);
 
+                    /**
+                     * An alternative implementation of
+                     * {@link Kernel32#CreateRemoteThread(WinNT.HANDLE, WinBase.SECURITY_ATTRIBUTES, int, WinBase.FOREIGN_THREAD_START_ROUTINE, Pointer, WinDef.DWORD, Pointer)}
+                     * that uses a pointer as the {@code code} argument rather then a structure to avoid accessing foreign memory.
+                     *
+                     * @param process            A handle of the target process.
+                     * @param securityAttributes The security attributes to use or {@code null} if no attributes are provided.
+                     * @param stackSize          The stack size or {@code 0} for using the system default.
+                     * @param code               A pointer to the code to execute.
+                     * @param argument           A pointer to the argument to provide to the code being executed.
+                     * @param creationFlags      The creation flags or {@code null} if no flags are set.
+                     * @param threadId           A pointer to the thread id or {@code null} if no thread reference is set.
+                     * @return A handle to the created remote thread or {@code null} if the creation failed.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
                     WinNT.HANDLE CreateRemoteThread(WinNT.HANDLE process,
                                                     WinBase.SECURITY_ATTRIBUTES securityAttributes,
                                                     int stackSize,
@@ -797,7 +812,15 @@ public interface VirtualMachine {
                                                     WinDef.DWORD creationFlags,
                                                     Pointer threadId);
 
-                    boolean GetExitCodeThread(WinNT.HANDLE process, IntByReference exitCode);
+                    /**
+                     * Receives the exit code of a given thread.
+                     *
+                     * @param thread   A handle to the targeted thread.
+                     * @param exitCode A reference to the exit code value.
+                     * @return {@code true} if the exit code retrieval succeeded.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    boolean GetExitCodeThread(WinNT.HANDLE thread, IntByReference exitCode);
                 }
 
                 /**
