@@ -76,7 +76,7 @@ public class JavaVersionRule implements MethodRule {
             this.sort = sort;
         }
 
-        public void evaluate() throws Throwable {
+        public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version of " + sort + " " + requiredVersion);
         }
     }

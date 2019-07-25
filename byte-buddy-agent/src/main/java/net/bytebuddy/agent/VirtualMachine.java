@@ -1029,7 +1029,7 @@ public interface VirtualMachine {
                                         } finally {
                                             inputStream.close();
                                         }
-                                        long targetProcessId = Long.parseLong(virtualMachine.getProperty("processId"));
+                                        int targetProcessId = Integer.parseInt(virtualMachine.getProperty("processId"));
                                         long targetUserId;
                                         try {
                                             targetUserId = Long.parseLong(virtualMachine.getProperty("userUid"));
@@ -1268,7 +1268,7 @@ public interface VirtualMachine {
              * @param processId The process id to evaluate.
              * @return {@code true} if the supplied process id is currently running.
              */
-            boolean isExistingProcess(long processId);
+            boolean isExistingProcess(int processId);
 
             /**
              * Returns the user id of the owner of the supplied file.
@@ -1369,7 +1369,7 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isExistingProcess(long processId) {
+                public boolean isExistingProcess(int processId) {
                     return library.kill(processId, PosixLibrary.NULL_SIGNAL) != PosixLibrary.ESRCH;
                 }
 
@@ -1519,7 +1519,7 @@ public interface VirtualMachine {
                      * @return The command's return value.
                      * @throws LastErrorException If an error occurred.
                      */
-                    int kill(long processId, int signal) throws LastErrorException;
+                    int kill(int processId, int signal) throws LastErrorException;
 
                     /**
                      * Runs the {@code chmod} command.
@@ -1646,8 +1646,8 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isExistingProcess(long processId) {
-                    WinNT.HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_QUERY_INFORMATION, false, (int) processId);
+                public boolean isExistingProcess(int processId) {
+                    WinNT.HANDLE handle = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_QUERY_INFORMATION, false, processId);
                     if (handle == null) {
                         throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                     }
