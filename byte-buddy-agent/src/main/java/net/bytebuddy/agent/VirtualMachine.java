@@ -1253,14 +1253,14 @@ public interface VirtualMachine {
              *
              * @return The process id of this process.
              */
-            long pid();
+            int pid();
 
             /**
              * Returns the user id of this process.
              *
              * @return The user id of this process
              */
-            long userId();
+            int userId();
 
             /**
              * Returns {@code true} if the supplied process id is a running process.
@@ -1355,14 +1355,14 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public long pid() {
+                public int pid() {
                     return library.getpid();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public long userId() {
+                public int userId() {
                     return library.getuid();
                 }
 
@@ -1598,7 +1598,7 @@ public interface VirtualMachine {
                 /**
                  * Indicates a missing user id what is not supported on Windows.
                  */
-                private static final long NO_USER_ID = 0;
+                private static final int NO_USER_ID = 0;
 
                 /**
                  * The name of the creation mutex.
@@ -1632,14 +1632,14 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public long pid() {
+                public int pid() {
                     return Kernel32.INSTANCE.GetCurrentProcessId();
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public long userId() {
+                public int userId() {
                     return NO_USER_ID;
                 }
 
