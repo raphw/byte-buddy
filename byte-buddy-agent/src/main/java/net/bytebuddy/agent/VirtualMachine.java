@@ -1021,8 +1021,12 @@ public interface VirtualMachine {
                                 if (door.descriptorCount != 1 || door.descriptorPointer == null) {
                                     throw new IllegalStateException();
                                 } else {
-                                    // TODO: handle from door structure
-                                    return new DoorResponse(library, 0);
+                                    DoorDescription payload = new DoorDescription(door.descriptorPointer);
+                                    try {
+                                        return new DoorResponse(library, payload.descriptor);
+                                    } finally {
+                                        payload.clear();
+                                    }
                                 }
                             } finally {
                                 result.clear();
@@ -1126,6 +1130,42 @@ public interface VirtualMachine {
                     @Override
                     protected List<String> getFieldOrder() {
                         return Arrays.asList("dataPointer", "dataSize", "descriptorPointer", "descriptorCount", "resultPointer", "resultSize");
+                    }
+                }
+
+                /**
+                 * A structure describing a door to another VM.
+                 */
+                protected static class DoorDescription extends Structure {
+
+                    /**
+                     * The door attributes.
+                     */
+                    public int attributes;
+
+                    /**
+                     * The door descriptor.
+                     */
+                    public int descriptor;
+
+                    /**
+                     * The door id.
+                     */
+                    @SuppressWarnings("unused")
+                    public long id;
+
+                    /**
+                     * Creates a new door description.
+                     *
+                     * @param pointer The pointer to the structure.
+                     */
+                    protected DoorDescription(Pointer pointer) {
+                        super(pointer);
+                    }
+
+                    @Override
+                    protected List<String> getFieldOrder() {
+                        return Arrays.asList("attributes", "descriptor", "id");
                     }
                 }
 
