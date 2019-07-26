@@ -151,7 +151,7 @@ public interface VirtualMachine {
             if (Platform.isWindows() || Platform.isWindowsCE()) {
                 return attach(processId, new Connection.ForJnaWindowsNamedPipe.Factory());
             } else if (Platform.isSolaris()) {
-                return attach(processId, new Connection.ForJnaSolarisDoor.Factory());
+                return attach(processId, new Connection.ForJnaSolarisDoor.Factory(15, 100, TimeUnit.MILLISECONDS));
             } else {
                 return attach(processId, new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
             }
@@ -284,9 +284,9 @@ public interface VirtualMachine {
                 Connection connect(String processId) throws IOException;
 
                 /**
-                 * A factory for attaching on a POSIX-compatible VM.
+                 * A factory for attaching via a socket file.
                  */
-                abstract class ForPosixSocket implements Factory {
+                abstract class ForSocketFile implements Factory {
 
                     /**
                      * The temporary directory on Unix systems.
@@ -319,13 +319,13 @@ public interface VirtualMachine {
                     private final TimeUnit timeUnit;
 
                     /**
-                     * Creates a connection factory for creating a POSIX socket connection.
+                     * Creates a connection factory for creating a socket connection via a file.
                      *
                      * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
                      * @param pause    The pause between two checks for an established socket connection.
                      * @param timeUnit The time unit of the pause time.
                      */
-                    protected ForPosixSocket(int attempts, long pause, TimeUnit timeUnit) {
+                    protected ForSocketFile(int attempts, long pause, TimeUnit timeUnit) {
                         this.attempts = attempts;
                         this.pause = pause;
                         this.timeUnit = timeUnit;
@@ -351,7 +351,7 @@ public interface VirtualMachine {
                                 }
                             }
                             try {
-                                kill(processId, 3, socket);
+                                kill(processId, 3);
                                 int attempts = this.attempts;
                                 while (!socket.exists() && attempts-- > 0) {
                                     timeUnit.sleep(pause);
@@ -359,8 +359,9 @@ public interface VirtualMachine {
                                 if (!socket.exists()) {
                                     throw new IllegalStateException("Target VM did not respond: " + processId);
                                 }
-                            } catch (InterruptedException e) {
-                                throw new UnsupportedOperationException("Not yet implemented");
+                            } catch (InterruptedException exception) {
+                                Thread.currentThread().interrupt();
+                                throw new IllegalStateException("Interrupted while waiting for attachment thread to start", exception);
                             } finally {
                                 if (!attachFile.delete()) {
                                     attachFile.deleteOnExit();
@@ -375,9 +376,8 @@ public interface VirtualMachine {
                      *
                      * @param processId The process id.
                      * @param signal    The signal to send.
-                     * @param socket    The socket to read from.
                      */
-                    protected abstract void kill(String processId, int signal, File socket);
+                    protected abstract void kill(String processId, int signal);
 
                     /**
                      * Connects to the supplied POSIX socket.
@@ -585,7 +585,7 @@ public interface VirtualMachine {
                 /**
                  * A factory for a POSIX socket connection to a JVM using JNA.
                  */
-                public static class Factory extends Connection.Factory.ForPosixSocket {
+                public static class Factory extends Connection.Factory.ForSocketFile {
 
                     /**
                      * The socket library API.
@@ -605,7 +605,7 @@ public interface VirtualMachine {
                     }
 
                     @Override
-                    protected void kill(String processId, int signal, File socket) {
+                    protected void kill(String processId, int signal) {
                         library.kill(Integer.parseInt(processId), signal);
                     }
 
@@ -1017,9 +1017,12 @@ public interface VirtualMachine {
                             try {
                                 door.resultPointer = result;
                                 door.resultSize = (int) result.size();
-                                library.door_call(descriptor, door.getPointer());
-                                if (door.descriptorCount != 1 || door.descriptorPointer == null) {
-                                    throw new IllegalStateException();
+                                if (library.door_call(descriptor, door.getPointer()) != 0) {
+                                    throw new IllegalStateException("Door call to target VM failed");
+                                } else if (door.resultSize < 4 || door.resultPointer.getInt(0) != 0) {
+                                    throw new IllegalStateException("Target VM could not execute door call");
+                                } else if (door.descriptorCount != 1 || door.descriptorPointer == null) {
+                                    throw new IllegalStateException("Did not receive communication descriptor from target VM");
                                 } else {
                                     DoorDescription payload = new DoorDescription(door.descriptorPointer);
                                     try {
@@ -1050,6 +1053,15 @@ public interface VirtualMachine {
                  * A library for interacting with Solaris.
                  */
                 protected interface SolarisLibrary extends Library {
+
+                    /**
+                     * Sends a kill signal to the target VM.
+                     *
+                     * @param processId The target process's id.
+                     * @param signal    The signal to send.
+                     * @throws LastErrorException If an error occurred while sending the signal.
+                     */
+                    void kill(int processId, int signal) throws LastErrorException;
 
                     /**
                      * Opens a file.
@@ -1213,16 +1225,37 @@ public interface VirtualMachine {
                 /**
                  * A factory for establishing a connection to a JVM using a Solaris door in JNA.
                  */
-                public static class Factory implements Connection.Factory {
+                public static class Factory extends Connection.Factory.ForSocketFile {
+
+                    /**
+                     * The library to use for interacting with Solaris.
+                     */
+                    private final SolarisLibrary library;
+
+                    /**
+                     * Creates a new connection factory for a Solaris VM.
+                     *
+                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause    The pause between two checks for an established socket connection.
+                     * @param timeUnit The time unit of the pause time.
+                     */
+                    public Factory(int attempts, long pause, TimeUnit timeUnit) {
+                        super(attempts, pause, timeUnit);
+                        library = Native.load("c", SolarisLibrary.class);
+                    }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public Connection connect(String processId) {
-                        SolarisLibrary library = Native.load("c", SolarisLibrary.class);
-                        File target = new File("/tmp", ".java_pid" + processId);
-                        int descriptor = library.open(target.getAbsolutePath(), 2); // O_RDWR
-                        return new ForJnaSolarisDoor(library, descriptor);
+                    protected void kill(String processId, int signal) {
+                        library.kill(Integer.parseInt(processId), signal);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    protected Connection doConnect(File socket) {
+                        return new ForJnaSolarisDoor(library, library.open(socket.getAbsolutePath(), 2));
                     }
                 }
             }
