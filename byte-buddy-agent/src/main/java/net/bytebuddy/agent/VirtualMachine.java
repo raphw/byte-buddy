@@ -1276,7 +1276,7 @@ public interface VirtualMachine {
              * @param file The file for which to locate the owner.
              * @return The owner id of the supplied file.
              */
-            long getOwnerIdOf(File file);
+            int getOwnerIdOf(File file);
 
             /**
              * Sets permissions for the supplied file.
@@ -1377,7 +1377,7 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 @SuppressFBWarnings(value = "OS_OPEN_STREAM", justification = "The stream life-cycle is bound to its process.")
-                public long getOwnerIdOf(File file) {
+                public int getOwnerIdOf(File file) {
                     try {
                         // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
                         // stat is called as a separate command. This is less efficient but more portable.
@@ -1405,7 +1405,7 @@ public interface VirtualMachine {
                             process.destroy();
                             throw new IllegalStateException("Command for stat did not exit in time");
                         }
-                        return Long.parseLong(line.substring(1));
+                        return Integer.parseInt(line.substring(1));
                     } catch (IOException exception) {
                         throw new IllegalStateException("Unable to execute stat command", exception);
                     }
@@ -1661,7 +1661,7 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public long getOwnerIdOf(File file) {
+                public int getOwnerIdOf(File file) {
                     return NO_USER_ID;
                 }
 

@@ -22,7 +22,7 @@ public class VirtualMachineForOpenJ9Test {
     
     private static final String FOO = "foo", BAR = "bar";
 
-    private static final long PROCESS_ID = 42L, USER_ID = 84L, VM_ID = 168L;
+    private static final int PROCESS_ID = 42, USER_ID = 84, VM_ID = 168;
 
     private File temporaryFolder, attachFolder;
 
