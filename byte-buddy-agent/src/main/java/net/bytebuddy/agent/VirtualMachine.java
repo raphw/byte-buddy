@@ -148,9 +148,13 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, Platform.isWindows() || Platform.isWindowsCE()
-                    ? new Connection.ForJnaWindowsNamedPipe.Factory()
-                    : new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
+            if (Platform.isWindows() || Platform.isWindowsCE()) {
+                return attach(processId, new Connection.ForJnaWindowsNamedPipe.Factory());
+            } else if (Platform.isSolaris()) {
+                return attach(processId, new Connection.ForJnaSolarisDoor.Factory());
+            } else {
+                return attach(processId, new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
+            }
         }
 
         /**
@@ -959,6 +963,226 @@ public interface VirtualMachine {
                                 throw new IllegalStateException(throwable);
                             }
                         }
+                    }
+                }
+            }
+
+            /**
+             * A connection to a VM using a Solaris door.
+             */
+            class ForJnaSolarisDoor implements Connection {
+
+                /**
+                 * The library to use for interacting with Solaris.
+                 */
+                private final SolarisLibrary library;
+
+                /**
+                 * The descriptor to the file used for communication.
+                 */
+                private final int descriptor;
+
+                /**
+                 * Creates a new connection using a Solaris door.
+                 *
+                 * @param library    The library to use for interacting with Solaris.
+                 * @param descriptor The descriptor to the file used for communication.
+                 */
+                protected ForJnaSolarisDoor(SolarisLibrary library, int descriptor) {
+                    this.library = library;
+                    this.descriptor = descriptor;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Response execute(String protocol, String... argument) throws IOException {
+                    DoorArgument door = new DoorArgument();
+                    try {
+                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                        outputStream.write(protocol.getBytes("UTF-8"));
+                        outputStream.write(0);
+                        for (String anArgument : argument) {
+                            if (anArgument != null) {
+                                outputStream.write(anArgument.getBytes("UTF-8"));
+                            }
+                            outputStream.write(0);
+                        }
+                        door.dataSize = outputStream.size();
+                        Memory dataPointer = new Memory(outputStream.size());
+                        try {
+                            dataPointer.write(0, outputStream.toByteArray(), 0, outputStream.size());
+                            door.dataPointer = dataPointer;
+                            Memory result = new Memory(128);
+                            try {
+                                door.resultPointer = result;
+                                door.resultSize = (int) result.size();
+                                library.door_call(descriptor, door.getPointer());
+                                if (door.descriptorCount != 1 || door.descriptorPointer == null) {
+                                    throw new IllegalStateException();
+                                } else {
+                                    // TODO: handle from door structure
+                                    return new DoorResponse(library, 0);
+                                }
+                            } finally {
+                                result.clear();
+                            }
+                        } finally {
+                            dataPointer.clear();
+                        }
+                    } finally {
+                        door.clear();
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    library.close(descriptor);
+                }
+
+                /**
+                 * A library for interacting with Solaris.
+                 */
+                protected interface SolarisLibrary extends Library {
+
+                    /**
+                     * Opens a file.
+                     *
+                     * @param file  The file name.
+                     * @param flags the flags for opening.
+                     * @return The file descriptor.
+                     * @throws LastErrorException If the file could not be opened.
+                     */
+                    int open(String file, int flags) throws LastErrorException;
+
+                    /**
+                     * Reads from a handle.
+                     *
+                     * @param handle The handle representing the source being read.
+                     * @param buffer The buffer to read to.
+                     * @param length The buffer length.
+                     * @return The amount of bytes being read.
+                     * @throws LastErrorException If a read operation failed.
+                     */
+                    int read(int handle, byte[] buffer, int length) throws LastErrorException;
+
+                    /**
+                     * Releases a descriptor.
+                     *
+                     * @param descriptor The descriptor to release.
+                     * @throws LastErrorException If the descriptor could not be closed.
+                     */
+                    void close(int descriptor) throws LastErrorException;
+
+                    /**
+                     * Executes a door call.
+                     *
+                     * @param descriptor The door's descriptor.
+                     * @param argument   A pointer to the argument.
+                     * @return The door's handle.
+                     * @throws LastErrorException If the door call failed.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    int door_call(int descriptor, Pointer argument) throws LastErrorException;
+                }
+
+                /**
+                 * A structure representing the argument to a Solaris door operation.
+                 */
+                protected static class DoorArgument extends Structure {
+
+                    /**
+                     * A pointer to the operation argument.
+                     */
+                    public Pointer dataPointer;
+
+                    /**
+                     * The size of the argument being pointed to.
+                     */
+                    public int dataSize;
+
+                    /**
+                     * A pointer to the operation descriptor.
+                     */
+                    public Pointer descriptorPointer;
+
+                    /**
+                     * The size of the operation argument.
+                     */
+                    public int descriptorCount;
+
+                    /**
+                     * A pointer to the operation result.
+                     */
+                    public Pointer resultPointer;
+
+                    /**
+                     * The size of the operation argument.
+                     */
+                    public int resultSize;
+
+                    @Override
+                    protected List<String> getFieldOrder() {
+                        return Arrays.asList("dataPointer", "dataSize", "descriptorPointer", "descriptorCount", "resultPointer", "resultSize");
+                    }
+                }
+
+                /**
+                 * A response from a VM using a Solaris door.
+                 */
+                protected static class DoorResponse implements Response {
+
+                    /**
+                     * The Solaris library to use.
+                     */
+                    private final SolarisLibrary library;
+
+                    /**
+                     * The door handle.
+                     */
+                    private final int handle;
+
+                    /**
+                     * Creates a response from a VM using a Solaris door.
+                     *
+                     * @param library The Solaris library to use.
+                     * @param handle  The door handle.
+                     */
+                    protected DoorResponse(SolarisLibrary library, int handle) {
+                        this.library = library;
+                        this.handle = handle;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public int read(byte[] buffer) {
+                        return library.read(handle, buffer, buffer.length);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void release() {
+                        library.close(handle);
+                    }
+                }
+
+                /**
+                 * A factory for establishing a connection to a JVM using a Solaris door in JNA.
+                 */
+                public static class Factory implements Connection.Factory {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Connection connect(String processId) {
+                        SolarisLibrary library = Native.load("c", SolarisLibrary.class);
+                        File target = new File("/tmp", ".java_pid" + processId);
+                        int descriptor = library.open(target.getAbsolutePath(), 2); // O_RDWR
+                        return new ForJnaSolarisDoor(library, descriptor);
                     }
                 }
             }
