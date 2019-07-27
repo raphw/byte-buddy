@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -2127,6 +2128,35 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(listener);
         verify(ignored).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(ignored);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testTransformerApplicationOrder() throws Exception {
+        AgentBuilder.RawMatcher ignored = mock(AgentBuilder.RawMatcher.class);
+        AgentBuilder.Transformer first = mock(AgentBuilder.Transformer.class), second = mock(AgentBuilder.Transformer.class);
+        when(first.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+                .thenReturn((DynamicType.Builder) builder);
+        when(second.transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+                .thenReturn((DynamicType.Builder) builder);
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
+                .thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(ignored)
+                .type(typeMatcher).transform(first)
+                .type(typeMatcher).transform(second)
+                .installOn(instrumentation);
+        assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), equalTo(new byte[]{4, 5, 6}));
+        InOrder inOrder = inOrder(first, second);
+        inOrder.verify(first).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        inOrder.verify(second).transform(builder, TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        inOrder.verifyNoMoreInteractions();
     }
 
     @Test
