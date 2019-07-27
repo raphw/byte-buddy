@@ -978,26 +978,26 @@ public interface VirtualMachine {
                 private final SolarisLibrary library;
 
                 /**
-                 * The descriptor to the file used for communication.
+                 * The handle to the file used for communication.
                  */
-                private final int descriptor;
+                private final int handle;
 
                 /**
                  * Creates a new connection using a Solaris door.
                  *
-                 * @param library    The library to use for interacting with Solaris.
-                 * @param descriptor The descriptor to the file used for communication.
+                 * @param library The library to use for interacting with Solaris.
+                 * @param handle  The descriptor to the file used for communication.
                  */
-                protected ForJnaSolarisDoor(SolarisLibrary library, int descriptor) {
+                protected ForJnaSolarisDoor(SolarisLibrary library, int handle) {
                     this.library = library;
-                    this.descriptor = descriptor;
+                    this.handle = handle;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public Response execute(String protocol, String... argument) throws IOException {
-                    DoorArgument door = new DoorArgument();
+                    SolarisLibrary.DoorArgument door = new SolarisLibrary.DoorArgument();
                     try {
                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                         outputStream.write(protocol.getBytes("UTF-8"));
@@ -1017,18 +1017,18 @@ public interface VirtualMachine {
                             try {
                                 door.resultPointer = result;
                                 door.resultSize = (int) result.size();
-                                if (library.door_call(descriptor, door.getPointer()) != 0) {
+                                if (library.door_call(handle, door) != 0) {
                                     throw new IllegalStateException("Door call to target VM failed");
                                 } else if (door.resultSize < 4 || door.resultPointer.getInt(0) != 0) {
                                     throw new IllegalStateException("Target VM could not execute door call");
                                 } else if (door.descriptorCount != 1 || door.descriptorPointer == null) {
                                     throw new IllegalStateException("Did not receive communication descriptor from target VM");
                                 } else {
-                                    DoorDescription payload = new DoorDescription(door.descriptorPointer);
+                                    SolarisLibrary.DoorDescription description = new SolarisLibrary.DoorDescription(door.descriptorPointer);
                                     try {
-                                        return new DoorResponse(library, payload.descriptor);
+                                        return new DoorResponse(library, description.handle);
                                     } finally {
-                                        payload.clear();
+                                        description.clear();
                                     }
                                 }
                             } finally {
@@ -1046,7 +1046,7 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void close() {
-                    library.close(descriptor);
+                    library.close(handle);
                 }
 
                 /**
@@ -1061,7 +1061,7 @@ public interface VirtualMachine {
                      * @param signal    The signal to send.
                      * @throws LastErrorException If an error occurred while sending the signal.
                      */
-                    void kill(int processId, int signal) throws LastErrorException;
+                    int kill(int processId, int signal) throws LastErrorException;
 
                     /**
                      * Opens a file.
@@ -1082,7 +1082,7 @@ public interface VirtualMachine {
                      * @return The amount of bytes being read.
                      * @throws LastErrorException If a read operation failed.
                      */
-                    int read(int handle, byte[] buffer, int length) throws LastErrorException;
+                    int read(int handle, ByteBuffer buffer, int length) throws LastErrorException;
 
                     /**
                      * Releases a descriptor.
@@ -1090,7 +1090,7 @@ public interface VirtualMachine {
                      * @param descriptor The descriptor to release.
                      * @throws LastErrorException If the descriptor could not be closed.
                      */
-                    void close(int descriptor) throws LastErrorException;
+                    int close(int descriptor) throws LastErrorException;
 
                     /**
                      * Executes a door call.
@@ -1101,83 +1101,83 @@ public interface VirtualMachine {
                      * @throws LastErrorException If the door call failed.
                      */
                     @SuppressWarnings("checkstyle:methodname")
-                    int door_call(int descriptor, Pointer argument) throws LastErrorException;
-                }
-
-                /**
-                 * A structure representing the argument to a Solaris door operation.
-                 */
-                protected static class DoorArgument extends Structure {
+                    int door_call(int descriptor, DoorArgument argument) throws LastErrorException;
 
                     /**
-                     * A pointer to the operation argument.
+                     * A structure representing the argument to a Solaris door operation.
                      */
-                    public Pointer dataPointer;
+                    class DoorArgument extends Structure {
 
-                    /**
-                     * The size of the argument being pointed to.
-                     */
-                    public int dataSize;
+                        /**
+                         * A pointer to the operation argument.
+                         */
+                        public Pointer dataPointer;
 
-                    /**
-                     * A pointer to the operation descriptor.
-                     */
-                    public Pointer descriptorPointer;
+                        /**
+                         * The size of the argument being pointed to.
+                         */
+                        public int dataSize;
 
-                    /**
-                     * The size of the operation argument.
-                     */
-                    public int descriptorCount;
+                        /**
+                         * A pointer to the operation descriptor.
+                         */
+                        public Pointer descriptorPointer;
 
-                    /**
-                     * A pointer to the operation result.
-                     */
-                    public Pointer resultPointer;
+                        /**
+                         * The size of the operation argument.
+                         */
+                        public int descriptorCount;
 
-                    /**
-                     * The size of the operation argument.
-                     */
-                    public int resultSize;
+                        /**
+                         * A pointer to the operation result.
+                         */
+                        public Pointer resultPointer;
 
-                    @Override
-                    protected List<String> getFieldOrder() {
-                        return Arrays.asList("dataPointer", "dataSize", "descriptorPointer", "descriptorCount", "resultPointer", "resultSize");
-                    }
-                }
+                        /**
+                         * The size of the operation argument.
+                         */
+                        public int resultSize;
 
-                /**
-                 * A structure describing a door to another VM.
-                 */
-                protected static class DoorDescription extends Structure {
-
-                    /**
-                     * The door attributes.
-                     */
-                    public int attributes;
-
-                    /**
-                     * The door descriptor.
-                     */
-                    public int descriptor;
-
-                    /**
-                     * The door id.
-                     */
-                    @SuppressWarnings("unused")
-                    public long id;
-
-                    /**
-                     * Creates a new door description.
-                     *
-                     * @param pointer The pointer to the structure.
-                     */
-                    protected DoorDescription(Pointer pointer) {
-                        super(pointer);
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("dataPointer", "dataSize", "descriptorPointer", "descriptorCount", "resultPointer", "resultSize");
+                        }
                     }
 
-                    @Override
-                    protected List<String> getFieldOrder() {
-                        return Arrays.asList("attributes", "descriptor", "id");
+                    /**
+                     * A structure describing a door to another VM.
+                     */
+                    class DoorDescription extends Structure {
+
+                        /**
+                         * The door attributes.
+                         */
+                        public int attributes;
+
+                        /**
+                         * The door handle.
+                         */
+                        public int handle;
+
+                        /**
+                         * The door id.
+                         */
+                        @SuppressWarnings("unused")
+                        public long id;
+
+                        /**
+                         * Creates a new door description.
+                         *
+                         * @param pointer The pointer to the structure.
+                         */
+                        protected DoorDescription(Pointer pointer) {
+                            super(pointer);
+                        }
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("attributes", "descriptor", "id");
+                        }
                     }
                 }
 
@@ -1211,7 +1211,7 @@ public interface VirtualMachine {
                      * {@inheritDoc}
                      */
                     public int read(byte[] buffer) {
-                        return library.read(handle, buffer, buffer.length);
+                        return library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
                     }
 
                     /**
