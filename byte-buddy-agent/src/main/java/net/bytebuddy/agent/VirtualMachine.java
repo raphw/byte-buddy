@@ -148,7 +148,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            if (Platform.isWindows() || Platform.isWindowsCE()) {
+            if (Platform.isWindows()) {
                 return attach(processId, new Connection.ForJnaWindowsNamedPipe.Factory());
             } else if (Platform.isSolaris()) {
                 return attach(processId, new Connection.ForJnaSolarisDoor.Factory(15, 100, TimeUnit.MILLISECONDS));
@@ -1294,7 +1294,7 @@ public interface VirtualMachine {
          * @throws IOException If an IO exception occurs during establishing the connection.
          */
         public static VirtualMachine attach(String processId) throws IOException {
-            return attach(processId, 5000, Platform.isWindows() || Platform.isWindowsCE()
+            return attach(processId, 5000, Platform.isWindows()
                     ? new Dispatcher.ForJnaWindowsEnvironment()
                     : new Dispatcher.ForJnaPosixEnvironment(15, 100, TimeUnit.MILLISECONDS));
         }
