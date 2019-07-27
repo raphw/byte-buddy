@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. July 2019: version 1.9.16
+
+- Add support for attach emulation on Solaris.
+- Fix JNA signatures for attach emulation on POSIX.
+- Add standard call conventions for Windows JNA calls.
+
 ### 21. July 2019: version 1.9.15
 
 - Add emulated attach mechanism for HotSpot on Windows and for OpenJ9/J9 on POSIX and Windows (if JNA is present).
