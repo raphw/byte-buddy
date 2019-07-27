@@ -1054,6 +1054,7 @@ public interface VirtualMachine {
                      *
                      * @param processId The target process's id.
                      * @param signal    The signal to send.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurred while sending the signal.
                      */
                     int kill(int processId, int signal) throws LastErrorException;
@@ -1083,6 +1084,7 @@ public interface VirtualMachine {
                      * Releases a descriptor.
                      *
                      * @param descriptor The descriptor to release.
+                     * @return The return code.
                      * @throws LastErrorException If the descriptor could not be closed.
                      */
                     int close(int descriptor) throws LastErrorException;
