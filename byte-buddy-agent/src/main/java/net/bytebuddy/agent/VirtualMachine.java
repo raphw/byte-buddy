@@ -1176,7 +1176,7 @@ public interface VirtualMachine {
 
                         @Override
                         protected List<String> getFieldOrder() {
-                            return Arrays.asList("attributes", "descriptor", "id");
+                            return Arrays.asList("attributes", "handle", "id");
                         }
                     }
                 }
