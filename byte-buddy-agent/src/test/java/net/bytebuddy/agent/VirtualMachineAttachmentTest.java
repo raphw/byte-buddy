@@ -43,7 +43,7 @@ public class VirtualMachineAttachmentTest {
         SampleAgent.argument = null;
     }
 
-    @Test
+    @Test(timeout = 5000L)
     public void testAttachment() throws Exception {
         assertThat(SampleAgent.argument, nullValue(String.class));
         VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()
