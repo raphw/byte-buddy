@@ -996,6 +996,7 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = {"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"}, justification = "This pattern is required for use of JNA.")
                 public Response execute(String protocol, String... argument) throws IOException {
                     SolarisLibrary.DoorArgument door = new SolarisLibrary.DoorArgument();
                     try {
