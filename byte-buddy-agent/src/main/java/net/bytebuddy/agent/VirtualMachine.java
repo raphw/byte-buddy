@@ -482,6 +482,7 @@ public interface VirtualMachine {
                      *
                      * @param processId The process id to kill.
                      * @param signal    The signal to send.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurs.
                      */
                     int kill(int processId, int signal) throws LastErrorException;
@@ -503,6 +504,7 @@ public interface VirtualMachine {
                      * @param handle  The socket's handle.
                      * @param address The address of the POSIX socket.
                      * @param length  The length of the socket value.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurs.
                      */
                     int connect(int handle, SocketAddress address, int length) throws LastErrorException;
@@ -524,6 +526,7 @@ public interface VirtualMachine {
                      * @param handle The socket's handle.
                      * @param buffer The buffer to write to.
                      * @param count  The bytes being written.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurs.
                      */
                     int write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
@@ -532,6 +535,7 @@ public interface VirtualMachine {
                      * Closes the socket connection.
                      *
                      * @param handle The handle of the connection.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurs.
                      */
                     int close(int handle) throws LastErrorException;
@@ -1532,6 +1536,7 @@ public interface VirtualMachine {
                      *
                      * @param path The file path.
                      * @param mode The mode to set.
+                     * @return The return code.
                      * @throws LastErrorException If an error occurred.
                      */
                     int chmod(String path, int mode) throws LastErrorException;
@@ -1563,6 +1568,7 @@ public interface VirtualMachine {
                      * @param id        The id of the semaphore.
                      * @param operation The initial count of the semaphore.
                      * @param flags     The flags to set.
+                     * @return The return code.
                      * @throws LastErrorException If the operation was not successful.
                      */
                     int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
