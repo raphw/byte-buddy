@@ -1024,12 +1024,7 @@ public interface VirtualMachine {
                                 } else if (door.descriptorCount != 1 || door.descriptorPointer == null) {
                                     throw new IllegalStateException("Did not receive communication descriptor from target VM");
                                 } else {
-                                    SolarisLibrary.DoorDescription description = new SolarisLibrary.DoorDescription(door.descriptorPointer);
-                                    try {
-                                        return new DoorResponse(library, description.handle);
-                                    } finally {
-                                        description.clear();
-                                    }
+                                    return new DoorResponse(library, door.descriptorPointer.getInt(4));
                                 }
                             } finally {
                                 result.clear();
@@ -1141,42 +1136,6 @@ public interface VirtualMachine {
                         @Override
                         protected List<String> getFieldOrder() {
                             return Arrays.asList("dataPointer", "dataSize", "descriptorPointer", "descriptorCount", "resultPointer", "resultSize");
-                        }
-                    }
-
-                    /**
-                     * A structure describing a door to another VM.
-                     */
-                    class DoorDescription extends Structure {
-
-                        /**
-                         * The door attributes.
-                         */
-                        public int attributes;
-
-                        /**
-                         * The door handle.
-                         */
-                        public int handle;
-
-                        /**
-                         * The door id.
-                         */
-                        @SuppressWarnings("unused")
-                        public long id;
-
-                        /**
-                         * Creates a new door description.
-                         *
-                         * @param pointer The pointer to the structure.
-                         */
-                        protected DoorDescription(Pointer pointer) {
-                            super(pointer);
-                        }
-
-                        @Override
-                        protected List<String> getFieldOrder() {
-                            return Arrays.asList("attributes", "handle", "id");
                         }
                     }
                 }
