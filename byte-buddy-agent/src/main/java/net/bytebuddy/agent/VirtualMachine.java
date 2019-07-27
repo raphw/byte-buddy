@@ -484,7 +484,7 @@ public interface VirtualMachine {
                      * @param signal    The signal to send.
                      * @throws LastErrorException If an error occurs.
                      */
-                    void kill(int processId, int signal) throws LastErrorException;
+                    int kill(int processId, int signal) throws LastErrorException;
 
                     /**
                      * Creates a POSIX socket connection.
@@ -505,7 +505,7 @@ public interface VirtualMachine {
                      * @param length  The length of the socket value.
                      * @throws LastErrorException If an error occurs.
                      */
-                    void connect(int handle, SocketAddress address, int length) throws LastErrorException;
+                    int connect(int handle, SocketAddress address, int length) throws LastErrorException;
 
                     /**
                      * Reads from a POSIX socket.
@@ -526,7 +526,7 @@ public interface VirtualMachine {
                      * @param count  The bytes being written.
                      * @throws LastErrorException If an error occurs.
                      */
-                    void write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
+                    int write(int handle, ByteBuffer buffer, int count) throws LastErrorException;
 
                     /**
                      * Closes the socket connection.
@@ -534,7 +534,7 @@ public interface VirtualMachine {
                      * @param handle The handle of the connection.
                      * @throws LastErrorException If an error occurs.
                      */
-                    void close(int handle) throws LastErrorException;
+                    int close(int handle) throws LastErrorException;
 
                     /**
                      * Represents an address for a POSIX socket.
@@ -604,13 +604,18 @@ public interface VirtualMachine {
                     @Override
                     public Connection doConnect(File socket) {
                         int handle = library.socket(1, 1, 0);
-                        PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
                         try {
-                            address.setPath(socket.getAbsolutePath());
-                            library.connect(handle, address, address.size());
-                            return new Connection.ForJnaPosixSocket(library, handle);
-                        } finally {
-                            address.clear();
+                            PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
+                            try {
+                                address.setPath(socket.getAbsolutePath());
+                                library.connect(handle, address, address.size());
+                                return new Connection.ForJnaPosixSocket(library, handle);
+                            } finally {
+                                address.clear();
+                            }
+                        } catch (RuntimeException exception) {
+                            library.close(handle);
+                            throw exception;
                         }
                     }
                 }
@@ -1529,7 +1534,7 @@ public interface VirtualMachine {
                      * @param mode The mode to set.
                      * @throws LastErrorException If an error occurred.
                      */
-                    void chmod(String path, int mode) throws LastErrorException;
+                    int chmod(String path, int mode) throws LastErrorException;
 
                     /**
                      * Runs the {@code ftok} command.
@@ -1560,7 +1565,7 @@ public interface VirtualMachine {
                      * @param flags     The flags to set.
                      * @throws LastErrorException If the operation was not successful.
                      */
-                    void semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
+                    int semop(int id, SemaphoreOperation operation, int flags) throws LastErrorException;
 
                     /**
                      * A structure to represent a semaphore operation for {@code semop}.
