@@ -119,28 +119,28 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     /**
      * Locates a primitive unboxing delegate for a given primitive type.
      *
-     * @param typeDescription A description of the primitive type.
+     * @param typeDefinition A description of the primitive type.
      * @return A corresponding primitive unboxing delegate.
      */
-    protected static PrimitiveUnboxingDelegate forPrimitive(TypeDescription.Generic typeDescription) {
-        if (typeDescription.represents(boolean.class)) {
+    public static PrimitiveUnboxingDelegate forPrimitive(TypeDefinition typeDefinition) {
+        if (typeDefinition.represents(boolean.class)) {
             return BOOLEAN;
-        } else if (typeDescription.represents(byte.class)) {
+        } else if (typeDefinition.represents(byte.class)) {
             return BYTE;
-        } else if (typeDescription.represents(short.class)) {
+        } else if (typeDefinition.represents(short.class)) {
             return SHORT;
-        } else if (typeDescription.represents(char.class)) {
+        } else if (typeDefinition.represents(char.class)) {
             return CHARACTER;
-        } else if (typeDescription.represents(int.class)) {
+        } else if (typeDefinition.represents(int.class)) {
             return INTEGER;
-        } else if (typeDescription.represents(long.class)) {
+        } else if (typeDefinition.represents(long.class)) {
             return LONG;
-        } else if (typeDescription.represents(float.class)) {
+        } else if (typeDefinition.represents(float.class)) {
             return FLOAT;
-        } else if (typeDescription.represents(double.class)) {
+        } else if (typeDefinition.represents(double.class)) {
             return DOUBLE;
         } else {
-            throw new IllegalArgumentException("Expected non-void primitive type instead of " + typeDescription);
+            throw new IllegalArgumentException("Expected non-void primitive type instead of " + typeDefinition);
         }
     }
 
