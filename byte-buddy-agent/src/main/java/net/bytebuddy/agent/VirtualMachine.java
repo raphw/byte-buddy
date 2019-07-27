@@ -18,6 +18,7 @@ package net.bytebuddy.agent;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -762,7 +763,7 @@ public interface VirtualMachine {
                 /**
                  * A library for interacting with Windows.
                  */
-                protected interface WindowsLibrary extends Library {
+                protected interface WindowsLibrary extends StdCallLibrary {
 
                     /**
                      * Changes the state of memory in a given process.
@@ -826,7 +827,7 @@ public interface VirtualMachine {
                 /**
                  * A library for interacting with Windows.
                  */
-                protected interface WindowsAttachLibrary extends Library {
+                protected interface WindowsAttachLibrary extends StdCallLibrary {
 
                     /**
                      * Allocates the code to invoke on the remote VM.
@@ -1790,7 +1791,7 @@ public interface VirtualMachine {
                 /**
                  * A library for interacting with Windows.
                  */
-                protected interface WindowsLibrary extends Library {
+                protected interface WindowsLibrary extends StdCallLibrary {
 
                     /**
                      * Indicates that a semaphore requires all access rights.
