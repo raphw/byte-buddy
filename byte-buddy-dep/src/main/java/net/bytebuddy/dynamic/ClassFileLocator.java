@@ -865,7 +865,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A list of potential locations of the boot path for different platforms.
          */
-        private static final List<String> BOOT_LOCATIONS = Arrays.asList("jmods", "../jmods");
+        private static final List<String> BOOT_LOCATIONS = Arrays.asList("jmods", "../jmods", "modules");
 
         /**
          * The represented jmod file.
@@ -919,6 +919,8 @@ public interface ClassFileLocator extends Closeable {
             for (File aModule : module) {
                 if (aModule.isFile()) {
                     classFileLocators.add(of(aModule));
+                } else if (aModule.isDirectory()) { // Relevant for locally built OpenJDK.
+                    classFileLocators.add(new ForFolder(aModule));
                 }
             }
             return new Compound(classFileLocators);
