@@ -263,7 +263,7 @@ public interface VirtualMachine {
                 int length;
                 while ((length = response.read(buffer)) != -1) {
                     if (length > 0) {
-                        if (buffer[0] == 10) {
+                        if (buffer[0] == '\n') {
                             break;
                         }
                         outputStream.write(buffer[0]);
@@ -333,7 +333,7 @@ public interface VirtualMachine {
                 int length;
                 while ((length = response.read(buffer)) != -1) {
                     if (length > 0) {
-                        if (buffer[0] == 10) {
+                        if (buffer[0] == '\n') {
                             break;
                         }
                         outputStream.write(buffer[0]);
