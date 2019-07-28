@@ -46,6 +46,22 @@ import java.util.concurrent.TimeUnit;
 public interface VirtualMachine {
 
     /**
+     * Loads the target VMs system properties.
+     *
+     * @return The target VM properties.
+     * @throws IOException If an I/O exception occurs.
+     */
+    Properties getSystemProperties() throws IOException;
+
+    /**
+     * Loads the target VMs agent properties.
+     *
+     * @return The target VM properties.
+     * @throws IOException If an I/O exception occurs.
+     */
+    Properties getAgentProperties() throws IOException;
+
+    /**
      * Loads an agent into the represented virtual machine.
      *
      * @param jarFile The jar file to attach.
@@ -73,7 +89,7 @@ public interface VirtualMachine {
     /**
      * Loads a native agent into the represented virtual machine.
      *
-     * @param path  The agent path.
+     * @param path     The agent path.
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
@@ -156,11 +172,6 @@ public interface VirtualMachine {
     class ForHotSpot extends AbstractBase {
 
         /**
-         * The UTF-8 charset name.
-         */
-        private static final String UTF_8 = "UTF-8";
-
-        /**
          * The protocol version to use for communication.
          */
         private static final String PROTOCOL_VERSION = "1";
@@ -226,6 +237,66 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
+        public Properties getSystemProperties() throws IOException {
+            return getProperties("properties");
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Properties getAgentProperties() throws IOException {
+            return getProperties("agentProperties");
+        }
+
+        /**
+         * Loads properties of the target VM.
+         *
+         * @param command The command for fetching properties.
+         * @return The read properties.
+         * @throws IOException If an I/O exception occurs.
+         */
+        private Properties getProperties(String command) throws IOException {
+            Connection.Response response = connection.execute("1", command, null, null, null);
+            try {
+                byte[] buffer = new byte[1];
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                int length;
+                while ((length = response.read(buffer)) != -1) {
+                    if (length > 0) {
+                        if (buffer[0] == 10) {
+                            break;
+                        }
+                        outputStream.write(buffer[0]);
+                    }
+                }
+                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
+                    case 0:
+                        buffer = new byte[1024];
+                        outputStream = new ByteArrayOutputStream();
+                        while ((length = response.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                        Properties properties = new Properties();
+                        properties.load(new ByteArrayInputStream(outputStream.toByteArray()));
+                        return properties;
+                    case 101:
+                        throw new IOException("Protocol mismatch with target VM");
+                    default:
+                        buffer = new byte[1024];
+                        outputStream = new ByteArrayOutputStream();
+                        while ((length = response.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                        throw new IllegalStateException(outputStream.toString("UTF-8"));
+                }
+            } finally {
+                response.release();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgent(String jarFile, String argument) throws IOException {
             load(jarFile, false, argument);
         }
@@ -258,28 +329,28 @@ public interface VirtualMachine {
                     : file + ARGUMENT_DELIMITER + argument));
             try {
                 byte[] buffer = new byte[1];
-                StringBuilder stringBuilder = new StringBuilder();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 int length;
                 while ((length = response.read(buffer)) != -1) {
                     if (length > 0) {
                         if (buffer[0] == 10) {
                             break;
                         }
-                        stringBuilder.append((char) buffer[0]);
+                        outputStream.write(buffer[0]);
                     }
                 }
-                switch (Integer.parseInt(stringBuilder.toString())) {
+                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
                     case 0:
                         return;
                     case 101:
                         throw new IOException("Protocol mismatch with target VM");
                     default:
                         buffer = new byte[1024];
-                        stringBuilder = new StringBuilder();
+                        outputStream = new ByteArrayOutputStream();
                         while ((length = response.read(buffer)) != -1) {
-                            stringBuilder.append(new String(buffer, 0, length, UTF_8));
+                            outputStream.write(buffer, 0, length);
                         }
-                        throw new IllegalStateException(stringBuilder.toString());
+                        throw new IllegalStateException(outputStream.toString("UTF-8"));
                 }
             } finally {
                 response.release();
@@ -468,7 +539,9 @@ public interface VirtualMachine {
                     write(protocol.getBytes("UTF-8"));
                     write(BLANK);
                     for (String anArgument : argument) {
-                        write(anArgument.getBytes("UTF-8"));
+                        if (anArgument != null) {
+                            write(anArgument.getBytes("UTF-8"));
+                        }
                         write(BLANK);
                     }
                     return this;
@@ -520,7 +593,8 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public int read(byte[] buffer) {
-                    return library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
+                    int read = library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
+                    return read == 0 ? -1 : read;
                 }
 
                 /**
@@ -959,7 +1033,8 @@ public interface VirtualMachine {
                         if (!Kernel32.INSTANCE.ReadFile(pipe, buffer, buffer.length, read, null)) {
                             throw new Win32Exception(Native.getLastError());
                         }
-                        return read.getValue();
+                        int value = read.getValue();
+                        return value == 0 ? -1 : value;
                     }
 
                     /**
@@ -1234,7 +1309,8 @@ public interface VirtualMachine {
                      * {@inheritDoc}
                      */
                     public int read(byte[] buffer) {
-                        return library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
+                        int read = library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
+                        return read == 0 ? -1 : read;
                     }
 
                     /**
@@ -1455,7 +1531,7 @@ public interface VirtualMachine {
                                 dispatcher.incrementSemaphore(directory, "_notifier", global, notifications);
                                 try {
                                     Socket socket = serverSocket.accept();
-                                    String answer = read(socket);
+                                    String answer = new String(read(socket), "UTF-8");
                                     if (answer.contains(' ' + key + ' ')) {
                                         return new ForOpenJ9(socket);
                                     } else {
@@ -1496,9 +1572,29 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
+        public Properties getSystemProperties() throws IOException {
+            write(socket, "ATTACH_GETSYSTEMPROPERTIES");
+            Properties properties = new Properties();
+            properties.load(new ByteArrayInputStream(read(socket)));
+            return properties;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Properties getAgentProperties() throws IOException {
+            write(socket, "ATTACH_GETAGENTPROPERTIES");
+            Properties properties = new Properties();
+            properties.load(new ByteArrayInputStream(read(socket)));
+            return properties;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgent(String jarFile, String argument) throws IOException {
             write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
-            String answer = read(socket);
+            String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading agent: " + answer);
             } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
@@ -1511,7 +1607,7 @@ public interface VirtualMachine {
          */
         public void loadAgentPath(String path, String argument) throws IOException {
             write(socket, "ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')');
-            String answer = read(socket);
+            String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading native agent: " + answer);
             } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
@@ -1524,7 +1620,7 @@ public interface VirtualMachine {
          */
         public void loadAgentLibrary(String library, String argument) throws IOException {
             write(socket, "ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')');
-            String answer = read(socket);
+            String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading native library: " + answer);
             } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
@@ -1564,7 +1660,7 @@ public interface VirtualMachine {
          * @return The value that was read.
          * @throws IOException If an I/O exception occurs.
          */
-        private static String read(Socket socket) throws IOException {
+        private static byte[] read(Socket socket) throws IOException {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
             int length;
@@ -1576,7 +1672,7 @@ public interface VirtualMachine {
                     outputStream.write(buffer, 0, length);
                 }
             }
-            return outputStream.toString("UTF-8");
+            return outputStream.toByteArray();
         }
 
         /**

@@ -1,17 +1,20 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -55,5 +58,33 @@ public class VirtualMachineAttachmentTest {
             virtualMachine.detach();
         }
         assertThat(SampleAgent.argument, is(FOO));
+    }
+    
+    @Test(timeout = 10000L)
+    public void testSystemProperties() throws Exception {
+        VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()
+                .getMethod("attach", String.class)
+                .invoke(null, ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
+        Properties properties;
+        try {
+            properties = virtualMachine.getSystemProperties();
+        } finally {
+            virtualMachine.detach();
+        }
+        assertThat(properties.size(), not(0));
+    }
+
+    @Test(timeout = 10000L)
+    public void testAgentProperties() throws Exception {
+        VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()
+                .getMethod("attach", String.class)
+                .invoke(null, ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
+        Properties properties;
+        try {
+            properties = virtualMachine.getAgentProperties();
+        } finally {
+            virtualMachine.detach();
+        }
+        assertThat(properties.size(), not(0));
     }
 }
