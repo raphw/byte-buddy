@@ -1031,10 +1031,14 @@ public interface VirtualMachine {
                     public int read(byte[] buffer) {
                         IntByReference read = new IntByReference();
                         if (!Kernel32.INSTANCE.ReadFile(pipe, buffer, buffer.length, read, null)) {
-                            throw new Win32Exception(Native.getLastError());
+                            int code = Native.getLastError();
+                            if (code == WinError.ERROR_BROKEN_PIPE) {
+                                return -1;
+                            } else {
+                                throw new Win32Exception(code);
+                            }
                         }
-                        int value = read.getValue();
-                        return value == 0 ? -1 : value;
+                        return read.getValue();
                     }
 
                     /**
