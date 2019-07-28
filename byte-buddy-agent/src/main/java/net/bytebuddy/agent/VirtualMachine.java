@@ -65,19 +65,36 @@ public interface VirtualMachine {
     /**
      * Loads a native agent into the represented virtual machine.
      *
-     * @param library The agent library.
+     * @param path The agent path.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentPath(String library) throws IOException;
+    void loadAgentPath(String path) throws IOException;
 
     /**
      * Loads a native agent into the represented virtual machine.
+     *
+     * @param path  The agent path.
+     * @param argument The argument to provide or {@code null} if no argument should be provided.
+     * @throws IOException If an I/O exception occurs.
+     */
+    void loadAgentPath(String path, String argument) throws IOException;
+
+    /**
+     * Loads a native agent library into the represented virtual machine.
+     *
+     * @param library The agent library.
+     * @throws IOException If an I/O exception occurs.
+     */
+    void loadAgentLibrary(String library) throws IOException;
+
+    /**
+     * Loads a native agent library into the represented virtual machine.
      *
      * @param library  The agent library.
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
-    void loadAgentPath(String library, String argument) throws IOException;
+    void loadAgentLibrary(String library, String argument) throws IOException;
 
     /**
      * Detaches this virtual machine representation.
@@ -123,8 +140,13 @@ public interface VirtualMachine {
         }
 
         @Override
-        public void loadAgentPath(String library) throws IOException {
-            loadAgentPath(library, null);
+        public void loadAgentPath(String path) throws IOException {
+            loadAgentPath(path, null);
+        }
+
+        @Override
+        public void loadAgentLibrary(String library) throws IOException {
+            loadAgentLibrary(library, null);
         }
     }
 
@@ -211,20 +233,27 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String library, String argument) throws IOException {
-            load(library, true, argument);
+        public void loadAgentPath(String path, String argument) throws IOException {
+            load(path, true, argument);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void loadAgentLibrary(String library, String argument) throws IOException {
+            load(library, false, argument);
         }
 
         /**
          * Loads an agent by the given command.
          *
          * @param file     The Java agent or library to be loaded.
-         * @param isNative {@code true} if the agent is native.
+         * @param absolute {@code true} if the agent location is absolute.
          * @param argument The argument to the agent or {@code null} if no argument is given.
          * @throws IOException If an I/O exception occurs.
          */
-        protected void load(String file, boolean isNative, String argument) throws IOException {
-            Connection.Response response = connection.execute(PROTOCOL_VERSION, LOAD_COMMAND, INSTRUMENT_COMMAND, Boolean.toString(isNative), (argument == null
+        protected void load(String file, boolean absolute, String argument) throws IOException {
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, LOAD_COMMAND, INSTRUMENT_COMMAND, Boolean.toString(absolute), (argument == null
                     ? file
                     : file + ARGUMENT_DELIMITER + argument));
             try {
@@ -1471,7 +1500,7 @@ public interface VirtualMachine {
             write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
             String answer = read(socket);
             if (answer.startsWith("ATTACH_ERR")) {
-                throw new IllegalStateException("Target agent failed loading agent: " + answer);
+                throw new IllegalStateException("Target VM failed loading agent: " + answer);
             } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
                 throw new IllegalStateException("Unexpected response: " + answer);
             }
@@ -1480,11 +1509,24 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
-        public void loadAgentPath(String library, String argument) throws IOException {
-            write(socket, "ATTACH_LOADAGENTPATH(" + library + (argument == null ? "" : (',' + argument)) + ')');
+        public void loadAgentPath(String path, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')');
             String answer = read(socket);
             if (answer.startsWith("ATTACH_ERR")) {
-                throw new IllegalStateException("Target agent failed loading library: " + answer);
+                throw new IllegalStateException("Target VM failed loading native agent: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void loadAgentLibrary(String library, String argument) throws IOException {
+            write(socket, "ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')');
+            String answer = read(socket);
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target VM failed loading native library: " + answer);
             } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
                 throw new IllegalStateException("Unexpected response: " + answer);
             }
