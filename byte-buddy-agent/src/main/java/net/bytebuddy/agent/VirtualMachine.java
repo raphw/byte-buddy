@@ -150,17 +150,23 @@ public interface VirtualMachine {
      */
     abstract class AbstractBase implements VirtualMachine {
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgent(String jarFile) throws IOException {
             loadAgent(jarFile, null);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgentPath(String path) throws IOException {
             loadAgentPath(path, null);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public void loadAgentLibrary(String library) throws IOException {
             loadAgentLibrary(library, null);
         }
