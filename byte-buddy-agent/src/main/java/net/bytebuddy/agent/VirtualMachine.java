@@ -48,11 +48,27 @@ public interface VirtualMachine {
     /**
      * Loads an agent into the represented virtual machine.
      *
+     * @param jarFile The jar file to attach.
+     * @throws IOException If an I/O exception occurs.
+     */
+    void loadAgent(String jarFile) throws IOException;
+
+    /**
+     * Loads an agent into the represented virtual machine.
+     *
      * @param jarFile  The jar file to attach.
      * @param argument The argument to provide or {@code null} if no argument should be provided.
      * @throws IOException If an I/O exception occurs.
      */
     void loadAgent(String jarFile, String argument) throws IOException;
+
+    /**
+     * Loads a native agent into the represented virtual machine.
+     *
+     * @param library The agent library.
+     * @throws IOException If an I/O exception occurs.
+     */
+    void loadAgentPath(String library) throws IOException;
 
     /**
      * Loads a native agent into the represented virtual machine.
@@ -97,9 +113,25 @@ public interface VirtualMachine {
     }
 
     /**
+     * An abstract base implementation for a virtual machine.
+     */
+    abstract class AbstractBase implements VirtualMachine {
+
+        @Override
+        public void loadAgent(String jarFile) throws IOException {
+            loadAgent(jarFile, null);
+        }
+
+        @Override
+        public void loadAgentPath(String library) throws IOException {
+            loadAgentPath(library, null);
+        }
+    }
+
+    /**
      * A virtual machine attachment implementation for a HotSpot VM or any compatible JVM.
      */
-    class ForHotSpot implements VirtualMachine {
+    class ForHotSpot extends AbstractBase {
 
         /**
          * The UTF-8 charset name.
@@ -1227,7 +1259,7 @@ public interface VirtualMachine {
     /**
      * A virtual machine attachment implementation for OpenJ9 or any compatible JVM.
      */
-    class ForOpenJ9 implements VirtualMachine {
+    class ForOpenJ9 extends AbstractBase {
 
         /**
          * The temporary folder for attachment files for OpenJ9 VMs.
