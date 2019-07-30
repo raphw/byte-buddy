@@ -20,6 +20,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.primitive.PrimitiveTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.assign.primitive.VoidAwareAssigner;
+import net.bytebuddy.implementation.bytecode.assign.reference.GenericTypeAwareAssigner;
 import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAwareAssigner;
 
 /**
@@ -32,9 +33,14 @@ import net.bytebuddy.implementation.bytecode.assign.reference.ReferenceTypeAware
 public interface Assigner {
 
     /**
-     * A default assigner that can handle {@code void}, primitive types and references.
+     * A default assigner that can handle {@code void}, primitive types and reference types which considers generic types as raw types.
      */
     Assigner DEFAULT = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
+
+    /**
+     * A generics-aware assigner that can handle {@code void}, primitive types which reference types.
+     */
+    Assigner GENERICS_AWARE = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(GenericTypeAwareAssigner.INSTANCE));
 
     /**
      * @param source The original type that is to be transformed into the {@code targetType}.

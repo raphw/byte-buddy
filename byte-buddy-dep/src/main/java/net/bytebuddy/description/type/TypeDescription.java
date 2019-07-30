@@ -7745,6 +7745,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        public boolean isInferrable() {
+            return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onType(this);
         }

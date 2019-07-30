@@ -39,7 +39,6 @@ public enum ReferenceTypeAwareAssigner implements Assigner {
             return source.equals(target)
                     ? StackManipulation.Trivial.INSTANCE
                     : StackManipulation.Illegal.INSTANCE;
-
         } else if (source.asErasure().isAssignableTo(target.asErasure())) {
             return StackManipulation.Trivial.INSTANCE;
         } else if (typing.isDynamic()) {

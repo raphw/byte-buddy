@@ -46,6 +46,13 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
     TypeVariableSource getEnclosingSource();
 
     /**
+     * Returns {@code true} if type variables declared by this type variable source allow dynamic type inference.
+     *
+     * @return {@code true} if type variables declared by this type variable source allow dynamic type inference.
+     */
+    boolean isInferrable();
+
+    /**
      * Finds a particular variable with the given name in the closes type variable source that is visible from this instance.
      *
      * @param symbol The symbolic name of the type variable.

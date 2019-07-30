@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 
@@ -335,6 +337,43 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
                              AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
             return reset(instrumentation,
                     this,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener);
+        }
+    }
+
+    /**
+     * Implements a resettable class file transformer that allows for the delegation of a transformation. Typically implemented
+     * when using a {@link net.bytebuddy.agent.builder.AgentBuilder.TransformerDecorator}.
+     */
+    abstract class WithDelegation extends AbstractBase {
+
+        /**
+         * The class file transformer to delegate to.
+         */
+        protected final ResettableClassFileTransformer classFileTransformer;
+
+        /**
+         * Creates a new delegating resettable class file transformer.
+         * @param classFileTransformer The class file transformer to delegate to.
+         */
+        protected WithDelegation(ResettableClassFileTransformer classFileTransformer) {
+            this.classFileTransformer = classFileTransformer;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean reset(Instrumentation instrumentation,
+                             ResettableClassFileTransformer classFileTransformer,
+                             AgentBuilder.RedefinitionStrategy redefinitionStrategy,
+                             AgentBuilder.RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
+                             AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                             AgentBuilder.RedefinitionStrategy.Listener redefinitionListener) {
+            return this.classFileTransformer.reset(instrumentation,
+                    classFileTransformer,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
                     redefinitionBatchAllocator,

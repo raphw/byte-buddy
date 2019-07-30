@@ -795,6 +795,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
+        public boolean isInferrable() {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onMethod(this.asDefined());
         }
