@@ -348,6 +348,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * Implements a resettable class file transformer that allows for the delegation of a transformation. Typically implemented
      * when using a {@link net.bytebuddy.agent.builder.AgentBuilder.TransformerDecorator}.
      */
+    @HashCodeAndEqualsPlugin.Enhance
     abstract class WithDelegation extends AbstractBase {
 
         /**
@@ -357,6 +358,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
 
         /**
          * Creates a new delegating resettable class file transformer.
+         *
          * @param classFileTransformer The class file transformer to delegate to.
          */
         protected WithDelegation(ResettableClassFileTransformer classFileTransformer) {

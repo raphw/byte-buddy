@@ -1,3 +1,18 @@
+/*
+ * Copyright 2014 - 2019 Rafael Winterhalter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package net.bytebuddy.implementation.bytecode.assign.reference;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
@@ -67,7 +82,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
         }
 
         /**
-         * Creates a new visitor to determine assignability of the supplied type
+         * Creates a new visitor to determine assignability of the supplied type.
          *
          * @param typeDescription The type to which another type is being assigned.
          * @param polymorphic     {@code true} if the assignment is polymorphic.
@@ -107,7 +122,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
             } else if (typeVariable.equals(typeDescription)) {
                 return true;
             } else if (polymorphic) {
-                Queue<TypeDescription.Generic> candidates = new LinkedList<>(typeVariable.getUpperBounds());
+                Queue<TypeDescription.Generic> candidates = new LinkedList<TypeDescription.Generic>(typeVariable.getUpperBounds());
                 while (!candidates.isEmpty()) {
                     TypeDescription.Generic candidate = candidates.remove();
                     if (candidate.accept(new IsAssignableToVisitor(typeDescription))) {
@@ -133,7 +148,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
          * An implementation of a assignability visitor that is applicable for any non-wildcard type.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        protected static abstract class OfManifestType implements TypeDescription.Generic.Visitor<Boolean> {
+        protected abstract static class OfManifestType implements TypeDescription.Generic.Visitor<Boolean> {
 
             /**
              * The type being assigned to another type.
@@ -188,7 +203,7 @@ public enum GenericTypeAwareAssigner implements Assigner {
         /**
          * A visitor for determining assignability of a type in a type hierarchy, i.e. a non-generic or parameterized type.
          */
-        protected static abstract class OfSimpleType extends OfManifestType {
+        protected abstract static class OfSimpleType extends OfManifestType {
 
             /**
              * Creates a new visitor.
