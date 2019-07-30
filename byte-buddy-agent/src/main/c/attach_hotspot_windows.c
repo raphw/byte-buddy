@@ -70,7 +70,7 @@ LPVOID allocate_remote_code
     if (code == NULL) {
         return NULL;
     } else if (!WriteProcessMemory(process, code, execute_remote_attach, CODE_SIZE, NULL)) {
-        VirtualFreeEx(process, NULL, 0, MEM_RELEASE);
+        VirtualFreeEx(process, code, 0, MEM_RELEASE);
         return NULL;
     } else {
         return code;
@@ -104,7 +104,7 @@ LPVOID allocate_remote_argument
     if (allocation == NULL) {
         return NULL;
     } else if (!WriteProcessMemory(process, allocation, &operation, sizeof(operation), NULL)) {
-        VirtualFreeEx(process, NULL, 0, MEM_RELEASE);
+        VirtualFreeEx(process, allocation, 0, MEM_RELEASE);
         return NULL;
     } else {
         return allocation;
