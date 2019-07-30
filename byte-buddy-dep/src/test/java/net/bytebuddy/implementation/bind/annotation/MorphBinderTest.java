@@ -48,6 +48,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(genericMorphType.asErasure()).thenReturn(morphType);
         when(defaultType.asErasure()).thenReturn(defaultType);
         when(source.asSignatureToken()).thenReturn(sourceToken);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(sourceTypeToken)).thenReturn(specialMethodInvocation);
     }
 
     @Test(expected = IllegalStateException.class)

@@ -28,8 +28,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
@@ -122,13 +120,11 @@ public interface MethodRebaseResolver {
         MethodDescription.InDefinedShape getResolvedMethod();
 
         /**
-         * A rebased method might require additional arguments in order to create a distinct signature. The
-         * stack manipulation that is returned from this method loads these arguments onto the operand stack. For
-         * a non-rebased method, this method throws an {@link java.lang.IllegalArgumentException}.
+         * A rebased method might require additional arguments in order to create a distinct signature.
          *
-         * @return A stack manipulation that loaded the additional arguments onto the stack, if any.
+         * @return A list of prepended method parameters.
          */
-        StackManipulation getAdditionalArguments();
+        TypeList getPrependedParameters();
 
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
@@ -168,8 +164,8 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public StackManipulation getAdditionalArguments() {
-                throw new IllegalStateException("Cannot process additional arguments for non-rebased method: " + methodDescription);
+            public TypeList getPrependedParameters() {
+                throw new IllegalStateException("Cannot process additional parameters for non-rebased method: " + methodDescription);
             }
         }
 
@@ -224,8 +220,8 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public StackManipulation getAdditionalArguments() {
-                return StackManipulation.Trivial.INSTANCE;
+            public TypeList getPrependedParameters() {
+                return new TypeList.Empty();
             }
 
             /**
@@ -341,12 +337,19 @@ public interface MethodRebaseResolver {
             private final MethodDescription.InDefinedShape methodDescription;
 
             /**
+             * The placeholder type that is prepended to the constructor signature.
+             */
+            private final TypeDescription placeholderType;
+
+            /**
              * Creates a new resolution for a rebased constructor.
              *
              * @param methodDescription The rebased constructor.
+             * @param placeholderType   The placeholder type that is prepended to the constructor signature.
              */
-            protected ForRebasedConstructor(MethodDescription.InDefinedShape methodDescription) {
+            protected ForRebasedConstructor(MethodDescription.InDefinedShape methodDescription, TypeDescription placeholderType) {
                 this.methodDescription = methodDescription;
+                this.placeholderType = placeholderType;
             }
 
             /**
@@ -357,7 +360,7 @@ public interface MethodRebaseResolver {
              * @return A resolution of the provided constructor.
              */
             public static Resolution of(MethodDescription.InDefinedShape methodDescription, TypeDescription placeholderType) {
-                return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType));
+                return new ForRebasedConstructor(new RebasedConstructor(methodDescription, placeholderType), placeholderType);
             }
 
             /**
@@ -377,8 +380,8 @@ public interface MethodRebaseResolver {
             /**
              * {@inheritDoc}
              */
-            public StackManipulation getAdditionalArguments() {
-                return NullConstant.INSTANCE;
+            public TypeList getPrependedParameters() {
+                return new TypeList.Explicit(placeholderType);
             }
 
             /**

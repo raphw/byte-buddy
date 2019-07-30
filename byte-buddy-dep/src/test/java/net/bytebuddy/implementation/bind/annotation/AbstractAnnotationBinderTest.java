@@ -38,6 +38,9 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
     protected MethodDescription.InDefinedShape source;
 
     @Mock
+    protected MethodDescription.TypeToken sourceTypeToken;
+
+    @Mock
     protected ParameterDescription target;
 
     @Mock
@@ -81,5 +84,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
                 return Collections.<TypeDefinition>singleton(instrumentedType).iterator();
             }
         });
+        when(source.asTypeToken()).thenReturn(sourceTypeToken);
     }
 }

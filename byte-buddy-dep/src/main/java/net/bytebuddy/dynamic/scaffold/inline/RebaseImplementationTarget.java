@@ -19,12 +19,17 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -107,7 +112,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     private Implementation.SpecialMethodInvocation invokeSuper(MethodRebaseResolver.Resolution resolution) {
         return resolution.isRebased()
-                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), instrumentedType, resolution.getAdditionalArguments())
+                ? RebasedMethodInvocation.of(resolution.getResolvedMethod(), instrumentedType, resolution.getPrependedParameters())
                 : Implementation.SpecialMethodInvocation.Simple.of(resolution.getResolvedMethod(), instrumentedType);
     }
 
@@ -140,16 +145,26 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         private final StackManipulation stackManipulation;
 
         /**
+         * Any additional arguments that are to be provided to the rebased method.
+         */
+        private final TypeList prependedParameters;
+
+        /**
          * Creates a new rebased method invocation.
          *
-         * @param methodDescription The method to invoke via a special method invocation.
-         * @param instrumentedType  The instrumented type on which the method should be invoked on.
-         * @param stackManipulation The stack manipulation to execute in order to invoke the rebased method.
+         * @param methodDescription   The method to invoke via a special method invocation.
+         * @param instrumentedType    The instrumented type on which the method should be invoked on.
+         * @param stackManipulation   The stack manipulation to execute in order to invoke the rebased method.
+         * @param prependedParameters Any additional arguments that are to be provided to the rebased method.
          */
-        protected RebasedMethodInvocation(MethodDescription methodDescription, TypeDescription instrumentedType, StackManipulation stackManipulation) {
+        protected RebasedMethodInvocation(MethodDescription methodDescription,
+                                          TypeDescription instrumentedType,
+                                          StackManipulation stackManipulation,
+                                          TypeList prependedParameters) {
             this.methodDescription = methodDescription;
             this.instrumentedType = instrumentedType;
             this.stackManipulation = stackManipulation;
+            this.prependedParameters = prependedParameters;
         }
 
         /**
@@ -157,18 +172,23 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          *
          * @param resolvedMethod      The rebased method to be invoked.
          * @param instrumentedType    The instrumented type on which the method is to be invoked if it is non-static.
-         * @param additionalArguments Any additional arguments that are to be provided to the rebased method.
+         * @param prependedParameters Any additional arguments that are to be provided to the rebased method.
          * @return A special method invocation of the rebased method.
          */
-        protected static Implementation.SpecialMethodInvocation of(MethodDescription resolvedMethod,
-                                                                   TypeDescription instrumentedType,
-                                                                   StackManipulation additionalArguments) {
+        protected static Implementation.SpecialMethodInvocation of(MethodDescription resolvedMethod, TypeDescription instrumentedType, TypeList prependedParameters) {
             StackManipulation stackManipulation = resolvedMethod.isStatic()
                     ? MethodInvocation.invoke(resolvedMethod)
                     : MethodInvocation.invoke(resolvedMethod).special(instrumentedType);
-            return stackManipulation.isValid()
-                    ? new RebasedMethodInvocation(resolvedMethod, instrumentedType, new Compound(additionalArguments, stackManipulation))
-                    : Illegal.INSTANCE;
+            if (stackManipulation.isValid()) {
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(prependedParameters.size() + 1);
+                for (TypeDescription prependedParameter : prependedParameters) {
+                    stackManipulations.add(DefaultValue.of(prependedParameter));
+                }
+                stackManipulations.add(stackManipulation);
+                return new RebasedMethodInvocation(resolvedMethod, instrumentedType, new Compound(stackManipulations), prependedParameters);
+            } else {
+                return Illegal.INSTANCE;
+            }
         }
 
         /**
@@ -190,6 +210,18 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return stackManipulation.apply(methodVisitor, implementationContext);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Implementation.SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token) {
+            if (methodDescription.asTypeToken().equals(new MethodDescription.TypeToken(token.getReturnType(),
+                    CompoundList.of(token.getParameterTypes(), prependedParameters)))) {
+                return this;
+            } else {
+                return Illegal.INSTANCE;
+            }
         }
     }
 

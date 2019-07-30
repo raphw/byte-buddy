@@ -38,6 +38,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
         when(source.asSignatureToken()).thenReturn(sourceToken);
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(sourceTypeToken)).thenReturn(specialMethodInvocation);
     }
 
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<SuperCall> getSimpleBinder() {

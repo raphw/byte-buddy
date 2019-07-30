@@ -13,16 +13,12 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
-import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.*;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.InjectionStrategyResolver;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,7 +41,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
 
@@ -551,6 +546,16 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testBridgeMethodExplicit() throws Exception {
+        new ByteBuddy()
+                .subclass(GenericBase.Subclass.class)
+                .defineMethod("foo", void.class, Modifier.PUBLIC)
+                .withParameters(Object.class)
+                .intercept(SuperMethodCall.INSTANCE)
+                .make();
+    }
+
     @SuppressWarnings("unused")
     public enum SimpleEnum {
         FIRST,
@@ -650,6 +655,19 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
         public abstract static class Inner extends AbstractGenericType<Void> {
             /* empty */
+        }
+    }
+
+    public static abstract class GenericBase<T> {
+
+        public abstract void foo(T argument);
+
+        public static class Subclass extends GenericBase<String> {
+
+            @Override
+            public void foo(String argument) {
+                /* empty */
+            }
         }
     }
 }

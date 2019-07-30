@@ -27,6 +27,6 @@ public class MethodRebaseResolverResolutionPreservedTest {
 
     @Test(expected = IllegalStateException.class)
     public void testPreservationCannotAppendArguments() throws Exception {
-        new MethodRebaseResolver.Resolution.Preserved(methodDescription).getAdditionalArguments();
+        new MethodRebaseResolver.Resolution.Preserved(methodDescription).getPrependedParameters();
     }
 }

@@ -32,11 +32,16 @@ public class TypeProxyInvocationFactoryDefaultTest {
     private MethodDescription.SignatureToken token;
 
     @Mock
+    private MethodDescription.TypeToken typeToken;
+
+    @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Before
     public void setUp() throws Exception {
         when(methodDescription.asSignatureToken()).thenReturn(token);
+        when(methodDescription.asTypeToken()).thenReturn(typeToken);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(typeToken)).thenReturn(specialMethodInvocation);
     }
 
     @Test

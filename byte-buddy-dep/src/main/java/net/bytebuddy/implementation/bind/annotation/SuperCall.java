@@ -106,9 +106,9 @@ public @interface SuperCall {
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            Implementation.SpecialMethodInvocation specialMethodInvocation = annotation.loadSilent().fallbackToDefault()
+            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.loadSilent().fallbackToDefault()
                     ? implementationTarget.invokeDominant(source.asSignatureToken())
-                    : implementationTarget.invokeSuper(source.asSignatureToken());
+                    : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
                 stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy());

@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -31,19 +33,10 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private StackManipulation stackManipulation;
-
-    @Mock
     private TypeDescription.Generic typeDescription, parameterType, placeholderType, returnType;
 
     @Mock
     private TypeDescription rawTypeDescription, rawParameterType, rawReturnType, otherPlaceHolderType, rawPlaceholderType;
-
-    @Mock
-    private MethodVisitor methodVisitor;
-
-    @Mock
-    private Implementation.Context implementationContext;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -81,11 +74,6 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), parameterType, placeholderType)));
-        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
-        assertThat(size.getSizeImpact(), is(1));
-        assertThat(size.getMaximalSize(), is(1));
-        verify(methodVisitor).visitInsn(Opcodes.ACONST_NULL);
-        verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        assertThat(resolution.getPrependedParameters(), equalTo((TypeList) new TypeList.Explicit(rawPlaceholderType)));
     }
 }

@@ -124,6 +124,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
         TypeDescription getTypeDescription();
 
         /**
+         * Checks that this special method invocation is compatible with the supplied type representation.
+         *
+         * @param token The type token to check against.
+         * @return This special method invocation or an illegal invocation if the method invocation is not applicable.
+         */
+        SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token);
+
+        /**
          * A canonical implementation of an illegal {@link Implementation.SpecialMethodInvocation}.
          */
         enum Illegal implements SpecialMethodInvocation {
@@ -159,6 +167,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             public TypeDescription getTypeDescription() {
                 throw new IllegalStateException("An illegal special method invocation must not be applied");
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token) {
+                return this;
             }
         }
 
@@ -261,6 +276,17 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                 return stackManipulation.apply(methodVisitor, implementationContext);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public SpecialMethodInvocation withCheckedCompatibilityTo(MethodDescription.TypeToken token) {
+                if (methodDescription.asTypeToken().equals(token)) {
+                    return this;
+                } else {
+                    return SpecialMethodInvocation.Illegal.INSTANCE;
+                }
             }
         }
     }
@@ -390,7 +416,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token) {
                 SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
                 for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures()) {
-                    SpecialMethodInvocation invocation = invokeDefault(token, interfaceType);
+                    SpecialMethodInvocation invocation = invokeDefault(token, interfaceType).withCheckedCompatibilityTo(token.asTypeToken());
                     if (invocation.isValid()) {
                         if (specialMethodInvocation.isValid()) {
                             return SpecialMethodInvocation.Illegal.INSTANCE;

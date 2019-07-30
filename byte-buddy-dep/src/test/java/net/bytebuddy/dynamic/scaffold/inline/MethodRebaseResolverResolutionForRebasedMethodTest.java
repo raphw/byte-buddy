@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -21,6 +22,7 @@ import org.objectweb.asm.Opcodes;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -62,12 +64,6 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     @Mock
     private TypeDescription.Generic genericReturnType, genericParameterType;
 
-    @Mock
-    private MethodVisitor methodVisitor;
-
-    @Mock
-    private Implementation.Context implementationContext;
-
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -104,10 +100,6 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getReturnType(), is(genericReturnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), parameterType)));
-        StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
-        assertThat(size.getSizeImpact(), is(0));
-        assertThat(size.getMaximalSize(), is(0));
-        verifyZeroInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+        assertThat(resolution.getPrependedParameters().isEmpty(), is(true));
     }
 }

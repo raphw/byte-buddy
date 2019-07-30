@@ -43,6 +43,7 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(target.getType()).thenReturn(genericTargetType);
         when(genericTargetType.asErasure()).thenReturn(targetType);
         when(source.asSignatureToken()).thenReturn(token);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(sourceTypeToken)).thenReturn(specialMethodInvocation);
     }
 
     @Test(expected = IllegalStateException.class)

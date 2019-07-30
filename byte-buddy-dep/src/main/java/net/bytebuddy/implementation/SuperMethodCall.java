@@ -126,16 +126,18 @@ public enum SuperMethodCall implements Implementation.Composable {
          * {@inheritDoc}
          */
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            StackManipulation superMethodCall = implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
+            StackManipulation superMethodCall = implementationTarget
+                    .invokeDominant(instrumentedMethod.asSignatureToken())
+                    .withCheckedCompatibilityTo(instrumentedMethod.asTypeToken());
             if (!superMethodCall.isValid()) {
                 throw new IllegalStateException("Cannot call super (or default) method for " + instrumentedMethod);
             }
-            StackManipulation.Size stackSize = new StackManipulation.Compound(
+            StackManipulation.Size size = new StackManipulation.Compound(
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                     superMethodCall,
                     terminationHandler.of(instrumentedMethod)
             ).apply(methodVisitor, implementationContext);
-            return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
+            return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         /**

@@ -47,6 +47,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(genericInterfaceType.asErasure()).thenReturn(interfaceType);
         when(genericTargetType.asErasure()).thenReturn(targetType);
         when(source.asSignatureToken()).thenReturn(token);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(sourceTypeToken)).thenReturn(specialMethodInvocation);
     }
 
     @Test(expected = IllegalStateException.class)

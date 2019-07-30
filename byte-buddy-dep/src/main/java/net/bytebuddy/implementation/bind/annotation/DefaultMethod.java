@@ -142,7 +142,7 @@ public @interface DefaultMethod {
                 TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
                 Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                         ? MethodLocator.ForImplicitType.INSTANCE
-                        : new MethodLocator.ForExplicitType(typeDescription)).resolve(implementationTarget, source);
+                        : new MethodLocator.ForExplicitType(typeDescription)).resolve(implementationTarget, source).withCheckedCompatibilityTo(source.asTypeToken());
                 if (specialMethodInvocation.isValid()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(new DelegationMethod(specialMethodInvocation,
                             annotation.getValue(CACHED).resolve(Boolean.class),

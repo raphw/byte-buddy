@@ -47,6 +47,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(secondGenericInterface.asErasure()).thenReturn(secondInterface);
         when(firstInterface.asGenericType()).thenReturn(firstGenericInterface);
         when(secondInterface.asGenericType()).thenReturn(secondGenericInterface);
+        when(specialMethodInvocation.withCheckedCompatibilityTo(sourceTypeToken)).thenReturn(specialMethodInvocation);
     }
 
     protected TargetMethodAnnotationDrivenBinder.ParameterBinder<DefaultCall> getSimpleBinder() {

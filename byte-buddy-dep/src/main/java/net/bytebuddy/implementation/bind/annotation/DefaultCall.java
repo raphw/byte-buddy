@@ -142,7 +142,7 @@ public @interface DefaultCall {
             TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
             Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
-                    : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
+                    : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
                 stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
@@ -167,8 +167,7 @@ public @interface DefaultCall {
              * @return A special method invocation of the default method or an illegal special method invocation,
              * if no suitable invocation could be located.
              */
-            Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                           MethodDescription source);
+            Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source);
 
             /**
              * An implicit default method locator that only permits the invocation of a default method if the source
