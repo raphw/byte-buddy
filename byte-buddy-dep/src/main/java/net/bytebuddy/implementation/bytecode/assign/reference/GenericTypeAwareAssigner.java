@@ -219,8 +219,8 @@ public enum GenericTypeAwareAssigner implements Assigner {
              * {@inheritDoc}
              */
             public Boolean onParameterizedType(TypeDescription.Generic parameterizedType) {
-                Queue<TypeDescription.Generic> candidates = new LinkedList<>(Collections.singleton(typeDescription));
-                Set<TypeDescription> previous = new HashSet<>(Collections.singleton(typeDescription.asErasure()));
+                Queue<TypeDescription.Generic> candidates = new LinkedList<TypeDescription.Generic>(Collections.singleton(typeDescription));
+                Set<TypeDescription> previous = new HashSet<TypeDescription>(Collections.singleton(typeDescription.asErasure()));
                 do {
                     TypeDescription.Generic candidate = candidates.remove();
                     if (candidate.asErasure().equals(parameterizedType.asErasure())) {
