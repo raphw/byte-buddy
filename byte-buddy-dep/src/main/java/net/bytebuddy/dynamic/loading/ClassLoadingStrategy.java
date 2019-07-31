@@ -507,12 +507,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     }
 
     /**
-     * <p>
      * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
-     * </p>
-     * <p>
-     * <b>Important</b>: This strategy is no longer available after Java 11.
-     * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
     class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {
