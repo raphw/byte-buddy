@@ -2126,6 +2126,7 @@ ClassInjector {
                 if (!jarFile.createNewFile()) {
                     throw new IllegalStateException("Cannot create file " + jarFile);
                 }
+                jarFile.deleteOnExit();
                 JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
                 try {
                     for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
