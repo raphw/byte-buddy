@@ -39,6 +39,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetType);

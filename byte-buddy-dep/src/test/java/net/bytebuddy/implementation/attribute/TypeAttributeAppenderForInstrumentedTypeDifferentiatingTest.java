@@ -17,6 +17,7 @@ public class TypeAttributeAppenderForInstrumentedTypeDifferentiatingTest extends
     private TypeDescription.Generic pseudoType;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(pseudoType.asGenericType()).thenReturn(pseudoType);

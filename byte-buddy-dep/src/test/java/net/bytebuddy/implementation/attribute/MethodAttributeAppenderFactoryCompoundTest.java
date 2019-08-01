@@ -15,6 +15,7 @@ public class MethodAttributeAppenderFactoryCompoundTest extends AbstractMethodAt
     private MethodAttributeAppender first, second;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(firstFactory.make(instrumentedType)).thenReturn(first);

@@ -44,6 +44,7 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
     }
 
     @Before
+    @Override
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();

@@ -70,6 +70,7 @@ public class MethodDelegationArgumentTest {
 
     public static class Qux extends Baz {
 
+        @Override
         public void foo() {
             super.foo();
         }

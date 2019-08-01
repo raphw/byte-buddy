@@ -69,6 +69,7 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(firstPrimitive.asErasure()).thenReturn(firstRawPrimitive);

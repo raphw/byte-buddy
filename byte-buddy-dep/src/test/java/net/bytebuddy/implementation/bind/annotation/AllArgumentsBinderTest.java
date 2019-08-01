@@ -36,6 +36,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     }
 
     @Before
+    @Override
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();

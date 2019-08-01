@@ -31,6 +31,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(targetMethod.getDeclaringType()).thenReturn(targetMethodType);

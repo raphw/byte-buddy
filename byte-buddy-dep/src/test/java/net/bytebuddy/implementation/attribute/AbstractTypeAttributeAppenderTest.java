@@ -17,6 +17,7 @@ public abstract class AbstractTypeAttributeAppenderTest extends AbstractAttribut
     protected TypeDescription.Generic typeDescription;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(instrumentedType.asGenericType()).thenReturn(typeDescription);

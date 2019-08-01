@@ -613,7 +613,6 @@ public interface TypePool {
                 Object[] array = (Object[]) Array.newInstance(componentType, values.size());
                 int index = 0;
                 for (AnnotationValue<?, ?> annotationValue : values) {
-                    // TODO: State.
                     Array.set(array, index++, annotationValue.resolve());
                 }
                 return array;
@@ -5904,9 +5903,13 @@ public interface TypePool {
                     if (annotationValue == null) {
                         annotationValue = getAnnotationType().getDeclaredMethods().filter(is(property)).getOnly().getDefaultValue();
                     }
-                    return annotationValue == null
-                            ? new AnnotationValue.ForMissingValue<Void, Void>(annotationType, property.getName())
-                            : annotationValue;
+                    if (annotationValue == null) {
+                        return new AnnotationValue.ForMissingValue<Void, Void>(annotationType, property.getName());
+                    } else if (annotationValue.getState() == AnnotationValue.State.RESOLVED && !annotationValue.isResolvableTo(property.getReturnType())) {
+                        return new AnnotationValue.ForMismatchedType<Void, Void>(property, "[" + annotationValue + "]");
+                    } else {
+                        return annotationValue;
+                    }
                 }
 
                 /**
@@ -6024,13 +6027,28 @@ public interface TypePool {
                 public String toString() {
                     return doResolve().toString();
                 }
-                
+
+                /**
+                 * A lazy annotation value description for a type value.
+                 */
                 private static class ForTypeValue extends LazyAnnotationValue<TypeDescription, Class<?>> {
-                    
+
+                    /**
+                     * The type pool to query for the type.
+                     */
                     private final TypePool typePool;
-                    
+
+                    /**
+                     * The type's binary name.
+                     */
                     private final String typeName;
 
+                    /**
+                     * Creates a new lazy description of an annotation type constant.
+                     *
+                     * @param typePool The type pool to query for the type.
+                     * @param typeName The type's binary name.
+                     */
                     private ForTypeValue(TypePool typePool, String typeName) {
                         this.typePool = typePool;
                         this.typeName = typeName;
@@ -7717,8 +7735,8 @@ public interface TypePool {
                  * {@inheritDoc}
                  */
                 public void visitEnum(String name, String descriptor, String value) {
-                    annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForEnumerationValue(Default.this, 
-                            descriptor.substring(1, descriptor.length() - 1).replace('/', '.'), 
+                    annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForEnumerationValue(Default.this,
+                            descriptor.substring(1, descriptor.length() - 1).replace('/', '.'),
                             value));
                 }
 

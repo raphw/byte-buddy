@@ -184,6 +184,7 @@ public class MethodDelegationSuperTest {
 
     public static class Bar extends GenericBase<String> {
 
+        @Override
         public String qux(String value) {
             return super.qux(value);
         }

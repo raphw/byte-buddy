@@ -43,6 +43,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(genericMorphType.asErasure()).thenReturn(morphType);

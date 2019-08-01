@@ -35,6 +35,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(fieldDescription.asDefined()).thenReturn(fieldDescription);

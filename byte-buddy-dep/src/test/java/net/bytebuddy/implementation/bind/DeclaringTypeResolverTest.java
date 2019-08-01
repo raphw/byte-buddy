@@ -15,6 +15,7 @@ public class DeclaringTypeResolverTest extends AbstractAmbiguityResolverTest {
     private TypeDescription leftType, rightType;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(leftMethod.getDeclaringType()).thenReturn(leftType);

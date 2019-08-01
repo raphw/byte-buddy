@@ -13,6 +13,7 @@ public class TypePoolDefaultEnumerationDescriptionTest extends AbstractEnumerati
     private TypePool typePool;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         typePool = TypePool.Default.ofSystemLoader();

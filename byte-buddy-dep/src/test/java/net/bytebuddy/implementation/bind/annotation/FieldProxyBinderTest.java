@@ -41,6 +41,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(getterMethod.getDeclaringType()).thenReturn(getterType);

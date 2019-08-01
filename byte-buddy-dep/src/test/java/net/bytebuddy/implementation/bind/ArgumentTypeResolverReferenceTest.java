@@ -24,6 +24,7 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
     private ParameterDescription weakTargetParameter, dominantTargetParameter;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(weakTargetType.isAssignableFrom(dominantTargetType)).thenReturn(true);

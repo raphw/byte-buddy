@@ -15,6 +15,7 @@ public class FieldAttributeAppenderFactoryCompoundTest extends AbstractFieldAttr
     private FieldAttributeAppender first, second;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(firstFactory.make(instrumentedType)).thenReturn(first);

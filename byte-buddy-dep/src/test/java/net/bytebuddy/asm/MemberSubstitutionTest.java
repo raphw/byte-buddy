@@ -941,6 +941,7 @@ public class MemberSubstitutionTest {
 
         public static class Extension extends VirtualMethodCallSubstitutionSample {
 
+            @Override
             public int foo() {
                 return 2;
             }

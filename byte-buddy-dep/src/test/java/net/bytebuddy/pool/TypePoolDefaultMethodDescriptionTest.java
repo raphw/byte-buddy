@@ -16,6 +16,7 @@ public class TypePoolDefaultMethodDescriptionTest extends AbstractMethodDescript
     private TypePool typePool;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         typePool = new TypePool.Default(TypePool.CacheProvider.NoOp.INSTANCE,

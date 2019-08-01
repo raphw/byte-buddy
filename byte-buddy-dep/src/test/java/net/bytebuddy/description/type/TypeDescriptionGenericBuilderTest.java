@@ -142,12 +142,14 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     }
 
     @Test
+    @Override
     @JavaVersionRule.Enforce(9)
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
 
     @Test
+    @Override
     @Ignore("The Java reflection API does not currently support generic inner types")
     public void testTypeAnnotationNonGenericInnerType() throws Exception {
         super.testTypeAnnotationNonGenericInnerType();

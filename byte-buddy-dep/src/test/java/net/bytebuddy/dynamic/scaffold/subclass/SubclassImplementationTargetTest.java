@@ -40,6 +40,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private MethodDescription.SignatureToken superConstructorToken;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));

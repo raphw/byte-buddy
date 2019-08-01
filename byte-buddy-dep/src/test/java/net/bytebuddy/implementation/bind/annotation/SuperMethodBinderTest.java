@@ -38,6 +38,7 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetType);

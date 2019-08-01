@@ -23,6 +23,7 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(genericType.asErasure()).thenReturn(type);

@@ -23,6 +23,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);

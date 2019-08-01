@@ -10,15 +10,17 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
-import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -137,6 +139,9 @@ public abstract class AbstractAnnotationDescriptionTest {
     private static final Other[] OTHER_ANNOTATION_ARRAY = new Other[]{OTHER_ANNOTATION};
 
     private static final String[] OTHER_STRING_ARRAY = new String[]{BAR};
+    
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private Annotation first, second, defaultFirst, defaultSecond, explicitTarget, broken;
 
@@ -362,6 +367,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(11)
     public void testBrokenAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);
         assertToString(describe(broken).prepare(BrokenAnnotation.class).toString(), broken);

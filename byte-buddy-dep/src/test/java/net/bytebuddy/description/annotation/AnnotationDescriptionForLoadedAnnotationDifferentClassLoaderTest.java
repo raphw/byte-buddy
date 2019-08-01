@@ -12,6 +12,7 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
     private ClassLoader classLoader;
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,

@@ -28,6 +28,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
     private ParameterDescription parameterDescription;
 
     @Before
+    @Override
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();

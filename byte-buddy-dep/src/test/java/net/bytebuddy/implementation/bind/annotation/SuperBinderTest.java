@@ -27,6 +27,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     }
 
     @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetType);
