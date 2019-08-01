@@ -2126,21 +2126,27 @@ ClassInjector {
                 if (!jarFile.createNewFile()) {
                     throw new IllegalStateException("Cannot create file " + jarFile);
                 }
-                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
                 try {
-                    for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
-                        jarOutputStream.putNextEntry(new JarEntry(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION));
-                        jarOutputStream.write(entry.getValue());
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
+                    try {
+                        for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
+                            jarOutputStream.putNextEntry(new JarEntry(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION));
+                            jarOutputStream.write(entry.getValue());
+                        }
+                    } finally {
+                        jarOutputStream.close();
                     }
+                    target.inject(instrumentation, new JarFile(jarFile));
+                    Map<String, Class<?>> result = new HashMap<String, Class<?>>();
+                    for (String name : types.keySet()) {
+                        result.put(name, Class.forName(name, false, target.getClassLoader()));
+                    }
+                    return result;
                 } finally {
-                    jarOutputStream.close();
+                    if (!jarFile.delete()) {
+                        jarFile.deleteOnExit();
+                    }
                 }
-                target.inject(instrumentation, new JarFile(jarFile));
-                Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-                for (String name : types.keySet()) {
-                    result.put(name, Class.forName(name, false, ClassLoader.getSystemClassLoader()));
-                }
-                return result;
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot write jar file to disk", exception);
             } catch (ClassNotFoundException exception) {
@@ -2310,7 +2316,7 @@ ClassInjector {
             /**
              * Representation of the bootstrap class loader.
              */
-            BOOTSTRAP {
+            BOOTSTRAP(null) {
                 @Override
                 protected void inject(Instrumentation instrumentation, JarFile jarFile) {
                     DISPATCHER.appendToBootstrapClassLoaderSearch(instrumentation, jarFile);
@@ -2320,12 +2326,35 @@ ClassInjector {
             /**
              * Representation of the system class loader.
              */
-            SYSTEM {
+            SYSTEM(ClassLoader.getSystemClassLoader()) {
                 @Override
                 protected void inject(Instrumentation instrumentation, JarFile jarFile) {
                     DISPATCHER.appendToSystemClassLoaderSearch(instrumentation, jarFile);
                 }
             };
+
+            /**
+             * The class loader to load classes from.
+             */
+            private final ClassLoader classLoader;
+
+            /**
+             * Creates a new injection target.
+             *
+             * @param classLoader The class loader to load classes from.
+             */
+            Target(ClassLoader classLoader) {
+                this.classLoader = classLoader;
+            }
+
+            /**
+             * Returns the class loader to load classes from.
+             *
+             * @return The class loader to load classes from.
+             */
+            protected ClassLoader getClassLoader() {
+                return classLoader;
+            }
 
             /**
              * Adds the given classes to the represented class loader.
