@@ -543,90 +543,6 @@ public interface TypePool {
         }
 
         /**
-         * Represents a nested annotation value.
-         */
-        protected static class RawAnnotationValue extends AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
-
-            /**
-             * The type pool to use for looking up types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * The annotation token that represents the nested invocation.
-             */
-            private final Default.LazyTypeDescription.AnnotationToken annotationToken;
-
-            /**
-             * Creates a new annotation value for a nested annotation.
-             *
-             * @param typePool        The type pool to use for looking up types.
-             * @param annotationToken The token that represents the annotation.
-             */
-            public RawAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
-                this.typePool = typePool;
-                this.annotationToken = annotationToken;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                return annotationToken.toAnnotationDescription(typePool).isResolved()
-                        ? State.RESOLVED
-                        : State.UNRESOLVED;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return typeDefinition.asErasure().getName().equals(annotationToken.getBinaryName());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AnnotationDescription resolve() {
-                return annotationToken.toAnnotationDescription(typePool).resolve();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @SuppressWarnings("unchecked")
-            public Loaded<Annotation> load(ClassLoader classLoader) {
-                try {
-                    Class<?> type = Class.forName(annotationToken.getBinaryName(), false, classLoader);
-                    if (type.isAnnotation()) {
-                        return new ForAnnotationDescription.Loaded<Annotation>(AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
-                                (Class<? extends Annotation>) type,
-                                annotationToken.getValues()));
-                    } else {
-                        return new ForIncompatibleRuntimeType.Loaded<Annotation>(type);
-                    }
-                } catch (ClassNotFoundException exception) {
-                    return new ForMissingType.Loaded<Annotation>(annotationToken.getBinaryName(), exception);
-                }
-            }
-
-            @Override
-            public int hashCode() {
-                return resolve().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
-            }
-
-            @Override
-            public String toString() {
-                return resolve().toString();
-            }
-        }
-
-        /**
          * Represents an enumeration value of an annotation.
          */
         protected static class RawEnumerationValue extends AnnotationValue.AbstractBase<EnumerationDescription, Enum<?>> {
@@ -6315,7 +6231,7 @@ public interface TypePool {
                     }
                 }
             }
-            
+
             /**
              * A proxy for a lazy annotation value.
              *
@@ -6387,7 +6303,7 @@ public interface TypePool {
                     /**
                      * The annotation token.
                      */
-                    private final Default.LazyTypeDescription.AnnotationToken annotationToken;
+                    private final AnnotationToken annotationToken;
 
                     /**
                      * Creates a new lazy annotation value.
@@ -6395,7 +6311,7 @@ public interface TypePool {
                      * @param typePool        The type pool to use for resolving the annotation type.
                      * @param annotationToken The annotation token.
                      */
-                    protected ForAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
+                    protected ForAnnotationValue(TypePool typePool, AnnotationToken annotationToken) {
                         this.typePool = typePool;
                         this.annotationToken = annotationToken;
                     }
@@ -6403,10 +6319,14 @@ public interface TypePool {
                     @Override
                     @CachedReturnPlugin.Enhance
                     protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
-                        Default.LazyTypeDescription.AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
-                        return resolution.isResolved()
-                                ? new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve())
-                                : new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
+                        AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
+                        if (!resolution.isResolved()) {
+                            return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
+                        } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
+                            return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
+                        } else {
+                            return new AnnotationValue.ForIncompatibleRuntimeType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
+                        }
                     }
                 }
             }
@@ -8099,7 +8019,8 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public void onComplete() {
-                        annotationRegistrant.register(name, new RawAnnotationValue(Default.this, new LazyTypeDescription.AnnotationToken(descriptor, values)));
+                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForAnnotationValue(Default.this,
+                                new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
                 }
             }
