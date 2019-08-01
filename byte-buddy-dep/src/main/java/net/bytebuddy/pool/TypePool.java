@@ -543,272 +543,6 @@ public interface TypePool {
         }
 
         /**
-         * Represents an enumeration value of an annotation.
-         */
-        protected static class RawEnumerationValue extends AnnotationValue.AbstractBase<EnumerationDescription, Enum<?>> {
-
-            /**
-             * The type pool to use for looking up types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * The binary name of the enumeration type.
-             */
-            private final String typeName;
-
-            /**
-             * The name of the enumeration.
-             */
-            private final String value;
-
-            /**
-             * Creates a new enumeration value representation.
-             *
-             * @param typePool   The type pool to use for looking up types.
-             * @param descriptor The descriptor of the enumeration type.
-             * @param value      The name of the enumeration.
-             */
-            public RawEnumerationValue(TypePool typePool, String descriptor, String value) {
-                this.typePool = typePool;
-                typeName = descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
-                this.value = value;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                Resolution resolution = typePool.describe(typeName);
-                return resolution.isResolved()
-                        && resolution.resolve().isEnum()
-                        && resolution.resolve().getDeclaredFields().filter(named(value).<FieldDescription>and(isEnum())).size() == 1 ? State.RESOLVED : State.UNRESOLVED;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return typeDefinition.asErasure().getName().equals(typeName);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public EnumerationDescription resolve() {
-                return new LazyEnumerationDescription();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @SuppressWarnings("unchecked")
-            public Loaded<Enum<?>> load(ClassLoader classLoader) {
-                Class<?> type;
-                try {
-                    type = Class.forName(typeName, false, classLoader);
-                } catch (ClassNotFoundException exception) {
-                    return new ForMissingType.Loaded<Enum<?>>(typeName, exception);
-                }
-                try {
-                    return type.isEnum()
-                            ? new ForEnumerationDescription.Loaded(Enum.valueOf((Class) type, value))
-                            : new ForEnumerationDescription.Loaded.WithIncompatibleRuntimeType(type);
-                } catch (IllegalArgumentException ignored) {
-                    return new ForEnumerationDescription.WithUnknownConstant.Loaded((Class) type, value);
-                }
-            }
-
-            @Override
-            public int hashCode() {
-                return resolve().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
-            }
-
-            @Override
-            public String toString() {
-                return resolve().toString();
-            }
-
-            /**
-             * An enumeration description where any type references are only resolved on demand.
-             */
-            protected class LazyEnumerationDescription extends EnumerationDescription.AbstractBase {
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getValue() {
-                    return value;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public TypeDescription getEnumerationType() {
-                    return typePool.describe(typeName).resolve();
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public <T extends Enum<T>> T load(Class<T> type) {
-                    return Enum.valueOf(type, value);
-                }
-            }
-        }
-
-        /**
-         * Represents a type value of an annotation.
-         */
-        protected static class RawTypeValue extends AnnotationValue.AbstractBase<TypeDescription, Class<?>> {
-
-            /**
-             * A convenience reference indicating that a loaded type should not be initialized.
-             */
-            private static final boolean NO_INITIALIZATION = false;
-
-            /**
-             * The type pool to use for looking up types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * The binary name of the type.
-             */
-            private final String typeName;
-
-            /**
-             * Represents a type value of an annotation.
-             *
-             * @param typePool The type pool to use for looking up types.
-             * @param type     A type representation of the type that is referenced by the annotation..
-             */
-            protected RawTypeValue(TypePool typePool, Type type) {
-                this.typePool = typePool;
-                typeName = type.getSort() == Type.ARRAY
-                        ? type.getInternalName().replace('/', '.')
-                        : type.getClassName();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                return typePool.describe(typeName).isResolved()
-                        ? State.RESOLVED
-                        : State.UNRESOLVED;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return typeDefinition.asErasure().represents(Class.class);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public TypeDescription resolve() {
-                return typePool.describe(typeName).resolve();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            @SuppressWarnings("unchecked")
-            public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) {
-                try {
-                    return new Loaded(Class.forName(typeName, NO_INITIALIZATION, classLoader));
-                } catch (ClassNotFoundException exception) {
-                    return new ForMissingType.Loaded<Class<?>>(typeName, exception);
-                }
-            }
-
-            @Override
-            public int hashCode() {
-                return resolve().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve());
-            }
-
-            @Override
-            public String toString() {
-                return RenderingDispatcher.CURRENT.toSourceString(resolve());
-            }
-
-            /**
-             * Represents a loaded annotation property that represents a type.
-             */
-            protected static class Loaded extends AnnotationValue.Loaded.AbstractBase<Class<?>> {
-
-                /**
-                 * The type that is represented by an annotation property.
-                 */
-                private final Class<?> type;
-
-                /**
-                 * Creates a new representation for an annotation property referencing a type.
-                 *
-                 * @param type The type that is represented by an annotation property.
-                 */
-                public Loaded(Class<?> type) {
-                    this.type = type;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public State getState() {
-                    return State.RESOLVED;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Class<?> resolve() {
-                    return type;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean represents(Object value) {
-                    return type.equals(value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return type.hashCode();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) {
-                        return true;
-                    } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
-                        return false;
-                    }
-                    AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
-                    return annotationValue.getState().isResolved() && type.equals(annotationValue.resolve());
-                }
-
-                @Override
-                public String toString() {
-                    return RenderingDispatcher.CURRENT.toSourceString(TypeDescription.ForLoadedType.of(type));
-                }
-            }
-        }
-
-        /**
          * Represents an array that is referenced by an annotation which does not contain primitive values or {@link String}s.
          */
         protected static class RawDescriptionArray extends AnnotationValue.AbstractBase<Object[], Object[]> {
@@ -879,6 +613,7 @@ public interface TypePool {
                 Object[] array = (Object[]) Array.newInstance(componentType, values.size());
                 int index = 0;
                 for (AnnotationValue<?, ?> annotationValue : values) {
+                    // TODO: State.
                     Array.set(array, index++, annotationValue.resolve());
                 }
                 return array;
@@ -6289,11 +6024,33 @@ public interface TypePool {
                 public String toString() {
                     return doResolve().toString();
                 }
+                
+                private static class ForTypeValue extends LazyAnnotationValue<TypeDescription, Class<?>> {
+                    
+                    private final TypePool typePool;
+                    
+                    private final String typeName;
+
+                    private ForTypeValue(TypePool typePool, String typeName) {
+                        this.typePool = typePool;
+                        this.typeName = typeName;
+                    }
+
+                    @Override
+                    @CachedReturnPlugin.Enhance
+                    @SuppressWarnings("unchecked")
+                    protected AnnotationValue<TypeDescription, Class<?>> doResolve() {
+                        Resolution resolution = typePool.describe(typeName);
+                        return resolution.isResolved()
+                                ? new AnnotationValue.ForTypeDescription(resolution.resolve())
+                                : new AnnotationValue.ForMissingType<TypeDescription, Class<?>>(typeName);
+                    }
+                }
 
                 /**
-                 * A lazy annotation value for an annotation-typed value.
+                 * A lazy annotation value description for an annotation value.
                  */
-                protected static class ForAnnotationValue extends LazyAnnotationValue<AnnotationDescription, Annotation> {
+                private static class ForAnnotationValue extends LazyAnnotationValue<AnnotationDescription, Annotation> {
 
                     /**
                      * The type pool to use for resolving the annotation type.
@@ -6311,7 +6068,7 @@ public interface TypePool {
                      * @param typePool        The type pool to use for resolving the annotation type.
                      * @param annotationToken The annotation token.
                      */
-                    protected ForAnnotationValue(TypePool typePool, AnnotationToken annotationToken) {
+                    private ForAnnotationValue(TypePool typePool, AnnotationToken annotationToken) {
                         this.typePool = typePool;
                         this.annotationToken = annotationToken;
                     }
@@ -6326,6 +6083,56 @@ public interface TypePool {
                             return new AnnotationValue.ForIncompatibleRuntimeType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
+                        }
+                    }
+                }
+
+                /**
+                 * A lazy annotation value description for an enumeration value.
+                 */
+                private static class ForEnumerationValue extends LazyAnnotationValue<EnumerationDescription, Enum<?>> {
+
+                    /**
+                     * The type pool to use for looking up types.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * The binary name of the enumeration type.
+                     */
+                    private final String typeName;
+
+                    /**
+                     * The name of the enumeration.
+                     */
+                    private final String value;
+
+                    /**
+                     * Creates a lazy annotation value description for an enumeration.
+                     *
+                     * @param typePool The type pool to use for looking up types.
+                     * @param typeName The binary name of the enumeration type.
+                     * @param value    The name of the enumeration.
+                     */
+                    private ForEnumerationValue(TypePool typePool, String typeName, String value) {
+                        this.typePool = typePool;
+                        this.typeName = typeName;
+                        this.value = value;
+                    }
+
+                    @Override
+                    @CachedReturnPlugin.Enhance
+                    @SuppressWarnings("unchecked")
+                    protected AnnotationValue<EnumerationDescription, Enum<?>> doResolve() {
+                        Resolution resolution = typePool.describe(typeName);
+                        if (!resolution.isResolved()) {
+                            return new AnnotationValue.ForMissingType<EnumerationDescription, Enum<?>>(typeName);
+                        } else if (!resolution.resolve().isEnum()) {
+                            return new AnnotationValue.ForIncompatibleRuntimeType<EnumerationDescription, Enum<?>>(resolution.resolve());
+                        } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
+                            return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
+                        } else {
+                            return new AnnotationValue.ForEnumerationDescription(new EnumerationDescription.Latent(resolution.resolve(), value));
                         }
                     }
                 }
@@ -7896,16 +7703,23 @@ public interface TypePool {
                  * {@inheritDoc}
                  */
                 public void visit(String name, Object value) {
-                    annotationRegistrant.register(name, value instanceof Type
-                            ? new RawTypeValue(Default.this, (Type) value)
-                            : AnnotationValue.ForConstant.of(value));
+                    if (value instanceof Type) {
+                        Type type = (Type) value;
+                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForTypeValue(Default.this, type.getSort() == Type.ARRAY
+                                ? type.getInternalName().replace('/', '.')
+                                : type.getClassName()));
+                    } else {
+                        annotationRegistrant.register(name, AnnotationValue.ForConstant.of(value));
+                    }
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public void visitEnum(String name, String descriptor, String value) {
-                    annotationRegistrant.register(name, new RawEnumerationValue(Default.this, descriptor, value));
+                    annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForEnumerationValue(Default.this, 
+                            descriptor.substring(1, descriptor.length() - 1).replace('/', '.'), 
+                            value));
                 }
 
                 /**

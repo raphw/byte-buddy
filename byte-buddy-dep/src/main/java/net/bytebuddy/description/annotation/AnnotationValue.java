@@ -1508,7 +1508,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param enumerationDescription The enumeration that is to be represented.
          */
-        protected ForEnumerationDescription(EnumerationDescription enumerationDescription) {
+        public ForEnumerationDescription(EnumerationDescription enumerationDescription) {
             this.enumerationDescription = enumerationDescription;
         }
 
@@ -1816,7 +1816,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param typeDescription The represented type.
          */
-        protected ForTypeDescription(TypeDescription typeDescription) {
+        public ForTypeDescription(TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
         }
 
