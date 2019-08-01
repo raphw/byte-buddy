@@ -2621,7 +2621,12 @@ public interface AnnotationValue<T, S> {
             }
         }
 
-        // TODO: toString?
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+        @Override
+        public String toString() {
+            return "/* Warning type incompatibility! \"" + typeDescription.getName() + "\" */";
+        }
 
         /**
          * A description of annotation value for a type that does not fulfil runtime expectations.
@@ -2651,7 +2656,12 @@ public interface AnnotationValue<T, S> {
                 throw new IncompatibleClassChangeError(type.toString());
             }
 
-            // TODO: toString?
+            /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+            @Override
+            public String toString() {
+                return "/* Warning type incompatibility! \"" + type.getName() + "\" */";
+            }
         }
     }
 }

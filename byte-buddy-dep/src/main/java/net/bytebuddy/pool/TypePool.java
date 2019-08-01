@@ -543,101 +543,6 @@ public interface TypePool {
         }
 
         /**
-         * A proxy for a lazy annotation value.
-         *
-         * @param <U> The represented unloaded type.
-         * @param <V> The represented loaded type.
-         */
-        protected abstract static class AnnotationValueProxy<U, V> extends AnnotationValue.AbstractBase<U, V> {
-
-            /**
-             * Resolves the actual annotation value.
-             *
-             * @return The actual annotation value.
-             */
-            protected abstract AnnotationValue<U, V> doResolve();
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                return doResolve().getState();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return doResolve().isResolvableTo(typeDefinition);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public U resolve() {
-                return doResolve().resolve();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Loaded<V> load(ClassLoader classLoader) {
-                return doResolve().load(classLoader);
-            }
-
-            @Override
-            public int hashCode() {
-                return doResolve().hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return doResolve().equals(other);
-            }
-
-            @Override
-            public String toString() {
-                return doResolve().toString();
-            }
-
-            /**
-             * A lazy annotation value for an annotation-typed value.
-             */
-            protected static class ForAnnotationValue extends AnnotationValueProxy<AnnotationDescription, Annotation> {
-
-                /**
-                 * The type pool to use for resolving the annotation type.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * The annotation token.
-                 */
-                private final Default.LazyTypeDescription.AnnotationToken annotationToken;
-
-                /**
-                 * Creates a new lazy annotation value.
-                 *
-                 * @param typePool        The type pool to use for resolving the annotation type.
-                 * @param annotationToken The annotation token.
-                 */
-                protected ForAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
-                    this.typePool = typePool;
-                    this.annotationToken = annotationToken;
-                }
-
-                @Override
-                @CachedReturnPlugin.Enhance
-                protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
-                    Default.LazyTypeDescription.AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
-                    return resolution.isResolved()
-                            ? new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve())
-                            : new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
-                }
-            }
-        }
-
-        /**
          * Represents a nested annotation value.
          */
         protected static class RawAnnotationValue extends AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
@@ -6407,6 +6312,101 @@ public interface TypePool {
                     @SuppressWarnings("deprecation")
                     public S loadSilent() {
                         return load();
+                    }
+                }
+            }
+            
+            /**
+             * A proxy for a lazy annotation value.
+             *
+             * @param <U> The represented unloaded type.
+             * @param <V> The represented loaded type.
+             */
+            private abstract static class LazyAnnotationValue<U, V> extends AnnotationValue.AbstractBase<U, V> {
+
+                /**
+                 * Resolves the actual annotation value.
+                 *
+                 * @return The actual annotation value.
+                 */
+                protected abstract AnnotationValue<U, V> doResolve();
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public State getState() {
+                    return doResolve().getState();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                    return doResolve().isResolvableTo(typeDefinition);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public U resolve() {
+                    return doResolve().resolve();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Loaded<V> load(ClassLoader classLoader) {
+                    return doResolve().load(classLoader);
+                }
+
+                @Override
+                public int hashCode() {
+                    return doResolve().hashCode();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return doResolve().equals(other);
+                }
+
+                @Override
+                public String toString() {
+                    return doResolve().toString();
+                }
+
+                /**
+                 * A lazy annotation value for an annotation-typed value.
+                 */
+                protected static class ForAnnotationValue extends LazyAnnotationValue<AnnotationDescription, Annotation> {
+
+                    /**
+                     * The type pool to use for resolving the annotation type.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * The annotation token.
+                     */
+                    private final Default.LazyTypeDescription.AnnotationToken annotationToken;
+
+                    /**
+                     * Creates a new lazy annotation value.
+                     *
+                     * @param typePool        The type pool to use for resolving the annotation type.
+                     * @param annotationToken The annotation token.
+                     */
+                    protected ForAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
+                        this.typePool = typePool;
+                        this.annotationToken = annotationToken;
+                    }
+
+                    @Override
+                    @CachedReturnPlugin.Enhance
+                    protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
+                        Default.LazyTypeDescription.AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
+                        return resolution.isResolved()
+                                ? new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve())
+                                : new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                     }
                 }
             }
