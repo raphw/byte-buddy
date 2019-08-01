@@ -6323,9 +6323,9 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                         } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
-                            return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
-                        } else {
                             return new AnnotationValue.ForIncompatibleRuntimeType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
+                        } else {
+                            return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
                         }
                     }
                 }

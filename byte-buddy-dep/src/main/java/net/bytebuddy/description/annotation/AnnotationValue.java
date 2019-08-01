@@ -2501,7 +2501,7 @@ public interface AnnotationValue<T, S> {
                         ? new Loaded<V>(type, property)
                         : new ForIncompatibleRuntimeType.Loaded<V>(type);
             } catch (ClassNotFoundException exception) {
-                return new ForMissingType.Loaded<>(typeDescription.getName(), exception);
+                return new ForMissingType.Loaded<V>(typeDescription.getName(), exception);
             }
         }
 
