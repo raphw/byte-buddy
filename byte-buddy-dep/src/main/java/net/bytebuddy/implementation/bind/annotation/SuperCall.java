@@ -102,17 +102,17 @@ public @interface SuperCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (source.isConstructor()) {
-                return annotation.loadSilent().nullIfImpossible()
+                return annotation.load().nullIfImpossible()
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.loadSilent().fallbackToDefault()
+            Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.load().fallbackToDefault()
                     ? implementationTarget.invokeDominant(source.asSignatureToken())
                     : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
-                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy());
-            } else if (annotation.loadSilent().nullIfImpossible()) {
+                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.load().serializableProxy());
+            } else if (annotation.load().nullIfImpossible()) {
                 stackManipulation = NullConstant.INSTANCE;
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

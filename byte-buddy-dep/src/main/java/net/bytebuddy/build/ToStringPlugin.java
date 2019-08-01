@@ -52,7 +52,7 @@ public class ToStringPlugin implements Plugin, Plugin.Factory {
      * {@inheritDoc}
      */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
+        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).load();
         if (typeDescription.getDeclaredMethods().filter(isToString()).isEmpty()) {
             builder = builder.method(isToString()).intercept(ToStringMethod.prefixedBy(enhance.prefix().getPrefixResolver())
                     .withIgnoredFields(enhance.includeSyntheticFields()

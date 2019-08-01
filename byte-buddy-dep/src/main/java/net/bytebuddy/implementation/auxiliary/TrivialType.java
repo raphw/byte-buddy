@@ -67,7 +67,7 @@ public enum TrivialType implements AuxiliaryType {
                 .with(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .annotateType(eager
-                        ? Collections.singletonList(AnnotationDescription.Builder.ofType(SignatureRelevant.class).build())
+                        ? Collections.singletonList(AnnotationDescription.Builder.ofType(SignatureRelevant.class).build(false))
                         : Collections.<AnnotationDescription>emptyList())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)

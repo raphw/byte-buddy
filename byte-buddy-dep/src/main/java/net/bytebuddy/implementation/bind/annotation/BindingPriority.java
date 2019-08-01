@@ -70,7 +70,7 @@ public @interface BindingPriority {
         private static int resolve(AnnotationDescription.Loadable<BindingPriority> bindingPriority) {
             return bindingPriority == null
                     ? BindingPriority.DEFAULT
-                    : bindingPriority.loadSilent().value();
+                    : bindingPriority.load().value();
         }
 
         /**

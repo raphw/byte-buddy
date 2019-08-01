@@ -134,14 +134,14 @@ public @interface Origin {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType().asErasure()));
             } else if (parameterType.represents(Method.class)) {
                 return source.isMethod()
-                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()))
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.load(), source.asDefined()))
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else if (parameterType.represents(Constructor.class)) {
                 return source.isConstructor()
-                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()))
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.load(), source.asDefined()))
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else if (JavaType.EXECUTABLE.getTypeStub().equals(parameterType)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.loadSilent(), source.asDefined()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(methodConstant(annotation.load(), source.asDefined()));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
             } else if (parameterType.represents(int.class)) {

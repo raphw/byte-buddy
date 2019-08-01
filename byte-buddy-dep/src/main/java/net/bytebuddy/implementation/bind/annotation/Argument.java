@@ -166,7 +166,7 @@ public @interface Argument {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
                                                                Assigner.Typing typing) {
-            Argument argument = annotation.loadSilent();
+            Argument argument = annotation.load();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException("@Argument annotation on " + target + " specifies negative index");
             } else if (source.getParameters().size() <= argument.value()) {

@@ -30,6 +30,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -542,6 +543,101 @@ public interface TypePool {
         }
 
         /**
+         * A proxy for a lazy annotation value.
+         *
+         * @param <U> The represented unloaded type.
+         * @param <V> The represented loaded type.
+         */
+        protected abstract static class AnnotationValueProxy<U, V> extends AnnotationValue.AbstractBase<U, V> {
+
+            /**
+             * Resolves the actual annotation value.
+             *
+             * @return The actual annotation value.
+             */
+            protected abstract AnnotationValue<U, V> doResolve();
+
+            /**
+             * {@inheritDoc}
+             */
+            public State getState() {
+                return doResolve().getState();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return doResolve().isResolvableTo(typeDefinition);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public U resolve() {
+                return doResolve().resolve();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Loaded<V> load(ClassLoader classLoader) {
+                return doResolve().load(classLoader);
+            }
+
+            @Override
+            public int hashCode() {
+                return doResolve().hashCode();
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return doResolve().equals(other);
+            }
+
+            @Override
+            public String toString() {
+                return doResolve().toString();
+            }
+
+            /**
+             * A lazy annotation value for an annotation-typed value.
+             */
+            protected static class ForAnnotationValue extends AnnotationValueProxy<AnnotationDescription, Annotation> {
+
+                /**
+                 * The type pool to use for resolving the annotation type.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * The annotation token.
+                 */
+                private final Default.LazyTypeDescription.AnnotationToken annotationToken;
+
+                /**
+                 * Creates a new lazy annotation value.
+                 *
+                 * @param typePool        The type pool to use for resolving the annotation type.
+                 * @param annotationToken The annotation token.
+                 */
+                protected ForAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
+                    this.typePool = typePool;
+                    this.annotationToken = annotationToken;
+                }
+
+                @Override
+                @CachedReturnPlugin.Enhance
+                protected AnnotationValue<AnnotationDescription, Annotation> doResolve() {
+                    Default.LazyTypeDescription.AnnotationToken.Resolution resolution = annotationToken.toAnnotationDescription(typePool);
+                    return resolution.isResolved()
+                            ? new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve())
+                            : new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
+                }
+            }
+        }
+
+        /**
          * Represents a nested annotation value.
          */
         protected static class RawAnnotationValue extends AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
@@ -570,6 +666,22 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            public State getState() {
+                return annotationToken.toAnnotationDescription(typePool).isResolved()
+                        ? State.RESOLVED
+                        : State.UNRESOLVED;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return typeDefinition.asErasure().getName().equals(annotationToken.getBinaryName());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public AnnotationDescription resolve() {
                 return annotationToken.toAnnotationDescription(typePool).resolve();
             }
@@ -578,14 +690,18 @@ public interface TypePool {
              * {@inheritDoc}
              */
             @SuppressWarnings("unchecked")
-            public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
-                Class<?> type = Class.forName(annotationToken.getBinaryName(), false, classLoader);
-                if (type.isAnnotation()) {
-                    return new ForAnnotationDescription.Loaded<Annotation>(AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
-                            (Class<? extends Annotation>) type,
-                            annotationToken.getValues()));
-                } else {
-                    return new ForAnnotationDescription.IncompatibleRuntimeType(type);
+            public Loaded<Annotation> load(ClassLoader classLoader) {
+                try {
+                    Class<?> type = Class.forName(annotationToken.getBinaryName(), false, classLoader);
+                    if (type.isAnnotation()) {
+                        return new ForAnnotationDescription.Loaded<Annotation>(AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
+                                (Class<? extends Annotation>) type,
+                                annotationToken.getValues()));
+                    } else {
+                        return new ForIncompatibleRuntimeType.Loaded<Annotation>(type);
+                    }
+                } catch (ClassNotFoundException exception) {
+                    return new ForMissingType.Loaded<Annotation>(annotationToken.getBinaryName(), exception);
                 }
             }
 
@@ -616,9 +732,9 @@ public interface TypePool {
             private final TypePool typePool;
 
             /**
-             * The descriptor of the enumeration type.
+             * The binary name of the enumeration type.
              */
-            private final String descriptor;
+            private final String typeName;
 
             /**
              * The name of the enumeration.
@@ -634,8 +750,25 @@ public interface TypePool {
              */
             public RawEnumerationValue(TypePool typePool, String descriptor, String value) {
                 this.typePool = typePool;
-                this.descriptor = descriptor;
+                typeName = descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
                 this.value = value;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public State getState() {
+                Resolution resolution = typePool.describe(typeName);
+                return resolution.isResolved()
+                        && resolution.resolve().isEnum()
+                        && resolution.resolve().getDeclaredFields().filter(named(value).<FieldDescription>and(isEnum())).size() == 1 ? State.RESOLVED : State.UNRESOLVED;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return typeDefinition.asErasure().getName().equals(typeName);
             }
 
             /**
@@ -649,14 +782,19 @@ public interface TypePool {
              * {@inheritDoc}
              */
             @SuppressWarnings("unchecked")
-            public Loaded<Enum<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
-                Class<?> type = Class.forName(descriptor.substring(1, descriptor.length() - 1).replace('/', '.'), false, classLoader);
+            public Loaded<Enum<?>> load(ClassLoader classLoader) {
+                Class<?> type;
+                try {
+                    type = Class.forName(typeName, false, classLoader);
+                } catch (ClassNotFoundException exception) {
+                    return new ForMissingType.Loaded<Enum<?>>(typeName, exception);
+                }
                 try {
                     return type.isEnum()
                             ? new ForEnumerationDescription.Loaded(Enum.valueOf((Class) type, value))
-                            : new ForEnumerationDescription.IncompatibleRuntimeType(type);
+                            : new ForEnumerationDescription.Loaded.WithIncompatibleRuntimeType(type);
                 } catch (IllegalArgumentException ignored) {
-                    return new ForEnumerationDescription.UnknownRuntimeEnumeration((Class) type, value);
+                    return new ForEnumerationDescription.WithUnknownConstant.Loaded((Class) type, value);
                 }
             }
 
@@ -691,7 +829,7 @@ public interface TypePool {
                  * {@inheritDoc}
                  */
                 public TypeDescription getEnumerationType() {
-                    return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
+                    return typePool.describe(typeName).resolve();
                 }
 
                 /**
@@ -721,7 +859,7 @@ public interface TypePool {
             /**
              * The binary name of the type.
              */
-            private final String name;
+            private final String typeName;
 
             /**
              * Represents a type value of an annotation.
@@ -731,7 +869,7 @@ public interface TypePool {
              */
             protected RawTypeValue(TypePool typePool, Type type) {
                 this.typePool = typePool;
-                name = type.getSort() == Type.ARRAY
+                typeName = type.getSort() == Type.ARRAY
                         ? type.getInternalName().replace('/', '.')
                         : type.getClassName();
             }
@@ -739,15 +877,36 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            public TypeDescription resolve() {
-                return typePool.describe(name).resolve();
+            public State getState() {
+                return typePool.describe(typeName).isResolved()
+                        ? State.RESOLVED
+                        : State.UNRESOLVED;
             }
 
             /**
              * {@inheritDoc}
              */
-            public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
-                return new Loaded(Class.forName(name, NO_INITIALIZATION, classLoader));
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return typeDefinition.asErasure().represents(Class.class);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeDescription resolve() {
+                return typePool.describe(typeName).resolve();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @SuppressWarnings("unchecked")
+            public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) {
+                try {
+                    return new Loaded(Class.forName(typeName, NO_INITIALIZATION, classLoader));
+                } catch (ClassNotFoundException exception) {
+                    return new ForMissingType.Loaded<Class<?>>(typeName, exception);
+                }
             }
 
             @Override
@@ -866,6 +1025,22 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
+            public State getState() {
+                return typePool.describe(componentTypeReference.lookup()).isResolved()
+                        ? State.RESOLVED
+                        : State.UNRESOLVED;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().getName().equals(componentTypeReference.lookup());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Object[] resolve() {
                 TypeDescription componentTypeDescription = typePool.describe(componentTypeReference.lookup()).resolve();
                 Class<?> componentType;
@@ -891,12 +1066,17 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+            public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) {
                 List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(values.size());
                 for (AnnotationValue<?, ?> value : values) {
                     loadedValues.add(value.load(classLoader));
                 }
-                return new Loaded(Class.forName(componentTypeReference.lookup(), false, classLoader), loadedValues);
+                String typeName = componentTypeReference.lookup();
+                try {
+                    return new Loaded(Class.forName(typeName, false, classLoader), loadedValues);
+                } catch (ClassNotFoundException exception) {
+                    return new ForMissingType.Loaded<Object[]>(typeName, exception);
+                }
             }
 
             @Override
@@ -6168,10 +6348,9 @@ public interface TypePool {
                     if (annotationValue == null) {
                         annotationValue = getAnnotationType().getDeclaredMethods().filter(is(property)).getOnly().getDefaultValue();
                     }
-                    if (annotationValue != null) {
-                        return annotationValue;
-                    }
-                    throw new IllegalStateException(property + " is not defined on annotation");
+                    return annotationValue == null
+                            ? new AnnotationValue.ForMissingValue<Void, Void>(annotationType, property.getName())
+                            : annotationValue;
                 }
 
                 /**
@@ -6218,19 +6397,16 @@ public interface TypePool {
                     /**
                      * {@inheritDoc}
                      */
-                    public S load() throws ClassNotFoundException {
+                    public S load() {
                         return AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values);
                     }
 
                     /**
                      * {@inheritDoc}
                      */
+                    @SuppressWarnings("deprecation")
                     public S loadSilent() {
-                        try {
-                            return load();
-                        } catch (ClassNotFoundException exception) {
-                            throw new IllegalStateException("Could not load annotation type or referenced type", exception);
-                        }
+                        return load();
                     }
                 }
             }
@@ -7816,8 +7992,7 @@ public interface TypePool {
                  * {@inheritDoc}
                  */
                 public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-                    return new AnnotationExtractor(new AnnotationLookup(descriptor, name),
-                            new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
+                    return new AnnotationExtractor(new AnnotationLookup(descriptor, name), new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
                 }
 
                 /**

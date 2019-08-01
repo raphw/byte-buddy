@@ -104,19 +104,19 @@ public @interface SuperMethod {
             if (!target.getType().asErasure().isAssignableFrom(Method.class)) {
                 throw new IllegalStateException("Cannot assign Method type to " + target);
             } else if (source.isMethod()) {
-                Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.loadSilent().fallbackToDefault()
+                Implementation.SpecialMethodInvocation specialMethodInvocation = (annotation.load().fallbackToDefault()
                         ? implementationTarget.invokeDominant(source.asSignatureToken())
                         : implementationTarget.invokeSuper(source.asSignatureToken())).withCheckedCompatibilityTo(source.asTypeToken());
                 if (specialMethodInvocation.isValid()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(new DelegationMethod(specialMethodInvocation,
-                            annotation.loadSilent().cached(),
-                            annotation.loadSilent().privileged()));
-                } else if (annotation.loadSilent().nullIfImpossible()) {
+                            annotation.load().cached(),
+                            annotation.load().privileged()));
+                } else if (annotation.load().nullIfImpossible()) {
                     return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
                 } else {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
-            } else if (annotation.loadSilent().nullIfImpossible()) {
+            } else if (annotation.load().nullIfImpossible()) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE);
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

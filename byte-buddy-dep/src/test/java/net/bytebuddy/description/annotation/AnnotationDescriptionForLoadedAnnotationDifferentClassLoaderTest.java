@@ -19,7 +19,8 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
                         SampleDefault.class,
                         Other.class,
                         SampleEnumeration.class,
-                        ExplicitTarget.class));
+                        ExplicitTarget.class,
+                        BrokenAnnotation.class));
     }
 
     @SuppressWarnings("unchecked")

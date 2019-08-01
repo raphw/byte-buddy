@@ -1625,10 +1625,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<Argument> annotation,
                                               AdviceType adviceType) {
-                        if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                        if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + target + " when using delegation");
                         } else {
-                            return new ForArgument.Unresolved(target.getType(), annotation.loadSilent());
+                            return new ForArgument.Unresolved(target.getType(), annotation.load());
                         }
                     }
                 }
@@ -1843,10 +1843,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<This> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot write to this reference for " + target + " in read-only context");
                     } else {
-                        return new ForThisReference(target.getType(), annotation.loadSilent());
+                        return new ForThisReference(target.getType(), annotation.load());
                     }
                 }
             }
@@ -1954,12 +1954,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           AdviceType adviceType) {
                     if (!target.getType().represents(Object.class) && !target.getType().isArray()) {
                         throw new IllegalStateException("Cannot use AllArguments annotation on a non-array type");
-                    } else if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    } else if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot define writable field access for " + target);
                     } else {
                         return new ForAllArguments(target.getType().represents(Object.class)
                                 ? TypeDescription.Generic.OBJECT
-                                : target.getType().getComponentType(), annotation.loadSilent());
+                                : target.getType().getComponentType(), annotation.load());
                     }
                 }
             }
@@ -2202,7 +2202,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected WithImplicitType(TypeDescription.Generic target, AnnotationDescription.Loadable<FieldValue> annotation) {
                         this(target,
                                 annotation.getValue(READ_ONLY).resolve(Boolean.class),
-                                annotation.getValue(TYPING).loadSilent(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
+                                annotation.getValue(TYPING).load(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
                                 annotation.getValue(VALUE).resolve(String.class));
                     }
 
@@ -2247,7 +2247,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                TypeDescription declaringType) {
                         this(target,
                                 annotation.getValue(READ_ONLY).resolve(Boolean.class),
-                                annotation.getValue(TYPING).loadSilent(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
+                                annotation.getValue(TYPING).load(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class),
                                 annotation.getValue(VALUE).resolve(String.class),
                                 declaringType);
                     }
@@ -2730,7 +2730,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (JavaType.EXECUTABLE.getTypeStub().equals(target.getType().asErasure())) {
                         return OffsetMapping.ForInstrumentedMethod.EXECUTABLE;
                     } else if (target.getType().asErasure().isAssignableFrom(String.class)) {
-                        return ForOrigin.parse(annotation.loadSilent().value());
+                        return ForOrigin.parse(annotation.load().value());
                     } else {
                         throw new IllegalStateException("Non-supported type " + target.getType() + " for @Origin annotation");
                     }
@@ -2961,10 +2961,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Enter> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForEnterValue(target.getType(), enterType.asGenericType(), annotation.loadSilent());
+                        return new ForEnterValue(target.getType(), enterType.asGenericType(), annotation.load());
                     }
                 }
             }
@@ -3089,10 +3089,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Exit> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForExitValue(target.getType(), exitType.asGenericType(), annotation.loadSilent());
+                        return new ForExitValue(target.getType(), exitType.asGenericType(), annotation.load());
                     }
                 }
             }
@@ -3182,7 +3182,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Local> annotation,
                                           AdviceType adviceType) {
-                    String name = annotation.loadSilent().value();
+                    String name = annotation.load().value();
                     TypeDefinition namedType = namedTypes.get(name);
                     if (namedType == null) {
                         throw new IllegalStateException("Named local variable is unknown: " + name);
@@ -3285,10 +3285,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Return> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot write return value for " + target + " in read-only context");
                     } else {
-                        return new ForReturnValue(target.getType(), annotation.loadSilent());
+                        return new ForReturnValue(target.getType(), annotation.load());
                     }
                 }
             }
@@ -3398,10 +3398,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Thrown> annotation,
                                           AdviceType adviceType) {
-                    if (adviceType.isDelegation() && !annotation.loadSilent().readOnly()) {
+                    if (adviceType.isDelegation() && !annotation.load().readOnly()) {
                         throw new IllegalStateException("Cannot use writable " + target + " on read-only parameter");
                     } else {
-                        return new ForThrowable(target.getType(), annotation.loadSilent());
+                        return new ForThrowable(target.getType(), annotation.load());
                     }
                 }
             }
@@ -7103,7 +7103,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.adviceMethod = adviceMethod;
                 namedTypes = new HashMap<String, TypeDefinition>();
                 for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).load().value();
                     TypeDefinition previous = namedTypes.put(name, parameterDescription.getType());
                     if (previous != null && !previous.equals(parameterDescription.getType())) {
                         throw new IllegalStateException("Local variable for " + name + " is defined with inconsistent types");
@@ -8499,7 +8499,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                   Unresolved methodEnter) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
                 for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
-                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).loadSilent().value();
+                    String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).load().value();
                     TypeDefinition typeDefinition = namedTypes.get(name);
                     if (typeDefinition == null) {
                         throw new IllegalStateException(adviceMethod + " attempts use of undeclared local variable " + name);

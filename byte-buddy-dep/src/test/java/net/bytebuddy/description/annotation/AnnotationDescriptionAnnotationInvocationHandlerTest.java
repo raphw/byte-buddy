@@ -42,15 +42,6 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
                 .thenReturn((AnnotationValue.Loaded) otherLoadedAnnotationValue);
     }
 
-    @Test(expected = ClassNotFoundException.class)
-    public void testClassNotFoundExceptionIsTransparent() throws Throwable {
-        when(freeAnnotationValue.load(getClass().getClassLoader())).thenThrow(new ClassNotFoundException());
-        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
-                Foo.class,
-                Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
-                .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
-    }
-
     @Test(expected = AnnotationTypeMismatchException.class)
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeMismatchException() throws Throwable {
@@ -65,7 +56,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @SuppressWarnings("unchecked")
     public void testIncompleteAnnotationException() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationValue.Loaded)
-                new AnnotationDescription.AnnotationInvocationHandler.MissingValue(Foo.class, "foo"));
+                new AnnotationValue.ForMissingValue.Loaded<Void>(Foo.class, "foo"));
         Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
@@ -76,7 +67,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @SuppressWarnings("unchecked")
     public void testEnumConstantNotPresentException() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationValue.Loaded)
-                new AnnotationValue.ForEnumerationDescription.UnknownRuntimeEnumeration(Bar.class, FOO));
+                new AnnotationValue.ForEnumerationDescription.WithUnknownConstant.Loaded(Bar.class, FOO));
         Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
@@ -87,7 +78,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @SuppressWarnings("unchecked")
     public void testEnumTypeIncompatible() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationValue.Loaded)
-                new AnnotationValue.ForEnumerationDescription.IncompatibleRuntimeType(Foo.class));
+                new AnnotationValue.ForEnumerationDescription.Loaded.WithIncompatibleRuntimeType(Foo.class));
         Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
@@ -98,7 +89,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeIncompatible() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationValue.Loaded)
-                new AnnotationValue.ForEnumerationDescription.IncompatibleRuntimeType(Foo.class));
+                new AnnotationValue.ForEnumerationDescription.Loaded.WithIncompatibleRuntimeType(Foo.class));
         Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
@@ -116,7 +107,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToDirectIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.represents(FOO)).thenReturn(true);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -127,7 +118,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToUnresolvedIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.UNRESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.UNRESOLVED);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
@@ -138,7 +129,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToUndefinedIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.UNDEFINED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.UNDEFINED);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
                 Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
@@ -149,7 +140,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToIndirectIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.represents(FOO)).thenReturn(true);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -162,7 +153,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToOtherHandlerIsTrue() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
         InvocationHandler invocationHandler = Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -178,7 +169,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToDirectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.represents(BAR)).thenReturn(false);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -190,7 +181,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToIndirectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.represents(BAR)).thenReturn(false);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -203,9 +194,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToOtherHandlerIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        when(otherLoadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(otherLoadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(otherLoadedAnnotationValue.resolve()).thenReturn(BAR);
         InvocationHandler invocationHandler = Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -222,7 +213,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToObjectIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
@@ -234,7 +225,7 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
 
     @Test
     public void testEqualsToInvocationExceptionIsFalse() throws Throwable {
-        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.Loaded.State.RESOLVED);
+        when(loadedAnnotationValue.getState()).thenReturn(AnnotationValue.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
         assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,

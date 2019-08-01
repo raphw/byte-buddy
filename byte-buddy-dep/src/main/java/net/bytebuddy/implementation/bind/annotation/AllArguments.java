@@ -154,7 +154,7 @@ public @interface AllArguments {
             } else {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
+            boolean includeThis = !source.isStatic() && annotation.load().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
             for (TypeDescription.Generic sourceParameter : includeThis
@@ -166,7 +166,7 @@ public @interface AllArguments {
                 );
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
-                } else if (annotation.loadSilent().value().isStrict()) {
+                } else if (annotation.load().value().isStrict()) {
                     return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
                 }
                 offset += sourceParameter.getStackSize().getSize();

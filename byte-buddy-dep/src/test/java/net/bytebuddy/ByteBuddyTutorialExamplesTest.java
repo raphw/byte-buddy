@@ -513,7 +513,7 @@ public class ByteBuddyTutorialExamplesTest {
             if (!target.getType().asErasure().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
-            StackManipulation constant = new TextConstant(annotation.loadSilent().value());
+            StackManipulation constant = new TextConstant(annotation.load().value());
             return new MethodDelegationBinder.ParameterBinding.Anonymous(constant);
         }
     }

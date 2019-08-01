@@ -81,7 +81,7 @@ public @interface This {
                 throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
             } else if (target.getType().isArray()) {
                 throw new IllegalStateException(target + " uses an array type with a @This annotation");
-            } else if (source.isStatic() && !annotation.loadSilent().optional()) {
+            } else if (source.isStatic() && !annotation.load().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()

@@ -192,7 +192,7 @@ public @interface Pipe {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(new Redirection(forwardingMethod.getDeclaringType().asErasure(),
                     source,
                     assigner,
-                    annotation.loadSilent().serializableProxy()));
+                    annotation.load().serializableProxy()));
         }
 
         /**

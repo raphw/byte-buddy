@@ -122,7 +122,7 @@ public class CachedReturnPlugin extends Plugin.ForElementMatcher implements Plug
             } else if (methodDescription.getReturnType().represents(void.class)) {
                 throw new IllegalStateException("Cannot cache void result for " + methodDescription);
             }
-            String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent().value();
+            String name = methodDescription.getDeclaredAnnotations().ofType(Enhance.class).load().value();
             if (name.length() == 0) {
                 name = methodDescription.getName() + NAME_INFIX + randomString.nextString();
             }

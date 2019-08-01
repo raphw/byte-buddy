@@ -57,7 +57,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
      * {@inheritDoc}
      */
     public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).loadSilent();
+        Enhance enhance = typeDescription.getDeclaredAnnotations().ofType(Enhance.class).load();
         if (typeDescription.getDeclaredMethods().filter(isHashCode()).isEmpty()) {
             builder = builder.method(isHashCode()).intercept(enhance.invokeSuper()
                     .hashCodeMethod(typeDescription)
@@ -345,8 +345,8 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
         public int compare(FieldDescription.InDefinedShape left, FieldDescription.InDefinedShape right) {
             AnnotationDescription.Loadable<Sorted> leftAnnotation = left.getDeclaredAnnotations().ofType(Sorted.class);
             AnnotationDescription.Loadable<Sorted> rightAnnotation = right.getDeclaredAnnotations().ofType(Sorted.class);
-            int leftValue = leftAnnotation == null ? Sorted.DEFAULT : leftAnnotation.loadSilent().value();
-            int rightValue = rightAnnotation == null ? Sorted.DEFAULT : rightAnnotation.loadSilent().value();
+            int leftValue = leftAnnotation == null ? Sorted.DEFAULT : leftAnnotation.load().value();
+            int rightValue = rightAnnotation == null ? Sorted.DEFAULT : rightAnnotation.load().value();
             if (leftValue > rightValue) {
                 return -1;
             } else if (leftValue < rightValue) {
@@ -382,7 +382,7 @@ public class HashCodeAndEqualsPlugin implements Plugin, Plugin.Factory {
          */
         public boolean matches(FieldDescription target) {
             AnnotationDescription.Loadable<ValueHandling> annotation = target.getDeclaredAnnotations().ofType(ValueHandling.class);
-            return annotation != null && annotation.loadSilent().value() == sort;
+            return annotation != null && annotation.load().value() == sort;
         }
     }
 }

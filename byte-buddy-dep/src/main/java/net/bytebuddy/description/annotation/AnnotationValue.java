@@ -17,10 +17,15 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.AnnotationTypeMismatchException;
+import java.lang.annotation.IncompleteAnnotationException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -45,14 +50,29 @@ public interface AnnotationValue<T, S> {
     AnnotationValue<?, ?> UNDEFINED = null;
 
     /**
-     * Resolves the unloaded value of this annotation.
+     * Returns the state of the represented annotation value.
+     *
+     * @return The state represented by this instance.
+     */
+    State getState();
+
+    /**
+     * Returns {@code true} if this annotation's value can represent the supplied type.
+     *
+     * @param typeDefinition The type for which to check if it represents this annotation value.
+     * @return {@code true} if this annotation's value can represent the supplied type.
+     */
+    boolean isResolvableTo(TypeDefinition typeDefinition);
+
+    /**
+     * Resolves the unloaded value of this annotation. The return value of this method is not defined if this annotation value is invalid.
      *
      * @return The unloaded value of this annotation.
      */
     T resolve();
 
     /**
-     * Resolves the unloaded value of this annotation.
+     * Resolves the unloaded value of this annotation. The return value of this method is not defined if this annotation value is invalid.
      *
      * @param type The annotation value's unloaded type.
      * @param <W>  The annotation value's unloaded type.
@@ -65,16 +85,17 @@ public interface AnnotationValue<T, S> {
      *
      * @param classLoader The class loader for loading this value.
      * @return The loaded value of this annotation.
-     * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
      */
-    Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
+    Loaded<S> load(ClassLoader classLoader);
 
     /**
-     * Returns the loaded value of this annotation without throwing a checked exception.
+     * Identical to {@link AnnotationValue#load(ClassLoader)}.
      *
      * @param classLoader The class loader for loading this value.
      * @return The loaded value of this annotation.
+     * @deprecated Use {@link AnnotationValue#load(ClassLoader)}.
      */
+    @Deprecated
     Loaded<S> loadSilent(ClassLoader classLoader);
 
     /**
@@ -421,49 +442,6 @@ public interface AnnotationValue<T, S> {
         boolean represents(Object value);
 
         /**
-         * Represents the state of a {@link Loaded} annotation property.
-         */
-        enum State {
-
-            /**
-             * An undefined annotation value describes an annotation property which is missing such that
-             * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
-             */
-            UNDEFINED,
-
-            /**
-             * An unresolved annotation value describes an annotation property which does not represent a
-             * valid value but an exceptional state.
-             */
-            UNRESOLVED,
-
-            /**
-             * A resolved annotation value describes an annotation property with an actual value.
-             */
-            RESOLVED;
-
-            /**
-             * Returns {@code true} if the related annotation value is defined, i.e. either represents
-             * an actual value or an exceptional state.
-             *
-             * @return {@code true} if the related annotation value is defined.
-             */
-            public boolean isDefined() {
-                return this != UNDEFINED;
-            }
-
-            /**
-             * Returns {@code true} if the related annotation value is resolved, i.e. represents an actual
-             * value.
-             *
-             * @return {@code true} if the related annotation value is resolved.
-             */
-            public boolean isResolved() {
-                return this == RESOLVED;
-            }
-        }
-
-        /**
          * An abstract base implementation of a loaded annotation value.
          *
          * @param <W> The represented loaded type.
@@ -476,6 +454,71 @@ public interface AnnotationValue<T, S> {
             public <X> X resolve(Class<? extends X> type) {
                 return type.cast(resolve());
             }
+
+            /**
+             * A base implementation for an unresolved property.
+             *
+             * @param <Z> The represented loaded type.
+             */
+            public abstract static class ForUnresolvedProperty<Z> extends AbstractBase<Z> {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public State getState() {
+                    return State.UNRESOLVED;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean represents(Object value) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    /**
+     * Represents the state of a {@link Loaded} annotation property.
+     */
+    enum State {
+
+        /**
+         * An undefined annotation value describes an annotation property which is missing such that
+         * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
+         */
+        UNDEFINED,
+
+        /**
+         * An unresolved annotation value describes an annotation property which does not represent a
+         * valid value but an exceptional state.
+         */
+        UNRESOLVED,
+
+        /**
+         * A resolved annotation value describes an annotation property with an actual value.
+         */
+        RESOLVED;
+
+        /**
+         * Returns {@code true} if the related annotation value is defined, i.e. either represents
+         * an actual value or an exceptional state.
+         *
+         * @return {@code true} if the related annotation value is defined.
+         */
+        public boolean isDefined() {
+            return this != UNDEFINED;
+        }
+
+        /**
+         * Returns {@code true} if the related annotation value is resolved, i.e. represents an actual
+         * value.
+         *
+         * @return {@code true} if the related annotation value is resolved.
+         */
+        public boolean isResolved() {
+            return this == RESOLVED;
         }
     }
 
@@ -498,11 +541,7 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         public Loaded<V> loadSilent(ClassLoader classLoader) {
-            try {
-                return load(classLoader);
-            } catch (ClassNotFoundException exception) {
-                throw new IllegalStateException("Cannot load " + this, exception);
-            }
+            return load(classLoader);
         }
     }
 
@@ -762,6 +801,20 @@ public interface AnnotationValue<T, S> {
             } else {
                 throw new IllegalArgumentException("Not a constant annotation value: " + value);
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public State getState() {
+            return State.RESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().equals(TypeDescription.ForLoadedType.of(value.getClass()).asUnboxed());
         }
 
         /**
@@ -1326,6 +1379,20 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public State getState() {
+            return State.RESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return annotationDescription.getAnnotationType().equals(typeDefinition.asErasure());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public AnnotationDescription resolve() {
             return annotationDescription;
         }
@@ -1333,10 +1400,15 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
-            @SuppressWarnings("unchecked")
-            Class<U> annotationType = (Class<U>) Class.forName(annotationDescription.getAnnotationType().getName(), false, classLoader);
-            return new Loaded<U>(annotationDescription.prepare(annotationType).load());
+        @SuppressWarnings("unchecked")
+        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
+            try {
+                return new Loaded<U>(annotationDescription
+                        .prepare((Class<U>) Class.forName(annotationDescription.getAnnotationType().getName(), false, classLoader))
+                        .load());
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<U>(annotationDescription.getAnnotationType().getName(), exception);
+            }
         }
 
         @Override
@@ -1417,57 +1489,6 @@ public interface AnnotationValue<T, S> {
                 return annotation.toString();
             }
         }
-
-        /**
-         * <p>
-         * Represents an annotation value which was attempted to ba loaded by a type that does not represent
-         * an annotation value.
-         * </p>
-         * <p>
-         * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-         * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-         * such exceptional states are represented in the Open JDK's annotation implementations.
-         * </p>
-         */
-        public static class IncompatibleRuntimeType extends AnnotationValue.Loaded.AbstractBase<Annotation> {
-
-            /**
-             * The incompatible runtime type which is not an annotation type.
-             */
-            private final Class<?> incompatibleType;
-
-            /**
-             * Creates a new representation for an annotation with an incompatible runtime type.
-             *
-             * @param incompatibleType The incompatible runtime type which is not an annotation type.
-             */
-            public IncompatibleRuntimeType(Class<?> incompatibleType) {
-                this.incompatibleType = incompatibleType;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                return State.UNRESOLVED;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Annotation resolve() {
-                throw new IncompatibleClassChangeError("Not an annotation type: " + incompatibleType.toString());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean represents(Object value) {
-                return false;
-            }
-
-            /* does intentionally not implement hashCode, equals and toString */
-        }
     }
 
     /**
@@ -1512,10 +1533,25 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
-            @SuppressWarnings("unchecked")
-            Class<U> enumerationType = (Class<U>) Class.forName(enumerationDescription.getEnumerationType().getName(), false, classLoader);
-            return new Loaded<U>(enumerationDescription.load(enumerationType));
+        public State getState() {
+            return State.RESOLVED;
+        }
+
+        @Override
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return enumerationDescription.getEnumerationType().equals(typeDefinition.asErasure());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @SuppressWarnings("unchecked")
+        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
+            try {
+                return new Loaded<U>(enumerationDescription.load((Class<U>) Class.forName(enumerationDescription.getEnumerationType().getName(), false, classLoader)));
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<U>(enumerationDescription.getEnumerationType().getName(), exception);
+            }
         }
 
         @Override
@@ -1595,39 +1631,83 @@ public interface AnnotationValue<T, S> {
             public String toString() {
                 return enumeration.toString();
             }
+
+            /**
+             * <p>
+             * Represents an annotation's enumeration value for a runtime type that is not an enumeration type.
+             * </p>
+             * <p>
+             * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
+             * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
+             * such exceptional states are represented in the Open JDK's annotation implementations.
+             * </p>
+             */
+            public static class WithIncompatibleRuntimeType extends AnnotationValue.Loaded.AbstractBase<Enum<?>> {
+
+                /**
+                 * The runtime type which is not an enumeration type.
+                 */
+                private final Class<?> type;
+
+                /**
+                 * Creates a new representation for an incompatible runtime type.
+                 *
+                 * @param type The runtime type which is not an enumeration type.
+                 */
+                public WithIncompatibleRuntimeType(Class<?> type) {
+                    this.type = type;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public State getState() {
+                    return State.UNRESOLVED;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Enum<?> resolve() {
+                    throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean represents(Object value) {
+                    return false;
+                }
+
+                /* hashCode, equals and toString are intentionally not implemented */
+            }
         }
 
         /**
-         * <p>
-         * Represents an annotation's enumeration value for a constant that does not exist for the runtime
-         * enumeration type.
-         * </p>
-         * <p>
-         * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-         * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-         * such exceptional states are represented in the Open JDK's annotation implementations.
-         * </p>
+         * Represents a property with an enumeration constant that is not defined by an enumeration type.
+         *
+         * @param <U> The enumerationl type.
          */
-        public static class UnknownRuntimeEnumeration extends AnnotationValue.Loaded.AbstractBase<Enum<?>> {
+        public static class WithUnknownConstant<U extends Enum<U>> extends AbstractBase<EnumerationDescription, U> {
 
             /**
-             * The loaded enumeration type.
+             * A description of the enumeration type.
              */
-            private final Class<? extends Enum<?>> enumType;
+            private final TypeDescription typeDescription;
 
             /**
-             * The value for which no enumeration constant exists at runtime.
+             * The enumeration constant value.
              */
             private final String value;
 
             /**
-             * Creates a new representation for an unknown enumeration constant of an annotation.
+             * Creates a property description for an enumeration value that does not exist for the enumeration type.
              *
-             * @param enumType The loaded enumeration type.
-             * @param value    The value for which no enumeration constant exists at runtime.
+             * @param typeDescription A description of the enumeration type.
+             * @param value           The enumeration constant value.
              */
-            public UnknownRuntimeEnumeration(Class<? extends Enum<?>> enumType, String value) {
-                this.enumType = enumType;
+            public WithUnknownConstant(TypeDescription typeDescription, String value) {
+                this.typeDescription = typeDescription;
                 this.value = value;
             }
 
@@ -1641,68 +1721,76 @@ public interface AnnotationValue<T, S> {
             /**
              * {@inheritDoc}
              */
-            public Enum<?> resolve() {
-                throw new EnumConstantNotPresentException(enumType, value);
+            public boolean isResolvableTo(TypeDefinition typeDefinition) {
+                return typeDefinition.asErasure().equals(typeDescription);
             }
 
             /**
              * {@inheritDoc}
              */
-            public boolean represents(Object value) {
-                return false;
-            }
-
-            /* hashCode, equals and toString are intentionally not implemented */
-        }
-
-        /**
-         * <p>
-         * Represents an annotation's enumeration value for a runtime type that is not an enumeration type.
-         * </p>
-         * <p>
-         * <b>Note</b>: Neither of {@link Object#hashCode()}, {@link Object#toString()} and
-         * {@link java.lang.Object#equals(Object)} are implemented specifically what resembles the way
-         * such exceptional states are represented in the Open JDK's annotation implementations.
-         * </p>
-         */
-        public static class IncompatibleRuntimeType extends AnnotationValue.Loaded.AbstractBase<Enum<?>> {
-
-            /**
-             * The runtime type which is not an enumeration type.
-             */
-            private final Class<?> type;
-
-            /**
-             * Creates a new representation for an incompatible runtime type.
-             *
-             * @param type The runtime type which is not an enumeration type.
-             */
-            public IncompatibleRuntimeType(Class<?> type) {
-                this.type = type;
+            public EnumerationDescription resolve() {
+                throw new IllegalStateException(typeDescription + " does not declare enumeration constant " + value);
             }
 
             /**
              * {@inheritDoc}
              */
-            public State getState() {
-                return State.UNRESOLVED;
+            @SuppressWarnings("unchecked")
+            public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
+                try {
+                    return (AnnotationValue.Loaded<U>) new Loaded((Class<Enum<?>>) Class.forName(typeDescription.getName(), false, classLoader), value);
+                } catch (ClassNotFoundException exception) {
+                    return new ForMissingType.Loaded<U>(typeDescription.getName(), exception);
+                }
+            }
+
+            /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+            @Override
+            public String toString() {
+                return value + " /* Warning: constant not present! */";
             }
 
             /**
-             * {@inheritDoc}
+             * Represents a property with an enumeration constant that is not defined by an enumeration type.
              */
-            public Enum<?> resolve() {
-                throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
-            }
+            public static class Loaded extends AnnotationValue.Loaded.AbstractBase.ForUnresolvedProperty<Enum<?>> {
 
-            /**
-             * {@inheritDoc}
-             */
-            public boolean represents(Object value) {
-                return false;
-            }
+                /**
+                 * The loaded enumeration type.
+                 */
+                private final Class<? extends Enum<?>> enumType;
 
-            /* hashCode, equals and toString are intentionally not implemented */
+                /**
+                 * The value for which no enumeration constant exists at runtime.
+                 */
+                private final String value;
+
+                /**
+                 * Creates a new representation for an unknown enumeration constant of an annotation.
+                 *
+                 * @param enumType The loaded enumeration type.
+                 * @param value    The value for which no enumeration constant exists at runtime.
+                 */
+                public Loaded(Class<? extends Enum<?>> enumType, String value) {
+                    this.enumType = enumType;
+                    this.value = value;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Enum<?> resolve() {
+                    throw new EnumConstantNotPresentException(enumType, value);
+                }
+
+                /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+                @Override
+                public String toString() {
+                    return value + " /* Warning: constant not present! */";
+                }
+            }
         }
     }
 
@@ -1746,6 +1834,20 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public State getState() {
+            return State.RESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().represents(Class.class);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription resolve() {
             return typeDescription;
         }
@@ -1754,8 +1856,12 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
-            return new Loaded<U>((U) Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader));
+        public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
+            try {
+                return new Loaded<U>((U) Class.forName(typeDescription.getName(), NO_INITIALIZATION, classLoader));
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<U>(typeDescription.getName(), exception);
+            }
         }
 
         @Override
@@ -1936,6 +2042,20 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
+        public State getState() {
+            return State.RESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public U[] resolve() {
             @SuppressWarnings("unchecked")
             U[] resolved = (U[]) Array.newInstance(unloadedComponentType, values.size());
@@ -1950,12 +2070,16 @@ public interface AnnotationValue<T, S> {
          * {@inheritDoc}
          */
         @SuppressWarnings("unchecked")
-        public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+        public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) {
             List<AnnotationValue.Loaded<?>> values = new ArrayList<AnnotationValue.Loaded<?>>(this.values.size());
             for (AnnotationValue<?, ?> value : this.values) {
                 values.add(value.load(classLoader));
             }
-            return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
+            try {
+                return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<V[]>(componentType.getName(), exception);
+            }
         }
 
         @Override
@@ -2111,6 +2235,423 @@ public interface AnnotationValue<T, S> {
             public String toString() {
                 return RenderingDispatcher.CURRENT.toSourceString(values);
             }
+        }
+    }
+
+    /**
+     * An annotation value for a type that could not be loaded.
+     *
+     * @param <U> The type of the annotation's value when it is not loaded.
+     * @param <V> The type of the annotation's value when it is loaded.
+     */
+    class ForMissingType<U, V> extends AbstractBase<U, V> {
+
+        /**
+         * The type's binary name.
+         */
+        private final String typeName;
+
+        /**
+         * Creates a new annotation value for a type that cannot be loaded.
+         *
+         * @param typeName The type's binary name.
+         */
+        public ForMissingType(String typeName) {
+            this.typeName = typeName;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public State getState() {
+            return State.UNRESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public U resolve() {
+            throw new IllegalStateException("Type not found: " + typeName);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValue.Loaded<V> load(ClassLoader classLoader) {
+            return new Loaded<V>(typeName, new ClassNotFoundException(typeName));
+        }
+
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+        @Override
+        public String toString() {
+            return typeName + ".class /* Warning: type not present! */";
+        }
+
+        /**
+         * Represents a missing type during an annotation's resolution.
+         *
+         * @param <U> The represented type.
+         */
+        public static class Loaded<U> extends AnnotationValue.Loaded.AbstractBase.ForUnresolvedProperty<U> {
+
+            /**
+             * The type's binary name.
+             */
+            private final String typeName;
+
+            /**
+             * The exception describing the missing type.
+             */
+            private final ClassNotFoundException exception;
+
+            /**
+             * The type's binary name.
+             *
+             * @param typeName  The type's binary name.
+             * @param exception The exception describing the missing type.
+             */
+            public Loaded(String typeName, ClassNotFoundException exception) {
+                this.typeName = typeName;
+                this.exception = exception;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public U resolve() {
+                throw new TypeNotPresentException(typeName, exception);
+            }
+
+            @Override
+            public String toString() {
+                return typeName + ".class /* Warning: type not present! */";
+            }
+        }
+    }
+
+    /**
+     * Describes an annotation value that does not match the annotation' type for a property.
+     *
+     * @param <U> The type of the annotation's value when it is not loaded.
+     * @param <V> The type of the annotation's value when it is loaded.
+     */
+    class ForMismatchedType<U, V> extends AbstractBase<U, V> {
+
+        /**
+         * The property that does not defines a non-matching value.
+         */
+        private final MethodDescription.InDefinedShape property;
+
+        /**
+         * A value description of the property.
+         */
+        private final String value;
+
+        /**
+         * Creates an annotation description for a mismatched typeName.
+         *
+         * @param property The property that does not defines a non-matching value.
+         * @param value    A value description of the property.
+         */
+        public ForMismatchedType(MethodDescription.InDefinedShape property, String value) {
+            this.property = property;
+            this.value = value;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public State getState() {
+            return State.UNRESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public U resolve() {
+            throw new IllegalStateException(property + " cannot define " + value);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValue.Loaded<V> load(ClassLoader classLoader) {
+            try {
+                Class<?> type = Class.forName(property.getDeclaringType().getName(), false, classLoader);
+                try {
+                    return new Loaded<V>(type.getMethod(property.getName()), value);
+                } catch (NoSuchMethodException exception) {
+                    return new ForIncompatibleRuntimeType.Loaded<V>(type);
+                }
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<V>(property.getDeclaringType().getName(), exception);
+            }
+        }
+
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+        @Override
+        public String toString() {
+            return "/* Warning type mismatch! \"" + value + "\" */";
+        }
+
+        /**
+         * Describes an annotation value for a property that is not assignable to it.
+         *
+         * @param <W> The type of the annotation's expected value.
+         */
+        public static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase.ForUnresolvedProperty<W> {
+
+            /**
+             * The annotation property that is not well-defined.
+             */
+            private final Method property;
+
+            /**
+             * A value description of the incompatible property or {@code null}.
+             */
+            private final String value;
+
+            /**
+             * Creates a new loaded version of a property with an incompatible type.
+             *
+             * @param property The annotation property that is not well-defined.
+             * @param value    A value description of the incompatible property or {@code null}.
+             */
+            public Loaded(Method property, String value) {
+                this.property = property;
+                this.value = value;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public W resolve() {
+                throw new AnnotationTypeMismatchException(property, value);
+            }
+        }
+    }
+
+    /**
+     * Represents a missing annotation property which is not represented by a default value.
+     *
+     * @param <U> The type of the annotation's value when it is not loaded.
+     * @param <V> The type of the annotation's value when it is loaded.
+     */
+    class ForMissingValue<U, V> extends AnnotationValue.AbstractBase<U, V> {
+
+        /**
+         * The annotation type for which a property is not defined.
+         */
+        private final TypeDescription typeDescription;
+
+        /**
+         * The name of the property without an annotation value.
+         */
+        private final String property;
+
+        /**
+         * Creates a new missing annotation value.
+         *
+         * @param typeDescription The annotation type for which a property is not defined.
+         * @param property        The name of the property without an annotation value.
+         */
+        public ForMissingValue(TypeDescription typeDescription, String property) {
+            this.typeDescription = typeDescription;
+            this.property = property;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public State getState() {
+            return State.UNDEFINED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @SuppressWarnings("unchecked")
+        public AnnotationValue.Loaded<V> load(ClassLoader classLoader) {
+            try {
+                Class<? extends Annotation> type = (Class<? extends Annotation>) Class.forName(typeDescription.getName(), false, classLoader);
+                return type.isAnnotation()
+                        ? new Loaded<V>(type, property)
+                        : new ForIncompatibleRuntimeType.Loaded<V>(type);
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<>(typeDescription.getName(), exception);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public U resolve() {
+            throw new IllegalStateException(typeDescription + " does not define " + property);
+        }
+
+        /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+
+        /**
+         * Describes an annotation value for a property that is not assignable to it.
+         *
+         * @param <W> The type of the annotation's expected value.
+         */
+        public static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase<W> {
+
+            /**
+             * The annotation type.
+             */
+            private final Class<? extends Annotation> type;
+
+            /**
+             * The name of the property for which the annotation value is missing.
+             */
+            private final String property;
+
+            /**
+             * Creates a new loaded representation for an unresolved property.
+             *
+             * @param type     The annotation type.
+             * @param property The name of the property for which the annotation value is missing.
+             */
+            public Loaded(Class<? extends Annotation> type, String property) {
+                this.type = type;
+                this.property = property;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public State getState() {
+                return State.UNDEFINED;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public W resolve() {
+                throw new IncompleteAnnotationException(type, property);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean represents(Object value) {
+                return false;
+            }
+
+            /* does not implement hashCode and equals method to mimic OpenJDK behavior. */
+        }
+    }
+
+    /**
+     * Represents an annotation value where the runtime type does not fulfil the type's runtime expectations.
+     *
+     * @param <U> The type of the annotation's value when it is not loaded.
+     * @param <V> The type of the annotation's value when it is loaded.
+     */
+    class ForIncompatibleRuntimeType<U, V> extends AnnotationValue.AbstractBase<U, V> {
+
+        /**
+         * A description of the type that does not fulfil the expectations.
+         */
+        private final TypeDescription typeDescription;
+
+        /**
+         * Creates a new description for an annotation value that does not fulfil expectations.
+         *
+         * @param typeDescription A description of the type that does not fulfil the expectations.
+         */
+        public ForIncompatibleRuntimeType(TypeDescription typeDescription) {
+            this.typeDescription = typeDescription;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public State getState() {
+            return State.UNRESOLVED;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isResolvableTo(TypeDefinition typeDefinition) {
+            return true;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public U resolve() {
+            throw new IllegalStateException("Property is defined with an incompatible runtime type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValue.Loaded<V> load(ClassLoader classLoader) {
+            try {
+                return new Loaded<V>(Class.forName(typeDescription.getName(), false, classLoader));
+            } catch (ClassNotFoundException exception) {
+                return new ForMissingType.Loaded<V>(typeDescription.getName(), exception);
+            }
+        }
+
+        // TODO: toString?
+
+        /**
+         * A description of annotation value for a type that does not fulfil runtime expectations.
+         *
+         * @param <W> The type of the annotation's expected value.
+         */
+        public static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase.ForUnresolvedProperty<W> {
+
+            /**
+             * The type that does not fulfil its runtime expectations.
+             */
+            private final Class<?> type;
+
+            /**
+             * Creates a new description of an annotation.
+             *
+             * @param type The type that does not fulfil its runtime expectations.
+             */
+            public Loaded(Class<?> type) {
+                this.type = type;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public W resolve() {
+                throw new IncompatibleClassChangeError(type.toString());
+            }
+
+            // TODO: toString?
         }
     }
 }
