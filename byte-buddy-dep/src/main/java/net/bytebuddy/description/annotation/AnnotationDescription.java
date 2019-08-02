@@ -127,15 +127,6 @@ public interface AnnotationDescription {
          * @return A loaded version of this annotation description.
          */
         S load();
-
-        /**
-         * This method is identical to {@link Loadable#load()}.
-         *
-         * @return A loaded version of this annotation description.
-         * @deprecated Use {@link Loadable#load()}.
-         */
-        @Deprecated
-        S loadSilent();
     }
 
     /**
@@ -487,21 +478,6 @@ public interface AnnotationDescription {
             }
             return toString.append(')').toString();
         }
-
-        /**
-         * An abstract implementation of a loadable annotation description.
-         *
-         * @param <S> The annotation type this instance was prepared for.
-         */
-        public abstract static class ForPrepared<S extends Annotation> extends AbstractBase implements Loadable<S> {
-
-            /**
-             * {@inheritDoc}
-             */
-            public S loadSilent() {
-                return load();
-            }
-        }
     }
 
     /**
@@ -509,7 +485,7 @@ public interface AnnotationDescription {
      *
      * @param <S> The type of the annotation.
      */
-    class ForLoadedAnnotation<S extends Annotation> extends AbstractBase.ForPrepared<S> {
+    class ForLoadedAnnotation<S extends Annotation> extends AbstractBase implements Loadable<S> {
 
         /**
          * The represented annotation value.
@@ -772,7 +748,7 @@ public interface AnnotationDescription {
          *
          * @param <S> The annotation type.
          */
-        protected class Loadable<S extends Annotation> extends AbstractBase.ForPrepared<S> {
+        protected class Loadable<S extends Annotation> extends AbstractBase implements AnnotationDescription.Loadable<S> {
 
             /**
              * The annotation type.

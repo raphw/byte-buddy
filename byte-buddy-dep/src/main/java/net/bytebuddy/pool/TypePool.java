@@ -5729,14 +5729,6 @@ public interface TypePool {
                     public S load() {
                         return AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values);
                     }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    @SuppressWarnings("deprecation")
-                    public S loadSilent() {
-                        return load();
-                    }
                 }
             }
 

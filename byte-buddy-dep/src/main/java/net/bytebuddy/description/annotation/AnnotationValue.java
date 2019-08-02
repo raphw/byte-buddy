@@ -98,16 +98,6 @@ public interface AnnotationValue<T, S> {
     Loaded<S> load(ClassLoader classLoader);
 
     /**
-     * Identical to {@link AnnotationValue#load(ClassLoader)}.
-     *
-     * @param classLoader The class loader for loading this value.
-     * @return The loaded value of this annotation.
-     * @deprecated Use {@link AnnotationValue#load(ClassLoader)}.
-     */
-    @Deprecated
-    Loaded<S> loadSilent(ClassLoader classLoader);
-
-    /**
      * A rendering dispatcher is responsible for resolving annotation values to {@link String} representations.
      */
     enum RenderingDispatcher {
@@ -582,13 +572,6 @@ public interface AnnotationValue<T, S> {
          */
         public <W> W resolve(Class<? extends W> type) {
             return type.cast(resolve());
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public Loaded<V> loadSilent(ClassLoader classLoader) {
-            return load(classLoader);
         }
 
         @Override
@@ -1798,7 +1781,8 @@ public interface AnnotationValue<T, S> {
             @SuppressWarnings("unchecked")
             public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
                 try {
-                    return (AnnotationValue.Loaded<U>) new Loaded((Class<Enum<?>>) Class.forName(typeDescription.getName(), false, classLoader), value);
+                    // Type casting to Object is required for Java 6 compilability.
+                    return (AnnotationValue.Loaded<U>) (Object) new Loaded((Class<Enum<?>>) Class.forName(typeDescription.getName(), false, classLoader), value);
                 } catch (ClassNotFoundException exception) {
                     return new ForMissingType.Loaded<U>(typeDescription.getName(), exception);
                 }
