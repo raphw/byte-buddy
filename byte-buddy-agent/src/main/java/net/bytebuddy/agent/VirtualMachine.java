@@ -427,11 +427,6 @@ public interface VirtualMachine {
                 abstract class ForSocketFile implements Factory {
 
                     /**
-                     * The temporary directory on Unix systems.
-                     */
-                    private static final String TEMPORARY_DIRECTORY = "/tmp";
-
-                    /**
                      * The name prefix for a socket.
                      */
                     private static final String SOCKET_FILE_PREFIX = ".java_pid";
@@ -440,6 +435,11 @@ public interface VirtualMachine {
                      * The name prefix for an attachment file indicator.
                      */
                     private static final String ATTACH_FILE_PREFIX = ".attach_pid";
+
+                    /**
+                     * The temporary directory to use.
+                     */
+                    private final String temporaryDirectory;
 
                     /**
                      * The maximum amount of attempts for checking the establishment of a socket connection.
@@ -459,11 +459,13 @@ public interface VirtualMachine {
                     /**
                      * Creates a connection factory for creating a socket connection via a file.
                      *
-                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
-                     * @param pause    The pause between two checks for an established socket connection.
-                     * @param timeUnit The time unit of the pause time.
+                     * @param temporaryDirectory The temporary directory to use.
+                     * @param attempts           The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause              The pause between two checks for an established socket connection.
+                     * @param timeUnit           The time unit of the pause time.
                      */
-                    protected ForSocketFile(int attempts, long pause, TimeUnit timeUnit) {
+                    protected ForSocketFile(String temporaryDirectory, int attempts, long pause, TimeUnit timeUnit) {
+                        this.temporaryDirectory = temporaryDirectory;
                         this.attempts = attempts;
                         this.pause = pause;
                         this.timeUnit = timeUnit;
@@ -474,7 +476,7 @@ public interface VirtualMachine {
                      */
                     @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME", justification = "File name convention is specified.")
                     public Connection connect(String processId) throws IOException {
-                        File socket = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
+                        File socket = new File(temporaryDirectory, SOCKET_FILE_PREFIX + processId);
                         if (!socket.exists()) {
                             String target = ATTACH_FILE_PREFIX + processId, path = "/proc/" + processId + "/cwd/" + target;
                             File attachFile = new File(path);
@@ -483,7 +485,7 @@ public interface VirtualMachine {
                                     throw new IllegalStateException("Could not create attach file: " + attachFile);
                                 }
                             } catch (IOException ignored) {
-                                attachFile = new File(TEMPORARY_DIRECTORY, target);
+                                attachFile = new File(temporaryDirectory, target);
                                 if (!attachFile.createNewFile() && !attachFile.isFile()) {
                                     throw new IllegalStateException("Could not create attach file: " + attachFile);
                                 }
@@ -741,7 +743,19 @@ public interface VirtualMachine {
                      * @param timeUnit The time unit of the pause time.
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
-                        super(attempts, pause, timeUnit);
+                        this("/tmp", attempts, pause, timeUnit);
+                    }
+
+                    /**
+                     * Creates a connection factory for a POSIX socket using JNA.
+                     *
+                     * @param temporaryDirectory The temporary directory to use.
+                     * @param attempts           The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause              The pause between two checks for an established socket connection.
+                     * @param timeUnit           The time unit of the pause time.
+                     */
+                    public Factory(String temporaryDirectory, int attempts, long pause, TimeUnit timeUnit) {
+                        super(temporaryDirectory, attempts, pause, timeUnit);
                         library = Native.load("c", PosixLibrary.class);
                     }
 
@@ -1344,12 +1358,12 @@ public interface VirtualMachine {
                     /**
                      * Creates a new connection factory for a Solaris VM.
                      *
-                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
-                     * @param pause    The pause between two checks for an established socket connection.
-                     * @param timeUnit The time unit of the pause time.
+                     * @param attempts           The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause              The pause between two checks for an established socket connection.
+                     * @param timeUnit           The time unit of the pause time.
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
-                        super(attempts, pause, timeUnit);
+                        super("/tmp", attempts, pause, timeUnit);
                         library = Native.load("c", SolarisLibrary.class);
                     }
 
