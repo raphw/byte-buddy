@@ -245,7 +245,6 @@ public interface AnnotationDescription {
          * @param values         The values that the annotation contains.
          * @param <S>            The type of the handled annotation.
          * @return A proxy for the annotation type and values.
-         * @throws ClassNotFoundException If the class of an instance that is contained by this annotation could not be found.
          */
         @SuppressWarnings("unchecked")
         public static <S extends Annotation> S of(ClassLoader classLoader,
@@ -254,53 +253,16 @@ public interface AnnotationDescription {
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
             for (Method method : annotationType.getDeclaredMethods()) {
                 AnnotationValue<?, ?> annotationValue = values.get(method.getName());
-                loadedValues.put(method, (annotationValue == null
-                        ? defaultValueOf(method)
-                        : annotationValue).load(classLoader));
-            }
-            return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType}, new AnnotationInvocationHandler<S>(annotationType, loadedValues));
-        }
-
-        /**
-         * Creates a default value for the given method.
-         *
-         * @param method The method from which to attempt the extraction of a default value.
-         * @return A default value representation.
-         */
-        private static AnnotationValue<?, ?> defaultValueOf(Method method) {
-            Object defaultValue = method.getDefaultValue();
-            return defaultValue == null
-                    ? new AnnotationValue.ForMissingValue<Void, Void>(new TypeDescription.ForLoadedType(method.getDeclaringClass()), method.getName())
-                    : AnnotationDescription.ForLoadedAnnotation.asValue(defaultValue, method.getReturnType());
-        }
-
-        /**
-         * Resolves any primitive type to its wrapper type.
-         *
-         * @param type The type to resolve.
-         * @return The resolved type.
-         */
-        private static Class<?> asWrapper(Class<?> type) {
-            if (type.isPrimitive()) {
-                if (type == boolean.class) {
-                    return Boolean.class;
-                } else if (type == byte.class) {
-                    return Byte.class;
-                } else if (type == short.class) {
-                    return Short.class;
-                } else if (type == char.class) {
-                    return Character.class;
-                } else if (type == int.class) {
-                    return Integer.class;
-                } else if (type == long.class) {
-                    return Long.class;
-                } else if (type == float.class) {
-                    return Float.class;
-                } else if (type == double.class) {
-                    return Double.class;
+                if (annotationValue == null) {
+                    Object defaultValue = method.getDefaultValue();
+                    loadedValues.put(method, (defaultValue == null
+                            ? new AnnotationValue.ForMissingValue<Void, Void>(new TypeDescription.ForLoadedType(method.getDeclaringClass()), method.getName())
+                            : AnnotationDescription.ForLoadedAnnotation.asValue(defaultValue, method.getReturnType())).load(classLoader));
+                } else {
+                    loadedValues.put(method, annotationValue.filter(new MethodDescription.ForLoadedMethod(method)).load(classLoader));
                 }
             }
-            return type;
+            return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType}, new AnnotationInvocationHandler<S>(annotationType, loadedValues));
         }
 
         /**
@@ -318,11 +280,7 @@ public interface AnnotationDescription {
                     return annotationType;
                 }
             }
-            Object value = values.get(method).resolve();
-            if (!asWrapper(method.getReturnType()).isAssignableFrom(value.getClass())) {
-                throw new AnnotationTypeMismatchException(method, value.getClass().toString());
-            }
-            return value;
+            return values.get(method).resolve();
         }
 
         /**
@@ -703,7 +661,7 @@ public interface AnnotationDescription {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
-                return asValue(method.invoke(annotation), method.getReturnType());
+                return asValue(method.invoke(annotation), method.getReturnType()).filter(property);
             } catch (InvocationTargetException exception) {
                 Throwable cause = exception.getCause();
                 if (cause instanceof TypeNotPresentException) {
@@ -784,7 +742,7 @@ public interface AnnotationDescription {
             }
             AnnotationValue<?, ?> value = annotationValues.get(property.getName());
             if (value != null) {
-                return value;
+                return value.filter(property);
             }
             AnnotationValue<?, ?> defaultValue = property.getDefaultValue();
             return defaultValue == null
@@ -918,11 +876,9 @@ public interface AnnotationDescription {
          * @return A builder with the additional, given property.
          */
         public Builder define(String property, AnnotationValue<?, ?> value) {
-            MethodList<?> methodDescriptions = annotationType.getDeclaredMethods().filter(named(property));
+            MethodList<MethodDescription.InDefinedShape> methodDescriptions = annotationType.getDeclaredMethods().filter(named(property));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
-            } else if (!value.isResolvableTo(methodDescriptions.getOnly().getReturnType())) {
-                throw new IllegalArgumentException(value + " cannot be assigned to " + property);
             }
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>(this.annotationValues);
             if (annotationValues.put(methodDescriptions.getOnly().getName(), value) != null) {
@@ -1318,9 +1274,12 @@ public interface AnnotationDescription {
          * @return An appropriate annotation description.
          */
         public AnnotationDescription build() {
-            for (MethodDescription methodDescription : annotationType.getDeclaredMethods()) {
-                if (annotationValues.get(methodDescription.getName()) == null && methodDescription.getDefaultValue() == null) {
+            for (MethodDescription.InDefinedShape methodDescription : annotationType.getDeclaredMethods()) {
+                AnnotationValue<?, ?> annotationValue = annotationValues.get(methodDescription.getName());
+                if (annotationValue == null && methodDescription.getDefaultValue() == null) {
                     throw new IllegalStateException("No value or default value defined for " + methodDescription.getName());
+                } else if (annotationValue != null && annotationValue.filter(methodDescription).getState() != AnnotationValue.State.RESOLVED) {
+                    throw new IllegalStateException("Illegal annotation value for " + methodDescription + ": " + annotationValue);
                 }
             }
             return new Latent(annotationType, annotationValues);

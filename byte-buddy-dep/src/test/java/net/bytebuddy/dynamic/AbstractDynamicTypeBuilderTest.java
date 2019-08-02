@@ -956,7 +956,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
-    @Ignore("The Java reflection API does not currently support nested generic types")
+    @Ignore("The OpenJDK reflection API does not currently support nested generic types")
     public void testAnnotationTypeOnNestedParameterizedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();

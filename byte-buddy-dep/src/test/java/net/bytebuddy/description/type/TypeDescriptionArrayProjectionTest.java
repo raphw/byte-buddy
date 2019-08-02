@@ -53,28 +53,28 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableU() throws Exception {
         super.testTypeVariableU();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableV() throws Exception {
         super.testTypeVariableV();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableW() throws Exception {
         super.testTypeVariableW();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableX() throws Exception {
         super.testTypeVariableX();
     }

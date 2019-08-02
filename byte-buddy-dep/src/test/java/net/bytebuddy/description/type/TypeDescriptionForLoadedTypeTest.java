@@ -51,28 +51,28 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableU() throws Exception {
         super.testTypeVariableU();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableV() throws Exception {
         super.testTypeVariableV();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableW() throws Exception {
         super.testTypeVariableW();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    @Ignore("The OpenJDK reflection API suffers a bug that affects parsing of type variable bounds")
     public void testTypeVariableX() throws Exception {
         super.testTypeVariableX();
     }
@@ -86,14 +86,14 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
     public void testGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericTypeAnnotationReceiverTypeOnMethod();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
     public void testGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericNestedTypeAnnotationReceiverTypeOnMethod();
     }
@@ -107,14 +107,14 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Test
     @Override
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
     public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnConstructor();
     }
 
     @Test
     @Override
-    @Ignore("The Java reflection API does not currently support generic receiver types")
+    @Ignore("The OpenJDK reflection API does not currently support generic receiver types")
     public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnMethod();
     }

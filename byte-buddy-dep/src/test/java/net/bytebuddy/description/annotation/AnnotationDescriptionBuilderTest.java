@@ -6,12 +6,7 @@ import java.lang.annotation.Annotation;
 
 public class AnnotationDescriptionBuilderTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNonMatchingEnumerationValue() throws Exception {
-        AnnotationDescription.Builder.ofType(Foo.class).define(FOO, FooBar.FIRST);
-    }
+    private static final String FOO = "foo", BAR = "bar", BAZ = "baz";
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonMatchingAnnotationValue() throws Exception {
@@ -44,11 +39,6 @@ public class AnnotationDescriptionBuilderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUnknownProperty() throws Exception {
         AnnotationDescription.Builder.ofType(Foo.class).define(FOO + BAR, FOO);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testIllegalProperty() throws Exception {
-        AnnotationDescription.Builder.ofType(Foo.class).define(FOO, FOO);
     }
 
     @Test(expected = IllegalArgumentException.class)

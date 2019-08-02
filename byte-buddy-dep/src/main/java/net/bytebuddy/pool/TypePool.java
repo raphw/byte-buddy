@@ -42,7 +42,6 @@ import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -439,6 +438,19 @@ public interface TypePool {
         protected abstract Resolution doDescribe(String name);
 
         /**
+         * A lazy representation of the component type of an array.
+         */
+        protected interface ComponentTypeReference {
+
+            /**
+             * Lazily returns the binary name of the array component type of an annotation value.
+             *
+             * @return The binary name of the component type.
+             */
+            String lookup();
+        }
+
+        /**
          * Implements a hierarchical view of type pools, similarly to class loader hierarchies. For every lookup, the parent type pool
          * is asked first if it can resolve a type. Only if the parent (and potentially its parents) are unable to resolve a type,
          * this instance is queried for a type description.
@@ -539,246 +551,6 @@ public interface TypePool {
              */
             public TypeDescription resolve() {
                 return TypeDescription.ArrayProjection.of(resolution.resolve(), arity);
-            }
-        }
-
-        /**
-         * Represents an array that is referenced by an annotation which does not contain primitive values or {@link String}s.
-         */
-        protected static class RawDescriptionArray extends AnnotationValue.AbstractBase<Object[], Object[]> {
-
-            /**
-             * The type pool to use for looking up types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * A reference to the component type.
-             */
-            private final ComponentTypeReference componentTypeReference;
-
-            /**
-             * A list of all values of this array value in their order.
-             */
-            private List<AnnotationValue<?, ?>> values;
-
-            /**
-             * Creates a new array value representation of a complex array.
-             *
-             * @param typePool               The type pool to use for looking up types.
-             * @param componentTypeReference A lazy reference to the component type of this array.
-             * @param values                 A list of all values of this annotation.
-             */
-            public RawDescriptionArray(TypePool typePool,
-                                       ComponentTypeReference componentTypeReference,
-                                       List<AnnotationValue<?, ?>> values) {
-                this.typePool = typePool;
-                this.values = values;
-                this.componentTypeReference = componentTypeReference;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public State getState() {
-                return typePool.describe(componentTypeReference.lookup()).isResolved()
-                        ? State.RESOLVED
-                        : State.UNRESOLVED;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().getName().equals(componentTypeReference.lookup());
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public Object[] resolve() {
-                TypeDescription componentTypeDescription = typePool.describe(componentTypeReference.lookup()).resolve();
-                Class<?> componentType;
-                if (componentTypeDescription.represents(Class.class)) {
-                    componentType = TypeDescription.class;
-                } else if (componentTypeDescription.isAssignableTo(Enum.class)) { // Enums can implement annotation interfaces, check this first.
-                    componentType = EnumerationDescription.class;
-                } else if (componentTypeDescription.isAssignableTo(Annotation.class)) {
-                    componentType = AnnotationDescription.class;
-                } else if (componentTypeDescription.represents(String.class)) {
-                    componentType = String.class;
-                } else {
-                    throw new IllegalStateException("Unexpected complex array component type " + componentTypeDescription);
-                }
-                Object[] array = (Object[]) Array.newInstance(componentType, values.size());
-                int index = 0;
-                for (AnnotationValue<?, ?> annotationValue : values) {
-                    Array.set(array, index++, annotationValue.resolve());
-                }
-                return array;
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) {
-                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(values.size());
-                for (AnnotationValue<?, ?> value : values) {
-                    loadedValues.add(value.load(classLoader));
-                }
-                String typeName = componentTypeReference.lookup();
-                try {
-                    return new Loaded(Class.forName(typeName, false, classLoader), loadedValues);
-                } catch (ClassNotFoundException exception) {
-                    return new ForMissingType.Loaded<Object[]>(typeName, exception);
-                }
-            }
-
-            @Override
-            public int hashCode() {
-                return Arrays.hashCode(resolve());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) {
-                    return true;
-                } else if (!(other instanceof AnnotationValue<?, ?>)) {
-                    return false;
-                }
-                Object value = ((AnnotationValue<?, ?>) other).resolve();
-                return value instanceof Object[] && Arrays.equals(resolve(), (Object[]) value);
-            }
-
-            @Override
-            public String toString() {
-                return RenderingDispatcher.CURRENT.toSourceString(values);
-            }
-
-            /**
-             * A lazy representation of the component type of an array.
-             */
-            public interface ComponentTypeReference {
-
-                /**
-                 * Lazily returns the binary name of the array component type of an annotation value.
-                 *
-                 * @return The binary name of the component type.
-                 */
-                String lookup();
-            }
-
-            /**
-             * Represents a loaded annotation property representing a complex array.
-             */
-            protected static class Loaded extends AnnotationValue.Loaded.AbstractBase<Object[]> {
-
-                /**
-                 * The array's loaded component type.
-                 */
-                private final Class<?> componentType;
-
-                /**
-                 * A list of loaded values of the represented complex array.
-                 */
-                private final List<AnnotationValue.Loaded<?>> values;
-
-                /**
-                 * Creates a new representation of an annotation property representing an array of
-                 * non-trivial values.
-                 *
-                 * @param componentType The array's loaded component type.
-                 * @param values        A list of loaded values of the represented complex array.
-                 */
-                public Loaded(Class<?> componentType, List<AnnotationValue.Loaded<?>> values) {
-                    this.componentType = componentType;
-                    this.values = values;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public State getState() {
-                    for (AnnotationValue.Loaded<?> value : values) {
-                        if (!value.getState().isResolved()) {
-                            return State.UNRESOLVED;
-                        }
-                    }
-                    return State.RESOLVED;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object[] resolve() {
-                    Object[] array = (Object[]) Array.newInstance(componentType, values.size());
-                    int index = 0;
-                    for (AnnotationValue.Loaded<?> annotationValue : values) {
-                        Array.set(array, index++, annotationValue.resolve());
-                    }
-                    return array;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean represents(Object value) {
-                    if (!(value instanceof Object[])) return false;
-                    if (value.getClass().getComponentType() != componentType) return false;
-                    Object[] array = (Object[]) value;
-                    if (values.size() != array.length) return false;
-                    Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                    for (Object aValue : array) {
-                        AnnotationValue.Loaded<?> self = iterator.next();
-                        if (!self.getState().isResolved() || !self.represents(aValue)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = 1;
-                    for (AnnotationValue.Loaded<?> value : values) {
-                        result = 31 * result + value.hashCode();
-                    }
-                    return result;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) {
-                        return true;
-                    } else if (!(other instanceof AnnotationValue.Loaded<?>)) {
-                        return false;
-                    }
-                    AnnotationValue.Loaded<?> annotationValue = (AnnotationValue.Loaded<?>) other;
-                    if (!annotationValue.getState().isResolved()) {
-                        return false;
-                    }
-                    Object value = annotationValue.resolve();
-                    if (!(value instanceof Object[])) {
-                        return false;
-                    }
-                    Object[] arrayValue = (Object[]) value;
-                    if (values.size() != arrayValue.length) {
-                        return false;
-                    }
-                    Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
-                    for (Object aValue : arrayValue) {
-                        AnnotationValue.Loaded<?> self = iterator.next();
-                        if (!self.resolve().equals(aValue)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                @Override
-                public String toString() {
-                    return RenderingDispatcher.CURRENT.toSourceString(values);
-                }
             }
         }
     }
@@ -1507,7 +1279,7 @@ public interface TypePool {
              *             query for resolving an array's component type.
              * @return A component type reference to an annotation value's component type.
              */
-            RawDescriptionArray.ComponentTypeReference bind(String name);
+            ComponentTypeReference bind(String name);
 
             /**
              * A component type locator which cannot legally resolve an array's component type.
@@ -1522,7 +1294,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public RawDescriptionArray.ComponentTypeReference bind(String name) {
+                public ComponentTypeReference bind(String name) {
                     throw new IllegalStateException("Unexpected lookup of component type for " + name);
                 }
             }
@@ -1558,7 +1330,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public RawDescriptionArray.ComponentTypeReference bind(String name) {
+                public ComponentTypeReference bind(String name) {
                     return new Bound(name);
                 }
 
@@ -1567,7 +1339,7 @@ public interface TypePool {
                  * {@link net.bytebuddy.pool.TypePool.Default.ComponentTypeLocator.ForAnnotationProperty}.
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                protected class Bound implements RawDescriptionArray.ComponentTypeReference {
+                protected class Bound implements ComponentTypeReference {
 
                     /**
                      * The name of the annotation property.
@@ -1604,7 +1376,7 @@ public interface TypePool {
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class ForArrayType implements ComponentTypeLocator, RawDescriptionArray.ComponentTypeReference {
+            class ForArrayType implements ComponentTypeLocator, ComponentTypeReference {
 
                 /**
                  * The resolved component type's binary name.
@@ -1624,7 +1396,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public RawDescriptionArray.ComponentTypeReference bind(String name) {
+                public ComponentTypeReference bind(String name) {
                     return this;
                 }
 
@@ -5900,16 +5672,14 @@ public interface TypePool {
                         throw new IllegalArgumentException(property + " is not declared by " + getAnnotationType());
                     }
                     AnnotationValue<?, ?> annotationValue = values.get(property.getName());
-                    if (annotationValue == null) {
+                    if (annotationValue != null) {
+                        return annotationValue.filter(property);
+                    } else {
                         annotationValue = getAnnotationType().getDeclaredMethods().filter(is(property)).getOnly().getDefaultValue();
                     }
-                    if (annotationValue == null) {
-                        return new AnnotationValue.ForMissingValue<Void, Void>(annotationType, property.getName());
-                    } else if (annotationValue.getState() == AnnotationValue.State.RESOLVED && !annotationValue.isResolvableTo(property.getReturnType())) {
-                        return new AnnotationValue.ForMismatchedType<Void, Void>(property, "[" + annotationValue + "]");
-                    } else {
-                        return annotationValue;
-                    }
+                    return annotationValue == null
+                            ? new AnnotationValue.ForMissingValue<Void, Void>(annotationType, property.getName())
+                            : annotationValue;
                 }
 
                 /**
@@ -5995,8 +5765,8 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                    return doResolve().isResolvableTo(typeDefinition);
+                public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+                    return doResolve().filter(property, typeDefinition);
                 }
 
                 /**
@@ -6098,7 +5868,7 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<AnnotationDescription, Annotation>(annotationToken.getBinaryName());
                         } else if (!resolution.resolve().getAnnotationType().isAnnotation()) {
-                            return new AnnotationValue.ForIncompatibleRuntimeType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
+                            return new ForIncompatibleType<AnnotationDescription, Annotation>(resolution.resolve().getAnnotationType());
                         } else {
                             return new AnnotationValue.ForAnnotationDescription<Annotation>(resolution.resolve());
                         }
@@ -6146,11 +5916,64 @@ public interface TypePool {
                         if (!resolution.isResolved()) {
                             return new AnnotationValue.ForMissingType<EnumerationDescription, Enum<?>>(typeName);
                         } else if (!resolution.resolve().isEnum()) {
-                            return new AnnotationValue.ForIncompatibleRuntimeType<EnumerationDescription, Enum<?>>(resolution.resolve());
+                            return new ForIncompatibleType<EnumerationDescription, Enum<?>>(resolution.resolve());
                         } else if (resolution.resolve().getDeclaredFields().filter(named(value)).isEmpty()) {
                             return new AnnotationValue.ForEnumerationDescription.WithUnknownConstant(resolution.resolve(), value);
                         } else {
                             return new AnnotationValue.ForEnumerationDescription(new EnumerationDescription.Latent(resolution.resolve(), value));
+                        }
+                    }
+                }
+
+                /**
+                 * A lazy projection of an annotation value that is an array of non-primitive values.
+                 */
+                private static class ForNonPrimitiveArray extends LazyAnnotationValue<Object[], Object[]> {
+
+                    /**
+                     * The type pool to use for looking up types.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * A reference to the component type.
+                     */
+                    private final ComponentTypeReference componentTypeReference;
+
+                    /**
+                     * A list of all values of this array value in their order.
+                     */
+                    private final List<AnnotationValue<?, ?>> values;
+
+                    /**
+                     * Creates a lazy projection for a non-primitive array.
+                     *
+                     * @param typePool               The type pool to use for looking up types.
+                     * @param componentTypeReference A reference to the component type.
+                     * @param values                 A list of all values of this array value in their order.
+                     */
+                    private ForNonPrimitiveArray(TypePool typePool, ComponentTypeReference componentTypeReference, List<AnnotationValue<?, ?>> values) {
+                        this.typePool = typePool;
+                        this.componentTypeReference = componentTypeReference;
+                        this.values = values;
+                    }
+
+                    @Override
+                    protected AnnotationValue<Object[], Object[]> doResolve() {
+                        String typeName = componentTypeReference.lookup();
+                        Resolution resolution = typePool.describe(typeName);
+                        if (!resolution.isResolved()) {
+                            return new ForMissingType<Object[], Object[]>(typeName);
+                        } else if (resolution.resolve().isEnum()) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(EnumerationDescription.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().isAnnotation()) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(AnnotationDescription.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(Class.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(TypeDescription.class, resolution.resolve(), values);
+                        } else if (resolution.resolve().represents(String.class)) {
+                            return new AnnotationValue.ForDescriptionArray<Object, Object>(String.class, resolution.resolve(), values);
+                        } else {
+                            throw new IllegalStateException("Unexpected complex component type: " + resolution.resolve());
                         }
                     }
                 }
@@ -7717,9 +7540,7 @@ public interface TypePool {
                     this.componentTypeLocator = componentTypeLocator;
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
+                @Override
                 public void visit(String name, Object value) {
                     if (value instanceof Type) {
                         Type type = (Type) value;
@@ -7731,32 +7552,24 @@ public interface TypePool {
                     }
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
+                @Override
                 public void visitEnum(String name, String descriptor, String value) {
                     annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForEnumerationValue(Default.this,
                             descriptor.substring(1, descriptor.length() - 1).replace('/', '.'),
                             value));
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
+                @Override
                 public AnnotationVisitor visitAnnotation(String name, String descriptor) {
                     return new AnnotationExtractor(new AnnotationLookup(descriptor, name), new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
+                @Override
                 public AnnotationVisitor visitArray(String name) {
                     return new AnnotationExtractor(new ArrayLookup(name, componentTypeLocator.bind(name)), ComponentTypeLocator.Illegal.INSTANCE);
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
+                @Override
                 public void visitEnd() {
                     annotationRegistrant.onComplete();
                 }
@@ -7774,7 +7587,7 @@ public interface TypePool {
                     /**
                      * A lazy reference to resolve the component type of the collected array.
                      */
-                    private final RawDescriptionArray.ComponentTypeReference componentTypeReference;
+                    private final ComponentTypeReference componentTypeReference;
 
                     /**
                      * A list of all annotation values that are found on this array.
@@ -7787,7 +7600,7 @@ public interface TypePool {
                      * @param name                   The name of the annotation property the collected array is representing.
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
-                    protected ArrayLookup(String name, RawDescriptionArray.ComponentTypeReference componentTypeReference) {
+                    protected ArrayLookup(String name, ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new ArrayList<AnnotationValue<?, ?>>();
@@ -7804,7 +7617,7 @@ public interface TypePool {
                      * {@inheritDoc}
                      */
                     public void onComplete() {
-                        annotationRegistrant.register(name, new RawDescriptionArray(Default.this, componentTypeReference, values));
+                        annotationRegistrant.register(name, new LazyTypeDescription.LazyAnnotationValue.ForNonPrimitiveArray(Default.this, componentTypeReference, values));
                     }
                 }
 

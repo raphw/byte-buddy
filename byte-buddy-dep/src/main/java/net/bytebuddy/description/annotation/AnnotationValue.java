@@ -57,12 +57,21 @@ public interface AnnotationValue<T, S> {
     State getState();
 
     /**
-     * Returns {@code true} if this annotation's value can represent the supplied type.
+     * Filters this annotation value as a valid value of the provided property.
      *
-     * @param typeDefinition The type for which to check if it represents this annotation value.
-     * @return {@code true} if this annotation's value can represent the supplied type.
+     * @param property The property to filter against.
+     * @return This annotation value or a new annotation value that describes why this value is not a valid value for the supplied property.
      */
-    boolean isResolvableTo(TypeDefinition typeDefinition);
+    AnnotationValue<T, S> filter(MethodDescription.InDefinedShape property);
+
+    /**
+     * Filters this annotation value as a valid value of the provided property.
+     *
+     * @param property       The property to filter against.
+     * @param typeDefinition The expected type.
+     * @return This annotation value or a new annotation value that describes why this value is not a valid value for the supplied property.
+     */
+    AnnotationValue<T, S> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition);
 
     /**
      * Resolves the unloaded value of this annotation. The return value of this method is not defined if this annotation value is invalid.
@@ -383,6 +392,44 @@ public interface AnnotationValue<T, S> {
             }
             return stringBuilder.append(closingBrace).toString();
         }
+
+        /**
+         * Resolves the supplied type description's component tag.
+         *
+         * @param typeDescription The type to resolve.
+         * @return The character that describes the component tag as an {@code int} to ease concatenation.
+         */
+        public int toComponentTag(TypeDescription typeDescription) {
+            if (typeDescription.represents(boolean.class)) {
+                return 'Z';
+            } else if (typeDescription.represents(byte.class)) {
+                return 'B';
+            } else if (typeDescription.represents(short.class)) {
+                return 'S';
+            } else if (typeDescription.represents(char.class)) {
+                return 'C';
+            } else if (typeDescription.represents(int.class)) {
+                return 'I';
+            } else if (typeDescription.represents(long.class)) {
+                return 'J';
+            } else if (typeDescription.represents(float.class)) {
+                return 'F';
+            } else if (typeDescription.represents(double.class)) {
+                return 'D';
+            } else if (typeDescription.represents(String.class)) {
+                return 's';
+            } else if (typeDescription.represents(Class.class)) {
+                return 'c';
+            } else if (typeDescription.isEnum()) {
+                return 'e';
+            } else if (typeDescription.isAnnotation()) {
+                return '@';
+            } else if (typeDescription.isArray()) {
+                return '[';
+            } else {
+                throw new IllegalArgumentException("Not an annotation component: " + typeDescription);
+            }
+        }
     }
 
     /**
@@ -542,6 +589,11 @@ public interface AnnotationValue<T, S> {
          */
         public Loaded<V> loadSilent(ClassLoader classLoader) {
             return load(classLoader);
+        }
+
+        @Override
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property) {
+            return filter(property, property.getReturnType());
         }
     }
 
@@ -813,8 +865,10 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().equals(TypeDescription.ForLoadedType.of(value.getClass()).asUnboxed());
+        public AnnotationValue<U, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().asBoxed().represents(value.getClass()) ? this : new ForMismatchedType<U, U>(property, value.getClass().isArray()
+                    ? "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(TypeDescription.ForLoadedType.of(value.getClass().getComponentType()))
+                    : value.getClass().toString() + '[' + value + ']');
         }
 
         /**
@@ -1386,8 +1440,10 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return annotationDescription.getAnnotationType().equals(typeDefinition.asErasure());
+        public AnnotationValue<AnnotationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().equals(annotationDescription.getAnnotationType())
+                    ? this
+                    : new ForMismatchedType<AnnotationDescription, U>(property, annotationDescription.getAnnotationType().toString() + '[' + annotationDescription + ']');
         }
 
         /**
@@ -1537,9 +1593,13 @@ public interface AnnotationValue<T, S> {
             return State.RESOLVED;
         }
 
-        @Override
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return enumerationDescription.getEnumerationType().equals(typeDefinition.asErasure());
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().equals(enumerationDescription.getEnumerationType())
+                    ? this
+                    : new ForMismatchedType<EnumerationDescription, U>(property, enumerationDescription.getEnumerationType().toString() + '[' + enumerationDescription.getValue() + ']');
         }
 
         /**
@@ -1721,8 +1781,8 @@ public interface AnnotationValue<T, S> {
             /**
              * {@inheritDoc}
              */
-            public boolean isResolvableTo(TypeDefinition typeDefinition) {
-                return typeDefinition.asErasure().equals(typeDescription);
+            public AnnotationValue<EnumerationDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+                return this;
             }
 
             /**
@@ -1841,8 +1901,10 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return typeDefinition.asErasure().represents(Class.class);
+        public AnnotationValue<TypeDescription, U> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return typeDefinition.asErasure().represents(Class.class)
+                    ? this
+                    : new ForMismatchedType<TypeDescription, U>(property, Class.class.getName() + '[' + typeDescription.getName() + ']');
         }
 
         /**
@@ -1976,9 +2038,9 @@ public interface AnnotationValue<T, S> {
          * @param componentType         A description of the component type when it is loaded.
          * @param values                A list of values of the array elements.
          */
-        protected ForDescriptionArray(Class<?> unloadedComponentType,
-                                      TypeDescription componentType,
-                                      List<? extends AnnotationValue<?, ?>> values) {
+        public ForDescriptionArray(Class<?> unloadedComponentType,
+                                   TypeDescription componentType,
+                                   List<? extends AnnotationValue<?, ?>> values) {
             this.unloadedComponentType = unloadedComponentType;
             this.componentType = componentType;
             this.values = values;
@@ -2049,8 +2111,19 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType);
+        @SuppressWarnings("unchecked")
+        public AnnotationValue<U[], V[]> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            if (typeDefinition.isArray() && typeDefinition.getComponentType().asErasure().equals(componentType)) {
+                for (AnnotationValue<?, ?> value : values) {
+                    value = value.filter(property, typeDefinition.getComponentType());
+                    if (value.getState() != State.RESOLVED) {
+                        return (AnnotationValue<U[], V[]>) value;
+                    }
+                }
+                return this;
+            } else {
+                return new ForMismatchedType<U[], V[]>(property, "Array with component tag: " + RenderingDispatcher.CURRENT.toComponentTag(componentType));
+            }
         }
 
         /**
@@ -2270,8 +2343,8 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return true;
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return this;
         }
 
         /**
@@ -2376,8 +2449,8 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return true;
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return this;
         }
 
         /**
@@ -2396,7 +2469,7 @@ public interface AnnotationValue<T, S> {
                 try {
                     return new Loaded<V>(type.getMethod(property.getName()), value);
                 } catch (NoSuchMethodException exception) {
-                    return new ForIncompatibleRuntimeType.Loaded<V>(type);
+                    return new ForIncompatibleType.Loaded<V>(type);
                 }
             } catch (ClassNotFoundException exception) {
                 return new ForMissingType.Loaded<V>(property.getDeclaringType().getName(), exception);
@@ -2486,8 +2559,8 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return true;
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return this;
         }
 
         /**
@@ -2499,7 +2572,7 @@ public interface AnnotationValue<T, S> {
                 Class<? extends Annotation> type = (Class<? extends Annotation>) Class.forName(typeDescription.getName(), false, classLoader);
                 return type.isAnnotation()
                         ? new Loaded<V>(type, property)
-                        : new ForIncompatibleRuntimeType.Loaded<V>(type);
+                        : new ForIncompatibleType.Loaded<V>(type);
             } catch (ClassNotFoundException exception) {
                 return new ForMissingType.Loaded<V>(typeDescription.getName(), exception);
             }
@@ -2568,15 +2641,15 @@ public interface AnnotationValue<T, S> {
     }
 
     /**
-     * Represents an annotation value where the runtime type does not fulfil the type's runtime expectations.
+     * Represents an annotation value where its declared type does not fulfil an expectation.
      *
      * @param <U> The type of the annotation's value when it is not loaded.
      * @param <V> The type of the annotation's value when it is loaded.
      */
-    class ForIncompatibleRuntimeType<U, V> extends AnnotationValue.AbstractBase<U, V> {
+    class ForIncompatibleType<U, V> extends AnnotationValue.AbstractBase<U, V> {
 
         /**
-         * A description of the type that does not fulfil the expectations.
+         * A description of the type that does not fulfil an expectation.
          */
         private final TypeDescription typeDescription;
 
@@ -2585,7 +2658,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param typeDescription A description of the type that does not fulfil the expectations.
          */
-        public ForIncompatibleRuntimeType(TypeDescription typeDescription) {
+        public ForIncompatibleType(TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
         }
 
@@ -2599,8 +2672,8 @@ public interface AnnotationValue<T, S> {
         /**
          * {@inheritDoc}
          */
-        public boolean isResolvableTo(TypeDefinition typeDefinition) {
-            return true;
+        public AnnotationValue<U, V> filter(MethodDescription.InDefinedShape property, TypeDefinition typeDefinition) {
+            return this;
         }
 
         /**
@@ -2629,21 +2702,21 @@ public interface AnnotationValue<T, S> {
         }
 
         /**
-         * A description of annotation value for a type that does not fulfil runtime expectations.
+         * A description of annotation value for a type that does not fulfil an expectation.
          *
          * @param <W> The type of the annotation's expected value.
          */
         public static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase.ForUnresolvedProperty<W> {
 
             /**
-             * The type that does not fulfil its runtime expectations.
+             * The type that does not fulfil an expectation.
              */
             private final Class<?> type;
 
             /**
              * Creates a new description of an annotation.
              *
-             * @param type The type that does not fulfil its runtime expectations.
+             * @param type The type that does not fulfil an expectation.
              */
             public Loaded(Class<?> type) {
                 this.type = type;

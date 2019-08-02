@@ -14,14 +14,22 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
     @Before
     @Override
     public void setUp() throws Exception {
-        super.setUp();
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileLocator.ForClassLoader.readToNames(Sample.class,
+                ClassFileLocator.ForClassLoader.readToNames(AbstractAnnotationDescriptionTest.class,
+                        Sample.class,
                         SampleDefault.class,
                         Other.class,
                         SampleEnumeration.class,
                         ExplicitTarget.class,
-                        BrokenAnnotation.class));
+                        BrokenAnnotation.class,
+                        BrokenAnnotationProperty.class,
+                        BrokenEnumerationProperty.class));
+        super.setUp();
+    }
+
+    @Override
+    protected ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     @SuppressWarnings("unchecked")

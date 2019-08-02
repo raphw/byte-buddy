@@ -1,11 +1,14 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationTypeMismatchException;
@@ -36,20 +39,13 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
+        when(annotationValue.filter(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) annotationValue);
         when(annotationValue.load(getClass().getClassLoader()))
                 .thenReturn((AnnotationValue.Loaded) loadedAnnotationValue);
+        when(otherAnnotationValue.filter(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) otherAnnotationValue);
         when(otherAnnotationValue.load(getClass().getClassLoader()))
                 .thenReturn((AnnotationValue.Loaded) otherLoadedAnnotationValue);
-    }
-
-    @Test(expected = AnnotationTypeMismatchException.class)
-    @SuppressWarnings("unchecked")
-    public void testAnnotationTypeMismatchException() throws Throwable {
-        when(loadedAnnotationValue.resolve()).thenReturn(new Object());
-        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
-                Foo.class,
-                Collections.<String, AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
-                .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
+        when(freeAnnotationValue.filter(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) freeAnnotationValue);
     }
 
     @Test(expected = IncompleteAnnotationException.class)

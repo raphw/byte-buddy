@@ -150,7 +150,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test
     @Override
-    @Ignore("The Java reflection API does not currently support generic inner types")
+    @Ignore("The OpenJDK reflection API does not currently support generic inner types")
     public void testTypeAnnotationNonGenericInnerType() throws Exception {
         super.testTypeAnnotationNonGenericInnerType();
     }
