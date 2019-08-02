@@ -179,7 +179,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
         brokenCarrier = new ByteBuddy()
                 .subclass(Object.class)
-                .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V11), false))
+                .visit(new AnnotationValueBreaker(ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V12), false))
                 .make()
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenAnnotationProperty.class.getName()).make())
                 .include(new ByteBuddy().subclass(Object.class).name(BrokenEnumerationProperty.class.getName()).make())
@@ -413,59 +413,59 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test(expected = EnumConstantNotPresentException.class)
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationUnknownEnumerationConstant() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().unknownEnumerationConstant();
     }
 
     @Test
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationUnknownEnumerationConstantState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("unknownEnumerationConstant"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = EnumConstantNotPresentException.class)
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationUnknownEnumerationConstantArray() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().unknownEnumerationConstantArray();
     }
 
     @Test
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationUnknownEnumerationConstantArrayState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("unknownEnumerationConstantArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = TypeNotPresentException.class)
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationMissingType() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().missingType();
     }
 
     @Test
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationMissingTypeState() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingType"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test(expected = TypeNotPresentException.class)
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationMissingTypeArray() throws Exception {
         describe(broken).prepare(BrokenAnnotation.class).load().missingTypeArray();
     }
 
     @Test
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationMissingTypeStateArray() throws Exception {
         assertThat(describe(broken).getValue(new MethodDescription.ForLoadedMethod(BrokenAnnotation.class.getMethod("missingTypeArray"))).getState(),
                 is(AnnotationValue.State.UNRESOLVED));
     }
 
     @Test
-    @JavaVersionRule.Enforce(11)
+    @JavaVersionRule.Enforce(12)
     public void testBrokenAnnotationToString() throws Exception {
         assertToString(describe(broken).toString(), broken);
         assertToString(describe(broken).prepare(BrokenAnnotation.class).toString(), broken);
