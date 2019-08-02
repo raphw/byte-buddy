@@ -76,7 +76,6 @@ public class ClassInjectorUsingLookupTest {
                 .get(dynamicType.getTypeDescription()).getName(), is("net.bytebuddy.test.Bar"));
     }
 
-
     @Test
     @JavaVersionRule.Enforce(9)
     public void testSubclassUsingLookup() throws Exception {

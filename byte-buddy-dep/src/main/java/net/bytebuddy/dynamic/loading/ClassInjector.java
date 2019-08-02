@@ -29,7 +29,6 @@ import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
-import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1375,7 +1374,7 @@ ClassInjector {
             } else if ((DISPATCHER.lookupModes(lookup) & PACKAGE_LOOKUP) == 0) {
                 throw new IllegalArgumentException("Lookup does not imply package-access: " + lookup);
             }
-            return new UsingLookup(DISPATCHER.dropLookupMode(lookup, Opcodes.ACC_PRIVATE));
+            return new UsingLookup(lookup);
         }
 
         /**
@@ -1458,15 +1457,6 @@ ClassInjector {
             int lookupModes(Object lookup);
 
             /**
-             * Drops a given lookup mode from a lookup instance.
-             *
-             * @param lookup The lookup instance.
-             * @param mode   The modes to drop.
-             * @return A new lookup instance where the modes were dropped.
-             */
-            Object dropLookupMode(Object lookup, int mode);
-
-            /**
              * Resolves the supplied lookup instance's access scope for the supplied type.
              *
              * @param lookup The lookup to use.
@@ -1504,7 +1494,6 @@ ClassInjector {
                         return new Dispatcher.ForJava9CapableVm(JavaType.METHOD_HANDLES.load().getMethod("privateLookupIn", Class.class, lookup),
                                 lookup.getMethod("lookupClass"),
                                 lookup.getMethod("lookupModes"),
-                                lookup.getMethod("dropLookupMode", int.class),
                                 lookup.getMethod("defineClass", byte[].class));
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
@@ -1540,13 +1529,6 @@ ClassInjector {
                  * {@inheritDoc}
                  */
                 public int lookupModes(Object lookup) {
-                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object dropLookupMode(Object lookup, int mode) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
                 }
 
@@ -1592,11 +1574,6 @@ ClassInjector {
                 private final Method lookupModes;
 
                 /**
-                 * The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
-                 */
-                private final Method dropLookupMode;
-
-                /**
                  * The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
                  */
                 private final Method defineClass;
@@ -1607,15 +1584,13 @@ ClassInjector {
                  * @param privateLookupIn The {@code java.lang.invoke.MethodHandles$#privateLookupIn} method.
                  * @param lookupClass     The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  * @param lookupModes     The {@code java.lang.invoke.MethodHandles$Lookup#lookupModes} method.
-                 * @param dropLookupMode  The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
                  * @param defineClass     The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
                  */
-                protected ForJava9CapableVm(Method privateLookupIn, Method lookupClass, Method lookupModes, Method dropLookupMode, Method defineClass) {
+                protected ForJava9CapableVm(Method privateLookupIn, Method lookupClass, Method lookupModes, Method defineClass) {
                     this.privateLookupIn = privateLookupIn;
                     this.lookupClass = lookupClass;
                     this.lookupModes = lookupModes;
                     this.defineClass = defineClass;
-                    this.dropLookupMode = dropLookupMode;
                 }
 
                 /**
@@ -1644,19 +1619,6 @@ ClassInjector {
                 public int lookupModes(Object lookup) {
                     try {
                         return (Integer) lookupModes.invoke(lookup, NO_ARGUMENTS);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#lookupModes", exception.getCause());
-                    }
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Object dropLookupMode(Object lookup, int mode) {
-                    try {
-                        return dropLookupMode.invoke(lookup, mode);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
                     } catch (InvocationTargetException exception) {
