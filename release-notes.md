@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. August 2019: version 1.10.0
+
+- Add API for loading native agents from Byte Buddy agent.
+- Extend `VirtualMachine` API to include other methods.
+- Fix error handling in `VirtualMachine` API.
+- Fix temporary folder resolution for `VirtualMachine` API.
+- Add API for `MemberAttributeExtension`.
+- Rework of `AnnotationDescription` API to emulate JVM error handling for incorrect or inconsistent values.
+- Add generic type-aware `Assigner`.
+- Fix method handle-based injector for Java 14.
+
 ### 27. July 2019: version 1.9.16
 
 - Add support for attach emulation on Solaris.
