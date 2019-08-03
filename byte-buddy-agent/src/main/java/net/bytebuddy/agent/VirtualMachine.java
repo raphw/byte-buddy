@@ -224,7 +224,7 @@ public interface VirtualMachine {
             } else if (Platform.isSolaris()) {
                 return attach(processId, new Connection.ForJnaSolarisDoor.Factory(15, 100, TimeUnit.MILLISECONDS));
             } else {
-                return attach(processId, new Connection.ForJnaPosixSocket.Factory(15, 100, TimeUnit.MILLISECONDS));
+                return attach(processId, Connection.ForJnaPosixSocket.Factory.withDefaultTemporaryFolder(15, 100, TimeUnit.MILLISECONDS));
             }
         }
 
@@ -738,17 +738,6 @@ public interface VirtualMachine {
                     /**
                      * Creates a connection factory for a POSIX socket using JNA.
                      *
-                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
-                     * @param pause    The pause between two checks for an established socket connection.
-                     * @param timeUnit The time unit of the pause time.
-                     */
-                    public Factory(int attempts, long pause, TimeUnit timeUnit) {
-                        this("/tmp", attempts, pause, timeUnit);
-                    }
-
-                    /**
-                     * Creates a connection factory for a POSIX socket using JNA.
-                     *
                      * @param temporaryDirectory The temporary directory to use.
                      * @param attempts           The maximum amount of attempts for checking the establishment of a socket connection.
                      * @param pause              The pause between two checks for an established socket connection.
@@ -757,6 +746,28 @@ public interface VirtualMachine {
                     public Factory(String temporaryDirectory, int attempts, long pause, TimeUnit timeUnit) {
                         super(temporaryDirectory, attempts, pause, timeUnit);
                         library = Native.load("c", PosixLibrary.class);
+                    }
+
+                    /**
+                     * Creates a connection factory for a POSIX socket using JNA while locating the default temporary directory used on the
+                     * current platform.
+                     *
+                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause    The pause between two checks for an established socket connection.
+                     * @param timeUnit The time unit of the pause time.
+                     * @return An appropriate connection factory.
+                     */
+                    public static Connection.Factory withDefaultTemporaryFolder(int attempts, long pause, TimeUnit timeUnit) {
+                        String temporaryDirectory;
+                        if (Platform.isMac()) {
+                            temporaryDirectory = System.getenv("TMPDIR");
+                            if (temporaryDirectory == null) {
+                                temporaryDirectory = "/tmp";
+                            }
+                        } else {
+                            temporaryDirectory = "/tmp";
+                        }
+                        return new Factory(temporaryDirectory, attempts, pause, timeUnit);
                     }
 
                     @Override
@@ -1358,9 +1369,9 @@ public interface VirtualMachine {
                     /**
                      * Creates a new connection factory for a Solaris VM.
                      *
-                     * @param attempts           The maximum amount of attempts for checking the establishment of a socket connection.
-                     * @param pause              The pause between two checks for an established socket connection.
-                     * @param timeUnit           The time unit of the pause time.
+                     * @param attempts The maximum amount of attempts for checking the establishment of a socket connection.
+                     * @param pause    The pause between two checks for an established socket connection.
+                     * @param timeUnit The time unit of the pause time.
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
                         super("/tmp", attempts, pause, timeUnit);
@@ -1812,7 +1823,8 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public String getTemporaryFolder() {
-                    return "/tmp";
+                    String temporaryFolder = System.getenv("TMPDIR");
+                    return temporaryFolder == null ? "/tmp" : temporaryFolder;
                 }
 
                 /**
