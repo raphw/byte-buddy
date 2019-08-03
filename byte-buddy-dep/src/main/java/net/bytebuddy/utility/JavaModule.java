@@ -18,6 +18,7 @@ package net.bytebuddy.utility;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.type.PackageDescription;
 
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
@@ -26,6 +27,7 @@ import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -144,13 +146,37 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
+     * Returns {@code true} if this module exports the supplied package to this module.
+     *
+     * @param packageDescription The package to check for
+     * @param module             The target module.
+     * @return {@code true} if this module exports the supplied package to this module.
+     */
+    public boolean isExported(PackageDescription packageDescription, JavaModule module) {
+        return packageDescription == null || DISPATCHER.isExported(this.module, module.unwrap(), packageDescription.getName());
+    }
+
+    /**
+     * Returns {@code true} if this module opens the supplied package to this module.
+     *
+     * @param packageDescription The package to check for.
+     * @param module             The target module.
+     * @return {@code true} if this module opens the supplied package to this module.
+     */
+    public boolean isOpened(PackageDescription packageDescription, JavaModule module) {
+        return packageDescription == null || DISPATCHER.isOpened(this.module, module.unwrap(), packageDescription.getName());
+    }
+
+    /**
      * Adds a read-edge to this module to the supplied module using the instrumentation API.
      *
      * @param instrumentation The instrumentation instance to use for adding the edge.
      * @param module          The module to add as a read dependency to this module.
+     * @param exported        A set of packages to export.
+     * @param opened          A set of packages to open.
      */
-    public void addReads(Instrumentation instrumentation, JavaModule module) {
-        DISPATCHER.addReads(instrumentation, this.module, module.unwrap());
+    public void addReads(Instrumentation instrumentation, JavaModule module, Set<String> exported, Set<String> opened) {
+        DISPATCHER.modify(instrumentation, this.module, module.unwrap(), exported, opened);
     }
 
     @Override
@@ -228,6 +254,26 @@ public class JavaModule implements NamedElement.WithOptionalName {
         ClassLoader getClassLoader(Object module);
 
         /**
+         * Returns {@code true} if the source module exports the supplied package to the target module.
+         *
+         * @param source   The source module.
+         * @param target   The target module.
+         * @param aPackage The name of the package to check.
+         * @return {@code true} if the source module exports the supplied package to the target module.
+         */
+        boolean isExported(Object source, Object target, String aPackage);
+
+        /**
+         * Returns {@code true} if the source module opens the supplied package to the target module.
+         *
+         * @param source   The source module.
+         * @param target   The target module.
+         * @param aPackage The name of the package to check.
+         * @return {@code true} if the source module opens the supplied package to the target module.
+         */
+        boolean isOpened(Object source, Object target, String aPackage);
+
+        /**
          * Checks if the source module can read the target module.
          *
          * @param source The source module.
@@ -242,8 +288,10 @@ public class JavaModule implements NamedElement.WithOptionalName {
          * @param instrumentation The instrumentation instance to use for adding the edge.
          * @param source          The source module.
          * @param target          The target module.
+         * @param exported        A set of packages to export.
+         * @param opened          A set of packages to open.
          */
-        void addReads(Instrumentation instrumentation, Object source, Object target);
+        void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened);
 
         /**
          * A creation action for a dispatcher.
@@ -267,6 +315,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
                             module.getMethod("isNamed"),
                             module.getMethod("getName"),
                             module.getMethod("getResourceAsStream", String.class),
+                            module.getMethod("isExported", String.class, module),
+                            module.getMethod("isOpen", String.class, module),
                             module.getMethod("canRead", module),
                             Instrumentation.class.getMethod("isModifiableModule", module),
                             Instrumentation.class.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
@@ -313,6 +363,16 @@ public class JavaModule implements NamedElement.WithOptionalName {
             private final Method getResourceAsStream;
 
             /**
+             * The {@code java.lang.Module#isExported(String,Module)} method.
+             */
+            private final Method isExported;
+
+            /**
+             * The {@code java.lang.Module#isOpened(String,Module)} method.
+             */
+            private final Method isOpened;
+
+            /**
              * The {@code java.lang.Module#canRead(Module)} method.
              */
             private final Method canRead;
@@ -335,6 +395,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * @param isNamed             The {@code java.lang.Module#isNamed()} method.
              * @param getName             The {@code java.lang.Module#getName()} method.
              * @param getResourceAsStream The {@code java.lang.Module#getResourceAsStream(String)} method.
+             * @param isExported          The {@code java.lang.Module#isExported(String,Module)} method.
+             * @param isOpened            The {@code java.lang.Module#isOpened(String,Module)} method.
              * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
              * @param isModifiableModule  The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
              * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
@@ -344,6 +406,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
                               Method isNamed,
                               Method getName,
                               Method getResourceAsStream,
+                              Method isExported,
+                              Method isOpened,
                               Method canRead,
                               Method isModifiableModule,
                               Method redefineModule) {
@@ -352,6 +416,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 this.isNamed = isNamed;
                 this.getName = getName;
                 this.getResourceAsStream = getResourceAsStream;
+                this.isExported = isExported;
+                this.isOpened = isOpened;
                 this.canRead = canRead;
                 this.isModifiableModule = isModifiableModule;
                 this.redefineModule = redefineModule;
@@ -432,6 +498,32 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
+            public boolean isExported(Object source, Object target, String aPackage) {
+                try {
+                    return (Boolean) isExported.invoke(source, aPackage, target);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + isExported, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + isExported, exception.getCause());
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isOpened(Object source, Object target, String aPackage) {
+                try {
+                    return (Boolean) isOpened.invoke(source, aPackage, target);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + isOpened, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + isOpened, exception.getCause());
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public boolean canRead(Object source, Object target) {
                 try {
                     return (Boolean) canRead.invoke(source, target);
@@ -445,7 +537,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
-            public void addReads(Instrumentation instrumentation, Object source, Object target) {
+            public void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened) {
                 try {
                     if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
                         throw new IllegalStateException(source + " is not modifiable");
@@ -455,11 +547,19 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
+                Map<String, Set<Object>> exportedModules = new HashMap<String, Set<Object>>();
+                for (String anExported : exported) {
+                    exportedModules.put(anExported, Collections.singleton(target));
+                }
+                Map<String, Set<Object>> openedModules = new HashMap<String, Set<Object>>();
+                for (String anOpened : opened) {
+                    openedModules.put(anOpened, Collections.singleton(target));
+                }
                 try {
                     redefineModule.invoke(instrumentation, source,
                             Collections.singleton(target),
-                            Collections.emptyMap(),
-                            Collections.emptyMap(),
+                            exportedModules,
+                            openedModules,
                             Collections.emptySet(),
                             Collections.emptyMap());
                 } catch (IllegalAccessException exception) {
@@ -525,6 +625,20 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
+            public boolean isExported(Object source, Object target, String aPackage) {
+                throw new UnsupportedOperationException("Current VM does not support modules");
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isOpened(Object source, Object target, String aPackage) {
+                throw new UnsupportedOperationException("Current VM does not support modules");
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public boolean canRead(Object source, Object target) {
                 throw new UnsupportedOperationException("Current VM does not support modules");
             }
@@ -532,7 +646,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
-            public void addReads(Instrumentation instrumentation, Object source, Object target) {
+            public void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened) {
                 throw new UnsupportedOperationException("Current VM does not support modules");
             }
         }

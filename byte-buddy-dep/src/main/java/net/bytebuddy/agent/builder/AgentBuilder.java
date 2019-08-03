@@ -28,11 +28,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.NexusAccessor;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
-import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
+import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -349,6 +345,7 @@ public interface AgentBuilder {
     /**
      * Assures that all modules of the supplied types are read by the module of any instrumented type and vice versa.
      * If the current VM does not support the Java module system, calling this method has no effect and this instance is returned.
+     * Setting this option will also ensure that the instrumented type's package is opened to the target module, if applicable.
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
      * @param type            The types for which to assure their module-visibility from and to any instrumented class.
@@ -359,6 +356,7 @@ public interface AgentBuilder {
 
     /**
      * Assures that all supplied modules are read by the module of any instrumented type and vice versa.
+     * Setting this option will also ensure that the instrumented type's package is opened to the target module.
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
      * @param module          The modules for which to assure their module-visibility from and to any instrumented class.
@@ -369,6 +367,7 @@ public interface AgentBuilder {
 
     /**
      * Assures that all supplied modules are read by the module of any instrumented type and vice versa.
+     * Setting this option will also ensure that the instrumented type's package is opened to the target module.
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
      * @param modules         The modules for which to assure their module-visibility from and to any instrumented class.
@@ -1675,7 +1674,7 @@ public interface AgentBuilder {
         }
 
         /**
-         * A listener that adds read-edges to any module of an instrumented class upon its transformation.
+         * A listener that adds read-edges to any module of an instrumented class upon its transformation and opens the class's package to the module.
          */
         @HashCodeAndEqualsPlugin.Enhance
         class ModuleReadEdgeCompleting extends Adapter {
@@ -1687,6 +1686,7 @@ public interface AgentBuilder {
 
             /**
              * {@code true} if the listener should also add a read-edge from the supplied modules to the instrumented type's module.
+             * This will also ensure that the package of the instrumented type is exported to the target module.
              */
             private final boolean addTargetEdge;
 
@@ -1699,8 +1699,9 @@ public interface AgentBuilder {
              * Creates a new module read-edge completing listener.
              *
              * @param instrumentation The instrumentation instance used for adding read edges.
-             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied modules
-             *                        to the instrumented type's module.
+             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
+             *                        modules to the instrumented type's module. This will also ensure that the package
+             *                        of the instrumented type is exported to the target module.
              * @param modules         The modules to add as a read edge to any transformed class's module.
              */
             public ModuleReadEdgeCompleting(Instrumentation instrumentation, boolean addTargetEdge, Set<? extends JavaModule> modules) {
@@ -1714,7 +1715,8 @@ public interface AgentBuilder {
              *
              * @param instrumentation The instrumentation instance used for adding read edges.
              * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
-             *                        modules to the instrumented type's module.
+             *                        modules to the instrumented type's module. This will also ensure that the package
+             *                        of the instrumented type is exported to the target module.
              * @param type            The types for which to extract the modules.
              * @return An appropriate listener.
              */
@@ -1732,11 +1734,13 @@ public interface AgentBuilder {
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 if (module != JavaModule.UNSUPPORTED && module.isNamed()) {
                     for (JavaModule target : modules) {
-                        if (!module.canRead(target)) {
-                            module.addReads(instrumentation, target);
+                        if (!module.canRead(target) || addTargetEdge && !module.isOpened(typeDescription.getPackage(), target)) {
+                            module.addReads(instrumentation, target, Collections.<String>emptySet(), !addTargetEdge || typeDescription.getPackage() == null
+                                    ? Collections.<String>emptySet()
+                                    : Collections.singleton(typeDescription.getPackage().getName()));
                         }
                         if (addTargetEdge && !target.canRead(module)) {
-                            target.addReads(instrumentation, module);
+                            target.addReads(instrumentation, module, Collections.<String>emptySet(), Collections.<String>emptySet());
                         }
                     }
                 }

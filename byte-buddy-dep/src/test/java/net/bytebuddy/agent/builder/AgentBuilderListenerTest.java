@@ -1,5 +1,6 @@
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -289,7 +290,7 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).addReads(instrumentation, target);
+        verify(source).addReads(instrumentation, target, Collections.<String>emptySet(), Collections.<String>emptySet());
         verifyNoMoreInteractions(source);
         verifyZeroInteractions(target);
     }
@@ -316,13 +317,18 @@ public class AgentBuilderListenerTest {
     public void testReadEdgeAddingListenerDuplexCanRead() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        PackageDescription packageDescription = mock(PackageDescription.class);
+        when(typeDescription.getPackage()).thenReturn(packageDescription);
         when(source.isNamed()).thenReturn(true);
         when(source.canRead(target)).thenReturn(true);
+        when(source.isOpened(packageDescription, target)).thenReturn(true);
         when(target.canRead(source)).thenReturn(true);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.singleton(target));
-        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
+        listener.onTransformation(typeDescription, mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
+        verify(source).isOpened(packageDescription, target);
         verifyNoMoreInteractions(source);
         verify(target).canRead(source);
         verifyNoMoreInteractions(target);
@@ -339,10 +345,10 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).addReads(instrumentation, target);
+        verify(source).addReads(instrumentation, target, Collections.<String>emptySet(), Collections.<String>emptySet());
         verifyNoMoreInteractions(source);
         verify(target).canRead(source);
-        verify(target).addReads(instrumentation, source);
+        verify(target).addReads(instrumentation, source, Collections.<String>emptySet(), Collections.<String>emptySet());
         verifyNoMoreInteractions(target);
     }
 

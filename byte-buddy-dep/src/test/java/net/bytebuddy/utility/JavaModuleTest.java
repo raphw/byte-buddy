@@ -3,6 +3,7 @@ package net.bytebuddy.utility;
 import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -55,8 +56,22 @@ public class JavaModuleTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testAddReadsThrowsException() throws Exception {
-        JavaModule.Dispatcher.Disabled.INSTANCE.addReads(mock(Instrumentation.class), mock(Object.class), mock(Object.class));
+    public void testIsExportedThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.isExported(mock(Object.class), mock(Object.class), null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testIsOpenedThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.isOpened(mock(Object.class), mock(Object.class), null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testModifyThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.modify(mock(Instrumentation.class),
+                mock(Object.class),
+                mock(Object.class),
+                Collections.<String>emptySet(),
+                Collections.<String>emptySet());
     }
 
     @Test
