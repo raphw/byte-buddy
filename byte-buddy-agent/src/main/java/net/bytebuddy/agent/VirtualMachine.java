@@ -134,9 +134,10 @@ public interface VirtualMachine {
          */
         public Class<? extends VirtualMachine> run() {
             try {
-                Class.forName("com.sun.jna.Platform");
-            } catch (ClassNotFoundException exception) {
-                throw new IllegalStateException("Optional JNA dependency is not available", exception);
+                Class<?> nativeClass = Class.forName("com.sun.jna.Native");
+                nativeClass.getMethod("load", String.class, Class.class);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Optional JNA dependency is not available or is not at least version 5", exception);
             }
             return System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")
                     ? ForOpenJ9.class
