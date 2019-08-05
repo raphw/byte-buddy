@@ -753,7 +753,7 @@ public class ByteBuddyAgent {
                 ForStandardToolsJarVm.JDK_ROOT,
                 ForStandardToolsJarVm.MACINTOSH,
                 ForUserDefinedToolsJar.INSTANCE,
-                ForUnixHotSpotVm.INSTANCE);
+                ForEmulatedAttachment.INSTANCE);
 
         /**
          * Attempts the creation of an accessor for a specific JVM's attachment API.
@@ -1163,9 +1163,9 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider using a custom protocol implementation for HotSpot on Unix.
+         * An attachment provider that uses Byte Buddy's attachment API emulation. To use this feature, JNA is required.
          */
-        enum ForUnixHotSpotVm implements AttachmentProvider {
+        enum ForEmulatedAttachment implements AttachmentProvider {
 
             /**
              * The singleton instance.
