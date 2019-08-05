@@ -745,7 +745,7 @@ public interface VirtualMachine {
                      */
                     public Factory(String temporaryDirectory, int attempts, long pause, TimeUnit timeUnit) {
                         super(temporaryDirectory, attempts, pause, timeUnit);
-                        library = Native.load("c", PosixLibrary.class);
+                        library = Native.loadLibrary("c", PosixLibrary.class);
                     }
 
                     /**
@@ -1107,8 +1107,8 @@ public interface VirtualMachine {
                      * Creates a new connection factory for Windows using JNA.
                      */
                     public Factory() {
-                        library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
-                        attachLibrary = Native.load("attach_hotspot_windows", WindowsAttachLibrary.class);
+                        library = Native.loadLibrary("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                        attachLibrary = Native.loadLibrary("attach_hotspot_windows", WindowsAttachLibrary.class);
                     }
 
                     /**
@@ -1375,7 +1375,7 @@ public interface VirtualMachine {
                      */
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
                         super("/tmp", attempts, pause, timeUnit);
-                        library = Native.load("c", SolarisLibrary.class);
+                        library = Native.loadLibrary("c", SolarisLibrary.class);
                     }
 
                     /**

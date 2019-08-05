@@ -15,6 +15,7 @@
         <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
+        <!-- Assure compatibility to JNA version 4. -->
         <jna.version>5.3.1</jna.version>
         <packages.list>net.bytebuddy.agent</packages.list>
         <native.compiler.32>i686-w64-mingw32-gcc</native.compiler.32>
