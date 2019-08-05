@@ -2341,6 +2341,7 @@ public interface VirtualMachine {
                     /**
                      * A structure representing a mutex's security attributes.
                      */
+                    @SuppressFBWarnings(value = {"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD", "UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"}, justification = "Field required by native implementation.")
                     class SecurityAttributes extends Structure {
 
                         /**
