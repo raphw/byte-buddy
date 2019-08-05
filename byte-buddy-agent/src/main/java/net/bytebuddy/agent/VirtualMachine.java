@@ -1816,7 +1816,7 @@ public interface VirtualMachine {
                     this.attempts = attempts;
                     this.pause = pause;
                     this.timeUnit = timeUnit;
-                    library = Native.load("c", PosixLibrary.class);
+                    library = Native.loadLibrary("c", PosixLibrary.class);
                 }
 
                 /**
@@ -2091,7 +2091,7 @@ public interface VirtualMachine {
                  * Creates a new connector for a Windows environment using JNA.
                  */
                 public ForJnaWindowsEnvironment() {
-                    library = Native.load("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
+                    library = Native.loadLibrary("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                 }
 
                 /**
@@ -2205,16 +2205,15 @@ public interface VirtualMachine {
                         if (!Advapi32.INSTANCE.SetSecurityDescriptorDacl(securityDescriptor, true, null, true)) {
                             throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                         }
-                        WinBase.SECURITY_ATTRIBUTES securityAttributes = new WinBase.SECURITY_ATTRIBUTES();
+                        WindowsLibrary.SecurityAttributes securityAttributes = new WindowsLibrary.SecurityAttributes();
                         try {
-                            securityAttributes.dwLength = new WinDef.DWORD(securityAttributes.size());
-                            securityAttributes.lpSecurityDescriptor = securityDescriptor.getPointer();
-                            securityAttributes.bInheritHandle = false;
-                            WinNT.HANDLE mutex = Kernel32.INSTANCE.CreateMutex(securityAttributes, false, CREATION_MUTEX_NAME);
+                            securityAttributes.length = new WinDef.DWORD(securityAttributes.size());
+                            securityAttributes.securityDescriptor = securityDescriptor.getPointer();
+                            WinNT.HANDLE mutex = library.CreateMutex(securityAttributes, false, CREATION_MUTEX_NAME);
                             if (mutex == null) {
                                 int lastError = Kernel32.INSTANCE.GetLastError();
                                 if (lastError == WinError.ERROR_ALREADY_EXISTS) {
-                                    mutex = Kernel32.INSTANCE.OpenMutex(WinBase.MUTEX_ALL_ACCESS, false, CREATION_MUTEX_NAME);
+                                    mutex = library.OpenMutex(WinNT.STANDARD_RIGHTS_REQUIRED | WinNT.SYNCHRONIZE | 0x0001, false, CREATION_MUTEX_NAME);
                                     if (mutex == null) {
                                         throw new Win32Exception(Kernel32.INSTANCE.GetLastError());
                                     }
@@ -2251,7 +2250,7 @@ public interface VirtualMachine {
                                             return new AttachmentHandle(parent, child);
                                         }
                                     } finally {
-                                        if (!Kernel32.INSTANCE.ReleaseMutex(mutex)) {
+                                        if (!library.ReleaseMutex(mutex)) {
                                             throw new Win32Exception(Native.getLastError());
                                         }
                                     }
@@ -2307,6 +2306,64 @@ public interface VirtualMachine {
                      */
                     @SuppressWarnings("checkstyle:methodname")
                     boolean ReleaseSemaphore(WinNT.HANDLE handle, long count, Long previousCount);
+
+                    /**
+                     * Create or opens a mutex.
+                     *
+                     * @param attributes The mutex's security attributes.
+                     * @param owner      {@code true} if the caller is supposed to be the initial owner.
+                     * @param name       The mutex name.
+                     * @return The handle to the mutex or {@code null} if the mutex could not be created.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    WinNT.HANDLE CreateMutex(SecurityAttributes attributes, boolean owner, String name);
+
+                    /**
+                     * Opens an existing object.
+                     *
+                     * @param access  The required access privileges.
+                     * @param inherit {@code true} if the mutex should be inherited.
+                     * @param name    The mutex's name.
+                     * @return The handle or {@code null} if the mutex could not be opened.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    WinNT.HANDLE OpenMutex(int access, boolean inherit, String name);
+
+                    /**
+                     * Releases the supplied mutex.
+                     *
+                     * @param handle The handle to the mutex.
+                     * @return {@code true} if the handle was successfully released.
+                     */
+                    @SuppressWarnings("checkstyle:methodname")
+                    boolean ReleaseMutex(WinNT.HANDLE handle);
+
+                    /**
+                     * A structure representing a mutex's security attributes.
+                     */
+                    class SecurityAttributes extends Structure {
+
+                        /**
+                         * The descriptor's length.
+                         */
+                        public WinDef.DWORD length;
+
+                        /**
+                         * A pointer to the descriptor.
+                         */
+                        public Pointer securityDescriptor;
+
+                        /**
+                         * {@code true} if the attributes are inherited.
+                         */
+                        @SuppressWarnings("unused")
+                        public boolean inherit;
+
+                        @Override
+                        protected List<String> getFieldOrder() {
+                            return Arrays.asList("length", "securityDescriptor", "inherit");
+                        }
+                    }
                 }
 
                 /**
