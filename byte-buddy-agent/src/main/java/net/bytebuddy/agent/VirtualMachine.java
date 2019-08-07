@@ -743,6 +743,7 @@ public interface VirtualMachine {
                      * @param pause              The pause between two checks for an established socket connection.
                      * @param timeUnit           The time unit of the pause time.
                      */
+                    @SuppressWarnings("deprecation")
                     public Factory(String temporaryDirectory, int attempts, long pause, TimeUnit timeUnit) {
                         super(temporaryDirectory, attempts, pause, timeUnit);
                         library = Native.loadLibrary("c", PosixLibrary.class);
@@ -1106,6 +1107,7 @@ public interface VirtualMachine {
                     /**
                      * Creates a new connection factory for Windows using JNA.
                      */
+                    @SuppressWarnings("deprecation")
                     public Factory() {
                         library = Native.loadLibrary("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                         attachLibrary = Native.loadLibrary("attach_hotspot_windows", WindowsAttachLibrary.class);
@@ -1373,6 +1375,7 @@ public interface VirtualMachine {
                      * @param pause    The pause between two checks for an established socket connection.
                      * @param timeUnit The time unit of the pause time.
                      */
+                    @SuppressWarnings("deprecation")
                     public Factory(int attempts, long pause, TimeUnit timeUnit) {
                         super("/tmp", attempts, pause, timeUnit);
                         library = Native.loadLibrary("c", SolarisLibrary.class);
@@ -1812,6 +1815,7 @@ public interface VirtualMachine {
                  * @param pause    The pause between two checks for another process to return.
                  * @param timeUnit The time unit of the pause time.
                  */
+                @SuppressWarnings("deprecation")
                 public ForJnaPosixEnvironment(int attempts, long pause, TimeUnit timeUnit) {
                     this.attempts = attempts;
                     this.pause = pause;
@@ -2090,6 +2094,7 @@ public interface VirtualMachine {
                 /**
                  * Creates a new connector for a Windows environment using JNA.
                  */
+                @SuppressWarnings("deprecation")
                 public ForJnaWindowsEnvironment() {
                     library = Native.loadLibrary("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
                 }
