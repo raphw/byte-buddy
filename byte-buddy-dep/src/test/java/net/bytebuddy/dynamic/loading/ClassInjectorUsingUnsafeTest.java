@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.lang.instrument.Instrumentation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
@@ -16,6 +17,7 @@ import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingUnsafeTest {
 
@@ -41,7 +43,7 @@ public class ClassInjectorUsingUnsafeTest {
     @Test
     @ClassUnsafeInjectionAvailableRule.Enforce
     public void testUnsafeInjectionFactory() throws Exception {
-        assertThat(new ClassInjector.UsingUnsafe.Factory()
+        assertThat(ClassInjector.UsingUnsafe.Factory.resolve(mock(Instrumentation.class))
                 .make(classLoader)
                 .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileLocator.ForClassLoader.read(Foo.class)))
                 .get(TypeDescription.ForLoadedType.of(Foo.class)), notNullValue(Class.class));

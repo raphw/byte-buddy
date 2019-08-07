@@ -20,6 +20,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.MemberRemoval;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
@@ -40,14 +41,13 @@ import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -2069,6 +2069,82 @@ ClassInjector {
             }
 
             /**
+             * Creates a new factory.
+             *
+             * @param dispatcher The dispatcher to use.
+             */
+            protected Factory(Dispatcher.Initializable dispatcher) {
+                this.dispatcher = dispatcher;
+            }
+
+            /**
+             * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
+             * {@code jdk.internal.misc.Unsafe} as a fallback. This method generates a new class and module for opening the
+             * internal package to avoid its exposure to any non-trusted code.
+             *
+             * @param instrumentation The instrumentation instance to use for opening the internal package if required.
+             * @return An appropriate injection strategy.
+             */
+            public static Factory resolve(Instrumentation instrumentation) {
+                return resolve(instrumentation, false);
+            }
+
+            /**
+             * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
+             * {@code jdk.internal.misc.Unsafe} as a fallback.
+             *
+             * @param instrumentation The instrumentation instance to use for opening the internal package if required.
+             * @param local           {@code false} if a new class should in a separated class loader and module should be created for
+             *                        opening the {@code jdk.internal.misc} package. This way, the internal package is not exposed to any
+             *                        other classes within this class's module.
+             * @return An appropriate injection strategy.
+             */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception intends to trigger disabled injection strategy.")
+            public static Factory resolve(Instrumentation instrumentation, boolean local) {
+                if (ClassInjector.UsingUnsafe.isAvailable() || !JavaModule.isSupported()) {
+                    return new Factory();
+                } else {
+                    try {
+                        Class<?> type = Class.forName("jdk.internal.misc.Unsafe");
+                        PackageDescription packageDescription = new PackageDescription.ForLoadedPackage(type.getPackage());
+                        JavaModule source = JavaModule.ofType(type), target = JavaModule.ofType(ClassInjector.UsingUnsafe.class);
+                        if (source.isOpened(packageDescription, target)) {
+                            return new Factory();
+                        } else if (local) {
+                            JavaModule module = JavaModule.ofType(AccessResolver.Default.class);
+                            source.modify(instrumentation,
+                                    Collections.singleton(module),
+                                    Collections.<String, Set<JavaModule>>emptyMap(),
+                                    Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
+                                    Collections.<Class<?>>emptySet(),
+                                    Collections.<Class<?>, List<Class<?>>>emptyMap());
+                            return new Factory();
+                        } else {
+                            Class<? extends AccessResolver> resolver = new ByteBuddy()
+                                    .subclass(AccessResolver.class)
+                                    .method(named("apply"))
+                                    .intercept(MethodCall.invoke(AccessibleObject.class.getMethod("setAccessible", boolean.class))
+                                            .onArgument(0)
+                                            .with(true))
+                                    .make()
+                                    .load(AccessResolver.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER.with(AccessResolver.class.getProtectionDomain()))
+                                    .getLoaded();
+                            JavaModule module = JavaModule.ofType(resolver);
+                            source.modify(instrumentation,
+                                    Collections.singleton(module),
+                                    Collections.<String, Set<JavaModule>>emptyMap(),
+                                    Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
+                                    Collections.<Class<?>>emptySet(),
+                                    Collections.<Class<?>, List<Class<?>>>emptyMap());
+                            return new ClassInjector.UsingUnsafe.Factory(resolver.getConstructor().newInstance());
+                        }
+                    } catch (Exception exception) {
+                        return new Factory(new Dispatcher.Unavailable(exception.getMessage()));
+                    }
+                }
+            }
+
+            /**
              * Returns {@code true} if this factory creates a valid dispatcher.
              *
              * @return {@code true} if this factory creates a valid dispatcher.
@@ -2090,7 +2166,7 @@ ClassInjector {
             /**
              * Creates a new class injector for the given class loader and protection domain.
              *
-             * @param classLoader The class loader to inject into or {@code null} to inject into the bootstrap loader.
+             * @param classLoader      The class loader to inject into or {@code null} to inject into the bootstrap loader.
              * @param protectionDomain The protection domain to apply or {@code null} if no protection domain should be used.
              * @return An appropriate class injector.
              */

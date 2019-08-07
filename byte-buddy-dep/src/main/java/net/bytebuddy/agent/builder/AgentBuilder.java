@@ -27,7 +27,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
-import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ClassInjector;
@@ -74,7 +73,6 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -1725,8 +1723,8 @@ public interface AgentBuilder {
                                     Collections.singleton(target),
                                     Collections.<String, Set<JavaModule>>emptyMap(),
                                     !addTargetEdge || typeDescription.getPackage() == null
-                                        ? Collections.<String, Set<JavaModule>>emptyMap()
-                                        : Collections.singletonMap(typeDescription.getPackage().getName(), Collections.singleton(target)),
+                                            ? Collections.<String, Set<JavaModule>>emptyMap()
+                                            : Collections.singletonMap(typeDescription.getPackage().getName(), Collections.singleton(target)),
                                     Collections.<Class<?>>emptySet(),
                                     Collections.<Class<?>, List<Class<?>>>emptyMap());
                         }
@@ -2921,9 +2919,9 @@ public interface AgentBuilder {
             /**
              * Registers a dynamic type for initialization and/or begins the initialization process.
              *
-             * @param dynamicType     The dynamic type that is created.
-             * @param classLoader     The class loader of the dynamic type which can be {@code null} to represent the bootstrap class loader.
-             * @param protectionDomain The instrumented type's protection domain or {@code null} if no protection domain is available.
+             * @param dynamicType       The dynamic type that is created.
+             * @param classLoader       The class loader of the dynamic type which can be {@code null} to represent the bootstrap class loader.
+             * @param protectionDomain  The instrumented type's protection domain or {@code null} if no protection domain is available.
              * @param injectionStrategy The injection strategy to use.
              */
             void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy);
@@ -3343,7 +3341,7 @@ public interface AgentBuilder {
         /**
          * Resolves the class injector to use for a given class loader and protection domain.
          *
-         * @param classLoader The class loader to use.
+         * @param classLoader      The class loader to use.
          * @param protectionDomain The protection domain to use.
          * @return The class injector to use.
          */
@@ -3430,52 +3428,6 @@ public interface AgentBuilder {
                  */
                 public WithFactory(ClassInjector.UsingUnsafe.Factory factory) {
                     this.factory = factory;
-                }
-
-                /**
-                 * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
-                 * {@code jdk.internal.misc.Unsafe} as a fallback. To avoid exposing {@code jdk.internal.misc.Unsafe} to any code on
-                 * the class loader on which Byte Buddy is currently loaded, the access resolution is performed by a newly created
-                 * class that is loaded in an isolated module that is not accessible to any other code.
-                 *
-                 * @param instrumentation The instrumentation instance to use for opening the internal package if required.
-                 * @return An appropriate injection strategy.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception intends to trigger disabled injection strategy.")
-                public static InjectionStrategy resolve(Instrumentation instrumentation) {
-                    if (ClassInjector.UsingUnsafe.isAvailable() || !JavaModule.isSupported()) {
-                        return UsingUnsafe.INSTANCE;
-                    } else {
-                        try {
-                            Class<?> type = Class.forName("jdk.internal.misc.Unsafe");
-                            PackageDescription packageDescription = new PackageDescription.ForLoadedPackage(type.getPackage());
-                            JavaModule source = JavaModule.ofType(type), target = JavaModule.ofType(ClassInjector.UsingUnsafe.class);
-                            if (source.isOpened(packageDescription, target)) {
-                                return new WithFactory(new ClassInjector.UsingUnsafe.Factory());
-                            } else {
-                                Class<? extends ClassInjector.UsingUnsafe.Factory.AccessResolver> resolver = new ByteBuddy()
-                                        .subclass(ClassInjector.UsingUnsafe.Factory.AccessResolver.class)
-                                        .method(named("apply"))
-                                        .intercept(MethodCall.invoke(AccessibleObject.class.getMethod("setAccessible", boolean.class))
-                                                .onArgument(0)
-                                                .with(true))
-                                        .make()
-                                        .load(ClassInjector.UsingUnsafe.Factory.AccessResolver.class.getClassLoader(),
-                                                ClassLoadingStrategy.Default.WRAPPER.with(ClassInjector.UsingUnsafe.Factory.AccessResolver.class.getProtectionDomain()))
-                                        .getLoaded();
-                                JavaModule module = JavaModule.ofType(resolver);
-                                source.modify(instrumentation,
-                                        Collections.singleton(module),
-                                        Collections.<String, Set<JavaModule>>emptyMap(),
-                                        Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
-                                        Collections.<Class<?>>emptySet(),
-                                        Collections.<Class<?>, List<Class<?>>>emptyMap());
-                                return new WithFactory(new ClassInjector.UsingUnsafe.Factory(resolver.getConstructor().newInstance()));
-                            }
-                        } catch (Exception ignored) {
-                            return Disabled.INSTANCE;
-                        }
-                    }
                 }
 
                 /**
@@ -8615,7 +8567,7 @@ public interface AgentBuilder {
          * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
          * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
          * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
-         * @param injectionStrategy       The injection strategy for injecting classes into a class loader.
+         * @param injectionStrategy                The injection strategy for injecting classes into a class loader.
          * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
          *                                         instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
@@ -9785,14 +9737,14 @@ public interface AgentBuilder {
                 /**
                  * Transforms a type or returns {@code null} if a type is not to be transformed.
                  *
-                 * @param initializationStrategy     The initialization strategy to use.
-                 * @param classFileLocator           The class file locator to use.
-                 * @param typeStrategy               The definition handler to use.
-                 * @param byteBuddy                  The Byte Buddy instance to use.
-                 * @param methodNameTransformer      The method name transformer to be used.
-                 * @param injectionStrategy          The injection strategy to be used.
-                 * @param accessControlContext       The access control context to be used.
-                 * @param listener                   The listener to be invoked to inform about an applied or non-applied transformation.
+                 * @param initializationStrategy The initialization strategy to use.
+                 * @param classFileLocator       The class file locator to use.
+                 * @param typeStrategy           The definition handler to use.
+                 * @param byteBuddy              The Byte Buddy instance to use.
+                 * @param methodNameTransformer  The method name transformer to be used.
+                 * @param injectionStrategy      The injection strategy to be used.
+                 * @param accessControlContext   The access control context to be used.
+                 * @param listener               The listener to be invoked to inform about an applied or non-applied transformation.
                  * @return The class file of the transformed class or {@code null} if no transformation is attempted.
                  */
                 byte[] apply(InitializationStrategy initializationStrategy,

@@ -18,7 +18,9 @@ import java.security.ProtectionDomain;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AgentBuilderInjectionStrategyTest {
 
@@ -63,10 +65,11 @@ public class AgentBuilderInjectionStrategyTest {
     }
 
     @Test
-    @ClassUnsafeInjectionAvailableRule.Enforce
     public void testUsingUnsafeFactory() throws Exception {
-        assertThat(AgentBuilder.InjectionStrategy.UsingUnsafe.WithFactory.resolve(mock(Instrumentation.class)).resolve(classLoader, protectionDomain),
-                hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(classLoader, protectionDomain)));
+        ClassInjector.UsingUnsafe.Factory factory = mock(ClassInjector.UsingUnsafe.Factory.class);
+        ClassInjector classInjector = mock(ClassInjector.class);
+        when(factory.make(classLoader, protectionDomain)).thenReturn(classInjector);
+        assertThat(new AgentBuilder.InjectionStrategy.UsingUnsafe.WithFactory(factory).resolve(classLoader, protectionDomain), is(classInjector));
     }
 
     @Test
