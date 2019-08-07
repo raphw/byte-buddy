@@ -17,6 +17,8 @@ package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.io.Serializable;
@@ -118,7 +120,10 @@ public interface LoadedTypeInitializer {
         public void onLoad(Class<?> type) {
             try {
                 Field field = type.getDeclaredField(fieldName);
-                if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
+                if (!Modifier.isPublic(field.getModifiers())
+                        || !Modifier.isPublic(field.getDeclaringClass().getModifiers())
+                        || JavaModule.isSupported()
+                        && !JavaModule.ofType(type).isExported(new TypeDescription.ForLoadedType(type).getPackage(), JavaModule.ofType(ForStaticField.class))) {
                     AccessController.doPrivileged(new SetAccessibleAction<Field>(field));
                 }
                 field.set(STATIC_FIELD, value);
