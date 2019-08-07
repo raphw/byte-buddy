@@ -3443,7 +3443,7 @@ public interface AgentBuilder {
          * An injection strategy that uses bootstrap injection using an {@link Instrumentation} instance.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class UsingBootstrapInjection implements InjectionStrategy {
+        class UsingInstrumentation implements InjectionStrategy {
 
             /**
              * The instrumentation instance to use.
@@ -3461,7 +3461,7 @@ public interface AgentBuilder {
              * @param instrumentation The instrumentation instance to use.
              * @param folder          The folder to store jar files being used for bootstrap injection.
              */
-            public UsingBootstrapInjection(Instrumentation instrumentation, File folder) {
+            public UsingInstrumentation(Instrumentation instrumentation, File folder) {
                 this.instrumentation = instrumentation;
                 this.folder = folder;
             }

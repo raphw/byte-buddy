@@ -74,14 +74,14 @@ public class AgentBuilderInjectionStrategyTest {
 
     @Test
     public void testBootstrapInjectionBootClassLoader() throws Exception {
-        assertThat(new AgentBuilder.InjectionStrategy.UsingBootstrapInjection(mock(Instrumentation.class), mock(File.class))
+        assertThat(new AgentBuilder.InjectionStrategy.UsingInstrumentation(mock(Instrumentation.class), mock(File.class))
                 .resolve(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain), instanceOf(ClassInjector.UsingInstrumentation.class));
     }
 
     @Test
     @ClassReflectionInjectionAvailableRule.Enforce
     public void testBootstrapInjectionNonBootClassLoader() throws Exception {
-        assertThat(new AgentBuilder.InjectionStrategy.UsingBootstrapInjection(mock(Instrumentation.class), mock(File.class))
+        assertThat(new AgentBuilder.InjectionStrategy.UsingInstrumentation(mock(Instrumentation.class), mock(File.class))
                 .resolve(classLoader, protectionDomain), instanceOf(ClassInjector.UsingReflection.class));
     }
 }
