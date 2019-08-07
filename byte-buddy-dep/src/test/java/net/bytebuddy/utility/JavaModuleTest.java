@@ -4,6 +4,8 @@ import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -69,9 +71,11 @@ public class JavaModuleTest {
     public void testModifyThrowsException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.modify(mock(Instrumentation.class),
                 mock(Object.class),
-                mock(Object.class),
-                Collections.<String>emptySet(),
-                Collections.<String>emptySet());
+                Collections.emptySet(),
+                Collections.<String, Set<Object>>emptyMap(),
+                Collections.<String, Set<Object>>emptyMap(),
+                Collections.<Class<?>>emptySet(),
+                Collections.<Class<?>, List<Class<?>>>emptyMap());
     }
 
     @Test

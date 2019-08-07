@@ -1,0 +1,84 @@
+package net.bytebuddy.agent.builder;
+
+import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
+import net.bytebuddy.test.utility.ClassUnsafeInjectionAvailableRule;
+import net.bytebuddy.test.utility.MockitoRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.MethodRule;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
+
+import java.io.File;
+import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
+
+import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+
+public class AgentBuilderInjectionStrategyTest {
+
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule classInjectionAvailableRule = new ClassReflectionInjectionAvailableRule();
+
+    @Rule
+    public MethodRule classUnsafeInjectionAvailableRule = new ClassUnsafeInjectionAvailableRule();
+
+    @Mock
+    private ClassLoader classLoader;
+
+    @Mock
+    private ProtectionDomain protectionDomain;
+
+    @Test(expected = IllegalStateException.class)
+    public void testDisabled() throws Exception {
+        AgentBuilder.InjectionStrategy.Disabled.INSTANCE.resolve(classLoader, protectionDomain);
+    }
+
+    @Test
+    @ClassReflectionInjectionAvailableRule.Enforce
+    public void testUsingReflection() throws Exception {
+        assertThat(AgentBuilder.InjectionStrategy.UsingReflection.INSTANCE.resolve(classLoader, protectionDomain),
+                hasPrototype((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain)));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @ClassReflectionInjectionAvailableRule.Enforce
+    public void testUsingReflectionCannotHandleBootstrapLoader() throws Exception {
+        AgentBuilder.InjectionStrategy.UsingReflection.INSTANCE.resolve(null, protectionDomain);
+    }
+
+    @Test
+    @ClassUnsafeInjectionAvailableRule.Enforce
+    public void testUsingUnsafe() throws Exception {
+        assertThat(AgentBuilder.InjectionStrategy.UsingUnsafe.INSTANCE.resolve(classLoader, protectionDomain),
+                hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(classLoader, protectionDomain)));
+    }
+
+    @Test
+    @ClassUnsafeInjectionAvailableRule.Enforce
+    public void testUsingUnsafeFactory() throws Exception {
+        assertThat(AgentBuilder.InjectionStrategy.UsingUnsafe.WithFactory.resolve(mock(Instrumentation.class)).resolve(classLoader, protectionDomain),
+                hasPrototype((ClassInjector) new ClassInjector.UsingUnsafe(classLoader, protectionDomain)));
+    }
+
+    @Test
+    public void testBootstrapInjectionBootClassLoader() throws Exception {
+        assertThat(new AgentBuilder.InjectionStrategy.UsingBootstrapInjection(mock(Instrumentation.class), mock(File.class))
+                .resolve(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain), instanceOf(ClassInjector.UsingInstrumentation.class));
+    }
+
+    @Test
+    @ClassReflectionInjectionAvailableRule.Enforce
+    public void testBootstrapInjectionNonBootClassLoader() throws Exception {
+        assertThat(new AgentBuilder.InjectionStrategy.UsingBootstrapInjection(mock(Instrumentation.class), mock(File.class))
+                .resolve(classLoader, protectionDomain), instanceOf(ClassInjector.UsingReflection.class));
+    }
+}

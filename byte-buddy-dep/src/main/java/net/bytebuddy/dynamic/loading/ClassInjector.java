@@ -1689,6 +1689,11 @@ ClassInjector {
         private final ProtectionDomain protectionDomain;
 
         /**
+         * The dispatcher to use.
+         */
+        private final Dispatcher.Initializable dispatcher;
+
+        /**
          * Creates a new unsafe injector for the given class loader with a default protection domain.
          *
          * @param classLoader The class loader to inject classes into or {@code null} for the bootstrap loader.
@@ -1704,22 +1709,34 @@ ClassInjector {
          * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
          */
         public UsingUnsafe(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+            this(classLoader, protectionDomain, DISPATCHER);
+        }
+
+        /**
+         * Creates a new unsafe injector for the given class loader with a default protection domain.
+         *
+         * @param classLoader      The class loader to inject classes into or {@code null} for the bootstrap loader.
+         * @param protectionDomain The protection domain to use or {@code null} for no protection domain.
+         * @param dispatcher       The dispatcher to use.
+         */
+        protected UsingUnsafe(ClassLoader classLoader, ProtectionDomain protectionDomain, Dispatcher.Initializable dispatcher) {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
+            this.dispatcher = dispatcher;
         }
 
         /**
          * {@inheritDoc}
          */
         public boolean isAlive() {
-            return isAvailable();
+            return dispatcher.isAvailable();
         }
 
         /**
          * {@inheritDoc}
          */
         public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
-            Dispatcher dispatcher = DISPATCHER.initialize();
+            Dispatcher dispatcher = this.dispatcher.initialize();
             Map<String, Class<?>> result = new HashMap<String, Class<?>>();
             synchronized (classLoader == null
                     ? BOOTSTRAP_LOADER_LOCK
@@ -1995,6 +2012,120 @@ ClassInjector {
                  */
                 public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     throw new UnsupportedOperationException("Could not access Unsafe class: " + message);
+                }
+            }
+        }
+
+        /**
+         * A factory for creating a {@link ClassInjector} that uses {@code sun.misc.Unsafe} if available but attempts a fallback
+         * to using {@code jdk.internal.misc.Unsafe} if the {@code jdk.internal} module is not resolved or unavailable.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        public static class Factory {
+
+            /**
+             * The dispatcher to use.
+             */
+            private final Dispatcher.Initializable dispatcher;
+
+            /**
+             * Creates a new factory for an unsafe class injector that uses Byte Buddy's privileges to
+             * accessing {@code jdk.internal.misc.Unsafe} if available.
+             */
+            public Factory() {
+                this(AccessResolver.Default.INSTANCE);
+            }
+
+            /**
+             * Creates a new factory for an unsafe class injector.
+             *
+             * @param accessResolver The access resolver to use.
+             */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is captured to trigger lazy error upon use.")
+            public Factory(AccessResolver accessResolver) {
+                Dispatcher.Initializable dispatcher;
+                if (DISPATCHER.isAvailable()) {
+                    dispatcher = DISPATCHER;
+                } else {
+                    try {
+                        Class<?> unsafeType = Class.forName("jdk.internal.misc.Unsafe");
+                        Field theUnsafe = unsafeType.getDeclaredField("theUnsafe");
+                        accessResolver.apply(theUnsafe);
+                        Object unsafe = theUnsafe.get(null);
+                        Method defineClass = unsafeType.getMethod("defineClass",
+                                String.class,
+                                byte[].class,
+                                int.class,
+                                int.class,
+                                ClassLoader.class,
+                                ProtectionDomain.class);
+                        accessResolver.apply(defineClass);
+                        dispatcher = new Dispatcher.Enabled(unsafe, defineClass);
+                    } catch (Exception exception) {
+                        dispatcher = new Dispatcher.Unavailable(exception.getMessage());
+                    }
+                }
+                this.dispatcher = dispatcher;
+            }
+
+            /**
+             * Returns {@code true} if this factory creates a valid dispatcher.
+             *
+             * @return {@code true} if this factory creates a valid dispatcher.
+             */
+            public boolean isAvailable() {
+                return dispatcher.isAvailable();
+            }
+
+            /**
+             * Creates a new class injector for the given class loader without a {@link ProtectionDomain}.
+             *
+             * @param classLoader The class loader to inject into or {@code null} to inject into the bootstrap loader.
+             * @return An appropriate class injector.
+             */
+            public ClassInjector make(ClassLoader classLoader) {
+                return make(classLoader, ClassLoadingStrategy.NO_PROTECTION_DOMAIN);
+            }
+
+            /**
+             * Creates a new class injector for the given class loader and protection domain.
+             *
+             * @param classLoader The class loader to inject into or {@code null} to inject into the bootstrap loader.
+             * @param protectionDomain The protection domain to apply or {@code null} if no protection domain should be used.
+             * @return An appropriate class injector.
+             */
+            public ClassInjector make(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                return new UsingUnsafe(classLoader, protectionDomain, dispatcher);
+            }
+
+            /**
+             * An access resolver that invokes {@link AccessibleObject#setAccessible(boolean)} to {@code true} in a given privilege scope.
+             */
+            public interface AccessResolver {
+
+                /**
+                 * Applies this access resolver.
+                 *
+                 * @param accessibleObject The accessible object to make accessible.
+                 */
+                void apply(AccessibleObject accessibleObject);
+
+                /**
+                 * A default access resolver that uses Byte Buddy's privilege scope.
+                 */
+                enum Default implements AccessResolver {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void apply(AccessibleObject accessibleObject) {
+                        accessibleObject.setAccessible(true);
+                    }
                 }
             }
         }

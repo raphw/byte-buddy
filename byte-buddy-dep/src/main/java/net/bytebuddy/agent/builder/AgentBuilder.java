@@ -27,6 +27,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ClassInjector;
@@ -73,6 +74,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -254,21 +256,12 @@ public interface AgentBuilder {
     AgentBuilder with(InstallationListener installationListener);
 
     /**
-     * Enables class injection of auxiliary classes into the bootstrap class loader.
+     * Defines a strategy for injecting auxiliary types into the target class loader.
      *
-     * @param instrumentation The instrumentation instance that is used for appending jar files to the
-     *                        bootstrap class path.
-     * @param folder          The folder in which jar files of the injected classes are to be stored.
-     * @return An agent builder with bootstrap class loader class injection enabled.
+     * @param injectionStrategy The injection strategy to use.
+     * @return A new agent builder with the supplied injection strategy configured.
      */
-    AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder);
-
-    /**
-     * Enables class injection of auxiliary classes into the bootstrap class loader which relies on {@code sun.misc.Unsafe}.
-     *
-     * @return An agent builder with bootstrap class loader class injection enabled.
-     */
-    AgentBuilder enableUnsafeBootstrapInjection();
+    AgentBuilder with(InjectionStrategy injectionStrategy);
 
     /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
@@ -286,13 +279,6 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder which does not use a native method prefix.
      */
     AgentBuilder disableNativeMethodPrefix();
-
-    /**
-     * Disables injection of auxiliary classes into the bootstrap class path.
-     *
-     * @return A new instance of this agent builder which does not apply bootstrap class loader injection.
-     */
-    AgentBuilder disableBootstrapInjection();
 
     /**
      * <p>
@@ -1735,12 +1721,22 @@ public interface AgentBuilder {
                 if (module != JavaModule.UNSUPPORTED && module.isNamed()) {
                     for (JavaModule target : modules) {
                         if (!module.canRead(target) || addTargetEdge && !module.isOpened(typeDescription.getPackage(), target)) {
-                            module.addReads(instrumentation, target, Collections.<String>emptySet(), !addTargetEdge || typeDescription.getPackage() == null
-                                    ? Collections.<String>emptySet()
-                                    : Collections.singleton(typeDescription.getPackage().getName()));
+                            module.modify(instrumentation,
+                                    Collections.singleton(target),
+                                    Collections.<String, Set<JavaModule>>emptyMap(),
+                                    !addTargetEdge || typeDescription.getPackage() == null
+                                        ? Collections.<String, Set<JavaModule>>emptyMap()
+                                        : Collections.singletonMap(typeDescription.getPackage().getName(), Collections.singleton(target)),
+                                    Collections.<Class<?>>emptySet(),
+                                    Collections.<Class<?>, List<Class<?>>>emptyMap());
                         }
                         if (addTargetEdge && !target.canRead(module)) {
-                            target.addReads(instrumentation, module, Collections.<String>emptySet(), Collections.<String>emptySet());
+                            target.modify(instrumentation,
+                                    Collections.singleton(module),
+                                    Collections.<String, Set<JavaModule>>emptyMap(),
+                                    Collections.<String, Set<JavaModule>>emptyMap(),
+                                    Collections.<Class<?>>emptySet(),
+                                    Collections.<Class<?>, List<Class<?>>>emptyMap());
                         }
                     }
                 }
@@ -2926,23 +2922,11 @@ public interface AgentBuilder {
              * Registers a dynamic type for initialization and/or begins the initialization process.
              *
              * @param dynamicType     The dynamic type that is created.
-             * @param classLoader     The class loader of the dynamic type.
-             * @param injectorFactory The injector factory
+             * @param classLoader     The class loader of the dynamic type which can be {@code null} to represent the bootstrap class loader.
+             * @param protectionDomain The instrumented type's protection domain or {@code null} if no protection domain is available.
+             * @param injectionStrategy The injection strategy to use.
              */
-            void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory);
-
-            /**
-             * A factory for creating a {@link ClassInjector} only if it is required.
-             */
-            interface InjectorFactory {
-
-                /**
-                 * Resolves the class injector for this factory.
-                 *
-                 * @return The class injector for this factory.
-                 */
-                ClassInjector resolve();
-            }
+            void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy);
         }
 
         /**
@@ -2972,7 +2956,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
+            public void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                 /* do nothing */
             }
         }
@@ -3006,7 +2990,7 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
+            public void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
@@ -3015,7 +2999,7 @@ public interface AgentBuilder {
                     }
                 }
                 if (!independentTypes.isEmpty()) {
-                    ClassInjector classInjector = injectorFactory.resolve();
+                    ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
                     Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                     for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
                         loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
@@ -3205,12 +3189,12 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer;
                         if (!auxiliaryTypes.isEmpty()) {
                             TypeDescription instrumentedType = dynamicType.getTypeDescription();
-                            ClassInjector classInjector = injectorFactory.resolve();
+                            ClassInjector classInjector = injectionStrategy.resolve(classLoader, protectionDomain);
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
@@ -3281,11 +3265,11 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
-                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
+                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectionStrategy.resolve(classLoader, protectionDomain));
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
                 }
@@ -3335,11 +3319,11 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, ProtectionDomain protectionDomain, InjectionStrategy injectionStrategy) {
                         Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                         if (!auxiliaryTypes.isEmpty()) {
-                            for (Map.Entry<TypeDescription, Class<?>> entry : injectorFactory.resolve().inject(auxiliaryTypes).entrySet()) {
+                            for (Map.Entry<TypeDescription, Class<?>> entry : injectionStrategy.resolve(classLoader, protectionDomain).inject(auxiliaryTypes).entrySet()) {
                                 loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                             }
                         }
@@ -3347,6 +3331,196 @@ public interface AgentBuilder {
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * A strategy for injecting auxiliary types into a class loader.
+     */
+    interface InjectionStrategy {
+
+        /**
+         * Resolves the class injector to use for a given class loader and protection domain.
+         *
+         * @param classLoader The class loader to use.
+         * @param protectionDomain The protection domain to use.
+         * @return The class injector to use.
+         */
+        ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain);
+
+        /**
+         * An injection strategy that does not permit class injection.
+         */
+        enum Disabled implements InjectionStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                throw new IllegalStateException("Class injection is disabled");
+            }
+        }
+
+        /**
+         * An injection strategy that uses Java reflection. This strategy is not capable of injecting classes into the bootstrap class loader.
+         */
+        enum UsingReflection implements InjectionStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                if (classLoader == null) {
+                    throw new IllegalStateException("Cannot inject auxiliary class into bootstrap loader using reflection");
+                } else if (ClassInjector.UsingReflection.isAvailable()) {
+                    return new ClassInjector.UsingReflection(classLoader, protectionDomain);
+                } else {
+                    throw new IllegalStateException("Reflection-based injection is not available on the current VM");
+                }
+            }
+        }
+
+        /**
+         * An injection strategy that uses {@code sun.misc.Unsafe} to inject classes.
+         */
+        enum UsingUnsafe implements InjectionStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                if (ClassInjector.UsingUnsafe.isAvailable()) {
+                    return new ClassInjector.UsingUnsafe(classLoader, protectionDomain);
+                } else {
+                    throw new IllegalStateException("Unsafe-based injection is not available on the current VM");
+                }
+            }
+
+            /**
+             * An injection strategy that uses a factory for creating an unsafe injector.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            public static class WithFactory implements InjectionStrategy {
+
+                /**
+                 * The factory to use for creating an unsafe injector.
+                 */
+                private final ClassInjector.UsingUnsafe.Factory factory;
+
+                /**
+                 * Creates an injection strategy based on a factory.
+                 *
+                 * @param factory The factory to use for creating an unsafe injector.
+                 */
+                public WithFactory(ClassInjector.UsingUnsafe.Factory factory) {
+                    this.factory = factory;
+                }
+
+                /**
+                 * Resolves an injection strategy that uses unsafe injection if available and also attempts to open and use
+                 * {@code jdk.internal.misc.Unsafe} as a fallback. To avoid exposing {@code jdk.internal.misc.Unsafe} to any code on
+                 * the class loader on which Byte Buddy is currently loaded, the access resolution is performed by a newly created
+                 * class that is loaded in an isolated module that is not accessible to any other code.
+                 *
+                 * @param instrumentation The instrumentation instance to use for opening the internal package if required.
+                 * @return An appropriate injection strategy.
+                 */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception intends to trigger disabled injection strategy.")
+                public static InjectionStrategy resolve(Instrumentation instrumentation) {
+                    if (ClassInjector.UsingUnsafe.isAvailable() || !JavaModule.isSupported()) {
+                        return UsingUnsafe.INSTANCE;
+                    } else {
+                        try {
+                            Class<?> type = Class.forName("jdk.internal.misc.Unsafe");
+                            PackageDescription packageDescription = new PackageDescription.ForLoadedPackage(type.getPackage());
+                            JavaModule source = JavaModule.ofType(type), target = JavaModule.ofType(ClassInjector.UsingUnsafe.class);
+                            if (source.isOpened(packageDescription, target)) {
+                                return new WithFactory(new ClassInjector.UsingUnsafe.Factory());
+                            } else {
+                                Class<? extends ClassInjector.UsingUnsafe.Factory.AccessResolver> resolver = new ByteBuddy()
+                                        .subclass(ClassInjector.UsingUnsafe.Factory.AccessResolver.class)
+                                        .method(named("apply"))
+                                        .intercept(MethodCall.invoke(AccessibleObject.class.getMethod("setAccessible", boolean.class))
+                                                .onArgument(0)
+                                                .with(true))
+                                        .make()
+                                        .load(ClassInjector.UsingUnsafe.Factory.AccessResolver.class.getClassLoader(),
+                                                ClassLoadingStrategy.Default.WRAPPER.with(ClassInjector.UsingUnsafe.Factory.AccessResolver.class.getProtectionDomain()))
+                                        .getLoaded();
+                                JavaModule module = JavaModule.ofType(resolver);
+                                source.modify(instrumentation,
+                                        Collections.singleton(module),
+                                        Collections.<String, Set<JavaModule>>emptyMap(),
+                                        Collections.singletonMap(packageDescription.getName(), Collections.singleton(module)),
+                                        Collections.<Class<?>>emptySet(),
+                                        Collections.<Class<?>, List<Class<?>>>emptyMap());
+                                return new WithFactory(new ClassInjector.UsingUnsafe.Factory(resolver.getConstructor().newInstance()));
+                            }
+                        } catch (Exception ignored) {
+                            return Disabled.INSTANCE;
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                    return factory.make(classLoader, protectionDomain);
+                }
+            }
+        }
+
+        /**
+         * An injection strategy that uses bootstrap injection using an {@link Instrumentation} instance.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class UsingBootstrapInjection implements InjectionStrategy {
+
+            /**
+             * The instrumentation instance to use.
+             */
+            private final Instrumentation instrumentation;
+
+            /**
+             * The folder to store jar files being used for bootstrap injection.
+             */
+            private final File folder;
+
+            /**
+             * Creates a new bootstrap injection strategy.
+             *
+             * @param instrumentation The instrumentation instance to use.
+             * @param folder          The folder to store jar files being used for bootstrap injection.
+             */
+            public UsingBootstrapInjection(Instrumentation instrumentation, File folder) {
+                this.instrumentation = instrumentation;
+                this.folder = folder;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ClassInjector resolve(ClassLoader classLoader, ProtectionDomain protectionDomain) {
+                return classLoader == null
+                        ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
+                        : UsingReflection.INSTANCE.resolve(classLoader, protectionDomain);
             }
         }
     }
@@ -3689,7 +3863,7 @@ public interface AgentBuilder {
                     /**
                      * {@inheritDoc}
                      */
-                    public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
+                    public Class<?> load(String name, ClassLoader classLoader) {
                         boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
                         AtomicBoolean signal = new AtomicBoolean(holdsLock);
                         Future<Class<?>> future = executorService.submit(holdsLock
@@ -8234,7 +8408,8 @@ public interface AgentBuilder {
      * <p>
      * By default, Byte Buddy ignores any types loaded by the bootstrap class loader and
      * any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format changes, set
-     * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link PoolStrategy.Default#FAST}).
+     * {@link AgentBuilder#disableClassFormatChanges()}. All types are parsed without their debugging information
+     * ({@link PoolStrategy.Default#FAST}).
      * </p>
      */
     @HashCodeAndEqualsPlugin.Enhance
@@ -8343,9 +8518,9 @@ public interface AgentBuilder {
         protected final RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy;
 
         /**
-         * The injection strategy for injecting classes into the bootstrap class loader.
+         * The injection strategy for injecting classes into a class loader.
          */
-        protected final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+        protected final InjectionStrategy injectionStrategy;
 
         /**
          * A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the instrumentation
@@ -8393,7 +8568,7 @@ public interface AgentBuilder {
         /**
          * Creates a new agent builder with default settings. By default, Byte Buddy ignores any types loaded by the bootstrap class loader, any
          * type within a {@code net.bytebuddy} package and any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format
-         * changes, set {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information
+         * changes, set {@link AgentBuilder#disableClassFormatChanges()}. All types are parsed without their debugging information
          * ({@link PoolStrategy.Default#FAST}).
          *
          * @param byteBuddy The Byte Buddy instance to be used.
@@ -8412,7 +8587,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
                     RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
-                    BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    InjectionStrategy.UsingReflection.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
@@ -8440,7 +8615,7 @@ public interface AgentBuilder {
          * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
          * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
          * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
-         * @param bootstrapInjectionStrategy       The injection strategy for injecting classes into the bootstrap class loader.
+         * @param injectionStrategy       The injection strategy for injecting classes into a class loader.
          * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
          *                                         instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
@@ -8463,7 +8638,7 @@ public interface AgentBuilder {
                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                           RedefinitionStrategy.Listener redefinitionListener,
                           RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
-                          BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                          InjectionStrategy injectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
                           FallbackStrategy fallbackStrategy,
@@ -8484,7 +8659,7 @@ public interface AgentBuilder {
             this.redefinitionBatchAllocator = redefinitionBatchAllocator;
             this.redefinitionListener = redefinitionListener;
             this.redefinitionResubmissionStrategy = redefinitionResubmissionStrategy;
-            this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+            this.injectionStrategy = injectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
             this.fallbackStrategy = fallbackStrategy;
@@ -8603,7 +8778,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8630,7 +8805,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8657,7 +8832,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8684,7 +8859,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8711,7 +8886,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8738,7 +8913,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8765,7 +8940,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8792,7 +8967,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8819,7 +8994,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
                     RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8846,7 +9021,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8873,7 +9048,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8900,7 +9075,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8927,7 +9102,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8954,7 +9129,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8981,7 +9156,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -8994,7 +9169,7 @@ public interface AgentBuilder {
         /**
          * {@inheritDoc}
          */
-        public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
+        public AgentBuilder with(InjectionStrategy injectionStrategy) {
             return new Default(byteBuddy,
                     listener,
                     circularityLock,
@@ -9008,61 +9183,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    fallbackStrategy,
-                    classFileBufferStrategy,
-                    installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public AgentBuilder enableUnsafeBootstrapInjection() {
-            return new Default(byteBuddy,
-                    listener,
-                    circularityLock,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener,
-                    redefinitionResubmissionStrategy,
-                    BootstrapInjectionStrategy.Unsafe.INSTANCE,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    fallbackStrategy,
-                    classFileBufferStrategy,
-                    installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public AgentBuilder disableBootstrapInjection() {
-            return new Default(byteBuddy,
-                    listener,
-                    circularityLock,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    redefinitionDiscoveryStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener,
-                    redefinitionResubmissionStrategy,
-                    BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -9091,7 +9212,7 @@ public interface AgentBuilder {
                     redefinitionBatchAllocator,
                     redefinitionListener,
                     redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -9229,7 +9350,7 @@ public interface AgentBuilder {
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
-                    bootstrapInjectionStrategy,
+                    injectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
@@ -9491,93 +9612,6 @@ public interface AgentBuilder {
         }
 
         /**
-         * An injection strategy for injecting classes into the bootstrap class loader.
-         */
-        protected interface BootstrapInjectionStrategy {
-
-            /**
-             * Creates an injector for the bootstrap class loader.
-             *
-             * @param protectionDomain The protection domain to be used.
-             * @return A class injector for the bootstrap class loader.
-             */
-            ClassInjector make(ProtectionDomain protectionDomain);
-
-            /**
-             * A disabled bootstrap injection strategy.
-             */
-            enum Disabled implements BootstrapInjectionStrategy {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ClassInjector make(ProtectionDomain protectionDomain) {
-                    throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
-                }
-            }
-
-            /**
-             * A bootstrap injection strategy relying on {@code sun.misc.Unsafe}.
-             */
-            enum Unsafe implements BootstrapInjectionStrategy {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ClassInjector make(ProtectionDomain protectionDomain) {
-                    return new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain);
-                }
-            }
-
-            /**
-             * An enabled bootstrap injection strategy.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class Enabled implements BootstrapInjectionStrategy {
-
-                /**
-                 * The folder in which jar files are to be saved.
-                 */
-                private final File folder;
-
-                /**
-                 * The instrumentation to use for appending jar files.
-                 */
-                private final Instrumentation instrumentation;
-
-                /**
-                 * Creates a new enabled bootstrap class loader injection strategy.
-                 *
-                 * @param folder          The folder in which jar files are to be saved.
-                 * @param instrumentation The instrumentation to use for appending jar files.
-                 */
-                public Enabled(File folder, Instrumentation instrumentation) {
-                    this.folder = folder;
-                    this.instrumentation = instrumentation;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public ClassInjector make(ProtectionDomain protectionDomain) {
-                    return ClassInjector.UsingInstrumentation.of(folder,
-                            ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
-                            instrumentation);
-                }
-            }
-        }
-
-        /**
          * A strategy for determining if a native method name prefix should be used when rebasing methods.
          */
         protected interface NativeMethodStrategy {
@@ -9756,7 +9790,7 @@ public interface AgentBuilder {
                  * @param typeStrategy               The definition handler to use.
                  * @param byteBuddy                  The Byte Buddy instance to use.
                  * @param methodNameTransformer      The method name transformer to be used.
-                 * @param bootstrapInjectionStrategy The bootstrap injection strategy to be used.
+                 * @param injectionStrategy          The injection strategy to be used.
                  * @param accessControlContext       The access control context to be used.
                  * @param listener                   The listener to be invoked to inform about an applied or non-applied transformation.
                  * @return The class file of the transformed class or {@code null} if no transformation is attempted.
@@ -9766,7 +9800,7 @@ public interface AgentBuilder {
                              TypeStrategy typeStrategy,
                              ByteBuddy byteBuddy,
                              NativeMethodStrategy methodNameTransformer,
-                             BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                             InjectionStrategy injectionStrategy,
                              AccessControlContext accessControlContext,
                              Listener listener);
 
@@ -9899,7 +9933,7 @@ public interface AgentBuilder {
                                         TypeStrategy typeStrategy,
                                         ByteBuddy byteBuddy,
                                         NativeMethodStrategy methodNameTransformer,
-                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        InjectionStrategy injectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
                         listener.onIgnored(typeDescription, classLoader, module, loaded);
@@ -10124,7 +10158,7 @@ public interface AgentBuilder {
                                         TypeStrategy typeStrategy,
                                         ByteBuddy byteBuddy,
                                         NativeMethodStrategy methodNameTransformer,
-                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        InjectionStrategy injectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
                         InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
@@ -10135,57 +10169,9 @@ public interface AgentBuilder {
                                 classLoader,
                                 module,
                                 protectionDomain), typeDescription, classLoader, module)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
-                        dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
-                                classLoader,
-                                protectionDomain));
+                        dispatcher.register(dynamicType, classLoader, protectionDomain, injectionStrategy);
                         listener.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
                         return dynamicType.getBytes();
-                    }
-
-                    /**
-                     * An injector factory that resolves to a bootstrap class loader injection if this is necessary and enabled.
-                     */
-                    @HashCodeAndEqualsPlugin.Enhance
-                    protected static class BootstrapClassLoaderCapableInjectorFactory implements InitializationStrategy.Dispatcher.InjectorFactory {
-
-                        /**
-                         * The bootstrap injection strategy being used.
-                         */
-                        private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
-
-                        /**
-                         * The class loader for which to create an injection factory.
-                         */
-                        private final ClassLoader classLoader;
-
-                        /**
-                         * The protection domain of the created classes.
-                         */
-                        private final ProtectionDomain protectionDomain;
-
-                        /**
-                         * Creates a new bootstrap class loader capable injector factory.
-                         *
-                         * @param bootstrapInjectionStrategy The bootstrap injection strategy being used.
-                         * @param classLoader                The class loader for which to create an injection factory.
-                         * @param protectionDomain           The protection domain of the created classes.
-                         */
-                        protected BootstrapClassLoaderCapableInjectorFactory(BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                                                             ClassLoader classLoader,
-                                                                             ProtectionDomain protectionDomain) {
-                            this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
-                            this.classLoader = classLoader;
-                            this.protectionDomain = protectionDomain;
-                        }
-
-                        /**
-                         * {@inheritDoc}
-                         */
-                        public ClassInjector resolve() {
-                            return classLoader == null
-                                    ? bootstrapInjectionStrategy.make(protectionDomain)
-                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain);
-                        }
                     }
                 }
             }
@@ -10320,9 +10306,9 @@ public interface AgentBuilder {
             private final InitializationStrategy initializationStrategy;
 
             /**
-             * The injection strategy for injecting classes into the bootstrap class loader.
+             * The injection strategy to use.
              */
-            private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+            private final InjectionStrategy injectionStrategy;
 
             /**
              * The lambda instrumentation strategy to use.
@@ -10384,7 +10370,7 @@ public interface AgentBuilder {
              * @param locationStrategy              The location strategy to use.
              * @param nativeMethodStrategy          The native method strategy to apply.
              * @param initializationStrategy        The initialization strategy to use for transformed types.
-             * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+             * @param injectionStrategy             The injection strategy to use.
              * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
              * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
              * @param fallbackStrategy              The fallback strategy to use.
@@ -10401,7 +10387,7 @@ public interface AgentBuilder {
                                         LocationStrategy locationStrategy,
                                         NativeMethodStrategy nativeMethodStrategy,
                                         InitializationStrategy initializationStrategy,
-                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        InjectionStrategy injectionStrategy,
                                         LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
@@ -10417,7 +10403,7 @@ public interface AgentBuilder {
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
                 this.initializationStrategy = initializationStrategy;
-                this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                this.injectionStrategy = injectionStrategy;
                 this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
                 this.descriptionStrategy = descriptionStrategy;
                 this.fallbackStrategy = fallbackStrategy;
@@ -10558,7 +10544,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         byteBuddy,
                         nativeMethodStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         accessControlContext,
                         listener);
             }
@@ -10636,7 +10622,7 @@ public interface AgentBuilder {
                  * @param locationStrategy              The location strategy to use.
                  * @param nativeMethodStrategy          The native method strategy to apply.
                  * @param initializationStrategy        The initialization strategy to use for transformed types.
-                 * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+                 * @param injectionStrategy             The injection strategy to use.
                  * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
                  * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
                  * @param fallbackStrategy              The fallback strategy to use.
@@ -10654,7 +10640,7 @@ public interface AgentBuilder {
                                                     LocationStrategy locationStrategy,
                                                     NativeMethodStrategy nativeMethodStrategy,
                                                     InitializationStrategy initializationStrategy,
-                                                    BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                    InjectionStrategy injectionStrategy,
                                                     LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
@@ -10703,7 +10689,7 @@ public interface AgentBuilder {
                                             LocationStrategy.class,
                                             NativeMethodStrategy.class,
                                             InitializationStrategy.class,
-                                            BootstrapInjectionStrategy.class,
+                                            InjectionStrategy.class,
                                             LambdaInstrumentationStrategy.class,
                                             DescriptionStrategy.class,
                                             FallbackStrategy.class,
@@ -10751,7 +10737,7 @@ public interface AgentBuilder {
                                                                LocationStrategy locationStrategy,
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
-                                                               BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               InjectionStrategy injectionStrategy,
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
@@ -10768,7 +10754,7 @@ public interface AgentBuilder {
                                     locationStrategy,
                                     nativeMethodStrategy,
                                     initializationStrategy,
-                                    bootstrapInjectionStrategy,
+                                    injectionStrategy,
                                     lambdaInstrumentationStrategy,
                                     descriptionStrategy,
                                     fallbackStrategy,
@@ -10807,7 +10793,7 @@ public interface AgentBuilder {
                                                                LocationStrategy locationStrategy,
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
-                                                               BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               InjectionStrategy injectionStrategy,
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
@@ -10823,7 +10809,7 @@ public interface AgentBuilder {
                                 locationStrategy,
                                 nativeMethodStrategy,
                                 initializationStrategy,
-                                bootstrapInjectionStrategy,
+                                injectionStrategy,
                                 lambdaInstrumentationStrategy,
                                 descriptionStrategy,
                                 fallbackStrategy,
@@ -11084,22 +11070,8 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
-                return materialize().enableBootstrapInjection(instrumentation, folder);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AgentBuilder enableUnsafeBootstrapInjection() {
-                return materialize().enableUnsafeBootstrapInjection();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public AgentBuilder disableBootstrapInjection() {
-                return materialize().disableBootstrapInjection();
+            public AgentBuilder with(InjectionStrategy injectionStrategy) {
+                return materialize().with(injectionStrategy);
             }
 
             /**
@@ -11297,7 +11269,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11343,7 +11315,7 @@ public interface AgentBuilder {
              * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
              * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
              * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
-             * @param bootstrapInjectionStrategy       The injection strategy for injecting classes into the bootstrap class loader.
+             * @param injectionStrategy                The injection strategy to use.
              * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
              *                                         instrumentation of classes that represent lambda expressions.
              * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
@@ -11366,7 +11338,7 @@ public interface AgentBuilder {
                                  RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                  RedefinitionStrategy.Listener redefinitionListener,
                                  RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
-                                 BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                 InjectionStrategy injectionStrategy,
                                  LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                  DescriptionStrategy descriptionStrategy,
                                  FallbackStrategy fallbackStrategy,
@@ -11387,7 +11359,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11417,7 +11389,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11454,7 +11426,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11484,7 +11456,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11521,7 +11493,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher),
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,
@@ -11583,7 +11555,7 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener,
                         redefinitionResubmissionStrategy,
-                        bootstrapInjectionStrategy,
+                        injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         fallbackStrategy,

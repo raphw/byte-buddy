@@ -45,7 +45,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     private DynamicType dynamicType;
 
     @Mock
-    private AgentBuilder.InitializationStrategy.Dispatcher.InjectorFactory injectorFactory;
+    private AgentBuilder.InjectionStrategy injectionStrategy;
 
     @Mock
     private ClassInjector classInjector;
@@ -62,7 +62,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(builder.initializer((any(ByteCodeAppender.class)))).thenReturn((DynamicType.Builder) appendedBuilder);
-        when(injectorFactory.resolve()).thenReturn(classInjector);
+        when(injectionStrategy.resolve(Qux.class.getClassLoader(), Qux.class.getProtectionDomain())).thenReturn(classInjector);
         when(dynamicType.getTypeDescription()).thenReturn(instrumented);
         Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
         auxiliaryTypes.put(dependent, FOO);
@@ -130,7 +130,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @SuppressWarnings("unchecked")
     public void testSplit() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher(nexusAccessor, IDENTIFIER);
-        dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
+        dispatcher.register(dynamicType, Qux.class.getClassLoader(), Qux.class.getProtectionDomain(), injectionStrategy);
         verify(classInjector).inject(Collections.singletonMap(independent, BAR));
         verifyNoMoreInteractions(classInjector);
         verify(independentInitializer).onLoad(Bar.class);
@@ -148,7 +148,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @SuppressWarnings("unchecked")
     public void testEager() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher(nexusAccessor, IDENTIFIER);
-        dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
+        dispatcher.register(dynamicType, Qux.class.getClassLoader(), Qux.class.getProtectionDomain(), injectionStrategy);
         Map<TypeDescription, byte[]> injected = new HashMap<TypeDescription, byte[]>();
         injected.put(independent, BAR);
         injected.put(dependent, FOO);
@@ -168,7 +168,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @SuppressWarnings("unchecked")
     public void testLazy() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher(nexusAccessor, IDENTIFIER);
-        dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
+        dispatcher.register(dynamicType, Qux.class.getClassLoader(), Qux.class.getProtectionDomain(), injectionStrategy);
         verifyZeroInteractions(classInjector, dependentInitializer, independentInitializer);
         Nexus.initialize(Qux.class, IDENTIFIER);
         Map<TypeDescription, byte[]> injected = new HashMap<TypeDescription, byte[]>();

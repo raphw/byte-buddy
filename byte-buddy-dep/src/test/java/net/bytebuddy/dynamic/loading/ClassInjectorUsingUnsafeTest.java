@@ -40,8 +40,19 @@ public class ClassInjectorUsingUnsafeTest {
 
     @Test
     @ClassUnsafeInjectionAvailableRule.Enforce
+    public void testUnsafeInjectionFactory() throws Exception {
+        assertThat(new ClassInjector.UsingUnsafe.Factory()
+                .make(classLoader)
+                .inject(Collections.singletonMap(TypeDescription.ForLoadedType.of(Foo.class), ClassFileLocator.ForClassLoader.read(Foo.class)))
+                .get(TypeDescription.ForLoadedType.of(Foo.class)), notNullValue(Class.class));
+        assertThat(Class.forName(Foo.class.getName(), false, classLoader).getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    @ClassUnsafeInjectionAvailableRule.Enforce
     public void testAvailability() throws Exception {
         assertThat(ClassInjector.UsingUnsafe.isAvailable(), is(true));
+        assertThat(new ClassInjector.UsingUnsafe.Factory().isAvailable(), is(true));
         assertThat(new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader()).isAlive(), is(true));
         assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Unavailable(null).isAvailable(), is(false));
     }

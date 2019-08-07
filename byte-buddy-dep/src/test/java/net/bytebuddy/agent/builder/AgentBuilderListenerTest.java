@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
@@ -290,7 +292,12 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).addReads(instrumentation, target, Collections.<String>emptySet(), Collections.<String>emptySet());
+        verify(source).modify(instrumentation,
+                Collections.singleton(target),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<Class<?>>emptySet(),
+                Collections.<Class<?>, List<Class<?>>>emptyMap());
         verifyNoMoreInteractions(source);
         verifyZeroInteractions(target);
     }
@@ -345,10 +352,20 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, LOADED, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
-        verify(source).addReads(instrumentation, target, Collections.<String>emptySet(), Collections.<String>emptySet());
+        verify(source).modify(instrumentation,
+                Collections.singleton(target),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<Class<?>>emptySet(),
+                Collections.<Class<?>, List<Class<?>>>emptyMap());
         verifyNoMoreInteractions(source);
         verify(target).canRead(source);
-        verify(target).addReads(instrumentation, source, Collections.<String>emptySet(), Collections.<String>emptySet());
+        verify(target).modify(instrumentation,
+                Collections.singleton(source),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<String, Set<JavaModule>>emptyMap(),
+                Collections.<Class<?>>emptySet(),
+                Collections.<Class<?>, List<Class<?>>>emptyMap());
         verifyNoMoreInteractions(target);
     }
 

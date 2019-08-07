@@ -26,10 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -168,15 +165,42 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * Adds a read-edge to this module to the supplied module using the instrumentation API.
+     * Modifies this module's properties.
      *
-     * @param instrumentation The instrumentation instance to use for adding the edge.
-     * @param module          The module to add as a read dependency to this module.
-     * @param exported        A set of packages to export.
-     * @param opened          A set of packages to open.
+     * @param instrumentation The instrumentation instace to use for applying the modification.
+     * @param reads           A set of additional modules this module should read.
+     * @param exports         A map of packages to export to a set of modules.
+     * @param opens           A map of packages to open to a set of modules.
+     * @param uses            A set of provider interfaces to use by this module.
+     * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
      */
-    public void addReads(Instrumentation instrumentation, JavaModule module, Set<String> exported, Set<String> opened) {
-        DISPATCHER.modify(instrumentation, this.module, module.unwrap(), exported, opened);
+    public void modify(Instrumentation instrumentation,
+                       Set<JavaModule> reads,
+                       Map<String, Set<JavaModule>> exports,
+                       Map<String, Set<JavaModule>> opens,
+                       Set<Class<?>> uses,
+                       Map<Class<?>, List<Class<?>>> provides) {
+        Set<Object> unwrappedReads = new HashSet<Object>();
+        for (JavaModule read : reads) {
+            unwrappedReads.add(read.unwrap());
+        }
+        Map<String, Set<Object>> unwrappedExports = new HashMap<String, Set<Object>>();
+        for (Map.Entry<String, Set<JavaModule>> entry : exports.entrySet()) {
+            Set<Object> modules = new HashSet<Object>();
+            for (JavaModule module : entry.getValue()) {
+                modules.add(module.unwrap());
+            }
+            unwrappedExports.put(entry.getKey(), modules);
+        }
+        Map<String, Set<Object>> unwrappedOpens = new HashMap<String, Set<Object>>();
+        for (Map.Entry<String, Set<JavaModule>> entry : opens.entrySet()) {
+            Set<Object> modules = new HashSet<Object>();
+            for (JavaModule module : entry.getValue()) {
+                modules.add(module.unwrap());
+            }
+            unwrappedOpens.put(entry.getKey(), modules);
+        }
+        DISPATCHER.modify(instrumentation, module, unwrappedReads, unwrappedExports, unwrappedOpens, uses, provides);
     }
 
     @Override
@@ -283,15 +307,23 @@ public class JavaModule implements NamedElement.WithOptionalName {
         boolean canRead(Object source, Object target);
 
         /**
-         * Adds a read-edge from the source to the target module.
+         * Modifies this module's properties.
          *
-         * @param instrumentation The instrumentation instance to use for adding the edge.
-         * @param source          The source module.
-         * @param target          The target module.
-         * @param exported        A set of packages to export.
-         * @param opened          A set of packages to open.
+         * @param instrumentation The instrumentation instace to use for applying the modification.
+         * @param module          The module to modify.
+         * @param reads           A set of additional modules this module should read.
+         * @param exports         A map of packages to export to a set of modules.
+         * @param opens           A map of packages to open to a set of modules.
+         * @param uses            A set of provider interfaces to use by this module.
+         * @param provides        A map of provider interfaces to provide by this module mapped to the provider implementations.
          */
-        void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened);
+        void modify(Instrumentation instrumentation,
+                    Object module,
+                    Set<Object> reads,
+                    Map<String, Set<Object>> exports,
+                    Map<String, Set<Object>> opens,
+                    Set<Class<?>> uses,
+                    Map<Class<?>, List<Class<?>>> provides);
 
         /**
          * A creation action for a dispatcher.
@@ -537,7 +569,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
-            public void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened) {
+            public void modify(Instrumentation instrumentation,
+                               Object source,
+                               Set<Object> reads,
+                               Map<String, Set<Object>> exports,
+                               Map<String, Set<Object>> opens,
+                               Set<Class<?>> uses,
+                               Map<Class<?>, List<Class<?>>> provides) {
                 try {
                     if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
                         throw new IllegalStateException(source + " is not modifiable");
@@ -547,21 +585,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
-                Map<String, Set<Object>> exportedModules = new HashMap<String, Set<Object>>();
-                for (String anExported : exported) {
-                    exportedModules.put(anExported, Collections.singleton(target));
-                }
-                Map<String, Set<Object>> openedModules = new HashMap<String, Set<Object>>();
-                for (String anOpened : opened) {
-                    openedModules.put(anOpened, Collections.singleton(target));
-                }
                 try {
-                    redefineModule.invoke(instrumentation, source,
-                            Collections.singleton(target),
-                            exportedModules,
-                            openedModules,
-                            Collections.emptySet(),
-                            Collections.emptyMap());
+                    redefineModule.invoke(instrumentation, source, reads, exports, opens, uses, provides);
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + redefineModule, exception);
                 } catch (InvocationTargetException exception) {
@@ -646,7 +671,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
             /**
              * {@inheritDoc}
              */
-            public void modify(Instrumentation instrumentation, Object source, Object target, Set<String> exported, Set<String> opened) {
+            public void modify(Instrumentation instrumentation,
+                               Object module,
+                               Set<Object> reads,
+                               Map<String, Set<Object>> exports,
+                               Map<String, Set<Object>> opens,
+                               Set<Class<?>> uses,
+                               Map<Class<?>, List<Class<?>>> provides) {
                 throw new UnsupportedOperationException("Current VM does not support modules");
             }
         }
