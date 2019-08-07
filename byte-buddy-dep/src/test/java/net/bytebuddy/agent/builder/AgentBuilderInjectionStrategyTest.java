@@ -69,7 +69,7 @@ public class AgentBuilderInjectionStrategyTest {
         ClassInjector.UsingUnsafe.Factory factory = mock(ClassInjector.UsingUnsafe.Factory.class);
         ClassInjector classInjector = mock(ClassInjector.class);
         when(factory.make(classLoader, protectionDomain)).thenReturn(classInjector);
-        assertThat(new AgentBuilder.InjectionStrategy.UsingUnsafe.WithFactory(factory).resolve(classLoader, protectionDomain), is(classInjector));
+        assertThat(new AgentBuilder.InjectionStrategy.UsingUnsafe.OfFactory(factory).resolve(classLoader, protectionDomain), is(classInjector));
     }
 
     @Test

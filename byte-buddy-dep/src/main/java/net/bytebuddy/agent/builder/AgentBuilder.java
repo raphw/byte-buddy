@@ -3414,7 +3414,7 @@ public interface AgentBuilder {
              * An injection strategy that uses a factory for creating an unsafe injector.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            public static class WithFactory implements InjectionStrategy {
+            public static class OfFactory implements InjectionStrategy {
 
                 /**
                  * The factory to use for creating an unsafe injector.
@@ -3426,7 +3426,7 @@ public interface AgentBuilder {
                  *
                  * @param factory The factory to use for creating an unsafe injector.
                  */
-                public WithFactory(ClassInjector.UsingUnsafe.Factory factory) {
+                public OfFactory(ClassInjector.UsingUnsafe.Factory factory) {
                     this.factory = factory;
                 }
 
