@@ -591,8 +591,10 @@ public interface VirtualMachine {
 
             /**
              * A connection that is represented by a byte channel that is persistent during communication.
+             *
+             * @param <T> The connection representation.
              */
-            abstract class OnPersistentByteChannel implements Connection, Response {
+            abstract class OnPersistentByteChannel<T> implements Connection {
 
                 /**
                  * A blank line argument.
@@ -602,38 +604,105 @@ public interface VirtualMachine {
                 /**
                  * {@inheritDoc}
                  */
-                public Response execute(String protocol, String... argument) throws IOException {
-                    write(protocol.getBytes("UTF-8"));
-                    write(BLANK);
-                    for (String anArgument : argument) {
-                        if (anArgument != null) {
-                            write(anArgument.getBytes("UTF-8"));
+                public Connection.Response execute(String protocol, String... argument) throws IOException {
+                    T connection = connect();
+                    try {
+                        write(connection, protocol.getBytes("UTF-8"));
+                        write(connection, BLANK);
+                        for (String anArgument : argument) {
+                            if (anArgument != null) {
+                                write(connection, anArgument.getBytes("UTF-8"));
+                            }
+                            write(connection, BLANK);
                         }
-                        write(BLANK);
+                        return new Response(connection);
+                    } catch (Throwable throwable) {
+                        close(connection);
+                        if (throwable instanceof RuntimeException) {
+                            throw (RuntimeException) throwable;
+                        } else if (throwable instanceof IOException) {
+                            throw (IOException) throwable;
+                        } else {
+                            throw new IllegalStateException(throwable);
+                        }
                     }
-                    return this;
                 }
 
                 /**
-                 * {@inheritDoc}
+                 * A response of a persistent byte channel.
                  */
-                public void release() {
-                    /* do nothing */
+                private class Response implements Connection.Response {
+
+                    /**
+                     * The connection representing this response.
+                     */
+                    private final T connection;
+
+                    /**
+                     * Creates a new response for a persistent byte channel.
+                     *
+                     * @param connection The connection representing this response.
+                     */
+                    private Response(T connection) {
+                        this.connection = connection;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public int read(byte[] buffer) throws IOException {
+                        return OnPersistentByteChannel.this.read(connection, buffer);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void release() throws IOException {
+                        OnPersistentByteChannel.this.close(connection);
+
+                    }
                 }
 
                 /**
-                 * Writes to the connected virtual machine.
+                 * Creates a new connection to the target VM.
                  *
-                 * @param buffer The buffer to write to.
+                 * @return Returns a new connection to the target VM.
+                 * @throws IOException If an I/O exception occurs.
+                 */
+                protected abstract T connect() throws IOException;
+
+                /**
+                 * Closes the connection to the target VM.
+                 *
+                 * @param connection The connection to close.
+                 * @throws IOException If an I/O exception occurs.
+                 */
+                protected abstract void close(T connection) throws IOException;
+
+                /**
+                 * Writes to the target VM.
+                 *
+                 * @param connection The connection to write to.
+                 * @param buffer     The buffer to write to.
                  * @throws IOException If an I/O exception occurs during writing.
                  */
-                public abstract void write(byte[] buffer) throws IOException;
+                protected abstract void write(T connection, byte[] buffer) throws IOException;
+
+                /**
+                 * Reads from the target VM.
+                 *
+                 * @param connection The connection to read from.
+                 * @param buffer     The buffer to store the result in.
+                 * @return The number of byte that were read.
+                 * @throws IOException If an I/O exception occurs.
+                 */
+                protected abstract int read(T connection, byte[] buffer) throws IOException;
             }
 
             /**
              * Implements a connection for a Posix socket in JNA.
              */
-            class ForJnaPosixSocket extends OnPersistentByteChannel {
+            class ForJnaPosixSocket extends OnPersistentByteChannel<Integer> {
 
                 /**
                  * The JNA library to use.
@@ -641,41 +710,60 @@ public interface VirtualMachine {
                 private final PosixLibrary library;
 
                 /**
-                 * The socket's handle.
+                 * The POSIX socket.
                  */
-                private final int handle;
+                private final File socket;
 
                 /**
-                 * Creates a new connection for a Posix socket.
+                 * Creates a connection for a virtual posix socket implemented in JNA.
                  *
                  * @param library The JNA library to use.
-                 * @param handle  The socket's handle.
+                 * @param socket  The POSIX socket.
                  */
-                protected ForJnaPosixSocket(PosixLibrary library, int handle) {
+                protected ForJnaPosixSocket(PosixLibrary library, File socket) {
                     this.library = library;
-                    this.handle = handle;
+                    this.socket = socket;
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
-                public int read(byte[] buffer) {
+                @Override
+                protected Integer connect() {
+                    int handle = library.socket(1, 1, 0);
+                    try {
+                        PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
+                        try {
+                            address.setPath(socket.getAbsolutePath());
+                            library.connect(handle, address, address.size());
+                            return handle;
+                        } finally {
+                            address.clear();
+                        }
+                    } catch (RuntimeException exception) {
+                        library.close(handle);
+                        throw exception;
+                    }
+                }
+
+                @Override
+                protected int read(Integer handle, byte[] buffer) {
                     int read = library.read(handle, ByteBuffer.wrap(buffer), buffer.length);
                     return read == 0 ? -1 : read;
                 }
 
-                /**
-                 * {@inheritDoc}
-                 */
-                public void write(byte[] buffer) {
+                @Override
+                protected void write(Integer handle, byte[] buffer) {
                     library.write(handle, ByteBuffer.wrap(buffer), buffer.length);
+                }
+
+                @Override
+                protected void close(Integer handle) {
+                    library.close(handle);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 public void close() {
-                    library.close(handle);
+                    /* do nothing */
                 }
 
                 /**
@@ -837,20 +925,7 @@ public interface VirtualMachine {
 
                     @Override
                     public Connection doConnect(File socket) {
-                        int handle = library.socket(1, 1, 0);
-                        try {
-                            PosixLibrary.SocketAddress address = new PosixLibrary.SocketAddress();
-                            try {
-                                address.setPath(socket.getAbsolutePath());
-                                library.connect(handle, address, address.size());
-                                return new Connection.ForJnaPosixSocket(library, handle);
-                            } finally {
-                                address.clear();
-                            }
-                        } catch (RuntimeException exception) {
-                            library.close(handle);
-                            throw exception;
-                        }
+                        return new Connection.ForJnaPosixSocket(library, socket);
                     }
                 }
             }
@@ -1210,63 +1285,68 @@ public interface VirtualMachine {
                 private final SolarisLibrary library;
 
                 /**
-                 * The handle to the file used for communication.
+                 * The socket used for communication.
                  */
-                private final int handle;
+                private final File socket;
 
                 /**
                  * Creates a new connection using a Solaris door.
                  *
                  * @param library The library to use for interacting with Solaris.
-                 * @param handle  The descriptor to the file used for communication.
+                 * @param socket  The socket used for communication.
                  */
-                protected ForJnaSolarisDoor(SolarisLibrary library, int handle) {
+                protected ForJnaSolarisDoor(SolarisLibrary library, File socket) {
                     this.library = library;
-                    this.handle = handle;
+                    this.socket = socket;
                 }
 
                 /**
                  * {@inheritDoc}
                  */
                 @SuppressFBWarnings(value = {"UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", "URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"}, justification = "This pattern is required for use of JNA.")
-                public Response execute(String protocol, String... argument) throws IOException {
-                    SolarisLibrary.DoorArgument door = new SolarisLibrary.DoorArgument();
+                public Connection.Response execute(String protocol, String... argument) throws IOException {
+                    int handle = library.open(socket.getAbsolutePath(), 2);
                     try {
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        outputStream.write(protocol.getBytes("UTF-8"));
-                        outputStream.write(0);
-                        for (String anArgument : argument) {
-                            if (anArgument != null) {
-                                outputStream.write(anArgument.getBytes("UTF-8"));
-                            }
-                            outputStream.write(0);
-                        }
-                        door.dataSize = outputStream.size();
-                        Memory dataPointer = new Memory(outputStream.size());
+                        SolarisLibrary.DoorArgument door = new SolarisLibrary.DoorArgument();
                         try {
-                            dataPointer.write(0, outputStream.toByteArray(), 0, outputStream.size());
-                            door.dataPointer = dataPointer;
-                            Memory result = new Memory(128);
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            outputStream.write(protocol.getBytes("UTF-8"));
+                            outputStream.write(0);
+                            for (String anArgument : argument) {
+                                if (anArgument != null) {
+                                    outputStream.write(anArgument.getBytes("UTF-8"));
+                                }
+                                outputStream.write(0);
+                            }
+                            door.dataSize = outputStream.size();
+                            Memory dataPointer = new Memory(outputStream.size());
                             try {
-                                door.resultPointer = result;
-                                door.resultSize = (int) result.size();
-                                if (library.door_call(handle, door) != 0) {
-                                    throw new IllegalStateException("Door call to target VM failed");
-                                } else if (door.resultSize < 4 || door.resultPointer.getInt(0) != 0) {
-                                    throw new IllegalStateException("Target VM could not execute door call");
-                                } else if (door.descriptorCount != 1 || door.descriptorPointer == null) {
-                                    throw new IllegalStateException("Did not receive communication descriptor from target VM");
-                                } else {
-                                    return new DoorResponse(library, door.descriptorPointer.getInt(4));
+                                dataPointer.write(0, outputStream.toByteArray(), 0, outputStream.size());
+                                door.dataPointer = dataPointer;
+                                Memory result = new Memory(128);
+                                try {
+                                    door.resultPointer = result;
+                                    door.resultSize = (int) result.size();
+                                    if (library.door_call(handle, door) != 0) {
+                                        throw new IllegalStateException("Door call to target VM failed");
+                                    } else if (door.resultSize < 4 || door.resultPointer.getInt(0) != 0) {
+                                        throw new IllegalStateException("Target VM could not execute door call");
+                                    } else if (door.descriptorCount != 1 || door.descriptorPointer == null) {
+                                        throw new IllegalStateException("Did not receive communication descriptor from target VM");
+                                    } else {
+                                        return new Response(library, door.descriptorPointer.getInt(4));
+                                    }
+                                } finally {
+                                    result.clear();
                                 }
                             } finally {
-                                result.clear();
+                                dataPointer.clear();
                             }
                         } finally {
-                            dataPointer.clear();
+                            door.clear();
                         }
                     } finally {
-                        door.clear();
+                        library.close(handle);
                     }
                 }
 
@@ -1274,7 +1354,7 @@ public interface VirtualMachine {
                  * {@inheritDoc}
                  */
                 public void close() {
-                    library.close(handle);
+                    /* do nothing */
                 }
 
                 /**
@@ -1378,7 +1458,7 @@ public interface VirtualMachine {
                 /**
                  * A response from a VM using a Solaris door.
                  */
-                protected static class DoorResponse implements Response {
+                protected static class Response implements Connection.Response {
 
                     /**
                      * The Solaris library to use.
@@ -1396,7 +1476,7 @@ public interface VirtualMachine {
                      * @param library The Solaris library to use.
                      * @param handle  The door handle.
                      */
-                    protected DoorResponse(SolarisLibrary library, int handle) {
+                    protected Response(SolarisLibrary library, int handle) {
                         this.library = library;
                         this.handle = handle;
                     }
@@ -1451,7 +1531,7 @@ public interface VirtualMachine {
                      * {@inheritDoc}
                      */
                     protected Connection doConnect(File socket) {
-                        return new ForJnaSolarisDoor(library, library.open(socket.getAbsolutePath(), 2));
+                        return new ForJnaSolarisDoor(library, socket);
                     }
                 }
             }

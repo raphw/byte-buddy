@@ -87,4 +87,19 @@ public class VirtualMachineAttachmentTest {
         }
         assertThat(properties.size(), not(0));
     }
+
+    @Test(timeout = 10000L)
+    public void testMultipleProperties() throws Exception {
+        VirtualMachine virtualMachine = (VirtualMachine) VirtualMachine.Resolver.INSTANCE.run()
+                .getMethod("attach", String.class)
+                .invoke(null, ByteBuddyAgent.ProcessProvider.ForCurrentVm.INSTANCE.resolve());
+        Properties agentProperties, systemProperties;
+        try {
+            agentProperties = virtualMachine.getAgentProperties();
+            systemProperties = virtualMachine.getSystemProperties();
+        } finally {
+            virtualMachine.detach();
+        }
+        assertThat(agentProperties, not(systemProperties));
+    }
 }
