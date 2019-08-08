@@ -240,20 +240,22 @@ General questions can be asked on [Stack Overflow](https://stackoverflow.com/que
 Dependency and API evolution
 ----------------------------
 
-Byte Buddy is written on top of [ASM](https://asm.ow2.io/), a mature and well-tested library for reading and writing
+Byte Buddy is written on top of [ASM](https://asm.ow2.io), a mature and well-tested library for reading and writing
 compiled Java classes. In order to allow for advanced type manipulations, Byte Buddy is intentionally exposing the
 ASM API to its users. Of course, the direct use of ASM remains fully optional and most users will most likely never
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
 but can implement custom implementations without a fuss when it is necessary.
 
-ASM has previously changed its public API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
+ASM has previously changed its public API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you **must** repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
 
 License and development
 -----------------------
 
 Byte Buddy is licensed under the liberal and business-friendly
 [*Apache Licence, Version 2.0*](https://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on
-GitHub. Byte Buddy is further released to the repositories of Maven Central and on JCenter. The project is built
+GitHub. Additionally, the *byte-buddy* distribution bundles ASM which is released under [a 3-clause BSD license](https://asm.ow2.io/license.html).
+
+Byte Buddy is further to the repositories of Maven Central and on JCenter. The project is built
 using <a href="https://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go
 something like this:
 

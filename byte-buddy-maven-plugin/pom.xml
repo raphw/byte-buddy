@@ -10,7 +10,7 @@
     <artifactId>byte-buddy-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
 
-    <name>Byte Buddy (Maven plugin)</name>
+    <name>Byte Buddy Maven plugin</name>
     <description>A plugin for post-processing class files via Byte Buddy in a Maven build.</description>
 
     <properties>
@@ -89,5 +89,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>..</directory>
+                <targetPath>META-INF</targetPath>
+                <filtering>true</filtering>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
 
 </project>

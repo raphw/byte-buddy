@@ -7,18 +7,19 @@
     <parent>
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
-        <!-- The version number is not updated by the release plugin as this artifact is not released! -->
-        <version>1.9.17-SNAPSHOT</version>
+        <version>1.10.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android-test</artifactId>
-    <packaging>apk</packaging>
+    <packaging>${android.sort}</packaging>
 
     <name>Byte Buddy for Android (test application)</name>
     <description>An Android test application that runs Byte Buddy in an Android environment.</description>
 
     <properties>
-        <version.maven.android>3.8.2</version.maven.android>
+        <android.sort>pom</android.sort>
+        <android.maven.group>com.simpligility.maven.plugins</android.maven.group>
+        <version.maven.android>4.6.0</version.maven.android>
         <version.android.sdk.platform>4</version.android.sdk.platform>
     </properties>
 
@@ -45,17 +46,36 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <!-- The Android build is not active unless the 'android' profile is set since it requires an installed Android SDK. -->
+        <profile>
+            <id>android</id>
+            <properties>
+                <android.sort>apk</android.sort>
+            </properties>
+        </profile>
+    </profiles>
+
     <build>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>..</directory>
+                <targetPath>META-INF</targetPath>
+                <filtering>true</filtering>
+                <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <!-- Build Android application from Maven. -->
             <plugin>
-                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <groupId>${android.maven.group}</groupId>
                 <artifactId>android-maven-plugin</artifactId>
                 <version>${version.maven.android}</version>
                 <extensions>true</extensions>
@@ -67,6 +87,9 @@
                         <platform>${version.android.sdk.platform}</platform>
                     </sdk>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
+                    <release>false</release>
+                    <androidManifestFile>AndroidManifest.xml</androidManifestFile>
+                    <resourceDirectory>res</resourceDirectory>
                 </configuration>
             </plugin>
             <!-- This artifact should not be deployed. -->
@@ -88,8 +111,9 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.5</version>
+                <version>${version.plugin.resources}</version>
                 <executions>
                     <execution>
                         <phase>initialize</phase>

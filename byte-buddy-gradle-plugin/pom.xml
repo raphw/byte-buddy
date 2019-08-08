@@ -9,7 +9,7 @@
 
     <artifactId>byte-buddy-gradle-plugin</artifactId>
 
-    <name>Byte Buddy (Gradle plugin)</name>
+    <name>Byte Buddy Gradle plugin</name>
     <description>A plugin for post-processing class files via Byte Buddy in a Gradle build.</description>
 
     <!--

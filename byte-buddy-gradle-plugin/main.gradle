@@ -76,3 +76,32 @@ test {
     systemProperty('net.bytebuddy.test.integration', Boolean.getBoolean('net.bytebuddy.test.integration'))
 }
 
+task copyLicense(type: Copy) {
+    from '..'
+    include 'LICENSE', 'NOTICE'
+    into "$buildDir/resources/main/META-INF"
+    def pattern = java.util.regex.Pattern.compile('\\$\\{([a-zA-Z0-9\\-._]+)}');
+    filter { String line ->
+        def matcher = pattern.matcher(line)
+        def buffer = new StringBuffer()
+        while (matcher.find()) {
+            def property = matcher.group(1)
+            String resolved
+            if (property.equals("current.year")) {
+                resolved = Calendar.getInstance().get(Calendar.YEAR)
+            } else if (property.startsWith("project.")) {
+                resolved = outerPom.getProperty(property.substring("project.".length()))
+            } else {
+                resolved = outerPom.properties.getProperty(property)
+            }
+            if (resolved == null) {
+                throw new GradleException("Could not resolve property $property")
+            }
+            logger.debug("Resolved $property to $resolved")
+            matcher.appendReplacement(buffer, resolved)
+        }
+        matcher.appendTail(buffer).toString()
+    }
+}
+
+jar.dependsOn copyLicense

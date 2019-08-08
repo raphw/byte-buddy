@@ -82,6 +82,12 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- Shade the ASM dependency. -->
             <plugin>
@@ -97,7 +103,7 @@
                         <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <createDependencyReducedPom>true</createDependencyReducedPom>
-                            <createSourcesJar>true</createSourcesJar>
+                            <createSourcesJar>${bytebuddy.extras}</createSourcesJar>
                             <shadeSourcesContent>true</shadeSourcesContent>
                             <relocations>
                                 <relocation>
@@ -106,6 +112,14 @@
                                 </relocation>
                             </relocations>
                             <filters>
+                                <filter>
+                                    <artifact>org.ow2.asm:*</artifact>
+                                    <excludes>
+                                        <exclude>**/module-info.class</exclude>
+                                        <exclude>**/LICENSE</exclude>
+                                        <exclude>**/NOTICE</exclude>
+                                    </excludes>
+                                </filter>
                                 <filter>
                                     <artifact>org.ow2.asm:asm-commons</artifact>
                                     <includes>
@@ -124,6 +138,9 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>net.bytebuddy.build.Plugin$Engine$Default</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/LICENSE</resource>
                                 </transformer>
                             </transformers>
                         </configuration>
