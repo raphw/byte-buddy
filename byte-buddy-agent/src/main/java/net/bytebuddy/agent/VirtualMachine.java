@@ -113,6 +113,22 @@ public interface VirtualMachine {
     void loadAgentLibrary(String library, String argument) throws IOException;
 
     /**
+     * Starts a JMX management agent.
+     *
+     * @param properties The properties to transfer to the JMX agent.
+     * @throws IOException If an I/O error occurs.
+     */
+    void startManagementAgent(Properties properties) throws IOException;
+
+    /**
+     * Starts a local management agent.
+     *
+     * @return The local connector address.
+     * @throws IOException If an I/O error occurs.
+     */
+    String startLocalManagementAgent() throws IOException;
+
+    /**
      * Detaches this virtual machine representation.
      *
      * @throws IOException If an I/O exception occurs.
@@ -262,7 +278,7 @@ public interface VirtualMachine {
          * @throws IOException If an I/O exception occurs.
          */
         private Properties getProperties(String command) throws IOException {
-            Connection.Response response = connection.execute("1", command, null, null, null);
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, command, null, null, null);
             try {
                 byte[] buffer = new byte[1];
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -348,6 +364,94 @@ public interface VirtualMachine {
                 switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
                     case 0:
                         return;
+                    case 101:
+                        throw new IOException("Protocol mismatch with target VM");
+                    default:
+                        buffer = new byte[1024];
+                        outputStream = new ByteArrayOutputStream();
+                        while ((length = response.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                        throw new IllegalStateException(outputStream.toString("UTF-8"));
+                }
+            } finally {
+                response.release();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public void startManagementAgent(Properties properties) throws IOException {
+            StringBuilder stringBuilder = new StringBuilder("ManagementAgent.start ");
+            boolean first = true;
+            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+                if (!(entry.getKey() instanceof String) || !((String) entry.getKey()).startsWith("com.sun.management.")) {
+                    throw new IllegalArgumentException("Illegal property name: " + entry.getKey());
+                } else if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(' ');
+                }
+                stringBuilder.append(((String) entry.getKey()).substring("com.sun.management.".length())).append('=');
+                String value = entry.getValue().toString();
+                if (value.contains(" ")) {
+                    stringBuilder.append('\'').append(value).append('\'');
+                } else {
+                    stringBuilder.append(value);
+                }
+            }
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", stringBuilder.toString(), "", "");
+            try {
+                byte[] buffer = new byte[1];
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                int length;
+                while ((length = response.read(buffer)) != -1) {
+                    if (length > 0) {
+                        if (buffer[0] == '\n') {
+                            break;
+                        }
+                        outputStream.write(buffer[0]);
+                    }
+                }
+                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
+                    case 0:
+                        return;
+                    case 101:
+                        throw new IOException("Protocol mismatch with target VM");
+                    default:
+                        buffer = new byte[1024];
+                        outputStream = new ByteArrayOutputStream();
+                        while ((length = response.read(buffer)) != -1) {
+                            outputStream.write(buffer, 0, length);
+                        }
+                        throw new IllegalStateException(outputStream.toString("UTF-8"));
+                }
+            } finally {
+                response.release();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String startLocalManagementAgent() throws IOException {
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", "ManagementAgent.start_local", "", "");
+            try {
+                byte[] buffer = new byte[1];
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                int length;
+                while ((length = response.read(buffer)) != -1) {
+                    if (length > 0) {
+                        if (buffer[0] == '\n') {
+                            break;
+                        }
+                        outputStream.write(buffer[0]);
+                    }
+                }
+                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
+                    case 0:
+                        return getAgentProperties().getProperty("com.sun.management.jmxremote.localConnectorAddress");
                     case 101:
                         throw new IOException("Protocol mismatch with target VM");
                     default:
@@ -1611,7 +1715,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public Properties getSystemProperties() throws IOException {
-            write(socket, "ATTACH_GETSYSTEMPROPERTIES");
+            write(socket, "ATTACH_GETSYSTEMPROPERTIES".getBytes("UTF-8"));
             Properties properties = new Properties();
             properties.load(new ByteArrayInputStream(read(socket)));
             return properties;
@@ -1621,7 +1725,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public Properties getAgentProperties() throws IOException {
-            write(socket, "ATTACH_GETAGENTPROPERTIES");
+            write(socket, "ATTACH_GETAGENTPROPERTIES".getBytes("UTF-8"));
             Properties properties = new Properties();
             properties.load(new ByteArrayInputStream(read(socket)));
             return properties;
@@ -1631,7 +1735,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public void loadAgent(String jarFile, String argument) throws IOException {
-            write(socket, "ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')');
+            write(socket, ("ATTACH_LOADAGENT(instrument," + jarFile + '=' + (argument == null ? "" : argument) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading agent: " + answer);
@@ -1644,7 +1748,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public void loadAgentPath(String path, String argument) throws IOException {
-            write(socket, "ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')');
+            write(socket, ("ATTACH_LOADAGENTPATH(" + path + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading native agent: " + answer);
@@ -1657,7 +1761,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public void loadAgentLibrary(String library, String argument) throws IOException {
-            write(socket, "ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')');
+            write(socket, ("ATTACH_LOADAGENTLIBRARY(" + library + (argument == null ? "" : (',' + argument)) + ')').getBytes("UTF-8"));
             String answer = new String(read(socket), "UTF-8");
             if (answer.startsWith("ATTACH_ERR")) {
                 throw new IllegalStateException("Target VM failed loading native library: " + answer);
@@ -1669,9 +1773,42 @@ public interface VirtualMachine {
         /**
          * {@inheritDoc}
          */
+        public void startManagementAgent(Properties properties) throws IOException {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            properties.store(outputStream, null);
+            write(socket, "ATTACH_START_MANAGEMENT_AGENT".getBytes("UTF-8"));
+            write(socket, outputStream.toByteArray());
+            String answer = new String(read(socket), "UTF-8");
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target VM could not start management agent: " + answer);
+            } else if (!answer.startsWith("ATTACH_ACK") && !answer.startsWith("ATTACH_RESULT=")) {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String startLocalManagementAgent() throws IOException {
+            write(socket, "ATTACH_START_LOCAL_MANAGEMENT_AGENT".getBytes("UTF-8"));
+            String answer = new String(read(socket), "UTF-8");
+            if (answer.startsWith("ATTACH_ERR")) {
+                throw new IllegalStateException("Target VM could not start management agent: " + answer);
+            } else if (answer.startsWith("ATTACH_ACK")) {
+                return answer.substring("ATTACH_ACK".length());
+            } else if (answer.startsWith("ATTACH_RESULT=")) {
+                return answer.substring("ATTACH_RESULT=".length());
+            } else {
+                throw new IllegalStateException("Unexpected response: " + answer);
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public void detach() throws IOException {
             try {
-                write(socket, "ATTACH_DETACH");
+                write(socket, "ATTACH_DETACH".getBytes("UTF-8"));
                 read(socket); // The answer is intentionally ignored.
             } finally {
                 socket.close();
@@ -1685,8 +1822,8 @@ public interface VirtualMachine {
          * @param value  The value being written.
          * @throws IOException If an I/O exception occurs.
          */
-        private static void write(Socket socket, String value) throws IOException {
-            socket.getOutputStream().write(value.getBytes("UTF-8"));
+        private static void write(Socket socket, byte[] value) throws IOException {
+            socket.getOutputStream().write(value);
             socket.getOutputStream().write(0);
             socket.getOutputStream().flush();
         }

@@ -93,8 +93,6 @@
         <version.plugin.license>3.0</version.plugin.license>
         <version.android.sdk>4.1.1.4</version.android.sdk>
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
-        <version.maven.android>4.6.0</version.maven.android>
-        <android.maven.group>com.simpligility.maven.plugins</android.maven.group>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
     </properties>
@@ -397,10 +395,17 @@
                 <version.plugin.plugin>3.5.2</version.plugin.plugin>
                 <version.plugin.shade>3.1.1</version.plugin.shade>
                 <version.plugin.surefire>2.22.1</version.plugin.surefire>
-                <version.maven.android>3.8.2</version.maven.android>
-                <android.maven.group>com.jayway.maven.plugins.android.generation2</android.maven.group>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
+            <modules>
+                <module>byte-buddy</module>
+                <module>byte-buddy-dep</module>
+                <module>byte-buddy-benchmark</module>
+                <module>byte-buddy-agent</module>
+                <module>byte-buddy-android</module>
+                <module>byte-buddy-maven-plugin</module>
+                <module>byte-buddy-gradle-plugin</module>
+            </modules>
         </profile>
         <!-- Runs the build with compatibility for Java 7 JVMs. -->
         <profile>

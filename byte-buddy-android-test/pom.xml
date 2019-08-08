@@ -19,6 +19,7 @@
     <properties>
         <android.sort>pom</android.sort>
         <version.android.sdk.platform>4</version.android.sdk.platform>
+        <version.maven.android>4.6.0</version.maven.android>
     </properties>
 
     <!--
@@ -73,7 +74,7 @@
         <plugins>
             <!-- Build Android application from Maven. -->
             <plugin>
-                <groupId>${android.maven.group}</groupId>
+                <groupId>com.simpligility.maven.plugins</groupId>
                 <artifactId>android-maven-plugin</artifactId>
                 <version>${version.maven.android}</version>
                 <extensions>true</extensions>
