@@ -18,8 +18,6 @@
 
     <properties>
         <android.sort>pom</android.sort>
-        <android.maven.group>com.simpligility.maven.plugins</android.maven.group>
-        <version.maven.android>4.6.0</version.maven.android>
         <version.android.sdk.platform>4</version.android.sdk.platform>
     </properties>
 
