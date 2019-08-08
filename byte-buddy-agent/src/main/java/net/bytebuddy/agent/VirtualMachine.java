@@ -257,6 +257,39 @@ public interface VirtualMachine {
         }
 
         /**
+         * Checks the header of a response.
+         *
+         * @param response The response to check the header for.
+         * @throws IOException If an I/O exception occurs.
+         */
+        private static void checkHeader(Connection.Response response) throws IOException {
+            byte[] buffer = new byte[1];
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            int length;
+            while ((length = response.read(buffer)) != -1) {
+                if (length > 0) {
+                    if (buffer[0] == '\n') {
+                        break;
+                    }
+                    outputStream.write(buffer[0]);
+                }
+            }
+            switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
+                case 0:
+                    return;
+                case 101:
+                    throw new IOException("Protocol mismatch with target VM");
+                default:
+                    buffer = new byte[1024];
+                    outputStream = new ByteArrayOutputStream();
+                    while ((length = response.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, length);
+                    }
+                    throw new IllegalStateException(outputStream.toString("UTF-8"));
+            }
+        }
+
+        /**
          * {@inheritDoc}
          */
         public Properties getSystemProperties() throws IOException {
@@ -280,37 +313,16 @@ public interface VirtualMachine {
         private Properties getProperties(String command) throws IOException {
             Connection.Response response = connection.execute(PROTOCOL_VERSION, command, null, null, null);
             try {
-                byte[] buffer = new byte[1];
+                checkHeader(response);
+                byte[] buffer = new byte[1024];
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 int length;
                 while ((length = response.read(buffer)) != -1) {
-                    if (length > 0) {
-                        if (buffer[0] == '\n') {
-                            break;
-                        }
-                        outputStream.write(buffer[0]);
-                    }
+                    outputStream.write(buffer, 0, length);
                 }
-                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
-                    case 0:
-                        buffer = new byte[1024];
-                        outputStream = new ByteArrayOutputStream();
-                        while ((length = response.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        Properties properties = new Properties();
-                        properties.load(new ByteArrayInputStream(outputStream.toByteArray()));
-                        return properties;
-                    case 101:
-                        throw new IOException("Protocol mismatch with target VM");
-                    default:
-                        buffer = new byte[1024];
-                        outputStream = new ByteArrayOutputStream();
-                        while ((length = response.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        throw new IllegalStateException(outputStream.toString("UTF-8"));
-                }
+                Properties properties = new Properties();
+                properties.load(new ByteArrayInputStream(outputStream.toByteArray()));
+                return properties;
             } finally {
                 response.release();
             }
@@ -350,30 +362,7 @@ public interface VirtualMachine {
                     ? file
                     : file + ARGUMENT_DELIMITER + argument));
             try {
-                byte[] buffer = new byte[1];
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                int length;
-                while ((length = response.read(buffer)) != -1) {
-                    if (length > 0) {
-                        if (buffer[0] == '\n') {
-                            break;
-                        }
-                        outputStream.write(buffer[0]);
-                    }
-                }
-                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
-                    case 0:
-                        return;
-                    case 101:
-                        throw new IOException("Protocol mismatch with target VM");
-                    default:
-                        buffer = new byte[1024];
-                        outputStream = new ByteArrayOutputStream();
-                        while ((length = response.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        throw new IllegalStateException(outputStream.toString("UTF-8"));
-                }
+                checkHeader(response);
             } finally {
                 response.release();
             }
@@ -403,30 +392,7 @@ public interface VirtualMachine {
             }
             Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", stringBuilder.toString(), "", "");
             try {
-                byte[] buffer = new byte[1];
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                int length;
-                while ((length = response.read(buffer)) != -1) {
-                    if (length > 0) {
-                        if (buffer[0] == '\n') {
-                            break;
-                        }
-                        outputStream.write(buffer[0]);
-                    }
-                }
-                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
-                    case 0:
-                        return;
-                    case 101:
-                        throw new IOException("Protocol mismatch with target VM");
-                    default:
-                        buffer = new byte[1024];
-                        outputStream = new ByteArrayOutputStream();
-                        while ((length = response.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        throw new IllegalStateException(outputStream.toString("UTF-8"));
-                }
+                checkHeader(response);
             } finally {
                 response.release();
             }
@@ -449,19 +415,8 @@ public interface VirtualMachine {
                         outputStream.write(buffer[0]);
                     }
                 }
-                switch (Integer.parseInt(outputStream.toString("UTF-8"))) {
-                    case 0:
-                        return getAgentProperties().getProperty("com.sun.management.jmxremote.localConnectorAddress");
-                    case 101:
-                        throw new IOException("Protocol mismatch with target VM");
-                    default:
-                        buffer = new byte[1024];
-                        outputStream = new ByteArrayOutputStream();
-                        while ((length = response.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        throw new IllegalStateException(outputStream.toString("UTF-8"));
-                }
+                checkHeader(response);
+                return getAgentProperties().getProperty("com.sun.management.jmxremote.localConnectorAddress");
             } finally {
                 response.release();
             }
