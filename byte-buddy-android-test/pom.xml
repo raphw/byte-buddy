@@ -18,8 +18,9 @@
 
     <properties>
         <android.sort>pom</android.sort>
-        <version.android.sdk.platform>4</version.android.sdk.platform>
+        <android.build.group>com.simpligility.maven.plugins</android.build.group>
         <version.maven.android>4.6.0</version.maven.android>
+        <version.android.sdk.platform>4</version.android.sdk.platform>
     </properties>
 
     <!--
@@ -53,6 +54,18 @@
                 <android.sort>apk</android.sort>
             </properties>
         </profile>
+        <!-- The maintained version of the Android build plugin does not support Java 6. -->
+        <profile>
+            <id>java6-compatibility-android</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <android.build.group>com.jayway.maven.plugins.android.generation2</android.build.group>
+                <version.maven.android>4.0.0-rc.2</version.maven.android>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
@@ -74,7 +87,7 @@
         <plugins>
             <!-- Build Android application from Maven. -->
             <plugin>
-                <groupId>com.simpligility.maven.plugins</groupId>
+                <groupId>${android.build.group}</groupId>
                 <artifactId>android-maven-plugin</artifactId>
                 <version>${version.maven.android}</version>
                 <extensions>true</extensions>
