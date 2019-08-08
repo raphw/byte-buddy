@@ -324,7 +324,7 @@ public interface VirtualMachine {
                 properties.load(new ByteArrayInputStream(outputStream.toByteArray()));
                 return properties;
             } finally {
-                response.release();
+                response.close();
             }
         }
 
@@ -364,7 +364,7 @@ public interface VirtualMachine {
             try {
                 checkHeader(response);
             } finally {
-                response.release();
+                response.close();
             }
         }
 
@@ -394,7 +394,7 @@ public interface VirtualMachine {
             try {
                 checkHeader(response);
             } finally {
-                response.release();
+                response.close();
             }
         }
 
@@ -418,7 +418,7 @@ public interface VirtualMachine {
                 checkHeader(response);
                 return getAgentProperties().getProperty("com.sun.management.jmxremote.localConnectorAddress");
             } finally {
-                response.release();
+                response.close();
             }
         }
 
@@ -447,7 +447,7 @@ public interface VirtualMachine {
             /**
              * A response to an execution command to a VM.
              */
-            interface Response {
+            interface Response extends Closeable {
 
                 /**
                  * Reads a buffer from the target VM.
@@ -457,13 +457,6 @@ public interface VirtualMachine {
                  * @throws IOException If an I/O exception occurred.
                  */
                 int read(byte[] buffer) throws IOException;
-
-                /**
-                 * Releases this response.
-                 *
-                 * @throws IOException If an I/O exception occurred.
-                 */
-                void release() throws IOException;
             }
 
             /**
@@ -657,9 +650,8 @@ public interface VirtualMachine {
                     /**
                      * {@inheritDoc}
                      */
-                    public void release() throws IOException {
+                    public void close() throws IOException {
                         OnPersistentByteChannel.this.close(connection);
-
                     }
                 }
 
@@ -1210,7 +1202,7 @@ public interface VirtualMachine {
                     /**
                      * {@inheritDoc}
                      */
-                    public void release() {
+                    public void close() {
                         try {
                             if (!Kernel32.INSTANCE.DisconnectNamedPipe(pipe)) {
                                 throw new Win32Exception(Native.getLastError());
@@ -1492,7 +1484,7 @@ public interface VirtualMachine {
                     /**
                      * {@inheritDoc}
                      */
-                    public void release() {
+                    public void close() {
                         library.close(handle);
                     }
                 }

@@ -20,7 +20,7 @@ public class VirtualMachineForHotSpotTest {
         VirtualMachine virtualMachine = new VirtualMachine.ForHotSpot(connection);
         virtualMachine.loadAgent("foo", "bar");
         verify(connection).execute("1", "load", "instrument", "false", "foo=bar");
-        verify(response).release();
+        verify(response).close();
         verifyNoMoreInteractions(connection);
         virtualMachine.detach();
         verify(connection).close();
@@ -35,7 +35,7 @@ public class VirtualMachineForHotSpotTest {
         VirtualMachine virtualMachine = new VirtualMachine.ForHotSpot(connection);
         virtualMachine.loadAgent("foo", null);
         verify(connection).execute("1", "load", "instrument", "false", "foo");
-        verify(response).release();
+        verify(response).close();
         verifyNoMoreInteractions(connection);
         virtualMachine.detach();
         verify(connection).close();
@@ -50,7 +50,7 @@ public class VirtualMachineForHotSpotTest {
         VirtualMachine virtualMachine = new VirtualMachine.ForHotSpot(connection);
         virtualMachine.loadAgentPath("foo", "bar");
         verify(connection).execute("1", "load", "instrument", "true", "foo=bar");
-        verify(response).release();
+        verify(response).close();
         verifyNoMoreInteractions(connection);
         virtualMachine.detach();
         verify(connection).close();
