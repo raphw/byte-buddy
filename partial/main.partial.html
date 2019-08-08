@@ -18,7 +18,7 @@
                 <p class="lead">
                     Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during
                     the runtime of a Java application and without the help of a compiler. Other than the code generation
-                    utilities that <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">ship with the Java Class Library</a>,
+                    utilities that <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">ship with the Java Class Library</a>,
                     Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for
                     the creation of runtime proxies. Furthermore, Byte Buddy offers a convenient API for changing classes
                     either manually, using a Java agent or during a build.
@@ -30,7 +30,7 @@
         </div>
         <p>
             In order to use Byte Buddy, one does not require an understanding of Java byte code or the
-            <a href="http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">class file format</a>.
+            <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">class file format</a>.
             In contrast, Byte Buddy's API aims for code that is concise and easy to understand for
             everybody. Nevertheless, Byte Buddy remains fully customizable down to the possibility of defining custom
             byte code. Furthermore, the API was designed to be as non-intrusive as possible and as a result, Byte
@@ -42,8 +42,8 @@
         <p>
             Byte Buddy is written in Java 5 but supports the generation of classes for any Java version. Byte Buddy is a
             light-weight library and only depends on the visitor API of the Java byte code parser library
-            <a href="http://asm.ow2.org/">ASM</a> which does itself
-            <a href="http://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom">not require any
+            <a href="https://asm.ow2.org/">ASM</a> which does itself
+            <a href="https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/4.2/asm-4.2.pom">not require any
                 further dependencies</a>.
         </p>
 
@@ -55,7 +55,7 @@
             implement library-proprietary interfaces or to generate code at runtime when the user's type hierarchy
             becomes first known to the library. Many known libraries such as for example <i>Spring</i> or
             <i>Hibernate</i> choose the latter approach which is popular among their users under the term of using
-            <a href="http://en.wikipedia.org/wiki/Plain_Old_Java_Object"><i>Plain Old Java Objects</i></a>. As a result,
+            <a href="https://en.wikipedia.org/wiki/Plain_Old_Java_Object"><i>Plain Old Java Objects</i></a>. As a result,
             code generation has become an ubiquitous concept in the Java space. Byte Buddy is an attempt to innovate
             the runtime creation of Java types in order to provide a better tool set to those relying on such
             functionality.
@@ -83,8 +83,8 @@
         <p>
             Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished
             frameworks and tools such as <a href="http://mockito.io">Mockito</a>,
-            <a href="http://hibernate.org">Hibernate</a>,
-            <a href="http://bazel.io">Google's Bazel build system</a> and
+            <a href="https://hibernate.org">Hibernate</a>,
+            <a href="https://bazel.io">Google's Bazel build system</a> and
             <a href="https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy">many others</a>. Byte Buddy
             is also used by a large number of commercial products to great result. It is currently downloaded over 75
             million times a year.
@@ -136,7 +136,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             with numerous predefined and well-tested matchers which are collected in the
             <code>ElementMatchers</code> class and which can be easily composed. The creation of custom matchers
             is however as simple as implementing the
-            (<a href="http://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html">functional</a>)
+            (<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/FunctionalInterface.html">functional</a>)
             <code>ElementMatcher</code> interface.
         </p>
 
@@ -213,10 +213,10 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             <dt>Licence</dt>
             <dd>
                 Byte Buddy is an open source project distributed under the liberal and business-friendly
-                <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. Its source code is
+                <a href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 licence</a>. Its source code is
                 <a href="https://github.com/raphw/byte-buddy">freely available on GitHub</a>. Please note that Byte
-                Buddy depends on <a href="http://asm.ow2.org/license.html">the ASM library which is distributed under
-                a BSD license</a>.
+                Buddy depends on <a href="https://asm.ow2.io/license.html">the ASM library which is distributed under
+                a 3-clause BSD license</a>.
             </dd>
         </dl>
         <dl>
@@ -260,7 +260,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Free</dt>
             <dd>
-                General questions can be asked on <a href="http://stackoverflow.com/questions/tagged/byte-buddy">Stack Overflow</a>
+                General questions can be asked on <a href="https://stackoverflow.com/questions/tagged/byte-buddy">Stack Overflow</a>
                 or on the <a href="https://groups.google.com/forum/#!forum/byte-buddy">Byte Buddy mailing list</a> which also
                 serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial
                 plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into
@@ -275,7 +275,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <h2>Dependency maintenance</h2>
 
         <p>
-            Byte Buddy is written on top of <a href="http://asm.ow2.org/">ASM</a>, a mature and well-tested
+            Byte Buddy is written on top of <a href="https://asm.ow2.org">ASM</a>, a mature and well-tested
             library for reading and writing compiled Java classes. In order to allow for advanced type
             manipulations, Byte Buddy is intentionally exposing the ASM API to its users. Of course, the direct
             use of ASM remains fully optional and most users will most likely never require it. This choice was
@@ -287,7 +287,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
             ASM has previously changed its public API but added a mechanism for API compatibility starting with version
             4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the
             ASM dependency into its own namespace. If you want to use ASM directly, use the <code>byte-buddy-dep</code>
-            artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then
+            artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you <b>must</b>
             repackage <b>both</b> Byte Buddy and ASM into your namespace to avoid version conflicts.
         </p>
     </div>
