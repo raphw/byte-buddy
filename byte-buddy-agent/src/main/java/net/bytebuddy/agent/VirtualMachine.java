@@ -404,17 +404,6 @@ public interface VirtualMachine {
         public String startLocalManagementAgent() throws IOException {
             Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", "ManagementAgent.start_local", null, null);
             try {
-                byte[] buffer = new byte[1];
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                int length;
-                while ((length = response.read(buffer)) != -1) {
-                    if (length > 0) {
-                        if (buffer[0] == '\n') {
-                            break;
-                        }
-                        outputStream.write(buffer[0]);
-                    }
-                }
                 checkHeader(response);
                 return getAgentProperties().getProperty("com.sun.management.jmxremote.localConnectorAddress");
             } finally {
