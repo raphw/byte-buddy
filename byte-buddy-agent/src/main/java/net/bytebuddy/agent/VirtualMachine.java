@@ -390,7 +390,7 @@ public interface VirtualMachine {
                     stringBuilder.append(value);
                 }
             }
-            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", stringBuilder.toString(), "", "");
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", stringBuilder.toString(), null, null);
             try {
                 checkHeader(response);
             } finally {
@@ -402,7 +402,7 @@ public interface VirtualMachine {
          * {@inheritDoc}
          */
         public String startLocalManagementAgent() throws IOException {
-            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", "ManagementAgent.start_local", "", "");
+            Connection.Response response = connection.execute(PROTOCOL_VERSION, "jcmd", "ManagementAgent.start_local", null, null);
             try {
                 byte[] buffer = new byte[1];
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
