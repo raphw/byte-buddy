@@ -144,6 +144,50 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test
+    public void testGetSystemProperties() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = (FOO + "=" + BAR).getBytes("ISO_8859_1");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        Properties properties = new VirtualMachine.ForOpenJ9(socket).getSystemProperties();
+        assertThat(properties.size(), is(1));
+        assertThat(properties.getProperty(FOO), is(BAR));
+        verify(outputStream).write("ATTACH_GETSYSTEMPROPERTIES".getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testGetAgentProperties() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = (FOO + "=" + BAR).getBytes("ISO_8859_1");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        Properties properties = new VirtualMachine.ForOpenJ9(socket).getAgentProperties();
+        assertThat(properties.size(), is(1));
+        assertThat(properties.getProperty(FOO), is(BAR));
+        verify(outputStream).write("ATTACH_GETAGENTPROPERTIES".getBytes("UTF-8"));
+    }
+
+    @Test
     public void testLoadAgent() throws Exception {
         Socket socket = mock(Socket.class);
         OutputStream outputStream = mock(OutputStream.class);
@@ -164,6 +208,26 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test
+    public void testLoadAgentWithoutArgument() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgent(FOO);
+        verify(outputStream).write(("ATTACH_LOADAGENT(instrument," + FOO + "=)").getBytes("UTF-8"));
+    }
+
+    @Test
     public void testLoadAgentPath() throws Exception {
         Socket socket = mock(Socket.class);
         OutputStream outputStream = mock(OutputStream.class);
@@ -181,6 +245,111 @@ public class VirtualMachineForOpenJ9Test {
         });
         new VirtualMachine.ForOpenJ9(socket).loadAgentPath(FOO, BAR);
         verify(outputStream).write(("ATTACH_LOADAGENTPATH(" + FOO + ',' + BAR + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testLoadAgentPathWithoutArgument() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgentPath(FOO);
+        verify(outputStream).write(("ATTACH_LOADAGENTPATH(" + FOO + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testLoadAgentLibrary() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgentLibrary(FOO, BAR);
+        verify(outputStream).write(("ATTACH_LOADAGENTLIBRARY(" + FOO + ',' + BAR + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testLoadAgentLibraryWithoutArgument() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        new VirtualMachine.ForOpenJ9(socket).loadAgentLibrary(FOO);
+        verify(outputStream).write(("ATTACH_LOADAGENTLIBRARY(" + FOO + ')').getBytes("UTF-8"));
+    }
+
+    @Test
+    public void testStartManagementAgent() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = "ATTACH_ACK".getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        Properties properties = new Properties();
+        properties.setProperty(FOO, BAR);
+        new VirtualMachine.ForOpenJ9(socket).startManagementAgent(properties);
+        verify(outputStream).write("ATTACH_START_MANAGEMENT_AGENT".getBytes("UTF-8"));
+        ByteArrayOutputStream written = new ByteArrayOutputStream();
+        properties.store(written, null);
+        verify(outputStream).write(written.toByteArray());
+    }
+
+    @Test
+    public void testStartLocalManagementAgent() throws Exception {
+        Socket socket = mock(Socket.class);
+        OutputStream outputStream = mock(OutputStream.class);
+        when(socket.getOutputStream()).thenReturn(outputStream);
+        InputStream inputStream = mock(InputStream.class);
+        when(socket.getInputStream()).thenReturn(inputStream);
+        when(inputStream.read(any(byte[].class))).then(new Answer<Integer>() {
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                byte[] result = ("ATTACH_ACK" + FOO).getBytes("UTF-8");
+                byte[] buffer = invocation.getArgument(0);
+                System.arraycopy(result, 0, buffer, 0, result.length);
+                buffer[result.length] = 0;
+                return result.length + 1;
+            }
+        });
+        assertThat(new VirtualMachine.ForOpenJ9(socket).startLocalManagementAgent(), is(FOO));
+        verify(outputStream).write("ATTACH_START_LOCAL_MANAGEMENT_AGENT".getBytes("UTF-8"));
     }
 
     @Test
