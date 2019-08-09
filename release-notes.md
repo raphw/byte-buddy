@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. August 2019: version 1.10.1
+
+- Extend `VirtualMachine` API emulation.
+- Reopen socket for POSIX-HotSpot connections after each command being sent to avoid broken pipe errors.
+- Only use JNA API that is available in JNA versions 4 and 5 for better compatibility.
+- Include correct license information in artifacts.
+- Add injection API based on `jdk.internal.misc.Unsafe` to support agents on platforms that do not include *jdk.unsupported*.
+- Add `AgentBuilder.InjectionStrategy` to allow usage of internal injection API.
+- Open package in `AgentBuilder` if from and to edges are added.
+
 ### 3. August 2019: version 1.10.0
 
 - Add API for loading native agents from Byte Buddy agent.
