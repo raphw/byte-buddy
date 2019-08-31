@@ -321,7 +321,10 @@ public interface AnnotationAppender {
          * @param annotationValueFilter The annotation value filter to apply.
          */
         private void doAppend(AnnotationDescription annotation, boolean visible, AnnotationValueFilter annotationValueFilter) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, annotationValueFilter);
+            AnnotationVisitor annotationVisitor = target.visit(annotation.getAnnotationType().getDescriptor(), visible);
+            if (annotationVisitor != null) {
+                handle(annotationVisitor, annotation, annotationValueFilter);
+            }
         }
 
         /**
@@ -357,7 +360,10 @@ public interface AnnotationAppender {
                               AnnotationValueFilter annotationValueFilter,
                               int typeReference,
                               String typePath) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible, typeReference, typePath), annotation, annotationValueFilter);
+            AnnotationVisitor annotationVisitor = target.visit(annotation.getAnnotationType().getDescriptor(), visible, typeReference, typePath);
+            if (annotationVisitor != null) {
+                handle(annotationVisitor, annotation, annotationValueFilter);
+            }
         }
     }
 
