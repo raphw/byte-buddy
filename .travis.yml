@@ -24,13 +24,13 @@ matrix:
     - env: TARGET='-Pjava11' EXPERIMENTAL='false' EXCLUDE=''
       jdk: openjdk11
     # OpenJDK - Java 12
-    - env: TARGET='-Pjava11' EXPERIMENTAL='true' EXCLUDE=''
+    - env: TARGET='-Pjava12' EXPERIMENTAL='false' EXCLUDE=''
       jdk: openjdk12
     # OpenJDK - Java 13
-    - env: TARGET='-Pjava11' EXPERIMENTAL='true' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
+    - env: TARGET='-Pjava13' EXPERIMENTAL='false' EXCLUDE=''
       jdk: openjdk13
     # OpenJDK - Java 14
-    - env: TARGET='-Pjava11' EXPERIMENTAL='true' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
+    - env: TARGET='-Pjava13' EXPERIMENTAL='true' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
       jdk: openjdk-ea
     # OpenJ9 - Java 11
     - env: JDK="OpenJ9 11" TARGET='-Pjava11' EXPERIMENTAL='false' EXCLUDE=''
