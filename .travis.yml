@@ -27,7 +27,7 @@ matrix:
     - env: TARGET='-Pjava12' EXPERIMENTAL='false' EXCLUDE=''
       jdk: openjdk12
     # OpenJDK - Java 13
-    - env: TARGET='-Pjava13' EXPERIMENTAL='false' EXCLUDE=''
+    - env: TARGET='-Pjava13' EXPERIMENTAL='false' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
       jdk: openjdk13
     # OpenJDK - Java 14
     - env: TARGET='-Pjava13' EXPERIMENTAL='true' EXCLUDE='-pl ''!byte-buddy-gradle-plugin'''
