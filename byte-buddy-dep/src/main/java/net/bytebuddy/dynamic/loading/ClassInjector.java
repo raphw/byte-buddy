@@ -2290,13 +2290,13 @@ ClassInjector {
          * {@inheritDoc}
          */
         public Map<String, Class<?>> injectRaw(Map<? extends String, byte[]> types) {
-            File jarFile = new File(folder, JAR + randomString.nextString() + "." + JAR);
+            File file = new File(folder, JAR + randomString.nextString() + "." + JAR);
             try {
-                if (!jarFile.createNewFile()) {
-                    throw new IllegalStateException("Cannot create file " + jarFile);
+                if (!file.createNewFile()) {
+                    throw new IllegalStateException("Cannot create file " + file);
                 }
                 try {
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file));
                     try {
                         for (Map.Entry<? extends String, byte[]> entry : types.entrySet()) {
                             jarOutputStream.putNextEntry(new JarEntry(entry.getKey().replace('.', '/') + CLASS_FILE_EXTENSION));
@@ -2305,15 +2305,20 @@ ClassInjector {
                     } finally {
                         jarOutputStream.close();
                     }
-                    target.inject(instrumentation, new JarFile(jarFile));
+                    JarFile jarFile = new JarFile(file);
+                    try {
+                        target.inject(instrumentation, jarFile);
+                    } finally {
+                        jarFile.close();
+                    }
                     Map<String, Class<?>> result = new HashMap<String, Class<?>>();
                     for (String name : types.keySet()) {
                         result.put(name, Class.forName(name, false, target.getClassLoader()));
                     }
                     return result;
                 } finally {
-                    if (!jarFile.delete()) {
-                        jarFile.deleteOnExit();
+                    if (!file.delete()) {
+                        file.deleteOnExit();
                     }
                 }
             } catch (IOException exception) {
