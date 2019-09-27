@@ -2305,7 +2305,7 @@ ClassInjector {
                     } finally {
                         jarOutputStream.close();
                     }
-                    JarFile jarFile = new JarFile(file);
+                    JarFile jarFile = new JarFile(file, false);
                     try {
                         target.inject(instrumentation, jarFile);
                     } finally {
