@@ -21,8 +21,6 @@ import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.utility.OpenedClassReader;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
@@ -111,7 +109,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * The class file version of Java 14.
      */
-    public static final ClassFileVersion JAVA_V14 = new ClassFileVersion(Opcodes.V13 + 1);
+    public static final ClassFileVersion JAVA_V14 = new ClassFileVersion(Opcodes.V14);
 
     /**
      * A version locator for the executing JVM.
@@ -304,10 +302,20 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @throws IOException If an error occurs while reading the class file.
      */
     public static ClassFileVersion of(TypeDescription typeDescription, ClassFileLocator classFileLocator) throws IOException {
-        ClassReader classReader = OpenedClassReader.of(classFileLocator.locate(typeDescription.getName()).resolve());
-        VersionExtractor versionExtractor = new VersionExtractor();
-        classReader.accept(versionExtractor, ClassReader.SKIP_CODE);
-        return ClassFileVersion.ofMinorMajor(versionExtractor.getClassFileVersionNumber());
+        return ofClassFile(classFileLocator.locate(typeDescription.getName()).resolve());
+    }
+
+    /**
+     * Extracts a class' class version from a class file.
+     *
+     * @param binaryRepresentation The class file's binary representation.
+     * @return The supplied class file's class file version.
+     */
+    public static ClassFileVersion ofClassFile(byte[] binaryRepresentation) {
+        if (binaryRepresentation.length < 7) {
+            throw new IllegalArgumentException("Supplied byte array is too short to be a class file with " + binaryRepresentation.length + " byte");
+        }
+        return ofMinorMajor(((int) binaryRepresentation[6] << 8) | binaryRepresentation[7]);
     }
 
     /**
@@ -324,8 +332,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The major version this instance represents.
      */
-    public int getMajorVersion() {
-        return versionNumber & 0xFF;
+    public short getMajorVersion() {
+        return (short) (versionNumber & 0xFF);
     }
 
     /**
@@ -333,8 +341,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The minor version this instance represents.
      */
-    public int getMinorVersion() {
-        return versionNumber >> 16;
+    public short getMinorVersion() {
+        return (short) (versionNumber >> 16);
     }
 
     /**
@@ -415,7 +423,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     @Override
     public String toString() {
-        return "Java " + getJavaVersion();
+        return "Java " + getJavaVersion() + " (" + getMinorMajorVersion() + ")";
     }
 
     /**
@@ -536,38 +544,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             public String run() {
                 return System.getProperty(JAVA_VERSION_PROPERTY);
             }
-        }
-    }
-
-    /**
-     * A simple visitor that extracts the class file version of a class file.
-     */
-    protected static class VersionExtractor extends ClassVisitor {
-
-        /**
-         * The class file version extracted from a class.
-         */
-        private int classFileVersionNumber;
-
-        /**
-         * Creates a new extractor.
-         */
-        protected VersionExtractor() {
-            super(OpenedClassReader.ASM_API);
-        }
-
-        @Override
-        public void visit(int classFileVersionNumber, int modifier, String internalName, String signature, String superTypeName, String[] interfaceName) {
-            this.classFileVersionNumber = classFileVersionNumber;
-        }
-
-        /**
-         * Returns the class file version number found in a class file.
-         *
-         * @return The class file version number found in a class file.
-         */
-        protected int getClassFileVersionNumber() {
-            return classFileVersionNumber;
         }
     }
 }

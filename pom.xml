@@ -60,7 +60,7 @@
         <bytecode.test.version>1.6</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
-        <version.asm>7.1</version.asm>
+        <version.asm>7.2</version.asm>
         <version.junit>4.12</version.junit>
         <version.mockito>2.23.0</version.mockito>
         <version.plugin.clean>3.0.0</version.plugin.clean>
@@ -347,11 +347,6 @@
                         <dependency>
                             <groupId>org.ow2.asm</groupId>
                             <artifactId>asm-commons</artifactId>
-                            <version>${version.asm}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.ow2.asm</groupId>
-                            <artifactId>asm-deprecated</artifactId>
                             <version>${version.asm}</version>
                         </dependency>
                     </dependencies>

@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.utility;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -70,14 +71,17 @@ public class OpenedClassReader {
      */
     public static ClassReader of(byte[] binaryRepresentation) {
         if (EXPERIMENTAL) {
-            byte[] actualVersion = new byte[]{binaryRepresentation[4], binaryRepresentation[5], binaryRepresentation[6], binaryRepresentation[7]};
-            binaryRepresentation[4] = (byte) (Opcodes.V12 >>> 24);
-            binaryRepresentation[5] = (byte) (Opcodes.V12 >>> 16);
-            binaryRepresentation[6] = (byte) (Opcodes.V12 >>> 8);
-            binaryRepresentation[7] = (byte) Opcodes.V12;
-            ClassReader classReader = new ClassReader(binaryRepresentation);
-            System.arraycopy(actualVersion, 0, binaryRepresentation, 4, actualVersion.length);
-            return classReader;
+            ClassFileVersion classFileVersion = ClassFileVersion.ofClassFile(binaryRepresentation);
+            if (classFileVersion.isGreaterThan(ClassFileVersion.JAVA_V14)) {
+                binaryRepresentation[6] = (byte) (ClassFileVersion.JAVA_V14.getMajorVersion() >>> 8);
+                binaryRepresentation[7] = (byte) ClassFileVersion.JAVA_V14.getMajorVersion();
+                ClassReader classReader = new ClassReader(binaryRepresentation);
+                binaryRepresentation[6] = (byte) (classFileVersion.getMajorVersion() >>> 8);
+                binaryRepresentation[7] = (byte) classFileVersion.getMajorVersion();
+                return classReader;
+            } else {
+                return new ClassReader(binaryRepresentation);
+            }
         } else {
             return new ClassReader(binaryRepresentation);
         }

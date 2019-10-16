@@ -38,6 +38,16 @@ public class ClassFileVersionTest {
         assertThat(ClassFileVersion.of(Foo.class).compareTo(ClassFileVersion.ofThisVm()) < 1, is(true));
     }
 
+    @Test
+    public void testClassFile() throws Exception {
+        assertThat(ClassFileVersion.of(Object.class).getMinorMajorVersion(), is(ClassFileVersion.ofThisVm().getMinorMajorVersion()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalClassFile() throws Exception {
+        ClassFileVersion.ofClassFile(new byte[0]);
+    }
+
     private static class Foo {
         /* empty */
     }

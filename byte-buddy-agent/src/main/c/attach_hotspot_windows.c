@@ -17,6 +17,7 @@
 
 #define ENQUEUE_ERROR 0xffff
 #define CODE_SIZE (SIZE_T) 1024
+#define MAX_ARGUMENT 1024
 
 typedef HMODULE (WINAPI *GetModuleHandle_t)(LPCTSTR);
 typedef FARPROC (WINAPI *GetProcAddress_t)(HMODULE, LPCSTR);
@@ -28,7 +29,7 @@ typedef struct {
     char library[32];
     char command[32];
     char pipe[MAX_PATH];
-    char argument[4][MAX_PATH];
+    char argument[4][MAX_ARGUMENT];
 } EnqueueOperation;
 
 #pragma check_stack(off)
@@ -90,6 +91,13 @@ LPVOID allocate_remote_code
 LPVOID allocate_remote_argument
   (HANDLE process, LPCSTR pipe, LPCSTR argument0, LPCSTR argument1, LPCSTR argument2, LPCSTR argument3) 
 {
+    if (strlen(pipe) > MAX_PATH
+            || strlen(argument0) > MAX_ARGUMENT
+            || strlen(argument1) > MAX_ARGUMENT
+            || strlen(argument2) > MAX_ARGUMENT
+            || strlen(argument3) > MAX_ARGUMENT) {
+        return NULL;
+    }
     EnqueueOperation operation;
     operation.GetModuleHandleA = GetModuleHandleA;
     operation.GetProcAddress = GetProcAddress;
