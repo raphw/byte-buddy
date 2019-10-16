@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -382,6 +383,7 @@
                 <jdk>1.6</jdk>
             </activation>
             <properties>
+                <version.asm.deprecated>7.1</version.asm.deprecated>
                 <version.plugin.bundle>2.5.4</version.plugin.bundle>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
                 <version.plugin.compiler>3.6.2</version.plugin.compiler>
@@ -401,6 +403,34 @@
                 <module>byte-buddy-maven-plugin</module>
                 <module>byte-buddy-gradle-plugin</module>
             </modules>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-plugin-plugin</artifactId>
+                            <version>${version.plugin.plugin}</version>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.ow2.asm</groupId>
+                                    <artifactId>asm</artifactId>
+                                    <version>${version.asm.deprecated}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.ow2.asm</groupId>
+                                    <artifactId>asm-commons</artifactId>
+                                    <version>${version.asm.deprecated}</version>
+                                </dependency>
+                                <dependency>
+                                    <groupId>org.ow2.asm</groupId>
+                                    <artifactId>asm-deprecated</artifactId>
+                                    <version>${version.asm.deprecated}</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
         </profile>
         <!-- Runs the build with compatibility for Java 7 JVMs. -->
         <profile>
