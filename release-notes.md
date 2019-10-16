@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. October 2019: version 1.10.2
+
+- Upgrade ASM to version 7.2.
+- Improve class file version detection for class files.
+
 ### 9. August 2019: version 1.10.1
 
 - Extend `VirtualMachine` API emulation.
