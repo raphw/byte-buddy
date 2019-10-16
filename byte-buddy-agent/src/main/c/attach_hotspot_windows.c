@@ -91,11 +91,11 @@ LPVOID allocate_remote_code
 LPVOID allocate_remote_argument
   (HANDLE process, LPCSTR pipe, LPCSTR argument0, LPCSTR argument1, LPCSTR argument2, LPCSTR argument3) 
 {
-    if (strlen(pipe) > MAX_PATH
-            || strlen(argument0) > MAX_ARGUMENT
-            || strlen(argument1) > MAX_ARGUMENT
-            || strlen(argument2) > MAX_ARGUMENT
-            || strlen(argument3) > MAX_ARGUMENT) {
+    if (strlen(pipe) >= MAX_PATH
+            || strlen(argument0) >= MAX_ARGUMENT
+            || strlen(argument1) >= MAX_ARGUMENT
+            || strlen(argument2) >= MAX_ARGUMENT
+            || strlen(argument3) >= MAX_ARGUMENT) {
         return NULL;
     }
     EnqueueOperation operation;

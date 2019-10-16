@@ -315,7 +315,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         if (binaryRepresentation.length < 7) {
             throw new IllegalArgumentException("Supplied byte array is too short to be a class file with " + binaryRepresentation.length + " byte");
         }
-        return ofMinorMajor(((int) binaryRepresentation[6] << 8) | binaryRepresentation[7]);
+        return ofMinorMajor(binaryRepresentation[6] << 8 | binaryRepresentation[7] & 0xFF);
     }
 
     /**
