@@ -28,3 +28,7 @@ jobs:
         architecture: x64
     - name: Build project
       run: ./mvnw install -Dnet.bytebuddy.test.ci=true
+      if: matrix.java < 13
+    - name: Build project (without Gradle)
+      run: ./mvnw install -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+      if: matrix.java > 12
