@@ -45,14 +45,14 @@ public class VirtualMachineForOpenJ9Test {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
         when(dispatcher.getTemporaryFolder()).thenReturn(temporaryFolder.getAbsolutePath());
-        File targetFolder = new File(attachFolder, Long.toString(PROCESS_ID));
+        File targetFolder = new File(attachFolder, Integer.toString(PROCESS_ID));
         assertThat(targetFolder.mkdir(), is(true));
         try {
             File attachInfo = new File(targetFolder, "attachInfo");
             Properties properties = new Properties();
-            properties.setProperty("processId", Long.toString(PROCESS_ID));
-            properties.setProperty("userUid", Long.toString(USER_ID));
-            properties.setProperty("vmId", Long.toString(VM_ID));
+            properties.setProperty("processId", Integer.toString(PROCESS_ID));
+            properties.setProperty("userUid", Integer.toString(USER_ID));
+            properties.setProperty("vmId", Integer.toString(VM_ID));
             OutputStream outputStream = new FileOutputStream(attachInfo);
             try {
                 try {
@@ -60,7 +60,7 @@ public class VirtualMachineForOpenJ9Test {
                 } finally {
                     outputStream.close();
                 }
-                final File sourceFolder = new File(attachFolder, Long.toString(VM_ID)), replyInfo = new File(sourceFolder, "replyInfo");
+                final File sourceFolder = new File(attachFolder, Integer.toString(VM_ID)), replyInfo = new File(sourceFolder, "replyInfo");
                 assertThat(sourceFolder.mkdir(), is(true));
                 try {
                     when(dispatcher.userId()).thenReturn(USER_ID);
@@ -120,7 +120,7 @@ public class VirtualMachineForOpenJ9Test {
                     attachmentThread.setName("attachment-thread-emulation");
                     attachmentThread.start();
                     try {
-                        VirtualMachine.ForOpenJ9.attach(Long.toString(PROCESS_ID), 5000, dispatcher).detach();
+                        VirtualMachine.ForOpenJ9.attach(Integer.toString(PROCESS_ID), 5000, dispatcher).detach();
                         attachmentThread.join(5000);
                     } finally {
                         attachmentThread.interrupt();

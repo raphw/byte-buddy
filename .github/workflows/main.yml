@@ -11,8 +11,8 @@ on:
     - cron: "0 0 * * 1"
 
 jobs:
-  bleeding-edge:
-    name: HotSpot (bleeding edge)
+  hotspot-ea:
+    name: HotSpot (EA)
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
@@ -22,8 +22,8 @@ jobs:
         run: . .ci/install-jdk.sh --feature ea --os linux-x64
       - name: Build project (without Gradle)
         run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
-  hotspot-current:
-    name: HotSpot (current)
+  hotspot-supported:
+    name: HotSpot (supported)
     strategy:
       matrix:
         os: [ubuntu-18.04, macOS-10.14, windows-2019]
@@ -43,8 +43,38 @@ jobs:
     - name: Build project (without Gradle)
       run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
       if: matrix.java > 12
-  openj9-current:
-    name: OpenJ9 (current)
+  hotspot-unsupported:
+    name: HotSpot (unsupported)
+    strategy:
+      matrix:
+        java: [9, 10, 12]
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+          architecture: x64
+      - name: Build project
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+  hotspot-legacy:
+    name: HotSpot (legacy)
+    strategy:
+      matrix:
+        java: [1.6, 1.7]
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Build project
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+      - name: Build project
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+  openj9-supported:
+    name: OpenJ9 (supported)
     strategy:
       matrix:
         java: [8, 11, 13]
