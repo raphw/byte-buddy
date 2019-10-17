@@ -13,15 +13,18 @@ on:
 jobs:
   build:
     name: Linux build
-    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, windows-2019, macOS-10.14]
+        java: [9.x.x]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
     - uses: actions/setup-java@v1
       with:
-        java-version: '9.x.x'
+        java-version: ${{ matrix.java }}
         architecture: x64
-    - name: Run a one-line script
-      run: echo Hello, world!
     - name: Build project
-      run: |
-        ./mvnw install -Dnet.bytebuddy.test.ci=true
+      run: ./mvnw install -Dnet.bytebuddy.test.ci=true
