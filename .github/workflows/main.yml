@@ -11,8 +11,19 @@ on:
     - cron: "0 0 * * 1"
 
 jobs:
-  major-versions:
-    name: Test HotSpot
+  bleeding-edge:
+    name: HotSpot (bleeding edge)
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Install JDK
+        run: . .ci/install-jdk.sh --feature ea --os linux-x64
+      - name: Build project (without Gradle)
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+  hotspot-current:
+    name: HotSpot (current)
     strategy:
       matrix:
         os: [ubuntu-18.04, macOS-10.14, windows-2019]
@@ -32,17 +43,17 @@ jobs:
     - name: Build project (without Gradle)
       run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
       if: matrix.java > 12
-  openj9:
-    name: Test OpenJ9
+  openj9-current:
+    name: OpenJ9 (current)
     strategy:
       matrix:
         java: [8, 11, 13]
-      runs-on: ubuntu-18.04
-      steps:
-        - uses: actions/checkout@v1
-          with:
-            fetch-depth: 1
-        - name: Install OpenJ9
-          run: . .ci/install-jdk.sh -W ~/custom-java --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
-        - name: Build project (without Gradle)
-          run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Install JDK
+        run: . .ci/install-jdk.sh -W ~/custom-java --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+      - name: Build project (without Gradle)
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
