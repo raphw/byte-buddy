@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04, macOS-10.14]
-        java: [6, 8, 11, 13]
+        java: [1.6, 1.7, 8, 9, 10, 11, 12, 13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v1
@@ -27,8 +27,8 @@ jobs:
         java-version: ${{ matrix.java }}
         architecture: x64
     - name: Build project
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pjava${{ matrix.java }}
+      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
       if: matrix.java < 13
     - name: Build project (without Gradle)
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pjava${{ matrix.java }} -pl !byte-buddy-gradle-plugin
+      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
       if: matrix.java > 12
