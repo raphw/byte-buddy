@@ -21,7 +21,7 @@ jobs:
       - name: Install JDK
         run: . .ci/install-jdk.sh --feature ea --os linux-x64
       - name: Build project (without Gradle)
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+        run: ./mvnw verify -Pintegration -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
   hotspot-supported:
     name: HotSpot (supported)
     strategy:
@@ -41,7 +41,7 @@ jobs:
       run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
       if: matrix.java < 13
     - name: Build project (without Gradle)
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+      run: ./mvnw verify -Pintegration -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
       if: matrix.java > 12
   hotspot-unsupported:
     name: HotSpot (unsupported)
@@ -58,21 +58,7 @@ jobs:
           java-version: ${{ matrix.java }}
           architecture: x64
       - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
-  hotspot-legacy:
-    name: HotSpot (legacy)
-    strategy:
-      matrix:
-        java: [1.6, 1.7]
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
-      - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
-      - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+        run: ./mvnw verify -Pintegration -Dnet.bytebuddy.test.ci=true
   openj9-supported:
     name: OpenJ9 (supported)
     strategy:
@@ -86,4 +72,4 @@ jobs:
       - name: Install JDK
         run: . .ci/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
       - name: Build project (without Gradle)
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+        run: ./mvnw verify -Pintegration -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
