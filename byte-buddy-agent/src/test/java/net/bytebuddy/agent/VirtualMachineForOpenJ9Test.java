@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
@@ -135,7 +134,10 @@ public class VirtualMachineForOpenJ9Test {
         } finally {
             assertThat(targetFolder.delete(), is(true));
         }
-        assertThat(error.get(), nullValue());
+        Throwable throwable = error.get();
+        if (throwable != null) {
+            throw new AssertionError(throwable);
+        }
         for (String infrastructure : Arrays.asList("attachNotificationSync", "_master", "_attachlock")) {
             File file = new File(attachFolder, infrastructure);
             assertThat(file.isFile(), is(true));
