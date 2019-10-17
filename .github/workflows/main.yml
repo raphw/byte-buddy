@@ -12,11 +12,11 @@ on:
 
 jobs:
   build:
-    name: Run tests
+    name: Test major versions
     strategy:
       matrix:
         os: [ubuntu-18.04, macOS-10.14]
-        java: [1.6, 1.7, 8, 9, 10, 11, 12, 13]
+        java: [8, 11, 13]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v1
