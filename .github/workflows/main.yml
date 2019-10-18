@@ -18,10 +18,10 @@ jobs:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
-      - name: Install JDK
-        run: . .ci/install-jdk.sh --feature ea --os linux-x64
-      - name: Build project (without Gradle)
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+      - name: 'Install JDK-ea & Build project (without Gradle)'
+        run: |
+          . .ci/install-jdk.sh --feature ea --os linux-x64
+          ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
   hotspot-supported:
     name: HotSpot (supported)
     strategy:
