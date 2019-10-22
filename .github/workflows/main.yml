@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
-      - name: 'Install JDK-ea & Build project (without Gradle)'
+      - name: Install JDK and build project (without Gradle)
         run: |
-          . .ci/install-jdk.sh --feature ea --os linux-x64
+          . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
           ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
   hotspot-supported:
     name: HotSpot (supported)
@@ -38,16 +38,16 @@ jobs:
         java-version: ${{ matrix.java }}
         architecture: x64
     - name: Build project
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
       if: matrix.java < 13
     - name: Build project (without Gradle)
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration -pl !byte-buddy-gradle-plugin
       if: matrix.java > 12
   hotspot-unsupported:
     name: HotSpot (unsupported)
     strategy:
       matrix:
-        java: [9, 10, 12]
+        java: [7, 9, 10, 12]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
@@ -58,7 +58,7 @@ jobs:
           java-version: ${{ matrix.java }}
           architecture: x64
       - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
   openj9-supported:
     name: OpenJ9 (supported)
     strategy:
@@ -70,12 +70,12 @@ jobs:
         with:
           fetch-depth: 1
       - name: Install JDK
-        run: . .ci/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+        run: . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
       - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
         if: matrix.java < 13
       - name: Build project (without Gradle)
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
+        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration -pl !byte-buddy-gradle-plugin
         if: matrix.java > 12
   coverage:
     name: Coverage
