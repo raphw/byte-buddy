@@ -7,9 +7,7 @@ Byte Buddy
 
 runtime code generation for the Java virtual machine
 
-[![Build Status (Travis CI)](https://circleci.com/gh/raphw/byte-buddy.svg?style=shield)](https://circleci.com/gh/raphw/byte-buddy)
-[![Build Status (AppVeyor CI)](https://ci.appveyor.com/api/projects/status/github/raphw/byte-buddy?branch=master&svg=true)](https://ci.appveyor.com/project/raphw/byte-buddy)
-[![Build Status](https://travis-ci.org/raphw/byte-buddy.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
+[![Actions Status](https://github.com/raphw/byte-buddy/workflows/CI/badge.svg)](https://github.com/raphw/byte-buddy/actions)
 [![Coverage Status](https://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg#)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 [![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
