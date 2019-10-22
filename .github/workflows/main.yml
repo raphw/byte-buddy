@@ -91,6 +91,6 @@ jobs:
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true
-      - uses: coverallsapp/github-action@v1
+      - uses: coverallsapp/github-action@v1.0.1
         with:
           github-token: ${{ secrets.github_token }}
