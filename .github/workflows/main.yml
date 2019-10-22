@@ -19,6 +19,9 @@ jobs:
         with:
           fetch-depth: 1
       - name: Install JDK
-        run: sudo apt install openjdk-6-jdk
+        run: |
+          sudo add-apt-repository ppa:webupd8team/java
+          sudo apt-get update
+          sudo apt-get install oracle-java6-installer
       - name: Build project
         run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
