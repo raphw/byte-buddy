@@ -11,86 +11,14 @@ on:
     - cron: "0 0 * * 1"
 
 jobs:
-  hotspot-ea:
-    name: HotSpot (EA)
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
-      - name: Install JDK and build project (without Gradle)
-        run: |
-          . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
-          ./mvnw verify -Dnet.bytebuddy.test.ci=true -pl !byte-buddy-gradle-plugin
-  hotspot-supported:
-    name: HotSpot (supported)
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, macOS-10.14, windows-2019]
-        java: [8, 11, 13]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v1
-      with:
-        fetch-depth: 1
-    - uses: actions/setup-java@v1
-      with:
-        java-version: ${{ matrix.java }}
-        architecture: x64
-    - name: Build project
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
-      if: matrix.java < 13
-    - name: Build project (without Gradle)
-      run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration -pl !byte-buddy-gradle-plugin
-      if: matrix.java > 12
-  hotspot-unsupported:
-    name: HotSpot (unsupported)
-    strategy:
-      matrix:
-        java: [7, 9, 10, 12]
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: ${{ matrix.java }}
-          architecture: x64
-      - name: Build project
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
-  openj9-supported:
-    name: OpenJ9 (supported)
-    strategy:
-      matrix:
-        java: [8, 11, 13]
+  hotspot-legacy:
+    name: HotSpot (legacy)
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
       - name: Install JDK
-        run: . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+        run: sudo apt install openjdk-6-jdk
       - name: Build project
         run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration
-        if: matrix.java < 13
-      - name: Build project (without Gradle)
-        run: ./mvnw verify -Dnet.bytebuddy.test.ci=true -Pintegration -pl !byte-buddy-gradle-plugin
-        if: matrix.java > 12
-  coverage:
-    name: Coverage
-    runs-on: ubuntu-18.04
-    needs: [hotspot-ea, hotspot-supported, hotspot-unsupported, openj9-supported]
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 11
-          architecture: x64
-      - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true
-      - uses: coverallsapp/github-action@v1.0.1
-        with:
-          github-token: ${{ secrets.github_token }}
