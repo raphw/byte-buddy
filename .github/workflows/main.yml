@@ -49,5 +49,7 @@ jobs:
         with:
           java-version: 1.6
           architecture: x64
+      - name: Print version
+        run: java -version
       - name: Build project
         run: ./mvnw -s nossl.settings.xml verify -Dnet.bytebuddy.test.ci=true -Pintegration -Pjava6 -pl !byte-buddy-gradle-plugin
