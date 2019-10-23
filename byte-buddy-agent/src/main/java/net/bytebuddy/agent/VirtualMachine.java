@@ -1210,6 +1210,12 @@ public interface VirtualMachine {
                 public static class Factory implements Connection.Factory {
 
                     /**
+                     * The name of the native code library that is included in this artifact to support Windows attachment. 
+                     * This property can be set by other libraries that shade Byte Buddy agent and relocates the library.
+                     */
+                    public static final String LIBRARY_NAME = "net.bytebuddy.library.name";
+
+                    /**
                      * The library to use for communicating with Windows native functions.
                      */
                     private final WindowsLibrary library;
@@ -1225,7 +1231,7 @@ public interface VirtualMachine {
                     @SuppressWarnings("deprecation")
                     public Factory() {
                         library = Native.loadLibrary("kernel32", WindowsLibrary.class, W32APIOptions.DEFAULT_OPTIONS);
-                        attachLibrary = Native.loadLibrary("attach_hotspot_windows", WindowsAttachLibrary.class);
+                        attachLibrary = Native.loadLibrary(System.getProperty(LIBRARY_NAME, "attach_hotspot_windows"), WindowsAttachLibrary.class);
                     }
 
                     /**
