@@ -42,8 +42,8 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test(timeout = 10000L)
-    @Ignore("Fails on Windows sporadically. Needs investigation.")
-    public void testAttachment() throws Exception {
+    //@Ignore("Fails on Windows sporadically. Needs investigation.")
+    public void testAttachment() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
         when(dispatcher.getTemporaryFolder()).thenReturn(temporaryFolder.getAbsolutePath());
@@ -138,7 +138,7 @@ public class VirtualMachineForOpenJ9Test {
         }
         Throwable throwable = error.get();
         if (throwable != null) {
-            throw new AssertionError(throwable);
+            throw throwable;
         }
         for (String infrastructure : Arrays.asList("attachNotificationSync", "_master", "_attachlock")) {
             File file = new File(attachFolder, infrastructure);
