@@ -108,7 +108,7 @@ jobs:
           java-version: 11
           architecture: x64
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Pjava11 -Dnet.bytebuddy.test.ci=true
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -Pintegration -Pjava11 -Dnet.bytebuddy.test.ci=true
       - uses: coverallsapp/github-action@v1.0.1
         with:
           github-token: ${{ secrets.github_token }}
