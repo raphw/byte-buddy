@@ -5,6 +5,7 @@ Byte Buddy release notes
 
 - Upgrade ASM to version 7.2.
 - Improve class file version detection for class files.
+- Check argument length of Windows attach emulation.
 
 ### 9. August 2019: version 1.10.1
 
