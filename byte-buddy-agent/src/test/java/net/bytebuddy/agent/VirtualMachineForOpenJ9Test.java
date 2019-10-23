@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -79,7 +80,8 @@ public class VirtualMachineForOpenJ9Test {
                                             key = reader.readLine();
                                             port = Integer.parseInt(reader.readLine());
                                             assertThat(reader.read(), is(-1));
-                                        } catch (Exception exception) { // Avoid races with attachment.
+                                        } catch (Exception exception) { // Reattempt to avoid races with attachment.
+                                            Logger.getLogger("net.bytebuddy").info("Unexpected reply file content: " + exception.getMessage());
                                             continue;
                                         } finally {
                                             reader.close();
