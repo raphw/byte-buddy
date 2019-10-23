@@ -99,6 +99,7 @@ jobs:
     name: Coverage
     runs-on: ubuntu-18.04
     needs: [hotspot-ea, hotspot-supported, hotspot-unsupported, hotspot-legacy, openj9-supported]
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v1
         with:
@@ -108,7 +109,4 @@ jobs:
           java-version: 8
           architecture: x64
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true
-      - uses: coverallsapp/github-action@v1.0.1
-        with:
-          github-token: ${{ secrets.github_token }}
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration -Dnet.bytebuddy.test.ci=true
