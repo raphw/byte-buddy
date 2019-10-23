@@ -105,10 +105,10 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
           architecture: x64
       - name: Build project
-        run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Pjava11 -Dnet.bytebuddy.test.ci=true
+        run: ./mvnw jacoco:prepare-agent verify jacoco:report -Pintegration -Dnet.bytebuddy.test.ci=true
       - uses: coverallsapp/github-action@v1.0.1
         with:
           github-token: ${{ secrets.github_token }}

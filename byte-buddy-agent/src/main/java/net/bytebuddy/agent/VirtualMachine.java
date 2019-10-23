@@ -1210,7 +1210,7 @@ public interface VirtualMachine {
                 public static class Factory implements Connection.Factory {
 
                     /**
-                     * The name of the native code library that is included in this artifact to support Windows attachment. 
+                     * The name of the native code library that is included in this artifact to support Windows attachment.
                      * This property can be set by other libraries that shade Byte Buddy agent and relocates the library.
                      */
                     public static final String LIBRARY_NAME = "net.bytebuddy.library.name";
