@@ -2,7 +2,6 @@ package net.bytebuddy.agent;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -42,7 +41,6 @@ public class VirtualMachineForOpenJ9Test {
     }
 
     @Test(timeout = 10000L)
-    //@Ignore("Fails on Windows sporadically. Needs investigation.")
     public void testAttachment() throws Throwable {
         final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
         VirtualMachine.ForOpenJ9.Dispatcher dispatcher = mock(VirtualMachine.ForOpenJ9.Dispatcher.class);
@@ -81,6 +79,8 @@ public class VirtualMachineForOpenJ9Test {
                                             key = reader.readLine();
                                             port = Integer.parseInt(reader.readLine());
                                             assertThat(reader.read(), is(-1));
+                                        } catch (Exception exception) { // Avoid races with attachment.
+                                            continue;
                                         } finally {
                                             reader.close();
                                         }
