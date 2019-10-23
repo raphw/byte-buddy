@@ -154,7 +154,7 @@ public interface VirtualMachine {
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Optional JNA dependency is not available", exception);
             }
-            return System.getProperty("java.vm.vendor").toUpperCase(Locale.US).contains("J9")
+            return System.getProperty("java.vm.vendor", "").toUpperCase(Locale.US).contains("J9")
                     ? ForOpenJ9.class
                     : ForHotSpot.class;
 

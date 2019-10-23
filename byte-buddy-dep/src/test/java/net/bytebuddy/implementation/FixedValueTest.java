@@ -96,7 +96,7 @@ public class FixedValueTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testMethodHandleConstantPool() throws Exception {
         Class<? extends Qux> qux = new ByteBuddy()
                 .subclass(Qux.class)
@@ -110,7 +110,7 @@ public class FixedValueTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testMethodHandleConstantPoolValue() throws Exception {
         Class<? extends Qux> qux = new ByteBuddy()
                 .subclass(Qux.class)

@@ -19,11 +19,11 @@ public class JavaVersionRule implements MethodRule {
 
     private final ClassFileVersion currentVersion;
 
-    private final boolean hotSpot;
+    private final boolean openJ9;
 
     public JavaVersionRule() {
         currentVersion = ClassFileVersion.ofThisVm();
-        hotSpot = System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot");
+        openJ9 = System.getProperty("java.vm.vendor", "").toUpperCase(Locale.US).contains("J9");
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
@@ -37,8 +37,8 @@ public class JavaVersionRule implements MethodRule {
             } catch (IOException exception) {
                 throw new AssertionError(exception);
             }
-            if (!hotSpot && enforce.hotSpot()) {
-                return new NoHotSpotStatement();
+            if (openJ9 && !enforce.openJ9()) {
+                return new OpenJ9Statement();
             } else if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value(), "at least");
             } else if (enforce.atMost() != UNDEFINED && !version.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
@@ -56,7 +56,7 @@ public class JavaVersionRule implements MethodRule {
 
         int atMost() default UNDEFINED;
 
-        boolean hotSpot() default false;
+        boolean openJ9() default true;
 
         Class<?> target() default void.class;
     }
@@ -64,6 +64,7 @@ public class JavaVersionRule implements MethodRule {
     private static class NoOpStatement extends Statement {
 
         private final int requiredVersion;
+
         private final String sort;
 
         private NoOpStatement(int requiredVersion, String sort) {
@@ -76,10 +77,10 @@ public class JavaVersionRule implements MethodRule {
         }
     }
 
-    private static class NoHotSpotStatement extends Statement {
+    private static class OpenJ9Statement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires HotSpot VM");
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Test not supported on OpenJ9");
         }
     }
 }

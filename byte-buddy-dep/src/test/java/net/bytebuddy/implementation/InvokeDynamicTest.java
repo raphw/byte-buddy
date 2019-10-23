@@ -117,7 +117,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testBootstrapWithArrayArgumentsWithArguments() throws Exception {
         Class<?> type = Class.forName(BOOTSTRAP_CLASS);
         Field field = type.getField("arguments");
@@ -145,7 +145,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testBootstrapWithExplicitArgumentsWithArguments() throws Exception {
         Class<?> type = Class.forName(BOOTSTRAP_CLASS);
         Field field = type.getField("arguments");
@@ -180,7 +180,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testBootstrapOfMethodsWithParametersPrimitive() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Class.forName(BOOTSTRAP_CLASS));
         Object value = new Object();
@@ -209,7 +209,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, openJ9 = false)
     public void testBootstrapOfMethodsWithParametersWrapperConstantPool() throws Exception {
         TypeDescription typeDescription = TypeDescription.ForLoadedType.of(Class.forName(BOOTSTRAP_CLASS));
         Object value = new Object();
