@@ -37,16 +37,12 @@ public class JavaVersionRule implements MethodRule {
             } catch (IOException exception) {
                 throw new AssertionError(exception);
             }
-            if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
+            if (!hotSpot && enforce.hotSpot()) {
+                return new NoHotSpotStatement();
+            } else if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value(), "at least");
             } else if (enforce.atMost() != UNDEFINED && !version.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
                 return new NoOpStatement(enforce.atMost(), "at most");
-            } else if (!hotSpot) {
-                for (int javaVersion : enforce.hotSpot()) {
-                    if (version.getJavaVersion() == javaVersion) {
-                        return new NoOpHotSpotStatement(javaVersion);
-                    }
-                }
             }
         }
         return base;
@@ -60,7 +56,7 @@ public class JavaVersionRule implements MethodRule {
 
         int atMost() default UNDEFINED;
 
-        int[] hotSpot() default {};
+        boolean hotSpot() default false;
 
         Class<?> target() default void.class;
     }
@@ -68,7 +64,6 @@ public class JavaVersionRule implements MethodRule {
     private static class NoOpStatement extends Statement {
 
         private final int requiredVersion;
-
         private final String sort;
 
         private NoOpStatement(int requiredVersion, String sort) {
@@ -76,21 +71,15 @@ public class JavaVersionRule implements MethodRule {
             this.sort = sort;
         }
 
-        public void evaluate() throws Throwable {
+        public void evaluate() {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version of " + sort + " " + requiredVersion);
         }
     }
 
-    private static class NoOpHotSpotStatement extends Statement {
-
-        private final int restrictedVersion;
-
-        private NoOpHotSpotStatement(int restrictedVersion) {
-            this.restrictedVersion = restrictedVersion;
-        }
+    private static class NoHotSpotStatement extends Statement {
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires HotSpot VM");
         }
     }
 }

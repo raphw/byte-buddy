@@ -17,7 +17,10 @@ import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.AgentAttachmentRule;
+import net.bytebuddy.test.utility.ClassReflectionInjectionAvailableRule;
+import net.bytebuddy.test.utility.IntegrationRule;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,13 +39,12 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
-import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
@@ -54,15 +56,6 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        // CI can run out of memory if all of these tests are run. This property serves as a protection (on some profiles).
-        if (Boolean.getBoolean("net.bytebuddy.test.ci")) {
-            Logger.getLogger("net.bytebuddy").info("Running only a subset of type locator tests on CI server.");
-            return Arrays.asList(new Object[][]{
-                    {AgentBuilder.PoolStrategy.Default.EXTENDED},
-                    {AgentBuilder.PoolStrategy.Eager.EXTENDED},
-                    {AgentBuilder.PoolStrategy.ClassLoading.EXTENDED}
-            });
-        }
         return Arrays.asList(new Object[][]{
                 {AgentBuilder.PoolStrategy.Default.EXTENDED},
                 {AgentBuilder.PoolStrategy.Default.FAST},
@@ -673,7 +666,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(8)
+    @JavaVersionRule.Enforce(value = 8, hotSpot = true) // Segfaults on OpenJ9.
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testInstanceCapturingLambda() throws Exception {
@@ -720,7 +713,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(8)
+    @JavaVersionRule.Enforce(value = 8, hotSpot = true) // Segfaults on OpenJ9.
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testCapturingLambdaWithArguments() throws Exception {

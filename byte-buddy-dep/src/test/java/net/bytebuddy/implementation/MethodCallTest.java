@@ -976,7 +976,7 @@ public class MethodCallTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
     public void testJava7Types() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
                 .subclass(SimpleMethod.class)
@@ -994,7 +994,7 @@ public class MethodCallTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
+    @JavaVersionRule.Enforce(value = 7, atMost = 7, hotSpot = true)
     public void testJava7TypesExplicit() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
                 .subclass(SimpleMethod.class)
