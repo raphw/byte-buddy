@@ -99,7 +99,7 @@ jobs:
     name: Coverage
     runs-on: ubuntu-18.04
     needs: [hotspot-ea, hotspot-supported, hotspot-unsupported, hotspot-legacy, openj9-supported]
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v1
         with:
