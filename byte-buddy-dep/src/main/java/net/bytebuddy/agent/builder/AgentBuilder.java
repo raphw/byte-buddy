@@ -4710,7 +4710,7 @@ public interface AgentBuilder {
             @Override
             protected void check(Instrumentation instrumentation) {
                 if (!DISPATCHER.isRetransformClassesSupported(instrumentation)) {
-                    throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
+                    throw new IllegalStateException("Cannot apply retransformation on " + instrumentation);
                 }
             }
 
