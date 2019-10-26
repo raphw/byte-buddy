@@ -5633,7 +5633,7 @@ public interface AgentBuilder {
                  * {@inheritDoc}
                  */
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
-                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
+                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE %d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
                 }
             }
 
