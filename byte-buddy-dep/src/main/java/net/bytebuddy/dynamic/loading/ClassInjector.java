@@ -59,8 +59,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * the user of this injector is responsible for providing access to non-public properties.
  * </p>
  */
-public interface
-ClassInjector {
+public interface ClassInjector {
 
     /**
      * A permission for the {@code suppressAccessChecks} permission.
