@@ -22,11 +22,6 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
                 controller: 'developController',
                 templateUrl: 'partial/develop.partial.html'
             })
-            .when('/javadoc', {
-                redirectTo: function() {
-                    window.location = 'https://javadoc.io/doc/' + repository.groupId + '/' + repository.artifactId;
-                }
-            })
             .otherwise({redirectTo: '/'});
     })
 
@@ -44,7 +39,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             {name: 'Welcome', target: '#/'},
             {name: 'Learn', target: '#/tutorial'},
             {name: 'Develop', target: '#/develop'},
-            {name: 'API', target: '#/javadoc'}
+            {name: 'API', target: 'https://javadoc.io/doc/' + repository.groupId + '/' + repository.artifactId}
         ];
         $scope.activeClass = function (current) {
             return current.target === '#' + ($location.path() || '/') ? 'active' : '';
