@@ -1,3 +1,16 @@
+var request = new XMLHttpRequest();
+var latest = 'LATEST';
+request.open('GET', 'https://search.maven.org/solrsearch/select?q=g:"net.bytebuddy"+AND+a:"byte-buddy"&core=gav&rows=20&wt=json', true);
+request.onload = function() {
+    if (request.status >= 200 && request.status < 400) {
+        var data = JSON.parse(this.response);
+        if (data.response && data.response.docs && data.response.docs[0] && data.response.docs[0].latestVersion) {
+            latest = data.response.docs[0].latestVersion;
+        }
+    }
+};
+request.send();
+
 angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'duScroll'])
 
     .value('duScrollDuration', 2000)
@@ -5,7 +18,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     .constant('repository', {
         groupId: 'net.bytebuddy',
         artifactId: 'byte-buddy',
-        version: 'LATEST'
+        version: latest
     })
 
     .config(function ($routeProvider, repository) {
