@@ -66,21 +66,21 @@ public class Installer {
     /**
      * Allows the installation of this agent via a command line argument.
      *
-     * @param agentArguments  The unused agent arguments.
+     * @param argument        The unused agent arguments.
      * @param instrumentation The instrumentation instance.
      */
-    public static void premain(String agentArguments, Instrumentation instrumentation) {
+    public static void premain(String argument, Instrumentation instrumentation) {
         Installer.instrumentation = instrumentation;
     }
 
     /**
      * Allows the installation of this agent via the Attach API.
      *
-     * @param agentArguments  The unused agent arguments.
+     * @param argument        The unused agent arguments.
      * @param instrumentation The instrumentation instance.
      */
     @SuppressWarnings("unused")
-    public static void agentmain(String agentArguments, Instrumentation instrumentation) {
+    public static void agentmain(String argument, Instrumentation instrumentation) {
         Installer.instrumentation = instrumentation;
     }
 }

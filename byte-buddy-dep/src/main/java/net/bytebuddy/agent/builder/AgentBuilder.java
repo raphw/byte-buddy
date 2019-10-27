@@ -4701,7 +4701,7 @@ public interface AgentBuilder {
          * retransformation of a class causes the entire retransformation attempt to fail.
          * </p>
          * <p>
-         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
+         * <b>Note</b>: When applying a retransformation, it is normally required to use a {@link TypeStrategy} that applies
          * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
          * the constrains given by this type strategy.
          * </p>
