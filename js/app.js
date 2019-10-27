@@ -39,7 +39,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         };
     })
 
-    .controller('menuController', function ($scope, $location, $rootScope, scroller, repository) {
+    .controller('menuController', function ($scope, $location, $rootScope, scroller) {
         $scope.menuItems = [
             {name: 'Welcome', target: '#/'},
             {name: 'Learn', target: '#/tutorial'},
