@@ -8,7 +8,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         version: 'LATEST'
     })
 
-    .config(function ($routeProvider, repository) {
+    .config(function ($routeProvider) {
         $routeProvider
             .when('/', {
                 controller: 'mainController',
@@ -34,7 +34,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         };
     })
 
-    .controller('menuController', function ($scope, $location, $rootScope, scroller) {
+    .controller('menuController', function ($scope, $location, $rootScope, scroller, repository) {
         $scope.menuItems = [
             {name: 'Welcome', target: '#/'},
             {name: 'Learn', target: '#/tutorial'},
