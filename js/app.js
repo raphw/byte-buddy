@@ -2,9 +2,13 @@ var request = new XMLHttpRequest();
 var latest = 'LATEST';
 request.open('GET', 'https://search.maven.org/solrsearch/select?q=g:"net.bytebuddy"+AND+a:"byte-buddy"&wt=json', true);
 request.onload = function() {
+    console.log("Loading response");
     if (request.status >= 200 && request.status < 400) {
+    console.log("Successful");
         var data = JSON.parse(this.response);
+    console.log("Data: " + data);
         if (data.response && data.response.docs && data.response.docs[0] && data.response.docs[0].latestVersion) {
+            console.log("Setting");
             latest = data.response.docs[0].latestVersion;
         }
     }
