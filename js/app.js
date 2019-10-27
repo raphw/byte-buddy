@@ -1,15 +1,3 @@
-var request = new XMLHttpRequest();
-var latest = 'LATEST';
-request.open('GET', 'https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy', true);
-request.onload = function() {
-    console.log("Loading response");
-    if (request.status >= 200 && request.status < 400) {
-        console.log("Successful");
-        console.log("Data: " + this.response);
-    }
-};
-request.send();
-
 angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'duScroll'])
 
     .value('duScrollDuration', 2000)
@@ -17,7 +5,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     .constant('repository', {
         groupId: 'net.bytebuddy',
         artifactId: 'byte-buddy',
-        version: latest
+        version: 'LATEST'
     })
 
     .config(function ($routeProvider, repository) {
