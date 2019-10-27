@@ -1,6 +1,6 @@
 var request = new XMLHttpRequest();
 var latest = 'LATEST';
-request.open('GET', 'https://search.maven.org/solrsearch/select?q=g:"net.bytebuddy"+AND+a:"byte-buddy"&core=gav&rows=20&wt=json', true);
+request.open('GET', 'https://search.maven.org/solrsearch/select?q=g:"net.bytebuddy"+AND+a:"byte-buddy"&wt=json', true);
 request.onload = function() {
     if (request.status >= 200 && request.status < 400) {
         var data = JSON.parse(this.response);
