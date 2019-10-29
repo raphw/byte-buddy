@@ -5,7 +5,7 @@ The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements duri
 ###### build.gradle
 ```groovy
 plugins {
-  id 'net.bytebuddy.byte-buddy-gradle-plugin'
+  id 'net.bytebuddy.byte-buddy-gradle-plugin' version 'LATEST'
 }
 
 configurations {
