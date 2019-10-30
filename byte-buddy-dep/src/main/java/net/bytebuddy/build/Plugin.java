@@ -21,6 +21,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -3634,7 +3635,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                                 sink.retain(element);
                                                 failed.put(typeDescription, errored);
                                             } else if (!applied.isEmpty()) {
-                                                DynamicType dynamicType = builder.make();
+                                                DynamicType dynamicType = builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
                                                 listener.onTransformation(typeDescription, applied);
                                                 for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
                                                     if (entry.getValue().isAlive()) {

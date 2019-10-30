@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -75,6 +76,7 @@
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
         <version.plugin.jar>3.0.2</version.plugin.jar>
+        <version.plugin.site>3.8.2</version.plugin.site>
         <version.plugin.exec>1.6.0</version.plugin.exec>
         <version.plugin.plugin>3.6.0</version.plugin.plugin>
         <version.plugin.release>2.5.3</version.plugin.release>
@@ -320,6 +322,11 @@
                     <configuration>
                         <updateReleaseInfo>true</updateReleaseInfo>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${version.plugin.site}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
