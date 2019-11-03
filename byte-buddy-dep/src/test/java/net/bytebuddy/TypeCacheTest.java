@@ -7,6 +7,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -84,9 +85,20 @@ public class TypeCacheTest {
             System.gc();
             Thread.sleep(50L);
         }
-        assertThat(typeCache.find(classLoader, key), nullValue(Class.class));
-        assertThat(typeCache.insert(classLoader, key, Void.class), is((Object) Void.class));
-        assertThat(typeCache.find(classLoader, key), is((Object) Void.class));
+        try {
+            assertThat(typeCache.find(classLoader, key), nullValue(Class.class));
+            assertThat(typeCache.insert(classLoader, key, Void.class), is((Object) Void.class));
+            assertThat(typeCache.find(classLoader, key), is((Object) Void.class));
+        } catch (AssertionError error) {
+            Logger.getLogger("net.bytebuddy").warning("Cache was not cleared, possibly due to weak references not being collected, retrying...");
+            for (int index = 0; index < 50; index++) {
+                System.gc();
+                Thread.sleep(50L);
+            }
+            assertThat(typeCache.find(classLoader, key), nullValue(Class.class));
+            assertThat(typeCache.insert(classLoader, key, Void.class), is((Object) Void.class));
+            assertThat(typeCache.find(classLoader, key), is((Object) Void.class));
+        }
     }
 
     @Test
