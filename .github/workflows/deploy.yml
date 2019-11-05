@@ -20,6 +20,6 @@ jobs:
       - name: Import GPG keys
         run: |
           echo "${{ secret.gpg_public }}" | gpg --import
-          echo "${{ secret.gpg_secret }}" | gpg --import
+          echo "${{ secret.gpg_secret }}" | gpg --batch --import
       - name: Release project
         run: ./mvnw -s release.settings.xml release:prepare release:perform -DdryRun=true -pl !byte-buddy-gradle-plugin -Dbintray.username=${{ secret.bintray_username }} -Dbintray.password=${{ secret.bintray_password }} -Dgpg.passphrase=${{ secret.gpg_passphrase }} -Dgradle.publish.key=${{ secret.gradle_key }} -Dgradle.publish.secret=${{ secret.gradle_secret }}
