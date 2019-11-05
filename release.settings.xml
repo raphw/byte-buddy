@@ -1,0 +1,9 @@
+<settings>
+    <servers>
+        <server>
+            <id>bintray</id>
+            <username>${bintray.username}</username>
+            <password>${bintray.password}</password>
+        </server>
+    </servers>
+</settings>
