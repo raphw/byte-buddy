@@ -22,4 +22,4 @@ jobs:
           echo "${{ secrets.gpg_public }}" | gpg --import
           echo "${{ secrets.gpg_secret }}" | gpg --batch --import
       - name: Release project
-        run: ./mvnw -s release.settings.xml release:prepare release:perform -DdryRun=true -pl !byte-buddy-gradle-plugin -Dbintray.username=${{ secrets.bintray_username }} -Dbintray.password=${{ secrets.bintray_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgradle.publish.key=${{ secrets.gradle_key }} -Dgradle.publish.secret=${{ secrets.gradle_secret }}
+        run: ./mvnw -s .mvn/release.settings.xml release:prepare release:perform -Dbintray.username=${{ secrets.bintray_username }} -Dbintray.password=${{ secrets.bintray_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgradle.publish.key=${{ secrets.gradle_key }} -Dgradle.publish.secret=${{ secrets.gradle_secret }}

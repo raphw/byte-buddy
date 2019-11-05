@@ -7,6 +7,7 @@ on:
   pull_request:
     branches: 
       - master
+      - release
   schedule:
     - cron: "0 0 * * 1"
 
@@ -74,7 +75,7 @@ jobs:
           java-version: 1.6
           architecture: x64
       - name: Build project
-        run: ./mvnw -s nossl.settings.xml verify -Pintegration -Pjava6
+        run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava6
   openj9-supported:
     name: OpenJ9 (supported)
     strategy:
