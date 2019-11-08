@@ -1,6 +1,10 @@
 <settings>
     <servers>
         <server>
+            <id>gpg.passphrase</id>
+            <passphrase>${gpg.passphrase}</passphrase>
+        </server>
+        <server>
             <id>bintray</id>
             <username>${bintray.username}</username>
             <password>${bintray.password}</password>
