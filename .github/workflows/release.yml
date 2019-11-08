@@ -17,9 +17,8 @@ jobs:
         with:
           java-version: 8
           architecture: x64
-      - name: Import GPG keys
-        run: |
-          echo "${{ secrets.gpg_public }}" | gpg --import
-          echo "${{ secrets.gpg_secret }}" | gpg --batch --import
       - name: Release project
-        run: ./mvnw -s .mvn/release.settings.xml release:prepare release:perform -Dbintray.username=${{ secrets.bintray_username }} -Dbintray.password=${{ secrets.bintray_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgradle.publish.key=${{ secrets.gradle_key }} -Dgradle.publish.secret=${{ secrets.gradle_secret }}
+        run: |
+          echo "${{ secrets.gpg_secret }}" | gpg --batch --import
+          gpg --list-private-keys
+          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -Dbintray.username=raphw -Dbintray.password=${{ secrets.bintray_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgradle.publish.key=${{ secrets.gradle_key }} -Dgradle.publish.secret=${{ secrets.gradle_secret }}
