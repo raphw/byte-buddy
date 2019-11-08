@@ -681,21 +681,9 @@
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <!-- Additionally to the regular jar file specified above, create an aggregated jar. -->
-                            <execution>
-                                <id>aggregate-javadoc</id>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <doctitle>Byte Buddy (full API), version ${project.version}</doctitle>
-                                    <!-- Fails due to repacking of ASM by the Shade plugin. -->
-                                    <failOnError>false</failOnError>
-                                </configuration>
-                            </execution>
                         </executions>
                         <configuration>
+                            <source>${sourcecode.main.version}</source>
                             <detectJavaApiLink>true</detectJavaApiLink>
                             <links>
                                 <link>${asm.url}/javadoc</link>
