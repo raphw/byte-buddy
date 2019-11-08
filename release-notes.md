@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. November 2019: version 1.10.3
+
+- Allow overriding the name of the native library for Windows attach emulation.
+- Use correct type pool in build plugin engine for decorators.
+- Fix attach emulation for OpenJ9 on MacOS.
+
 ### 16. October 2019: version 1.10.2
 
 - Upgrade ASM to version 7.2.
