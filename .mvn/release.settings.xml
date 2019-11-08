@@ -1,4 +1,13 @@
 <settings>
+    <profiles>
+        <profile>
+            <id>gradle</id>
+            <properties>
+                <gradle.publish.key>${gradle.key}</gradle.publish.key>
+                <gradle.publish.secret>${gradle.secret}</gradle.publish.secret>
+            </properties>
+        </profile>
+    </profiles>
     <servers>
         <server>
             <id>gpg.passphrase</id>
