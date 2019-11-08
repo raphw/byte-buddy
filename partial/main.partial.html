@@ -196,7 +196,7 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         <dl>
             <dt>Repositories</dt>
             <dd>
-                Byte Buddy releases are available from the <a href="http://search.maven.org/">Maven Central</a> and
+                Byte Buddy binaries are available from the <a href="http://search.maven.org/">Maven Central</a> and
                 <a href="https://bintray.com/bintray/jcenter">JCenter</a> repositories. Using a build manager, it is
                 therefore easy to define a project dependency on Byte Buddy. Before releasing your project, please take
                 the time to read through the information on
@@ -207,6 +207,11 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
                         <pre class="prettyprint" data-ng-bind="tab.content"></pre>
                     </tab>
                 </tabset>
+                <br style="margin-bottom: 20px;"/>
+                The artifacts signatures can be validated against 
+                <a href="https://keys.openpgp.org/search?q=rafael.wth@gmail.com">this PGP public key</a> 
+                beginning with Byte Buddy 1.10.3. Older versions can be validated against 
+                <a href="https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf42b96b8648b5c4a1c43a62fbb2914c1fa0811c3">this older and weaker certificate</a>.
             </dd>
         </dl>
         <dl>
