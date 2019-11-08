@@ -1,5 +1,6 @@
 <settings>
     <profiles>
+        <!-- The renamed Gradle properties are required as the POM defaults take precedence over any command line arguments. -->
         <profile>
             <id>gradle</id>
             <properties>
