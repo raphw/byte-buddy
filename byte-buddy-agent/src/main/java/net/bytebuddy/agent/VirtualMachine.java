@@ -2019,7 +2019,8 @@ public interface VirtualMachine {
                     try {
                         // The binding for 'stat' is very platform dependant. To avoid the complexity of binding the correct method,
                         // stat is called as a separate command. This is less efficient but more portable.
-                        Process process = Runtime.getRuntime().exec("stat -c=%u " + file.getAbsolutePath());
+                        String statUserSwitch = Platform.isMac() ? "-f" : "-c";
+                        Process process = Runtime.getRuntime().exec("stat " + statUserSwitch + " %u " + file.getAbsolutePath());
                         int attempts = this.attempts;
                         boolean exited = false;
                         String line = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8")).readLine();
@@ -2043,7 +2044,7 @@ public interface VirtualMachine {
                             process.destroy();
                             throw new IllegalStateException("Command for stat did not exit in time");
                         }
-                        return Integer.parseInt(line.substring(1));
+                        return Integer.parseInt(line);
                     } catch (IOException exception) {
                         throw new IllegalStateException("Unable to execute stat command", exception);
                     }
@@ -2091,7 +2092,8 @@ public interface VirtualMachine {
                             try {
                                 library.semop(semaphore, target, 1);
                             } catch (LastErrorException exception) {
-                                if (acceptUnavailable && Native.getLastError() == PosixLibrary.EAGAIN) {
+                                if (acceptUnavailable && (Native.getLastError() == PosixLibrary.EAGAIN
+                                    || Native.getLastError() == PosixLibrary.EDEADLK)) {
                                     break;
                                 } else {
                                     throw exception;
@@ -2122,6 +2124,11 @@ public interface VirtualMachine {
                      * Indicates that a request timed out.
                      */
                     int EAGAIN = 11;
+
+                    /**
+                     * Indicates a dead lock on a resource.
+                     */
+                    int EDEADLK = 35;
 
                     /**
                      * Indicates that a semaphore's operations should be undone at process shutdown.

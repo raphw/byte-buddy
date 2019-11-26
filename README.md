@@ -253,7 +253,9 @@ Byte Buddy is licensed under the liberal and business-friendly
 [*Apache Licence, Version 2.0*](https://www.apache.org/licenses/LICENSE-2.0.html) and is freely available on
 GitHub. Additionally, the *byte-buddy* distribution bundles ASM which is released under [a 3-clause BSD license](https://asm.ow2.io/license.html).
 
-Byte Buddy is further to the repositories of Maven Central and on JCenter. The project is built
+Byte Buddy binaries are published to the repositories of Maven Central and on JCenter. The artifacts signatures can be validated against [this PGP public key](https://keys.openpgp.org/search?q=rafael.wth@gmail.com) beginning with Byte Buddy 1.10.3. Older versions can be validated against [this older and weaker certificate](https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf42b96b8648b5c4a1c43a62fbb2914c1fa0811c3).
+
+The project is built
 using <a href="https://maven.apache.org/">Maven</a>. From your shell, cloning and building the project would go
 something like this:
 

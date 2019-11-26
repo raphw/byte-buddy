@@ -1,11 +1,11 @@
 name: CI
 
-on: 
+on:
   push:
-    branches: 
+    branches:
       - master
   pull_request:
-    branches: 
+    branches:
       - master
   schedule:
     - cron: "0 0 * * 1"
@@ -74,7 +74,7 @@ jobs:
           java-version: 1.6
           architecture: x64
       - name: Build project
-        run: ./mvnw -s nossl.settings.xml verify -Pintegration -Pjava6
+        run: ./mvnw -s .mvn/nossl.settings.xml verify -Pintegration -Pjava6
   openj9-supported:
     name: OpenJ9 (supported)
     strategy:
@@ -103,11 +103,32 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v1
-        with:
-          fetch-depth: 1
       - uses: actions/setup-java@v1
         with:
           java-version: 8
           architecture: x64
       - name: Build project
         run: ./mvnw jacoco:prepare-agent verify jacoco:report coveralls:report -DrepoToken=${{ secrets.coveralls }} -Pintegration
+  release:
+    name: Release new version
+    runs-on: ubuntu-18.04
+    needs: [coverage]
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          ref: master
+      - name: Consider release
+        id: release
+        run: echo "##[set-output name=release;]$(git log --format=%B -n 1 | grep ^\[release\] | wc -l)"
+      - uses: actions/setup-java@v1
+        if: steps.release.outputs.release > 0
+        with:
+          java-version: 8
+          architecture: x64
+      - name: Publish new version
+        if: steps.release.outputs.release > 0
+        run: |
+          echo "${{ secrets.gpg_secret }}" | gpg --batch --import
+          export GPG_TTY=$(tty)
+          ./mvnw -B -s .mvn/release.settings.xml release:prepare release:perform -Drepository.url=https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git -Dbintray.username=raphw -Dbintray.password=${{ secrets.bintray_password }} -Dgpg.passphrase=${{ secrets.gpg_passphrase }} -Dgpg.keyname=B4AC8CDC141AF0AE468D16921DA784CCB5C46DD5 -Dgradle.key=${{ secrets.gradle_key }} -Dgradle.secret=${{ secrets.gradle_secret }}

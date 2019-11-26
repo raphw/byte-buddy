@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.10.3-SNAPSHOT</version>
+    <version>1.10.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -97,6 +96,7 @@
         <version.utility.findbugs>3.0.1</version.utility.findbugs>
         <spotbugs.skip>false</spotbugs.skip>
         <jacoco.skip>false</jacoco.skip>
+        <repository.url>git@github.com:raphw/byte-buddy.git</repository.url>
     </properties>
 
     <licenses>
@@ -127,9 +127,9 @@
     </issueManagement>
 
     <scm>
-        <connection>scm:git:git@github.com:raphw/byte-buddy.git</connection>
-        <developerConnection>scm:git:git@github.com:raphw/byte-buddy.git</developerConnection>
-        <url>git@github.com:raphw/byte-buddy.git</url>
+        <connection>scm:git:${repository.url}</connection>
+        <developerConnection>scm:git:${repository.url}</developerConnection>
+        <url>${repository.url}</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -680,21 +680,9 @@
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
-                            <!-- Additionally to the regular jar file specified above, create an aggregated jar. -->
-                            <execution>
-                                <id>aggregate-javadoc</id>
-                                <goals>
-                                    <goal>aggregate</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <doctitle>Byte Buddy (full API), version ${project.version}</doctitle>
-                                    <!-- Fails due to repacking of ASM by the Shade plugin. -->
-                                    <failOnError>false</failOnError>
-                                </configuration>
-                            </execution>
                         </executions>
                         <configuration>
+                            <source>${sourcecode.main.version}</source>
                             <detectJavaApiLink>true</detectJavaApiLink>
                             <links>
                                 <link>${asm.url}/javadoc</link>
@@ -723,6 +711,12 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

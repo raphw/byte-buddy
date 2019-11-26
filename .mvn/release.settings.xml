@@ -1,0 +1,23 @@
+<settings>
+    <profiles>
+        <!-- The renamed Gradle properties are required as the POM defaults take precedence over any command line arguments. -->
+        <profile>
+            <id>gradle</id>
+            <properties>
+                <gradle.publish.key>${gradle.key}</gradle.publish.key>
+                <gradle.publish.secret>${gradle.secret}</gradle.publish.secret>
+            </properties>
+        </profile>
+    </profiles>
+    <servers>
+        <server>
+            <id>gpg.passphrase</id>
+            <passphrase>${gpg.passphrase}</passphrase>
+        </server>
+        <server>
+            <id>bintray</id>
+            <username>${bintray.username}</username>
+            <password>${bintray.password}</password>
+        </server>
+    </servers>
+</settings>
