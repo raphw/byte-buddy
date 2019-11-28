@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. November 2019: version 1.10.4
+
+- Throw exception upon illegal creation of entry-only advice with local parameters to avoid verify error.
+- Remove escaping for execution path on Windows with spaces for Byte Buddy agent.
+- Fix J9 detection for older IBM-released versions of J9 in Byte Buddy agent.
+
 ### 8. November 2019: version 1.10.3
 
 - Allow overriding the name of the native library for Windows attach emulation.
