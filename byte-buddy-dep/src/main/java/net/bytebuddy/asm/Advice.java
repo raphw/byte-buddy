@@ -5160,6 +5160,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if ((writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
                     return NoOp.INSTANCE;
                 } else if (!exitAdvice) {
+                    if (!initialTypes.isEmpty()) {
+                        throw new IllegalStateException("Local parameters are not supported if no exit advice is present");
+                    }
                     return new Trivial(instrumentedType, instrumentedMethod, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else if (copyArguments) {
                     return new WithPreservedArguments.UsingArgumentCopy(instrumentedType,
