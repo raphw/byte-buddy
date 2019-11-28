@@ -32,7 +32,7 @@
         <version.plugin.directory>0.2</version.plugin.directory>
         <version.gradle>4.5</version.gradle>
         <exec.gradle>gradlew</exec.gradle>
-        <!-- Actual values are set via settings.xml on the 'gradle' profile since they cannot be published. -->
+        <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
         <gradle.publish.secret />
     </properties>
