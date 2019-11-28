@@ -19,6 +19,11 @@
 
         IDEs are typically confused by this setup and this sub project should be directly imported as
         a Gradle project to avoid errors. Alternatively, this project should be ignored.
+
+        When running Maven clean, this module might fail if the dependencies were never packaged before.
+        This is due to the resolution scope of the maven-exec-plugin where the byte-buddy dependency is
+        attempted to be resolved what fails if the project was never build on the current machine for
+        a given snapshot version.
     -->
 
     <properties>
