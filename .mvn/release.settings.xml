@@ -9,6 +9,9 @@
             </properties>
         </profile>
     </profiles>
+    <activeProfiles>
+        <activeProfile>gradle</activeProfile>
+    </activeProfiles>
     <servers>
         <server>
             <id>gpg.passphrase</id>
