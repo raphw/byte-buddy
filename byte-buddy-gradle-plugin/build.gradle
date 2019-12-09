@@ -3,4 +3,26 @@ plugins {
     id 'java-gradle-plugin'
 }
 
+def pom = new XmlSlurper().parse(file('./pom.xml'))
+def outerPom = new XmlSlurper().parse(file('../pom.xml'))
+
+version = pom.parent.version.text().toString()
+
+dependencies {
+    compile gradleApi()
+    // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+    def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+    logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+    if (location.exists()) {
+        compile files(location.absolutePath)
+    } else {
+        logger.warn("${location.absolutePath} does not exist, can clean but not build project")
+    }
+    testCompile gradleTestKit()
+    testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+        exclude group: 'net.bytebuddy'
+    }
+}
+
 apply from: './main.gradle'
