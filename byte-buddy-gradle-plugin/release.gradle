@@ -4,9 +4,43 @@ plugins {
     id 'com.gradle.plugin-publish' version '0.10.0'
 }
 
-apply from: './main.gradle'
-
 def pom = new XmlSlurper().parse(file('./pom.xml'))
+
+version = pom.parent.version.text().toString()
+
+project(":mavenBridge") { // pseudo-project to represent the shaded byte-buddy artifact that is only published in a later step
+    def artifact = objects.fileProperty().fileProvider(providers.provider {
+        def file = file("../byte-buddy/target/byte-buddy-${version}.jar")
+        if (!file.exists()) {
+            throw new GradleException("Cannot resolve ${version} of byte-buddy artifact which is required for a release build")
+        }
+        file
+    })
+    configurations {
+        mavenBridge {
+            canBeResolved = false
+            canBeResolved = false
+            canBeConsumed = true
+            attributes {
+                attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, 'java-api'))
+            }
+            outgoing.artifact(artifact)
+        }
+    }
+}
+
+dependencies {
+    compile gradleApi()
+    implementation "net.bytebuddy:byte-buddy:${version}"
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+    }
+}
+
+apply from: './main.gradle'
 
 pluginBundle {
     website = 'https://bytebuddy.net'
