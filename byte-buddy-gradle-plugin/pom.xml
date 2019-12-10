@@ -28,9 +28,6 @@
 
     <properties>
         <version.plugin.antrun>1.8</version.plugin.antrun>
-        <version.plugin.gradlerun>1.0.10</version.plugin.gradlerun>
-        <version.plugin.directory>0.2</version.plugin.directory>
-        <version.gradle>4.5</version.gradle>
         <exec.gradle>gradlew</exec.gradle>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
@@ -82,6 +79,7 @@
                             <executable>${project.basedir}/${exec.gradle}</executable>
                             <arguments>
                                 <argument>clean</argument>
+                                <argument>--build-file=build.simple.gradle</argument>
                                 <argument>--info</argument>
                             </arguments>
                         </configuration>
@@ -97,6 +95,7 @@
                             <arguments>
                                 <argument>build</argument>
                                 <argument>javadocJar</argument>
+                                <argument>--build-file=build.simple.gradle</argument>
                                 <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
@@ -115,7 +114,7 @@
                             <executable>${project.basedir}/${exec.gradle}</executable>
                             <arguments>
                                 <argument>publishPlugins</argument>
-                                <argument>--build-file=release.gradle</argument>
+                                <argument>--build-file=build.gradle</argument>
                                 <argument>--info</argument>
                                 <argument>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</argument>
                                 <argument>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</argument>
@@ -150,18 +149,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>gradle-legacy</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>1.6</jdk>
-            </activation>
-            <properties>
-                <version.plugin.gradlerun>1.0.9</version.plugin.gradlerun>
-                <version.gradle>2.14.1</version.gradle>
-            </properties>
-        </profile>
-        
         <profile>
             <id>gradle-windows</id>
             <activation>
