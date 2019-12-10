@@ -1,0 +1,18 @@
+version = pom.parent.version.toString()
+
+configurations {
+    mavenBridge {
+        canBeResolved = false
+        canBeConsumed = true
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, 'java-runtime'))
+        }
+        outgoing.artifact(objects.fileProperty().fileProvider(providers.provider {
+            def file = rootProject.file("../byte-buddy/target/byte-buddy-${version}.jar")
+            if (!file.exists()) {
+                throw new GradleException("Cannot resolve ${version} of byte-buddy artifact what is required for a substitution")
+            }
+            file
+        }))
+    }
+}

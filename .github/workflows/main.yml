@@ -41,10 +41,10 @@ jobs:
           architecture: x64
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
-        if: matrix.java < 13
+        if: matrix.java < 14
       - name: Build project (without Gradle)
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }} -pl !byte-buddy-gradle-plugin
-        if: matrix.java > 12
+        if: matrix.java > 13
   hotspot-unsupported:
     name: HotSpot (unsupported)
     strategy:
@@ -90,12 +90,12 @@ jobs:
         run: |
           . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
           ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
-        if: matrix.java < 13
+        if: matrix.java < 14
       - name: Install JDK and build project (without Gradle)
         run: |
           . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
           ./mvnw verify -Pintegration -Pjava${{ matrix.java }} -pl !byte-buddy-gradle-plugin
-        if: matrix.java > 12
+        if: matrix.java > 13
   coverage:
     name: Coverage
     runs-on: ubuntu-18.04

@@ -64,13 +64,13 @@ set CMD_LINE_ARGS=%*
 @rem Setup the command line
 
 @rem  Java 6 and 7 are no longer supported by Gradle 5 which is why we are using an old version of Gradle if those are detected.
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
+for /f tokens^=2-5^ delims^=.-_^" %%j in ('%JAVA_HOME%\bin\java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
 IF "%JAVA_VERSION_STRING:~0,3%"=="160" (
   set "GRADLE_VERSION=2.14.1"
 ) ELSE (IF "%JAVA_VERSION_STRING:~0,3%"=="170" (
   set "GRADLE_VERSION=2.14.1"
 ) ELSE (
-  set "GRADLE_VERSION=5.4.1"
+  set "GRADLE_VERSION=6.0.1"
 ))
 
 set CLASSPATH=%APP_HOME%\gradle\%GRADLE_VERSION%\gradle-wrapper.jar
