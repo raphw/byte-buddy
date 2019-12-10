@@ -1,3 +1,19 @@
+@rem
+@rem Copyright 2015 the original author or authors.
+@rem
+@rem Licensed under the Apache License, Version 2.0 (the "License");
+@rem you may not use this file except in compliance with the License.
+@rem You may obtain a copy of the License at
+@rem
+@rem      https://www.apache.org/licenses/LICENSE-2.0
+@rem
+@rem Unless required by applicable law or agreed to in writing, software
+@rem distributed under the License is distributed on an "AS IS" BASIS,
+@rem WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@rem See the License for the specific language governing permissions and
+@rem limitations under the License.
+@rem
+
 @if "%DEBUG%" == "" @echo off
 @rem ##########################################################################
 @rem
@@ -14,33 +30,33 @@ set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%
 
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
-set DEFAULT_JVM_OPTS=
+set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
 
 @rem Find java.exe
-if defined JAVA_HOME goto findJavaFromJavaHome
+if defined JDK_8 goto findJavaFromJavaHome
 
 set JAVA_EXE=java.exe
 %JAVA_EXE% -version >NUL 2>&1
 if "%ERRORLEVEL%" == "0" goto init
 
 echo.
-echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+echo ERROR: JDK_8 is not set and no 'java' command could be found in your PATH.
 echo.
-echo Please set the JAVA_HOME variable in your environment to match the
+echo Please set the JDK_8 variable in your environment to match the
 echo location of your Java installation.
 
 goto fail
 
 :findJavaFromJavaHome
-set JAVA_HOME=%JAVA_HOME:"=%
-set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+set JDK_8=%JDK_8:"=%
+set JAVA_EXE=%JDK_8%/bin/java.exe
 
 if exist "%JAVA_EXE%" goto init
 
 echo.
-echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
+echo ERROR: JDK_8 is set to an invalid directory: %JDK_8%
 echo.
-echo Please set the JAVA_HOME variable in your environment to match the
+echo Please set the JDK_8 variable in your environment to match the
 echo location of your Java installation.
 
 goto fail
@@ -63,17 +79,7 @@ set CMD_LINE_ARGS=%*
 :execute
 @rem Setup the command line
 
-@rem  Java 6 and 7 are no longer supported by Gradle 5 which is why we are using an old version of Gradle if those are detected.
-for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "JAVA_VERSION_STRING=%%j%%k%%l%%m"
-IF "%JAVA_VERSION_STRING:~0,3%"=="160" (
-  set "GRADLE_VERSION=2.14.1"
-) ELSE (IF "%JAVA_VERSION_STRING:~0,3%"=="170" (
-  set "GRADLE_VERSION=2.14.1"
-) ELSE (
-  set "GRADLE_VERSION=5.4.1"
-))
-
-set CLASSPATH=%APP_HOME%\gradle\%GRADLE_VERSION%\gradle-wrapper.jar
+set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
 
 @rem Execute Gradle
 "%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %CMD_LINE_ARGS%

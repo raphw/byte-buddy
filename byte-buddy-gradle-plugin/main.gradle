@@ -1,59 +1,34 @@
-def pom = new XmlSlurper().parse(file('./pom.xml'))
-def outerPom = new XmlSlurper().parse(file('../pom.xml'))
-
-group = pom.parent.groupId.text().toString()
-version = pom.parent.version.text().toString()
-description = pom.description.text().toString()
-
-// Gradle cannot process all version strings such that JavaVersion.current() fails.
-def raw = System.getProperty("java.version")
-def current
-if (!raw.startsWith("1.") && raw.contains(".")) {
-    current = JavaVersion.toVersion(raw.substring(0, raw.indexOf('.')))
-} else {
-    current = JavaVersion.toVersion(raw)
-}
-
-def sourceVersion = System.getProperty("net.bytebuddy.gradle.version.source")
-if (sourceVersion != null) {
-    sourceCompatibility = JavaVersion.toVersion(sourceVersion)
-} else if (current > JavaVersion.VERSION_1_9) {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-} else if (current > JavaVersion.VERSION_1_8) {
-    sourceCompatibility = JavaVersion.VERSION_1_6
-} else {
-    sourceCompatibility = JavaVersion.VERSION_1_5
-}
-def targetVersion = System.getProperty("net.bytebuddy.gradle.version.target")
-if (targetVersion != null) {
-    targetCompatibility = JavaVersion.toVersion(targetVersion)
-} else if (current > JavaVersion.VERSION_1_9) {
-    targetCompatibility = JavaVersion.VERSION_1_7
-} else if (current > JavaVersion.VERSION_1_8) {
-    targetCompatibility = JavaVersion.VERSION_1_6
-} else {
-    targetCompatibility = JavaVersion.VERSION_1_5
-}
-
 logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
 
-repositories {
-    mavenLocal()
-    mavenCentral()
+java {
+    new VersionHelper().with {
+        sourceCompatibility = getVersionFor("net.bytebuddy.gradle.version.source")
+        targetCompatibility = getVersionFor("net.bytebuddy.gradle.version.target")
+    }
+    if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
+        withSourcesJar()
+        withJavadocJar()
+    }
 }
 
-// Without the extras property, creating a javadoc artifact is not necessary.
-if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
+String jdkHomeEnvVar = "JDK_${targetCompatibility.majorVersion}"
+String javaHome = System.getenv("JDK_${targetCompatibility.majorVersion}")
+if (javaHome == null) {
+    logger.warn("""---------------------------------------------------------------------------------------
+/!\\ The ${jdkHomeEnvVar} environment variable is not set to a ${targetCompatibility.majorVersion}. Falling back to current Java home
+---------------------------------------------------------------------------------------""")
 } else {
-    task javadocJar {
-        logger.info('javadoc is only generated if net.bytebuddy.misc.extras is set to true')
+    tasks.withType(JavaCompile).configureEach {
+        options.with {
+            fork = true
+            forkOptions.javaHome = file(javaHome)
+            forkOptions.memoryMaximumSize = "512m"
+        }
+    }
+    tasks.withType(Test).configureEach {
+        executable = file("${javaHome}/bin/java")
     }
 }
-
 test {
     systemProperty('net.bytebuddy.test.version', version)
     systemProperty('net.bytebuddy.test.integration', Boolean.getBoolean('net.bytebuddy.test.integration'))

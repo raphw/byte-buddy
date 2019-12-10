@@ -1,0 +1,20 @@
+configurations {
+    mavenBridge {
+        canBeResolved = false
+        canBeResolved = false
+        canBeConsumed = true
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, 'java-runtime'))
+        }
+
+
+        def artifact = objects.fileProperty().fileProvider(providers.provider {
+            def file = rootProject.file("../byte-buddy/target/byte-buddy-${version}.jar")
+            if (!file.exists()) {
+                throw new GradleException("Cannot resolve ${version} of byte-buddy artifact which is required for a release build")
+            }
+            file
+        })
+        outgoing.artifact(artifact)
+    }
+}

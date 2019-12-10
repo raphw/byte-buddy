@@ -1,28 +1,84 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '0.10.1'
 }
 
-def pom = new XmlSlurper().parse(file('./pom.xml'))
-def outerPom = new XmlSlurper().parse(file('../pom.xml'))
+repositories {
+    jcenter()
+}
 
-version = pom.parent.version.text().toString()
+apply from: 'main.gradle'
+
+ext.pom = new XmlSlurper().parse(file('./pom.xml'))
+ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
+
+allprojects {
+    version = pom.parent.version.text().toString()
+    group = pom.parent.groupId.text().toString()
+    description = pom.description.text().toString()
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+    }
+}
+
+pluginBundle {
+    website = 'https://bytebuddy.net'
+    vcsUrl = 'https://github.com/raphw/byte-buddy'
+    tags = ['Byte Buddy', 'bytecode', 'enhancement']
+}
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+            displayName = 'Byte Buddy Gradle plugin'
+            description = pom.description.text().toString()
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+        }
+    }
+}
+
+// Tests will use a modified Gradle API jar so that we can verify
+// the behavior for older Gradle versions. We should really think
+// if this is the way to go, because the tests do not test against
+// the Gradle runtime, they use the generated API.
+
+configurations {
+    rawGradleApi
+    all {
+        // do not rely on the dependencies added by default by the Java Gradle plugin
+        dependencies.clear()
+    }
+}
 
 dependencies {
-    compile gradleApi()
-    // At this point, it is not given that any artifact from the Maven build can be found in a repository.
-    def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
-    logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
-    if (location.exists()) {
-        compile files(location.absolutePath)
-    } else {
-        logger.warn("${location.absolutePath} does not exist, can clean but not build project")
-    }
-    testCompile gradleTestKit()
-    testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
-    testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+    rawGradleApi gradleApi()
+}
+
+def bytecodeVersion(JavaVersion version) {
+    return 44 + version.majorVersion.toInteger()
+}
+
+def downgradeGradleApi = tasks.create("downgradeGradleApi", DowngradeGradleApi) {
+    gradleApi = files(configurations.rawGradleApi)
+    outputDir = file("${buildDir}/apis")
+    classVersion = bytecodeVersion(targetCompatibility)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn(downgradeGradleApi)
+}
+
+dependencies {
+    implementation files(downgradeGradleApi.downgradedJars)
+    implementation "net.bytebuddy:byte-buddy:${version}"
+    testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
         exclude group: 'net.bytebuddy'
     }
 }
-
-apply from: './main.gradle'
