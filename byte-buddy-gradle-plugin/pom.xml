@@ -29,6 +29,7 @@
     <properties>
         <version.plugin.antrun>1.8</version.plugin.antrun>
         <exec.gradle>gradlew</exec.gradle>
+        <gradle.disabled>false</gradle.disabled>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
         <gradle.publish.secret />
@@ -68,6 +69,9 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>${version.plugin.exec}</version>
+                <configuration>
+                    <skip>${gradle.disabled}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>gradle-clean</id>
@@ -149,6 +153,7 @@
     </build>
 
     <profiles>
+        <!-- Defines the correct Gradle wrapper binary to use when run on Windows. -->
         <profile>
             <id>gradle-windows</id>
             <activation>
@@ -159,6 +164,18 @@
             </activation>
             <properties>
                 <exec.gradle>gradlew.bat</exec.gradle>
+            </properties>
+        </profile>
+
+        <!-- Avoids triggering Gradle on JDK versions that Gradle does not currently support. -->
+        <profile>
+            <id>gradle-disabled</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>[14,)</jdk>
+            </activation>
+            <properties>
+                <gradle.disabled>true</gradle.disabled>
             </properties>
         </profile>
 
