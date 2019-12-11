@@ -28,7 +28,7 @@
 
     <properties>
         <version.plugin.antrun>1.8</version.plugin.antrun>
-        <exec.gradle>gradlew</exec.gradle>
+        <gradle.exec>gradlew</gradle.exec>
         <gradle.disabled>false</gradle.disabled>
         <!-- Actual values must be set via settings.xml or using command line arguments since they cannot be published. -->
         <gradle.publish.key />
@@ -80,7 +80,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.basedir}/${exec.gradle}</executable>
+                            <executable>${project.basedir}/${gradle.exec}</executable>
                             <arguments>
                                 <argument>clean</argument>
                                 <argument>--build-file=build.simple.gradle</argument>
@@ -95,7 +95,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.basedir}/${exec.gradle}</executable>
+                            <executable>${project.basedir}/${gradle.exec}</executable>
                             <arguments>
                                 <argument>build</argument>
                                 <argument>javadocJar</argument>
@@ -115,7 +115,7 @@
                             <goal>exec</goal>
                         </goals>
                         <configuration>
-                            <executable>${project.basedir}/${exec.gradle}</executable>
+                            <executable>${project.basedir}/${gradle.exec}</executable>
                             <arguments>
                                 <argument>publishPlugins</argument>
                                 <argument>--build-file=build.gradle</argument>
@@ -142,6 +142,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
+                            <skip>${gradle.disabled}</skip>
                             <target>
                                 <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}.jar" todir="${project.build.directory}" overwrite="true" />
                             </target>
@@ -163,7 +164,7 @@
                 </os>
             </activation>
             <properties>
-                <exec.gradle>gradlew.bat</exec.gradle>
+                <gradle.exec>gradlew.bat</gradle.exec>
             </properties>
         </profile>
 
@@ -177,6 +178,29 @@
             <properties>
                 <gradle.disabled>true</gradle.disabled>
             </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>${version.plugin.antrun}</version>
+                        <executions>
+                            <execution>
+                                <id>log-skip</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo message="Skipping Gradle build since it does not support the current JDK version" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
@@ -196,6 +220,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${gradle.disabled}</skip>
                                     <target>
                                         <copy file="${project.basedir}/build/libs/${project.artifactId}-${project.version}-javadoc.jar" todir="${project.build.directory}" overwrite="true" />
                                     </target>
