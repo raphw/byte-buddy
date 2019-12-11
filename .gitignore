@@ -18,6 +18,7 @@ site/
 
 # Gradle
 byte-buddy-gradle-plugin/build/
+byte-buddy-gradle-plugin/buildSrc
 byte-buddy-gradle-plugin/gradle/build
 .gradle/
 
