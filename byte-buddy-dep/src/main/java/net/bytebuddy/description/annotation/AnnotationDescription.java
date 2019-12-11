@@ -546,6 +546,7 @@ public interface AnnotationDescription {
          * @param annotation The annotation to convert.
          * @return A mapping of property names to their annotation value.
          */
+        @SuppressWarnings("unchecked")
         private static Map<String, AnnotationValue<?, ?>> asValue(Annotation annotation) {
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             for (Method property : annotation.annotationType().getDeclaredMethods()) {
@@ -621,6 +622,7 @@ public interface AnnotationDescription {
         /**
          * {@inheritDoc}
          */
+        @SuppressWarnings("deprecation")
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             if (!property.getDeclaringType().represents(annotation.annotationType())) {
@@ -1040,7 +1042,6 @@ public interface AnnotationDescription {
          * @param typeDescription Descriptions of the types that should be contained by the array.
          * @return A builder with the additional type array property.
          */
-        @SuppressWarnings("unchecked")
         public Builder defineTypeArray(String property, TypeDescription... typeDescription) {
             return define(property, AnnotationValue.ForDescriptionArray.of(typeDescription));
         }
