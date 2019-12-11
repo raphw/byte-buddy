@@ -6,10 +6,6 @@ plugins {
 
 apply from: './main.gradle'
 
-if (legacy) {
-    throw new GradleException("Current JDK version only supports simple build (--build-file build.simple.gradle)");
-}
-
 version = pom.parent.version.text().toString()
 
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
