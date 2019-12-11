@@ -1114,6 +1114,7 @@ public class MethodCallTest {
             .make()
             .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
             .getLoaded()
+            .getConstructor()
             .newInstance(), instanceOf(ProtectedConstructor.class));
     }
 

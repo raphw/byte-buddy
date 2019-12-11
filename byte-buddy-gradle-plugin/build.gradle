@@ -1,6 +1,54 @@
 plugins {
     id 'java'
     id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '0.10.1'
 }
 
 apply from: './main.gradle'
+
+version = pom.parent.version.text().toString()
+
+if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    dependencies {
+        compile gradleApi()
+        compile "net.bytebuddy:byte-buddy:${version}"
+        testCompile gradleTestKit()
+        testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+        testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+            exclude group: 'net.bytebuddy'
+        }
+    }
+} else {
+    dependencies {
+        implementation gradleApi()
+        implementation "net.bytebuddy:byte-buddy:${version}"
+        testImplementation gradleTestKit()
+        testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+        testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
+            exclude group: 'net.bytebuddy'
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute module("net.bytebuddy:byte-buddy:${version}") with project(":mavenBridge")
+    }
+}
+
+pluginBundle {
+    website = 'https://bytebuddy.net'
+    vcsUrl = 'https://github.com/raphw/byte-buddy'
+    tags = ['Byte Buddy', 'bytecode', 'enhancement']
+}
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+            displayName = pom.name.text().toString()
+            description = pom.description.text().toString()
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+        }
+    }
+}

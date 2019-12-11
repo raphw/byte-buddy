@@ -23,7 +23,7 @@ public class JavaVersionRule implements MethodRule {
 
     public JavaVersionRule() {
         currentVersion = ClassFileVersion.ofThisVm();
-        openJ9 = System.getProperty("java.vm.vendor", "").toUpperCase(Locale.US).contains("J9");
+        openJ9 = System.getProperty("java.vm.name", "").toUpperCase(Locale.US).contains("J9");
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
@@ -40,9 +40,9 @@ public class JavaVersionRule implements MethodRule {
             if (openJ9 && !enforce.openJ9()) {
                 return new OpenJ9Statement();
             } else if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
-                return new NoOpStatement(enforce.value(), "at least");
+                return new NoOpStatement(enforce.value(), "at least", enforce.target());
             } else if (enforce.atMost() != UNDEFINED && !version.isAtMost(ClassFileVersion.ofJavaVersion(enforce.atMost()))) {
-                return new NoOpStatement(enforce.atMost(), "at most");
+                return new NoOpStatement(enforce.atMost(), "at most", enforce.target());
             }
         }
         return base;
@@ -67,13 +67,18 @@ public class JavaVersionRule implements MethodRule {
 
         private final String sort;
 
-        private NoOpStatement(int requiredVersion, String sort) {
+        private final Class<?> target;
+
+        private NoOpStatement(int requiredVersion, String sort, Class<?> target) {
             this.requiredVersion = requiredVersion;
             this.sort = sort;
+            this.target = target;
         }
 
         public void evaluate() {
-            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version of " + sort + " " + requiredVersion);
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version " +
+                    "of " + sort + " " + requiredVersion
+                    + (target == void.class ? "" : (" for target " + target)));
         }
     }
 
