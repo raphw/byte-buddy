@@ -279,6 +279,7 @@ Supporters
 
 The work on Byte Buddy is also possible thanks to a row of supporters that have dedicated regular resources and attention to the project. Please take your time to have a look at those supporters and their offerings.
 
+<pre>
 <a href="https://www.scienta.no">
 <img src="https://bytebuddy.net/logos/scienta.png" height="50"/> 
 </a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -291,3 +292,4 @@ The work on Byte Buddy is also possible thanks to a row of supporters that have 
 <a href="https://www.elastic.co">
 <img src="https://bytebuddy.net/logos/elastic.png" height="50"/>
 </a>
+</pre>
