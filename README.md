@@ -273,3 +273,21 @@ Furthermore, make sure you are not breaking any existing test cases. If possible
 some documentation. For feature requests or general feedback, you can also use the
 [issue tracker](https://github.com/raphw/byte-buddy/issues) or contact us on
 [our mailing list](https://groups.google.com/forum/#!forum/byte-buddy).
+
+Supporters
+----------
+
+The work on Byte Buddy is also possible thanks to a row of supporters that have dedicated regular resources and attention to the project. Please take your time to have a look at those supporters and their offerings.
+
+<a href="https://www.scienta.no">
+<img src="https://bytebuddy.net/logos/scienta.png" height="50"/> 
+</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://www.instana.com">
+<img src="https://bytebuddy.net/logos/instana.png" height="50"/>
+</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://www.sqreen.com">
+<img src="https://bytebuddy.net/logos/sqreen.png" height="50"/>
+</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="https://www.elastic.co">
+<img src="https://bytebuddy.net/logos/elastic.png" height="50"/>
+</a>
