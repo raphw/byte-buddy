@@ -22,6 +22,7 @@ import com.android.dx.cf.direct.StdAttributeFactory;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
+import com.android.dx.dex.file.ClassDefItem;
 import com.android.dx.dex.file.DexFile;
 import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexClassLoader;
@@ -31,6 +32,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -207,13 +209,43 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             private static final int DEX_COMPATIBLE_API_VERSION = 13;
 
             /**
+             * The name of the field storing the target API level if available.
+             */
+            private static final String TARGET_API_LEVEL = "targetApiLevel";
+
+            /**
+             * The dispatcher for translating a dex file.
+             */
+            private static final Dispatcher DISPATCHER;
+
+            /*
+             * Resolves the dispatcher for class file translations.
+             */
+            static {
+                Dispatcher dispatcher;
+                try {
+                    dispatcher = Dispatcher.ForApi26LevelCompatibleVm.make();
+                } catch (Throwable ignored) {
+                    try {
+                        dispatcher = Dispatcher.ForLegacyVm.make();
+                    } catch (Throwable throwable) {
+                        dispatcher = new Dispatcher.Unavailable(throwable.getMessage());
+                    }
+                }
+                DISPATCHER = dispatcher;
+            }
+
+            /**
              * Creates a default dex processor that ensures API version compatibility.
              *
              * @return A dex processor using an SDK compiler that ensures compatibility.
              */
             protected static DexProcessor makeDefault() {
                 DexOptions dexOptions = new DexOptions();
-                dexOptions.targetApiLevel = DEX_COMPATIBLE_API_VERSION;
+                try {
+                    DexOptions.class.getField(TARGET_API_LEVEL).set(dexOptions, DEX_COMPATIBLE_API_VERSION);
+                } catch (Exception ignored) {
+                }
                 return new ForSdkCompiler(dexOptions, new CfOptions());
             }
 
@@ -291,7 +323,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 public void register(String name, byte[] binaryRepresentation) {
                     DirectClassFile directClassFile = new DirectClassFile(binaryRepresentation, name.replace('.', '/') + CLASS_FILE_EXTENSION, NON_STRICT);
                     directClassFile.setAttributeFactory(new StdAttributeFactory());
-                    dexFile.add(CfTranslator.translate(directClassFile,
+                    dexFile.add(DISPATCHER.translate(directClassFile,
                             binaryRepresentation,
                             dexCompilerOptions,
                             dexFileOptions,
@@ -303,6 +335,185 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  */
                 public void drainTo(OutputStream outputStream) throws IOException {
                     dexFile.writeTo(outputStream, NO_PRINT_OUTPUT, NOT_VERBOSE);
+                }
+            }
+
+            /**
+             * A dispatcher for translating a direct class file.
+             */
+            protected interface Dispatcher {
+
+                /**
+                 * Creates a new class file definition.
+                 *
+                 * @param directClassFile      The direct class file to translate.
+                 * @param binaryRepresentation The file's binary representation.
+                 * @param dexCompilerOptions   The dex compiler options.
+                 * @param dexFileOptions       The dex file options.
+                 * @param dexFile              The dex file.
+                 * @return The translated class file definition.
+                 */
+                ClassDefItem translate(DirectClassFile directClassFile,
+                                       byte[] binaryRepresentation,
+                                       CfOptions dexCompilerOptions,
+                                       DexOptions dexFileOptions,
+                                       DexFile dexFile);
+
+                /**
+                 * An unavailable dispatcher.
+                 */
+                class Unavailable implements Dispatcher {
+
+                    /**
+                     * A message explaining why the dispatcher is unavailable.
+                     */
+                    private final String message;
+
+                    /**
+                     * Creates a new unavailable dispatcher.
+                     *
+                     * @param message A message explaining why the dispatcher is unavailable.
+                     */
+                    protected Unavailable(String message) {
+                        this.message = message;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassDefItem translate(DirectClassFile directClassFile,
+                                                  byte[] binaryRepresentation,
+                                                  CfOptions dexCompilerOptions,
+                                                  DexOptions dexFileOptions,
+                                                  DexFile dexFile) {
+                        throw new IllegalStateException("Could not resolve dispatcher: " + message);
+                    }
+                }
+
+                /**
+                 * A dispatcher for a lagacy Android VM.
+                 */
+                class ForLegacyVm implements Dispatcher {
+
+                    /**
+                     * The {@code CfTranslator#translate(DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
+                     */
+                    private final Method translate;
+
+                    /**
+                     * Creates a new dispatcher.
+                     *
+                     * @param translate The {@code CfTranslator#translate(DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
+                     */
+                    protected ForLegacyVm(Method translate) {
+                        this.translate = translate;
+                    }
+
+                    /**
+                     * Creates a new dispatcher.
+                     *
+                     * @return The created dispatcher.
+                     * @throws Exception If the dispatcher cannot be created.
+                     */
+                    protected static Dispatcher make() throws Exception {
+                        return new ForLegacyVm(CfTranslator.class.getMethod("translate",
+                                DirectClassFile.class,
+                                byte[].class,
+                                CfOptions.class,
+                                DexOptions.class,
+                                DexFile.class));
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassDefItem translate(DirectClassFile directClassFile,
+                                                  byte[] binaryRepresentation,
+                                                  CfOptions dexCompilerOptions,
+                                                  DexOptions dexFileOptions,
+                                                  DexFile dexFile) {
+                        try {
+                            return (ClassDefItem) translate.invoke(null,
+                                    directClassFile,
+                                    binaryRepresentation,
+                                    dexCompilerOptions,
+                                    dexFileOptions,
+                                    new DexFile(dexFileOptions));
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
+                        }
+                    }
+                }
+
+                /**
+                 * A dispatcher for an Android VM with API level 26 or higher.
+                 */
+                class ForApi26LevelCompatibleVm implements Dispatcher {
+
+                    /**
+                     * The {@code CfTranslator#translate(DxContext, DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
+                     */
+                    private final Method translate;
+
+                    /**
+                     * The {@code com.android.dx.command.dexer.DxContext#DxContext()} constructor.
+                     */
+                    private final Constructor<?> dxContext;
+
+                    /**
+                     * Creates a new dispatcher.
+                     *
+                     * @param translate The {@code CfTranslator#translate(DxContext, DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
+                     * @param dxContext The {@code com.android.dx.command.dexer.DxContext#DxContext()} constructor.
+                     */
+                    protected ForApi26LevelCompatibleVm(Method translate, Constructor<?> dxContext) {
+                        this.translate = translate;
+                        this.dxContext = dxContext;
+                    }
+
+                    /**
+                     * Creates a new dispatcher.
+                     *
+                     * @return The created dispatcher.
+                     * @throws Exception If the dispatcher cannot be created.
+                     */
+                    protected static Dispatcher make() throws Exception {
+                        Class<?> dxContextType = Class.forName("com.android.dx.command.dexer.DxContext");
+                        return new ForApi26LevelCompatibleVm(CfTranslator.class.getMethod("translate",
+                                dxContextType,
+                                DirectClassFile.class,
+                                byte[].class,
+                                CfOptions.class,
+                                DexOptions.class,
+                                DexFile.class), dxContextType.getConstructor());
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public ClassDefItem translate(DirectClassFile directClassFile,
+                                                  byte[] binaryRepresentation,
+                                                  CfOptions dexCompilerOptions,
+                                                  DexOptions dexFileOptions,
+                                                  DexFile dexFile) {
+                        try {
+                            return (ClassDefItem) translate.invoke(null,
+                                    dxContext.newInstance(),
+                                    directClassFile,
+                                    binaryRepresentation,
+                                    dexCompilerOptions,
+                                    dexFileOptions,
+                                    new DexFile(dexFileOptions));
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
+                        } catch (InstantiationException exception) {
+                            throw new IllegalStateException("Cannot instantiate dex context", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
+                        }
+                    }
                 }
             }
         }

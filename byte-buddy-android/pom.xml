@@ -12,8 +12,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <!-- Newer versions require Java 7 -->
-        <version.android.sdk.dx>1</version.android.sdk.dx>
+        <version.android.sdk.dx>9.0.0_r3</version.android.sdk.dx>
     </properties>
 
     <name>Byte Buddy for Android</name>
@@ -76,5 +75,18 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <profile>
+            <id>java6-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>1.6</jdk>
+            </activation>
+            <properties>
+                <version.android.sdk.dx>1</version.android.sdk.dx>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
