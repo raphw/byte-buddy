@@ -59,6 +59,15 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
         });
     })
 
+    .controller('supportController', function ($scope) {
+        $scope.supporters = [
+            {location: 'https://www.scienta.no', target: './logos/scienta.png'},
+            {location: 'https://www.instana.com', target: './logos/instana.png'},
+            {location: 'https://www.sqreen.com', target: './logos/sqreen.png'},
+            {location: 'https://www.elastic.co', target: './logos/elastic.png'}
+        ];
+    })
+
     .controller('socialMediaController', function ($scope) {
         $scope.icons = [
             {name: 'Google', style: 'google', target: 'https://plus.google.com/share?url=http%3A%2F%2Fbytebuddy.net'},

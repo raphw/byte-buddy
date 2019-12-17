@@ -111,6 +111,19 @@
                     </dd>
                 </dl>
                 <dl>
+                    <dt>Supporters</dt>
+                    <dd>
+                        The work on Byte Buddy is also possible thanks to a row of supporters that have dedicated regular resources
+                        and attention to the project. Please take your time to have a look at those supporters and their offerings.<br/>
+
+                        <div class="btn-group" data-ng-controller="supportController" style="padding-top: 7px;">
+                            <a data-ng-repeat="supporter in supporters" data-ng-href="{{supporter.location}}" class="social-link">
+                                <img src="{{supporter.target}}" href="#" style="height: 40px; margin-right: 15px; margin-top: 20px;" />
+                            </a>
+                        </div>
+                    </dd>
+                </dl>
+                <dl>
                     <dt>Discover</dt>
                     <dd>
                         Byte Buddy is maintained by <a href="https://rafael.codes">Rafael Winterhalter</a> and was first
@@ -126,7 +139,7 @@
                 <dl>
                     <dt>Legal</dt>
                     <dd>
-                        <script>document.write(new Date().getFullYear())</script> &copy; Rafael Winterhalter, Scienta AS, Arbinsgate 11, 0253 Oslo, Norway
+                        <script>document.write(new Date().getFullYear())</script> &copy; Rafael Winterhalter, Oslo, Norway
                     </dd>
                 </dl>
             </div>
