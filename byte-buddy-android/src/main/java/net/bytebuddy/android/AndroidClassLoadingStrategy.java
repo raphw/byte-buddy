@@ -33,6 +33,7 @@ import net.bytebuddy.utility.RandomString;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -209,11 +210,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             private static final int DEX_COMPATIBLE_API_VERSION = 13;
 
             /**
-             * The name of the field storing the target API level if available.
-             */
-            private static final String TARGET_API_LEVEL = "targetApiLevel";
-
-            /**
              * The dispatcher for translating a dex file.
              */
             private static final Dispatcher DISPATCHER;
@@ -242,10 +238,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              */
             protected static DexProcessor makeDefault() {
                 DexOptions dexOptions = new DexOptions();
-                try {
-                    DexOptions.class.getField(TARGET_API_LEVEL).set(dexOptions, DEX_COMPATIBLE_API_VERSION);
-                } catch (Exception ignored) {
-                }
+                DISPATCHER.setTargetApi(dexOptions, DEX_COMPATIBLE_API_VERSION);
                 return new ForSdkCompiler(dexOptions, new CfOptions());
             }
 
@@ -360,6 +353,14 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                        DexFile dexFile);
 
                 /**
+                 * Sets the target API level if available.
+                 *
+                 * @param dexOptions     The dex options to set the api version for
+                 * @param targetApiLevel The target API level.
+                 */
+                void setTargetApi(DexOptions dexOptions, int targetApiLevel);
+
+                /**
                  * An unavailable dispatcher.
                  */
                 class Unavailable implements Dispatcher {
@@ -388,6 +389,13 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                                   DexFile dexFile) {
                         throw new IllegalStateException("Could not resolve dispatcher: " + message);
                     }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
+                        throw new IllegalStateException("Could not resolve dispatcher: " + message);
+                    }
                 }
 
                 /**
@@ -400,13 +408,17 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                      */
                     private final Method translate;
 
+                    private final Field targetApi;
+
                     /**
                      * Creates a new dispatcher.
                      *
                      * @param translate The {@code CfTranslator#translate(DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
+                     * @param targetApi
                      */
-                    protected ForLegacyVm(Method translate) {
+                    protected ForLegacyVm(Method translate, Field targetApi) {
                         this.translate = translate;
+                        this.targetApi = targetApi;
                     }
 
                     /**
@@ -421,7 +433,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                                 byte[].class,
                                 CfOptions.class,
                                 DexOptions.class,
-                                DexFile.class));
+                                DexFile.class), DexOptions.class.getField("targetApiLevel"));
                     }
 
                     /**
@@ -443,6 +455,14 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                             throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         } catch (InvocationTargetException exception) {
                             throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
+                        }
+                    }
+
+                    public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
+                        try {
+                            targetApi.set(dexOptions, targetApiLevel);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException();
                         }
                     }
                 }
@@ -513,6 +533,13 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         } catch (InvocationTargetException exception) {
                             throw new IllegalStateException("Cannot invoke Android dex file translation method", exception.getCause());
                         }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
+                        /* do nothing */
                     }
                 }
             }

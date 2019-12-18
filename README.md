@@ -279,17 +279,15 @@ Supporters
 
 The work on Byte Buddy is also possible thanks to a row of supporters that have dedicated regular resources and attention to the project. Please take your time to have a look at those supporters and their offerings.
 
-<pre>
 <a href="https://www.scienta.no">
-<img src="https://bytebuddy.net/logos/scienta.png" height="50"/> 
+<img src="https://bytebuddy.net/logos/scienta.png" height="50" alt="Scienta AS"/> 
 </a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://www.instana.com">
-<img src="https://bytebuddy.net/logos/instana.png" height="50"/>
+<img src="https://bytebuddy.net/logos/instana.png" height="50" alt="Instana"/>
 </a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://www.sqreen.com">
-<img src="https://bytebuddy.net/logos/sqreen.png" height="50"/>
+<img src="https://bytebuddy.net/logos/sqreen.png" height="50" alt="Sqreen"/>
 </a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <a href="https://www.elastic.co">
-<img src="https://bytebuddy.net/logos/elastic.png" height="50"/>
+<img src="https://bytebuddy.net/logos/elastic.png" height="50" alt="Elastic"/>
 </a>
-</pre>
