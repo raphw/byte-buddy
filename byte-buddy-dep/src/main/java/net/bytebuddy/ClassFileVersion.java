@@ -240,7 +240,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             case 14:
                 return JAVA_V14;
             case 15:
-                return JAVA_V14;
+                return JAVA_V15;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
                     return new ClassFileVersion(BASE_VERSION + javaVersion);

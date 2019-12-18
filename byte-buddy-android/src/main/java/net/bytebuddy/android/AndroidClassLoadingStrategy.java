@@ -220,10 +220,22 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
             static {
                 Dispatcher dispatcher;
                 try {
-                    dispatcher = Dispatcher.ForApi26LevelCompatibleVm.make();
+                    Class<?> dxContextType = Class.forName("com.android.dx.command.dexer.DxContext");
+                    dispatcher = new Dispatcher.ForApi26LevelCompatibleVm(CfTranslator.class.getMethod("translate",
+                            dxContextType,
+                            DirectClassFile.class,
+                            byte[].class,
+                            CfOptions.class,
+                            DexOptions.class,
+                            DexFile.class), dxContextType.getConstructor());
                 } catch (Throwable ignored) {
                     try {
-                        dispatcher = Dispatcher.ForLegacyVm.make();
+                        dispatcher = new Dispatcher.ForLegacyVm(CfTranslator.class.getMethod("translate",
+                                DirectClassFile.class,
+                                byte[].class,
+                                CfOptions.class,
+                                DexOptions.class,
+                                DexFile.class), DexOptions.class.getField("targetApiLevel"));
                     } catch (Throwable throwable) {
                         dispatcher = new Dispatcher.Unavailable(throwable.getMessage());
                     }
@@ -408,32 +420,20 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                      */
                     private final Method translate;
 
+                    /**
+                     * The {@code DexOptions#targetApiLevel} field.
+                     */
                     private final Field targetApi;
 
                     /**
                      * Creates a new dispatcher.
                      *
                      * @param translate The {@code CfTranslator#translate(DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
-                     * @param targetApi
+                     * @param targetApi The {@code DexOptions#targetApiLevel} field.
                      */
                     protected ForLegacyVm(Method translate, Field targetApi) {
                         this.translate = translate;
                         this.targetApi = targetApi;
-                    }
-
-                    /**
-                     * Creates a new dispatcher.
-                     *
-                     * @return The created dispatcher.
-                     * @throws Exception If the dispatcher cannot be created.
-                     */
-                    protected static Dispatcher make() throws Exception {
-                        return new ForLegacyVm(CfTranslator.class.getMethod("translate",
-                                DirectClassFile.class,
-                                byte[].class,
-                                CfOptions.class,
-                                DexOptions.class,
-                                DexFile.class), DexOptions.class.getField("targetApiLevel"));
                     }
 
                     /**
@@ -458,11 +458,14 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                         }
                     }
 
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
                         try {
                             targetApi.set(dexOptions, targetApiLevel);
                         } catch (IllegalAccessException exception) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         }
                     }
                 }
@@ -491,23 +494,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     protected ForApi26LevelCompatibleVm(Method translate, Constructor<?> dxContext) {
                         this.translate = translate;
                         this.dxContext = dxContext;
-                    }
-
-                    /**
-                     * Creates a new dispatcher.
-                     *
-                     * @return The created dispatcher.
-                     * @throws Exception If the dispatcher cannot be created.
-                     */
-                    protected static Dispatcher make() throws Exception {
-                        Class<?> dxContextType = Class.forName("com.android.dx.command.dexer.DxContext");
-                        return new ForApi26LevelCompatibleVm(CfTranslator.class.getMethod("translate",
-                                dxContextType,
-                                DirectClassFile.class,
-                                byte[].class,
-                                CfOptions.class,
-                                DexOptions.class,
-                                DexFile.class), dxContextType.getConstructor());
                     }
 
                     /**
