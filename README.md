@@ -229,7 +229,7 @@ The use of Byte Buddy is free and does not require the purchase of a license. To
 
 #### GitHub Sponsors ####
 
-Sponsorship via GitHub is easy to set up and is available for different plans. For more information, visit the [GitHub sponsor's page of the author of the library](https://github.com/sponsors/raphw/).
+Sponsorship via GitHub is easy to set up and is available for different plans. For more information, visit the [GitHub sponsors page of the author of the library](https://github.com/sponsors/raphw/).
 
 #### Tidelift ####
 
