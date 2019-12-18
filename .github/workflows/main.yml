@@ -21,7 +21,7 @@ jobs:
       - name: Install JDK and build project
         run: |
           . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
-          ./mvnw verify -Pjava14
+          ./mvnw verify -Pjava15
   hotspot-supported:
     name: HotSpot (supported)
     strategy:

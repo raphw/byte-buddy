@@ -541,6 +541,22 @@
                 <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
+        <!-- Runs the build with compatibility for Java 15 JVMs. -->
+        <profile>
+            <id>java15-compatibility</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <jdk>15</jdk>
+            </activation>
+            <properties>
+                <sourcecode.main.version>8</sourcecode.main.version>
+                <sourcecode.test.version>8</sourcecode.test.version>
+                <bytecode.main.version>8</bytecode.main.version>
+                <bytecode.test.version>8</bytecode.test.version>
+                <jacoco.skip>true</jacoco.skip>
+                <bytebuddy.experimental>true</bytebuddy.experimental>
+            </properties>
+        </profile>
         <!-- Builds using a byte code target for Java 6. -->
         <profile>
             <id>java6</id>
@@ -641,6 +657,18 @@
             <properties>
                 <bytecode.main.version>14</bytecode.main.version>
                 <bytecode.test.version>14</bytecode.test.version>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
+        <!-- Builds using a byte code target for Java 15. -->
+        <profile>
+            <id>java15</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytecode.main.version>15</bytecode.main.version>
+                <bytecode.test.version>15</bytecode.test.version>
                 <spotbugs.skip>true</spotbugs.skip>
             </properties>
         </profile>

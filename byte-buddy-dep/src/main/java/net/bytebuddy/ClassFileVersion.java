@@ -112,6 +112,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V14 = new ClassFileVersion(Opcodes.V14);
 
     /**
+     * The class file version of Java 15.
+     */
+    public static final ClassFileVersion JAVA_V15 = new ClassFileVersion(Opcodes.V14 + 1);
+
+    /**
      * A version locator for the executing JVM.
      */
     private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.CreationAction.INSTANCE);
@@ -179,6 +184,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             return JAVA_V13;
         } else if (javaVersionString.equals("1.14") || javaVersionString.equals("14")) {
             return JAVA_V14;
+        } else if (javaVersionString.equals("1.15") || javaVersionString.equals("15")) {
+            return JAVA_V15;
         } else {
             if (OpenedClassReader.EXPERIMENTAL) {
                 try {
@@ -231,6 +238,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             case 13:
                 return JAVA_V13;
             case 14:
+                return JAVA_V14;
+            case 15:
                 return JAVA_V14;
             default:
                 if (OpenedClassReader.EXPERIMENTAL && javaVersion > 0) {
