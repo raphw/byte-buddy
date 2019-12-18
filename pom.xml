@@ -506,7 +506,6 @@
                 <bytecode.main.version>1.7</bytecode.main.version>
                 <bytecode.test.version>1.7</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 13 JVMs. -->
@@ -522,7 +521,6 @@
                 <bytecode.main.version>1.7</bytecode.main.version>
                 <bytecode.test.version>1.7</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 14 JVMs. -->
@@ -538,7 +536,6 @@
                 <bytecode.main.version>1.7</bytecode.main.version>
                 <bytecode.test.version>1.7</bytecode.test.version>
                 <jacoco.skip>true</jacoco.skip>
-                <bytebuddy.experimental>true</bytebuddy.experimental>
             </properties>
         </profile>
         <!-- Runs the build with compatibility for Java 15 JVMs. -->
