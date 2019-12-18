@@ -29,6 +29,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04, macOS-10.14, windows-2019]
         java: [8, 11, 13]
+        architecture: [x32, x64]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
@@ -37,7 +38,7 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-          architecture: x64
+          architecture: ${{ matrix.architecture }}
       - name: Build project
         run: ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   hotspot-unsupported:
@@ -76,6 +77,7 @@ jobs:
       fail-fast: false
       matrix:
         java: [8, 11, 13]
+        architecture: [x32, x64]
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
@@ -83,7 +85,7 @@ jobs:
           fetch-depth: 1
       - name: Install JDK and build project
         run: |
-          . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
+          . ./.github/scripts/install-jdk.sh --url "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${{ matrix.java }}?openjdk_impl=openj9&os=linux&arch=${{ matrix.architecture }}&release=latest&type=jdk&heap_size=normal"
           ./mvnw verify -Pintegration -Pjava${{ matrix.java }}
   coverage:
     name: Coverage
