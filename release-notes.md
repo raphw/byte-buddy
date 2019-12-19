@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. December 2019: version 1.10.6
+
+- Add experimental support for Java 15.
+- Allow `AndroidClassLoadingStrategy` to work with newer API level.
+
+### 11. December 2019: version 1.10.5
+
+- Fixes Gradle plugin release to include correct dependency.
+- Fixes source jar release for shaded *byte-buddy* artifact.
+
 ### 28. November 2019: version 1.10.4
 
 - Throw exception upon illegal creation of entry-only advice with local parameters to avoid verify error.
