@@ -480,4 +480,11 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
                 typePool,
                 classFileLocator).make(typeResolutionStrategy.resolve());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public TypeDescription toTypeDescription() {
+        return instrumentedType;
+    }
 }

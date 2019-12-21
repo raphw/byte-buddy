@@ -1341,6 +1341,13 @@ public interface DynamicType {
         DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool);
 
         /**
+         * Returns a {@link TypeDescription} for the currently built type.
+         *
+         * @return A {@link TypeDescription} for the currently built type.
+         */
+        TypeDescription toTypeDescription();
+
+        /**
          * An inner type definition for defining a type that is contained within another type, method or constructor.
          *
          * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
@@ -3622,6 +3629,13 @@ public interface DynamicType {
                 }
 
                 /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription toTypeDescription() {
+                    return materialize().toTypeDescription();
+                }
+
+                /**
                  * Creates a new builder that realizes the current state of the builder.
                  *
                  * @return A new builder that realizes the current state of the builder.
@@ -4177,6 +4191,13 @@ public interface DynamicType {
                             classWriterStrategy,
                             ignoredMethods,
                             CompoundList.of(this.auxiliaryTypes, new ArrayList<DynamicType>(auxiliaryTypes)));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeDescription toTypeDescription() {
+                    return instrumentedType;
                 }
 
                 /**
