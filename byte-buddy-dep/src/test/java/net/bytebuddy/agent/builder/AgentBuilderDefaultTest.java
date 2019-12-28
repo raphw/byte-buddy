@@ -8,7 +8,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
-import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -30,7 +29,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.File;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -40,7 +38,6 @@ import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
-import static net.bytebuddy.test.utility.FieldByFieldComparison.matchesPrototype;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
@@ -1962,7 +1959,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class),
+                mock(List.class),
                 new AgentBuilder.CircularityLock.Default())
                 .transform(mock(ClassLoader.class),
                         FOO,
@@ -1995,7 +1992,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class),
+                Collections.<AgentBuilder.Default.Transformation>emptyList(),
                 new AgentBuilder.Default.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
@@ -2034,7 +2031,7 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.ClassFileBufferStrategy.class),
                 mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class),
+                Collections.<AgentBuilder.Default.Transformation>emptyList(),
                 new AgentBuilder.CircularityLock.Default());
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);

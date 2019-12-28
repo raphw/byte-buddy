@@ -16,14 +16,17 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaModule;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.ProtectionDomain;
 
 /**
  * A class file transformer that can reset its transformation.
  */
-public interface ResettableClassFileTransformer extends ClassFileTransformer {
+public interface ResettableClassFileTransformer extends ClassFileTransformer, AgentBuilder.RawMatcher {
 
     /**
      * <p>
@@ -363,6 +366,17 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
          */
         protected WithDelegation(ResettableClassFileTransformer classFileTransformer) {
             this.classFileTransformer = classFileTransformer;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean matches(TypeDescription typeDescription,
+                               ClassLoader classLoader,
+                               JavaModule module,
+                               Class<?> classBeingRedefined,
+                               ProtectionDomain protectionDomain) {
+            return classFileTransformer.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
         }
 
         /**
