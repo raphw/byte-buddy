@@ -685,6 +685,7 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -719,6 +720,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -755,6 +757,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -791,6 +794,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1069,6 +1073,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1349,6 +1354,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1383,6 +1389,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1419,6 +1426,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1459,6 +1467,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes, ignoredClassLoaders)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1498,6 +1507,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(ElementMatchers.any()).and(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1535,6 +1545,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none()).or(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1572,6 +1583,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1608,6 +1620,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -1885,6 +1898,7 @@ public class AgentBuilderDefaultTest {
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .patchOn(instrumentation, previous);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -2125,6 +2139,7 @@ public class AgentBuilderDefaultTest {
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -2153,6 +2168,7 @@ public class AgentBuilderDefaultTest {
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -2182,6 +2198,7 @@ public class AgentBuilderDefaultTest {
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
@@ -2211,6 +2228,7 @@ public class AgentBuilderDefaultTest {
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);
+        verify(listener).onDiscovery(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
