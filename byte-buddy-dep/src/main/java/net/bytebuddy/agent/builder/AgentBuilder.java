@@ -262,6 +262,14 @@ public interface AgentBuilder {
     AgentBuilder with(InjectionStrategy injectionStrategy);
 
     /**
+     * Adds a decorator for the created class file transformer.
+     *
+     * @param transformerDecorator A decorator to wrap the created class file transformer.
+     * @return A new agent builder that applies the supplied transformer decorator.
+     */
+    AgentBuilder with(TransformerDecorator transformerDecorator);
+
+    /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
      * applied when preserving non-native methods. The use of this prefix is also registered when installing the
      * final agent with an {@link java.lang.instrument.Instrumentation}.
@@ -638,23 +646,6 @@ public interface AgentBuilder {
     ResettableClassFileTransformer installOn(Instrumentation instrumentation);
 
     /**
-     * <p>
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
-     * the installation also causes all loaded types to be retransformed.
-     * </p>
-     * <p>
-     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
-     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
-     * </p>
-     *
-     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
-     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
-     * @return The installed class file transformer.
-     */
-    ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator);
-
-    /**
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
      * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
      *
@@ -662,16 +653,6 @@ public interface AgentBuilder {
      * @see AgentBuilder#installOn(Instrumentation)
      */
     ResettableClassFileTransformer installOnByteBuddyAgent();
-
-    /**
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
-     *
-     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
-     * @return The installed class file transformer.
-     * @see AgentBuilder#installOn(Instrumentation)
-     */
-    ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator);
 
     /**
      * An abstraction for extending a matcher.
@@ -4541,6 +4522,53 @@ public interface AgentBuilder {
                 return classFileTransformer;
             }
         }
+
+        /**
+         * A compound transformer decorator.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class Compound implements TransformerDecorator {
+
+            /**
+             * The listeners to invoke.
+             */
+            private final List<TransformerDecorator> transformerDecorators;
+
+            /**
+             * Creates a new compound transformer decorator.
+             *
+             * @param transformerDecorator The transformer decorators to add.
+             */
+            public Compound(TransformerDecorator... transformerDecorator) {
+                this(Arrays.asList(transformerDecorator));
+            }
+
+            /**
+             * Creates a new compound listener.
+             *
+             * @param transformerDecorators The transformerDecorators to invoke.
+             */
+            public Compound(List<? extends TransformerDecorator> transformerDecorators) {
+                this.transformerDecorators = new ArrayList<TransformerDecorator>();
+                for (TransformerDecorator transformerDecorator : transformerDecorators) {
+                    if (transformerDecorator instanceof Compound) {
+                        this.transformerDecorators.addAll(((Compound) transformerDecorator).transformerDecorators);
+                    } else if (!(transformerDecorator instanceof NoOp)) {
+                        this.transformerDecorators.add(transformerDecorator);
+                    }
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer) {
+                for (TransformerDecorator transformerDecorator : transformerDecorators) {
+                    classFileTransformer = transformerDecorator.decorate(classFileTransformer);
+                }
+                return classFileTransformer;
+            }
+        }
     }
 
     /**
@@ -8357,6 +8385,11 @@ public interface AgentBuilder {
         protected final NativeMethodStrategy nativeMethodStrategy;
 
         /**
+         * A decorator to wrap the created class file transformer.
+         */
+        protected final TransformerDecorator transformerDecorator;
+
+        /**
          * The initialization strategy to use for creating classes.
          */
         protected final InitializationStrategy initializationStrategy;
@@ -8450,6 +8483,7 @@ public interface AgentBuilder {
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    TransformerDecorator.NoOp.INSTANCE,
                     new InitializationStrategy.SelfInjection.Split(),
                     RedefinitionStrategy.DISABLED,
                     RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
@@ -8478,6 +8512,7 @@ public interface AgentBuilder {
          * @param typeStrategy                     The definition handler to use.
          * @param locationStrategy                 The location strategy to use.
          * @param nativeMethodStrategy             The native method strategy to apply.
+         * @param transformerDecorator             A decorator to wrap the created class file transformer.
          * @param initializationStrategy           The initialization strategy to use for transformed types.
          * @param redefinitionStrategy             The redefinition strategy to apply.
          * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
@@ -8501,6 +8536,7 @@ public interface AgentBuilder {
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
                           NativeMethodStrategy nativeMethodStrategy,
+                          TransformerDecorator transformerDecorator,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
                           RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -8522,6 +8558,7 @@ public interface AgentBuilder {
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
             this.nativeMethodStrategy = nativeMethodStrategy;
+            this.transformerDecorator = transformerDecorator;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
             this.redefinitionDiscoveryStrategy = redefinitionDiscoveryStrategy;
@@ -8641,6 +8678,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8668,6 +8706,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8695,6 +8734,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8722,6 +8762,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8749,6 +8790,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8776,6 +8818,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8803,6 +8846,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.ForPrefix.of(prefix),
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8830,6 +8874,35 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    transformerDecorator,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    injectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    classFileBufferStrategy,
+                    installationListener,
+                    ignoreMatcher,
+                    transformations);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AgentBuilder with(TransformerDecorator transformerDecorator) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    new TransformerDecorator.Compound(this.transformerDecorator, transformerDecorator),
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8857,6 +8930,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
@@ -8884,6 +8958,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8911,6 +8986,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8938,6 +9014,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8965,6 +9042,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8992,6 +9070,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9019,6 +9098,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9046,6 +9126,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9075,6 +9156,7 @@ public interface AgentBuilder {
                             : TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    transformerDecorator,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9234,13 +9316,6 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            return installOn(instrumentation, TransformerDecorator.NoOp.INSTANCE);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
             if (!circularityLock.acquire()) {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
@@ -9291,18 +9366,11 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
-            return installOnByteBuddyAgent(TransformerDecorator.NoOp.INSTANCE);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
             try {
                 return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getMethod(INSTRUMENTATION_GETTER)
-                        .invoke(STATIC_MEMBER), transformerDecorator);
+                        .invoke(STATIC_MEMBER));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -10516,6 +10584,13 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public AgentBuilder with(TransformerDecorator transformerDecorator) {
+                return materialize().with(transformerDecorator);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder enableNativeMethodPrefix(String prefix) {
                 return materialize().enableNativeMethodPrefix(prefix);
             }
@@ -10654,22 +10729,8 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
-                return materialize().installOn(instrumentation, transformerDecorator);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
             public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
-                return materialize().installOnByteBuddyAgent(transformerDecorator);
             }
         }
 
@@ -10702,6 +10763,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10748,6 +10810,7 @@ public interface AgentBuilder {
              * @param typeStrategy                     The definition handler to use.
              * @param locationStrategy                 The location strategy to use.
              * @param nativeMethodStrategy             The native method strategy to apply.
+             * @param transformerDecorator             A decorator to wrap the created class file transformer.
              * @param initializationStrategy           The initialization strategy to use for transformed types.
              * @param redefinitionStrategy             The redefinition strategy to apply.
              * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
@@ -10771,6 +10834,7 @@ public interface AgentBuilder {
                                  TypeStrategy typeStrategy,
                                  LocationStrategy locationStrategy,
                                  NativeMethodStrategy nativeMethodStrategy,
+                                 TransformerDecorator transformerDecorator,
                                  InitializationStrategy initializationStrategy,
                                  RedefinitionStrategy redefinitionStrategy,
                                  RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -10792,6 +10856,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10822,6 +10887,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10859,6 +10925,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10889,6 +10956,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10926,6 +10994,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -10988,6 +11057,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
