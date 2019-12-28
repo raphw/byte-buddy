@@ -4723,18 +4723,18 @@ public interface AgentBuilder {
          * @param fallbackStrategy              The fallback strategy to apply.
          * @param matcher                       The matcher to identify what types to redefine.
          */
-        public void apply(Instrumentation instrumentation,
-                          AgentBuilder.Listener listener,
-                          CircularityLock circularityLock,
-                          PoolStrategy poolStrategy,
-                          LocationStrategy locationStrategy,
-                          DiscoveryStrategy redefinitionDiscoveryStrategy,
-                          BatchAllocator redefinitionBatchAllocator,
-                          Listener redefinitionListener,
-                          LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
-                          DescriptionStrategy descriptionStrategy,
-                          FallbackStrategy fallbackStrategy,
-                          RawMatcher matcher) {
+        protected void apply(Instrumentation instrumentation,
+                             AgentBuilder.Listener listener,
+                             CircularityLock circularityLock,
+                             PoolStrategy poolStrategy,
+                             LocationStrategy locationStrategy,
+                             DiscoveryStrategy redefinitionDiscoveryStrategy,
+                             BatchAllocator redefinitionBatchAllocator,
+                             Listener redefinitionListener,
+                             LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                             DescriptionStrategy descriptionStrategy,
+                             FallbackStrategy fallbackStrategy,
+                             RawMatcher matcher) {
             check(instrumentation);
             int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
