@@ -6858,7 +6858,6 @@ public interface AgentBuilder {
                                     boolean unmodifiable) {
                 if (unmodifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
-                        types.add(type);
                         try {
                             listener.onIgnored(typeDescription, type.getClassLoader(), module, classBeingRedefined != null);
                         } finally {
@@ -6867,6 +6866,8 @@ public interface AgentBuilder {
                     } catch (Throwable ignored) {
                         // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                     }
+                } else {
+                    types.add(type);
                 }
             }
 

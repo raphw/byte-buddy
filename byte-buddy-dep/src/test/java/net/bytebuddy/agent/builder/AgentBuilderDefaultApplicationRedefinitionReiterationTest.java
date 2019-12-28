@@ -11,7 +11,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -25,7 +24,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@Ignore // TODO
 public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";

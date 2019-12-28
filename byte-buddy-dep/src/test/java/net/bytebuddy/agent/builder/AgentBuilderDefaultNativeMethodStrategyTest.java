@@ -61,7 +61,8 @@ public class AgentBuilderDefaultNativeMethodStrategyTest {
     }
 
     @Test
-    public void testEnabledStrategyApply() throws Exception {
+    public void testEnabledStrategyApplySupported() throws Exception {
+        when(instrumentation.isNativeMethodPrefixSupported()).thenReturn(true);
         new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).apply(instrumentation, classFileTransformer);
         verify(instrumentation).isNativeMethodPrefixSupported();
         verify(instrumentation).setNativeMethodPrefix(classFileTransformer, FOO);
@@ -69,4 +70,9 @@ public class AgentBuilderDefaultNativeMethodStrategyTest {
         verifyZeroInteractions(classFileTransformer);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testEnabledStrategyApplyNotSupported() throws Exception {
+        when(instrumentation.isNativeMethodPrefixSupported()).thenReturn(false);
+        new AgentBuilder.Default.NativeMethodStrategy.ForPrefix(FOO).apply(instrumentation, classFileTransformer);
+    }
 }
