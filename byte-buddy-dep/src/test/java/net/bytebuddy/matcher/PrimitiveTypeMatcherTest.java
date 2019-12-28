@@ -4,8 +4,8 @@ import net.bytebuddy.description.type.TypeDefinition;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
 
 public class PrimitiveTypeMatcherTest extends AbstractElementMatcherTest<PrimitiveTypeMatcher<?>> {
