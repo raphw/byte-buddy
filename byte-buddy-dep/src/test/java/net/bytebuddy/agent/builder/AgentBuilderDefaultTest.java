@@ -1170,6 +1170,21 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetransformationPatchNotRegistered() throws Exception {
+        new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .patchOn(instrumentation, mock(ResettableClassFileTransformer.class));
+    }
+
     @Test
     public void testSuccessfulWithRedefinitionMatched() throws Exception {
         when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain()))
@@ -1813,6 +1828,151 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(installationListener);
     }
 
+    @Test
+    public void testRedefinitionPatchPreviousDoesNotMatch() throws Exception {
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ResettableClassFileTransformer previous = mock(ResettableClassFileTransformer.class);
+        when(previous.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED)).thenReturn(true);
+        when(previous.iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(Collections.<AgentBuilder.Transformer>emptySet().iterator());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .patchOn(instrumentation, previous);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).redefineClasses(any(ClassDefinition.class));
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(installationListener);
+        verify(previous).reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
+        verify(previous).iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(previous);
+    }
+
+    @Test
+    public void testRedefinitionPatchPreviousDoesMatch() throws Exception {
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ResettableClassFileTransformer previous = mock(ResettableClassFileTransformer.class);
+        when(previous.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED)).thenReturn(true);
+        when(previous.iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(Collections.singleton(transformer).iterator());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .patchOn(instrumentation, previous);
+        verify(listener).onIgnored(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        //verifyNoMoreInteractions(instrumentation);
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(installationListener);
+        verify(previous).reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
+        verify(previous).iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(previous);
+    }
+
+    @Test
+    public void testRedefinitionPatchOnlyPreviousDoesMatchEqual() throws Exception {
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ResettableClassFileTransformer previous = mock(ResettableClassFileTransformer.class);
+        when(previous.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED)).thenReturn(true);
+        when(previous.iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(Collections.singleton(transformer).iterator());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .patchOn(instrumentation, previous);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        //verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(initializationStrategy);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(installationListener);
+        verify(previous).reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
+        verify(previous).iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(previous);
+    }
+
+    @Test
+    public void testRedefinitionPatchPreviousDoesMatchUnequal() throws Exception {
+        when(typeMatcher.matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ResettableClassFileTransformer previous = mock(ResettableClassFileTransformer.class);
+        when(previous.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED)).thenReturn(true);
+        when(previous.iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(Collections.singleton(mock(AgentBuilder.Transformer.class)).iterator());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationListener)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .patchOn(instrumentation, previous);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        //verifyNoMoreInteractions(instrumentation);
+        verify(typeMatcher).matches(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(installationListener).onInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(installationListener);
+        verify(previous).reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
+        verify(previous).iterator(TypeDescription.ForLoadedType.of(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(previous);
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testRedefinitionNotSupported() throws Exception {
         new AgentBuilder.Default(byteBuddy)
@@ -1824,6 +1984,19 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRedefinitionPatchPreviousNotRegistered() throws Exception {
+        new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .type(typeMatcher).transform(transformer)
+                .patchOn(instrumentation, mock(ResettableClassFileTransformer.class));
     }
 
     @Test
