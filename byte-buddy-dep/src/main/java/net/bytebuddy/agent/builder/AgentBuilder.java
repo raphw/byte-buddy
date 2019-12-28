@@ -10465,7 +10465,7 @@ public interface AgentBuilder {
                                             ClassFileBufferStrategy.class,
                                             InstallationListener.class,
                                             RawMatcher.class,
-                                            Transformation.class,
+                                            List.class,
                                             CircularityLock.class));
                         } catch (Exception ignored) {
                             return Factory.ForLegacyVm.INSTANCE;
