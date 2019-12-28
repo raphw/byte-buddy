@@ -4839,7 +4839,7 @@ public interface AgentBuilder {
                     } catch (Throwable throwable) {
                         try {
                             try {
-                                listener.onDiscovery(type.getName(), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                             } finally {
                                 try {
                                     listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
@@ -6521,16 +6521,23 @@ public interface AgentBuilder {
                                                 }
                                             } catch (Throwable throwable) {
                                                 try {
-                                                    listener.onError(TypeDescription.ForLoadedType.getName(type),
-                                                            type.getClassLoader(),
-                                                            JavaModule.ofType(type),
-                                                            AgentBuilder.Listener.LOADED,
-                                                            throwable);
-                                                } finally {
-                                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                    listener.onDiscovery(TypeDescription.ForLoadedType.getName(type),
                                                             type.getClassLoader(),
                                                             JavaModule.ofType(type),
                                                             AgentBuilder.Listener.LOADED);
+                                                } finally {
+                                                    try {
+                                                        listener.onError(TypeDescription.ForLoadedType.getName(type),
+                                                                type.getClassLoader(),
+                                                                JavaModule.ofType(type),
+                                                                AgentBuilder.Listener.LOADED,
+                                                                throwable);
+                                                    } finally {
+                                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                                type.getClassLoader(),
+                                                                JavaModule.ofType(type),
+                                                                AgentBuilder.Listener.LOADED);
+                                                    }
                                                 }
                                             }
                                         } catch (Throwable ignored) {
@@ -6934,13 +6941,12 @@ public interface AgentBuilder {
                 if (unmodifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
                         try {
-                            listener.onDiscovery(type.getName(), type.getClassLoader(), module, classBeingRedefined != null);
+                            listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null);
+                            listener.onIgnored(typeDescription, type.getClassLoader(), module, classBeingRedefined != null);
+                        } catch (Throwable throwable) {
+                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null, throwable);
                         } finally {
-                            try {
-                                listener.onIgnored(typeDescription, type.getClassLoader(), module, classBeingRedefined != null);
-                            } finally {
-                                listener.onComplete(type.getName(), type.getClassLoader(), module, classBeingRedefined != null);
-                            }
+                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null);
                         }
                     } catch (Throwable ignored) {
                         // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -7101,9 +7107,13 @@ public interface AgentBuilder {
                             } catch (Throwable throwable) {
                                 JavaModule module = JavaModule.ofType(type);
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                    listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                                 } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                    try {
+                                        listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                    } finally {
+                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                    }
                                 }
                             }
                         } catch (Throwable ignored) {
@@ -10249,7 +10259,6 @@ public interface AgentBuilder {
                             module,
                             protectionDomain), locationStrategy.classFileLocator(classLoader, module));
                     TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
-                    byte[] result;
                     try {
                         return doTransform(module, classLoader, typeName, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
                     } catch (Throwable throwable) {
