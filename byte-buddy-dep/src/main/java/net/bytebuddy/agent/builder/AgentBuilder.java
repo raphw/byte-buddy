@@ -621,7 +621,7 @@ public interface AgentBuilder {
     Ignored ignore(RawMatcher rawMatcher);
 
     /**
-     * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
+     * Creates a {@link ResettableClassFileTransformer} that implements the configuration of this
      * agent builder. When using a raw class file transformer, the {@link InstallationListener} callbacks are
      * not invoked and the set {@link RedefinitionStrategy} is not applied onto currently loaded classes.
      *
@@ -631,7 +631,7 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed.
      * </p>
@@ -646,13 +646,56 @@ public interface AgentBuilder {
     ResettableClassFileTransformer installOn(Instrumentation instrumentation);
 
     /**
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
+     * is enabled, the installation also causes all loaded types to be retransformed.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
      *
      * @return The installed class file transformer.
      * @see AgentBuilder#installOn(Instrumentation)
      */
     ResettableClassFileTransformer installOnByteBuddyAgent();
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @return The installed class file transformer.
+     */
+    ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
+     * is enabled, the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @return The installed class file transformer.
+     * @see AgentBuilder#patchOn(Instrumentation, ResettableClassFileTransformer)
+     */
+    ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer);
 
     /**
      * An abstraction for extending a matcher.
@@ -9320,43 +9363,7 @@ public interface AgentBuilder {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
-                        locationStrategy,
-                        listener,
-                        installationListener,
-                        circularityLock,
-                        new Transformation.SimpleMatcher(ignoreMatcher, transformations),
-                        redefinitionStrategy,
-                        redefinitionBatchAllocator,
-                        redefinitionListener);
-                ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
-                        installation.getInstallationListener()));
-                installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
-                try {
-                    DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
-                    nativeMethodStrategy.apply(instrumentation, classFileTransformer);
-                    lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-                    redefinitionStrategy.apply(instrumentation,
-                            installation.getListener(),
-                            circularityLock,
-                            poolStrategy,
-                            locationStrategy,
-                            redefinitionDiscoveryStrategy,
-                            redefinitionBatchAllocator,
-                            redefinitionListener,
-                            lambdaInstrumentationStrategy,
-                            descriptionStrategy,
-                            fallbackStrategy,
-                            new Transformation.SimpleMatcher(ignoreMatcher, transformations));
-                } catch (Throwable throwable) {
-                    throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
-                    if (throwable != null) {
-                        instrumentation.removeTransformer(classFileTransformer);
-                        throw new IllegalStateException("Could not install class file transformer", throwable);
-                    }
-                }
-                installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
-                return classFileTransformer;
+                return doInstall(instrumentation, new Transformation.SimpleMatcher(ignoreMatcher, transformations));
             } finally {
                 circularityLock.release();
             }
@@ -9376,6 +9383,86 @@ public interface AgentBuilder {
             } catch (Exception exception) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+            if (!circularityLock.acquire()) {
+                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
+            }
+            try {
+                if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
+                    throw new IllegalArgumentException("Cannot patch unregistered class file transformer: " + classFileTransformer);
+                }
+                return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer));
+            } finally {
+                circularityLock.release();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
+            try {
+                return patchOn((Instrumentation) ClassLoader.getSystemClassLoader()
+                        .loadClass(INSTALLER_TYPE)
+                        .getMethod(INSTRUMENTATION_GETTER)
+                        .invoke(STATIC_MEMBER), classFileTransformer);
+            } catch (RuntimeException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+            }
+        }
+
+        /**
+         * Installs the class file transformer.
+         *
+         * @param instrumentation The instrumentation to install the matcher on.
+         * @param matcher         The matcher to identify redefined types.
+         * @return The created class file transformer.
+         */
+        private ResettableClassFileTransformer doInstall(Instrumentation instrumentation, RawMatcher matcher) {
+            RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
+                    locationStrategy,
+                    listener,
+                    installationListener,
+                    circularityLock,
+                    new Transformation.SimpleMatcher(ignoreMatcher, transformations),
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener);
+            ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
+                    installation.getInstallationListener()));
+            installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
+            try {
+                DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
+                nativeMethodStrategy.apply(instrumentation, classFileTransformer);
+                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                redefinitionStrategy.apply(instrumentation,
+                        installation.getListener(),
+                        circularityLock,
+                        poolStrategy,
+                        locationStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        fallbackStrategy,
+                        matcher);
+            } catch (Throwable throwable) {
+                throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
+                if (throwable != null) {
+                    instrumentation.removeTransformer(classFileTransformer);
+                    throw new IllegalStateException("Could not install class file transformer", throwable);
+                }
+            }
+            installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
+            return classFileTransformer;
         }
 
         /**
@@ -9752,6 +9839,169 @@ public interface AgentBuilder {
                     return false;
                 }
             }
+
+            /**
+             * A matcher that considers the differential of two transformers' transformations.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class DifferentialMatcher implements RawMatcher {
+
+                /**
+                 * Identifies types that should not be instrumented.
+                 */
+                private final RawMatcher ignoreMatcher;
+
+                /**
+                 * The transformations to apply on non-ignored types.
+                 */
+                private final List<Transformation> transformations;
+
+                /**
+                 * The class file transformer representing the differential.
+                 */
+                private final ResettableClassFileTransformer classFileTransformer;
+
+                /**
+                 * Creates a new differential matcher.
+                 *
+                 * @param ignoreMatcher        Identifies types that should not be instrumented.
+                 * @param transformations      The transformations to apply on non-ignored types.
+                 * @param classFileTransformer The class file transformer representing the differential.
+                 */
+                protected DifferentialMatcher(RawMatcher ignoreMatcher,
+                                              List<Transformation> transformations,
+                                              ResettableClassFileTransformer classFileTransformer) {
+                    this.ignoreMatcher = ignoreMatcher;
+                    this.transformations = transformations;
+                    this.classFileTransformer = classFileTransformer;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean matches(TypeDescription typeDescription,
+                                       ClassLoader classLoader,
+                                       JavaModule module,
+                                       Class<?> classBeingRedefined,
+                                       ProtectionDomain protectionDomain) {
+                    Iterator<Transformer> iterator = classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                    if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        return iterator.hasNext();
+                    }
+                    for (Transformation transformation : transformations) {
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            for (Transformer transformer : transformation.getTransformers()) {
+                                if (!iterator.hasNext() || !iterator.next().equals(transformer)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return iterator.hasNext();
+                }
+            }
+
+            /**
+             * An iterator over a list of transformations that match a raw matcher specification.
+             */
+            protected static class TransformerIterator implements Iterator<Transformer> {
+
+                /**
+                 * A description of the matched type.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * The type's class loader.
+                 */
+                private final ClassLoader classLoader;
+
+                /**
+                 * The type's module.
+                 */
+                private final JavaModule module;
+
+                /**
+                 * The class being redefined or {@code null} if the type was not previously loaded.
+                 */
+                private final Class<?> classBeingRedefined;
+
+                /**
+                 * The type's protection domain.
+                 */
+                private final ProtectionDomain protectionDomain;
+
+                /**
+                 * An iterator over the remaining transformations that were not yet considered.
+                 */
+                private final Iterator<Transformation> transformations;
+
+                /**
+                 * An iterator over the currently matched transformers.
+                 */
+                private Iterator<Transformer> transformers;
+
+                /**
+                 * Creates a new iterator.
+                 *
+                 * @param typeDescription     A description of the matched type.
+                 * @param classLoader         The type's class loader.
+                 * @param module              The type's module.
+                 * @param classBeingRedefined The class being redefined or {@code null} if the type was not previously loaded.
+                 * @param protectionDomain    The type's protection domain.
+                 * @param transformations     The matched transformations.
+                 */
+                protected TransformerIterator(TypeDescription typeDescription,
+                                              ClassLoader classLoader,
+                                              JavaModule module,
+                                              Class<?> classBeingRedefined,
+                                              ProtectionDomain protectionDomain,
+                                              List<Transformation> transformations) {
+                    this.typeDescription = typeDescription;
+                    this.classLoader = classLoader;
+                    this.module = module;
+                    this.classBeingRedefined = classBeingRedefined;
+                    this.protectionDomain = protectionDomain;
+                    this.transformations = transformations.iterator();
+                    transformers = Collections.<Transformer>emptySet().iterator();
+                    while (!transformers.hasNext() && this.transformations.hasNext()) {
+                        Transformation transformation = this.transformations.next();
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            transformers = transformation.getTransformers().iterator();
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean hasNext() {
+                    return transformers.hasNext();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Transformer next() {
+                    try {
+                        return transformers.next();
+                    } finally {
+                        while (!transformers.hasNext() && transformations.hasNext()) {
+                            Transformation transformation = transformations.next();
+                            if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                                transformers = transformation.getTransformers().iterator();
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void remove() {
+                    throw new UnsupportedOperationException("remove");
+                }
+            }
         }
 
         /**
@@ -9991,6 +10241,7 @@ public interface AgentBuilder {
                             module,
                             protectionDomain), locationStrategy.classFileLocator(classLoader, module));
                     TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
+                    byte[] result;
                     try {
                         return doTransform(module, classLoader, typeName, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
                     } catch (Throwable throwable) {
@@ -10067,20 +10318,14 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public boolean matches(TypeDescription typeDescription,
-                                   ClassLoader classLoader,
-                                   JavaModule module,
-                                   Class<?> classBeingRedefined,
-                                   ProtectionDomain protectionDomain) {
-                if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
-                    return false;
-                }
-                for (Transformation transformation : transformations) {
-                    if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
-                        return true;
-                    }
-                }
-                return false;
+            public Iterator<Transformer> iterator(TypeDescription typeDescription,
+                                                  ClassLoader classLoader,
+                                                  JavaModule module,
+                                                  Class<?> classBeingRedefined,
+                                                  ProtectionDomain protectionDomain) {
+                return ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                        ? Collections.<Transformer>emptySet().iterator()
+                        : new Transformation.TransformerIterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, transformations);
             }
 
             /**
@@ -10104,7 +10349,7 @@ public interface AgentBuilder {
                             lambdaInstrumentationStrategy,
                             descriptionStrategy,
                             fallbackStrategy,
-                            this);
+                            new Transformation.SimpleMatcher(ignoreMatcher, transformations));
                     installationListener.onReset(instrumentation, classFileTransformer);
                     return true;
                 } else {
@@ -10731,6 +10976,20 @@ public interface AgentBuilder {
              */
             public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                return materialize().patchOn(instrumentation, classFileTransformer);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
+                return materialize().patchOnByteBuddyAgent(classFileTransformer);
             }
         }
 

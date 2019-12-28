@@ -22,11 +22,28 @@ import net.bytebuddy.utility.JavaModule;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.Iterator;
 
 /**
  * A class file transformer that can reset its transformation.
  */
-public interface ResettableClassFileTransformer extends ClassFileTransformer, AgentBuilder.RawMatcher {
+public interface ResettableClassFileTransformer extends ClassFileTransformer {
+
+    /**
+     * Creates an iterator over the transformers that are applied for a given type.
+     *
+     * @param typeDescription     A description of a type.
+     * @param classLoader         The type's class loader.
+     * @param module              The type's module.
+     * @param classBeingRedefined The class being redefined or {@code null} if the type is not yet loaded.
+     * @param protectionDomain    The type's protection domain.
+     * @return An iterator over the transformers that are applied by this transformer if the given type is discovered.
+     */
+    Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module,
+                                                Class<?> classBeingRedefined,
+                                                ProtectionDomain protectionDomain);
 
     /**
      * <p>
@@ -371,12 +388,12 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer, Ag
         /**
          * {@inheritDoc}
          */
-        public boolean matches(TypeDescription typeDescription,
-                               ClassLoader classLoader,
-                               JavaModule module,
-                               Class<?> classBeingRedefined,
-                               ProtectionDomain protectionDomain) {
-            return classFileTransformer.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+        public Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
+                                                           ClassLoader classLoader,
+                                                           JavaModule module,
+                                                           Class<?> classBeingRedefined,
+                                                           ProtectionDomain protectionDomain) {
+            return classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
         }
 
         /**
