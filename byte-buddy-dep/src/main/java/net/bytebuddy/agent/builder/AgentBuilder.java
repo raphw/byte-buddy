@@ -9754,7 +9754,7 @@ public interface AgentBuilder {
             /**
              * Indicates that a type should not be ignored.
              */
-            protected static final byte[] NONE = null;
+            private static final byte[] NONE = null;
 
             /**
              * The matcher to identify types for transformation.
@@ -10298,16 +10298,14 @@ public interface AgentBuilder {
                                        TypePool typePool,
                                        ClassFileLocator classFileLocator) {
                 TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool, circularityLock, classLoader, module);
-                if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
-                    listener.onIgnored(typeDescription, classLoader, module, loaded);
-                    return Transformation.NONE;
-                }
                 List<Transformer> transformers = new ArrayList<Transformer>();
-                for (Transformation transformation : transformations) {
-                    if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
-                        transformers.addAll(transformation.getTransformers());
-                        if (transformation.isTerminal()) {
-                            break;
+                if (!ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                    for (Transformation transformation : transformations) {
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            transformers.addAll(transformation.getTransformers());
+                            if (transformation.isTerminal()) {
+                                break;
+                            }
                         }
                     }
                 }
