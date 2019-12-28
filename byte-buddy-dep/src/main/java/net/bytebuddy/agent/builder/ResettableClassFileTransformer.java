@@ -37,7 +37,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
      * @param module              The type's module.
      * @param classBeingRedefined The class being redefined or {@code null} if the type is not yet loaded.
      * @param protectionDomain    The type's protection domain.
-     * @return An iterator over the transformers that are applied by this transformer if the given type is discovered.
+     * @return An iterator over the transformers that are applied by this class file transformer if the given type is discovered.
      */
     Iterator<AgentBuilder.Transformer> iterator(TypeDescription typeDescription,
                                                 ClassLoader classLoader,

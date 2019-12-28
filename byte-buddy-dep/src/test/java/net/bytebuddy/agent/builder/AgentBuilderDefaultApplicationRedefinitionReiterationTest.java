@@ -52,7 +52,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
         try {
             assertAdvice();
         } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
         }
     }
 
@@ -65,7 +65,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
         try {
             assertAdvice();
         } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
         }
     }
 
@@ -79,7 +79,7 @@ public class AgentBuilderDefaultApplicationRedefinitionReiterationTest {
         try {
             assertAdvice();
         } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
         }
     }
 

@@ -82,7 +82,7 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                 Thread.sleep(TimeUnit.SECONDS.toMillis(TIMEOUT * 3));
                 assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
             } finally {
-                ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+                assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
             }
         } finally {
             scheduledExecutorService.shutdown();
