@@ -19,11 +19,11 @@ public class JavaVersionRule implements MethodRule {
 
     private final ClassFileVersion currentVersion;
 
-    private final boolean openJ9;
+    private final boolean j9;
 
     public JavaVersionRule() {
         currentVersion = ClassFileVersion.ofThisVm();
-        openJ9 = System.getProperty("java.vm.name", "").toUpperCase(Locale.US).contains("J9");
+        j9 = System.getProperty("java.vm.name", "").toUpperCase(Locale.US).contains("J9");
     }
 
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
@@ -37,7 +37,7 @@ public class JavaVersionRule implements MethodRule {
             } catch (IOException exception) {
                 throw new AssertionError(exception);
             }
-            if (openJ9 && !enforce.openJ9()) {
+            if (j9 && !enforce.j9()) {
                 return new OpenJ9Statement();
             } else if (enforce.value() != UNDEFINED && !version.isAtLeast(ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value(), "at least", enforce.target());
@@ -56,7 +56,7 @@ public class JavaVersionRule implements MethodRule {
 
         int atMost() default UNDEFINED;
 
-        boolean openJ9() default true;
+        boolean j9() default true;
 
         Class<?> target() default void.class;
     }

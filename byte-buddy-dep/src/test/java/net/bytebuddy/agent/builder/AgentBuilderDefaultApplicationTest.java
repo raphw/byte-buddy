@@ -552,7 +552,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambda() throws Exception {
@@ -576,7 +576,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambdaIsConstant() throws Exception {
@@ -599,7 +599,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testLambdaFactoryIsReset() throws Exception {
@@ -619,7 +619,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testArgumentCapturingLambda() throws Exception {
@@ -643,7 +643,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testArgumentCapturingLambdaIsNotConstant() throws Exception {
@@ -666,7 +666,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testInstanceCapturingLambda() throws Exception {
@@ -690,7 +690,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testNonCapturingLambdaWithArguments() throws Exception {
@@ -713,7 +713,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testCapturingLambdaWithArguments() throws Exception {
@@ -736,7 +736,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testSerializableLambda() throws Exception {
@@ -768,7 +768,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testReturnTypeTransformingLambda() throws Exception {
@@ -791,7 +791,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, openJ9 = false)
+    @JavaVersionRule.Enforce(value = 8, j9 = false)
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     public void testInstanceReturningLambda() throws Exception {
