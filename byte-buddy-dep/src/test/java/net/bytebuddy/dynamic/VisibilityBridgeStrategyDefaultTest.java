@@ -1,16 +1,15 @@
 package net.bytebuddy.dynamic;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.when;
-
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.test.utility.MockitoRule;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class VisibilityBridgeStrategyDefaultTest {
 

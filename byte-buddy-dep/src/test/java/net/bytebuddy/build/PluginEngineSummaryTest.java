@@ -9,9 +9,9 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class PluginEngineSummaryTest {
 

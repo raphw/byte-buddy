@@ -684,6 +684,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(rawMatcher);
         verifyZeroInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verify(listener).onDiscovery(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, runtimeException);
         verify(listener).onComplete(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true);
         verifyNoMoreInteractions(listener);
@@ -737,6 +738,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(rawMatcher);
         verifyZeroInteractions(redefinitionBatchAllocator);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verify(listener).onDiscovery(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true);
         verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, runtimeException);
         verify(listener).onComplete(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true);
         verifyNoMoreInteractions(listener);

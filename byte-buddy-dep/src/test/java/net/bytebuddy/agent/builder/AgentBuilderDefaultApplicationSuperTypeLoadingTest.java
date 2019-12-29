@@ -23,8 +23,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
@@ -70,7 +70,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
             assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
             assertThat(type.getSuperclass().getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
         } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
         }
     }
 
@@ -90,7 +90,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
             assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
             assertThat(type.getSuperclass().getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
         } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            assertThat(ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer), is(true));
         }
     }
 

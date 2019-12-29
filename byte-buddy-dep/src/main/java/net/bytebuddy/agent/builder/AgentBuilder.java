@@ -262,6 +262,14 @@ public interface AgentBuilder {
     AgentBuilder with(InjectionStrategy injectionStrategy);
 
     /**
+     * Adds a decorator for the created class file transformer.
+     *
+     * @param transformerDecorator A decorator to wrap the created class file transformer.
+     * @return A new agent builder that applies the supplied transformer decorator.
+     */
+    AgentBuilder with(TransformerDecorator transformerDecorator);
+
+    /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
      * applied when preserving non-native methods. The use of this prefix is also registered when installing the
      * final agent with an {@link java.lang.instrument.Instrumentation}.
@@ -613,7 +621,7 @@ public interface AgentBuilder {
     Ignored ignore(RawMatcher rawMatcher);
 
     /**
-     * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
+     * Creates a {@link ResettableClassFileTransformer} that implements the configuration of this
      * agent builder. When using a raw class file transformer, the {@link InstallationListener} callbacks are
      * not invoked and the set {@link RedefinitionStrategy} is not applied onto currently loaded classes.
      *
@@ -623,7 +631,7 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed.
      * </p>
@@ -639,24 +647,14 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
-     * the installation also causes all loaded types to be retransformed.
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
+     * is enabled, the installation also causes all loaded types to be retransformed.
      * </p>
      * <p>
      * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
      * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
      * </p>
-     *
-     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
-     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
-     * @return The installed class file transformer.
-     */
-    ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator);
-
-    /**
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
      *
      * @return The installed class file transformer.
      * @see AgentBuilder#installOn(Instrumentation)
@@ -664,14 +662,40 @@ public interface AgentBuilder {
     ResettableClassFileTransformer installOnByteBuddyAgent();
 
     /**
-     * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
-     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
+     * the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
      *
-     * @param transformerDecorator A decorator that allows to change the registered class file transformer prior to registration.
+     * @param instrumentation      The instrumentation on which this agent builder's configuration is to be installed.
+     * @param classFileTransformer The class file transformer that is being patched.
      * @return The installed class file transformer.
-     * @see AgentBuilder#installOn(Instrumentation)
      */
-    ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator);
+    ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
+
+    /**
+     * <p>
+     * Creates and installs a {@link ResettableClassFileTransformer} that implements the configuration of
+     * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method. If retransformation
+     * is enabled, the installation also causes all loaded types to be retransformed which have changed compared to the previous
+     * class file transformer that is provided as an argument.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     * </p>
+     *
+     * @param classFileTransformer The class file transformer that is being patched.
+     * @return The installed class file transformer.
+     * @see AgentBuilder#patchOn(Instrumentation, ResettableClassFileTransformer)
+     */
+    ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer);
 
     /**
      * An abstraction for extending a matcher.
@@ -2151,28 +2175,6 @@ public interface AgentBuilder {
                                          JavaModule module);
 
         /**
-         * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} that does
-         * not modify the supplied dynamic type.
-         */
-        enum NoOp implements Transformer {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            /**
-             * {@inheritDoc}
-             */
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
-                                                    TypeDescription typeDescription,
-                                                    ClassLoader classLoader,
-                                                    JavaModule module) {
-                return builder;
-            }
-        }
-
-        /**
          * A transformer that applies a build {@link Plugin}. Note that a transformer is never completed as class loading
          * might happen dynamically such that plugins are not closed.
          */
@@ -2561,57 +2563,6 @@ public interface AgentBuilder {
                         return advice.to(typePool.describe(enter).resolve(), typePool.describe(exit).resolve(), classFileLocator);
                     }
                 }
-            }
-        }
-
-        /**
-         * A compound transformer that allows to group several
-         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s as a single transformer.
-         */
-        @HashCodeAndEqualsPlugin.Enhance
-        class Compound implements Transformer {
-
-            /**
-             * The transformers to apply in their application order.
-             */
-            private final List<Transformer> transformers;
-
-            /**
-             * Creates a new compound transformer.
-             *
-             * @param transformer The transformers to apply in their application order.
-             */
-            public Compound(Transformer... transformer) {
-                this(Arrays.asList(transformer));
-            }
-
-            /**
-             * Creates a new compound transformer.
-             *
-             * @param transformers The transformers to apply in their application order.
-             */
-            public Compound(List<? extends Transformer> transformers) {
-                this.transformers = new ArrayList<Transformer>();
-                for (Transformer transformer : transformers) {
-                    if (transformer instanceof Compound) {
-                        this.transformers.addAll(((Compound) transformer).transformers);
-                    } else if (!(transformer instanceof NoOp)) {
-                        this.transformers.add(transformer);
-                    }
-                }
-            }
-
-            /**
-             * {@inheritDoc}
-             */
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
-                                                    TypeDescription typeDescription,
-                                                    ClassLoader classLoader,
-                                                    JavaModule module) {
-                for (Transformer transformer : transformers) {
-                    builder = transformer.transform(builder, typeDescription, classLoader, module);
-                }
-                return builder;
             }
         }
     }
@@ -4614,6 +4565,53 @@ public interface AgentBuilder {
                 return classFileTransformer;
             }
         }
+
+        /**
+         * A compound transformer decorator.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class Compound implements TransformerDecorator {
+
+            /**
+             * The listeners to invoke.
+             */
+            private final List<TransformerDecorator> transformerDecorators;
+
+            /**
+             * Creates a new compound transformer decorator.
+             *
+             * @param transformerDecorator The transformer decorators to add.
+             */
+            public Compound(TransformerDecorator... transformerDecorator) {
+                this(Arrays.asList(transformerDecorator));
+            }
+
+            /**
+             * Creates a new compound listener.
+             *
+             * @param transformerDecorators The transformerDecorators to invoke.
+             */
+            public Compound(List<? extends TransformerDecorator> transformerDecorators) {
+                this.transformerDecorators = new ArrayList<TransformerDecorator>();
+                for (TransformerDecorator transformerDecorator : transformerDecorators) {
+                    if (transformerDecorator instanceof Compound) {
+                        this.transformerDecorators.addAll(((Compound) transformerDecorator).transformerDecorators);
+                    } else if (!(transformerDecorator instanceof NoOp)) {
+                        this.transformerDecorators.add(transformerDecorator);
+                    }
+                }
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer decorate(ResettableClassFileTransformer classFileTransformer) {
+                for (TransformerDecorator transformerDecorator : transformerDecorators) {
+                    classFileTransformer = transformerDecorator.decorate(classFileTransformer);
+                }
+                return classFileTransformer;
+            }
+        }
     }
 
     /**
@@ -4644,8 +4642,7 @@ public interface AgentBuilder {
                               LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                               DescriptionStrategy descriptionStrategy,
                               FallbackStrategy fallbackStrategy,
-                              RawMatcher typeMatcher,
-                              RawMatcher ignoredTypeMatcher) {
+                              RawMatcher matcher) {
                 /* do nothing */
             }
 
@@ -4795,22 +4792,20 @@ public interface AgentBuilder {
          *                                      instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
          * @param fallbackStrategy              The fallback strategy to apply.
-         * @param typeMatcher                   Identifies types that should be instrumented.
-         * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+         * @param matcher                       The matcher to identify what types to redefine.
          */
-        public void apply(Instrumentation instrumentation,
-                          AgentBuilder.Listener listener,
-                          CircularityLock circularityLock,
-                          PoolStrategy poolStrategy,
-                          LocationStrategy locationStrategy,
-                          DiscoveryStrategy redefinitionDiscoveryStrategy,
-                          BatchAllocator redefinitionBatchAllocator,
-                          Listener redefinitionListener,
-                          LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
-                          DescriptionStrategy descriptionStrategy,
-                          FallbackStrategy fallbackStrategy,
-                          RawMatcher typeMatcher,
-                          RawMatcher ignoredTypeMatcher) {
+        protected void apply(Instrumentation instrumentation,
+                             AgentBuilder.Listener listener,
+                             CircularityLock circularityLock,
+                             PoolStrategy poolStrategy,
+                             LocationStrategy locationStrategy,
+                             DiscoveryStrategy redefinitionDiscoveryStrategy,
+                             BatchAllocator redefinitionBatchAllocator,
+                             Listener redefinitionListener,
+                             LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                             DescriptionStrategy descriptionStrategy,
+                             FallbackStrategy fallbackStrategy,
+                             RawMatcher matcher) {
             check(instrumentation);
             int batch = RedefinitionStrategy.BatchAllocator.FIRST_BATCH;
             for (Iterable<Class<?>> types : redefinitionDiscoveryStrategy.resolve(instrumentation)) {
@@ -4823,8 +4818,7 @@ public interface AgentBuilder {
                     try {
                         TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
                         try {
-                            collector.consider(typeMatcher,
-                                    ignoredTypeMatcher,
+                            collector.consider(matcher,
                                     listener,
                                     descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
                                     type,
@@ -4833,8 +4827,7 @@ public interface AgentBuilder {
                                     !DISPATCHER.isModifiableClass(instrumentation, type));
                         } catch (Throwable throwable) {
                             if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                collector.consider(typeMatcher,
-                                        ignoredTypeMatcher,
+                                collector.consider(matcher,
                                         listener,
                                         typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
                                         type,
@@ -4846,9 +4839,13 @@ public interface AgentBuilder {
                     } catch (Throwable throwable) {
                         try {
                             try {
-                                listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                             } finally {
-                                listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                try {
+                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                } finally {
+                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                }
                             }
                         } catch (Throwable ignored) {
                             // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -6524,16 +6521,23 @@ public interface AgentBuilder {
                                                 }
                                             } catch (Throwable throwable) {
                                                 try {
-                                                    listener.onError(TypeDescription.ForLoadedType.getName(type),
-                                                            type.getClassLoader(),
-                                                            JavaModule.ofType(type),
-                                                            AgentBuilder.Listener.LOADED,
-                                                            throwable);
-                                                } finally {
-                                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                    listener.onDiscovery(TypeDescription.ForLoadedType.getName(type),
                                                             type.getClassLoader(),
                                                             JavaModule.ofType(type),
                                                             AgentBuilder.Listener.LOADED);
+                                                } finally {
+                                                    try {
+                                                        listener.onError(TypeDescription.ForLoadedType.getName(type),
+                                                                type.getClassLoader(),
+                                                                JavaModule.ofType(type),
+                                                                AgentBuilder.Listener.LOADED,
+                                                                throwable);
+                                                    } finally {
+                                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                                type.getClassLoader(),
+                                                                JavaModule.ofType(type),
+                                                                AgentBuilder.Listener.LOADED);
+                                                    }
                                                 }
                                             }
                                         } catch (Throwable ignored) {
@@ -6902,27 +6906,24 @@ public interface AgentBuilder {
             /**
              * Does consider the retransformation or redefinition of a loaded type without a loaded type representation.
              *
-             * @param typeMatcher        The type matcher to apply.
-             * @param ignoredTypeMatcher The ignored type matcher to apply.
-             * @param listener           The listener to apply during the consideration.
-             * @param typeDescription    The type description of the type being considered.
-             * @param type               The loaded type being considered.
-             * @param module             The type's Java module or {@code null} if the current VM does not support modules.
+             * @param matcher         The type matcher to apply.
+             * @param listener        The listener to apply during the consideration.
+             * @param typeDescription The type description of the type being considered.
+             * @param type            The loaded type being considered.
+             * @param module          The type's Java module or {@code null} if the current VM does not support modules.
              */
-            protected void consider(RawMatcher typeMatcher,
-                                    RawMatcher ignoredTypeMatcher,
+            protected void consider(RawMatcher matcher,
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
                                     JavaModule module) {
-                consider(typeMatcher, ignoredTypeMatcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
+                consider(matcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
             }
 
             /**
              * Does consider the retransformation or redefinition of a loaded type.
              *
-             * @param typeMatcher         A type matcher to apply.
-             * @param ignoredTypeMatcher  The ignored type matcher to apply.
+             * @param matcher             A type matcher to apply.
              * @param listener            The listener to apply during the consideration.
              * @param typeDescription     The type description of the type being considered.
              * @param type                The loaded type being considered.
@@ -6930,27 +6931,28 @@ public interface AgentBuilder {
              * @param module              The type's Java module or {@code null} if the current VM does not support modules.
              * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
              */
-            protected void consider(RawMatcher typeMatcher,
-                                    RawMatcher ignoredTypeMatcher,
+            protected void consider(RawMatcher matcher,
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
                                     Class<?> classBeingRedefined,
                                     JavaModule module,
                                     boolean unmodifiable) {
-                if (unmodifiable
-                        || ignoredTypeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
-                        || !typeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
-                        || !types.add(type)) {
+                if (unmodifiable || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())) {
                     try {
                         try {
+                            listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null);
                             listener.onIgnored(typeDescription, type.getClassLoader(), module, classBeingRedefined != null);
+                        } catch (Throwable throwable) {
+                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null, throwable);
                         } finally {
-                            listener.onComplete(typeDescription.getName(), type.getClassLoader(), module, classBeingRedefined != null);
+                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, classBeingRedefined != null);
                         }
                     } catch (Throwable ignored) {
                         // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                     }
+                } else {
+                    types.add(type);
                 }
             }
 
@@ -7105,9 +7107,13 @@ public interface AgentBuilder {
                             } catch (Throwable throwable) {
                                 JavaModule module = JavaModule.ofType(type);
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                    listener.onDiscovery(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                                 } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                    try {
+                                        listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
+                                    } finally {
+                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
+                                    }
                                 }
                             }
                         } catch (Throwable ignored) {
@@ -8440,6 +8446,11 @@ public interface AgentBuilder {
         protected final NativeMethodStrategy nativeMethodStrategy;
 
         /**
+         * A decorator to wrap the created class file transformer.
+         */
+        protected final TransformerDecorator transformerDecorator;
+
+        /**
          * The initialization strategy to use for creating classes.
          */
         protected final InitializationStrategy initializationStrategy;
@@ -8503,12 +8514,12 @@ public interface AgentBuilder {
         /**
          * Identifies types that should not be instrumented.
          */
-        protected final RawMatcher ignoredTypeMatcher;
+        protected final RawMatcher ignoreMatcher;
 
         /**
          * The transformation object for handling type transformations.
          */
-        protected final Transformation transformation;
+        protected final List<Transformation> transformations;
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
@@ -8533,6 +8544,7 @@ public interface AgentBuilder {
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    TransformerDecorator.NoOp.INSTANCE,
                     new InitializationStrategy.SelfInjection.Split(),
                     RedefinitionStrategy.DISABLED,
                     RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
@@ -8548,7 +8560,7 @@ public interface AgentBuilder {
                     new RawMatcher.Disjunction(
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader().or(isExtensionClassLoader())),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()))),
-                    Transformation.Ignored.INSTANCE);
+                    Collections.<Transformation>emptyList());
         }
 
         /**
@@ -8561,6 +8573,7 @@ public interface AgentBuilder {
          * @param typeStrategy                     The definition handler to use.
          * @param locationStrategy                 The location strategy to use.
          * @param nativeMethodStrategy             The native method strategy to apply.
+         * @param transformerDecorator             A decorator to wrap the created class file transformer.
          * @param initializationStrategy           The initialization strategy to use for transformed types.
          * @param redefinitionStrategy             The redefinition strategy to apply.
          * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
@@ -8574,8 +8587,8 @@ public interface AgentBuilder {
          * @param fallbackStrategy                 The fallback strategy to apply.
          * @param classFileBufferStrategy          The class file buffer strategy to use.
          * @param installationListener             The installation listener to notify.
-         * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
-         * @param transformation                   The transformation object for handling type transformations.
+         * @param ignoreMatcher                    Identifies types that should not be instrumented.
+         * @param transformations                  The transformations to apply for any non-ignored type.
          */
         protected Default(ByteBuddy byteBuddy,
                           Listener listener,
@@ -8584,6 +8597,7 @@ public interface AgentBuilder {
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
                           NativeMethodStrategy nativeMethodStrategy,
+                          TransformerDecorator transformerDecorator,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
                           RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -8596,8 +8610,8 @@ public interface AgentBuilder {
                           FallbackStrategy fallbackStrategy,
                           ClassFileBufferStrategy classFileBufferStrategy,
                           InstallationListener installationListener,
-                          RawMatcher ignoredTypeMatcher,
-                          Transformation transformation) {
+                          RawMatcher ignoreMatcher,
+                          List<Transformation> transformations) {
             this.byteBuddy = byteBuddy;
             this.listener = listener;
             this.circularityLock = circularityLock;
@@ -8605,6 +8619,7 @@ public interface AgentBuilder {
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
             this.nativeMethodStrategy = nativeMethodStrategy;
+            this.transformerDecorator = transformerDecorator;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
             this.redefinitionDiscoveryStrategy = redefinitionDiscoveryStrategy;
@@ -8617,8 +8632,8 @@ public interface AgentBuilder {
             this.fallbackStrategy = fallbackStrategy;
             this.classFileBufferStrategy = classFileBufferStrategy;
             this.installationListener = installationListener;
-            this.ignoredTypeMatcher = ignoredTypeMatcher;
-            this.transformation = transformation;
+            this.ignoreMatcher = ignoreMatcher;
+            this.transformations = transformations;
         }
 
         /**
@@ -8724,6 +8739,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8736,8 +8752,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8751,6 +8767,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8763,8 +8780,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8778,6 +8795,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8790,8 +8808,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8805,6 +8823,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8817,8 +8836,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8832,6 +8851,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8844,8 +8864,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8859,6 +8879,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8871,8 +8892,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8886,6 +8907,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.ForPrefix.of(prefix),
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8898,8 +8920,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8913,6 +8935,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8925,8 +8948,36 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AgentBuilder with(TransformerDecorator transformerDecorator) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    new TransformerDecorator.Compound(this.transformerDecorator, transformerDecorator),
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionDiscoveryStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    injectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    classFileBufferStrategy,
+                    installationListener,
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8940,6 +8991,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     RedefinitionStrategy.DiscoveryStrategy.SinglePass.INSTANCE,
@@ -8952,8 +9004,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8967,6 +9019,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -8979,8 +9032,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -8994,6 +9047,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9006,8 +9060,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9021,6 +9075,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9033,8 +9088,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9048,6 +9103,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9060,8 +9116,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9075,6 +9131,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9087,8 +9144,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9102,6 +9159,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9114,8 +9172,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     new InstallationListener.Compound(this.installationListener, installationListener),
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9129,6 +9187,7 @@ public interface AgentBuilder {
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
+                    transformerDecorator,
                     initializationStrategy,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9141,8 +9200,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9158,6 +9217,7 @@ public interface AgentBuilder {
                             : TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
+                    transformerDecorator,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
                     redefinitionDiscoveryStrategy,
@@ -9170,8 +9230,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoreMatcher,
+                    transformations);
         }
 
         /**
@@ -9224,7 +9284,7 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public Identified.Narrowable type(RawMatcher matcher) {
-            return new Transforming(matcher, Transformer.NoOp.INSTANCE, true);
+            return new Transforming(matcher, Collections.<Transformer>emptyList(), false);
         }
 
         /**
@@ -9308,8 +9368,8 @@ public interface AgentBuilder {
                     fallbackStrategy,
                     classFileBufferStrategy,
                     installationListener,
-                    ignoredTypeMatcher,
-                    transformation,
+                    ignoreMatcher,
+                    transformations,
                     circularityLock);
         }
 
@@ -9317,59 +9377,11 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            return installOn(instrumentation, TransformerDecorator.NoOp.INSTANCE);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
             if (!circularityLock.acquire()) {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
-                        locationStrategy,
-                        listener,
-                        installationListener,
-                        circularityLock,
-                        new RawMatcher.Conjunction(new RawMatcher.Inversion(ignoredTypeMatcher), transformation),
-                        redefinitionStrategy,
-                        redefinitionBatchAllocator,
-                        redefinitionListener);
-                ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
-                        installation.getInstallationListener()));
-                installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
-                try {
-                    DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
-                    if (nativeMethodStrategy.isEnabled(instrumentation)) {
-                        DISPATCHER.setNativeMethodPrefix(instrumentation, classFileTransformer, nativeMethodStrategy.getPrefix());
-                    }
-                    lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-                    if (redefinitionStrategy.isEnabled()) {
-                        redefinitionStrategy.apply(instrumentation,
-                                installation.getListener(),
-                                circularityLock,
-                                poolStrategy,
-                                locationStrategy,
-                                redefinitionDiscoveryStrategy,
-                                redefinitionBatchAllocator,
-                                redefinitionListener,
-                                lambdaInstrumentationStrategy,
-                                descriptionStrategy,
-                                fallbackStrategy,
-                                transformation,
-                                ignoredTypeMatcher);
-                    }
-                } catch (Throwable throwable) {
-                    throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
-                    if (throwable != null) {
-                        instrumentation.removeTransformer(classFileTransformer);
-                        throw new IllegalStateException("Could not install class file transformer", throwable);
-                    }
-                }
-                installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
-                return classFileTransformer;
+                return doInstall(instrumentation, new Transformation.SimpleMatcher(ignoreMatcher, transformations));
             } finally {
                 circularityLock.release();
             }
@@ -9379,23 +9391,96 @@ public interface AgentBuilder {
          * {@inheritDoc}
          */
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
-            return installOnByteBuddyAgent(TransformerDecorator.NoOp.INSTANCE);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
             try {
                 return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getMethod(INSTRUMENTATION_GETTER)
-                        .invoke(STATIC_MEMBER), transformerDecorator);
+                        .invoke(STATIC_MEMBER));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
             }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+            if (!circularityLock.acquire()) {
+                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
+            }
+            try {
+                if (!classFileTransformer.reset(instrumentation, RedefinitionStrategy.DISABLED)) {
+                    throw new IllegalArgumentException("Cannot patch unregistered class file transformer: " + classFileTransformer);
+                }
+                return doInstall(instrumentation, new Transformation.DifferentialMatcher(ignoreMatcher, transformations, classFileTransformer));
+            } finally {
+                circularityLock.release();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
+            try {
+                return patchOn((Instrumentation) ClassLoader.getSystemClassLoader()
+                        .loadClass(INSTALLER_TYPE)
+                        .getMethod(INSTRUMENTATION_GETTER)
+                        .invoke(STATIC_MEMBER), classFileTransformer);
+            } catch (RuntimeException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new IllegalStateException("The Byte Buddy agent is not installed or not accessible", exception);
+            }
+        }
+
+        /**
+         * Installs the class file transformer.
+         *
+         * @param instrumentation The instrumentation to install the matcher on.
+         * @param matcher         The matcher to identify redefined types.
+         * @return The created class file transformer.
+         */
+        private ResettableClassFileTransformer doInstall(Instrumentation instrumentation, RawMatcher matcher) {
+            RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
+                    locationStrategy,
+                    listener,
+                    installationListener,
+                    circularityLock,
+                    new Transformation.SimpleMatcher(ignoreMatcher, transformations),
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener);
+            ResettableClassFileTransformer classFileTransformer = transformerDecorator.decorate(makeRaw(installation.getListener(),
+                    installation.getInstallationListener()));
+            installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
+            try {
+                DISPATCHER.addTransformer(instrumentation, classFileTransformer, redefinitionStrategy.isRetransforming());
+                nativeMethodStrategy.apply(instrumentation, classFileTransformer);
+                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                redefinitionStrategy.apply(instrumentation,
+                        installation.getListener(),
+                        circularityLock,
+                        poolStrategy,
+                        locationStrategy,
+                        redefinitionDiscoveryStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        fallbackStrategy,
+                        matcher);
+            } catch (Throwable throwable) {
+                throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
+                if (throwable != null) {
+                    instrumentation.removeTransformer(classFileTransformer);
+                    throw new IllegalStateException("Could not install class file transformer", throwable);
+                }
+            }
+            installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
+            return classFileTransformer;
         }
 
         /**
@@ -9569,14 +9654,6 @@ public interface AgentBuilder {
         protected interface NativeMethodStrategy {
 
             /**
-             * Determines if this strategy enables name prefixing for native methods.
-             *
-             * @param instrumentation The instrumentation used.
-             * @return {@code true} if this strategy indicates that a native method prefix should be used.
-             */
-            boolean isEnabled(Instrumentation instrumentation);
-
-            /**
              * Resolves the method name transformer for this strategy.
              *
              * @return A method name transformer for this strategy.
@@ -9584,11 +9661,12 @@ public interface AgentBuilder {
             MethodNameTransformer resolve();
 
             /**
-             * Returns the method prefix if the strategy is enabled. This method must only be called if this strategy enables prefixing.
+             * Applies this native method strategy.
              *
-             * @return The method prefix.
+             * @param instrumentation      The instrumentation to apply this strategy upon.
+             * @param classFileTransformer The class file transformer being registered.
              */
-            String getPrefix();
+            void apply(Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
 
             /**
              * A native method strategy that suffixes method names with a random suffix and disables native method rebasement.
@@ -9610,15 +9688,8 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isEnabled(Instrumentation instrumentation) {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getPrefix() {
-                    throw new IllegalStateException("A disabled native method strategy does not define a method name prefix");
+                public void apply(Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+                    /* do nothing */
                 }
             }
 
@@ -9665,503 +9736,106 @@ public interface AgentBuilder {
                 /**
                  * {@inheritDoc}
                  */
-                public boolean isEnabled(Instrumentation instrumentation) {
+                public void apply(Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
                     if (!DISPATCHER.isNativeMethodPrefixSupported(instrumentation)) {
                         throw new IllegalArgumentException("A prefix for native methods is not supported: " + instrumentation);
                     }
-                    return true;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public String getPrefix() {
-                    return prefix;
+                    DISPATCHER.setNativeMethodPrefix(instrumentation, classFileTransformer, prefix);
                 }
             }
         }
 
         /**
-         * A transformation serves as a handler for modifying a class.
+         * A transformation to apply.
          */
-        protected interface Transformation extends RawMatcher {
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class Transformation {
 
             /**
-             * Resolves an attempted transformation to a specific transformation.
+             * Indicates that a type should not be ignored.
+             */
+            private static final byte[] NONE = null;
+
+            /**
+             * The matcher to identify types for transformation.
+             */
+            private final RawMatcher matcher;
+
+            /**
+             * A list of transformers to apply.
+             */
+            private final List<Transformer> transformers;
+
+            /**
+             * {@code true} if this transformation is terminal.
+             */
+            private final boolean terminal;
+
+            /**
+             * Creates a new transformation.
              *
-             * @param typeDescription     A description of the type that is to be transformed.
-             * @param classLoader         The class loader of the type being transformed.
-             * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
-             * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
-             * @param loaded              {@code true} if the instrumented type is loaded.
-             * @param protectionDomain    The protection domain of the type being transformed.
-             * @param typePool            The type pool to apply during type creation.
-             * @return A resolution for the given type.
+             * @param matcher      The matcher to identify types eligable for transformation.
+             * @param transformers A list of transformers to apply.
+             * @param terminal     Indicates that this transformation is terminal.
              */
-            Resolution resolve(TypeDescription typeDescription,
-                               ClassLoader classLoader,
-                               JavaModule module,
-                               Class<?> classBeingRedefined,
-                               boolean loaded,
-                               ProtectionDomain protectionDomain,
-                               TypePool typePool);
-
-            /**
-             * A resolution to a transformation.
-             */
-            interface Resolution {
-
-                /**
-                 * Returns the sort of this resolution.
-                 *
-                 * @return The sort of this resolution.
-                 */
-                Sort getSort();
-
-                /**
-                 * Resolves this resolution as a decorator of the supplied resolution.
-                 *
-                 * @param resolution The resolution for which this resolution should serve as a decorator.
-                 * @return A resolution where this resolution is applied as a decorator if this resolution is alive.
-                 */
-                Resolution asDecoratorOf(Resolution resolution);
-
-                /**
-                 * Resolves this resolution as a decorator of the supplied resolution.
-                 *
-                 * @param resolution The resolution for which this resolution should serve as a decorator.
-                 * @return A resolution where this resolution is applied as a decorator if this resolution is alive.
-                 */
-                Resolution prepend(Decoratable resolution);
-
-                /**
-                 * Transforms a type or returns {@code null} if a type is not to be transformed.
-                 *
-                 * @param initializationStrategy The initialization strategy to use.
-                 * @param classFileLocator       The class file locator to use.
-                 * @param typeStrategy           The definition handler to use.
-                 * @param byteBuddy              The Byte Buddy instance to use.
-                 * @param methodNameTransformer  The method name transformer to be used.
-                 * @param injectionStrategy      The injection strategy to be used.
-                 * @param accessControlContext   The access control context to be used.
-                 * @param listener               The listener to be invoked to inform about an applied or non-applied transformation.
-                 * @return The class file of the transformed class or {@code null} if no transformation is attempted.
-                 */
-                byte[] apply(InitializationStrategy initializationStrategy,
-                             ClassFileLocator classFileLocator,
-                             TypeStrategy typeStrategy,
-                             ByteBuddy byteBuddy,
-                             NativeMethodStrategy methodNameTransformer,
-                             InjectionStrategy injectionStrategy,
-                             AccessControlContext accessControlContext,
-                             Listener listener);
-
-                /**
-                 * Describes a specific sort of a {@link Resolution}.
-                 */
-                enum Sort {
-
-                    /**
-                     * A terminal resolution. After discovering such a resolution, no further transformers are considered.
-                     */
-                    TERMINAL(true),
-
-                    /**
-                     * A resolution that can serve as a decorator for another resolution. After discovering such a resolution
-                     * further transformations are considered where the represented resolution is prepended if applicable.
-                     */
-                    DECORATOR(true),
-
-                    /**
-                     * A non-resolved resolution.
-                     */
-                    UNDEFINED(false);
-
-                    /**
-                     * Indicates if this sort represents an active resolution.
-                     */
-                    private final boolean alive;
-
-                    /**
-                     * Creates a new resolution sort.
-                     *
-                     * @param alive Indicates if this sort represents an active resolution.
-                     */
-                    Sort(boolean alive) {
-                        this.alive = alive;
-                    }
-
-                    /**
-                     * Returns {@code true} if this resolution is alive.
-                     *
-                     * @return {@code true} if this resolution is alive.
-                     */
-                    protected boolean isAlive() {
-                        return alive;
-                    }
-                }
-
-                /**
-                 * A resolution that can be decorated by a transformer.
-                 */
-                interface Decoratable extends Resolution {
-
-                    /**
-                     * Appends the supplied transformer to this resolution.
-                     *
-                     * @param transformer The transformer to append to the transformer that is represented bz this instance.
-                     * @return A new resolution with the supplied transformer appended to this transformer.
-                     */
-                    Resolution append(Transformer transformer);
-                }
-
-                /**
-                 * A canonical implementation of a non-resolved resolution.
-                 */
-                @HashCodeAndEqualsPlugin.Enhance
-                class Unresolved implements Resolution {
-
-                    /**
-                     * The type that is not transformed.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * The unresolved type's class loader.
-                     */
-                    private final ClassLoader classLoader;
-
-                    /**
-                     * The non-transformed type's module or {@code null} if the current VM does not support modules.
-                     */
-                    private final JavaModule module;
-
-                    /**
-                     * {@code true} if the type is already loaded.
-                     */
-                    private final boolean loaded;
-
-                    /**
-                     * Creates a new unresolved resolution.
-                     *
-                     * @param typeDescription The type that is not transformed.
-                     * @param classLoader     The unresolved type's class loader.
-                     * @param module          The non-transformed type's module or {@code null} if the current VM does not support modules.
-                     * @param loaded          {@code true} if the type is already loaded.
-                     */
-                    protected Unresolved(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded) {
-                        this.typeDescription = typeDescription;
-                        this.classLoader = classLoader;
-                        this.module = module;
-                        this.loaded = loaded;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Sort getSort() {
-                        return Sort.UNDEFINED;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Resolution asDecoratorOf(Resolution resolution) {
-                        return resolution;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Resolution prepend(Decoratable resolution) {
-                        return resolution;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public byte[] apply(InitializationStrategy initializationStrategy,
-                                        ClassFileLocator classFileLocator,
-                                        TypeStrategy typeStrategy,
-                                        ByteBuddy byteBuddy,
-                                        NativeMethodStrategy methodNameTransformer,
-                                        InjectionStrategy injectionStrategy,
-                                        AccessControlContext accessControlContext,
-                                        Listener listener) {
-                        listener.onIgnored(typeDescription, classLoader, module, loaded);
-                        return NO_TRANSFORMATION;
-                    }
-                }
+            protected Transformation(RawMatcher matcher, List<Transformer> transformers, boolean terminal) {
+                this.matcher = matcher;
+                this.transformers = transformers;
+                this.terminal = terminal;
             }
 
             /**
-             * A transformation that does not attempt to transform any type.
+             * Returns the matcher to identify types for transformation.
+             *
+             * @return The matcher to identify types for transformation.
              */
-            enum Ignored implements Transformation {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean matches(TypeDescription typeDescription,
-                                       ClassLoader classLoader,
-                                       JavaModule module,
-                                       Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain) {
-                    return false;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Resolution resolve(TypeDescription typeDescription,
-                                          ClassLoader classLoader,
-                                          JavaModule module,
-                                          Class<?> classBeingRedefined,
-                                          boolean loaded,
-                                          ProtectionDomain protectionDomain,
-                                          TypePool typePool) {
-                    return new Resolution.Unresolved(typeDescription, classLoader, module, loaded);
-                }
+            protected RawMatcher getMatcher() {
+                return matcher;
             }
 
             /**
-             * A simple, active transformation.
+             * Returns a list of transformers to apply.
+             *
+             * @return A list of transformers to apply.
+             */
+            protected List<Transformer> getTransformers() {
+                return transformers;
+            }
+
+            /**
+             * Returns {@code true} if this transformation is terminal.
+             *
+             * @return {@code true} if this transformation is terminal.
+             */
+            protected boolean isTerminal() {
+                return terminal;
+            }
+
+            /**
+             * A matcher that matches any type that is touched by a transformer without being ignored.
              */
             @HashCodeAndEqualsPlugin.Enhance
-            class Simple implements Transformation {
+            protected static class SimpleMatcher implements RawMatcher {
 
                 /**
-                 * The raw matcher that is represented by this transformation.
+                 * Identifies types that should not be instrumented.
                  */
-                private final RawMatcher rawMatcher;
+                private final RawMatcher ignoreMatcher;
 
                 /**
-                 * The transformer that is represented by this transformation.
-                 */
-                private final Transformer transformer;
-
-                /**
-                 * {@code true} if this transformer serves as a decorator.
-                 */
-                private final boolean decorator;
-
-                /**
-                 * Creates a new transformation.
-                 *
-                 * @param rawMatcher  The raw matcher that is represented by this transformation.
-                 * @param transformer The transformer that is represented by this transformation.
-                 * @param decorator   {@code true} if this transformer serves as a decorator.
-                 */
-                protected Simple(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
-                    this.rawMatcher = rawMatcher;
-                    this.transformer = transformer;
-                    this.decorator = decorator;
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public boolean matches(TypeDescription typeDescription,
-                                       ClassLoader classLoader,
-                                       JavaModule module,
-                                       Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain) {
-                    return rawMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public Transformation.Resolution resolve(TypeDescription typeDescription,
-                                                         ClassLoader classLoader,
-                                                         JavaModule module,
-                                                         Class<?> classBeingRedefined,
-                                                         boolean loaded,
-                                                         ProtectionDomain protectionDomain,
-                                                         TypePool typePool) {
-                    return matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                            ? new Resolution(typeDescription, classLoader, module, protectionDomain, loaded, typePool, transformer, decorator)
-                            : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module, loaded);
-                }
-
-                /**
-                 * A resolution that performs a type transformation.
-                 */
-                @HashCodeAndEqualsPlugin.Enhance
-                protected static class Resolution implements Transformation.Resolution.Decoratable {
-
-                    /**
-                     * A description of the transformed type.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * The class loader of the transformed type.
-                     */
-                    private final ClassLoader classLoader;
-
-                    /**
-                     * The transformed type's module or {@code null} if the current VM does not support modules.
-                     */
-                    private final JavaModule module;
-
-                    /**
-                     * The protection domain of the transformed type.
-                     */
-                    private final ProtectionDomain protectionDomain;
-
-                    /**
-                     * {@code true} if the transformed type is already loaded.
-                     */
-                    private final boolean loaded;
-
-                    /**
-                     * The type pool to apply during type creation.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The transformer to be applied.
-                     */
-                    private final Transformer transformer;
-
-                    /**
-                     * {@code true} if this transformer serves as a decorator.
-                     */
-                    private final boolean decorator;
-
-                    /**
-                     * Creates a new active transformation.
-                     *
-                     * @param typeDescription  A description of the transformed type.
-                     * @param classLoader      The class loader of the transformed type.
-                     * @param module           The transformed type's module or {@code null} if the current VM does not support modules.
-                     * @param protectionDomain The protection domain of the transformed type.
-                     * @param loaded           {@code true} if the transformed type is already loaded.
-                     * @param typePool         The type pool to apply during type creation.
-                     * @param transformer      The transformer to be applied.
-                     * @param decorator        {@code true} if this transformer serves as a decorator.
-                     */
-                    protected Resolution(TypeDescription typeDescription,
-                                         ClassLoader classLoader,
-                                         JavaModule module,
-                                         ProtectionDomain protectionDomain,
-                                         boolean loaded,
-                                         TypePool typePool,
-                                         Transformer transformer,
-                                         boolean decorator) {
-                        this.typeDescription = typeDescription;
-                        this.classLoader = classLoader;
-                        this.module = module;
-                        this.protectionDomain = protectionDomain;
-                        this.loaded = loaded;
-                        this.typePool = typePool;
-                        this.transformer = transformer;
-                        this.decorator = decorator;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Sort getSort() {
-                        return decorator
-                                ? Sort.DECORATOR
-                                : Sort.TERMINAL;
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Transformation.Resolution asDecoratorOf(Transformation.Resolution resolution) {
-                        return resolution.prepend(this);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Transformation.Resolution prepend(Decoratable resolution) {
-                        return resolution.append(transformer);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public Transformation.Resolution append(Transformer transformer) {
-                        return new Resolution(typeDescription,
-                                classLoader,
-                                module,
-                                protectionDomain,
-                                loaded,
-                                typePool,
-                                new Transformer.Compound(this.transformer, transformer),
-                                decorator);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public byte[] apply(InitializationStrategy initializationStrategy,
-                                        ClassFileLocator classFileLocator,
-                                        TypeStrategy typeStrategy,
-                                        ByteBuddy byteBuddy,
-                                        NativeMethodStrategy methodNameTransformer,
-                                        InjectionStrategy injectionStrategy,
-                                        AccessControlContext accessControlContext,
-                                        Listener listener) {
-                        InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
-                        DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
-                                byteBuddy,
-                                classFileLocator,
-                                methodNameTransformer.resolve(),
-                                classLoader,
-                                module,
-                                protectionDomain), typeDescription, classLoader, module)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
-                        dispatcher.register(dynamicType, classLoader, protectionDomain, injectionStrategy);
-                        listener.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
-                        return dynamicType.getBytes();
-                    }
-                }
-            }
-
-            /**
-             * A compound transformation that applied several transformation in the given order and applies the first active transformation.
-             */
-            @HashCodeAndEqualsPlugin.Enhance
-            class Compound implements Transformation {
-
-                /**
-                 * The list of transformations to apply in their application order.
+                 * The transformations to apply on non-ignored types.
                  */
                 private final List<Transformation> transformations;
 
                 /**
-                 * Creates a new compound transformation.
+                 * Creates a new simple matcher.
                  *
-                 * @param transformation An array of transformations to apply in their application order.
+                 * @param ignoreMatcher   Identifies types that should not be instrumented.
+                 * @param transformations The transformations to apply on non-ignored types.
                  */
-                protected Compound(Transformation... transformation) {
-                    this(Arrays.asList(transformation));
-                }
-
-                /**
-                 * Creates a new compound transformation.
-                 *
-                 * @param transformations A list of transformations to apply in their application order.
-                 */
-                protected Compound(List<? extends Transformation> transformations) {
-                    this.transformations = new ArrayList<Transformation>();
-                    for (Transformation transformation : transformations) {
-                        if (transformation instanceof Compound) {
-                            this.transformations.addAll(((Compound) transformation).transformations);
-                        } else if (!(transformation instanceof Ignored)) {
-                            this.transformations.add(transformation);
-                        }
-                    }
+                protected SimpleMatcher(RawMatcher ignoreMatcher, List<Transformation> transformations) {
+                    this.ignoreMatcher = ignoreMatcher;
+                    this.transformations = transformations;
                 }
 
                 /**
@@ -10172,46 +9846,178 @@ public interface AgentBuilder {
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain) {
+                    if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        return false;
+                    }
                     for (Transformation transformation : transformations) {
-                        if (transformation.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                             return true;
                         }
                     }
                     return false;
                 }
+            }
+
+            /**
+             * A matcher that considers the differential of two transformers' transformations.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            protected static class DifferentialMatcher implements RawMatcher {
+
+                /**
+                 * Identifies types that should not be instrumented.
+                 */
+                private final RawMatcher ignoreMatcher;
+
+                /**
+                 * The transformations to apply on non-ignored types.
+                 */
+                private final List<Transformation> transformations;
+
+                /**
+                 * The class file transformer representing the differential.
+                 */
+                private final ResettableClassFileTransformer classFileTransformer;
+
+                /**
+                 * Creates a new differential matcher.
+                 *
+                 * @param ignoreMatcher        Identifies types that should not be instrumented.
+                 * @param transformations      The transformations to apply on non-ignored types.
+                 * @param classFileTransformer The class file transformer representing the differential.
+                 */
+                protected DifferentialMatcher(RawMatcher ignoreMatcher,
+                                              List<Transformation> transformations,
+                                              ResettableClassFileTransformer classFileTransformer) {
+                    this.ignoreMatcher = ignoreMatcher;
+                    this.transformations = transformations;
+                    this.classFileTransformer = classFileTransformer;
+                }
 
                 /**
                  * {@inheritDoc}
                  */
-                public Resolution resolve(TypeDescription typeDescription,
-                                          ClassLoader classLoader,
-                                          JavaModule module,
-                                          Class<?> classBeingRedefined,
-                                          boolean loaded,
-                                          ProtectionDomain protectionDomain,
-                                          TypePool typePool) {
-                    Resolution current = new Resolution.Unresolved(typeDescription, classLoader, module, classBeingRedefined != null);
+                public boolean matches(TypeDescription typeDescription,
+                                       ClassLoader classLoader,
+                                       JavaModule module,
+                                       Class<?> classBeingRedefined,
+                                       ProtectionDomain protectionDomain) {
+                    Iterator<Transformer> iterator = classFileTransformer.iterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                    if (ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        return iterator.hasNext();
+                    }
                     for (Transformation transformation : transformations) {
-                        Resolution resolution = transformation.resolve(typeDescription,
-                                classLoader,
-                                module,
-                                classBeingRedefined,
-                                loaded,
-                                protectionDomain,
-                                typePool);
-                        switch (resolution.getSort()) {
-                            case TERMINAL:
-                                return current.asDecoratorOf(resolution);
-                            case DECORATOR:
-                                current = current.asDecoratorOf(resolution);
-                                break;
-                            case UNDEFINED:
-                                break;
-                            default:
-                                throw new IllegalStateException("Unexpected resolution type: " + resolution.getSort());
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            for (Transformer transformer : transformation.getTransformers()) {
+                                if (!iterator.hasNext() || !iterator.next().equals(transformer)) {
+                                    return true;
+                                }
+                            }
                         }
                     }
-                    return current;
+                    return iterator.hasNext();
+                }
+            }
+
+            /**
+             * An iterator over a list of transformations that match a raw matcher specification.
+             */
+            protected static class TransformerIterator implements Iterator<Transformer> {
+
+                /**
+                 * A description of the matched type.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * The type's class loader.
+                 */
+                private final ClassLoader classLoader;
+
+                /**
+                 * The type's module.
+                 */
+                private final JavaModule module;
+
+                /**
+                 * The class being redefined or {@code null} if the type was not previously loaded.
+                 */
+                private final Class<?> classBeingRedefined;
+
+                /**
+                 * The type's protection domain.
+                 */
+                private final ProtectionDomain protectionDomain;
+
+                /**
+                 * An iterator over the remaining transformations that were not yet considered.
+                 */
+                private final Iterator<Transformation> transformations;
+
+                /**
+                 * An iterator over the currently matched transformers.
+                 */
+                private Iterator<Transformer> transformers;
+
+                /**
+                 * Creates a new iterator.
+                 *
+                 * @param typeDescription     A description of the matched type.
+                 * @param classLoader         The type's class loader.
+                 * @param module              The type's module.
+                 * @param classBeingRedefined The class being redefined or {@code null} if the type was not previously loaded.
+                 * @param protectionDomain    The type's protection domain.
+                 * @param transformations     The matched transformations.
+                 */
+                protected TransformerIterator(TypeDescription typeDescription,
+                                              ClassLoader classLoader,
+                                              JavaModule module,
+                                              Class<?> classBeingRedefined,
+                                              ProtectionDomain protectionDomain,
+                                              List<Transformation> transformations) {
+                    this.typeDescription = typeDescription;
+                    this.classLoader = classLoader;
+                    this.module = module;
+                    this.classBeingRedefined = classBeingRedefined;
+                    this.protectionDomain = protectionDomain;
+                    this.transformations = transformations.iterator();
+                    transformers = Collections.<Transformer>emptySet().iterator();
+                    while (!transformers.hasNext() && this.transformations.hasNext()) {
+                        Transformation transformation = this.transformations.next();
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            transformers = transformation.getTransformers().iterator();
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean hasNext() {
+                    return transformers.hasNext();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Transformer next() {
+                    try {
+                        return transformers.next();
+                    } finally {
+                        while (!transformers.hasNext() && transformations.hasNext()) {
+                            Transformation transformation = transformations.next();
+                            if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                                transformers = transformation.getTransformers().iterator();
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void remove() {
+                    throw new UnsupportedOperationException("remove");
                 }
             }
         }
@@ -10295,12 +10101,12 @@ public interface AgentBuilder {
             /**
              * Identifies types that should not be instrumented.
              */
-            private final RawMatcher ignoredTypeMatcher;
+            private final RawMatcher ignoreMatcher;
 
             /**
-             * The transformation object for handling type transformations.
+             * The transformations to apply on non-ignored types.
              */
-            private final Transformation transformation;
+            private final List<Transformation> transformations;
 
             /**
              * A lock that prevents circular class transformations.
@@ -10328,8 +10134,8 @@ public interface AgentBuilder {
              * @param fallbackStrategy              The fallback strategy to use.
              * @param installationListener          The installation listener to notify.
              * @param classFileBufferStrategy       The class file buffer strategy to use.
-             * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
-             * @param transformation                The transformation object for handling type transformations.
+             * @param ignoreMatcher                 Identifies types that should not be instrumented.
+             * @param transformations               The transformations to apply on non-ignored types.
              * @param circularityLock               The circularity lock to use.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
@@ -10345,8 +10151,8 @@ public interface AgentBuilder {
                                         FallbackStrategy fallbackStrategy,
                                         ClassFileBufferStrategy classFileBufferStrategy,
                                         InstallationListener installationListener,
-                                        RawMatcher ignoredTypeMatcher,
-                                        Transformation transformation,
+                                        RawMatcher ignoreMatcher,
+                                        List<Transformation> transformations,
                                         CircularityLock circularityLock) {
                 this.byteBuddy = byteBuddy;
                 this.typeStrategy = typeStrategy;
@@ -10361,8 +10167,8 @@ public interface AgentBuilder {
                 this.fallbackStrategy = fallbackStrategy;
                 this.classFileBufferStrategy = classFileBufferStrategy;
                 this.installationListener = installationListener;
-                this.ignoredTypeMatcher = ignoredTypeMatcher;
-                this.transformation = transformation;
+                this.ignoreMatcher = ignoreMatcher;
+                this.transformations = transformations;
                 this.circularityLock = circularityLock;
                 accessControlContext = AccessController.getContext();
             }
@@ -10491,40 +10297,50 @@ public interface AgentBuilder {
                                        ProtectionDomain protectionDomain,
                                        TypePool typePool,
                                        ClassFileLocator classFileLocator) {
-                return resolve(module, classLoader, typeName, classBeingRedefined, loaded, protectionDomain, typePool).apply(initializationStrategy,
-                        classFileLocator,
-                        typeStrategy,
+                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool, circularityLock, classLoader, module);
+                List<Transformer> transformers = new ArrayList<Transformer>();
+                if (!ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                    for (Transformation transformation : transformations) {
+                        if (transformation.getMatcher().matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                            transformers.addAll(transformation.getTransformers());
+                            if (transformation.isTerminal()) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (transformers.isEmpty()) {
+                    listener.onIgnored(typeDescription, classLoader, module, loaded);
+                    return Transformation.NONE;
+                }
+                DynamicType.Builder<?> builder = typeStrategy.builder(typeDescription,
                         byteBuddy,
-                        nativeMethodStrategy,
-                        injectionStrategy,
-                        accessControlContext,
-                        listener);
+                        classFileLocator,
+                        nativeMethodStrategy.resolve(),
+                        classLoader,
+                        module,
+                        protectionDomain);
+                InitializationStrategy.Dispatcher dispatcher = initializationStrategy.dispatcher();
+                for (Transformer transformer : transformers) {
+                    builder = transformer.transform(builder, typeDescription, classLoader, module);
+                }
+                DynamicType.Unloaded<?> dynamicType = dispatcher.apply(builder).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
+                dispatcher.register(dynamicType, classLoader, protectionDomain, injectionStrategy);
+                listener.onTransformation(typeDescription, classLoader, module, loaded, dynamicType);
+                return dynamicType.getBytes();
             }
 
-
             /**
-             * Resolves the transformation and assures it is not ignored.
-             *
-             * @param module              The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
-             * @param classLoader         The instrumented class's class loader.
-             * @param typeName            The binary name of the instrumented class.
-             * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
-             * @param loaded              {@code true} if the instrumented type is loaded.
-             * @param protectionDomain    The instrumented type's protection domain.
-             * @param typePool            The type pool to use.
-             * @return The resolution for the transformation.
+             * {@inheritDoc}
              */
-            private Transformation.Resolution resolve(JavaModule module,
-                                                      ClassLoader classLoader,
-                                                      String typeName,
-                                                      Class<?> classBeingRedefined,
-                                                      boolean loaded,
-                                                      ProtectionDomain protectionDomain,
-                                                      TypePool typePool) {
-                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool, circularityLock, classLoader, module);
-                return ignoredTypeMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                        ? new Transformation.Resolution.Unresolved(typeDescription, classLoader, module, loaded)
-                        : transformation.resolve(typeDescription, classLoader, module, classBeingRedefined, loaded, protectionDomain, typePool);
+            public Iterator<Transformer> iterator(TypeDescription typeDescription,
+                                                  ClassLoader classLoader,
+                                                  JavaModule module,
+                                                  Class<?> classBeingRedefined,
+                                                  ProtectionDomain protectionDomain) {
+                return ignoreMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                        ? Collections.<Transformer>emptySet().iterator()
+                        : new Transformation.TransformerIterator(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, transformations);
             }
 
             /**
@@ -10548,8 +10364,7 @@ public interface AgentBuilder {
                             lambdaInstrumentationStrategy,
                             descriptionStrategy,
                             fallbackStrategy,
-                            transformation,
-                            ignoredTypeMatcher);
+                            new Transformation.SimpleMatcher(ignoreMatcher, transformations));
                     installationListener.onReset(instrumentation, classFileTransformer);
                     return true;
                 } else {
@@ -10580,8 +10395,8 @@ public interface AgentBuilder {
                  * @param fallbackStrategy              The fallback strategy to use.
                  * @param classFileBufferStrategy       The class file buffer strategy to use.
                  * @param installationListener          The installation listener to notify.
-                 * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
-                 * @param transformation                The transformation object for handling type transformations.
+                 * @param ignoreMatcher                 Identifies types that should not be instrumented.
+                 * @param transformations               The transformations to apply on non-ignored types.
                  * @param circularityLock               The circularity lock to use.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
@@ -10598,8 +10413,8 @@ public interface AgentBuilder {
                                                     FallbackStrategy fallbackStrategy,
                                                     ClassFileBufferStrategy classFileBufferStrategy,
                                                     InstallationListener installationListener,
-                                                    RawMatcher ignoredTypeMatcher,
-                                                    Transformation transformation,
+                                                    RawMatcher ignoreMatcher,
+                                                    List<Transformation> transformations,
                                                     CircularityLock circularityLock);
 
                 /**
@@ -10648,7 +10463,7 @@ public interface AgentBuilder {
                                             ClassFileBufferStrategy.class,
                                             InstallationListener.class,
                                             RawMatcher.class,
-                                            Transformation.class,
+                                            List.class,
                                             CircularityLock.class));
                         } catch (Exception ignored) {
                             return Factory.ForLegacyVm.INSTANCE;
@@ -10695,8 +10510,8 @@ public interface AgentBuilder {
                                                                FallbackStrategy fallbackStrategy,
                                                                ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
-                                                               RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation,
+                                                               RawMatcher ignoreMatcher,
+                                                               List<Transformation> transformations,
                                                                CircularityLock circularityLock) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
@@ -10712,8 +10527,8 @@ public interface AgentBuilder {
                                     fallbackStrategy,
                                     classFileBufferStrategy,
                                     installationListener,
-                                    ignoredTypeMatcher,
-                                    transformation,
+                                    ignoreMatcher,
+                                    transformations,
                                     circularityLock);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access " + executingTransformer, exception);
@@ -10751,8 +10566,8 @@ public interface AgentBuilder {
                                                                FallbackStrategy fallbackStrategy,
                                                                ClassFileBufferStrategy classFileBufferStrategy,
                                                                InstallationListener installationListener,
-                                                               RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation,
+                                                               RawMatcher ignoreMatcher,
+                                                               List<Transformation> transformations,
                                                                CircularityLock circularityLock) {
                         return new ExecutingTransformer(byteBuddy,
                                 listener,
@@ -10767,8 +10582,8 @@ public interface AgentBuilder {
                                 fallbackStrategy,
                                 classFileBufferStrategy,
                                 installationListener,
-                                ignoredTypeMatcher,
-                                transformation,
+                                ignoreMatcher,
+                                transformations,
                                 circularityLock);
                     }
                 }
@@ -11029,6 +10844,13 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
+            public AgentBuilder with(TransformerDecorator transformerDecorator) {
+                return materialize().with(transformerDecorator);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public AgentBuilder enableNativeMethodPrefix(String prefix) {
                 return materialize().enableNativeMethodPrefix(prefix);
             }
@@ -11167,13 +10989,6 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ResettableClassFileTransformer installOn(Instrumentation instrumentation, TransformerDecorator transformerDecorator) {
-                return materialize().installOn(instrumentation, transformerDecorator);
-            }
-
-            /**
-             * {@inheritDoc}
-             */
             public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
             }
@@ -11181,8 +10996,15 @@ public interface AgentBuilder {
             /**
              * {@inheritDoc}
              */
-            public ResettableClassFileTransformer installOnByteBuddyAgent(TransformerDecorator transformerDecorator) {
-                return materialize().installOnByteBuddyAgent(transformerDecorator);
+            public ResettableClassFileTransformer patchOn(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                return materialize().patchOn(instrumentation, classFileTransformer);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public ResettableClassFileTransformer patchOnByteBuddyAgent(ResettableClassFileTransformer classFileTransformer) {
+                return materialize().patchOnByteBuddyAgent(classFileTransformer);
             }
         }
 
@@ -11215,6 +11037,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11228,7 +11051,7 @@ public interface AgentBuilder {
                         classFileBufferStrategy,
                         installationListener,
                         rawMatcher,
-                        transformation);
+                        transformations);
             }
 
             /**
@@ -11261,6 +11084,7 @@ public interface AgentBuilder {
              * @param typeStrategy                     The definition handler to use.
              * @param locationStrategy                 The location strategy to use.
              * @param nativeMethodStrategy             The native method strategy to apply.
+             * @param transformerDecorator             A decorator to wrap the created class file transformer.
              * @param initializationStrategy           The initialization strategy to use for transformed types.
              * @param redefinitionStrategy             The redefinition strategy to apply.
              * @param redefinitionDiscoveryStrategy    The discovery strategy for loaded types to be redefined.
@@ -11274,8 +11098,8 @@ public interface AgentBuilder {
              * @param fallbackStrategy                 The fallback strategy to apply.
              * @param classFileBufferStrategy          The class file buffer strategy to use.
              * @param installationListener             The installation listener to notify.
-             * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
-             * @param transformation                   The transformation object for handling type transformations.
+             * @param ignoreMatcher                    Identifies types that should not be instrumented.
+             * @param transformations                  The transformations to apply on non-ignored types.
              */
             protected Redefining(ByteBuddy byteBuddy,
                                  Listener listener,
@@ -11284,6 +11108,7 @@ public interface AgentBuilder {
                                  TypeStrategy typeStrategy,
                                  LocationStrategy locationStrategy,
                                  NativeMethodStrategy nativeMethodStrategy,
+                                 TransformerDecorator transformerDecorator,
                                  InitializationStrategy initializationStrategy,
                                  RedefinitionStrategy redefinitionStrategy,
                                  RedefinitionStrategy.DiscoveryStrategy redefinitionDiscoveryStrategy,
@@ -11296,8 +11121,8 @@ public interface AgentBuilder {
                                  FallbackStrategy fallbackStrategy,
                                  ClassFileBufferStrategy classFileBufferStrategy,
                                  InstallationListener installationListener,
-                                 RawMatcher ignoredTypeMatcher,
-                                 Transformation transformation) {
+                                 RawMatcher ignoreMatcher,
+                                 List<Transformation> transformations) {
                 super(byteBuddy,
                         listener,
                         circularityLock,
@@ -11305,6 +11130,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11317,8 +11143,8 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        transformation);
+                        ignoreMatcher,
+                        transformations);
             }
 
             /**
@@ -11335,6 +11161,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11347,8 +11174,8 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        transformation);
+                        ignoreMatcher,
+                        transformations);
             }
 
             /**
@@ -11372,6 +11199,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11384,8 +11212,8 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        transformation);
+                        ignoreMatcher,
+                        transformations);
             }
 
             /**
@@ -11402,6 +11230,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11414,8 +11243,8 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        transformation);
+                        ignoreMatcher,
+                        transformations);
             }
 
             /**
@@ -11439,6 +11268,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11451,8 +11281,8 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        transformation);
+                        ignoreMatcher,
+                        transformations);
             }
         }
 
@@ -11472,24 +11302,24 @@ public interface AgentBuilder {
             /**
              * The supplied transformer.
              */
-            private final Transformer transformer;
+            private final List<Transformer> transformers;
 
             /**
-             * {@code true} if this transformer serves as a decorator.
+             * {@code true} if this transformer is a terminal transformation.
              */
-            private final boolean decorator;
+            private final boolean terminal;
 
             /**
              * Creates a new matched default agent builder.
              *
-             * @param rawMatcher  The supplied raw matcher.
-             * @param transformer The supplied transformer.
-             * @param decorator   {@code true} if this transformer serves as a decorator.
+             * @param rawMatcher   The supplied raw matcher.
+             * @param transformers The transformers to apply.
+             * @param terminal     {@code true} if this transformer is a terminal transformation.
              */
-            protected Transforming(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
+            protected Transforming(RawMatcher rawMatcher, List<Transformer> transformers, boolean terminal) {
                 this.rawMatcher = rawMatcher;
-                this.transformer = transformer;
-                this.decorator = decorator;
+                this.transformers = transformers;
+                this.terminal = terminal;
             }
 
             @Override
@@ -11501,6 +11331,7 @@ public interface AgentBuilder {
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
+                        transformerDecorator,
                         initializationStrategy,
                         redefinitionStrategy,
                         redefinitionDiscoveryStrategy,
@@ -11513,36 +11344,36 @@ public interface AgentBuilder {
                         fallbackStrategy,
                         classFileBufferStrategy,
                         installationListener,
-                        ignoredTypeMatcher,
-                        new Transformation.Compound(transformation, new Transformation.Simple(rawMatcher, transformer, decorator)));
+                        ignoreMatcher,
+                        CompoundList.of(transformations, new Transformation(rawMatcher, transformers, terminal)));
             }
 
             /**
              * {@inheritDoc}
              */
             public Identified.Extendable transform(Transformer transformer) {
-                return new Transforming(rawMatcher, new Transformer.Compound(this.transformer, transformer), decorator);
+                return new Transforming(rawMatcher, CompoundList.of(this.transformers, transformer), terminal);
             }
 
             /**
              * {@inheritDoc}
              */
             public AgentBuilder asTerminalTransformation() {
-                return new Transforming(rawMatcher, transformer, false);
+                return new Transforming(rawMatcher, transformers, true);
             }
 
             /**
              * {@inheritDoc}
              */
             public Narrowable and(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformer, decorator);
+                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformers, terminal);
             }
 
             /**
              * {@inheritDoc}
              */
             public Narrowable or(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer, decorator);
+                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformers, terminal);
             }
         }
     }
