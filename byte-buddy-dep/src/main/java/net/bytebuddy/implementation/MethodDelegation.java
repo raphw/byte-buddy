@@ -410,6 +410,70 @@ public class MethodDelegation implements Implementation.Composable {
     }
 
     /**
+     * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+     * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+     * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+     * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+     * a delegation target if the delegation is targeting the instrumented type.
+     *
+     * @param target         The target instance for the delegation.
+     * @param typeDefinition The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+     * @return A method delegation that redirects method calls to a static method of the supplied type.
+     */
+    public static MethodDelegation to(Object target, TypeDefinition typeDefinition) {
+        return withDefaultConfiguration().to(target, typeDefinition);
+    }
+
+    /**
+     * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+     * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+     * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+     * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+     * a delegation target if the delegation is targeting the instrumented type.
+     *
+     * @param target              The target instance for the delegation.
+     * @param typeDefinition      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A method delegation that redirects method calls to a static method of the supplied type.
+     */
+    public static MethodDelegation to(Object target, TypeDefinition typeDefinition, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, typeDefinition, methodGraphCompiler);
+    }
+
+    /**
+     * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+     * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+     * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+     * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+     * a delegation target if the delegation is targeting the instrumented type.
+     *
+     * @param target         The target instance for the delegation.
+     * @param typeDefinition The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+     * @param fieldName      The name of the field that is holding the {@code target} instance.
+     * @return A method delegation that redirects method calls to a static method of the supplied type.
+     */
+    public static MethodDelegation to(Object target, TypeDefinition typeDefinition, String fieldName) {
+        return withDefaultConfiguration().to(target, typeDefinition, fieldName);
+    }
+
+    /**
+     * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+     * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+     * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+     * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+     * a delegation target if the delegation is targeting the instrumented type.
+     *
+     * @param target              The target instance for the delegation.
+     * @param typeDefinition      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+     * @param fieldName           The name of the field that is holding the {@code target} instance.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A method delegation that redirects method calls to a static method of the supplied type.
+     */
+    public static MethodDelegation to(Object target, TypeDefinition typeDefinition, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, typeDefinition, fieldName, methodGraphCompiler);
+    }
+
+    /**
      * Delegates any intercepted method to invoke a constructor of the supplied type. To be considered a valid delegation target,
      * a constructor must be visible and accessible to the instrumented type. This is the case if the constructor's declaring type is
      * either public or in the same package as the instrumented type and if the constructor is either public or non-private and in
@@ -1567,16 +1631,82 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A method delegation that redirects method calls to a static method of the supplied type.
          */
         public MethodDelegation to(Object target, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-            TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);
-            if (!typeDescription.asErasure().isInstance(target)) {
-                throw new IllegalArgumentException(target + " is not an instance of " + type);
+            return to(target, TypeDefinition.Sort.describe(type), fieldName, methodGraphCompiler);
+        }
+
+        /**
+         * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+         * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+         * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+         * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+         * a delegation target if the delegation is targeting the instrumented type.
+         *
+         * @param target         The target instance for the delegation.
+         * @param typeDefinition The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         */
+        public MethodDelegation to(Object target, TypeDefinition typeDefinition) {
+            return to(target, typeDefinition, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+         * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+         * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+         * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+         * a delegation target if the delegation is targeting the instrumented type.
+         *
+         * @param target              The target instance for the delegation.
+         * @param typeDefinition      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+         * @param methodGraphCompiler The method graph compiler to use.
+         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         */
+        public MethodDelegation to(Object target, TypeDefinition typeDefinition, MethodGraph.Compiler methodGraphCompiler) {
+            return to(target,
+                    typeDefinition,
+                    ImplementationDelegate.FIELD_NAME_PREFIX + "$" + RandomString.hashOf(target.hashCode()),
+                    methodGraphCompiler);
+        }
+
+        /**
+         * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+         * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+         * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+         * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+         * a delegation target if the delegation is targeting the instrumented type.
+         *
+         * @param target         The target instance for the delegation.
+         * @param typeDefinition The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+         * @param fieldName      The name of the field that is holding the {@code target} instance.
+         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         */
+        public MethodDelegation to(Object target, TypeDefinition typeDefinition, String fieldName) {
+            return to(target, typeDefinition, fieldName, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Delegates any intercepted method to invoke a non-{@code static} method that is declared by the supplied type's instance or any
+         * of its super types. To be considered a valid delegation target, a method must be visible and accessible to the instrumented type.
+         * This is the case if the method's declaring type is either public or in the same package as the instrumented type and if the method
+         * is either public or non-private and in the same package as the instrumented type. Private methods can only be used as
+         * a delegation target if the delegation is targeting the instrumented type.
+         *
+         * @param target              The target instance for the delegation.
+         * @param typeDefinition      The most specific type of which {@code target} should be considered. Must be a super type of the target's actual type.
+         * @param fieldName           The name of the field that is holding the {@code target} instance.
+         * @param methodGraphCompiler The method graph compiler to use.
+         * @return A method delegation that redirects method calls to a static method of the supplied type.
+         */
+        public MethodDelegation to(Object target, TypeDefinition typeDefinition, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+            if (!typeDefinition.asErasure().isInstance(target)) {
+                throw new IllegalArgumentException(target + " is not an instance of " + typeDefinition);
             }
             return new MethodDelegation(new ImplementationDelegate.ForField.WithInstance(fieldName,
                     methodGraphCompiler,
                     parameterBinders,
                     matcher,
                     target,
-                    typeDescription), parameterBinders, ambiguityResolver, bindingResolver);
+                    typeDefinition.asGenericType()), parameterBinders, ambiguityResolver, bindingResolver);
         }
 
         /**
