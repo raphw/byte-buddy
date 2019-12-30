@@ -109,7 +109,7 @@ public interface LoadedTypeInitializer {
          * @param fieldName the name of the field.
          * @param value     The value to be set.
          */
-        protected ForStaticField(String fieldName, Object value) {
+        public ForStaticField(String fieldName, Object value) {
             this.fieldName = fieldName;
             this.value = value;
         }
