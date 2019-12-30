@@ -60,6 +60,11 @@ import java.util.jar.*;
 public class ByteBuddyAgent {
 
     /**
+     * Indicates that the agent should not resolve it's own code location for a self-attachment.
+     */
+    public static final String LATENT_RESOLVE = "net.bytebuddy.agent.latent";
+
+    /**
      * The manifest property specifying the agent class.
      */
     private static final String AGENT_CLASS_PROPERTY = "Agent-Class";
@@ -686,6 +691,9 @@ public class ByteBuddyAgent {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     private static File trySelfResolve() {
         try {
+            if (Boolean.getBoolean(LATENT_RESOLVE)) {
+                return CANNOT_SELF_RESOLVE;
+            }
             ProtectionDomain protectionDomain = Attacher.class.getProtectionDomain();
             if (protectionDomain == null) {
                 return CANNOT_SELF_RESOLVE;
@@ -1397,6 +1405,9 @@ public class ByteBuddyAgent {
              */
             private static File trySelfResolve() throws IOException {
                 ProtectionDomain protectionDomain = Installer.class.getProtectionDomain();
+                if (Boolean.getBoolean(LATENT_RESOLVE)) {
+                    return CANNOT_SELF_RESOLVE;
+                }
                 if (protectionDomain == null) {
                     return CANNOT_SELF_RESOLVE;
                 }
