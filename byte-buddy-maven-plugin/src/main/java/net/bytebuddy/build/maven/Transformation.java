@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2019 Rafael Winterhalter
+ * Copyright 2014 - 2020 Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.Plugin;
+import org.apache.maven.plugin.MojoExecutionException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.build.Plugin;
-
-import org.apache.maven.plugin.MojoExecutionException;
 
 /**
  * A transformation specification to apply during the plugin's execution.

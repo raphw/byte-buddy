@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 - 2019 Rafael Winterhalter
+ * Copyright 2014 - 2020 Rafael Winterhalter
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -555,7 +555,7 @@ public class EqualsMethod implements Implementation {
         FLOAT {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-                methodVisitor.visitInsn(Opcodes.FCMPL);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "compare", "(FF)I", false);
                 return new Size(-1, 0);
             }
         },
@@ -566,7 +566,7 @@ public class EqualsMethod implements Implementation {
         DOUBLE {
             /** {@inheritDoc} */
             public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-                methodVisitor.visitInsn(Opcodes.DCMPL);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "compare", "(DD)I", false);
                 return new Size(-2, 0);
             }
         },
