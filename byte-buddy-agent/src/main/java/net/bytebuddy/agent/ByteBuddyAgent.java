@@ -661,7 +661,7 @@ public class ByteBuddyAgent {
             for (File jar : externalAttachment.getClassPath()) {
                 classPath.append(File.pathSeparatorChar).append(quote(jar.getCanonicalPath()));
             }
-            if (new ProcessBuilder(System.getProperty(JAVA_HOME)
+            if (new ProcessBuilder(quote(System.getProperty(JAVA_HOME))
                     + File.separatorChar + "bin"
                     + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
                     CLASS_PATH_ARGUMENT,
