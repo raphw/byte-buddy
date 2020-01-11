@@ -3288,6 +3288,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_UPPER_BOUNDS.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS);
                         return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
@@ -3332,6 +3335,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_LOWER_BOUNDS.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
@@ -3373,6 +3379,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_BOUNDS.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement, NO_ARGUMENTS), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
@@ -3462,6 +3471,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement, NO_ARGUMENTS), index);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
@@ -3495,6 +3507,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_GENERIC_COMPONENT_TYPE.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement, NO_ARGUMENTS);
                     } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
@@ -3542,6 +3557,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    if (!GET_ANNOTATED_OWNER_TYPE.getDeclaringClass().isInstance(annotatedElement)) { // Avoid problem with Kotlin compiler.
+                        return NoOp.INSTANCE;
+                    }
                     try {
                         AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement, NO_ARGUMENTS);
                         return annotatedOwnerType == null
