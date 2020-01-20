@@ -129,6 +129,7 @@
                                         <include>org/objectweb/asm/commons/MethodRemapper.class</include>
                                         <include>org/objectweb/asm/commons/ModuleHashesAttribute.class</include>
                                         <include>org/objectweb/asm/commons/ModuleRemapper.class</include>
+                                        <include>org/objectweb/asm/commons/RecordComponentRemapper.class</include>
                                         <include>org/objectweb/asm/commons/Remapper.class</include>
                                         <include>org/objectweb/asm/commons/SignatureRemapper.class</include>
                                         <include>org/objectweb/asm/commons/SimpleRemapper.class</include>
