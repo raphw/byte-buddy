@@ -111,7 +111,7 @@ jobs:
           ref: master
       - name: Consider release
         id: release
-        run: echo "##[set-output name=release;]$(git log --format=%B -n 1 | grep ^\[release\] | wc -l)"
+        run: echo "##[set-output name=release;]$(git log --format=%B -n 1 | grep '^\[release\]' | wc -l)"
       - uses: actions/setup-java@v1
         if: steps.release.outputs.release > 0
         with:
