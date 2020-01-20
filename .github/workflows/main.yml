@@ -22,6 +22,7 @@ jobs:
         run: |
           . ./.github/scripts/install-jdk.sh --feature ea --os linux-x64
           ./mvnw verify -Pjava14 -Dnet.bytebuddy.experimental=true
+        continue-on-error: true
   hotspot-supported:
     name: HotSpot (supported)
     strategy:
