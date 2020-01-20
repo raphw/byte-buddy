@@ -53,7 +53,7 @@ public class OpenedClassReader {
             experimental = false;
         }
         EXPERIMENTAL = experimental;
-        ASM_API = experimental ? (1 << 24 | 8 << 16) : Opcodes.ASM7;
+        ASM_API = Opcodes.ASM7;
     }
 
     /**
