@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. January 2020: version 1.10.7
+
+- Correct discovery of old J9 VMs.
+- Correct invocation of `AgentBuilder.Listener` during retransformation.
+- Allow forbidding self-attachment using own artifact.
+- Add possibility to patch class file transformers.
+- Fix equality check for float and double primitives.
+- Add guards for annotation API to handle buggy reflection API with mandated parameters.
+- Update ASM.
+
 ### 19. December 2019: version 1.10.6
 
 - Add experimental support for Java 15.
