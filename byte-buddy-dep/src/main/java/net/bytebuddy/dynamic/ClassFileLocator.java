@@ -1327,9 +1327,12 @@ public interface ClassFileLocator extends Closeable {
                  */
                 public Dispatcher run() {
                     try {
-                        return new ForJava6CapableVm(Instrumentation.class.getMethod("isRetransformClassesSupported"),
-                                Instrumentation.class.getMethod("addTransformer", ClassFileTransformer.class, boolean.class),
-                                Instrumentation.class.getMethod("retransformClasses", Class[].class));
+                        Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
+                        return new ForJava6CapableVm(instrumentation.getMethod("isRetransformClassesSupported"),
+                                instrumentation.getMethod("addTransformer", ClassFileTransformer.class, boolean.class),
+                                instrumentation.getMethod("retransformClasses", Class[].class));
+                    } catch (ClassNotFoundException ignored) {
+                        return ForLegacyVm.INSTANCE;
                     } catch (NoSuchMethodException ignored) {
                         return ForLegacyVm.INSTANCE;
                     }

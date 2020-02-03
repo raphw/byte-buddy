@@ -2379,8 +2379,11 @@ public interface ClassInjector {
                  */
                 public Dispatcher run() {
                     try {
-                        return new ForJava6CapableVm(Instrumentation.class.getMethod("appendToBootstrapClassLoaderSearch", JarFile.class),
-                                Instrumentation.class.getMethod("appendToSystemClassLoaderSearch", JarFile.class));
+                        Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
+                        return new ForJava6CapableVm(instrumentation.getMethod("appendToBootstrapClassLoaderSearch", JarFile.class),
+                                instrumentation.getMethod("appendToSystemClassLoaderSearch", JarFile.class));
+                    } catch (ClassNotFoundException ignored) {
+                        return ForLegacyVm.INSTANCE;
                     } catch (NoSuchMethodException ignored) {
                         return ForLegacyVm.INSTANCE;
                     }
@@ -2388,7 +2391,7 @@ public interface ClassInjector {
             }
 
             /**
-             * A dispatcher for a legacy VM that is not capable of appending jar files.
+             * A dispatcher for a legacy VM that is not capable of appending jar files using instrumentation.
              */
             enum ForLegacyVm implements Dispatcher {
 

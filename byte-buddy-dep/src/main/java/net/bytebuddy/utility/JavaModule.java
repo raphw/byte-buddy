@@ -342,17 +342,31 @@ public class JavaModule implements NamedElement.WithOptionalName {
             public Dispatcher run() {
                 try {
                     Class<?> module = Class.forName("java.lang.Module");
-                    return new Dispatcher.Enabled(Class.class.getMethod("getModule"),
-                            module.getMethod("getClassLoader"),
-                            module.getMethod("isNamed"),
-                            module.getMethod("getName"),
-                            module.getMethod("getResourceAsStream", String.class),
-                            module.getMethod("isExported", String.class, module),
-                            module.getMethod("isOpen", String.class, module),
-                            module.getMethod("canRead", module),
-                            Instrumentation.class.getMethod("isModifiableModule", module),
-                            Instrumentation.class.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
-                } catch (Exception ignored) {
+                    try {
+                        Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
+                        return new Dispatcher.Enabled.WithInstrumentationSupport(Class.class.getMethod("getModule"),
+                                module.getMethod("getClassLoader"),
+                                module.getMethod("isNamed"),
+                                module.getMethod("getName"),
+                                module.getMethod("getResourceAsStream", String.class),
+                                module.getMethod("isExported", String.class, module),
+                                module.getMethod("isOpen", String.class, module),
+                                module.getMethod("canRead", module),
+                                instrumentation.getMethod("isModifiableModule", module),
+                                instrumentation.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
+                    } catch (ClassNotFoundException ignored) {
+                        return new Dispatcher.Enabled.WithoutInstrumentationSupport(Class.class.getMethod("getModule"),
+                                module.getMethod("getClassLoader"),
+                                module.getMethod("isNamed"),
+                                module.getMethod("getName"),
+                                module.getMethod("getResourceAsStream", String.class),
+                                module.getMethod("isExported", String.class, module),
+                                module.getMethod("isOpen", String.class, module),
+                                module.getMethod("canRead", module));
+                    }
+                } catch (ClassNotFoundException ignored) {
+                    return Dispatcher.Disabled.INSTANCE;
+                } catch (NoSuchMethodException ignored) {
                     return Dispatcher.Disabled.INSTANCE;
                 }
             }
@@ -362,7 +376,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
          * A dispatcher for a VM that does support the {@code java.lang.Module} API.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class Enabled implements Dispatcher {
+        abstract class Enabled implements Dispatcher {
 
             /**
              * An empty array that can be used to indicate no arguments to avoid an allocation on a reflective call.
@@ -410,16 +424,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
             private final Method canRead;
 
             /**
-             * The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
-             */
-            private final Method isModifiableModule;
-
-            /**
-             * The {@code java.lang.instrument.Instrumentation#redefineModule} method.
-             */
-            private final Method redefineModule;
-
-            /**
              * Creates an enabled dispatcher.
              *
              * @param getModule           The {@code java.lang.Class#getModule()} method.
@@ -430,8 +434,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * @param isExported          The {@code java.lang.Module#isExported(String,Module)} method.
              * @param isOpened            The {@code java.lang.Module#isOpened(String,Module)} method.
              * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
-             * @param isModifiableModule  The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
-             * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
             protected Enabled(Method getModule,
                               Method getClassLoader,
@@ -440,9 +442,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                               Method getResourceAsStream,
                               Method isExported,
                               Method isOpened,
-                              Method canRead,
-                              Method isModifiableModule,
-                              Method redefineModule) {
+                              Method canRead) {
                 this.getModule = getModule;
                 this.getClassLoader = getClassLoader;
                 this.isNamed = isNamed;
@@ -451,8 +451,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 this.isExported = isExported;
                 this.isOpened = isOpened;
                 this.canRead = canRead;
-                this.isModifiableModule = isModifiableModule;
-                this.redefineModule = redefineModule;
             }
 
             /**
@@ -567,30 +565,131 @@ public class JavaModule implements NamedElement.WithOptionalName {
             }
 
             /**
-             * {@inheritDoc}
+             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that does not support {@link Instrumentation}.
              */
-            public void modify(Instrumentation instrumentation,
-                               Object source,
-                               Set<Object> reads,
-                               Map<String, Set<Object>> exports,
-                               Map<String, Set<Object>> opens,
-                               Set<Class<?>> uses,
-                               Map<Class<?>, List<Class<?>>> provides) {
-                try {
-                    if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
-                        throw new IllegalStateException(source + " is not modifiable");
-                    }
-                } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + redefineModule, exception);
-                } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
+            protected static class WithoutInstrumentationSupport extends Enabled {
+
+                /**
+                 * Creates an enabled dispatcher without support for {@link Instrumentation}.
+                 *
+                 * @param getModule           The {@code java.lang.Class#getModule()} method.
+                 * @param getClassLoader      The {@code java.lang.Module#getClassLoader()} method.
+                 * @param isNamed             The {@code java.lang.Module#isNamed()} method.
+                 * @param getName             The {@code java.lang.Module#getName()} method.
+                 * @param getResourceAsStream The {@code java.lang.Module#getResourceAsStream(String)} method.
+                 * @param isExported          The {@code java.lang.Module#isExported(String,Module)} method.
+                 * @param isOpened            The {@code java.lang.Module#isOpened(String,Module)} method.
+                 * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
+                 */
+                protected WithoutInstrumentationSupport(Method getModule,
+                                                        Method getClassLoader,
+                                                        Method isNamed,
+                                                        Method getName,
+                                                        Method getResourceAsStream,
+                                                        Method isExported,
+                                                        Method isOpened,
+                                                        Method canRead) {
+                    super(getModule,
+                            getClassLoader,
+                            isNamed,
+                            getName,
+                            getResourceAsStream,
+                            isExported,
+                            isOpened,
+                            canRead);
                 }
-                try {
-                    redefineModule.invoke(instrumentation, source, reads, exports, opens, uses, provides);
-                } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + redefineModule, exception);
-                } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void modify(Instrumentation instrumentation,
+                                   Object source,
+                                   Set<Object> reads,
+                                   Map<String, Set<Object>> exports,
+                                   Map<String, Set<Object>> opens,
+                                   Set<Class<?>> uses,
+                                   Map<Class<?>, List<Class<?>>> provides) {
+                    throw new IllegalStateException("Did not expect use of instrumentation");
+                }
+            }
+
+            /**
+             * A dispatcher for a VM that does support the {@code java.lang.Module} API and that supports {@link Instrumentation}.
+             */
+            protected static class WithInstrumentationSupport extends Enabled {
+
+                /**
+                 * The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
+                 */
+                private final Method isModifiableModule;
+
+                /**
+                 * The {@code java.lang.instrument.Instrumentation#redefineModule} method.
+                 */
+                private final Method redefineModule;
+
+                /**
+                 * Creates an enabled dispatcher.
+                 *
+                 * @param getModule           The {@code java.lang.Class#getModule()} method.
+                 * @param getClassLoader      The {@code java.lang.Module#getClassLoader()} method.
+                 * @param isNamed             The {@code java.lang.Module#isNamed()} method.
+                 * @param getName             The {@code java.lang.Module#getName()} method.
+                 * @param getResourceAsStream The {@code java.lang.Module#getResourceAsStream(String)} method.
+                 * @param isExported          The {@code java.lang.Module#isExported(String,Module)} method.
+                 * @param isOpened            The {@code java.lang.Module#isOpened(String,Module)} method.
+                 * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
+                 * @param isModifiableModule  The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
+                 * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
+                 */
+                protected WithInstrumentationSupport(Method getModule,
+                                                     Method getClassLoader,
+                                                     Method isNamed,
+                                                     Method getName,
+                                                     Method getResourceAsStream,
+                                                     Method isExported,
+                                                     Method isOpened,
+                                                     Method canRead,
+                                                     Method isModifiableModule,
+                                                     Method redefineModule) {
+                    super(getModule,
+                            getClassLoader,
+                            isNamed,
+                            getName,
+                            getResourceAsStream,
+                            isExported,
+                            isOpened,
+                            canRead);
+                    this.isModifiableModule = isModifiableModule;
+                    this.redefineModule = redefineModule;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void modify(Instrumentation instrumentation,
+                                   Object source,
+                                   Set<Object> reads,
+                                   Map<String, Set<Object>> exports,
+                                   Map<String, Set<Object>> opens,
+                                   Set<Class<?>> uses,
+                                   Map<Class<?>, List<Class<?>>> provides) {
+                    try {
+                        if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
+                            throw new IllegalStateException(source + " is not modifiable");
+                        }
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access " + redefineModule, exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
+                    }
+                    try {
+                        redefineModule.invoke(instrumentation, source, reads, exports, opens, uses, provides);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access " + redefineModule, exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
+                    }
                 }
             }
         }
