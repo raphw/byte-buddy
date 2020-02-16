@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. February 2020: version 1.10.8
+
+- Adjust use of types of the `java.instrument` module to avoid errors if the module is not present on a JVM.
+
 ### 21. January 2020: version 1.10.7
 
 - Correct discovery of old J9 VMs.
