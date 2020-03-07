@@ -22,7 +22,7 @@ import net.bytebuddy.description.NamedElement;
  * A method matcher that matches a byte code element's source code name:
  * <ul>
  * <li>The source code name of types is equal to their binary name where arrays are appended a {@code []} by
- * their arity and where inner classes are appended by dots to their outer class's source name.</li>
+ * their arity and where inner classes are appended by dollar signs to their outer class's source name.</li>
  * <li>Constructors and the type initializer methods are represented by the empty string as they do not
  * represent a source code name.</li>
  * <li>Fields are named as in the source code.</li>

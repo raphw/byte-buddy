@@ -196,8 +196,8 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
-    @Test
-    public void testNonPublicMethodOnInterfaceAssertionJava8() throws Exception {
+    @Test(expected = IllegalStateException.class)
+    public void testPackagePrivateMethodOnInterfaceAssertionJava8() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V8)
                 .makeInterface()
                 .defineMethod(FOO, void.class)

@@ -984,6 +984,23 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodAbstractNonAbstractType() throws Exception {
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OBJECT)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodProtectedInterface() throws Exception {
+        makePlainInstrumentedType().withModifiers(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)
+                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_PROTECTED, TypeDescription.Generic.OBJECT)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodPackagePrivateInterface() throws Exception {
+        makePlainInstrumentedType().withModifiers(Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT)
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
