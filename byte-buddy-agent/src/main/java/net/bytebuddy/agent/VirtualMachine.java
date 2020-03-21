@@ -716,7 +716,7 @@ public interface VirtualMachine {
                             library.connect(handle, address, address.size());
                             return handle;
                         } finally {
-                            address.clear();
+                            address = null;
                         }
                     } catch (RuntimeException exception) {
                         library.close(handle);
@@ -886,12 +886,23 @@ public interface VirtualMachine {
                      * @param timeUnit The time unit of the pause time.
                      * @return An appropriate connection factory.
                      */
+                    @SuppressWarnings("deprecation")
                     public static Connection.Factory withDefaultTemporaryFolder(int attempts, long pause, TimeUnit timeUnit) {
                         String temporaryDirectory;
                         if (Platform.isMac()) {
-                            temporaryDirectory = System.getenv("TMPDIR");
-                            if (temporaryDirectory == null) {
-                                temporaryDirectory = "/tmp";
+                            MacLibrary library = Native.loadLibrary("c", MacLibrary.class);
+                            Memory memory = new Memory(4096);
+                            try {
+                                long length = library.confstr(MacLibrary.CS_DARWIN_USER_TEMP_DIR, memory, memory.size());
+                                if (length == 0) {
+                                    throw new IllegalStateException("Could not read temporary user folder");
+                                } else if (length < 4096) {
+                                    temporaryDirectory = memory.getString(0);
+                                } else {
+                                    temporaryDirectory = "/tmp";
+                                }
+                            } finally {
+                                memory = null;
                             }
                         } else {
                             temporaryDirectory = "/tmp";
@@ -907,6 +918,27 @@ public interface VirtualMachine {
                     @Override
                     public Connection doConnect(File socket) {
                         return new Connection.ForJnaPosixSocket(library, socket);
+                    }
+
+                    /**
+                     * A library for reading a Mac user's temporary directory.
+                     */
+                    public interface MacLibrary extends Library {
+
+                        /**
+                         * The temporary directory.
+                         */
+                        int CS_DARWIN_USER_TEMP_DIR = 65537;
+
+                        /**
+                         * Reads a configuration dependant variable into a memory segment.
+                         *
+                         * @param name The name of the variable.
+                         * @param buffer The buffer to read the variable into.
+                         * @param length The length of the buffer.
+                         * @return The amount of bytes written to the buffer.
+                         */
+                        long confstr(int name, Pointer buffer, long length);
                     }
                 }
             }
@@ -1324,13 +1356,13 @@ public interface VirtualMachine {
                                         return new Response(library, door.descriptorPointer.getInt(4));
                                     }
                                 } finally {
-                                    result.clear();
+                                    result = null;
                                 }
                             } finally {
-                                dataPointer.clear();
+                                dataPointer = null;
                             }
                         } finally {
-                            door.clear();
+                            door = null;
                         }
                     } finally {
                         library.close(handle);
@@ -2101,7 +2133,7 @@ public interface VirtualMachine {
                             }
                         }
                     } finally {
-                        target.clear();
+                        target = null;
                     }
                 }
 
@@ -2427,10 +2459,10 @@ public interface VirtualMachine {
                                     }
                             }
                         } finally {
-                            securityAttributes.clear();
+                            securityAttributes = null;
                         }
                     } finally {
-                        securityDescriptor.clear();
+                        securityDescriptor = null;
                     }
                 }
 
