@@ -894,12 +894,10 @@ public interface VirtualMachine {
                             Memory memory = new Memory(4096);
                             try {
                                 long length = library.confstr(MacLibrary.CS_DARWIN_USER_TEMP_DIR, memory, memory.size());
-                                if (length == 0) {
-                                    throw new IllegalStateException("Could not read temporary user folder");
-                                } else if (length < 4096) {
-                                    temporaryDirectory = memory.getString(0);
-                                } else {
+                                if (length == 0 || length > 4096) {
                                     temporaryDirectory = "/tmp";
+                                } else {
+                                    temporaryDirectory = memory.getString(0);
                                 }
                             } finally {
                                 memory = null;
