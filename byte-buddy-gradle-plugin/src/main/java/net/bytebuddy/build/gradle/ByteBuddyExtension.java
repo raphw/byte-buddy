@@ -66,6 +66,11 @@ public class ByteBuddyExtension {
     private boolean extendedParsing;
 
     /**
+     * Indicates the amount of threads used for parallel type processing or {@code 0} for serial processing.
+     */
+    public int threads;
+
+    /**
      * A list of task names for which to apply a transformation or {@code null} if the task should apply to all tasks.
      */
     private Set<String> tasks;
@@ -195,6 +200,24 @@ public class ByteBuddyExtension {
      */
     public void setExtendedParsing(boolean extendedParsing) {
         this.extendedParsing = extendedParsing;
+    }
+
+    /**
+     * Returns the amount of threads to use for parallel processing or {@code 0} if processing should be applied serially.
+     *
+     * @return The amount of threads or {@code 0} for serial processing.
+     */
+    public int getThreads() {
+        return threads;
+    }
+
+    /**
+     * Defines the amount of threads to use for parallel processing or applies serial processing if {@code 0} is set.
+     *
+     * @param threads The amount of threads or {@code 0} if serial processing should be applied.
+     */
+    public void setThreads(int threads) {
+        this.threads = threads;
     }
 
     /**

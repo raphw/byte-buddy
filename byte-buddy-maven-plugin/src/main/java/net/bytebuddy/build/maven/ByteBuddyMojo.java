@@ -163,6 +163,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public boolean extendedParsing;
 
     /**
+     * Indicates the amount of threads used for parallel type processing or {@code 0} for serial processing.
+     */
+    @Parameter(defaultValue = "0", required = true)
+    public int threads;
+
+    /**
      * The currently used repository system.
      */
     @Component
@@ -294,6 +300,9 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                     : Plugin.Engine.Listener.NoOp.INSTANCE, failFast
                                     ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
                                     : Plugin.Engine.Listener.NoOp.INSTANCE)
+                            .with(threads == 0
+                                    ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
+                                    : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads))
                             .apply(new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), factories);
                 } catch (Throwable throwable) {
                     throw new MojoExecutionException("Failed to transform class files in " + root, throwable);

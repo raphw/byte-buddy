@@ -148,6 +148,9 @@ public class TransformationAction implements Action<Task> {
                                     : Plugin.Engine.Listener.NoOp.INSTANCE, byteBuddyExtension.isFailFast()
                                     ? Plugin.Engine.ErrorHandler.Failing.FAIL_FAST
                                     : Plugin.Engine.Listener.NoOp.INSTANCE)
+                            .with(byteBuddyExtension.getThreads() == 0
+                                    ? Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE
+                                    : new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(byteBuddyExtension.getThreads()))
                             .apply(new Plugin.Engine.Source.ForFolder(root), new Plugin.Engine.Target.ForFolder(root), factories);
                 } catch (Throwable throwable) {
                     throw new GradleException("Failed to transform class files in " + root, throwable);

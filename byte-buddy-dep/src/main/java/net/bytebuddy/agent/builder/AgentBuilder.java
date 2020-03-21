@@ -5564,7 +5564,7 @@ public interface AgentBuilder {
                             Thread.sleep(value);
                         } catch (InterruptedException exception) {
                             Thread.currentThread().interrupt();
-                            throw new RuntimeException("Sleep was interrupted", exception);
+                            throw new IllegalStateException(exception);
                         }
                     }
                 }

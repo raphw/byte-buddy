@@ -11,6 +11,8 @@ import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -18,28 +20,56 @@ import org.mockito.stubbing.Answer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.jar.*;
 
 import static net.bytebuddy.test.utility.FieldByFieldComparison.hasPrototype;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@RunWith(Parameterized.class)
 public class PluginEngineDefaultTest {
 
     private static final String FOO = "foo";
 
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE, true},
+                {new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(1), true},
+                {Plugin.Engine.Dispatcher.ForSerialTransformation.Factory.INSTANCE, false},
+                {new Plugin.Engine.Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(1), false}
+        });
+    }
+
+    private final Plugin.Engine.Dispatcher.Factory dispatcherFactory;
+
+    private final boolean eager;
+
+    public PluginEngineDefaultTest(Plugin.Engine.Dispatcher.Factory dispatcherFactory, boolean eager) {
+        this.dispatcherFactory = dispatcherFactory;
+        this.eager = eager;
+    }
+
     @Test
     public void testSimpleTransformation() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
-        Plugin plugin = new SimplePlugin();
+        Plugin plugin = eager
+                ? new SimplePlugin()
+                : new PreprocessingPlugin(new SimplePlugin());
         Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
@@ -58,12 +88,15 @@ public class PluginEngineDefaultTest {
     @Test
     public void testSimpleTransformationIgnoredByPlugin() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
-        Plugin plugin = new IgnoringPlugin();
+        Plugin plugin = eager
+                ? new IgnoringPlugin()
+                : new PreprocessingPlugin(new IgnoringPlugin());
         Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileLocator.ForClassLoader.of(IgnoringPlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
@@ -82,12 +115,15 @@ public class PluginEngineDefaultTest {
     @Test
     public void testSimpleTransformationIgnoredByMatcher() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
-        Plugin plugin = new SimplePlugin();
+        Plugin plugin = eager
+                ? new SimplePlugin()
+                : new PreprocessingPlugin(new SimplePlugin());
         Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
                 .ignore(ElementMatchers.is(Sample.class))
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
@@ -109,20 +145,26 @@ public class PluginEngineDefaultTest {
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         new Plugin.Engine.Default()
                 .with(ClassFileLocator.ForClassLoader.of(FailingPlugin.class.getClassLoader()))
-                .apply(source, target, new Plugin.Factory.Simple(new FailingPlugin(new RuntimeException())));
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(eager
+                        ? new FailingPlugin(new RuntimeException())
+                        : new PreprocessingPlugin(new FailingPlugin(new RuntimeException()))));
     }
 
     @Test
     public void testSimpleTransformationErrorIgnored() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
         RuntimeException exception = new RuntimeException();
-        Plugin plugin = new FailingPlugin(exception);
+        Plugin plugin = eager
+                ? new FailingPlugin(exception)
+                : new PreprocessingPlugin(new FailingPlugin(exception));
         Plugin.Engine.Source source = Plugin.Engine.Source.InMemory.ofTypes(Sample.class);
         Plugin.Engine.Target.InMemory target = new Plugin.Engine.Target.InMemory();
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .withoutErrorHandlers()
                 .with(ClassFileLocator.ForClassLoader.of(FailingPlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(1));
@@ -152,6 +194,7 @@ public class PluginEngineDefaultTest {
                 .with(listener)
                 .withoutErrorHandlers()
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
+                .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
@@ -171,7 +214,9 @@ public class PluginEngineDefaultTest {
     @Test
     public void testUnresolved() throws Exception {
         Plugin.Engine.Listener listener = mock(Plugin.Engine.Listener.class);
-        Plugin plugin = new SimplePlugin();
+        Plugin plugin = eager
+                ? new SimplePlugin()
+                : new PreprocessingPlugin(new SimplePlugin());
         Plugin.Engine.Source source = new Plugin.Engine.Source.InMemory(Collections.singletonMap(
                 Sample.class.getName().replace('.', '/') + ".class",
                 ClassFileLocator.ForClassLoader.read(Sample.class))) {
@@ -184,6 +229,7 @@ public class PluginEngineDefaultTest {
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .withoutErrorHandlers()
+                .with(dispatcherFactory)
                 .apply(source, target, new Plugin.Factory.Simple(plugin));
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, target.toTypeMap());
         Class<?> type = classLoader.loadClass(Sample.class.getName());
@@ -206,7 +252,10 @@ public class PluginEngineDefaultTest {
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
-                .apply(source, target, new Plugin.Factory.Simple(new SimplePlugin()));
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(eager
+                        ? new SimplePlugin()
+                        : new PreprocessingPlugin(new SimplePlugin())));
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
@@ -227,7 +276,10 @@ public class PluginEngineDefaultTest {
         Plugin.Engine.Summary summary = new Plugin.Engine.Default()
                 .with(listener)
                 .with(ClassFileLocator.ForClassLoader.of(SimplePlugin.class.getClassLoader()))
-                .apply(source, target, new Plugin.Factory.Simple(new SimplePlugin()));
+                .with(dispatcherFactory)
+                .apply(source, target, new Plugin.Factory.Simple(eager
+                        ? new SimplePlugin()
+                        : new PreprocessingPlugin(new SimplePlugin())));
         assertThat(summary.getTransformed().size(), is(0));
         assertThat(summary.getFailed().size(), is(0));
         assertThat(summary.getUnresolved().size(), is(0));
@@ -385,7 +437,7 @@ public class PluginEngineDefaultTest {
 
         private final RuntimeException exception;
 
-        public FailingPlugin(RuntimeException exception) {
+        private FailingPlugin(RuntimeException exception) {
             this.exception = exception;
         }
 
@@ -399,6 +451,31 @@ public class PluginEngineDefaultTest {
 
         public void close() {
             throw exception;
+        }
+    }
+
+    private static class PreprocessingPlugin implements Plugin.WithPreprocessor {
+
+        private final Plugin plugin;
+
+        private PreprocessingPlugin(Plugin plugin) {
+            this.plugin = plugin;
+        }
+
+        public void onPreprocess(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            /* empty */
+        }
+
+        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            return plugin.apply(builder, typeDescription, classFileLocator);
+        }
+
+        public boolean matches(TypeDescription target) {
+            return plugin.matches(target);
+        }
+
+        public void close() throws IOException {
+            plugin.close();
         }
     }
 }

@@ -542,7 +542,7 @@ public interface VirtualMachine {
                                 }
                             } catch (InterruptedException exception) {
                                 Thread.currentThread().interrupt();
-                                throw new IllegalStateException("Interrupted while waiting for attachment thread to start", exception);
+                                throw new IllegalStateException(exception);
                             } finally {
                                 if (!attachFile.delete()) {
                                     attachFile.deleteOnExit();
@@ -2036,7 +2036,7 @@ public interface VirtualMachine {
                                     Thread.sleep(timeUnit.toMillis(pause));
                                 } catch (InterruptedException exception) {
                                     Thread.currentThread().interrupt();
-                                    throw new IllegalStateException("Interrupted while waiting for stat", exception);
+                                    throw new IllegalStateException(exception);
                                 }
                             }
                         } while (--attempts > 0);

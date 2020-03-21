@@ -34,6 +34,7 @@ import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -42,9 +43,16 @@ import java.util.jar.Manifest;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
+ * <p>
  * A plugin that allows for the application of Byte Buddy transformations during a build process. This plugin's
  * transformation is applied to any type matching this plugin's type matcher. Plugin types must be public,
  * non-abstract and must declare a public default constructor to work.
+ * </p>
+ * <p>
+ * A plugin is always used within the scope of a single plugin engine application and is disposed after closing. It might be used
+ * concurrently and must assure its own thread-safety if run outside of a {@link Plugin.Engine} or when using a parallel
+ * {@link Plugin.Engine.Dispatcher}.
+ * </p>
  */
 public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
 
@@ -57,6 +65,28 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
      * @return The supplied builder with additional transformations registered.
      */
     DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator);
+
+    /**
+     * <p>
+     * A plugin that applies a preprocessor, i.e. causes a plugin engine's execution to defer all plugin applications until all types were discovered.
+     * </p>
+     * <p>
+     * <b>Important</b>: The registration of a single plugin with preprocessor causes the deferral of all plugins' application that are registered
+     * with a particular plugin engine. This will reduce parallel application if a corresponding {@link Engine.Dispatcher} is used and will increase
+     * the engine application's memory consumption. Any alternative application of a plugin outside of a {@link Plugin.Engine} might not be capable
+     * of preprocessing where the discovery callback is not invoked.
+     * </p>
+     */
+    interface WithPreprocessor extends Plugin {
+
+        /**
+         * Invoked upon the discovery of a type that is not explicitly ignored.
+         *
+         * @param typeDescription  The discovered type.
+         * @param classFileLocator A class file locator that can locate other types in the scope of the project.
+         */
+        void onPreprocess(TypeDescription typeDescription, ClassFileLocator classFileLocator);
+    }
 
     /**
      * A factory for providing a build plugin.
@@ -687,6 +717,22 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
          * @return A new plugin engine that is equal to this engine but with only the supplied error handlers being applied.
          */
         Engine withErrorHandlers(List<? extends ErrorHandler> errorHandlers);
+
+        /**
+         * Replaces the dispatcher factory of this plugin engine with a parallel dispatcher factory that uses the given amount of threads.
+         *
+         * @param threads The amount of threads to use.
+         * @return A new plugin engine that is equal to this engine but with a parallel dispatcher factory using the specified amount of threads.
+         */
+        Engine withParallelTransformation(int threads);
+
+        /**
+         * Replaces the dispatcher factory of this plugin engine with the supplied dispatcher factory.
+         *
+         * @param dispatcherFactory The dispatcher factory to use.
+         * @return A new plugin engine that is equal to this engine but with the supplied dispatcher factory being used.
+         */
+        Engine with(Dispatcher.Factory dispatcherFactory);
 
         /**
          * Ignores all types that are matched by this matcher or any previously registered ignore matcher.
@@ -3221,6 +3267,601 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
         }
 
         /**
+         * A dispatcher to execute a plugin engine transformation. A dispatcher will receive all work assignments prior to the invocation
+         * of complete. After registering and eventually completing the supplied work, the close method will always be called. Any dispatcher
+         * will only be used once and from a single thread.
+         */
+        interface Dispatcher extends Closeable {
+
+            /**
+             * Accepts a new work assignment.
+             *
+             * @param work The work to handle prefixed by a preprocessing step.
+             * @param eager {@code true} if the processing does not need to be deferred until all preprocessing is complete.
+             * @throws IOException If an I/O exception occurs.
+             */
+            void accept(Callable<? extends Callable<? extends Materializable>> work, boolean eager) throws IOException;
+
+            /**
+             * Completes the work being handled.
+             *
+             * @throws IOException If an I/O exception occurs.
+             */
+            void complete() throws IOException;
+
+            /**
+             * The result of a work assignment that needs to be invoked from the main thread that triggers a dispatchers life-cycle methods.
+             */
+            interface Materializable {
+
+                /**
+                 * Materializes this work result and adds any results to the corresponding collection.
+                 *
+                 * @param sink        The sink to write any work to.
+                 * @param transformed A list of all types that are transformed.
+                 * @param failed      A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 * @param unresolved  A list of type names that could not be resolved.
+                 * @throws IOException If an I/O exception occurs.
+                 */
+                void materialize(Target.Sink sink,
+                                 List<TypeDescription> transformed,
+                                 Map<TypeDescription,
+                                         List<Throwable>> failed,
+                                 List<String> unresolved) throws IOException;
+
+                /**
+                 * A materializable for a successfully transformed type.
+                 */
+                class ForTransformedElement implements Materializable {
+
+                    /**
+                     * The type that has been transformed.
+                     */
+                    private final DynamicType dynamicType;
+
+                    /**
+                     * Creates a new materializable for a successfully transformed type.
+                     *
+                     * @param dynamicType The type that has been transformed.
+                     */
+                    protected ForTransformedElement(DynamicType dynamicType) {
+                        this.dynamicType = dynamicType;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void materialize(Target.Sink sink,
+                                            List<TypeDescription> transformed,
+                                            Map<TypeDescription,
+                                                    List<Throwable>> failed,
+                                            List<String> unresolved) throws IOException {
+                        sink.store(dynamicType.getAllTypes());
+                        transformed.add(dynamicType.getTypeDescription());
+                    }
+                }
+
+                /**
+                 * A materializable for an element that is retained in its original state.
+                 */
+                class ForRetainedElement implements Materializable {
+
+                    /**
+                     * The retained element.
+                     */
+                    private final Source.Element element;
+
+                    /**
+                     * Creates a new materializable for a retained element.
+                     *
+                     * @param element The retained element.
+                     */
+                    protected ForRetainedElement(Source.Element element) {
+                        this.element = element;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void materialize(Target.Sink sink,
+                                            List<TypeDescription> transformed,
+                                            Map<TypeDescription,
+                                                    List<Throwable>> failed,
+                                            List<String> unresolved) throws IOException {
+                        sink.retain(element);
+                    }
+                }
+
+                /**
+                 * A materializable for an element that failed to be transformed.
+                 */
+                class ForFailedElement implements Materializable {
+
+                    /**
+                     * The element for which the transformation failed.
+                     */
+                    private final Source.Element element;
+
+                    /**
+                     * The type description for the represented type.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * A non-empty list of errors that occurred when attempting the transformation.
+                     */
+                    private final List<Throwable> errored;
+
+                    /**
+                     * Creates a new materializable for an element that failed to be transformed.
+                     *
+                     * @param element         The element for which the transformation failed.
+                     * @param typeDescription The type description for the represented type.
+                     * @param errored         A non-empty list of errors that occurred when attempting the transformation.
+                     */
+                    protected ForFailedElement(Source.Element element, TypeDescription typeDescription, List<Throwable> errored) {
+                        this.element = element;
+                        this.typeDescription = typeDescription;
+                        this.errored = errored;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void materialize(Target.Sink sink,
+                                            List<TypeDescription> transformed,
+                                            Map<TypeDescription,
+                                                    List<Throwable>> failed,
+                                            List<String> unresolved) throws IOException {
+                        sink.retain(element);
+                        failed.put(typeDescription, errored);
+                    }
+                }
+
+                /**
+                 * A materializable for an element that could not be resolved.
+                 */
+                class ForUnresolvedElement implements Materializable {
+
+                    /**
+                     * The element that could not be resolved.
+                     */
+                    private final Source.Element element;
+
+                    /**
+                     * The name of the type that was deducted for this element.
+                     */
+                    private final String typeName;
+
+                    /**
+                     * Creates a new materializable for an element that could not be resolved.
+                     *
+                     * @param element  The element that could not be resolved.
+                     * @param typeName The name of the type that was deducted for this element.
+                     */
+                    protected ForUnresolvedElement(Source.Element element, String typeName) {
+                        this.element = element;
+                        this.typeName = typeName;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void materialize(Target.Sink sink,
+                                            List<TypeDescription> transformed,
+                                            Map<TypeDescription,
+                                                    List<Throwable>> failed,
+                                            List<String> unresolved) throws IOException {
+                        sink.retain(element);
+                        unresolved.add(typeName);
+                    }
+                }
+            }
+
+            /**
+             * A factory that is used for creating a dispatcher that is used for a specific plugin engine application.
+             */
+            interface Factory {
+
+                /**
+                 * Creates a new dispatcher.
+                 *
+                 * @param sink        The sink to write any work to.
+                 * @param transformed A list of all types that are transformed.
+                 * @param failed      A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 * @param unresolved  A list of type names that could not be resolved.
+                 * @return The dispatcher to use.
+                 */
+                Dispatcher make(Target.Sink sink,
+                                List<TypeDescription> transformed,
+                                Map<TypeDescription,
+                                        List<Throwable>> failed,
+                                List<String> unresolved);
+            }
+
+            /**
+             * A dispatcher that applies transformation upon discovery.
+             */
+            class ForSerialTransformation implements Dispatcher {
+
+                /**
+                 * The sink to write any work to.
+                 */
+                private final Target.Sink sink;
+
+                /**
+                 * A list of all types that are transformed.
+                 */
+                private final List<TypeDescription> transformed;
+
+                /**
+                 * A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 */
+                private final Map<TypeDescription, List<Throwable>> failed;
+
+                /**
+                 * A list of type names that could not be resolved.
+                 */
+                private final List<String> unresolved;
+
+                /**
+                 * A list of deferred processings.
+                 */
+                private final List<Callable<? extends Materializable>> preprocessings;
+
+                /**
+                 * Creates a dispatcher for a serial transformation.
+                 *
+                 * @param sink        The sink to write any work to.
+                 * @param transformed A list of all types that are transformed.
+                 * @param failed      A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 * @param unresolved  A list of type names that could not be resolved.
+                 */
+                protected ForSerialTransformation(Target.Sink sink,
+                                                  List<TypeDescription> transformed,
+                                                  Map<TypeDescription, List<Throwable>> failed,
+                                                  List<String> unresolved) {
+                    this.sink = sink;
+                    this.transformed = transformed;
+                    this.failed = failed;
+                    this.unresolved = unresolved;
+                    preprocessings = new ArrayList<Callable<? extends Materializable>>();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void accept(Callable<? extends Callable<? extends Materializable>> work, boolean eager) throws IOException {
+                    try {
+                        Callable<? extends Materializable> preprocessed = work.call();
+                        if (eager) {
+                            preprocessed.call().materialize(sink, transformed, failed, unresolved);
+                        } else {
+                            preprocessings.add(preprocessed);
+                        }
+                    } catch (Exception exception) {
+                        if (exception instanceof IOException) {
+                            throw (IOException) exception;
+                        } else if (exception instanceof RuntimeException) {
+                            throw (RuntimeException) exception;
+                        } else {
+                            throw new IllegalStateException(exception);
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void complete() throws IOException {
+                    for (Callable<? extends Materializable> preprocessing : preprocessings) {
+                        if (Thread.interrupted()) {
+                            Thread.currentThread().interrupt();
+                            throw new IllegalStateException("Interrupted during plugin engine completion");
+                        }
+                        try {
+                            preprocessing.call().materialize(sink, transformed, failed, unresolved);
+                        } catch (Exception exception) {
+                            if (exception instanceof IOException) {
+                                throw (IOException) exception;
+                            } else if (exception instanceof RuntimeException) {
+                                throw (RuntimeException) exception;
+                            } else {
+                                throw new IllegalStateException(exception);
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    /* do nothing */
+                }
+
+                /**
+                 * A factory for creating a serial dispatcher.
+                 */
+                public enum Factory implements Dispatcher.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Dispatcher make(Target.Sink sink,
+                                           List<TypeDescription> transformed,
+                                           Map<TypeDescription,
+                                                   List<Throwable>> failed,
+                                           List<String> unresolved) {
+                        return new ForSerialTransformation(sink, transformed, failed, unresolved);
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher that applies transformations within one or more threads in parallel to the default transformer.
+             */
+            class ForParallelTransformation implements Dispatcher {
+
+                /**
+                 * The target sink.
+                 */
+                private final Target.Sink sink;
+
+                /**
+                 * A list of all types that are transformed.
+                 */
+                private final List<TypeDescription> transformed;
+
+                /**
+                 * A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 */
+                private final Map<TypeDescription, List<Throwable>> failed;
+
+                /**
+                 * A list of type names that could not be resolved.
+                 */
+                private final List<String> unresolved;
+
+                /**
+                 * A completion service for all preprocessings.
+                 */
+                private final CompletionService<Callable<Materializable>> preprocessings;
+
+                /**
+                 * A completion service for all materializers.
+                 */
+                private final CompletionService<Materializable> materializers;
+
+                /**
+                 * A count of deferred processings.
+                 */
+                private int deferred;
+
+                /**
+                 * A collection of futures that are currently scheduled.
+                 */
+                private final Set<Future<?>> futures;
+
+                /**
+                 * Creates a new dispatcher that applies transformations in parallel.
+                 *
+                 * @param executor    The executor to delegate any work to.
+                 * @param sink        The target sink.
+                 * @param transformed A list of all types that are transformed.
+                 * @param failed      A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                 * @param unresolved  A list of type names that could not be resolved.
+                 */
+                protected ForParallelTransformation(Executor executor,
+                                                    Target.Sink sink,
+                                                    List<TypeDescription> transformed,
+                                                    Map<TypeDescription,
+                                                            List<Throwable>> failed,
+                                                    List<String> unresolved) {
+                    this.sink = sink;
+                    this.transformed = transformed;
+                    this.failed = failed;
+                    this.unresolved = unresolved;
+                    preprocessings = new ExecutorCompletionService<Callable<Materializable>>(executor);
+                    materializers = new ExecutorCompletionService<Materializable>(executor);
+                    futures = new HashSet<Future<?>>();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                @SuppressWarnings("unchecked")
+                public void accept(Callable<? extends Callable<? extends Materializable>> work, boolean eager) {
+                    if (eager) {
+                        futures.add(materializers.submit(new EagerWork(work)));
+                    } else {
+                        deferred += 1;
+                        futures.add(preprocessings.submit((Callable<Callable<Materializable>>) work));
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void complete() throws IOException {
+                    try {
+                        List<Callable<Materializable>> preprocessings = new ArrayList<Callable<Materializable>>(deferred);
+                        while (deferred-- > 0) {
+                            Future<Callable<Materializable>> future = this.preprocessings.take();
+                            futures.remove(future);
+                            preprocessings.add(future.get());
+                        }
+                        for (Callable<Materializable> preprocessing : preprocessings) {
+                            futures.add(materializers.submit(preprocessing));
+                        }
+                        while (!futures.isEmpty()) {
+                            Future<Materializable> future = materializers.take();
+                            futures.remove(future);
+                            future.get().materialize(sink, transformed, failed, unresolved);
+                        }
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException(exception);
+                    } catch (ExecutionException exception) {
+                        Throwable cause = exception.getCause();
+                        if (cause instanceof IOException) {
+                            throw (IOException) cause;
+                        } else if (cause instanceof RuntimeException) {
+                            throw (RuntimeException) cause;
+                        } else if (cause instanceof Error) {
+                            throw (Error) cause;
+                        } else {
+                            throw new IllegalStateException(cause);
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void close() {
+                    for (Future<?> future : futures) {
+                        future.cancel(true);
+                    }
+                }
+
+                /**
+                 * A parallel dispatcher that shuts down its executor service upon completion of a plugin engine's application.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class WithThrowawayExecutorService extends ForParallelTransformation {
+
+                    /**
+                     * The executor service to delegate any work to.
+                     */
+                    private final ExecutorService executorService;
+
+                    /**
+                     * Creates a new dispatcher that applies transformations in parallel and that closes the supplies executor service.
+                     *
+                     * @param executorService The executor service to delegate any work to.
+                     * @param sink            The target sink.
+                     * @param transformed     A list of all types that are transformed.
+                     * @param failed          A mapping of all types that failed during transformation to the exceptions that explain the failure.
+                     * @param unresolved      A list of type names that could not be resolved.
+                     */
+                    protected WithThrowawayExecutorService(ExecutorService executorService,
+                                                           Target.Sink sink,
+                                                           List<TypeDescription> transformed,
+                                                           Map<TypeDescription, List<Throwable>> failed,
+                                                           List<String> unresolved) {
+                        super(executorService, sink, transformed, failed, unresolved);
+                        this.executorService = executorService;
+                    }
+
+                    @Override
+                    public void close() {
+                        try {
+                            super.close();
+                        } finally {
+                            executorService.shutdown();
+                        }
+                    }
+
+                    /**
+                     * A factory for a parallel executor service that creates a new executor service on each plugin engine application.
+                     */
+                    @HashCodeAndEqualsPlugin.Enhance
+                    public static class Factory implements Dispatcher.Factory {
+
+                        /**
+                         * The amount of threads to create in the throw-away executor service.
+                         */
+                        private final int threads;
+
+                        /**
+                         * Creates a new factory.
+                         *
+                         * @param threads The amount of threads to create in the throw-away executor service.
+                         */
+                        public Factory(int threads) {
+                            this.threads = threads;
+                        }
+
+                        /**
+                         * {@inheritDoc}
+                         */
+                        public Dispatcher make(Target.Sink sink,
+                                               List<TypeDescription> transformed,
+                                               Map<TypeDescription, List<Throwable>> failed,
+                                               List<String> unresolved) {
+                            return new WithThrowawayExecutorService(Executors.newFixedThreadPool(threads), sink, transformed, failed, unresolved);
+                        }
+                    }
+                }
+
+                /**
+                 * A factory for a dispatcher that uses a given executor service for parallel dispatching.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                public static class Factory implements Dispatcher.Factory {
+
+                    /**
+                     * The executor to use.
+                     */
+                    private final Executor executor;
+
+                    /**
+                     * Creates a new dispatcher factory for parallel dispatching using the supplied executor.
+                     *
+                     * @param executor The executor to use.
+                     */
+                    public Factory(Executor executor) {
+                        this.executor = executor;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Dispatcher make(Target.Sink sink,
+                                           List<TypeDescription> transformed,
+                                           Map<TypeDescription, List<Throwable>> failed,
+                                           List<String> unresolved) {
+                        return new ForParallelTransformation(executor, sink, transformed, failed, unresolved);
+                    }
+                }
+
+                /**
+                 * An eager materialization that does not defer processing after preprocessing.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                protected static class EagerWork implements Callable<Materializable> {
+
+                    /**
+                     * The work to apply.
+                     */
+                    private final Callable<? extends Callable<? extends Materializable>> work;
+
+                    /**
+                     * Creates an eager work resolution.
+                     *
+                     * @param work The work to apply.
+                     */
+                    protected EagerWork(Callable<? extends Callable<? extends Materializable>> work) {
+                        this.work = work;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Materializable call() throws Exception {
+                        return work.call().call();
+                    }
+                }
+            }
+        }
+
+        /**
          * A summary of the application of a {@link Engine} to a source and target.
          */
         class Summary {
@@ -3317,6 +3958,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * {@inheritDoc}
              */
+            public Engine withParallelTransformation(int threads) {
+                if (threads < 1) {
+                    throw new IllegalArgumentException("Number of threads must be positive: " + threads);
+                }
+                return with(new Dispatcher.ForParallelTransformation.WithThrowawayExecutorService.Factory(threads));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Summary apply(File source, File target, Factory... factory) throws IOException {
                 return apply(source, target, Arrays.asList(factory));
             }
@@ -3377,6 +4028,11 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             private final ErrorHandler errorHandler;
 
             /**
+             * The dispatcher factory to use.
+             */
+            private final Dispatcher.Factory dispatcherFactory;
+
+            /**
              * A matcher for types to exclude from transformation.
              */
             private final ElementMatcher.Junction<? super TypeDescription> ignoredTypeMatcher;
@@ -3412,6 +4068,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         new ErrorHandler.Compound(ErrorHandler.Failing.FAIL_FAST,
                                 ErrorHandler.Enforcing.ALL_TYPES_RESOLVED,
                                 ErrorHandler.Enforcing.NO_LIVE_INITIALIZERS),
+                        Dispatcher.ForSerialTransformation.Factory.INSTANCE,
                         none());
             }
 
@@ -3424,6 +4081,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
              * @param classFileLocator   The class file locator to use.
              * @param listener           The listener to use.
              * @param errorHandler       The error handler to use.
+             * @param dispatcherFactory  The dispatcher factory to use.
              * @param ignoredTypeMatcher A matcher for types to exclude from transformation.
              */
             protected Default(ByteBuddy byteBuddy,
@@ -3432,6 +4090,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                               ClassFileLocator classFileLocator,
                               Listener listener,
                               ErrorHandler errorHandler,
+                              Dispatcher.Factory dispatcherFactory,
                               ElementMatcher.Junction<? super TypeDescription> ignoredTypeMatcher) {
                 this.byteBuddy = byteBuddy;
                 this.typeStrategy = typeStrategy;
@@ -3439,6 +4098,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 this.classFileLocator = classFileLocator;
                 this.listener = listener;
                 this.errorHandler = errorHandler;
+                this.dispatcherFactory = dispatcherFactory;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
             }
 
@@ -3484,6 +4144,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3497,6 +4158,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3510,6 +4172,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3523,6 +4186,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         new ClassFileLocator.Compound(this.classFileLocator, classFileLocator),
                         listener,
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3536,6 +4200,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         new Listener.Compound(this.listener, listener),
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3549,6 +4214,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         Listener.NoOp.INSTANCE,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3562,6 +4228,21 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         new ErrorHandler.Compound(errorHandlers),
+                        dispatcherFactory,
+                        ignoredTypeMatcher);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Engine with(Dispatcher.Factory dispatcherFactory) {
+                return new Default(byteBuddy,
+                        typeStrategy,
+                        poolStrategy,
+                        classFileLocator,
+                        listener,
+                        errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher);
             }
 
@@ -3575,6 +4256,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         classFileLocator,
                         listener,
                         errorHandler,
+                        dispatcherFactory,
                         ignoredTypeMatcher.<TypeDescription>or(matcher));
             }
 
@@ -3586,11 +4268,16 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 List<TypeDescription> transformed = new ArrayList<TypeDescription>();
                 Map<TypeDescription, List<Throwable>> failed = new LinkedHashMap<TypeDescription, List<Throwable>>();
                 List<String> unresolved = new ArrayList<String>();
-                RuntimeException rethrown = null;
+                Throwable rethrown = null;
                 List<Plugin> plugins = new ArrayList<Plugin>(factories.size());
+                List<WithPreprocessor> preprocessors = new ArrayList<WithPreprocessor>();
                 try {
                     for (Plugin.Factory factory : factories) {
-                        plugins.add(factory.make());
+                        Plugin plugin = factory.make();
+                        plugins.add(plugin);
+                        if (plugin instanceof WithPreprocessor) {
+                            preprocessors.add((WithPreprocessor) plugin);
+                        }
                     }
                     Source.Origin origin = source.read();
                     try {
@@ -3600,68 +4287,33 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         listener.onManifest(manifest);
                         Target.Sink sink = target.write(manifest);
                         try {
-                            for (Source.Element element : origin) {
-                                String name = element.getName();
-                                while (name.startsWith("/")) {
-                                    name = name.substring(1);
-                                }
-                                if (name.endsWith(CLASS_FILE_EXTENSION)) {
-                                    String typeName = name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.');
-                                    listener.onDiscovery(typeName);
-                                    TypePool.Resolution resolution = typePool.describe(typeName);
-                                    if (resolution.isResolved()) {
-                                        TypeDescription typeDescription = resolution.resolve();
-                                        if (!ignoredTypeMatcher.matches(typeDescription)) {
-                                            List<Plugin> applied = new ArrayList<Plugin>(), ignored = new ArrayList<Plugin>();
-                                            List<Throwable> errored = new ArrayList<Throwable>();
-                                            DynamicType.Builder<?> builder = typeStrategy.builder(byteBuddy, typeDescription, classFileLocator);
-                                            for (Plugin plugin : plugins) {
-                                                try {
-                                                    if (plugin.matches(typeDescription)) {
-                                                        builder = plugin.apply(builder, typeDescription, classFileLocator);
-                                                        listener.onTransformation(typeDescription, plugin);
-                                                        applied.add(plugin);
-                                                    } else {
-                                                        listener.onIgnored(typeDescription, plugin);
-                                                        ignored.add(plugin);
-                                                    }
-                                                } catch (Throwable throwable) {
-                                                    listener.onError(typeDescription, plugin, throwable);
-                                                    errored.add(throwable);
-                                                }
-                                            }
-                                            if (!errored.isEmpty()) {
-                                                listener.onError(typeDescription, errored);
-                                                sink.retain(element);
-                                                failed.put(typeDescription, errored);
-                                            } else if (!applied.isEmpty()) {
-                                                DynamicType dynamicType = builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
-                                                listener.onTransformation(typeDescription, applied);
-                                                for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
-                                                    if (entry.getValue().isAlive()) {
-                                                        listener.onLiveInitializer(typeDescription, entry.getKey());
-                                                    }
-                                                }
-                                                sink.store(dynamicType.getAllTypes());
-                                                transformed.add(dynamicType.getTypeDescription());
-                                            } else {
-                                                listener.onIgnored(typeDescription, ignored);
-                                                sink.retain(element);
-                                            }
-                                        } else {
-                                            listener.onIgnored(typeDescription, plugins);
-                                            sink.retain(element);
-                                        }
-                                        listener.onComplete(typeDescription);
-                                    } else {
-                                        listener.onUnresolved(typeName);
-                                        sink.retain(element);
-                                        unresolved.add(typeName);
+                            Dispatcher dispatcher = dispatcherFactory.make(sink, transformed, failed, unresolved);
+                            try {
+                                for (Source.Element element : origin) {
+                                    if (Thread.interrupted()) {
+                                        Thread.currentThread().interrupt();
+                                        throw new IllegalStateException("Thread interrupted during plugin engine application");
                                     }
-                                } else if (!name.equals(JarFile.MANIFEST_NAME)) {
-                                    listener.onResource(name);
-                                    sink.retain(element);
+                                    String name = element.getName();
+                                    while (name.startsWith("/")) {
+                                        name = name.substring(1);
+                                    }
+                                    if (name.endsWith(CLASS_FILE_EXTENSION)) {
+                                        dispatcher.accept(new Preprocessor(element,
+                                                name.substring(0, name.length() - CLASS_FILE_EXTENSION.length()).replace('/', '.'),
+                                                classFileLocator,
+                                                typePool,
+                                                listener,
+                                                plugins,
+                                                preprocessors), preprocessors.isEmpty());
+                                    } else if (!name.equals(JarFile.MANIFEST_NAME)) {
+                                        listener.onResource(name);
+                                        sink.retain(element);
+                                    }
                                 }
+                                dispatcher.complete();
+                            } finally {
+                                dispatcher.close();
                             }
                             if (!failed.isEmpty()) {
                                 listener.onError(failed);
@@ -3679,9 +4331,9 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                         } catch (Throwable throwable) {
                             try {
                                 listener.onError(plugin, throwable);
-                            } catch (RuntimeException exception) {
+                            } catch (Throwable chained) {
                                 rethrown = rethrown == null
-                                        ? exception
+                                        ? chained
                                         : rethrown;
                             }
                         }
@@ -3689,8 +4341,222 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 }
                 if (rethrown == null) {
                     return new Summary(transformed, failed, unresolved);
+                } else if (rethrown instanceof IOException) {
+                    throw (IOException) rethrown;
+                } else if (rethrown instanceof RuntimeException) {
+                    throw (RuntimeException) rethrown;
                 } else {
-                    throw rethrown;
+                    throw new IllegalStateException(rethrown);
+                }
+            }
+
+            /**
+             * A preprocessor for a parallel plugin engine.
+             */
+            private class Preprocessor implements Callable<Callable<? extends Dispatcher.Materializable>> {
+
+                /**
+                 * The processed element.
+                 */
+                private final Source.Element element;
+
+                /**
+                 * The name of the processed type.
+                 */
+                private final String typeName;
+
+                /**
+                 * The class file locator to use.
+                 */
+                private final ClassFileLocator classFileLocator;
+
+                /**
+                 * The type pool to use.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * The listener to notify.
+                 */
+                private final Listener listener;
+
+                /**
+                 * The plugins to apply.
+                 */
+                private final List<Plugin> plugins;
+
+                /**
+                 * The plugins with preprocessors to preprocess.
+                 */
+                private final List<WithPreprocessor> preprocessors;
+
+                /**
+                 * Creates a new preprocessor.
+                 *
+                 * @param element          The processed element.
+                 * @param typeName         The name of the processed type.
+                 * @param classFileLocator The class file locator to use.
+                 * @param typePool         The type pool to use.
+                 * @param listener         The listener to notify.
+                 * @param plugins          The plugins to apply.
+                 * @param preprocessors    The plugins with preprocessors to preprocess.
+                 */
+                private Preprocessor(Source.Element element,
+                                     String typeName,
+                                     ClassFileLocator classFileLocator,
+                                     TypePool typePool,
+                                     Listener listener,
+                                     List<Plugin> plugins,
+                                     List<WithPreprocessor> preprocessors) {
+                    this.element = element;
+                    this.typeName = typeName;
+                    this.classFileLocator = classFileLocator;
+                    this.typePool = typePool;
+                    this.listener = listener;
+                    this.plugins = plugins;
+                    this.preprocessors = preprocessors;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Callable<Dispatcher.Materializable> call() throws Exception {
+                    listener.onDiscovery(typeName);
+                    TypePool.Resolution resolution = typePool.describe(typeName);
+                    if (resolution.isResolved()) {
+                        TypeDescription typeDescription = resolution.resolve();
+                        try {
+                            if (!ignoredTypeMatcher.matches(typeDescription)) {
+                                for (WithPreprocessor preprocessor : preprocessors) {
+                                    preprocessor.onPreprocess(typeDescription, classFileLocator);
+                                }
+                                return new Resolved(typeDescription);
+                            } else {
+                                return new Ignored(typeDescription);
+                            }
+                        } catch (Throwable throwable) {
+                            listener.onComplete(typeDescription);
+                            if (throwable instanceof Exception) {
+                                throw (Exception) throwable;
+                            } else if (throwable instanceof Error) {
+                                throw (Error) throwable;
+                            } else {
+                                throw new IllegalStateException(throwable);
+                            }
+                        }
+                    } else {
+                        return new Unresolved();
+                    }
+                }
+
+                /**
+                 * A resolved materializable.
+                 */
+                private class Resolved implements Callable<Dispatcher.Materializable> {
+
+                    /**
+                     * A description of the resolved type.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new resolved materializable.
+                     *
+                     * @param typeDescription A description of the resolved type.
+                     */
+                    private Resolved(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Dispatcher.Materializable call() {
+                        List<Plugin> applied = new ArrayList<Plugin>(), ignored = new ArrayList<Plugin>();
+                        List<Throwable> errored = new ArrayList<Throwable>();
+                        try {
+                            DynamicType.Builder<?> builder = typeStrategy.builder(byteBuddy, typeDescription, classFileLocator);
+                            for (Plugin plugin : plugins) {
+                                try {
+                                    if (plugin.matches(typeDescription)) {
+                                        builder = plugin.apply(builder, typeDescription, classFileLocator);
+                                        listener.onTransformation(typeDescription, plugin);
+                                        applied.add(plugin);
+                                    } else {
+                                        listener.onIgnored(typeDescription, plugin);
+                                        ignored.add(plugin);
+                                    }
+                                } catch (Throwable throwable) {
+                                    listener.onError(typeDescription, plugin, throwable);
+                                    errored.add(throwable);
+                                }
+                            }
+                            if (!errored.isEmpty()) {
+                                listener.onError(typeDescription, errored);
+                                return new Dispatcher.Materializable.ForFailedElement(element, typeDescription, errored);
+                            } else if (!applied.isEmpty()) {
+                                DynamicType dynamicType = builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
+                                listener.onTransformation(typeDescription, applied);
+                                for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
+                                    if (entry.getValue().isAlive()) {
+                                        listener.onLiveInitializer(typeDescription, entry.getKey());
+                                    }
+                                }
+                                return new Dispatcher.Materializable.ForTransformedElement(dynamicType);
+                            } else {
+                                listener.onIgnored(typeDescription, ignored);
+                                return new Dispatcher.Materializable.ForRetainedElement(element);
+                            }
+                        } finally {
+                            listener.onComplete(typeDescription);
+                        }
+                    }
+                }
+
+                /**
+                 * A materializable for an ignored element.
+                 */
+                private class Ignored implements Callable<Dispatcher.Materializable> {
+
+                    /**
+                     * A description of the ignored type.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * A materializable for an ignored element.
+                     *
+                     * @param typeDescription A description of the ignored type.
+                     */
+                    private Ignored(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Dispatcher.Materializable call() {
+                        try {
+                            listener.onIgnored(typeDescription, plugins);
+                        } finally {
+                            listener.onComplete(typeDescription);
+                        }
+                        return new Dispatcher.Materializable.ForRetainedElement(element);
+                    }
+                }
+
+                /**
+                 * A materializable that represents an unresolved type.
+                 */
+                private class Unresolved implements Callable<Dispatcher.Materializable> {
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Dispatcher.Materializable call() {
+                        listener.onUnresolved(typeName);
+                        return new Dispatcher.Materializable.ForUnresolvedElement(element, typeName);
+                    }
                 }
             }
         }
@@ -3756,76 +4622,6 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
          */
         public boolean matches(TypeDescription target) {
             return matcher.matches(target);
-        }
-    }
-
-    /**
-     * A compound plugin that applies several plugins in a row.
-     */
-    @HashCodeAndEqualsPlugin.Enhance
-    class Compound implements Plugin {
-
-        /**
-         * The plugins to apply.
-         */
-        private final List<Plugin> plugins;
-
-        /**
-         * Creates a compound plugin.
-         *
-         * @param plugin The plugins to apply.
-         */
-        public Compound(Plugin... plugin) {
-            this(Arrays.asList(plugin));
-        }
-
-        /**
-         * Creates a compound plugin.
-         *
-         * @param plugins The plugins to apply.
-         */
-        public Compound(List<? extends Plugin> plugins) {
-            this.plugins = new ArrayList<Plugin>();
-            for (Plugin plugin : plugins) {
-                if (plugin instanceof Compound) {
-                    this.plugins.addAll(((Compound) plugin).plugins);
-                } else if (!(plugin instanceof NoOp)) {
-                    this.plugins.add(plugin);
-                }
-            }
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public boolean matches(TypeDescription target) {
-            for (Plugin plugin : plugins) {
-                if (plugin.matches(target)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-            for (Plugin plugin : plugins) {
-                if (plugin.matches(typeDescription)) {
-                    builder = plugin.apply(builder, typeDescription, classFileLocator);
-                }
-            }
-            return builder;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        public void close() throws IOException {
-            for (Plugin plugin : plugins) {
-                plugin.close();
-            }
         }
     }
 }
