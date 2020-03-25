@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -1123,6 +1124,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance
         public Generic getSuperClass() {
             return superClass == null
                     ? Generic.UNDEFINED
@@ -1132,6 +1134,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance
         public TypeList.Generic getInterfaces() {
             return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(interfaceTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
@@ -1139,6 +1142,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
             return new FieldList.ForTokens(this, fieldTokens);
         }
@@ -1146,6 +1150,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
             return new MethodList.ForTokens(this, methodTokens);
         }
@@ -1153,6 +1158,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        @CachedReturnPlugin.Enhance
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }

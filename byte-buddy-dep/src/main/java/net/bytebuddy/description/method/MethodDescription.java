@@ -863,6 +863,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int hashCode = 17 + getDeclaringType().hashCode();
             hashCode = 31 * hashCode + getInternalName().hashCode();

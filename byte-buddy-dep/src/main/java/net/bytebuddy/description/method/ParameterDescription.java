@@ -16,6 +16,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
@@ -186,6 +187,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return getDeclaringMethod().hashCode() ^ getIndex();
         }

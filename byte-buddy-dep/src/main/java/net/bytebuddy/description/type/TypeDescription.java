@@ -3773,6 +3773,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return asErasure().hashCode();
             }
@@ -4313,6 +4314,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return getSort().isNonGeneric()
                         ? asErasure().hashCode()
@@ -4591,6 +4593,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 int lowerHash = 1, upperHash = 1;
                 for (Generic lowerBound : getLowerBounds()) {
@@ -5017,6 +5020,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 int result = 1;
                 for (Generic typeArgument : getTypeArguments()) {
@@ -5601,6 +5605,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return getTypeVariableSource().hashCode() ^ getSymbol().hashCode();
             }
@@ -6153,6 +6158,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return resolve().hashCode();
             }
@@ -7932,6 +7938,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return getName().hashCode();
         }

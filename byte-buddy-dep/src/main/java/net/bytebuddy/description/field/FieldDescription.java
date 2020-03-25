@@ -192,6 +192,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return getDeclaringType().hashCode() + 31 * (17 + getName().hashCode());
         }
