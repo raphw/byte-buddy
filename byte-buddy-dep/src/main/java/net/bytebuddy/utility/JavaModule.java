@@ -341,7 +341,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
                 try {
-                    Class<?> module = Class.forName("java.lang.Module");
+                    Class<?> module = Class.forName("java.lang.Module", false, null); // e.g. Netbeans contains a comilation target proxy
                     try {
                         Class<?> instrumentation = Class.forName("java.lang.instrument.Instrumentation");
                         return new Dispatcher.Enabled.WithInstrumentationSupport(Class.class.getMethod("getModule"),
@@ -367,8 +367,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 } catch (ClassNotFoundException ignored) {
                     return Dispatcher.Disabled.INSTANCE;
                 } catch (NoSuchMethodException ignored) {
-                    return Dispatcher.Disabled.INSTANCE;
-                } catch (SecurityException ignored) {
                     return Dispatcher.Disabled.INSTANCE;
                 }
             }
