@@ -368,6 +368,8 @@ public class JavaModule implements NamedElement.WithOptionalName {
                     return Dispatcher.Disabled.INSTANCE;
                 } catch (NoSuchMethodException ignored) {
                     return Dispatcher.Disabled.INSTANCE;
+                } catch (SecurityException ignored) {
+                    return Dispatcher.Disabled.INSTANCE;
                 }
             }
         }
