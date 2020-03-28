@@ -9,6 +9,7 @@ Byte Buddy release notes
 - Add preprocessor for Byte Buddy build engine.
 - Explicitly load Java's `Module` from boot loader to avoid loading pseudo compiler target bundled with NetBeans.
 - Add convenience method for creating lookup-based class loading strategy with fallback to Unsafe for Java 8 and older.
+- Add caching for method, field and parameter description hashCode methods.
 
 ### 16. February 2020: version 1.10.8
 
