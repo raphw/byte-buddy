@@ -2,6 +2,8 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,8 +12,10 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +47,16 @@ public class ClassLoadingStrategyUsingLookupTest {
         assertThat(loaded.size(), is(1));
         Class<?> type = loaded.get(typeDescription);
         assertThat(type.getName(), is(Foo.class.getName()));
+    }
+
+    @Test
+    public void testFallback() {
+        assertThat(ClassLoadingStrategy.UsingLookup.withFallback(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                return JavaType.METHOD_HANDLES.load().getMethod("lookup").invoke(null);
+            }
+        }), notNullValue(ClassLoadingStrategy.class));
     }
 
     private static class Foo {

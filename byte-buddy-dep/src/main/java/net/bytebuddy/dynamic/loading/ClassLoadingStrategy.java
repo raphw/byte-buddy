@@ -22,6 +22,7 @@ import java.io.File;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * A strategy for loading a collection of types.
@@ -457,6 +458,28 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          */
         public static ClassLoadingStrategy<ClassLoader> of(Object lookup) {
             return new UsingLookup(ClassInjector.UsingLookup.of(lookup));
+        }
+
+        /**
+         * Resolves a class loading strategy using a lookup if available on the current JVM. If the current JVM supports method handles
+         * lookups, a lookup instance will be used. Alternatively, unsafe class definition is used, if supported. If neither strategy is
+         * supported, an exception is thrown.
+         *
+         * @param lookup A resolver for a lookup instance if the current JVM allows for lookup-based class injection.
+         * @return An appropriate class loading strategy for the current JVM that uses a method handles lookup if available.
+         */
+        public static ClassLoadingStrategy<ClassLoader> withFallback(Callable<?> lookup) {
+            if (ClassInjector.UsingLookup.isAvailable()) {
+                try {
+                    return of(lookup.call());
+                } catch (Exception exception) {
+                    throw new IllegalStateException(exception);
+                }
+            } else if (ClassInjector.UsingUnsafe.isAvailable()) {
+                return new ClassLoadingStrategy.ForUnsafeInjection();
+            } else {
+                throw new IllegalStateException("Neither lookup or unsafe class injection is available");
+            }
         }
 
         /**
