@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. March 2020: version 1.10.9
+
+- Add validation for interface method modifiers.
+- Correct discovery of MacOs temp directory for Byte Buddy Agent `VirtualMachine`.
+- Add parallel processor for Byte Buddy build engine.
+- Add preprocessor for Byte Buddy build engine.
+- Explicitly load Java's `Module` from boot loader to avoid loading pseudo compiler target bundled with NetBeans.
+- Add convenience method for creating lookup-based class loading strategy with fallback to Unsafe for Java 8 and older.
+
 ### 16. February 2020: version 1.10.8
 
 - Adjust use of types of the `java.instrument` module to avoid errors if the module is not present on a JVM.
