@@ -78,6 +78,7 @@ public class AndroidClassLoadingStrategyTest {
         verify(conversion).register(Foo.class.getName(), QUX);
         verify(conversion).register(Bar.class.getName(), BAZ);
         verify(conversion).drainTo(any(OutputStream.class));
+        verify(conversion).close();
         verifyNoMoreInteractions(conversion);
     }
 
