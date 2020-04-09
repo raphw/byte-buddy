@@ -126,33 +126,29 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
      */
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         DexProcessor.Conversion conversion = dexProcessor.create();
+        for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
+            conversion.register(entry.getKey().getName(), entry.getValue());
+        }
+        File jar = new File(privateDirectory, randomString.nextString() + JAR_FILE_EXTENSION);
         try {
-            for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
-                conversion.register(entry.getKey().getName(), entry.getValue());
+            if (!jar.createNewFile()) {
+                throw new IllegalStateException("Cannot create " + jar);
             }
-            File jar = new File(privateDirectory, randomString.nextString() + JAR_FILE_EXTENSION);
+            JarOutputStream zipOutputStream = new JarOutputStream(new FileOutputStream(jar));
             try {
-                if (!jar.createNewFile()) {
-                    throw new IllegalStateException("Cannot create " + jar);
-                }
-                JarOutputStream zipOutputStream = new JarOutputStream(new FileOutputStream(jar));
-                try {
-                    zipOutputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
-                    conversion.drainTo(zipOutputStream);
-                    zipOutputStream.closeEntry();
-                } finally {
-                    zipOutputStream.close();
-                }
-                return doLoad(classLoader, types.keySet(), jar);
-            } catch (IOException exception) {
-                throw new IllegalStateException("Cannot write to zip file " + jar, exception);
+                zipOutputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
+                conversion.drainTo(zipOutputStream);
+                zipOutputStream.closeEntry();
             } finally {
-                if (!jar.delete()) {
-                    Logger.getLogger("net.bytebuddy").warning("Could not delete " + jar);
-                }
+                zipOutputStream.close();
             }
+            return doLoad(classLoader, types.keySet(), jar);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Cannot write to zip file " + jar, exception);
         } finally {
-            conversion.close();
+            if (!jar.delete()) {
+                Logger.getLogger("net.bytebuddy").warning("Could not delete " + jar);
+            }
         }
     }
 
@@ -183,7 +179,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         /**
          * Represents an ongoing conversion of several Java class files into an Android dex file.
          */
-        interface Conversion extends Closeable {
+        interface Conversion {
 
             /**
              * Adds a Java class to the generated dex file.
@@ -200,11 +196,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
              * @throws IOException If an error occurs while writing the file.
              */
             void drainTo(OutputStream outputStream) throws IOException;
-
-            /**
-             * {@inheritDoc}
-             */
-            void close();
         }
 
         /**
@@ -230,19 +221,13 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 Dispatcher dispatcher;
                 try {
                     Class<?> dxContextType = Class.forName("com.android.dx.command.dexer.DxContext");
-                    Method close;
-                    try {
-                        close = DexFile.class.getMethod("close");
-                    } catch (NoSuchMethodException ignored) {
-                        close = null;
-                    }
                     dispatcher = new Dispatcher.ForApi26LevelCompatibleVm(CfTranslator.class.getMethod("translate",
                             dxContextType,
                             DirectClassFile.class,
                             byte[].class,
                             CfOptions.class,
                             DexOptions.class,
-                            DexFile.class), dxContextType.getConstructor(), close);
+                            DexFile.class), dxContextType.getConstructor());
                 } catch (Throwable ignored) {
                     try {
                         dispatcher = new Dispatcher.ForLegacyVm(CfTranslator.class.getMethod("translate",
@@ -356,13 +341,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                 public void drainTo(OutputStream outputStream) throws IOException {
                     dexFile.writeTo(outputStream, NO_PRINT_OUTPUT, NOT_VERBOSE);
                 }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                public void close() {
-                    DISPATCHER.close(dexFile);
-                }
             }
 
             /**
@@ -393,13 +371,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                  * @param targetApiLevel The target API level.
                  */
                 void setTargetApi(DexOptions dexOptions, int targetApiLevel);
-
-                /**
-                 * Closes the dex file if applicable.
-                 *
-                 * @param dexFile The dex file to close.
-                 */
-                void close(DexFile dexFile);
 
                 /**
                  * An unavailable dispatcher.
@@ -435,13 +406,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                      * {@inheritDoc}
                      */
                     public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
-                        throw new IllegalStateException("Could not resolve dispatcher: " + message);
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void close(DexFile dexFile) {
                         throw new IllegalStateException("Could not resolve dispatcher: " + message);
                     }
                 }
@@ -504,13 +468,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                             throw new IllegalStateException("Cannot access an Android dex file translation method", exception);
                         }
                     }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void close(DexFile dexFile) {
-                        /* do nothing */
-                    }
                 }
 
                 /**
@@ -529,21 +486,14 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     private final Constructor<?> dxContext;
 
                     /**
-                     * The {@code com.android.dx.dex.file.DexFile#close()} method.
-                     */
-                    private final Method close;
-
-                    /**
                      * Creates a new dispatcher.
                      *
                      * @param translate The {@code CfTranslator#translate(DxContext, DirectClassFile, byte[], CfOptions, DexOptions, DexFile)} method.
                      * @param dxContext The {@code com.android.dx.command.dexer.DxContext#DxContext()} constructor.
-                     * @param close     The {@code com.android.dx.dex.file.DexFile#close()} method.
                      */
-                    protected ForApi26LevelCompatibleVm(Method translate, Constructor<?> dxContext, Method close) {
+                    protected ForApi26LevelCompatibleVm(Method translate, Constructor<?> dxContext) {
                         this.translate = translate;
                         this.dxContext = dxContext;
-                        this.close = close;
                     }
 
                     /**
@@ -576,21 +526,6 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                      */
                     public void setTargetApi(DexOptions dexOptions, int targetApiLevel) {
                         /* do nothing */
-                    }
-
-                    /**
-                     * {@inheritDoc}
-                     */
-                    public void close(DexFile dexFile) {
-                        if (close != null) {
-                            try {
-                                close.invoke(dexFile);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access an Android dex file close method", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Cannot invoke Android dex file close method", exception.getCause());
-                            }
-                        }
                     }
                 }
             }
@@ -702,17 +637,23 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
          */
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
             dalvik.system.DexFile dexFile = DISPATCHER.loadDex(privateDirectory, jar, classLoader, randomString);
-            Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
-            for (TypeDescription typeDescription : typeDescriptions) {
-                synchronized (classLoader) { // Guaranteed to be non-null by check in 'load' method.
-                    Class<?> type = DISPATCHER.loadClass(dexFile, classLoader, typeDescription);
-                    if (type == null) {
-                        throw new IllegalStateException("Could not load " + typeDescription);
+            try {
+                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
+                for (TypeDescription typeDescription : typeDescriptions) {
+                    synchronized (classLoader) { // Guaranteed to be non-null by check in 'load' method.
+                        Class<?> type = DISPATCHER.loadClass(dexFile, classLoader, typeDescription);
+                        if (type == null) {
+                            throw new IllegalStateException("Could not load " + typeDescription);
+                        }
+                        loadedTypes.put(typeDescription, type);
                     }
-                    loadedTypes.put(typeDescription, type);
+                }
+                return loadedTypes;
+            } finally {
+                if (dexFile != null) {
+                    dexFile.close();
                 }
             }
-            return loadedTypes;
         }
 
         /**
