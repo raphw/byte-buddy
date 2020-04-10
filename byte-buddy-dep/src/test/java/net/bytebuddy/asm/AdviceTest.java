@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -13,7 +14,9 @@ import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.precompiled.AdviceBootstrap;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
 
@@ -48,6 +51,9 @@ public class AdviceTest {
     private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable";
 
     private static final int VALUE = 42, IGNORED = 1;
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     public void testEmptyAdviceEntryAndExit() throws Exception {
