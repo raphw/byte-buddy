@@ -460,7 +460,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else {
             return annotation.getValue(property).resolve(Boolean.class)
                     ? new Dispatcher.Inlining(methodDescription)
-                    : new Dispatcher.Delegating(methodDescription, Dispatcher.Delegating.Invoker.ForStaticInvocation.INSTANCE); // TODO: dynamic
+                    : new Dispatcher.Delegating(methodDescription, Dispatcher.Delegating.Materializer.ForStaticInvocation.INSTANCE); // TODO: dynamic
         }
     }
 
@@ -8448,16 +8448,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription.InDefinedShape adviceMethod;
 
-            protected final Invoker invoker;
+            /**
+             * The materializer to use.
+             */
+            protected final Materializer materializer;
 
             /**
              * Creates a new delegating advice dispatcher.
              *
              * @param adviceMethod The advice method.
+             * @param materializer The materializer to use.
              */
-            protected Delegating(MethodDescription.InDefinedShape adviceMethod, Invoker invoker) {
+            protected Delegating(MethodDescription.InDefinedShape adviceMethod, Materializer materializer) {
                 this.adviceMethod = adviceMethod;
-                this.invoker = invoker;
+                this.materializer = materializer;
             }
 
             /**
@@ -8494,7 +8498,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit) {
-                return Resolved.ForMethodEnter.of(adviceMethod, invoker, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
+                return Resolved.ForMethodEnter.of(adviceMethod, materializer, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
             }
 
             /**
@@ -8513,18 +8517,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, invoker, namedTypes, userFactories, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, materializer, namedTypes, userFactories, methodEnter.getAdviceType());
             }
 
-            protected interface Invoker {
+            /**
+             * Materializes an advice invocation within a delegation.
+             */
+            protected interface Materializer {
 
+                /**
+                 * Materializes an invocation.
+                 *
+                 * @param methodVisitor The method visitor to apply the materialization to.
+                 * @param adviceMethod  The advice method to materialize.
+                 */
                 void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod);
 
-                enum ForStaticInvocation implements Invoker {
+                /**
+                 * Invokes an advice method using a static method call.
+                 */
+                enum ForStaticInvocation implements Materializer {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod) {
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
@@ -8534,15 +8555,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                class ForDynamicInvocation implements Invoker {
+                /**
+                 * Invokes an advice method using a dynamic method call.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance
+                class ForDynamicInvocation implements Materializer {
 
+                    /**
+                     * The handle of the referred bootstrap method.
+                     */
                     private final Handle handle;
 
+                    /**
+                     * Creates a materializer for a dynamic method invocation.
+                     *
+                     * @param handle The handle of the referred bootstrap method.
+                     */
                     protected ForDynamicInvocation(Handle handle) {
                         this.handle = handle;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod) {
                         methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
@@ -8556,7 +8591,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract static class Resolved extends Dispatcher.Resolved.AbstractBase {
 
-                protected final Invoker invoker;
+                /**
+                 * The materializer to use.
+                 */
+                protected final Materializer materializer;
 
                 /**
                  * Creates a new resolved version of a dispatcher.
@@ -8565,14 +8603,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
+                 * @param materializer    The materializer to use.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
                                    TypeDescription throwableType,
                                    TypeDescription relocatableType,
-                                   Invoker invoker) {
+                                   Materializer materializer) {
                     super(adviceMethod, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.DELEGATION);
-                    this.invoker = invoker;
+                    this.materializer = materializer;
                 }
 
                 /**
@@ -8685,7 +8724,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final RelocationHandler.Bound relocationHandler;
 
-                    private final Invoker invoker;
+                    /**
+                     *The materializer to use.
+                     */
+                    private final Materializer materializer;
 
                     /**
                      * Creates a new advice method writer.
@@ -8699,9 +8741,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                     * @param materializer          The materializer to use.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
-                                                 Invoker invoker,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -8709,9 +8751,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
-                                                 RelocationHandler.Bound relocationHandler) {
+                                                 RelocationHandler.Bound relocationHandler,
+                                                 Materializer materializer) {
                         this.adviceMethod = adviceMethod;
-                        this.invoker = invoker;
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.implementationContext = implementationContext;
@@ -8720,6 +8762,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.stackMapFrameHandler = stackMapFrameHandler;
                         this.suppressionHandler = suppressionHandler;
                         this.relocationHandler = relocationHandler;
+                        this.materializer = materializer;
                     }
 
                     /**
@@ -8741,7 +8784,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     .apply(methodVisitor, implementationContext)
                                     .getMaximalSize());
                         }
-                        invoker.apply(methodVisitor, adviceMethod);
+                        materializer.apply(methodVisitor, adviceMethod);
                         suppressionHandler.onEndWithSkip(methodVisitor,
                                 implementationContext,
                                 methodSizeHandler,
@@ -8792,9 +8835,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                         * @param materializer          The materializer to use.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
-                                                 Invoker invoker,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Implementation.Context implementationContext,
@@ -8802,9 +8845,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
-                                                 RelocationHandler.Bound relocationHandler) {
+                                                 RelocationHandler.Bound relocationHandler,
+                                                 Materializer materializer) {
                             super(adviceMethod,
-                                    invoker,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -8812,7 +8855,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodSizeHandler,
                                     stackMapFrameHandler,
                                     suppressionHandler,
-                                    relocationHandler);
+                                    relocationHandler,
+                                    materializer);
                         }
 
                         /**
@@ -8845,9 +8889,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                         * @param materializer          The materializer to use.
                          */
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                                Invoker invoker,
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -8855,9 +8899,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 MethodSizeHandler.ForAdvice methodSizeHandler,
                                                 StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                 SuppressionHandler.Bound suppressionHandler,
-                                                RelocationHandler.Bound relocationHandler) {
+                                                RelocationHandler.Bound relocationHandler,
+                                                Materializer materializer) {
                             super(adviceMethod,
-                                    invoker,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -8865,7 +8909,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodSizeHandler,
                                     stackMapFrameHandler,
                                     suppressionHandler,
-                                    relocationHandler);
+                                    relocationHandler,
+                                    materializer);
                         }
 
                         /**
@@ -8919,12 +8964,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
+                     * @param materializer  The materializer to use.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
-                                             Invoker invoker) {
+                                             Materializer materializer) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -8940,7 +8986,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
-                                invoker);
+                                materializer);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -8948,19 +8994,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves enter advice that only exposes the enter type if this is necessary.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param materializer  The materializer to use.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param methodExit    {@code true} if exit advice is applied.
                      * @return An appropriate enter handler.
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
-                                                                Invoker invoker,
+                                                                Materializer materializer,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType, invoker)
-                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType, invoker);
+                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType, materializer)
+                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType, materializer);
                     }
 
                     /**
@@ -9034,7 +9081,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.ENTER));
                         }
                         return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
-                                invoker,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
@@ -9042,7 +9088,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                materializer);
                     }
 
                     /**
@@ -9057,12 +9104,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
+                         * @param materializer  The materializer to use.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
                                                         TypeDefinition exitType,
-                                                        Invoker invoker) {
-                            super(adviceMethod, userFactories, exitType, invoker);
+                                                        Materializer materializer) {
+                            super(adviceMethod, userFactories, exitType, materializer);
                         }
 
                         /**
@@ -9084,12 +9132,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param adviceMethod  The represented advice method.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
+                         * @param materializer  The materializer to use.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          TypeDefinition exitType,
-                                                         Invoker invoker) {
-                            super(adviceMethod, userFactories, exitType, invoker);
+                                                         Materializer materializer) {
+                            super(adviceMethod, userFactories, exitType, materializer);
                         }
 
                         /**
@@ -9145,13 +9194,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
+                     * @param materializer  The materializer to use.
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             TypeDefinition enterType,
-                                            Invoker invoker) {
+                                            Materializer materializer) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -9168,7 +9218,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
-                                invoker);
+                                materializer);
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -9176,13 +9226,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param materializer  The materializer to use.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
-                                                               Invoker invoker,
+                                                               Materializer materializer,
                                                                Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                TypeDefinition enterType) {
@@ -9191,8 +9242,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .getValue(ON_THROWABLE)
                                 .resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, invoker)
-                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, throwable, invoker);
+                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, materializer)
+                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, throwable, materializer);
                     }
 
                     @Override
@@ -9252,7 +9303,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.EXIT));
                         }
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
-                                invoker,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
@@ -9260,7 +9310,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                materializer);
                     }
 
                     /**
@@ -9299,14 +9350,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param enterType     The type of the value supplied by the enter advice method or
                          *                      a description of {@code void} if no such value exists.
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
+                         * @param materializer  The materializer to use.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable,
-                                                       Invoker invoker) {
-                            super(adviceMethod, namedTypes, userFactories, enterType, invoker);
+                                                       Materializer materializer) {
+                            super(adviceMethod, namedTypes, userFactories, enterType, materializer);
                             this.throwable = throwable;
                         }
 
@@ -9331,13 +9383,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param enterType     The type of the value supplied by the enter advice method or
                          *                      a description of {@code void} if no such value exists.
+                         * @param materializer  The materializer to use.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           TypeDefinition enterType,
-                                                          Invoker invoker) {
-                            super(adviceMethod, namedTypes, userFactories, enterType, invoker);
+                                                          Materializer materializer) {
+                            super(adviceMethod, namedTypes, userFactories, enterType, materializer);
                         }
 
                         /**
