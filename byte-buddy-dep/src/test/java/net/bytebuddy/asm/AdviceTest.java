@@ -10,9 +10,10 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
-import org.hamcrest.CoreMatchers;
+import net.bytebuddy.test.precompiled.AdviceBootstrap;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaType;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
 
@@ -21,6 +22,9 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,7 +38,8 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AdviceTest {
 
@@ -229,6 +234,28 @@ public class AdviceTest {
                 .visit(Advice.to(TrivialAdviceDelegation.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 7, target = TrivialAdviceDelegation.class)
+    public void testTrivialAdviceWithDelegationBootstrapped() throws Exception {
+        Class<?> bootstrap = Class.forName("net.bytebuddy.test.precompiled.AdviceBootstrap");
+        Class<?> type = new ByteBuddy()
+                .redefine(TrivialAdviceDelegation.class)
+                .visit(Advice.withCustomMapping().bootstrap(bootstrap.getMethod("bootstrap",
+                        JavaType.METHOD_HANDLES_LOOKUP.load(),
+                        String.class,
+                        JavaType.METHOD_TYPE.load(),
+                        JavaType.METHOD_HANDLE.load(),
+                        Class.class,
+                        JavaType.METHOD_HANDLE.load(),
+                        int.class)).to(TrivialAdviceDelegation.class).on(named(FOO)))
+                .make()
+                .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -3272,11 +3299,11 @@ public class AdviceTest {
             value = new Object[0];
         }
     }
-    
+
     public static class ExceptionWriterSample extends RuntimeException {
 
         public static boolean exception;
-        
+
         public String foo() {
             return FOO;
         }
