@@ -4541,9 +4541,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),
                         handle,
-                        JavaConstant.MethodHandle.of(adviceMethod).asConstantPoolValue(),
+                        adviceMethod.getDeclaringType().getName(),
                         Type.getType(instrumentedType.getDescriptor()),
                         JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
+                        instrumentedMethod.getInternalName(),
                         enter);
             }
         }
@@ -11129,7 +11130,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied constructor as an dynamic invocation bootstrap target for delegating advice methods.
+         * Defines the supplied constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are:
+         * <ul>
+     *     <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+     *     <li>A {@link String} representing the constructor internal name.</li>
+     *     <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+     *     <li>A {@link String} of the binary target class name.</li>
+     *     <li>A {@link Class} representing the class implementing the instrumented method.</li>
+     *     <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+     *     <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * </ul>
          *
          * @param constructor The bootstrap constructor.
          * @return A new builder for an advice that uses the supplied constructor for bootstrapping.
@@ -11139,7 +11151,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods.
+         * Defines the supplied method as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are:
+         * <ul>
+         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+         * <li>A {@link String} representing the constructor internal name.</li>
+         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+         * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * </ul>
          *
          * @param method The bootstrap method.
          * @return A new builder for an advice that uses the supplied method for bootstrapping.
@@ -11149,7 +11172,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods.
+         * Defines the supplied method or constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
+         * method arguments are:
+         * <ul>
+         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+         * <li>A {@link String} representing the constructor internal name.</li>
+         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+         * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * </ul>
          *
          * @param methodDescription The bootstrap method or constructor.
          * @return A new builder for an advice that uses the supplied method or constructor for bootstrapping.
