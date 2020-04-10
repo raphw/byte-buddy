@@ -460,7 +460,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else {
             return annotation.getValue(property).resolve(Boolean.class)
                     ? new Dispatcher.Inlining(methodDescription)
-                    : new Dispatcher.Delegating(methodDescription);
+                    : new Dispatcher.Delegating(methodDescription, Dispatcher.Delegating.Invoker.ForStaticInvocation.INSTANCE); // TODO: dynamic
         }
     }
 
@@ -8448,13 +8448,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription.InDefinedShape adviceMethod;
 
+            protected final Invoker invoker;
+
             /**
              * Creates a new delegating advice dispatcher.
              *
              * @param adviceMethod The advice method.
              */
-            protected Delegating(MethodDescription.InDefinedShape adviceMethod) {
+            protected Delegating(MethodDescription.InDefinedShape adviceMethod, Invoker invoker) {
                 this.adviceMethod = adviceMethod;
+                this.invoker = invoker;
             }
 
             /**
@@ -8491,7 +8494,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit) {
-                return Resolved.ForMethodEnter.of(adviceMethod, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
+                return Resolved.ForMethodEnter.of(adviceMethod, invoker, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
             }
 
             /**
@@ -8510,13 +8513,50 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, namedTypes, userFactories, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, invoker, namedTypes, userFactories, methodEnter.getAdviceType());
+            }
+
+            protected interface Invoker {
+
+                void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod);
+
+                enum ForStaticInvocation implements Invoker {
+
+                    INSTANCE;
+
+                    @Override
+                    public void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod) {
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                adviceMethod.getDeclaringType().getInternalName(),
+                                adviceMethod.getInternalName(),
+                                adviceMethod.getDescriptor(),
+                                false);
+                    }
+                }
+
+                class ForDynamicInvocation implements Invoker {
+
+                    private final Handle handle;
+
+                    protected ForDynamicInvocation(Handle handle) {
+                        this.handle = handle;
+                    }
+
+                    @Override
+                    public void apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape adviceMethod) {
+                        methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
+                                adviceMethod.getDescriptor(),
+                                handle);
+                    }
+                }
             }
 
             /**
              * A resolved version of a dispatcher.
              */
             protected abstract static class Resolved extends Dispatcher.Resolved.AbstractBase {
+
+                protected final Invoker invoker;
 
                 /**
                  * Creates a new resolved version of a dispatcher.
@@ -8529,8 +8569,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<? extends OffsetMapping.Factory<?>> factories,
                                    TypeDescription throwableType,
-                                   TypeDescription relocatableType) {
+                                   TypeDescription relocatableType,
+                                   Invoker invoker) {
                     super(adviceMethod, factories, throwableType, relocatableType, OffsetMapping.Factory.AdviceType.DELEGATION);
+                    this.invoker = invoker;
                 }
 
                 /**
@@ -8643,6 +8685,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final RelocationHandler.Bound relocationHandler;
 
+                    private final Invoker invoker;
+
                     /**
                      * Creates a new advice method writer.
                      *
@@ -8657,6 +8701,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
+                                                 Invoker invoker,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -8666,6 +8711,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler) {
                         this.adviceMethod = adviceMethod;
+                        this.invoker = invoker;
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.implementationContext = implementationContext;
@@ -8695,11 +8741,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     .apply(methodVisitor, implementationContext)
                                     .getMaximalSize());
                         }
-                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                adviceMethod.getDeclaringType().getInternalName(),
-                                adviceMethod.getInternalName(),
-                                adviceMethod.getDescriptor(),
-                                false);
+                        invoker.apply(methodVisitor, adviceMethod);
                         suppressionHandler.onEndWithSkip(methodVisitor,
                                 implementationContext,
                                 methodSizeHandler,
@@ -8752,6 +8794,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
+                                                 Invoker invoker,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  Implementation.Context implementationContext,
@@ -8761,6 +8804,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler) {
                             super(adviceMethod,
+                                    invoker,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -8803,6 +8847,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                          */
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
+                                                Invoker invoker,
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -8812,6 +8857,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 SuppressionHandler.Bound suppressionHandler,
                                                 RelocationHandler.Bound relocationHandler) {
                             super(adviceMethod,
+                                    invoker,
                                     offsetMappings,
                                     methodVisitor,
                                     implementationContext,
@@ -8877,7 +8923,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
-                                             TypeDefinition exitType) {
+                                             TypeDefinition exitType,
+                                             Invoker invoker) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -8892,7 +8939,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Factory.Illegal<Local>(Local.class),
                                         new OffsetMapping.Factory.Illegal<Return>(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_ON).resolve(TypeDescription.class),
+                                invoker);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
@@ -8906,12 +8954,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate enter handler.
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
+                                                                Invoker invoker,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
                                                                 boolean methodExit) {
                         return methodExit
-                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType)
-                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType);
+                                ? new WithRetainedEnterType(adviceMethod, userFactories, exitType, invoker)
+                                : new WithDiscardedEnterType(adviceMethod, userFactories, exitType, invoker);
                     }
 
                     /**
@@ -8985,6 +9034,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.ENTER));
                         }
                         return new AdviceMethodWriter.ForMethodEnter(adviceMethod,
+                                invoker,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
@@ -9010,8 +9060,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                        TypeDefinition exitType) {
-                            super(adviceMethod, userFactories, exitType);
+                                                        TypeDefinition exitType,
+                                                        Invoker invoker) {
+                            super(adviceMethod, userFactories, exitType, invoker);
                         }
 
                         /**
@@ -9036,8 +9087,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                         TypeDefinition exitType) {
-                            super(adviceMethod, userFactories, exitType);
+                                                         TypeDefinition exitType,
+                                                         Invoker invoker) {
+                            super(adviceMethod, userFactories, exitType, invoker);
                         }
 
                         /**
@@ -9098,7 +9150,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
-                                            TypeDefinition enterType) {
+                                            TypeDefinition enterType,
+                                            Invoker invoker) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Unresolved.Factory.INSTANCE,
                                         OffsetMapping.ForAllArguments.Factory.INSTANCE,
@@ -9114,7 +9167,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod)
                                 ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(REPEAT_ON).resolve(TypeDescription.class),
+                                invoker);
                         backupArguments = adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(BACKUP_ARGUMENTS).resolve(Boolean.class);
                     }
 
@@ -9128,6 +9182,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
+                                                               Invoker invoker,
                                                                Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                TypeDefinition enterType) {
@@ -9136,8 +9191,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 .getValue(ON_THROWABLE)
                                 .resolve(TypeDescription.class);
                         return throwable.represents(NoExceptionHandler.class)
-                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, enterType)
-                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, throwable);
+                                ? new WithoutExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, invoker)
+                                : new WithExceptionHandler(adviceMethod, namedTypes, userFactories, enterType, throwable, invoker);
                     }
 
                     @Override
@@ -9197,6 +9252,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Sort.EXIT));
                         }
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
+                                invoker,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
@@ -9248,8 +9304,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                        Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        TypeDefinition enterType,
-                                                       TypeDescription throwable) {
-                            super(adviceMethod, namedTypes, userFactories, enterType);
+                                                       TypeDescription throwable,
+                                                       Invoker invoker) {
+                            super(adviceMethod, namedTypes, userFactories, enterType, invoker);
                             this.throwable = throwable;
                         }
 
@@ -9278,8 +9335,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
-                                                          TypeDefinition enterType) {
-                            super(adviceMethod, namedTypes, userFactories, enterType);
+                                                          TypeDefinition enterType,
+                                                          Invoker invoker) {
+                            super(adviceMethod, namedTypes, userFactories, enterType, invoker);
                         }
 
                         /**
