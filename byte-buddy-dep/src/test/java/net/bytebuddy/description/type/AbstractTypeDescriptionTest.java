@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
+import net.bytebuddy.test.precompiled.SampleRecord;
 import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.visibility.Sample;
@@ -30,12 +31,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -745,8 +748,35 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testNonRecordComponents() {
+    public void testNonRecordComponents() throws Exception {
         assertThat(describe(String.class).getRecordComponents().size(), is(0));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(14)
+    public void testRecordComponents() throws Exception {
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
+        RecordComponentList recordComponents = describe(sampleRecord).getRecordComponents();
+        assertThat(recordComponents.size(), is(1));
+        assertThat(recordComponents.getOnly().getActualName(), is(FOO));
+        assertThat(recordComponents.getOnly().getAccessor(), is(new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
+        assertThat(recordComponents.getOnly().getDeclaringType(), is(TypeDescription.ForLoadedType.of(sampleRecord)));
+        assertThat(recordComponents.getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(recordComponents.getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));
+        assertThat(recordComponents.getOnly().getType().asErasure().represents(List.class), is(true));
+        assertThat(recordComponents.getOnly().getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().size(), is(1));
+        assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is(42));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().size(), is(1));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is(84));
     }
 
     private Class<?> inMethodClass() {
@@ -761,7 +791,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private @interface SampleAnnotation {
+    public @interface SampleAnnotation {
         /* empty */
     }
 

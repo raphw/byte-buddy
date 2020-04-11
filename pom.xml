@@ -54,10 +54,10 @@
         <bytebuddy.integration>false</bytebuddy.integration>
         <bytebuddy.experimental>false</bytebuddy.experimental>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sourcecode.main.version>8</sourcecode.main.version>
-        <sourcecode.test.version>8</sourcecode.test.version>
-        <bytecode.main.version>8</bytecode.main.version>
-        <bytecode.test.version>8</bytecode.test.version>
+        <sourcecode.main.version>14</sourcecode.main.version>
+        <sourcecode.test.version>14</sourcecode.test.version>
+        <bytecode.main.version>14</bytecode.main.version>
+        <bytecode.test.version>14</bytecode.test.version>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.url>https://asm.ow2.io</asm.url>
         <version.asm>8.0</version.asm>

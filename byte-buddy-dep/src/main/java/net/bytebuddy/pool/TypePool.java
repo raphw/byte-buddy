@@ -8160,6 +8160,8 @@ public interface TypePool {
                                     typePath,
                                     receiverTypeAnnotationTokens);
                             break;
+                        case TypeReference.FIELD:
+                            return null; // TODO
                         default:
                             throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
                     }
