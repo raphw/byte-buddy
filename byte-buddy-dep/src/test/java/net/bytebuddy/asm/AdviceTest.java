@@ -1,7 +1,6 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -11,7 +10,6 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
-import net.bytebuddy.test.precompiled.AdviceBootstrap;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
@@ -25,9 +23,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -256,9 +251,10 @@ public class AdviceTest {
                         JavaType.METHOD_HANDLES_LOOKUP.load(),
                         String.class,
                         JavaType.METHOD_TYPE.load(),
-                        JavaType.METHOD_HANDLE.load(),
+                        String.class,
                         Class.class,
                         JavaType.METHOD_HANDLE.load(),
+                        String.class,
                         int.class)).to(TrivialAdviceDelegation.class).on(named(FOO)))
                 .make()
                 .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)

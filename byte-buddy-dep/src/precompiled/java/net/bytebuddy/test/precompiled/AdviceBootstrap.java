@@ -22,6 +22,7 @@ import java.lang.invoke.MethodType;
 
 public class AdviceBootstrap {
 
+    @SuppressWarnings("unused")
     public static ConstantCallSite bootstrap(MethodHandles.Lookup lookup,
                                              String invokedMethodName,
                                              MethodType invokedMethodType,
@@ -29,7 +30,9 @@ public class AdviceBootstrap {
                                              Class<?> sourceType,
                                              MethodHandle sourceMethod,
                                              String sourceMethodName,
-                                             int enter) throws Exception {
-        return new ConstantCallSite(lookup.findStatic(Class.forName(invokedClassName), invokedMethodName, invokedMethodType));
+                                             int type) throws Exception {
+        return new ConstantCallSite(lookup.findStatic(Class.forName(invokedClassName, false, lookup.lookupClass().getClassLoader()),
+                invokedMethodName,
+                invokedMethodType));
     }
 }
