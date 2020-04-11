@@ -25,10 +25,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
-import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -1198,6 +1195,13 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public RecordComponentList getRecordComponents() {
+            throw new UnsupportedOperationException(); // TODO
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription validated() {
             if (!isValidIdentifier(getName().split("\\."))) {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
@@ -1662,6 +1666,13 @@ public interface InstrumentedType extends TypeDescription {
          */
         public TypeList getNestMembers() {
             return typeDescription.getNestMembers();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            return typeDescription.getRecordComponents();
         }
 
         /**

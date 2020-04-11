@@ -395,6 +395,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     boolean isNestMateOf(TypeDescription typeDescription);
 
+    RecordComponentList getRecordComponents();
+
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
@@ -3256,6 +3258,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @return The resolved annotated element.
                      */
                     protected abstract AnnotatedElement resolve(AnnotatedElement annotatedElement);
+                }
+
+                protected static class ForRecordComponent extends Delegator {
+
+                    private final Object recordComponent;
+
+                    protected ForRecordComponent(Object recordComponent) {
+                        this.recordComponent = recordComponent;
+                    }
+
+                    @Override
+                    public AnnotatedElement resolve() {
+                        return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getAnnotatedType(recordComponent);
+                    }
                 }
             }
 
@@ -6661,10 +6677,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A lazy projection of a {@code java.lang.reflect.RecordComponent}'s type.
+             */
             public static class OfRecordComponent extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
+                /**
+                 * The represented record component.
+                 */
                 private final Object recordComponent;
 
+                /**
+                 * Creates a lazy projection of a {@code java.lang.reflect.RecordComponent}'s type.
+                 *
+                 * @param recordComponent The represented record component.
+                 */
                 protected OfRecordComponent(Object recordComponent) {
                     this.recordComponent = recordComponent;
                 }
@@ -6682,7 +6709,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    throw new UnsupportedOperationException(); // TODO: fixme
+                    return new AnnotationReader.Delegator.ForRecordComponent(recordComponent);
                 }
             }
 
@@ -8197,6 +8224,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public TypeList getNestMembers() {
                     return delegate().getNestMembers();
                 }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentList getRecordComponents() {
+                    return delegate().getRecordComponents();
+                }
             }
         }
     }
@@ -8609,6 +8643,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         @Override
         public boolean isNestMateOf(TypeDescription typeDescription) {
             return typeDescription instanceof ForLoadedType && DISPATCHER.isNestmateOf(type, ((ForLoadedType) typeDescription).type) || super.isNestMateOf(typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
+            return recordComponent == null
+                    ? new RecordComponentList.Empty()
+                    : new RecordComponentList.ForLoadedRecordComponents(recordComponent);
         }
 
         /**
@@ -9044,6 +9088,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public TypeList getNestMembers() {
             return new TypeList.Explicit(this);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            return new RecordComponentList.Empty();
+        }
     }
 
     /**
@@ -9226,6 +9277,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public TypeList getNestMembers() {
             throw new IllegalStateException("Cannot resolve nest mates of a latent type description: " + this);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            throw new IllegalStateException("Cannot resolve record components of a latent type description: " + this);
+        }
     }
 
     /**
@@ -9364,6 +9422,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeList getNestMembers() {
             return new TypeList.Explicit(this);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            return new RecordComponentList.Empty();
         }
     }
 
@@ -9579,6 +9644,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public TypeList getNestMembers() {
             return delegate.getNestMembers();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList getRecordComponents() {
+            return delegate.getRecordComponents();
         }
 
         /**

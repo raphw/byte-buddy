@@ -29,10 +29,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.OpenedClassReader;
@@ -2634,11 +2631,16 @@ public interface TypePool {
                 return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
             }
 
+            @Override
+            public String getGenericSignature() {
+                return genericSignature;
+            }
+
             /**
              * {@inheritDoc}
              */
-            public String getGenericSignature() {
-                return genericSignature;
+            public RecordComponentList getRecordComponents() {
+                throw new UnsupportedOperationException(); // TODO
             }
 
             /**

@@ -2,7 +2,9 @@ package net.bytebuddy.utility;
 
 import org.junit.Test;
 
+import java.lang.annotation.Annotation;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.AnnotatedElement;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -27,9 +29,9 @@ public class JavaModuleTest {
 
     @Test
     public void testUnwrap() throws Exception {
-        Object object = new Object();
+        AnnotatedElement object = mock(AnnotatedElement.class);
         JavaModule module = new JavaModule(object);
-        assertThat(module.unwrap(), sameInstance(object));
+        assertThat(module.unwrap(), sameInstance((Object) object));
     }
 
     @Test(expected = UnsupportedOperationException.class)
