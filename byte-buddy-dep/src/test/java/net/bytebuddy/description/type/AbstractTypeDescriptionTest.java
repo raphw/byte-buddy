@@ -744,6 +744,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(type).isMemberType(), is(type.isMemberClass()));
     }
 
+    @Test
+    public void testNonRecordComponents() {
+        assertThat(describe(String.class).getRecordComponents().size(), is(0));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */
