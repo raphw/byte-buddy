@@ -32,6 +32,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
@@ -2697,6 +2698,13 @@ public interface TypePool {
              */
             public RecordComponentList getRecordComponents() {
                 return new RecordComponentTokenList();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
+                return (actualModifiers & Opcodes.ACC_RECORD) != 0 && JavaType.RECORD.getTypeStub().getDescriptor().equals(superClassDescriptor);
             }
 
             /**
@@ -8253,8 +8261,8 @@ public interface TypePool {
                                     typePath,
                                     receiverTypeAnnotationTokens);
                             break;
-                        case TypeReference.FIELD:
-                            return null; // TODO
+                        case TypeReference.FIELD: // Emitted by mistake by javac for records in Java 14.
+                            return null;
                         default:
                             throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
                     }
@@ -8394,7 +8402,7 @@ public interface TypePool {
                     AnnotationRegistrant annotationRegistrant;
                     TypeReference typeReference = new TypeReference(rawTypeReference);
                     switch (typeReference.getSort()) {
-                        case TypeReference.FIELD: // TODO: What?
+                        case TypeReference.FIELD:
                             annotationRegistrant = new AnnotationRegistrant.ForTypeVariable(descriptor, typePath, typeAnnotationTokens);
                             break;
                         default:

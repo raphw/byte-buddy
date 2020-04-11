@@ -35,7 +35,6 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -7677,17 +7676,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public int getActualModifiers(boolean superFlag) {
-            int actualModifiers = getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
-                    ? Opcodes.ACC_DEPRECATED
-                    : EMPTY_MASK);
+            int actualModifiers = getModifiers()
+                    | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class) ? Opcodes.ACC_DEPRECATED : EMPTY_MASK)
+                    | (isRecord() ? Opcodes.ACC_RECORD : EMPTY_MASK)
+                    | (superFlag ? Opcodes.ACC_SUPER : EMPTY_MASK);
             if (isPrivate()) {
-                actualModifiers = actualModifiers & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
+                return actualModifiers & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {
-                actualModifiers = actualModifiers & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
+                return actualModifiers & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
             } else {
-                actualModifiers = actualModifiers & ~Opcodes.ACC_STATIC;
+                return actualModifiers & ~Opcodes.ACC_STATIC;
             }
-            return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
         /**
@@ -8022,13 +8021,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public boolean isRecord() {
-            return !getRecordComponents().isEmpty() && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
-        }
-
-        /**
-         * {@inheritDoc}
-         */
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
@@ -8274,6 +8266,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public RecordComponentList getRecordComponents() {
                     return delegate().getRecordComponents();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRecord() {
+                    return delegate().isRecord();
                 }
             }
         }
@@ -9141,6 +9140,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public RecordComponentList getRecordComponents() {
             return new RecordComponentList.Empty();
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isRecord() {
+            return false;
+        }
     }
 
     /**
@@ -9330,6 +9336,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public RecordComponentList getRecordComponents() {
             throw new IllegalStateException("Cannot resolve record components of a latent type description: " + this);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isRecord() {
+            throw new IllegalStateException("Cannot resolve record attribute of a latent type description: " + this);
+        }
     }
 
     /**
@@ -9475,6 +9488,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public RecordComponentList getRecordComponents() {
             return new RecordComponentList.Empty();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isRecord() {
+            return false;
         }
     }
 
@@ -9697,6 +9717,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public RecordComponentList getRecordComponents() {
             return delegate.getRecordComponents();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isRecord() {
+            return false;
         }
 
         /**

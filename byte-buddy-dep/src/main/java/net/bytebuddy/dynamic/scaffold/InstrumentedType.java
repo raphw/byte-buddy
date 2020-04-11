@@ -32,6 +32,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.ElementType;
 import java.util.*;
@@ -383,6 +384,7 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getDeclaredTypes(),
                             typeDescription.isAnonymousType(),
                             typeDescription.isLocalType(),
+                            typeDescription.isRecord(),
                             typeDescription.isNestHost()
                                     ? TargetType.DESCRIPTION
                                     : typeDescription.getNestHost(),
@@ -421,6 +423,7 @@ public interface InstrumentedType extends TypeDescription {
                         MethodDescription.UNDEFINED,
                         TypeDescription.UNDEFINED,
                         Collections.<TypeDescription>emptyList(),
+                        false,
                         false,
                         false,
                         TargetType.DESCRIPTION,
@@ -531,6 +534,11 @@ public interface InstrumentedType extends TypeDescription {
         private final boolean localClass;
 
         /**
+         * {@code true} if this class is a record class.
+         */
+        private final boolean record;
+
+        /**
          * The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
          */
         private final TypeDescription nestHost;
@@ -560,6 +568,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param declaredTypes          A list of types that are declared by this type.
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
+         * @param record                 {@code true} if this type is a record class.
          * @param nestHost               The nest host of this instrumented type or a description of {@link TargetType} if this type is its own nest host.
          * @param nestMembers            A list of all members of this types nest group excluding this type.
          */
@@ -580,6 +589,7 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends TypeDescription> declaredTypes,
                           boolean anonymousClass,
                           boolean localClass,
+                          boolean record,
                           TypeDescription nestHost,
                           List<? extends TypeDescription> nestMembers) {
             this.name = name;
@@ -599,6 +609,7 @@ public interface InstrumentedType extends TypeDescription {
             this.declaredTypes = declaredTypes;
             this.anonymousClass = anonymousClass;
             this.localClass = localClass;
+            this.record = record;
             this.nestHost = nestHost;
             this.nestMembers = nestMembers;
         }
@@ -648,6 +659,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -673,6 +685,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -698,6 +711,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -723,6 +737,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    true,
                     nestHost,
                     nestMembers);
         }
@@ -748,6 +763,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -773,6 +789,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -798,6 +815,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost.equals(this)
                             ? TargetType.DESCRIPTION
                             : nestHost,
@@ -825,6 +843,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     TargetType.DESCRIPTION,
                     CompoundList.of(this.nestMembers, nestMembers));
         }
@@ -850,6 +869,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -875,6 +895,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -900,6 +921,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -925,6 +947,7 @@ public interface InstrumentedType extends TypeDescription {
                     CompoundList.of(this.declaredTypes, declaredTypes),
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -950,6 +973,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -975,6 +999,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1007,6 +1032,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1032,6 +1058,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     false,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1057,6 +1084,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     false,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1082,6 +1110,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1107,6 +1136,7 @@ public interface InstrumentedType extends TypeDescription {
                     declaredTypes,
                     anonymousClass,
                     localClass,
+                    record,
                     nestHost,
                     nestMembers);
         }
@@ -1263,6 +1293,11 @@ public interface InstrumentedType extends TypeDescription {
          */
         public RecordComponentList getRecordComponents() {
             return new RecordComponentList.ForTokens(this, recordComponentTokens);
+        }
+
+        @Override
+        public boolean isRecord() {
+            return record && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
         }
 
         /**
@@ -1739,6 +1774,13 @@ public interface InstrumentedType extends TypeDescription {
          */
         public RecordComponentList getRecordComponents() {
             return typeDescription.getRecordComponents();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isRecord() {
+            return typeDescription.isRecord();
         }
 
         /**

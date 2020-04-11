@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.TargetType;
@@ -1047,6 +1048,7 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription.Generic>singletonList(TypeDescription.Generic.OfNonGenericType.ForLoadedType.of(VisibilityExtension.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
+                Collections.<RecordComponentDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 TypeInitializer.None.INSTANCE,
                 LoadedTypeInitializer.NoOp.INSTANCE,
@@ -1054,6 +1056,7 @@ public class MethodGraphCompilerDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
+                false,
                 false,
                 false,
                 TargetType.DESCRIPTION,
@@ -1086,6 +1089,7 @@ public class MethodGraphCompilerDefaultTest {
                         Opcodes.ACC_BRIDGE,
                         TypeDescription.Generic.VOID,
                         Collections.<TypeDescription.Generic>emptyList())),
+                Collections.<RecordComponentDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 TypeInitializer.None.INSTANCE,
                 LoadedTypeInitializer.NoOp.INSTANCE,
@@ -1093,6 +1097,7 @@ public class MethodGraphCompilerDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
+                false,
                 false,
                 false,
                 TargetType.DESCRIPTION,

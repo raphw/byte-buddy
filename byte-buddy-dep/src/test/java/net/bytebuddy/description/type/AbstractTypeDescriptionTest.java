@@ -4,7 +4,9 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -17,6 +19,7 @@ import net.bytebuddy.test.visibility.Sample;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -32,9 +35,9 @@ import java.lang.reflect.GenericSignatureFormatError;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.failSafe;
-import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -498,10 +501,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(SampleClass.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleInterface.class)), is(true));
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
         assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
-        assertThat(describe(SampleAnnotation.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
+        assertThat(describe(OtherAnnotation.class).isVisibleTo(TypeDescription.ForLoadedType.of(SampleClass.class)), is(true));
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.OBJECT), is(true));
-        assertThat(describe(SampleAnnotation.class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(OtherAnnotation.class).isVisibleTo(TypeDescription.OBJECT), is(false));
         assertThat(describe(int.class).isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(SampleInterface[].class).isVisibleTo(TypeDescription.OBJECT), is(true));
         assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(TypeDescription.OBJECT), is(false));
@@ -761,21 +764,92 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         RecordComponentList recordComponents = describe(sampleRecord).getRecordComponents();
         assertThat(recordComponents.size(), is(1));
         assertThat(recordComponents.getOnly().getActualName(), is(FOO));
-        assertThat(recordComponents.getOnly().getAccessor(), is(new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
-        assertThat(recordComponents.getOnly().getDeclaringType(), is(TypeDescription.ForLoadedType.of(sampleRecord)));
+        assertThat(recordComponents.getOnly().getAccessor(), is((MethodDescription.InDefinedShape) new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
+        assertThat(recordComponents.getOnly().getDeclaringType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(sampleRecord)));
         assertThat(recordComponents.getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(recordComponents.getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));
         assertThat(recordComponents.getOnly().getType().asErasure().represents(List.class), is(true));
         assertThat(recordComponents.getOnly().getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().size(), is(1));
         assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
-        assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is(42));
+        assertThat(recordComponents.getOnly().getType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 42));
         assertThat(recordComponents.getOnly().getType().getTypeArguments().size(), is(1));
         assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
         assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
-        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is(84));
+        assertThat(recordComponents.getOnly().getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 84));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(14)
+    public void testRecordComponentsField() throws Exception {
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
+        FieldDescription fieldDescription = describe(sampleRecord).getDeclaredFields().filter(named(FOO)).getOnly();
+        assertThat(fieldDescription.getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldDescription.getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));
+        assertThat(fieldDescription.getType().asErasure().represents(List.class), is(true));
+        assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(fieldDescription.getType().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldDescription.getType().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(fieldDescription.getType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 42));
+        assertThat(fieldDescription.getType().getTypeArguments().size(), is(1));
+        assertThat(fieldDescription.getType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldDescription.getType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(fieldDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(fieldDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 84));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(14)
+    @Ignore("javac does not currently add type annotation meta data correctly")
+    public void testRecordComponentsAccessor() throws Exception {
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
+        MethodDescription methodDescription = describe(sampleRecord).getDeclaredMethods().filter(named(FOO)).getOnly();
+        assertThat(methodDescription.getDeclaredAnnotations().size(), is(1));
+        assertThat(methodDescription.getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));
+        assertThat(methodDescription.getReturnType().asErasure().represents(List.class), is(true));
+        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(methodDescription.getReturnType().getDeclaredAnnotations().size(), is(1));
+        assertThat(methodDescription.getReturnType().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(methodDescription.getReturnType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 42));
+        assertThat(methodDescription.getReturnType().getTypeArguments().size(), is(1));
+        assertThat(methodDescription.getReturnType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(methodDescription.getReturnType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(methodDescription.getReturnType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(methodDescription.getReturnType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(methodDescription.getReturnType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 84));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(14)
+    @Ignore("javac does not currently add type annotation meta data correctly")
+    public void testRecordComponentsConstructorParameter() throws Exception {
+        Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
+        MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
+        ParameterDescription parameterDescription = describe(sampleRecord).getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().getOnly();
+        assertThat(parameterDescription.getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterDescription.getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));
+        assertThat(parameterDescription.getType().asErasure().represents(List.class), is(true));
+        assertThat(parameterDescription.getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(parameterDescription.getType().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterDescription.getType().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(parameterDescription.getType().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 42));
+        assertThat(parameterDescription.getType().getTypeArguments().size(), is(1));
+        assertThat(parameterDescription.getType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterDescription.getType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(typeAnnotation), is(true));
+        assertThat(parameterDescription.getType().getTypeArguments().getOnly().getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value).resolve(), is((Object) 84));
     }
 
     private Class<?> inMethodClass() {
