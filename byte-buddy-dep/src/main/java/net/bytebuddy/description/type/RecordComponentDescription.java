@@ -1,5 +1,21 @@
+/*
+ * Copyright 2014 - 2020 Rafael Winterhalter
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -13,13 +29,28 @@ import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
-
+/**
+ * Represents a component of a Java record.
+ */
 public interface RecordComponentDescription extends DeclaredByType, NamedElement, AnnotationSource {
 
+    /**
+     * Returns the type of the record.
+     *
+     * @return The type of the record.
+     */
     TypeDescription.Generic getType();
 
+    /**
+     * Returns the accessor for this record component.
+     *
+     * @return The accessor for this record component.
+     */
     MethodDescription.InDefinedShape getAccessor();
 
+    /**
+     * An abstract base implementation for a record component description.
+     */
     abstract class AbstractBase implements RecordComponentDescription {
 
         @Override
@@ -44,16 +75,36 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
         }
     }
 
+    /**
+     * Represents a loaded record component.
+     */
     class ForLoadedRecordComponent extends AbstractBase {
 
+        /**
+         * The dispatcher to use.
+         */
         protected static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
+        /**
+         * The represented record component.
+         */
         private final AnnotatedElement recordComponent;
 
+        /**
+         * Creates a new representation of a loaded record component.
+         *
+         * @param recordComponent The represented record component.
+         */
         protected ForLoadedRecordComponent(AnnotatedElement recordComponent) {
             this.recordComponent = recordComponent;
         }
 
+        /**
+         * Resolves an instance into a record component description.
+         *
+         * @param recordComponent The record component to represent.
+         * @return A suitable description of the record component.
+         */
         public static RecordComponentDescription of(Object recordComponent) {
             if (!DISPATCHER.isInstance(recordComponent)) {
                 throw new IllegalArgumentException("Not a record component: " + recordComponent);
@@ -96,29 +147,88 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
             return new AnnotationList.ForLoadedAnnotations(recordComponent.getDeclaredAnnotations());
         }
 
+        /**
+         * A dispatcher for resolving a {@code java.lang.reflect.RecordComponent}.
+         */
         protected interface Dispatcher {
 
+            /**
+             * Checks if the supplied instance is a record component.
+             *
+             * @param instance The instance to evaluate.
+             * @return {@code true} if the supplied instance is a record component.
+             */
             boolean isInstance(Object instance);
 
+            /**
+             * Resolves a type's record components.
+             *
+             * @param type The type for which to read the record components.
+             * @return An array of all declared record components.
+             */
             Object[] getRecordComponents(Class<?> type);
 
+            /**
+             * Resolves a record component's name.
+             *
+             * @param recordComponent The record component to resolve the name for.
+             * @return The record component's name.
+             */
             String getName(Object recordComponent);
 
+            /**
+             * Resolves a record component's declaring type.
+             *
+             * @param recordComponent The record component to resolve the declared type for.
+             * @return The record component's declaring type.
+             */
             Class<?> getDeclaringType(Object recordComponent);
 
+            /**
+             * Resolves a record component's accessor method.
+             *
+             * @param recordComponent The record component to resolve the accessor method for.
+             * @return The record component's accessor method.
+             */
             Method getAccessor(Object recordComponent);
 
+            /**
+             * Resolves a record component's type.
+             *
+             * @param recordComponent The record component to resolve the type for.
+             * @return The record component's type.
+             */
             Class<?> getType(Object recordComponent);
 
+            /**
+             * Resolves a record component's generic type.
+             *
+             * @param recordComponent The record component to resolve the generic type for.
+             * @return The record component's generic type.
+             */
             Type getGenericType(Object recordComponent);
 
+            /**
+             * Resolves a record component's annotated type.
+             *
+             * @param recordComponent The record component to resolve the annotated type for.
+             * @return The record component's annotated type.
+             */
             AnnotatedElement getAnnotatedType(Object recordComponent);
 
+            /**
+             * A creation action for creating a dispatcher.
+             */
             enum CreationAction implements PrivilegedAction<Dispatcher> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
-                @Override
+                /**
+                 * {@inheritDoc}
+                 */
                 public Dispatcher run() {
                     try {
                         Class<?> recordComponent = Class.forName("java.lang.reflect.RecordComponent");
@@ -138,8 +248,14 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 }
             }
 
+            /**
+             * A dispatcher for a legacy VM that does not support records.
+             */
             enum ForLegacyVm implements Dispatcher {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 /**
@@ -153,7 +269,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                  * {@inheritDoc}
                  */
                 public Object[] getRecordComponents(Class<?> type) {
-                    return null;
+                    return new Object[0];
                 }
 
 
@@ -200,24 +316,64 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 }
             }
 
+            /**
+             * A dispatcher for a Java 14-capable JVM.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
             class ForJava14CapableVm implements Dispatcher {
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent} type.
+                 */
                 private final Class<?> recordComponent;
 
+                /**
+                 * The {@code java.lang.Class#getRecordComponents()} method.
+                 */
                 private final Method getRecordComponents;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getName()} method.
+                 */
                 private final Method getName;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getDeclaringType()} method.
+                 */
                 private final Method getDeclaringType;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getAccessor()} method.
+                 */
                 private final Method getAccessor;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getType()} method.
+                 */
                 private final Method getType;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getGenericType()} method.
+                 */
                 private final Method getGenericType;
 
+                /**
+                 * The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
+                 */
                 private final Method getAnnotatedType;
 
+                /**
+                 * Creates a dispatcher for a Java 14 capable VM.
+                 *
+                 * @param recordComponent     The {@code java.lang.reflect.RecordComponent} type.
+                 * @param getRecordComponents The {@code java.lang.Class#getRecordComponents()} method.
+                 * @param getName             The {@code java.lang.reflect.RecordComponent#getName()} method.
+                 * @param getDeclaringType    The {@code java.lang.reflect.RecordComponent#getDeclaringType()} method.
+                 * @param getAccessor         The {@code java.lang.reflect.RecordComponent#getAccessor()} method.
+                 * @param getType             The {@code java.lang.reflect.RecordComponent#getType()} method.
+                 * @param getGenericType      The {@code java.lang.reflect.RecordComponent#getGenericType()} method.
+                 * @param getAnnotatedType    The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
+                 */
                 protected ForJava14CapableVm(Class<?> recordComponent,
                                              Method getRecordComponents,
                                              Method getName,

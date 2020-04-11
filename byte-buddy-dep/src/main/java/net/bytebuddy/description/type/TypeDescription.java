@@ -395,6 +395,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     boolean isNestMateOf(TypeDescription typeDescription);
 
+    /**
+     * Returns the list of record components that are declared by this type. If this type is not
+     * a record, the returned list is empty.
+     *
+     * @return A list of record components that this type declares.
+     */
     RecordComponentList getRecordComponents();
 
     /**
@@ -3260,15 +3266,28 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     protected abstract AnnotatedElement resolve(AnnotatedElement annotatedElement);
                 }
 
+                /**
+                 * An annotation reader for a {@code java.lang.reflect.RecordComponent}.
+                 */
                 protected static class ForRecordComponent extends Delegator {
 
+                    /**
+                     * The represented {@code java.lang.reflect.RecordComponent}.
+                     */
                     private final Object recordComponent;
 
+                    /**
+                     * Creates a new annotation reader for a {@code java.lang.reflect.RecordComponent}.
+                     *
+                     * @param recordComponent The represented {@code java.lang.reflect.RecordComponent}.
+                     */
                     protected ForRecordComponent(Object recordComponent) {
                         this.recordComponent = recordComponent;
                     }
 
-                    @Override
+                    /**
+                     * {@inheritDoc}
+                     */
                     public AnnotatedElement resolve() {
                         return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getAnnotatedType(recordComponent);
                     }
@@ -8649,10 +8668,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public RecordComponentList getRecordComponents() {
-            Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
-            return recordComponent == null
-                    ? new RecordComponentList.Empty()
-                    : new RecordComponentList.ForLoadedRecordComponents(recordComponent);
+            return new RecordComponentList.ForLoadedRecordComponents(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type));
         }
 
         /**

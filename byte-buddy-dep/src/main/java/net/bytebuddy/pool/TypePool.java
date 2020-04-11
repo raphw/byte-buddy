@@ -2458,6 +2458,9 @@ public interface TypePool {
              */
             private final List<MethodToken> methodTokens;
 
+            /**
+             * A list of record component tokens describing the record components of this type.
+             */
             private final List<RecordComponentToken> recordComponentTokens;
 
             /**
@@ -2483,6 +2486,7 @@ public interface TypePool {
              * @param annotationTokens                   A list of tokens that represent the annotations of this type.
              * @param fieldTokens                        A list of field tokens describing the field's of this type.
              * @param methodTokens                       A list of method tokens describing the method's of this type.
+             * @param recordComponentTokens              A list of record component tokens describing the record components of this type.
              */
             protected LazyTypeDescription(TypePool typePool,
                                           int actualModifiers,
@@ -2735,6 +2739,9 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A list of record component tokens representing each record component as a description.
+             */
             protected class RecordComponentTokenList extends RecordComponentList.AbstractBase {
 
                 /**
@@ -3821,6 +3828,57 @@ public interface TypePool {
                     }
 
                     /**
+                     * A resolution of the generic type of a {@link FieldDescription}.
+                     */
+                    interface ForField {
+
+                        /**
+                         * Resolves the field type of the represented field.
+                         *
+                         * @param fieldTypeDescriptor The descriptor of the raw field type.
+                         * @param typePool            The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens    A mapping of the represented types' type annotation tokens.
+                         * @param definingField       The field that defines this type.
+                         * @return A generic type representation of the field's type.
+                         */
+                        Generic resolveFieldType(String fieldTypeDescriptor,
+                                                 TypePool typePool,
+                                                 Map<String, List<AnnotationToken>> annotationTokens,
+                                                 FieldDescription.InDefinedShape definingField);
+
+                        /**
+                         * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
+                         */
+                        @HashCodeAndEqualsPlugin.Enhance
+                        class Tokenized implements ForField {
+
+                            /**
+                             * The token of the represented field's type.
+                             */
+                            private final GenericTypeToken fieldTypeToken;
+
+                            /**
+                             * Creates a new tokenized resolution of a {@link FieldDescription}'s type.
+                             *
+                             * @param fieldTypeToken The token of the represented field's type.
+                             */
+                            protected Tokenized(GenericTypeToken fieldTypeToken) {
+                                this.fieldTypeToken = fieldTypeToken;
+                            }
+
+                            /**
+                             * {@inheritDoc}
+                             */
+                            public Generic resolveFieldType(String fieldTypeDescriptor,
+                                                            TypePool typePool,
+                                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                                            FieldDescription.InDefinedShape definingField) {
+                                return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
+                            }
+                        }
+                    }
+
+                    /**
                      * A resolution of the generic types of a {@link MethodDescription}.
                      */
                     interface ForMethod extends Resolution {
@@ -3957,68 +4015,40 @@ public interface TypePool {
                     }
 
                     /**
-                     * A resolution of the generic types of a {@link FieldDescription}.
+                     * A resolution of the generic type of a {@link RecordComponentDescription}.
                      */
-                    interface ForField {
-
-                        /**
-                         * Resolves the field type of the represented field.
-                         *
-                         * @param fieldTypeDescriptor The descriptor of the raw field type.
-                         * @param annotationTokens    A mapping of the represented types' type annotation tokens.
-                         * @param typePool            The type pool to be used for locating non-generic type descriptions.
-                         * @param definingField       The field that defines this type.   @return A description of this field's type.
-                         * @return A generic type representation of the field's type.
-                         */
-                        Generic resolveFieldType(String fieldTypeDescriptor,
-                                                 TypePool typePool,
-                                                 Map<String, List<AnnotationToken>> annotationTokens,
-                                                 FieldDescription.InDefinedShape definingField);
-
-                        /**
-                         * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
-                         */
-                        @HashCodeAndEqualsPlugin.Enhance
-                        class Tokenized implements ForField {
-
-                            /**
-                             * The token of the represented field's type.
-                             */
-                            private final GenericTypeToken fieldTypeToken;
-
-                            /**
-                             * Creates a new tokenized resolution of a {@link FieldDescription}'s type.
-                             *
-                             * @param fieldTypeToken The token of the represented field's type.
-                             */
-                            protected Tokenized(GenericTypeToken fieldTypeToken) {
-                                this.fieldTypeToken = fieldTypeToken;
-                            }
-
-                            /**
-                             * {@inheritDoc}
-                             */
-                            public Generic resolveFieldType(String fieldTypeDescriptor,
-                                                            TypePool typePool,
-                                                            Map<String, List<AnnotationToken>> annotationTokens,
-                                                            FieldDescription.InDefinedShape definingField) {
-                                return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
-                            }
-                        }
-                    }
-
                     interface ForRecordComponent {
 
+                        /**
+                         * Resolves a record component's type.
+                         *
+                         * @param recordTypeDescriptor    The record component's descriptor.
+                         * @param typePool                The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens        A mapping of the represented types' type annotation tokens.
+                         * @param definingRecordComponent The defining record component.
+                         * @return A generic type representation of the record component's type.
+                         */
                         Generic resolveRecordType(String recordTypeDescriptor,
                                                   TypePool typePool,
                                                   Map<String, List<AnnotationToken>> annotationTokens,
                                                   RecordComponentDescription definingRecordComponent);
 
+                        /**
+                         * An implementation of a tokenized resolution of the generic type of a {@link RecordComponentDescription}.
+                         */
                         @HashCodeAndEqualsPlugin.Enhance
                         class Tokenized implements ForRecordComponent {
 
+                            /**
+                             * The token of the represented record component's type.
+                             */
                             private final GenericTypeToken recordComponentTypeToken;
 
+                            /**
+                             * Creates a new tokenized resolution of a {@link RecordComponentDescription}'s type.
+                             *
+                             * @param recordComponentTypeToken The token of the represented record component's type.
+                             */
                             protected Tokenized(GenericTypeToken recordComponentTypeToken) {
                                 this.recordComponentTypeToken = recordComponentTypeToken;
                             }
@@ -5621,7 +5651,7 @@ public interface TypePool {
                  * Transforms this method token to a method description that is attached to a lazy type description.
                  *
                  * @param lazyTypeDescription The lazy type description to attach this method description to.
-                 * @return A method description representing this field token.
+                 * @return A method description representing this method token.
                  */
                 private MethodDescription.InDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
                     return lazyTypeDescription.new LazyMethodDescription(name,
@@ -5717,21 +5747,51 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A token representing a record component.
+             */
             @HashCodeAndEqualsPlugin.Enhance
             protected static class RecordComponentToken {
 
+                /**
+                 * The record component's name.
+                 */
                 private final String name;
 
+                /**
+                 * The record component's descriptor.
+                 */
                 private final String descriptor;
 
+                /**
+                 * The record component's generic signature or {@code null} if it is non-generic.
+                 */
                 private final String genericSignature;
 
+                /**
+                 * The record component's signature resolution.
+                 */
                 private final GenericTypeToken.Resolution.ForRecordComponent signatureResolution;
 
+                /**
+                 * A mapping of the record component's type annotations.
+                 */
                 private final Map<String, List<AnnotationToken>> typeAnnotationTokens;
 
+                /**
+                 * A list of the record component's annotations.
+                 */
                 private final List<AnnotationToken> annotationTokens;
 
+                /**
+                 * Creates a new record component token.
+                 *
+                 * @param name                 The record component's name.
+                 * @param descriptor           The record component's descriptor.
+                 * @param genericSignature     The record component's generic signature or {@code null} if it is non-generic.
+                 * @param typeAnnotationTokens A mapping of the record component's type annotations.
+                 * @param annotationTokens     A list of the record component's annotations.
+                 */
                 protected RecordComponentToken(String name,
                                                String descriptor,
                                                String genericSignature,
@@ -5747,6 +5807,12 @@ public interface TypePool {
                     this.annotationTokens = annotationTokens;
                 }
 
+                /**
+                 * Transforms this record component token to a record component description that is attached to a lazy type description.
+                 *
+                 * @param lazyTypeDescription The lazy type description to attach this record component description to.
+                 * @return A record component description representing this record component token.
+                 */
                 private RecordComponentDescription toRecordComponentDescription(LazyTypeDescription lazyTypeDescription) {
                     return lazyTypeDescription.new LazyRecordComponentDescription(name,
                             descriptor,
@@ -7391,20 +7457,51 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A lazy description of a record component.
+             */
             private class LazyRecordComponentDescription extends RecordComponentDescription.AbstractBase {
 
+                /**
+                 * The record component's name.
+                 */
                 private final String name;
 
+                /**
+                 * The record component's descriptor.
+                 */
                 private final String descriptor;
 
+                /**
+                 * The record component's generic signature or {@code null} if the record component is non-generic.
+                 */
                 private final String genericSignature;
 
+                /**
+                 * The record component's signature resolution.
+                 */
                 private final GenericTypeToken.Resolution.ForRecordComponent signatureResolution;
 
+                /**
+                 * A mapping of the record component's type annotations.
+                 */
                 private final Map<String, List<AnnotationToken>> typeAnnotationTokens;
 
+                /**
+                 * A list of the record components annotations.
+                 */
                 private final List<AnnotationToken> annotationTokens;
 
+                /**
+                 * Creates a new lazy description of a record component.
+                 *
+                 * @param name                 The record component's name.
+                 * @param descriptor           The record component's descriptor.
+                 * @param genericSignature     The record component's generic signature or {@code null} if the record component is non-generic.
+                 * @param signatureResolution  The record component's signature resolution.
+                 * @param typeAnnotationTokens A mapping of the record component's type annotations.
+                 * @param annotationTokens     A list of the record components annotations.
+                 */
                 private LazyRecordComponentDescription(String name,
                                                        String descriptor,
                                                        String genericSignature,
@@ -7496,6 +7593,9 @@ public interface TypePool {
              */
             private final List<LazyTypeDescription.MethodToken> methodTokens;
 
+            /**
+             * A list of record component tokens that are found on the visited type.
+             */
             private final List<LazyTypeDescription.RecordComponentToken> recordComponentTokens;
 
             /**
@@ -8250,21 +8350,46 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A record component extractor reads a record component's information within a class file.
+             */
             protected class RecordComponentExtractor extends RecordComponentVisitor {
 
-                private final String internalName;
+                /**
+                 * The record component's name.
+                 */
+                private final String name;
 
+                /**
+                 * The record component's descriptor.
+                 */
                 private final String descriptor;
 
+                /**
+                 * The record component's generic signature.
+                 */
                 private final String genericSignature;
 
+                /**
+                 * A mapping of the record component's type annotations.
+                 */
                 private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
 
+                /**
+                 * A list of the record component's annotations.
+                 */
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
-                protected RecordComponentExtractor(String internalName, String descriptor, String genericSignature) {
+                /**
+                 * Creates a new record component extractor.
+                 *
+                 * @param name             The record component's name.
+                 * @param descriptor       The record component's descriptor.
+                 * @param genericSignature The record component's generic signature.
+                 */
+                protected RecordComponentExtractor(String name, String descriptor, String genericSignature) {
                     super(OpenedClassReader.ASM_API);
-                    this.internalName = internalName;
+                    this.name = name;
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
                     typeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
@@ -8292,7 +8417,7 @@ public interface TypePool {
 
                 @Override
                 public void visitEnd() {
-                    recordComponentTokens.add(new LazyTypeDescription.RecordComponentToken(internalName,
+                    recordComponentTokens.add(new LazyTypeDescription.RecordComponentToken(name,
                             descriptor,
                             genericSignature,
                             typeAnnotationTokens,
