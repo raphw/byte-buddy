@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.type;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.NamedElement;
@@ -305,6 +306,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 /**
                  * {@inheritDoc}
                  */
+                @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS", justification = "Null value return is aligned with OpenJDK return value.")
                 public Object[] getRecordComponents(Class<?> type) {
                     return null;
                 }

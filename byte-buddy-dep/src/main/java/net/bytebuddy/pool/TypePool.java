@@ -7483,6 +7483,7 @@ public interface TypePool {
                 /**
                  * The record component's generic signature or {@code null} if the record component is non-generic.
                  */
+                @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "Only unused for now.")
                 private final String genericSignature;
 
                 /**
