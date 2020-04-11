@@ -4459,13 +4459,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param adviceMethod       The advice method to materialize.
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
-         * @param enter              {@code true} if the materialization is for enter advice.
+         * @param exit               {@code true} if the materialization is exit advice.
          */
         void apply(MethodVisitor methodVisitor,
                    MethodDescription.InDefinedShape adviceMethod,
                    TypeDescription instrumentedType,
                    MethodDescription instrumentedMethod,
-                   boolean enter);
+                   boolean exit);
 
         /**
          * Invokes an advice method using a static method call.
@@ -4484,7 +4484,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               MethodDescription.InDefinedShape adviceMethod,
                               TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
-                              boolean enter) {
+                              boolean exit) {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                         adviceMethod.getDeclaringType().getInternalName(),
                         adviceMethod.getInternalName(),
@@ -4537,7 +4537,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               MethodDescription.InDefinedShape adviceMethod,
                               TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
-                              boolean enter) {
+                              boolean exit) {
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),
                         handle,
@@ -4545,7 +4545,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Type.getType(instrumentedType.getDescriptor()),
                         JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
                         instrumentedMethod.getInternalName(),
-                        enter);
+                        exit);
             }
         }
     }
@@ -8846,7 +8846,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     .apply(methodVisitor, implementationContext)
                                     .getMaximalSize());
                         }
-                        delegator.apply(methodVisitor, adviceMethod, instrumentedType, instrumentedMethod, isEnterAdvice());
+                        delegator.apply(methodVisitor, adviceMethod, instrumentedType, instrumentedMethod, isExitAdvice());
                         suppressionHandler.onEndWithSkip(methodVisitor,
                                 implementationContext,
                                 methodSizeHandler,
@@ -8881,11 +8881,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected abstract int getReturnValueOffset();
 
                     /**
-                     * Returns {@code true} if this writer represents enter advice.
+                     * Returns {@code true} if this writer represents exit advice.
                      *
-                     * @return {@code true} if this writer represents enter advice.
+                     * @return {@code true} if this writer represents exit advice.
                      */
-                    protected abstract boolean isEnterAdvice();
+                    protected abstract boolean isExitAdvice();
 
                     /**
                      * An advice method writer for a method enter.
@@ -8947,7 +8947,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected boolean isEnterAdvice() {
+                        protected boolean isExitAdvice() {
                             return true;
                         }
                     }
@@ -9032,7 +9032,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected boolean isEnterAdvice() {
+                        protected boolean isExitAdvice() {
                             return false;
                         }
                     }
