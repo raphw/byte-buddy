@@ -313,7 +313,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * The name of the field.
          */
-        private final String fieldName;
+        private final String name;
 
         /**
          * The field's modifiers.
@@ -348,18 +348,18 @@ public interface FieldDescription extends ByteCodeElement,
          * Creates a new latent field description. All provided types are attached to this instance before they are returned.
          *
          * @param declaringType       The declaring type of the field.
-         * @param fieldName           The name of the field.
+         * @param name           The name of the field.
          * @param fieldType           The field's modifiers.
          * @param modifiers           The type of the field.
          * @param declaredAnnotations The annotations of this field.
          */
         public Latent(TypeDescription declaringType,
-                      String fieldName,
+                      String name,
                       int modifiers,
                       TypeDescription.Generic fieldType,
                       List<? extends AnnotationDescription> declaredAnnotations) {
             this.declaringType = declaringType;
-            this.fieldName = fieldName;
+            this.name = name;
             this.modifiers = modifiers;
             this.fieldType = fieldType;
             this.declaredAnnotations = declaredAnnotations;
@@ -383,7 +383,7 @@ public interface FieldDescription extends ByteCodeElement,
          * {@inheritDoc}
          */
         public String getName() {
-            return fieldName;
+            return name;
         }
 
         /**

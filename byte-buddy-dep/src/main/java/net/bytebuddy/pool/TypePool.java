@@ -7526,13 +7526,6 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public MethodDescription.InDefinedShape getAccessor() {
-                    return LazyTypeDescription.this.getDeclaredMethods().filter(named(name)).getOnly();
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 public TypeDefinition getDeclaringType() {
                     return LazyTypeDescription.this;
                 }

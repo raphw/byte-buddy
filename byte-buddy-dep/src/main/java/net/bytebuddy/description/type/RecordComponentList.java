@@ -15,10 +15,13 @@
  */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.lang.reflect.AnnotatedElement;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,9 +30,29 @@ import java.util.List;
 public interface RecordComponentList extends FilterableList<RecordComponentDescription, RecordComponentList> {
 
     /**
+     * Transforms the list of record component descriptions into a list of detached tokens. All types that are matched by the provided
+     * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
+     *
+     * @param matcher A matcher that indicates type substitution.
+     * @return The transformed token list.
+     */
+    List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
+
+    /**
      * An abstract base implementation of a list of record components.
      */
     abstract class AbstractBase extends FilterableList.AbstractBase<RecordComponentDescription, RecordComponentList> implements RecordComponentList {
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+            List<RecordComponentDescription.Token> tokens = new ArrayList<RecordComponentDescription.Token>(size());
+            for (RecordComponentDescription recordComponentDescription : this) {
+                tokens.add(recordComponentDescription.asToken(matcher));
+            }
+            return tokens;
+        }
 
         @Override
         protected RecordComponentList wrap(List<RecordComponentDescription> values) {
@@ -124,9 +147,62 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
     }
 
     /**
+     * A list of record components described as tokens.
+     */
+    class ForTokens extends AbstractBase {
+
+        /**
+         * The record component's declaring type.
+         */
+        private final TypeDescription typeDescription;
+
+        /**
+         * The list of represented tokens.
+         */
+        private final List<? extends RecordComponentDescription.Token> tokens;
+
+        /**
+         * Creates a new list of record components that are described as tokens.
+         *
+         * @param typeDescription The record component's declaring type.
+         * @param token           The list of represented tokens.
+         */
+        public ForTokens(TypeDescription typeDescription, RecordComponentDescription.Token... token) {
+            this(typeDescription, Arrays.asList(token));
+        }
+
+        /**
+         * Creates a new list of record components that are described as tokens.
+         *
+         * @param typeDescription The record component's declaring type.
+         * @param tokens          The list of represented tokens.
+         */
+        public ForTokens(TypeDescription typeDescription, List<? extends RecordComponentDescription.Token> tokens) {
+            this.typeDescription = typeDescription;
+            this.tokens = tokens;
+        }
+
+        @Override
+        public RecordComponentDescription get(int index) {
+            return new RecordComponentDescription.Latent(typeDescription, tokens.get(index));
+        }
+
+        @Override
+        public int size() {
+            return tokens.size();
+        }
+    }
+
+    /**
      * An empty list of record components.
      */
     class Empty extends FilterableList.Empty<RecordComponentDescription, RecordComponentList> implements RecordComponentList {
-        /* empty */
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+            return Collections.emptyList();
+        }
     }
 }

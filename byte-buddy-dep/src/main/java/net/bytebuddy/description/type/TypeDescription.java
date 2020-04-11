@@ -1920,6 +1920,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
+                     * Attaches all types to the given type description.
+                     *
+                     * @param typeDescription The type description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given type's type context.
+                     */
+                    public static ForAttachment of(TypeDescription typeDescription) {
+                        return new ForAttachment(typeDescription, typeDescription);
+                    }
+
+                    /**
                      * Attaches all types to the given field description.
                      *
                      * @param fieldDescription The field description to which visited types should be attached to.
@@ -1950,13 +1960,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
 
                     /**
-                     * Attaches all types to the given type description.
+                     * Attaches all types to the given record component description.
                      *
-                     * @param typeDescription The type description to which visited types should be attached to.
-                     * @return A substitutor that attaches visited types to the given type's type context.
+                     * @param recordComponentDescription The record component description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given record component's type context.
                      */
-                    public static ForAttachment of(TypeDescription typeDescription) {
-                        return new ForAttachment(typeDescription, typeDescription);
+                    public static ForAttachment of(RecordComponentDescription recordComponentDescription) {
+                        return new ForAttachment(recordComponentDescription.getDeclaringType(), recordComponentDescription.getDeclaringType().asErasure());
                     }
 
                     /**

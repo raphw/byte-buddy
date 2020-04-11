@@ -18,9 +18,11 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
@@ -28,6 +30,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
+import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * Represents a component of a Java record.
@@ -49,9 +55,33 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
     MethodDescription.InDefinedShape getAccessor();
 
     /**
+     * Resolves this record component to a token where all types are detached.
+     *
+     * @param matcher The matcher to apply for detachment.
+     * @return An appropriate token.
+     */
+    Token asToken(ElementMatcher<? super TypeDescription> matcher);
+
+    /**
      * An abstract base implementation for a record component description.
      */
     abstract class AbstractBase implements RecordComponentDescription {
+
+        /**
+         * {@inheritDoc}
+         */
+        public MethodDescription.InDefinedShape getAccessor() {
+            return getDeclaringType().getDeclaredMethods().filter(named(getActualName())).getOnly().asDefined();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Token asToken(ElementMatcher<? super TypeDescription> matcher) {
+            return new Token(getActualName(),
+                    getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
+                    getDeclaredAnnotations());
+        }
 
         @Override
         public int hashCode() {
@@ -119,9 +149,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
             return new TypeDescription.Generic.LazyProjection.OfRecordComponent(recordComponent);
         }
 
-        /**
-         * {@inheritDoc}
-         */
+        @Override
         public MethodDescription.InDefinedShape getAccessor() {
             return new MethodDescription.ForLoadedMethod(DISPATCHER.getAccessor(recordComponent));
         }
@@ -490,6 +518,190 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * A latent record component description.
+     */
+    class Latent extends AbstractBase {
+
+        /**
+         * The record component's declaring type.
+         */
+        private final TypeDescription declaringType;
+
+        /**
+         * The record component's name.
+         */
+        private final String name;
+
+        /**
+         * The record component's type.
+         */
+        private final TypeDescription.Generic type;
+
+        /**
+         * The record component's annotations.
+         */
+        private final List<? extends AnnotationDescription> annotations;
+
+        /**
+         * Creates a new latent record component.
+         *
+         * @param declaringType The record component's declaring type.
+         * @param token         The token representing the record component's detached properties.
+         */
+        public Latent(TypeDescription declaringType, Token token) {
+            this(declaringType,
+                    token.getName(),
+                    token.getType(),
+                    token.getAnnotations());
+        }
+
+        /**
+         * Creates a new latent record component.
+         *
+         * @param declaringType The record component's declaring type-
+         * @param name          The record component's name.
+         * @param type          The record component's type.
+         * @param annotations   The record component's annotations.
+         */
+        public Latent(TypeDescription declaringType, String name, TypeDescription.Generic type, List<? extends AnnotationDescription> annotations) {
+            this.declaringType = declaringType;
+            this.name = name;
+            this.type = type;
+            this.annotations = annotations;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDescription.Generic getType() {
+            return type.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDefinition getDeclaringType() {
+            return declaringType;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getActualName() {
+            return name;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationList getDeclaredAnnotations() {
+            return new AnnotationList.Explicit(annotations);
+        }
+    }
+
+    /**
+     * A token representing a record component's properties detached from a type.
+     */
+    class Token {
+
+        /**
+         * The token's name.
+         */
+        private final String name;
+
+        /**
+         * The token's type.
+         */
+        private final TypeDescription.Generic type;
+
+        /**
+         * The token's annotations.
+         */
+        private final List<? extends AnnotationDescription> annotations;
+
+        /**
+         * Creates a new record component token without annotations.
+         *
+         * @param name The token's name.
+         * @param type The token's type.
+         */
+        public Token(String name, TypeDescription.Generic type) {
+            this(name, type, Collections.<AnnotationDescription>emptyList());
+        }
+
+        /**
+         * Creates a new record component token.
+         *
+         * @param name        The token's name.
+         * @param type        The token's type.
+         * @param annotations The token's annotations.
+         */
+        public Token(String name, TypeDescription.Generic type, List<? extends AnnotationDescription> annotations) {
+            this.name = name;
+            this.type = type;
+            this.annotations = annotations;
+        }
+
+        /**
+         * Returns the token's name.
+         *
+         * @return The token's name.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the token's type.
+         *
+         * @return The token's type.
+         */
+        public TypeDescription.Generic getType() {
+            return type;
+        }
+
+        /**
+         * Returns the token's annotations.
+         *
+         * @return The token's annotations.
+         */
+        public List<? extends AnnotationDescription> getAnnotations() {
+            return annotations;
+        }
+
+        /**
+         * Transforms the types represented by this token by applying the given visitor to them.
+         *
+         * @param visitor The visitor to transform all types that are represented by this token.
+         * @return This token with all of its represented types transformed by the supplied visitor.
+         */
+        public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            return new Token(name, type.accept(visitor), annotations);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + type.hashCode();
+            result = 31 * result + annotations.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            } else if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            RecordComponentDescription.Token token = (RecordComponentDescription.Token) other;
+            return name.equals(token.name)
+                    && type.equals(token.type)
+                    && annotations.equals(token.annotations);
         }
     }
 }

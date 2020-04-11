@@ -48,7 +48,7 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param token A token that represents the field's shape. This token must represent types in their detached state.
+     * @param token A token that represents the field's shape.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
     InstrumentedType withField(FieldDescription.Token token);
@@ -56,10 +56,18 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param token A token that represents the method's shape. This token must represent types in their detached state.
+     * @param token A token that represents the method's shape.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
     InstrumentedType withMethod(MethodDescription.Token token);
+
+    /**
+     * Creates a new instrumented type that includes a new record component.
+     *
+     * @param token A token that represents the record component's shape.
+     * @return A new instrumented type that is equal to this instrumented type but with the additional record component.
+     */
+    InstrumentedType withRecordComponent(RecordComponentDescription.Token token);
 
     /**
      * Creates a new instrumented type with changed modifiers.
@@ -219,6 +227,11 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        WithFlexibleName withRecordComponent(RecordComponentDescription.Token token);
+
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withModifiers(int modifiers);
 
         /**
@@ -360,6 +373,7 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
                             typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
                             typeDescription.getDeclaredMethods().asTokenList(is(typeDescription)),
+                            typeDescription.getRecordComponents().asTokenList(is(typeDescription)),
                             typeDescription.getDeclaredAnnotations(),
                             TypeInitializer.None.INSTANCE,
                             LoadedTypeInitializer.NoOp.INSTANCE,
@@ -399,6 +413,7 @@ public interface InstrumentedType extends TypeDescription {
                         Collections.<Generic>emptyList(),
                         Collections.<FieldDescription.Token>emptyList(),
                         Collections.<MethodDescription.Token>emptyList(),
+                        Collections.<RecordComponentDescription.Token>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         TypeInitializer.None.INSTANCE,
                         LoadedTypeInitializer.NoOp.INSTANCE,
@@ -466,6 +481,11 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends MethodDescription.Token> methodTokens;
 
         /**
+         * A list of record component tokens describing the record components of the instrumented type.
+         */
+        private final List<? extends RecordComponentDescription.Token> recordComponentTokens;
+
+        /**
          * A list of annotations of the annotated type.
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
@@ -530,6 +550,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param interfaceTypes         A list of interfaces of the instrumented type.
          * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
          * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
+         * @param recordComponentTokens  A list of record component tokens describing the record components of the instrumented type.
          * @param annotationDescriptions A list of annotations of the annotated type.
          * @param typeInitializer        The type initializer of the instrumented type.
          * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
@@ -549,6 +570,7 @@ public interface InstrumentedType extends TypeDescription {
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
                           List<? extends MethodDescription.Token> methodTokens,
+                          List<? extends RecordComponentDescription.Token> recordComponentTokens,
                           List<? extends AnnotationDescription> annotationDescriptions,
                           TypeInitializer typeInitializer,
                           LoadedTypeInitializer loadedTypeInitializer,
@@ -567,6 +589,7 @@ public interface InstrumentedType extends TypeDescription {
             this.interfaceTypes = interfaceTypes;
             this.fieldTokens = fieldTokens;
             this.methodTokens = methodTokens;
+            this.recordComponentTokens = recordComponentTokens;
             this.annotationDescriptions = annotationDescriptions;
             this.typeInitializer = typeInitializer;
             this.loadedTypeInitializer = loadedTypeInitializer;
@@ -615,6 +638,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -639,6 +663,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -663,6 +688,32 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     CompoundList.of(methodTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
+                    recordComponentTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    anonymousClass,
+                    localClass,
+                    nestHost,
+                    nestMembers);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withRecordComponent(RecordComponentDescription.Token token) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    CompoundList.of(recordComponentTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -687,6 +738,7 @@ public interface InstrumentedType extends TypeDescription {
                     CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -711,6 +763,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     CompoundList.of(this.annotationDescriptions, annotationDescriptions),
                     typeInitializer,
                     loadedTypeInitializer,
@@ -735,6 +788,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -761,6 +815,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -785,6 +840,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -809,6 +865,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -833,6 +890,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -857,6 +915,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -881,6 +940,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -905,6 +965,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -936,6 +997,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -960,6 +1022,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -984,6 +1047,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -1008,6 +1072,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer,
                     new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
@@ -1032,6 +1097,7 @@ public interface InstrumentedType extends TypeDescription {
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
+                    recordComponentTokens,
                     annotationDescriptions,
                     typeInitializer.expandWith(byteCodeAppender),
                     loadedTypeInitializer,
@@ -1196,7 +1262,7 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         public RecordComponentList getRecordComponents() {
-            throw new UnsupportedOperationException(); // TODO
+            return new RecordComponentList.ForTokens(this, recordComponentTokens);
         }
 
         /**
@@ -1687,6 +1753,13 @@ public interface InstrumentedType extends TypeDescription {
          */
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             throw new IllegalStateException("Cannot define method for frozen type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withRecordComponent(RecordComponentDescription.Token token) {
+            throw new IllegalStateException("Cannot define record component for frozen type: " + typeDescription);
         }
 
         /**
