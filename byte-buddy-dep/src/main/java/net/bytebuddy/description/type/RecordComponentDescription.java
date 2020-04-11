@@ -33,7 +33,6 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -416,6 +415,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                  *
                  * @param recordComponent     The {@code java.lang.reflect.RecordComponent} type.
                  * @param getRecordComponents The {@code java.lang.Class#getRecordComponents()} method.
+                 * @param isRecord            The {@code java.lang.Class#isRecord()} method.
                  * @param getName             The {@code java.lang.reflect.RecordComponent#getName()} method.
                  * @param getDeclaringType    The {@code java.lang.reflect.RecordComponent#getDeclaringType()} method.
                  * @param getAccessor         The {@code java.lang.reflect.RecordComponent#getAccessor()} method.

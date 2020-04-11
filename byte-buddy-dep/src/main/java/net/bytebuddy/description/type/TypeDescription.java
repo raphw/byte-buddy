@@ -404,6 +404,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      */
     RecordComponentList getRecordComponents();
 
+    /**
+     * Checks if this type is a Java record.
+     *
+     * @return {@code true} if this type is a Java record.
+     */
     boolean isRecord();
 
     /**
