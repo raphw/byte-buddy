@@ -8692,7 +8692,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public RecordComponentList getRecordComponents() {
-            return new RecordComponentList.ForLoadedRecordComponents(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type));
+            Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
+            return recordComponent == null
+                ? new RecordComponentList.Empty()
+                : new RecordComponentList.ForLoadedRecordComponents();
         }
 
         @Override

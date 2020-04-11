@@ -306,7 +306,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                  * {@inheritDoc}
                  */
                 public Object[] getRecordComponents(Class<?> type) {
-                    return new Object[0];
+                    return null;
                 }
 
                 /**
