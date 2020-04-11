@@ -151,7 +151,12 @@ public enum JavaType {
     /**
      * The Java 9 {@code java.lang.Module} type.
      */
-    MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class);
+    MODULE("java.lang.Module", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class),
+
+    /**
+     * The Java 14 {@code java.lang.Record} type.
+     */
+    RECORD("java.lang.Record", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class);
 
     /**
      * The type description to represent this type which is either a loaded type or a stub.

@@ -33,6 +33,7 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -197,6 +198,14 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
             Object[] getRecordComponents(Class<?> type);
 
             /**
+             * Checks if the supplied type is a record.
+             *
+             * @param type The type to resolve.
+             * @return {@code true} if the supplied type is a record.
+             */
+            boolean isRecord(Class<?> type);
+
+            /**
              * Resolves a record component's name.
              *
              * @param recordComponent The record component to resolve the name for.
@@ -262,6 +271,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                         Class<?> recordComponent = Class.forName("java.lang.reflect.RecordComponent");
                         return new ForJava14CapableVm(recordComponent,
                                 Class.class.getMethod("getRecordComponents"),
+                                Class.class.getMethod("isRecord"),
                                 recordComponent.getMethod("getName"),
                                 recordComponent.getMethod("getDeclaringRecord"),
                                 recordComponent.getMethod("getAccessor"),
@@ -300,6 +310,12 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                     return new Object[0];
                 }
 
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRecord(Class<?> type) {
+                    return false;
+                }
 
                 /**
                  * {@inheritDoc}
@@ -361,6 +377,11 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 private final Method getRecordComponents;
 
                 /**
+                 * The {@code java.lang.Class#isRecord()} method.
+                 */
+                private final Method isRecord;
+
+                /**
                  * The {@code java.lang.reflect.RecordComponent#getName()} method.
                  */
                 private final Method getName;
@@ -404,6 +425,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                  */
                 protected ForJava14CapableVm(Class<?> recordComponent,
                                              Method getRecordComponents,
+                                             Method isRecord,
                                              Method getName,
                                              Method getDeclaringType,
                                              Method getAccessor,
@@ -412,6 +434,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                                              Method getAnnotatedType) {
                     this.recordComponent = recordComponent;
                     this.getRecordComponents = getRecordComponents;
+                    this.isRecord = isRecord;
                     this.getName = getName;
                     this.getDeclaringType = getDeclaringType;
                     this.getAccessor = getAccessor;
@@ -437,6 +460,19 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                         throw new IllegalStateException("Cannot access java.lang.Class#getRecordComponents", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.Class#getRecordComponents", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRecord(Class<?> type) {
+                    try {
+                        return (Boolean) isRecord.invoke(type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.Class#isRecord", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.Class#isRecord", exception.getCause());
                     }
                 }
 

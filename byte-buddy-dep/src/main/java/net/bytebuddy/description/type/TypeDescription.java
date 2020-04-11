@@ -35,6 +35,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -402,6 +403,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * @return A list of record components that this type declares.
      */
     RecordComponentList getRecordComponents();
+
+    boolean isRecord();
 
     /**
      * <p>
@@ -8014,6 +8017,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        public boolean isRecord() {
+            return !getRecordComponents().isEmpty() && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
@@ -8679,6 +8689,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public RecordComponentList getRecordComponents() {
             return new RecordComponentList.ForLoadedRecordComponents(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type));
+        }
+
+        @Override
+        public boolean isRecord() {
+            return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.isRecord(type);
         }
 
         /**

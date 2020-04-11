@@ -32,6 +32,7 @@ import java.lang.reflect.GenericSignatureFormatError;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.failSafe;
 import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -745,6 +746,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testNonRecordComponents() throws Exception {
+        assertThat(describe(String.class).isRecord(), is(false));
         assertThat(describe(String.class).getRecordComponents().size(), is(0));
     }
 
@@ -752,6 +754,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @JavaVersionRule.Enforce(14)
     public void testRecordComponents() throws Exception {
         Class<?> sampleRecord = Class.forName("net.bytebuddy.test.precompiled.SampleRecord");
+        assertThat(describe(sampleRecord).isRecord(), is(true));
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
