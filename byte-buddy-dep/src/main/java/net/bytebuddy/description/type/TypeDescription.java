@@ -6661,6 +6661,31 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            public static class OfRecordComponent extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
+
+                private final Object recordComponent;
+
+                protected OfRecordComponent(Object recordComponent) {
+                    this.recordComponent = recordComponent;
+                }
+
+                @Override
+                @CachedReturnPlugin.Enhance("resolved")
+                protected Generic resolve() {
+                    return Sort.describe(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getGenericType(recordComponent), getAnnotationReader());
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return ForLoadedType.of(RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getType(recordComponent));
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    throw new UnsupportedOperationException(); // TODO: fixme
+                }
+            }
+
             /**
              * A lazy projection that applies a visitor only when resolving the generic type but not when reading the erasure.
              */

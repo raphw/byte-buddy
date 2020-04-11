@@ -18,10 +18,13 @@ package net.bytebuddy.utility;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.type.PackageDescription;
 
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -31,7 +34,7 @@ import java.util.*;
 /**
  * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
  */
-public class JavaModule implements NamedElement.WithOptionalName {
+public class JavaModule implements NamedElement.WithOptionalName, AnnotationSource {
 
     /**
      * Canonical representation of a Java module on a JVM that does not support the module API.
@@ -46,14 +49,14 @@ public class JavaModule implements NamedElement.WithOptionalName {
     /**
      * The {@code java.lang.Module} instance this wrapper represents.
      */
-    private final Object module;
+    private final AnnotatedElement module;
 
     /**
      * Creates a new Java module representation.
      *
      * @param module The {@code java.lang.Module} instance this wrapper represents.
      */
-    protected JavaModule(Object module) {
+    protected JavaModule(AnnotatedElement module) {
         this.module = module;
     }
 
@@ -78,7 +81,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         if (!JavaType.MODULE.isInstance(module)) {
             throw new IllegalArgumentException("Not a Java module: " + module);
         }
-        return new JavaModule(module);
+        return new JavaModule((AnnotatedElement) module);
     }
 
     /**
@@ -162,6 +165,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
      */
     public boolean isOpened(PackageDescription packageDescription, JavaModule module) {
         return packageDescription == null || DISPATCHER.isOpened(this.module, module.unwrap(), packageDescription.getName());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public AnnotationList getDeclaredAnnotations() {
+        return new AnnotationList.ForLoadedAnnotations(module.getDeclaredAnnotations());
     }
 
     /**
@@ -465,7 +475,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
              */
             public JavaModule moduleOf(Class<?> type) {
                 try {
-                    return new JavaModule(getModule.invoke(type, NO_ARGUMENTS));
+                    return new JavaModule((AnnotatedElement) getModule.invoke(type, NO_ARGUMENTS));
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Cannot access " + getModule, exception);
                 } catch (InvocationTargetException exception) {
