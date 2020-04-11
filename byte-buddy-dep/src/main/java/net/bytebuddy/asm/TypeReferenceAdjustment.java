@@ -209,6 +209,12 @@ public class TypeReferenceAdjustment extends AsmVisitorWrapper.AbstractBase {
         }
 
         @Override
+        public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+            observedTypes.add(Type.getType(descriptor).getInternalName());
+            return super.visitRecordComponent(name, descriptor, signature);
+        }
+
+        @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
             observedTypes.add(Type.getType(descriptor).getInternalName());
             AnnotationVisitor annotationVisitor = super.visitAnnotation(descriptor, visible);

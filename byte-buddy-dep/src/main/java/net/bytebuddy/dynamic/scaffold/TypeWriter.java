@@ -2075,9 +2075,18 @@ public interface TypeWriter<T> {
                 } else {
                     constraints.add(Constraint.ForClass.MANIFEST);
                 }
+                if ((modifiers & Opcodes.ACC_RECORD) != 0) {
+                    constraints.add(Constraint.ForRecord.INSTANCE);
+                }
                 constraint = new Constraint.Compound(constraints);
                 constraint.assertType(modifiers, interfaces != null, signature != null);
                 super.visit(version, modifiers, name, signature, superName, interfaces);
+            }
+
+            @Override
+            public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+                constraint.assertRecord();
+                return super.visitRecordComponent(name, descriptor, signature);
             }
 
             @Override
@@ -2298,6 +2307,11 @@ public interface TypeWriter<T> {
                 void assertNestMate();
 
                 /**
+                 * Asserts the presence of a record component.
+                 */
+                void assertRecord();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -2433,6 +2447,13 @@ public interface TypeWriter<T> {
                     public void assertNestMate() {
                         /* do nothing */
                     }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2552,6 +2573,13 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertNestMate() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
                         /* do nothing */
                     }
                 }
@@ -2702,6 +2730,139 @@ public interface TypeWriter<T> {
                     public void assertNestMate() {
                         /* do nothing */
                     }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        /* do nothing */
+                    }
+                }
+
+                /**
+                 * Represents the constraint of a record type.
+                 */
+                enum ForRecord implements Constraint {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertField(String name, boolean isPublic, boolean isStatic, boolean isFinal, boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertMethod(String name,
+                                             boolean isAbstract,
+                                             boolean isPublic,
+                                             boolean isPrivate,
+                                             boolean isStatic,
+                                             boolean isVirtual,
+                                             boolean isConstructor,
+                                             boolean isDefaultValueIncompatible,
+                                             boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertAnnotation() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertTypeAnnotation() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDefaultValue(String name) {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDefaultMethodCall() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        if ((modifier & Opcodes.ACC_ABSTRACT) != 0) {
+                            throw new IllegalStateException("Cannot define a record class as abstract");
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertMethodTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertHandleInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertInvokeDynamic() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertSubRoutine() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertDynamicValueInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertNestMate() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2848,6 +3009,13 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertNestMate() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
                         /* do nothing */
                     }
                 }
@@ -3005,6 +3173,15 @@ public interface TypeWriter<T> {
                     public void assertNestMate() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V11)) {
                             throw new IllegalStateException("Cannot define nest mate for class file version " + classFileVersion);
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V14)) {
+                            throw new IllegalStateException("Cannot define record for class file version " + classFileVersion);
                         }
                     }
                 }
@@ -3175,6 +3352,15 @@ public interface TypeWriter<T> {
                     public void assertNestMate() {
                         for (Constraint constraint : constraints) {
                             constraint.assertNestMate();
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertRecord() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertRecord();
                         }
                     }
                 }

@@ -129,6 +129,25 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
+    public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
+        considerTriggerNestHost();
+        considerTriggerOuterClass();
+        return onVisitRecordComponent(name, descriptor, signature);
+    }
+
+    /**
+     * An order-sensitive invocation of {@link ClassVisitor#visitRecordComponent(String, String, String)}.
+     *
+     * @param name       The record component's name.
+     * @param descriptor The record component's descriptor.
+     * @param signature  The record component's generic signature or {@code null} if the record component's type is non-generic.
+     * @return The record component visitor or {@code null} if the component should not be visited.
+     */
+    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String signature) {
+        return super.visitRecordComponent(name, descriptor, signature);
+    }
+
+    @Override
     public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
