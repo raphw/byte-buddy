@@ -99,6 +99,13 @@ public interface RecordComponentDescription extends DeclaredByType,
             /**
              * {@inheritDoc}
              */
+            public MethodDescription.InDefinedShape getAccessor() {
+                return getDeclaringType().getDeclaredMethods().filter(named(getActualName())).getOnly();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public InDefinedShape asDefined() {
                 return this;
             }
@@ -109,13 +116,6 @@ public interface RecordComponentDescription extends DeclaredByType,
      * An abstract base implementation for a record component description.
      */
     abstract class AbstractBase implements RecordComponentDescription {
-
-        /**
-         * {@inheritDoc}
-         */
-        public MethodDescription.InDefinedShape getAccessor() {
-            return getDeclaringType().getDeclaredMethods().filter(named(getActualName())).getOnly().asDefined();
-        }
 
         /**
          * {@inheritDoc}
@@ -743,6 +743,84 @@ public interface RecordComponentDescription extends DeclaredByType,
          */
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.Explicit(annotations);
+        }
+    }
+
+    /**
+     * A type substituting representation of a record component description.
+     */
+    class TypeSubstituting extends AbstractBase implements InGenericShape {
+
+        /**
+         * The type that declares this type-substituted record component.
+         */
+        private final TypeDescription.Generic declaringType;
+
+        /**
+         * The represented record component.
+         */
+        private final RecordComponentDescription recordComponentDescription;
+
+        /**
+         * A visitor that is applied to the parameter type.
+         */
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+
+        /**
+         * Creates a new type substituting representation of a record component description.
+         *
+         * @param declaringType              The type that declares this type-substituted record component.
+         * @param recordComponentDescription The represented record component.
+         * @param visitor                    A visitor that is applied to the parameter type.
+         */
+        public TypeSubstituting(TypeDescription.Generic declaringType,
+                                RecordComponentDescription recordComponentDescription,
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            this.declaringType = declaringType;
+            this.recordComponentDescription = recordComponentDescription;
+            this.visitor = visitor;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public MethodDescription.InGenericShape getAccessor() {
+            return declaringType.getDeclaredMethods().filter(named(getActualName())).getOnly();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDescription.Generic getType() {
+            return recordComponentDescription.getType().accept(visitor);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public InDefinedShape asDefined() {
+            return recordComponentDescription.asDefined();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeDefinition getDeclaringType() {
+            return declaringType;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getActualName() {
+            return recordComponentDescription.getActualName();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationList getDeclaredAnnotations() {
+            return recordComponentDescription.getDeclaredAnnotations();
         }
     }
 

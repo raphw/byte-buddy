@@ -26,8 +26,10 @@ import java.util.List;
 
 /**
  * Implementations represent a list of record component descriptions.
+ *
+ * @param <T> The type of record component descriptions represented by this list.
  */
-public interface RecordComponentList extends FilterableList<RecordComponentDescription, RecordComponentList> {
+public interface RecordComponentList<T extends RecordComponentDescription> extends FilterableList<T, RecordComponentList<T>> {
 
     /**
      * Transforms the list of record component descriptions into a list of detached tokens. All types that are matched by the provided
@@ -40,8 +42,10 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
 
     /**
      * An abstract base implementation of a list of record components.
+     *
+     * @param <S> The type of record component descriptions represented by this list.
      */
-    abstract class AbstractBase extends FilterableList.AbstractBase<RecordComponentDescription, RecordComponentList> implements RecordComponentList {
+    abstract class AbstractBase<S extends RecordComponentDescription> extends FilterableList.AbstractBase<S, RecordComponentList<S>> implements RecordComponentList<S> {
 
         /**
          * {@inheritDoc}
@@ -55,15 +59,15 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
         }
 
         @Override
-        protected RecordComponentList wrap(List<RecordComponentDescription> values) {
-            return new Explicit(values);
+        protected RecordComponentList<S> wrap(List<S> values) {
+            return new Explicit<S>(values);
         }
     }
 
     /**
      * A list of loaded record components.
      */
-    class ForLoadedRecordComponents extends AbstractBase {
+    class ForLoadedRecordComponents extends AbstractBase<RecordComponentDescription.InDefinedShape> {
 
         /**
          * The represented record components.
@@ -91,7 +95,7 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
         /**
          * {@inheritDoc}
          */
-        public RecordComponentDescription get(int index) {
+        public RecordComponentDescription.InDefinedShape get(int index) {
             return new RecordComponentDescription.ForLoadedRecordComponent((AnnotatedElement) recordComponents.get(index));
         }
 
@@ -105,20 +109,23 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
 
     /**
      * A wrapper implementation of an explicit list of record components.
+     *
+     * @param <S> The type of record component descriptions represented by this list.
      */
-    class Explicit extends AbstractBase {
+    class Explicit<S extends RecordComponentDescription> extends AbstractBase<S> {
 
         /**
          * The record components represented by this list.
          */
-        private final List<RecordComponentDescription> recordComponents;
+        private final List<? extends S> recordComponents;
 
         /**
          * Creates a new list of record component descriptions.
          *
          * @param recordComponent The represented record components.
          */
-        public Explicit(RecordComponentDescription... recordComponent) {
+        @SuppressWarnings("unchecked")
+        public Explicit(S... recordComponent) {
             this(Arrays.asList(recordComponent));
         }
 
@@ -127,14 +134,14 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
          *
          * @param recordComponents The represented record components.
          */
-        public Explicit(List<RecordComponentDescription> recordComponents) {
+        public Explicit(List<? extends S> recordComponents) {
             this.recordComponents = recordComponents;
         }
 
         /**
          * {@inheritDoc}
          */
-        public RecordComponentDescription get(int index) {
+        public S get(int index) {
             return recordComponents.get(index);
         }
 
@@ -149,7 +156,7 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
     /**
      * A list of record components described as tokens.
      */
-    class ForTokens extends AbstractBase {
+    class ForTokens extends AbstractBase<RecordComponentDescription.InDefinedShape> {
 
         /**
          * The record component's declaring type.
@@ -183,7 +190,7 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
         }
 
         @Override
-        public RecordComponentDescription get(int index) {
+        public RecordComponentDescription.InDefinedShape get(int index) {
             return new RecordComponentDescription.Latent(typeDescription, tokens.get(index));
         }
 
@@ -195,8 +202,10 @@ public interface RecordComponentList extends FilterableList<RecordComponentDescr
 
     /**
      * An empty list of record components.
+     *
+     * @param <S> The type of record component descriptions represented by this list.
      */
-    class Empty extends FilterableList.Empty<RecordComponentDescription, RecordComponentList> implements RecordComponentList {
+    class Empty<S extends RecordComponentDescription> extends FilterableList.Empty<S, RecordComponentList<S>> implements RecordComponentList<S> {
 
         /**
          * {@inheritDoc}
