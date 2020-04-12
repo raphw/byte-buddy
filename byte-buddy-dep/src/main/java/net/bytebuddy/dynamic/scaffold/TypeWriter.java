@@ -29,10 +29,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
@@ -1581,6 +1578,11 @@ public interface TypeWriter<T> {
         protected final MethodList<?> instrumentedMethods;
 
         /**
+         * The instrumented type's record components.
+         */
+        protected final RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents;
+
+        /**
          * The loaded type initializer to apply onto the created type after loading.
          */
         protected final LoadedTypeInitializer loadedTypeInitializer;
@@ -1645,6 +1647,7 @@ public interface TypeWriter<T> {
          * @param fields                       The instrumented type's declared fields.
          * @param methods                      The instrumented type's declared and virtually inherited methods.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+         * @param recordComponents             The instrumented type's record components.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
          * @param typeInitializer              The type initializer to include in the created type's type initializer.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
@@ -1664,6 +1667,7 @@ public interface TypeWriter<T> {
                           FieldList<FieldDescription.InDefinedShape> fields,
                           MethodList<?> methods,
                           MethodList<?> instrumentedMethods,
+                          RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents,
                           LoadedTypeInitializer loadedTypeInitializer,
                           TypeInitializer typeInitializer,
                           TypeAttributeAppender typeAttributeAppender,
@@ -1682,6 +1686,7 @@ public interface TypeWriter<T> {
             this.fields = fields;
             this.methods = methods;
             this.instrumentedMethods = instrumentedMethods;
+            this.recordComponents = recordComponents;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
             this.typeAttributeAppender = typeAttributeAppender;
@@ -1735,6 +1740,7 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
+                    methodRegistry.getInstrumentedType().getRecordComponents(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
@@ -1791,6 +1797,7 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
+                    methodRegistry.getInstrumentedType().getRecordComponents(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
@@ -1854,6 +1861,7 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
+                    methodRegistry.getInstrumentedType().getRecordComponents(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
@@ -3514,6 +3522,7 @@ public interface TypeWriter<T> {
              * @param fields                       The instrumented type's declared fields.
              * @param methods                      The instrumented type's declared and virtually inherited methods.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+             * @param recordComponents             The instrumented type's record components.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
              * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
@@ -3535,6 +3544,7 @@ public interface TypeWriter<T> {
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
+                                  RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents,
                                   LoadedTypeInitializer loadedTypeInitializer,
                                   TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
@@ -3555,6 +3565,7 @@ public interface TypeWriter<T> {
                         fields,
                         methods,
                         instrumentedMethods,
+                        recordComponents,
                         loadedTypeInitializer,
                         typeInitializer,
                         typeAttributeAppender,
@@ -3671,6 +3682,7 @@ public interface TypeWriter<T> {
                  * @param fields                       The instrumented type's declared fields.
                  * @param methods                      The instrumented type's declared and virtually inherited methods.
                  * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+                 * @param recordComponents             The instrumented type's record components.
                  * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
                  * @param typeInitializer              The type initializer to include in the created type's type initializer.
                  * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
@@ -3694,6 +3706,7 @@ public interface TypeWriter<T> {
                                              List<? extends DynamicType> auxiliaryTypes,
                                              FieldList<FieldDescription.InDefinedShape> fields,
                                              MethodList<?> methods, MethodList<?> instrumentedMethods,
+                                             RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents,
                                              LoadedTypeInitializer loadedTypeInitializer,
                                              TypeInitializer typeInitializer,
                                              TypeAttributeAppender typeAttributeAppender,
@@ -3717,6 +3730,7 @@ public interface TypeWriter<T> {
                             fields,
                             methods,
                             instrumentedMethods,
+                            recordComponents,
                             loadedTypeInitializer,
                             typeInitializer,
                             typeAttributeAppender,
@@ -5025,6 +5039,7 @@ public interface TypeWriter<T> {
                             new LazyFieldList(instrumentedType),
                             methods,
                             new MethodList.Empty<MethodDescription>(),
+                            new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>(), // TODO
                             LoadedTypeInitializer.NoOp.INSTANCE,
                             TypeInitializer.None.INSTANCE,
                             typeAttributeAppender,
@@ -5223,6 +5238,7 @@ public interface TypeWriter<T> {
              * @param fields                       The instrumented type's declared fields.
              * @param methods                      The instrumented type's declared and virtually inherited methods.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+             * @param recordComponents             The instrumented type's record components.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
              * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
@@ -5243,6 +5259,7 @@ public interface TypeWriter<T> {
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
+                                  RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents,
                                   LoadedTypeInitializer loadedTypeInitializer,
                                   TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
@@ -5261,6 +5278,7 @@ public interface TypeWriter<T> {
                         fields,
                         methods,
                         instrumentedMethods,
+                        recordComponents,
                         loadedTypeInitializer,
                         typeInitializer,
                         typeAttributeAppender,

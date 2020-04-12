@@ -762,7 +762,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         @SuppressWarnings("unchecked")
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName("net.bytebuddy.test.precompiled.TypeAnnotation");
         MethodDescription.InDefinedShape value = new MethodDescription.ForLoadedMethod(typeAnnotation.getMethod("value"));
-        RecordComponentList recordComponents = describe(sampleRecord).getRecordComponents();
+        RecordComponentList<RecordComponentDescription.InDefinedShape> recordComponents = describe(sampleRecord).getRecordComponents();
         assertThat(recordComponents.size(), is(1));
         assertThat(recordComponents.getOnly().getActualName(), is(FOO));
         assertThat(recordComponents.getOnly().getAccessor(), is((MethodDescription) new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
