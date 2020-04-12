@@ -57,6 +57,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -671,6 +672,10 @@ public class ByteBuddy {
                         TargetType[].class,
                         Visibility.PUBLIC, Ownership.STATIC)
                 .intercept(new EnumerationImplementation(new ArrayList<String>(values)));
+    }
+
+    public DynamicType.Builder<?> makeRecord() {
+        return subclass(JavaType.RECORD.getTypeStub(), null); // TODO: Constructor strategy for all components, equals, hashcode, toString
     }
 
     /**

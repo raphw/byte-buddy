@@ -434,6 +434,13 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
+    public RecordComponentDefinition<T> defineRecordComponent(String name, TypeDefinition type) {
+        throw new UnsupportedOperationException("Cannot define record component for decorated type: " + instrumentedType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> require(Collection<DynamicType> auxiliaryTypes) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
                 typeAttributeAppender,

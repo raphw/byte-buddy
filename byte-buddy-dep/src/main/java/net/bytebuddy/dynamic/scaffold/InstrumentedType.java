@@ -162,13 +162,22 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withLocalClass(boolean localClass);
 
     /**
-     * Creates a new instrumented type that indicates that is defined as an anonymous class. Setting this property
+     * Creates a new instrumented type that indicates that it is defined as an anonymous class. Setting this property
      * resets the local class property.
      *
      * @param anonymousClass {@code true} if the instrumented type is supposed to be treated as an anonymous class.
      * @return A new instrumented type that is treated as an anonymous class.
      */
     InstrumentedType withAnonymousClass(boolean anonymousClass);
+
+    /**
+     * Creates a new instrumented type that indicates that it defined as a record type. Setting this property to false
+     * removes all record components.
+     *
+     * @param record {@code true} if the instrumented type is supposed to be a record.
+     * @return A new instrumented type that is defined as a record.
+     */
+    InstrumentedType withRecord(boolean record);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -279,6 +288,11 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         WithFlexibleName withAnonymousClass(boolean anonymousClass);
+
+        /**
+         * {@inheritDoc}
+         */
+        WithFlexibleName withRecord(boolean record);
 
         /**
          * {@inheritDoc}
@@ -1092,6 +1106,34 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public WithFlexibleName withRecord(boolean record) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    record
+                            ? recordComponentTokens
+                            : Collections.<RecordComponentDescription.Token>emptyList(),
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    anonymousClass,
+                    localClass,
+                    record,
+                    nestHost,
+                    nestMembers);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
@@ -1886,6 +1928,13 @@ public interface InstrumentedType extends TypeDescription {
          */
         public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
             throw new IllegalStateException("Cannot define anonymous class state to frozen type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withRecord(boolean record) {
+            throw new IllegalStateException("Cannot define record state to frozen type: " + typeDescription);
         }
 
         /**

@@ -27,10 +27,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.*;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.scaffold.*;
@@ -988,6 +985,10 @@ public interface DynamicType {
          * instrumentation.
          */
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
+
+        RecordComponentDefinition<T> defineRecordComponent(String name, Type type);
+
+        RecordComponentDefinition<T> defineRecordComponent(String name, TypeDefinition type);
 
         /**
          * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
@@ -2956,6 +2957,41 @@ public interface DynamicType {
             }
         }
 
+        interface RecordComponentDefinition<S> extends Builder<S> {
+
+            RecordComponentDefinition<S> annotateRecordComponent(Annotation... annotation);
+
+            RecordComponentDefinition<S> annotateRecordComponent(List<? extends Annotation> annotations);
+
+            RecordComponentDefinition<S> annotateRecordComponent(AnnotationDescription... annotation);
+
+            RecordComponentDefinition<S> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations);
+
+            abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements RecordComponentDefinition<U> {
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> annotateRecordComponent(Annotation... annotation) {
+                    return annotateRecordComponent(Arrays.asList(annotation));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> annotateRecordComponent(List<? extends Annotation> annotations) {
+                    return annotateRecordComponent(new AnnotationList.ForLoadedAnnotations(annotations));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> annotateRecordComponent(AnnotationDescription... annotation) {
+                    return annotateRecordComponent(Arrays.asList(annotation));
+                }
+            }
+        }
+
         /**
          * An abstract base implementation of a dynamic type builder.
          *
@@ -3129,6 +3165,13 @@ public interface DynamicType {
              */
             public TypeVariableDefinition<S> typeVariable(String symbol, TypeDefinition... bound) {
                 return typeVariable(symbol, Arrays.asList(bound));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public RecordComponentDefinition<S> defineRecordComponent(String name, Type type) {
+                return defineRecordComponent(name, TypeDefinition.Sort.describe(type));
             }
 
             /**
@@ -3596,6 +3639,13 @@ public interface DynamicType {
                 /**
                  * {@inheritDoc}
                  */
+                public RecordComponentDefinition<U> defineRecordComponent(String name, TypeDefinition type) {
+                    return materialize().defineRecordComponent(name, type);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
                     return materialize().require(auxiliaryTypes);
                 }
@@ -3827,6 +3877,13 @@ public interface DynamicType {
                  */
                 public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
                     return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(interfaceTypes)));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> defineRecordComponent(String name, TypeDefinition type) {
+                    return new RecordComponentDefinitionAdapter(new RecordComponentDescription.Token(name, type.asGenericType()));
                 }
 
                 /**
@@ -5165,6 +5222,56 @@ public interface DynamicType {
                             elementMatcher = elementMatcher.or(isSuperTypeOf(typeDescription));
                         }
                         return materialize().invokable(isDeclaredBy(isInterface().and(elementMatcher)));
+                    }
+                }
+
+                /**
+                 * An adapter for defining a record component.
+                 */
+                @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
+                protected class RecordComponentDefinitionAdapter extends RecordComponentDefinition.AbstractBase<U> {
+
+                    /**
+                     * A token representing the defined record component.
+                     */
+                    private final RecordComponentDescription.Token token;
+
+                    /**
+                     * Creates a new record component definition adapter.
+                     *
+                     * @param token A token representing the defined record component.
+                     */
+                    protected RecordComponentDefinitionAdapter(RecordComponentDescription.Token token) {
+                        this.token = token;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public RecordComponentDefinition<U> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations) {
+                        return new RecordComponentDefinitionAdapter(new RecordComponentDescription.Token(token.getName(),
+                                token.getType(),
+                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withRecordComponent(token),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                visibilityBridgeStrategy,
+                                classWriterStrategy,
+                                ignoredMethods,
+                                auxiliaryTypes);
                     }
                 }
             }
