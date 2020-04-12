@@ -104,6 +104,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     MethodList<MethodDescription.InDefinedShape> getDeclaredMethods();
 
     /**
+     * {@inheritDoc}
+     */
+    RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents();
+
+    /**
      * Checks if {@code value} is an instance of the type represented by this instance.
      *
      * @param value The object of interest.
@@ -396,21 +401,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isNestMateOf(TypeDescription typeDescription);
 
     /**
-     * Returns the list of record components that are declared by this type. If this type is not
-     * a record, the returned list is empty.
-     *
-     * @return A list of record components that this type declares.
-     */
-    RecordComponentList getRecordComponents();
-
-    /**
-     * Checks if this type is a Java record.
-     *
-     * @return {@code true} if this type is a Java record.
-     */
-    boolean isRecord();
-
-    /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
@@ -559,6 +549,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         MethodList<MethodDescription.InGenericShape> getDeclaredMethods();
+
+        /**
+         * {@inheritDoc}
+         */
+        RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents();
 
         /**
          * Applies a visitor to this generic type description.
@@ -3729,6 +3724,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                TypeDescription erasure = asErasure();
+                return new RecordComponentList.TypeSubstituting(this, erasure.getRecordComponents(), TypeDescription.AbstractBase.RAW_TYPES
+                        ? Visitor.NoOp.INSTANCE
+                        : new Visitor.ForRawType(erasure));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A non-generic type does not imply type arguments: " + this);
             }
@@ -3808,6 +3813,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public boolean isPrimitive() {
                 return asErasure().isPrimitive();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
+                return asErasure().isRecord();
             }
 
             /**
@@ -4264,6 +4276,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                return new RecordComponentList.Empty<RecordComponentDescription.InGenericShape>();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 throw new IllegalStateException("A generic array type does not imply upper type bounds: " + this);
             }
@@ -4339,6 +4358,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * {@inheritDoc}
              */
             public boolean isPrimitive() {
+                return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
                 return false;
             }
 
@@ -4549,6 +4575,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                throw new IllegalStateException("A wildcard does not imply record component definitions: " + this);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 throw new IllegalStateException("A wildcard does not imply a component type: " + this);
             }
@@ -4613,6 +4646,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * {@inheritDoc}
              */
             public boolean isArray() {
+                return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
                 return false;
             }
 
@@ -4966,6 +5006,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                return new RecordComponentList.TypeSubstituting(this, asErasure().getRecordComponents(), new Visitor.Substitutor.ForTypeVariableBinding(this));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Generic findBindingOf(Generic typeVariable) {
                 Generic typeDescription = this;
                 do {
@@ -5041,6 +5088,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public boolean isArray() {
                 return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
+                return asErasure().isRecord();
             }
 
             /**
@@ -5568,6 +5622,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                throw new IllegalStateException("A type variable does not imply record component definitions: " + this);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Generic getComponentType() {
                 throw new IllegalStateException("A type variable does not imply a component type: " + this);
             }
@@ -5639,6 +5700,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * {@inheritDoc}
              */
             public boolean isPrimitive() {
+                return false;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
                 return false;
             }
 
@@ -5779,6 +5847,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
+                public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                    throw new IllegalStateException("A symbolic type variable does not imply record component definitions: " + this);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public Generic getComponentType() {
                     throw new IllegalStateException("A symbolic type variable does not imply a component type: " + this);
                 }
@@ -5850,6 +5925,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * {@inheritDoc}
                  */
                 public boolean isPrimitive() {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isRecord() {
                     return false;
                 }
 
@@ -6107,6 +6189,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * {@inheritDoc}
              */
+            public RecordComponentList<RecordComponentDescription.InGenericShape> getRecordComponents() {
+                return resolve().getRecordComponents();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public TypeList.Generic getUpperBounds() {
                 return resolve().getUpperBounds();
             }
@@ -6200,6 +6289,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             public boolean isPrimitive() {
                 return asErasure().isPrimitive();
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public boolean isRecord() {
+                return asErasure().isRecord();
             }
 
             /**

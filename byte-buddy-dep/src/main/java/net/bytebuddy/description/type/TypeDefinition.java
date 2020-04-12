@@ -114,6 +114,14 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
     TypeDefinition getComponentType();
 
     /**
+     * Returns the list of record components that are declared by this type. If this type is not
+     * a record, the returned list is empty.
+     *
+     * @return A list of record components that this type declares.
+     */
+    RecordComponentList<?> getRecordComponents();
+
+    /**
      * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
@@ -143,6 +151,13 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
      * @return {@code true} if this type description represents an array.
      */
     boolean isArray();
+
+    /**
+     * Checks if this type is a Java record.
+     *
+     * @return {@code true} if this type is a Java record.
+     */
+    boolean isRecord();
 
     /**
      * Checks if the type described by this entity is a primitive type.

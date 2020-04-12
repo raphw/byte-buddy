@@ -201,6 +201,56 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
     }
 
     /**
+     * A type-substituting list of record component descriptions.
+     */
+    class TypeSubstituting extends AbstractBase<RecordComponentDescription.InGenericShape> {
+
+        /**
+         * The method that is declaring the transformed record components.
+         */
+        private final TypeDescription.Generic declaringType;
+
+        /**
+         * The untransformed record components that are represented by this list.
+         */
+        private final List<? extends RecordComponentDescription> recordComponentDescriptions;
+
+        /**
+         * The visitor to apply to the parameter types before returning them.
+         */
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+
+        /**
+         * Creates a type substituting list of record component descriptions.
+         *
+         * @param declaringType               The method that is declaring the transformed record components.
+         * @param recordComponentDescriptions The untransformed record components that are represented by this list.
+         * @param visitor                     The visitor to apply to the parameter types before returning them.
+         */
+        public TypeSubstituting(TypeDescription.Generic declaringType,
+                                List<? extends RecordComponentDescription> recordComponentDescriptions,
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            this.declaringType = declaringType;
+            this.recordComponentDescriptions = recordComponentDescriptions;
+            this.visitor = visitor;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentDescription.InGenericShape get(int index) {
+            return new RecordComponentDescription.TypeSubstituting(declaringType, recordComponentDescriptions.get(index), visitor);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public int size() {
+            return recordComponentDescriptions.size();
+        }
+    }
+
+    /**
      * An empty list of record components.
      *
      * @param <S> The type of record component descriptions represented by this list.
