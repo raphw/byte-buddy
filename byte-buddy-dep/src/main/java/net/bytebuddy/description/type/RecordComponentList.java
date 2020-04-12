@@ -15,6 +15,8 @@
  */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -38,7 +40,14 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
      * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
+    ByteCodeElement.Token.TokenList<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
+
+    /**
+     * Returns this list of these record component descriptions resolved to their defined shape.
+     *
+     * @return A list of record components in their defined shape.
+     */
+    RecordComponentList<RecordComponentDescription.InDefinedShape> asDefined();
 
     /**
      * An abstract base implementation of a list of record components.
@@ -50,12 +59,23 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
         /**
          * {@inheritDoc}
          */
-        public List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+        public ByteCodeElement.Token.TokenList<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<RecordComponentDescription.Token> tokens = new ArrayList<RecordComponentDescription.Token>(size());
             for (RecordComponentDescription recordComponentDescription : this) {
                 tokens.add(recordComponentDescription.asToken(matcher));
             }
-            return tokens;
+            return new ByteCodeElement.Token.TokenList<RecordComponentDescription.Token>(tokens);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> asDefined() {
+            List<RecordComponentDescription.InDefinedShape> recordComponents = new ArrayList<RecordComponentDescription.InDefinedShape>(size());
+            for (RecordComponentDescription recordComponentDescription : this) {
+                recordComponents.add(recordComponentDescription.asDefined());
+            }
+            return new Explicit<RecordComponentDescription.InDefinedShape>(recordComponents);
         }
 
         @Override
@@ -260,8 +280,15 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
         /**
          * {@inheritDoc}
          */
-        public List<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
-            return Collections.emptyList();
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> asDefined() {
+            return new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ByteCodeElement.Token.TokenList<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+            return new ByteCodeElement.Token.TokenList<RecordComponentDescription.Token>();
         }
     }
 }
