@@ -38,6 +38,11 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     private boolean triggerAttributes;
 
     /**
+     * {@code true} if the record component visitation is not yet triggered.
+     */
+    private boolean triggerRecordComponents;
+
+    /**
      * Creates a metadata aware class visitor.
      *
      * @param api          The API version.
@@ -48,22 +53,36 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         triggerNestHost = true;
         triggerOuterClass = true;
         triggerAttributes = true;
+        triggerRecordComponents = true;
     }
 
     /**
      * Invoked if the nest host was not visited.
      */
-    protected abstract void onNestHost();
+    protected void onNestHost() {
+        /* do nothing */
+    }
 
     /**
      * Invoked if the outer class was not visited.
      */
-    protected abstract void onOuterType();
+    protected void onOuterType() {
+        /* do nothing */
+    }
 
     /**
      * Invoked if the attribute visitation is about to complete.
      */
-    protected abstract void onAfterAttributes();
+    protected void onAfterAttributes() {
+        /* do nothing */
+    }
+
+    /**
+     * Invoked after all record components are visited or none is found.
+     */
+    protected void onAfterRecordComponents() {
+        /* do nothing */
+    }
 
     /**
      * Considers triggering a nest host visitation.
@@ -92,6 +111,16 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         if (triggerAttributes) {
             triggerAttributes = false;
             onAfterAttributes();
+        }
+    }
+
+    /**
+     * Considers triggering the after record components visitation.
+     */
+    private void considerTriggerAfterRecordComponents() {
+        if (triggerRecordComponents) {
+            triggerRecordComponents = false;
+            onAfterRecordComponents();
         }
     }
 
@@ -132,6 +161,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
         considerTriggerNestHost();
         considerTriggerOuterClass();
+        considerTriggerAfterAttributes();
         return onVisitRecordComponent(name, descriptor, signature);
     }
 
@@ -243,6 +273,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        considerTriggerAfterRecordComponents();
         return onVisitField(modifiers, internalName, descriptor, signature, defaultValue);
     }
 
@@ -265,6 +296,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        considerTriggerAfterRecordComponents();
         return onVisitMethod(modifiers, internalName, descriptor, signature, exception);
     }
 
@@ -287,6 +319,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
         considerTriggerNestHost();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
+        considerTriggerAfterRecordComponents();
         onVisitEnd();
     }
 

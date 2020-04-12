@@ -22,6 +22,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(false));
         assertThat(classVisitor.outerClassVisited, is(false));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -30,6 +31,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(false));
         assertThat(classVisitor.outerClassVisited, is(false));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -38,6 +40,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(false));
         assertThat(classVisitor.outerClassVisited, is(false));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -46,6 +49,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(false));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -54,6 +58,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -62,6 +67,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -70,6 +76,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(false));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -78,6 +85,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -86,6 +94,16 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
+    }
+
+    @Test
+    public void testVisitRecordComponent() {
+        classVisitor.visitRecordComponent(null, null, null);
+        assertThat(classVisitor.nestHostVisited, is(true));
+        assertThat(classVisitor.outerClassVisited, is(true));
+        assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(false));
     }
 
     @Test
@@ -94,6 +112,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(true));
     }
 
     @Test
@@ -102,6 +121,7 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(true));
     }
 
     @Test
@@ -110,11 +130,12 @@ public class MetadataAwareClassVisitorTest {
         assertThat(classVisitor.nestHostVisited, is(true));
         assertThat(classVisitor.outerClassVisited, is(true));
         assertThat(classVisitor.afterAttributesVisited, is(true));
+        assertThat(classVisitor.afterRecordComponentsVisited, is(true));
     }
 
     private static class DelegatingMetadataAwareClassVisitor extends MetadataAwareClassVisitor {
 
-        private boolean nestHostVisited, outerClassVisited, afterAttributesVisited;
+        private boolean nestHostVisited, outerClassVisited, afterAttributesVisited, afterRecordComponentsVisited;
 
         private DelegatingMetadataAwareClassVisitor() {
             super(OpenedClassReader.ASM_API, null);
@@ -133,6 +154,11 @@ public class MetadataAwareClassVisitorTest {
         @Override
         protected void onAfterAttributes() {
             afterAttributesVisited = true;
+        }
+
+        @Override
+        protected void onAfterRecordComponents() {
+            afterRecordComponentsVisited = true;
         }
     }
 }

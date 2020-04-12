@@ -4421,6 +4421,11 @@ public interface TypeWriter<T> {
                     private final LinkedHashMap<String, MethodDescription> declarableMethods;
 
                     /**
+                     * A mapping of record components to write by their names.
+                     */
+                    private final LinkedHashMap<String, RecordComponentDescription> declarableRecordComponents;
+
+                    /**
                      * A set of internal names of all nest members not yet defined by this type. If this type is not a nest host, this set is empty.
                      */
                     private final Set<String> nestMembers;
@@ -4476,6 +4481,10 @@ public interface TypeWriter<T> {
                         declarableMethods = new LinkedHashMap<String, MethodDescription>();
                         for (MethodDescription methodDescription : instrumentedMethods) {
                             declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+                        }
+                        declarableRecordComponents = new LinkedHashMap<String, RecordComponentDescription>();
+                        for (RecordComponentDescription recordComponentDescription : recordComponents) {
+                            declarableRecordComponents.put(recordComponentDescription.getActualName(), recordComponentDescription);
                         }
                         if (instrumentedType.isNestHost()) {
                             nestMembers = new LinkedHashSet<String>();
@@ -4581,6 +4590,19 @@ public interface TypeWriter<T> {
                         return annotationRetention.isEnabled()
                                 ? cv.visitAnnotation(descriptor, visible)
                                 : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String signature) {
+                        declarableRecordComponents.remove(name);
+                        return cv.visitRecordComponent(name, descriptor, signature);
+                    }
+
+                    @Override
+                    protected void onAfterRecordComponents() {
+                        for (RecordComponentDescription recordComponent : declarableRecordComponents.values()) {
+                            cv.visitRecordComponent(recordComponent.getActualName(), recordComponent.getDescriptor(), recordComponent.getGenericSignature()).visitEnd();
+                        }
                     }
 
                     @Override
@@ -5170,16 +5192,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected void onNestHost() {
-                        /* do nothing */
-                    }
-
-                    @Override
-                    protected void onOuterType() {
-                        /* do nothing */
-                    }
-
-                    @Override
                     protected AnnotationVisitor onVisitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? cv.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
@@ -5330,6 +5342,11 @@ public interface TypeWriter<T> {
                     classVisitor.visitOuterClass(instrumentedType.getEnclosingType().getInternalName(), NO_REFERENCE, NO_REFERENCE);
                 }
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                for (RecordComponentDescription recordComponentDescription : recordComponents) {
+                    classVisitor.visitRecordComponent(recordComponentDescription.getActualName(),
+                            recordComponentDescription.getDescriptor(),
+                            recordComponentDescription.getGenericSignature()).visitEnd();
+                }
                 for (FieldDescription fieldDescription : fields) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
