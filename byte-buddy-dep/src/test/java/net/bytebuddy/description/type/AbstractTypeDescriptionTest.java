@@ -765,7 +765,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         RecordComponentList recordComponents = describe(sampleRecord).getRecordComponents();
         assertThat(recordComponents.size(), is(1));
         assertThat(recordComponents.getOnly().getActualName(), is(FOO));
-        assertThat(recordComponents.getOnly().getAccessor(), is((MethodDescription.InDefinedShape) new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
+        assertThat(recordComponents.getOnly().getAccessor(), is((MethodDescription) new MethodDescription.ForLoadedMethod(sampleRecord.getMethod(FOO))));
         assertThat(recordComponents.getOnly().getDeclaringType(), is((TypeDefinition) TypeDescription.ForLoadedType.of(sampleRecord)));
         assertThat(recordComponents.getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(recordComponents.getOnly().getDeclaredAnnotations().getOnly().getAnnotationType().represents(SampleAnnotation.class), is(true));

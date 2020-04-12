@@ -17,6 +17,7 @@ package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -24,11 +25,9 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.objectweb.asm.signature.SignatureWriter;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;
@@ -39,7 +38,10 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 /**
  * Represents a component of a Java record.
  */
-public interface RecordComponentDescription extends DeclaredByType, NamedElement, AnnotationSource {
+public interface RecordComponentDescription extends DeclaredByType,
+        NamedElement.WithDescriptor,
+        AnnotationSource,
+        ByteCodeElement.TypeDependant<RecordComponentDescription.InDefinedShape, RecordComponentDescription.Token> {
 
     /**
      * Returns the type of the record.
@@ -53,7 +55,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
      *
      * @return The accessor for this record component.
      */
-    MethodDescription.InDefinedShape getAccessor();
+    MethodDescription getAccessor();
 
     /**
      * Resolves this record component to a token where all types are detached.
@@ -62,6 +64,46 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
      * @return An appropriate token.
      */
     Token asToken(ElementMatcher<? super TypeDescription> matcher);
+
+    /**
+     * A description of a record component in generic shape.
+     */
+    interface InGenericShape extends RecordComponentDescription {
+
+        /**
+         * {@inheritDoc}
+         */
+        MethodDescription.InGenericShape getAccessor();
+    }
+
+    /**
+     * A description of a record component in its defined shape.
+     */
+    interface InDefinedShape extends RecordComponentDescription {
+
+        /**
+         * {@inheritDoc}
+         */
+        MethodDescription.InDefinedShape getAccessor();
+
+        /**
+         * {@inheritDoc}
+         */
+        TypeDescription getDeclaringType();
+
+        /**
+         * An abstract base implementation of a record component description in its defined shape.
+         */
+        abstract class AbstractBase extends RecordComponentDescription.AbstractBase implements InDefinedShape {
+
+            /**
+             * {@inheritDoc}
+             */
+            public InDefinedShape asDefined() {
+                return this;
+            }
+        }
+    }
 
     /**
      * An abstract base implementation for a record component description.
@@ -82,6 +124,27 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
             return new Token(getActualName(),
                     getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getDescriptor() {
+            return getType().asErasure().getDescriptor();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public String getGenericSignature() {
+            TypeDescription.Generic recordComponentType = getType();
+            try {
+                return recordComponentType.getSort().isNonGeneric()
+                        ? NON_GENERIC_SIGNATURE
+                        : recordComponentType.accept(new TypeDescription.Generic.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
+            } catch (GenericSignatureFormatError ignored) {
+                return NON_GENERIC_SIGNATURE;
+            }
         }
 
         @Override
@@ -109,7 +172,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
     /**
      * Represents a loaded record component.
      */
-    class ForLoadedRecordComponent extends AbstractBase {
+    class ForLoadedRecordComponent extends InDefinedShape.AbstractBase {
 
         /**
          * The dispatcher to use.
@@ -158,7 +221,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
         /**
          * {@inheritDoc}
          */
-        public TypeDefinition getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return TypeDescription.ForLoadedType.of(DISPATCHER.getDeclaringType(recordComponent));
         }
 
@@ -167,6 +230,11 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
          */
         public String getActualName() {
             return DISPATCHER.getName(recordComponent);
+        }
+
+        @Override
+        public String getGenericSignature() {
+            return DISPATCHER.getGenericSignature(recordComponent);
         }
 
         /**
@@ -246,6 +314,14 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
             Type getGenericType(Object recordComponent);
 
             /**
+             * Returns the record component type's generic signature.
+             *
+             * @param recordComponent The record component to resolve the generic signature for.
+             * @return The record component type's generic signature or {@code null} if no signature is defined.
+             */
+            String getGenericSignature(Object recordComponent);
+
+            /**
              * Resolves a record component's annotated type.
              *
              * @param recordComponent The record component to resolve the annotated type for.
@@ -277,6 +353,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                                 recordComponent.getMethod("getAccessor"),
                                 recordComponent.getMethod("getType"),
                                 recordComponent.getMethod("getGenericType"),
+                                recordComponent.getMethod("getGenericSignature"),
                                 recordComponent.getMethod("getAnnotatedType"));
                     } catch (ClassNotFoundException ignored) {
                         return ForLegacyVm.INSTANCE;
@@ -356,6 +433,13 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 /**
                  * {@inheritDoc}
                  */
+                public String getGenericSignature(Object recordComponent) {
+                    throw new IllegalStateException("The current VM does not support record components");
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotatedElement getAnnotatedType(Object recordComponent) {
                     throw new IllegalStateException("The current VM does not support record components");
                 }
@@ -408,6 +492,11 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 private final Method getGenericType;
 
                 /**
+                 * The {@code java.lang.reflect.RecordComponent#getGenericSignature()} method.
+                 */
+                private final Method getGenericSignature;
+
+                /**
                  * The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
                  */
                 private final Method getAnnotatedType;
@@ -423,6 +512,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                  * @param getAccessor         The {@code java.lang.reflect.RecordComponent#getAccessor()} method.
                  * @param getType             The {@code java.lang.reflect.RecordComponent#getType()} method.
                  * @param getGenericType      The {@code java.lang.reflect.RecordComponent#getGenericType()} method.
+                 * @param getGenericSignature The {@code java.lang.reflect.RecordComponent#getGenericSignature()} method.
                  * @param getAnnotatedType    The {@code java.lang.reflect.RecordComponent#getAnnotatedType()} method.
                  */
                 protected ForJava14CapableVm(Class<?> recordComponent,
@@ -433,6 +523,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                                              Method getAccessor,
                                              Method getType,
                                              Method getGenericType,
+                                             Method getGenericSignature,
                                              Method getAnnotatedType) {
                     this.recordComponent = recordComponent;
                     this.getRecordComponents = getRecordComponents;
@@ -442,6 +533,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                     this.getAccessor = getAccessor;
                     this.getType = getType;
                     this.getGenericType = getGenericType;
+                    this.getGenericSignature = getGenericSignature;
                     this.getAnnotatedType = getAnnotatedType;
                 }
 
@@ -546,6 +638,19 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
                 /**
                  * {@inheritDoc}
                  */
+                public String getGenericSignature(Object recordComponent) {
+                    try {
+                        return (String) getGenericSignature.invoke(recordComponent);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflection.RecordComponent#getGenericSignature", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflection.RecordComponent#getGenericSignature", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
                 public AnnotatedElement getAnnotatedType(Object recordComponent) {
                     try {
                         return (AnnotatedElement) getAnnotatedType.invoke(recordComponent);
@@ -562,7 +667,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
     /**
      * A latent record component description.
      */
-    class Latent extends AbstractBase {
+    class Latent extends InDefinedShape.AbstractBase {
 
         /**
          * The record component's declaring type.
@@ -622,7 +727,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
         /**
          * {@inheritDoc}
          */
-        public TypeDefinition getDeclaringType() {
+        public TypeDescription getDeclaringType() {
             return declaringType;
         }
 
@@ -644,7 +749,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
     /**
      * A token representing a record component's properties detached from a type.
      */
-    class Token {
+    class Token implements ByteCodeElement.Token<Token> {
 
         /**
          * The token's name.
@@ -712,10 +817,7 @@ public interface RecordComponentDescription extends DeclaredByType, NamedElement
         }
 
         /**
-         * Transforms the types represented by this token by applying the given visitor to them.
-         *
-         * @param visitor The visitor to transform all types that are represented by this token.
-         * @return This token with all of its represented types transformed by the supplied visitor.
+         * {@inheritDoc}
          */
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             return new Token(name, type.accept(visitor), annotations);

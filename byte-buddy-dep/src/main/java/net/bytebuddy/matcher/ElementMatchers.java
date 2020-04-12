@@ -758,13 +758,13 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement}'s descriptor against a given value.
+     * Matches a {@link NamedElement.WithDescriptor}'s descriptor against a given value.
      *
      * @param descriptor The expected descriptor.
      * @param <T>        The type of the matched object.
      * @return A matcher for the given {@code descriptor}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> hasDescriptor(String descriptor) {
+    public static <T extends NamedElement.WithDescriptor> ElementMatcher.Junction<T> hasDescriptor(String descriptor) {
         return new DescriptorMatcher<T>(new StringMatcher(descriptor, StringMatcher.Mode.EQUALS_FULLY));
     }
 

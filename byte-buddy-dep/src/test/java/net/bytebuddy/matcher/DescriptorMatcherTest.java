@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.NamedElement;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -17,7 +18,7 @@ public class DescriptorMatcherTest extends AbstractElementMatcherTest<Descriptor
     private ElementMatcher<String> descriptorMatcher;
 
     @Mock
-    private ByteCodeElement byteCodeElement;
+    private NamedElement.WithDescriptor namedElement;
 
     @SuppressWarnings("unchecked")
     public DescriptorMatcherTest() {
@@ -26,13 +27,13 @@ public class DescriptorMatcherTest extends AbstractElementMatcherTest<Descriptor
 
     @Before
     public void setUp() throws Exception {
-        when(byteCodeElement.getDescriptor()).thenReturn(FOO);
+        when(namedElement.getDescriptor()).thenReturn(FOO);
     }
 
     @Test
     public void testMatch() throws Exception {
         when(descriptorMatcher.matches(FOO)).thenReturn(true);
-        assertThat(new DescriptorMatcher<ByteCodeElement>(descriptorMatcher).matches(byteCodeElement), is(true));
+        assertThat(new DescriptorMatcher<NamedElement.WithDescriptor>(descriptorMatcher).matches(namedElement), is(true));
         verify(descriptorMatcher).matches(FOO);
         verifyNoMoreInteractions(descriptorMatcher);
     }
@@ -40,7 +41,7 @@ public class DescriptorMatcherTest extends AbstractElementMatcherTest<Descriptor
     @Test
     public void testNoMatch() throws Exception {
         when(descriptorMatcher.matches(FOO)).thenReturn(false);
-        assertThat(new DescriptorMatcher<ByteCodeElement>(descriptorMatcher).matches(byteCodeElement), is(false));
+        assertThat(new DescriptorMatcher<NamedElement.WithDescriptor>(descriptorMatcher).matches(namedElement), is(false));
         verify(descriptorMatcher).matches(FOO);
         verifyNoMoreInteractions(descriptorMatcher);
     }

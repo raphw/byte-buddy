@@ -7468,7 +7468,7 @@ public interface TypePool {
             /**
              * A lazy description of a record component.
              */
-            private class LazyRecordComponentDescription extends RecordComponentDescription.AbstractBase {
+            private class LazyRecordComponentDescription extends RecordComponentDescription.InDefinedShape.AbstractBase {
 
                 /**
                  * The record component's name.
@@ -7483,7 +7483,6 @@ public interface TypePool {
                 /**
                  * The record component's generic signature or {@code null} if the record component is non-generic.
                  */
-                @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "Only unused for now.")
                 private final String genericSignature;
 
                 /**
@@ -7535,7 +7534,7 @@ public interface TypePool {
                 /**
                  * {@inheritDoc}
                  */
-                public TypeDefinition getDeclaringType() {
+                public TypeDescription getDeclaringType() {
                     return LazyTypeDescription.this;
                 }
 
@@ -7551,6 +7550,11 @@ public interface TypePool {
                  */
                 public AnnotationList getDeclaredAnnotations() {
                     return LazyAnnotationDescription.asList(typePool, annotationTokens);
+                }
+
+                @Override
+                public String getGenericSignature() {
+                    return genericSignature;
                 }
             }
         }

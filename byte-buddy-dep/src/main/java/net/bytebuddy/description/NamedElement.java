@@ -83,4 +83,30 @@ public interface NamedElement {
          */
         String toGenericString();
     }
+
+    /**
+     * A named element with a class file descriptor and a generic signature.
+     */
+    interface WithDescriptor extends NamedElement {
+
+        /**
+         * The generic type signature of a non-generic byte code element.
+         */
+        String NON_GENERIC_SIGNATURE = null;
+
+        /**
+         * Returns the descriptor of this byte code element.
+         *
+         * @return The descriptor of this byte code element.
+         */
+        String getDescriptor();
+
+        /**
+         * Returns the generic signature of this byte code element. If this element does not reference generic types
+         * or references malformed generic types, {@code null} is returned as a signature.
+         *
+         * @return The generic signature or {@code null} if this element is not generic.
+         */
+        String getGenericSignature();
+    }
 }

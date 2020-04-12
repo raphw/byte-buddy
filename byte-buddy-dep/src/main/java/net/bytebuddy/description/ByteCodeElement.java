@@ -27,27 +27,11 @@ import java.util.List;
 /**
  * Implementations describe an element represented in byte code, i.e. a type, a field or a method or a constructor.
  */
-public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierReviewable, DeclaredByType, AnnotationSource {
-
-    /**
-     * The generic type signature of a non-generic byte code element.
-     */
-    String NON_GENERIC_SIGNATURE = null;
-
-    /**
-     * Returns the descriptor of this byte code element.
-     *
-     * @return The descriptor of this byte code element.
-     */
-    String getDescriptor();
-
-    /**
-     * Returns the generic signature of this byte code element. If this element does not reference generic types
-     * or references malformed generic types, {@code null} is returned as a signature.
-     *
-     * @return The generic signature or {@code null} if this element is not generic.
-     */
-    String getGenericSignature();
+public interface ByteCodeElement extends NamedElement.WithRuntimeName,
+        NamedElement.WithDescriptor,
+        ModifierReviewable,
+        DeclaredByType,
+        AnnotationSource {
 
     /**
      * <p>

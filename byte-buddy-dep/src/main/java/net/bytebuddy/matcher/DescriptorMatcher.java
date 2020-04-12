@@ -16,7 +16,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.NamedElement;
 
 /**
  * An element matcher that matches a Java descriptor.
@@ -24,7 +24,7 @@ import net.bytebuddy.description.ByteCodeElement;
  * @param <T> The type of the matched entity.
  */
 @HashCodeAndEqualsPlugin.Enhance
-public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
+public class DescriptorMatcher<T extends NamedElement.WithDescriptor> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * A matcher to apply to the descriptor.
