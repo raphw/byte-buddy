@@ -3011,6 +3011,16 @@ public interface DynamicType {
             RecordComponentDefinition<S> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations);
 
             /**
+             * Applies the supplied record component attribute appender factory onto the previously defined record component.
+             *
+             * @param recordComponentAttributeAppenderFactory The record component attribute appender factory that should be applied on the
+             *                                                previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the supplied record component attribute appender factory
+             * applied to the previously defined record component.
+             */
+            RecordComponentDefinition<S> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory);
+
+            /**
              * An abstract base implementation of a record definition.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
@@ -3884,7 +3894,6 @@ public interface DynamicType {
                 }
 
 
-
                 /**
                  * {@inheritDoc}
                  */
@@ -3931,7 +3940,8 @@ public interface DynamicType {
                  * {@inheritDoc}
                  */
                 public RecordComponentDefinition<U> defineRecordComponent(String name, TypeDefinition type) {
-                    return new RecordComponentDefinitionAdapter(new RecordComponentDescription.Token(name, type.asGenericType()));
+                    return new RecordComponentDefinitionAdapter(RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE,
+                            new RecordComponentDescription.Token(name, type.asGenericType()));
                 }
 
                 /**
@@ -5280,6 +5290,11 @@ public interface DynamicType {
                 protected class RecordComponentDefinitionAdapter extends RecordComponentDefinition.AbstractBase<U> {
 
                     /**
+                     * The record component attribute appender factory to apply.
+                     */
+                    private final RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory;
+
+                    /**
                      * A token representing the defined record component.
                      */
                     private final RecordComponentDescription.Token token;
@@ -5287,9 +5302,11 @@ public interface DynamicType {
                     /**
                      * Creates a new record component definition adapter.
                      *
-                     * @param token A token representing the defined record component.
+                     * @param recordComponentAttributeAppenderFactory The record component attribute appender factory to apply.
+                     * @param token                                   A token representing the defined record component.
                      */
-                    protected RecordComponentDefinitionAdapter(RecordComponentDescription.Token token) {
+                    protected RecordComponentDefinitionAdapter(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory, RecordComponentDescription.Token token) {
+                        this.recordComponentAttributeAppenderFactory = recordComponentAttributeAppenderFactory;
                         this.token = token;
                     }
 
@@ -5297,9 +5314,17 @@ public interface DynamicType {
                      * {@inheritDoc}
                      */
                     public RecordComponentDefinition<U> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations) {
-                        return new RecordComponentDefinitionAdapter(new RecordComponentDescription.Token(token.getName(),
+                        return new RecordComponentDefinitionAdapter(recordComponentAttributeAppenderFactory, new RecordComponentDescription.Token(token.getName(),
                                 token.getType(),
                                 CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public RecordComponentDefinition<U> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory) {
+                        return new RecordComponentDefinitionAdapter(new RecordComponentAttributeAppender.Factory.Compound(this.recordComponentAttributeAppenderFactory,
+                                recordComponentAttributeAppenderFactory), token);
                     }
 
                     @Override

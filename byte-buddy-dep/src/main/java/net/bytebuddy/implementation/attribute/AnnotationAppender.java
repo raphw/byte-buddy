@@ -117,6 +117,41 @@ public interface AnnotationAppender {
         }
 
         /**
+         * Target for an annotation that is written to a Java field.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class OnField implements Target {
+
+            /**
+             * The field visitor to write the annotation to.
+             */
+            private final FieldVisitor fieldVisitor;
+
+            /**
+             * Creates a new wrapper for a Java field.
+             *
+             * @param fieldVisitor The ASM field visitor to which the annotations are appended to.
+             */
+            public OnField(FieldVisitor fieldVisitor) {
+                this.fieldVisitor = fieldVisitor;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
+                return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
+                return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
+            }
+        }
+
+        /**
          * Target for an annotation that is written to a Java method or constructor.
          */
         @HashCodeAndEqualsPlugin.Enhance
@@ -194,37 +229,37 @@ public interface AnnotationAppender {
         }
 
         /**
-         * Target for an annotation that is written to a Java field.
+         * Target for an annotation that is written to a Java record component.
          */
         @HashCodeAndEqualsPlugin.Enhance
-        class OnField implements Target {
+        class OnRecordComponent implements Target {
 
             /**
-             * The field visitor to write the annotation to.
+             * The record component visitor to write the annotation to.
              */
-            private final FieldVisitor fieldVisitor;
+            private final RecordComponentVisitor recordComponentVisitor;
 
             /**
-             * Creates a new wrapper for a Java field.
+             * Creates a new wrapper for a Java record component.
              *
-             * @param fieldVisitor The ASM field visitor to which the annotations are appended to.
+             * @param recordComponentVisitor The record component visitor to write the annotation to.
              */
-            public OnField(FieldVisitor fieldVisitor) {
-                this.fieldVisitor = fieldVisitor;
+            public OnRecordComponent(RecordComponentVisitor recordComponentVisitor) {
+                this.recordComponentVisitor = recordComponentVisitor;
             }
 
             /**
              * {@inheritDoc}
              */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible) {
-                return fieldVisitor.visitAnnotation(annotationTypeDescriptor, visible);
+                return recordComponentVisitor.visitAnnotation(annotationTypeDescriptor, visible);
             }
 
             /**
              * {@inheritDoc}
              */
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
-                return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
+                return recordComponentVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
         }
     }

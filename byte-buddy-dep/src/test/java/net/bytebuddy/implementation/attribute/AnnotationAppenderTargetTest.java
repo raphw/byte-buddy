@@ -5,10 +5,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.TypePath;
+import org.objectweb.asm.*;
 
 import static org.mockito.Mockito.*;
 
@@ -24,26 +21,29 @@ public class AnnotationAppenderTargetTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private MethodVisitor methodVisitor;
+    private ClassVisitor classVisitor;
 
     @Mock
     private FieldVisitor fieldVisitor;
 
     @Mock
-    private ClassVisitor classVisitor;
+    private MethodVisitor methodVisitor;
 
-    @Test
-    public void testOnField() throws Exception {
-        new AnnotationAppender.Target.OnField(fieldVisitor).visit(FOO, true);
-        verify(fieldVisitor).visitAnnotation(FOO, true);
-        verifyNoMoreInteractions(fieldVisitor);
-    }
+    @Mock
+    private RecordComponentVisitor recordComponentVisitor;
 
     @Test
     public void testOnType() throws Exception {
         new AnnotationAppender.Target.OnType(classVisitor).visit(FOO, true);
         verify(classVisitor).visitAnnotation(FOO, true);
         verifyNoMoreInteractions(classVisitor);
+    }
+
+    @Test
+    public void testOnField() throws Exception {
+        new AnnotationAppender.Target.OnField(fieldVisitor).visit(FOO, true);
+        verify(fieldVisitor).visitAnnotation(FOO, true);
+        verifyNoMoreInteractions(fieldVisitor);
     }
 
     @Test
@@ -61,10 +61,10 @@ public class AnnotationAppenderTargetTest {
     }
 
     @Test
-    public void testTypeAnnotationOnField() throws Exception {
-        new AnnotationAppender.Target.OnField(fieldVisitor).visit(FOO, true, BAR, TYPE_PATH);
-        verify(fieldVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
-        verifyNoMoreInteractions(fieldVisitor);
+    public void testOnRecordComponent() throws Exception {
+        new AnnotationAppender.Target.OnRecordComponent(recordComponentVisitor).visit(FOO, true);
+        verify(recordComponentVisitor).visitAnnotation(FOO, true);
+        verifyNoMoreInteractions(recordComponentVisitor);
     }
 
     @Test
@@ -72,6 +72,13 @@ public class AnnotationAppenderTargetTest {
         new AnnotationAppender.Target.OnType(classVisitor).visit(FOO, true, BAR, TYPE_PATH);
         verify(classVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
         verifyNoMoreInteractions(classVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnField() throws Exception {
+        new AnnotationAppender.Target.OnField(fieldVisitor).visit(FOO, true, BAR, TYPE_PATH);
+        verify(fieldVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
+        verifyNoMoreInteractions(fieldVisitor);
     }
 
     @Test
@@ -86,5 +93,12 @@ public class AnnotationAppenderTargetTest {
         new AnnotationAppender.Target.OnMethodParameter(methodVisitor, 0).visit(FOO, true, BAR, TYPE_PATH);
         verify(methodVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
         verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnRecordComponent() throws Exception {
+        new AnnotationAppender.Target.OnRecordComponent(recordComponentVisitor).visit(FOO, true, BAR, TYPE_PATH);
+        verify(recordComponentVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
+        verifyNoMoreInteractions(recordComponentVisitor);
     }
 }
