@@ -986,8 +986,22 @@ public interface DynamicType {
          */
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
+        /**
+         * Defines a new record component.
+         *
+         * @param name The record component's name.
+         * @param type The record component's type.
+         * @return A new builder that is equal to this builder but also defines the supplied record component.
+         */
         RecordComponentDefinition<T> defineRecordComponent(String name, Type type);
 
+        /**
+         * Defines a new record component.
+         *
+         * @param name The record component's name.
+         * @param type The record component's type.
+         * @return A new builder that is equal to this builder but also defines the supplied record component.
+         */
         RecordComponentDefinition<T> defineRecordComponent(String name, TypeDefinition type);
 
         /**
@@ -2957,16 +2971,50 @@ public interface DynamicType {
             }
         }
 
+        /**
+         * A builder for a record component definition.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         interface RecordComponentDefinition<S> extends Builder<S> {
 
+            /**
+             * Annotates the record component with the supplied annotations.
+             *
+             * @param annotation The annotations to declare.
+             * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
+             */
             RecordComponentDefinition<S> annotateRecordComponent(Annotation... annotation);
 
+            /**
+             * Annotates the record component with the supplied annotations.
+             *
+             * @param annotations The annotations to declare.
+             * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
+             */
             RecordComponentDefinition<S> annotateRecordComponent(List<? extends Annotation> annotations);
 
+            /**
+             * Annotates the record component with the supplied annotations.
+             *
+             * @param annotation The annotations to declare.
+             * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
+             */
             RecordComponentDefinition<S> annotateRecordComponent(AnnotationDescription... annotation);
 
+            /**
+             * Annotates the record component with the supplied annotations.
+             *
+             * @param annotations The annotations to declare.
+             * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
+             */
             RecordComponentDefinition<S> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations);
 
+            /**
+             * An abstract base implementation of a record definition.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements RecordComponentDefinition<U> {
 
                 /**
