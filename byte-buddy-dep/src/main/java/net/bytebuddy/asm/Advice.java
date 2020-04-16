@@ -10899,8 +10899,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Binds the supplied annotation to a type constant of the supplied value. Constants can be strings, method handles, method types
-         * and any primitive or the value {@code null}.
+         * Binds the supplied annotation to a type constant of the supplied value. Constants can be strings and any primitive or the value {@code null}.
          *
          * @param type  The type of the annotation being bound.
          * @param value The value to bind to the annotation.
