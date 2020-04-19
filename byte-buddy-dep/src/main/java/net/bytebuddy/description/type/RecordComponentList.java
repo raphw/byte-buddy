@@ -41,6 +41,13 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
     ByteCodeElement.Token.TokenList<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
+     * Returns a list of all types of the records of this list.
+     *
+     * @return A list of all types of the records of this list.
+     */
+    TypeList.Generic asTypeList();
+
+    /**
      * Returns this list of these record component descriptions resolved to their defined shape.
      *
      * @return A list of record components in their defined shape.
@@ -63,6 +70,17 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
                 tokens.add(recordComponentDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<RecordComponentDescription.Token>(tokens);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList.Generic asTypeList() {
+            List<TypeDescription.Generic> typeDescriptions = new ArrayList<TypeDescription.Generic>(size());
+            for (RecordComponentDescription recordComponentDescription : this) {
+                typeDescriptions.add(recordComponentDescription.getType());
+            }
+            return new TypeList.Generic.Explicit(typeDescriptions);
         }
 
         /**
@@ -287,6 +305,13 @@ public interface RecordComponentList<T extends RecordComponentDescription> exten
          */
         public ByteCodeElement.Token.TokenList<RecordComponentDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<RecordComponentDescription.Token>();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList.Generic asTypeList() {
+            return new TypeList.Generic.Empty();
         }
     }
 }

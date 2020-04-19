@@ -5,9 +5,12 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.utility.DebuggingWrapper;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -17,6 +20,7 @@ import java.net.URLClassLoader;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static net.bytebuddy.matcher.ElementMatchers.returns;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -64,6 +68,35 @@ public class ByteBuddyTest {
         assertThat(type.isEnum(), is(false));
         assertThat(type.isInterface(), is(true));
         assertThat(type.isAnnotation(), is(true));
+    }
+
+    @Test
+    @Ignore("Requires preview feature enabling")
+    public void testRecordWithoutMember() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .with(ClassFileVersion.JAVA_V14.asPreviewVersion())
+                .makeRecord()
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat((Boolean) Class.class.getMethod("isRecord").invoke(type), is(true));
+    }
+
+    @Test
+    @Ignore("Requires preview feature enabling")
+    public void testRecordWithMember() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .with(ClassFileVersion.JAVA_V14.asPreviewVersion())
+                .makeRecord()
+                .defineRecordComponent("foo", String.class)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat((Boolean) Class.class.getMethod("isRecord").invoke(type), is(true));
+        Object record = type.getConstructor(String.class).newInstance("bar");
+        assertThat(type.getMethod("foo").invoke(record), is((Object) "bar"));
     }
 
     @Test

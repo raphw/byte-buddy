@@ -1337,7 +1337,9 @@ public interface InstrumentedType extends TypeDescription {
             return new RecordComponentList.ForTokens(this, recordComponentTokens);
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isRecord() {
             return record && getSuperClass().asErasure().equals(JavaType.RECORD.getTypeStub());
         }

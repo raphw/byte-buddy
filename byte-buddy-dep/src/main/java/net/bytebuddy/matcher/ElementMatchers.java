@@ -33,6 +33,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.JavaModule;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -859,7 +860,6 @@ public final class ElementMatchers {
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(TypeDescription type) {
         return new VisibilityMatcher<T>(type);
     }
-
 
     /**
      * Matches a {@link ByteCodeElement} that is accessible to a given {@link java.lang.Class}.
@@ -2048,6 +2048,16 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a type if it is a record type.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher that determines if a type is a record type.
+     */
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> isRecord() {
+        return new RecordMatcher<T>();
+    }
+
+    /**
      * Matches a field's generic type against the provided matcher.
      *
      * @param fieldType The field type to match.
@@ -2164,6 +2174,17 @@ public final class ElementMatchers {
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(ElementMatcher<? super TypeDescription> matcher) {
         return new AnnotationTypeMatcher<T>(matcher);
+    }
+
+    /**
+     * Matches if an annotation can target a given element type.
+     *
+     * @param elementType The element type we target.
+     * @param <T>         The type of the matched object.
+     * @return A matcher that matches annotations that target an element type.
+     */
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> targetsElement(ElementType elementType) {
+        return new AnnotationTargetMatcher<T>(elementType);
     }
 
     /**

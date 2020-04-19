@@ -16,21 +16,15 @@
 package net.bytebuddy;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
-import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TargetType;
-import net.bytebuddy.dynamic.VisibilityBridgeStrategy;
-import net.bytebuddy.dynamic.scaffold.ClassWriterStrategy;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.description.type.*;
+import net.bytebuddy.dynamic.*;
+import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.inline.DecoratingDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
@@ -42,6 +36,7 @@ import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Duplication;
@@ -55,12 +50,15 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -580,6 +578,40 @@ public class ByteBuddy {
                 classWriterStrategy,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
+    }
+
+    /**
+     * Creates a new Java record. This builder automatically defines fields for record members, standard accessors and a record constructor for any
+     * defined record component.
+     *
+     * @return A dynamic type builder that creates a record.
+     */
+    public DynamicType.Builder<?> makeRecord() {
+        TypeDescription.Generic record = InstrumentedType.Default.of(JavaType.RECORD.getTypeStub().getName(), TypeDescription.Generic.OBJECT, Visibility.PUBLIC)
+                .withMethod(new MethodDescription.Token(Opcodes.ACC_PROTECTED))
+                .withMethod(new MethodDescription.Token("hashCode",
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                        TypeDescription.ForLoadedType.of(int.class).asGenericType()))
+                .withMethod(new MethodDescription.Token("equals",
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                        TypeDescription.ForLoadedType.of(boolean.class).asGenericType(),
+                        Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .withMethod(new MethodDescription.Token("toString",
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                        TypeDescription.ForLoadedType.of(String.class).asGenericType()))
+                .asGenericType();
+        return new SubclassDynamicTypeBuilder<Object>(instrumentedTypeFactory.subclass(namingStrategy.subclass(record), Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, record).withRecord(true),
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classWriterStrategy,
+                ignoredMethods,
+                RecordConstructorStrategy.INSTANCE);
     }
 
     /**
@@ -1198,17 +1230,17 @@ public class ByteBuddy {
      */
     public ByteBuddy with(VisibilityBridgeStrategy visibilityBridgeStrategy) {
         return new ByteBuddy(classFileVersion,
-            namingStrategy,
-            auxiliaryTypeNamingStrategy,
-            annotationValueFilterFactory,
-            annotationRetention,
-            implementationContextFactory,
-            methodGraphCompiler,
-            instrumentedTypeFactory,
-            typeValidation,
-            visibilityBridgeStrategy,
-            classWriterStrategy,
-            ignoredMethods);
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                visibilityBridgeStrategy,
+                classWriterStrategy,
+                ignoredMethods);
     }
 
     /**
@@ -1426,6 +1458,127 @@ public class ByteBuddy {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).write()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+        }
+    }
+
+    /**
+     * A constructor strategy for implementing a Java record.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    protected enum RecordConstructorStrategy implements ConstructorStrategy, Implementation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * {@inheritDoc}
+         */
+        public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+            List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(instrumentedType.getRecordComponents().size());
+            for (RecordComponentDescription.InDefinedShape recordComponent : instrumentedType.getRecordComponents()) {
+                tokens.add(new ParameterDescription.Token(recordComponent.getType(),
+                        recordComponent.getDeclaredAnnotations().filter(targetsElement(ElementType.CONSTRUCTOR))));
+            }
+            return Collections.singletonList(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                    Opcodes.ACC_PUBLIC,
+                    Collections.<TypeVariableToken>emptyList(),
+                    TypeDescription.Generic.VOID,
+                    tokens,
+                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    AnnotationValue.UNDEFINED,
+                    TypeDescription.Generic.UNDEFINED));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public MethodRegistry inject(TypeDescription instrumentedType, MethodRegistry methodRegistry) {
+            return methodRegistry.prepend(new LatentMatcher.Resolved<MethodDescription>(isConstructor().and(takesGenericArguments(instrumentedType.getRecordComponents().asTypeList()))),
+                    new MethodRegistry.Handler.ForImplementation(this),
+                    MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
+                    Transformer.ForMethod.NoOp.<MethodDescription>make());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new Appender(implementationTarget.getInstrumentedType());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            for (RecordComponentDescription.InDefinedShape recordComponent : instrumentedType.getRecordComponents()) {
+                instrumentedType = instrumentedType
+                        .withField(new FieldDescription.Token(recordComponent.getActualName(),
+                                Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,
+                                recordComponent.getType(),
+                                recordComponent.getDeclaredAnnotations().filter(targetsElement(ElementType.FIELD))))
+                        .withMethod(new MethodDescription.Token(recordComponent.getActualName(),
+                                Opcodes.ACC_PUBLIC,
+                                Collections.<TypeVariableToken>emptyList(),
+                                recordComponent.getType(),
+                                Collections.<ParameterDescription.Token>emptyList(),
+                                Collections.<TypeDescription.Generic>emptyList(),
+                                recordComponent.getDeclaredAnnotations().filter(targetsElement(ElementType.METHOD)),
+                                AnnotationValue.UNDEFINED,
+                                TypeDescription.Generic.UNDEFINED));
+            }
+            return instrumentedType;
+        }
+
+        /**
+         * A byte code appender for accessors and the record constructor.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        protected static class Appender implements ByteCodeAppender {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new byte code appender for accessors and the record constructor.
+             *
+             * @param instrumentedType The instrumented type.
+             */
+            protected Appender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                if (instrumentedMethod.isMethod()) {
+                    return new Simple(
+                            MethodVariableAccess.loadThis(),
+                            FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(instrumentedMethod.getName())).getOnly()).read(),
+                            MethodReturn.of(instrumentedMethod.getReturnType())
+                    ).apply(methodVisitor, implementationContext, instrumentedMethod);
+                } else {
+                    List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(instrumentedType.getRecordComponents().size() * 3 + 2);
+                    stackManipulations.add(MethodVariableAccess.loadThis());
+                    stackManipulations.add(MethodInvocation.invoke(new MethodDescription.Latent(JavaType.RECORD.getTypeStub(), new MethodDescription.Token(Opcodes.ACC_PUBLIC))));
+                    int offset = 1;
+                    for (RecordComponentDescription.InDefinedShape recordComponent : instrumentedType.getRecordComponents()) {
+                        stackManipulations.add(MethodVariableAccess.loadThis());
+                        stackManipulations.add(MethodVariableAccess.of(recordComponent.getType()).loadFrom(offset));
+                        stackManipulations.add(FieldAccess.forField(instrumentedType.getDeclaredFields()
+                                .filter(named(recordComponent.getActualName()))
+                                .getOnly()).write());
+                        offset += recordComponent.getType().getStackSize().getSize();
+                    }
+                    stackManipulations.add(MethodReturn.VOID);
+                    return new Simple(stackManipulations).apply(methodVisitor, implementationContext, instrumentedMethod);
+                }
             }
         }
     }

@@ -156,7 +156,12 @@ public enum JavaType {
     /**
      * The Java 14 {@code java.lang.Record} type.
      */
-    RECORD("java.lang.Record", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class);
+    RECORD("java.lang.Record", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
+
+    /**
+     * The Java 14 {@code java.lang.runtime.ObjectMethods} type.
+     */
+    OBJECT_METHODS("java.lang.runtime.ObjectMethods", Opcodes.ACC_PUBLIC, Object.class);
 
     /**
      * The type description to represent this type which is either a loaded type or a stub.
