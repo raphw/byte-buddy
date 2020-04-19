@@ -631,12 +631,7 @@ public interface JavaConstant {
          * {@inheritDoc}
          */
         public Object asConstantPoolValue() {
-            StringBuilder stringBuilder = new StringBuilder().append('(');
-            for (TypeDescription parameterType : getParameterTypes()) {
-                stringBuilder.append(parameterType.getDescriptor());
-            }
-            String descriptor = stringBuilder.append(')').append(getReturnType().getDescriptor()).toString();
-            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor, getOwnerType().isInterface());
+            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), getDescriptor(), getOwnerType().isInterface());
         }
 
         /**
@@ -697,11 +692,15 @@ public interface JavaConstant {
          * @return The method descriptor of this method handle representation.
          */
         public String getDescriptor() {
-            StringBuilder stringBuilder = new StringBuilder().append('(');
-            for (TypeDescription parameterType : parameterTypes) {
-                stringBuilder.append(parameterType.getDescriptor());
+            if (handleType.isField()) {
+                return returnType.getDescriptor();
+            } else {
+                StringBuilder stringBuilder = new StringBuilder().append('(');
+                for (TypeDescription parameterType : parameterTypes) {
+                    stringBuilder.append(parameterType.getDescriptor());
+                }
+                return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
             }
-            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
         }
 
         @Override
@@ -1232,47 +1231,47 @@ public interface JavaConstant {
             /**
              * A handle representing an invokevirtual invocation.
              */
-            INVOKE_VIRTUAL(Opcodes.H_INVOKEVIRTUAL),
+            INVOKE_VIRTUAL(Opcodes.H_INVOKEVIRTUAL, false),
 
             /**
              * A handle representing an invokestatic invocation.
              */
-            INVOKE_STATIC(Opcodes.H_INVOKESTATIC),
+            INVOKE_STATIC(Opcodes.H_INVOKESTATIC, false),
 
             /**
              * A handle representing an invokespecial invocation for a non-constructor.
              */
-            INVOKE_SPECIAL(Opcodes.H_INVOKESPECIAL),
+            INVOKE_SPECIAL(Opcodes.H_INVOKESPECIAL, false),
 
             /**
              * A handle representing an invokeinterface invocation.
              */
-            INVOKE_INTERFACE(Opcodes.H_INVOKEINTERFACE),
+            INVOKE_INTERFACE(Opcodes.H_INVOKEINTERFACE, false),
 
             /**
              * A handle representing an invokespecial invocation for a constructor.
              */
-            INVOKE_SPECIAL_CONSTRUCTOR(Opcodes.H_NEWINVOKESPECIAL),
+            INVOKE_SPECIAL_CONSTRUCTOR(Opcodes.H_NEWINVOKESPECIAL, false),
 
             /**
              * A handle representing a write of a non-static field invocation.
              */
-            PUT_FIELD(Opcodes.H_PUTFIELD),
+            PUT_FIELD(Opcodes.H_PUTFIELD, true),
 
             /**
              * A handle representing a read of a non-static field invocation.
              */
-            GET_FIELD(Opcodes.H_GETFIELD),
+            GET_FIELD(Opcodes.H_GETFIELD, true),
 
             /**
              * A handle representing a write of a static field invocation.
              */
-            PUT_STATIC_FIELD(Opcodes.H_PUTSTATIC),
+            PUT_STATIC_FIELD(Opcodes.H_PUTSTATIC, true),
 
             /**
              * A handle representing a read of a static field invocation.
              */
-            GET_STATIC_FIELD(Opcodes.H_GETSTATIC);
+            GET_STATIC_FIELD(Opcodes.H_GETSTATIC, true);
 
             /**
              * The represented identifier.
@@ -1280,12 +1279,19 @@ public interface JavaConstant {
             private final int identifier;
 
             /**
+             * {@code} true if this handle type represents a field handle.
+             */
+            private final boolean field;
+
+            /**
              * Creates a new handle type.
              *
              * @param identifier The represented identifier.
+             * @param field      {@code} true if this handle type represents a field handle.
              */
-            HandleType(int identifier) {
+            HandleType(int identifier, boolean field) {
                 this.identifier = identifier;
+                this.field = field;
             }
 
             /**
@@ -1369,6 +1375,15 @@ public interface JavaConstant {
              */
             public int getIdentifier() {
                 return identifier;
+            }
+
+            /**
+             * Returns {@code} true if this handle type represents a field handle.
+             *
+             * @return {@code} true if this handle type represents a field handle.
+             */
+            public boolean isField() {
+                return field;
             }
         }
     }

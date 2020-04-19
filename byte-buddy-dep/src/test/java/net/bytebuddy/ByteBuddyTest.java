@@ -81,6 +81,11 @@ public class ByteBuddyTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat((Boolean) Class.class.getMethod("isRecord").invoke(type), is(true));
+        Object record = type.getConstructor().newInstance();
+        assertThat(type.getMethod("hashCode").invoke(record), is((Object) 0));
+        assertThat(type.getMethod("equals", Object.class).invoke(record, new Object()), is((Object) false));
+        assertThat(type.getMethod("equals", Object.class).invoke(record, record), is((Object) true));
+        assertThat(type.getMethod("toString").invoke(record), is((Object) (type.getSimpleName() + "[]")));
     }
 
     @Test
@@ -97,6 +102,10 @@ public class ByteBuddyTest {
         assertThat((Boolean) Class.class.getMethod("isRecord").invoke(type), is(true));
         Object record = type.getConstructor(String.class).newInstance("bar");
         assertThat(type.getMethod("foo").invoke(record), is((Object) "bar"));
+        assertThat(type.getMethod("hashCode").invoke(record), is((Object) "bar".hashCode()));
+        assertThat(type.getMethod("equals", Object.class).invoke(record, new Object()), is((Object) false));
+        assertThat(type.getMethod("equals", Object.class).invoke(record, record), is((Object) true));
+        assertThat(type.getMethod("toString").invoke(record), is((Object) (type.getSimpleName() + "[foo=bar]")));
     }
 
     @Test

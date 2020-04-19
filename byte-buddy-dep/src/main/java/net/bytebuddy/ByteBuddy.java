@@ -53,6 +53,8 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -611,7 +613,10 @@ public class ByteBuddy {
                 visibilityBridgeStrategy,
                 classWriterStrategy,
                 ignoredMethods,
-                RecordConstructorStrategy.INSTANCE);
+                RecordConstructorStrategy.INSTANCE)
+                .method(isHashCode()).intercept(RecordObjectMethod.HASH_CODE)
+                .method(isEquals()).intercept(RecordObjectMethod.EQUALS)
+                .method(isToString()).intercept(RecordObjectMethod.TO_STRING);
     }
 
     /**
@@ -1580,6 +1585,102 @@ public class ByteBuddy {
                     return new Simple(stackManipulations).apply(methodVisitor, implementationContext, instrumentedMethod);
                 }
             }
+        }
+    }
+
+    /**
+     * Implements the object methods of the Java record type.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    protected enum RecordObjectMethod implements Implementation {
+
+        /**
+         * The {@code hashCode} method.
+         */
+        HASH_CODE("hashCode", StackManipulation.Trivial.INSTANCE, int.class),
+
+        /**
+         * The {@code equals} method.
+         */
+        EQUALS("equals", MethodVariableAccess.REFERENCE.loadFrom(1), boolean.class, Object.class),
+
+        /**
+         * The {@code toString} method.
+         */
+        TO_STRING("toString", StackManipulation.Trivial.INSTANCE, String.class);
+
+        /**
+         * The method name.
+         */
+        private final String name;
+
+        /**
+         * The stack manipulation to append to the arguments.
+         */
+        private final StackManipulation stackManipulation;
+
+        /**
+         * The return type.
+         */
+        private final TypeDescription returnType;
+
+        /**
+         * The arguments type.
+         */
+        private final List<? extends TypeDescription> arguments;
+
+        /**
+         * Creates a new object method instance for a Java record.
+         *
+         * @param name              The method name.
+         * @param stackManipulation The stack manipulation to append to the arguments.
+         * @param returnType        The return type.
+         * @param arguments         The arguments type.
+         */
+        RecordObjectMethod(String name, StackManipulation stackManipulation, Class<?> returnType, Class<?>... arguments) {
+            this.name = name;
+            this.stackManipulation = stackManipulation;
+            this.returnType = TypeDescription.ForLoadedType.of(returnType);
+            this.arguments = new TypeList.ForLoadedTypes(arguments);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ByteCodeAppender appender(Target implementationTarget) {
+            StringBuilder stringBuilder = new StringBuilder();
+            List<Object> methodHandles = new ArrayList<Object>(implementationTarget.getInstrumentedType().getRecordComponents().size());
+            for (RecordComponentDescription.InDefinedShape recordComponent : implementationTarget.getInstrumentedType().getRecordComponents()) {
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append(";");
+                }
+                stringBuilder.append(recordComponent.getActualName());
+                methodHandles.add(JavaConstant.MethodHandle.ofGetter(implementationTarget.getInstrumentedType().getDeclaredFields()
+                        .filter(named(recordComponent.getActualName()))
+                        .getOnly()).asConstantPoolValue());
+            }
+            return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(),
+                    stackManipulation,
+                    MethodInvocation.invoke(new MethodDescription.Latent(JavaType.OBJECT_METHODS.getTypeStub(), new MethodDescription.Token("bootstrap",
+                            Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                            TypeDescription.Generic.OBJECT,
+                            Arrays.asList(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().asGenericType(),
+                                    TypeDescription.STRING.asGenericType(),
+                                    JavaType.TYPE_DESCRIPTOR.getTypeStub().asGenericType(),
+                                    TypeDescription.CLASS.asGenericType(),
+                                    TypeDescription.STRING.asGenericType(),
+                                    TypeDescription.ArrayProjection.of(JavaType.METHOD_HANDLE.getTypeStub()).asGenericType())))).dynamic(name,
+                            returnType,
+                            CompoundList.of(implementationTarget.getInstrumentedType(), arguments),
+                            CompoundList.of(Arrays.asList(org.objectweb.asm.Type.getType(implementationTarget.getInstrumentedType().getDescriptor()), stringBuilder.toString()), methodHandles)),
+                    MethodReturn.of(returnType));
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
         }
     }
 }
