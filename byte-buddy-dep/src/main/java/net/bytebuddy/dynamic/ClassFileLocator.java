@@ -353,7 +353,7 @@ public interface ClassFileLocator extends Closeable {
             try {
                 ClassLoader classLoader = type.getClassLoader();
                 return locate(classLoader == null
-                        ? ClassLoader.getSystemClassLoader()
+                        ? BOOT_LOADER_PROXY
                         : classLoader, TypeDescription.ForLoadedType.getName(type)).resolve();
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
