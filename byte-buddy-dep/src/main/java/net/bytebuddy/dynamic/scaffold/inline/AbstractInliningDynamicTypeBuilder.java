@@ -59,6 +59,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
      * @param instrumentedType             An instrumented type representing the subclass.
      * @param fieldRegistry                The field pool to use.
      * @param methodRegistry               The method pool to use.
+     * @param recordComponentRegistry      The record component pool to use.
      * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
      * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
@@ -78,6 +79,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
     protected AbstractInliningDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 RecordComponentRegistry recordComponentRegistry,
                                                  TypeAttributeAppender typeAttributeAppender,
                                                  AsmVisitorWrapper asmVisitorWrapper,
                                                  ClassFileVersion classFileVersion,
@@ -96,6 +98,7 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,

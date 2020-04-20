@@ -82,6 +82,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                new RecordComponentRegistry.Default(),
                 TypeAttributeAppender.ForInstrumentedType.INSTANCE,
                 AsmVisitorWrapper.NoOp.INSTANCE,
                 classFileVersion,
@@ -102,8 +103,9 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * Creates a new type builder for creating a subclass.
      *
      * @param instrumentedType             An instrumented type representing the subclass.
-     * @param fieldRegistry                The field pool to use.
-     * @param methodRegistry               The method pool to use.
+     * @param fieldRegistry                The field registry to use.
+     * @param methodRegistry               The method registry to use.
+     * @param recordComponentRegistry      The record component registry to use.
      * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
      * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
@@ -122,6 +124,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     protected SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
+                                         RecordComponentRegistry recordComponentRegistry,
                                          TypeAttributeAppender typeAttributeAppender,
                                          AsmVisitorWrapper asmVisitorWrapper,
                                          ClassFileVersion classFileVersion,
@@ -139,6 +142,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -159,6 +163,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 RecordComponentRegistry recordComponentRegistry,
                                                  TypeAttributeAppender typeAttributeAppender,
                                                  AsmVisitorWrapper asmVisitorWrapper,
                                                  ClassFileVersion classFileVersion,
@@ -175,6 +180,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -213,6 +219,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return TypeWriter.Default.<T>forCreation(methodRegistry,
                 auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
+                recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,

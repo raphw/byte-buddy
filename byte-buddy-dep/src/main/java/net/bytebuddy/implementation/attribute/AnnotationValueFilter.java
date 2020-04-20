@@ -18,6 +18,7 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
@@ -63,6 +64,14 @@ public interface AnnotationValueFilter {
          * @return An annotation value filter to be used when writing annotations onto the given method.
          */
         AnnotationValueFilter on(MethodDescription methodDescription);
+
+        /**
+         * Creates an annotation value filter for writing annotations on a record component.
+         *
+         * @param recordComponentDescription The record component onto which the annotations are written.
+         * @return An annotation value filter to be used when writing annotations onto the given record component.
+         */
+        AnnotationValueFilter on(RecordComponentDescription recordComponentDescription);
     }
 
     /**
@@ -109,6 +118,13 @@ public interface AnnotationValueFilter {
          * {@inheritDoc}
          */
         public AnnotationValueFilter on(MethodDescription methodDescription) {
+            return this;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public AnnotationValueFilter on(RecordComponentDescription recordComponentDescription) {
             return this;
         }
     }

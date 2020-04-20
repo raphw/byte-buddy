@@ -75,6 +75,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                new RecordComponentRegistry.Default(),
                 annotationRetention.isEnabled()
                         ? new TypeAttributeAppender.ForInstrumentedType.Differentiating(originalType)
                         : TypeAttributeAppender.ForInstrumentedType.INSTANCE,
@@ -100,6 +101,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
      * @param instrumentedType             An instrumented type representing the subclass.
      * @param fieldRegistry                The field pool to use.
      * @param methodRegistry               The method pool to use.
+     * @param recordComponentRegistry      The record component pool to use.
      * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
      * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
@@ -119,6 +121,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
     protected RedefinitionDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                              FieldRegistry fieldRegistry,
                                              MethodRegistry methodRegistry,
+                                             RecordComponentRegistry recordComponentRegistry,
                                              TypeAttributeAppender typeAttributeAppender,
                                              AsmVisitorWrapper asmVisitorWrapper,
                                              ClassFileVersion classFileVersion,
@@ -137,6 +140,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -158,6 +162,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
     protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 RecordComponentRegistry recordComponentRegistry,
                                                  TypeAttributeAppender typeAttributeAppender,
                                                  AsmVisitorWrapper asmVisitorWrapper,
                                                  ClassFileVersion classFileVersion,
@@ -174,6 +179,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -203,6 +209,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
         return TypeWriter.Default.<T>forRedefinition(methodRegistry,
                 auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
+                recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,

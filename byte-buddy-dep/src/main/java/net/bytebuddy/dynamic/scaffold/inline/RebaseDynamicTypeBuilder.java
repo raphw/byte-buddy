@@ -90,6 +90,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
+                new RecordComponentRegistry.Default(),
                 annotationRetention.isEnabled()
                         ? new TypeAttributeAppender.ForInstrumentedType.Differentiating(originalType)
                         : TypeAttributeAppender.ForInstrumentedType.INSTANCE,
@@ -116,6 +117,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
      * @param instrumentedType             An instrumented type representing the subclass.
      * @param fieldRegistry                The field pool to use.
      * @param methodRegistry               The method pool to use.
+     * @param recordComponentRegistry      The record component pool to use.
      * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
      * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
      * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
@@ -136,6 +138,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
     protected RebaseDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                        FieldRegistry fieldRegistry,
                                        MethodRegistry methodRegistry,
+                                       RecordComponentRegistry recordComponentRegistry,
                                        TypeAttributeAppender typeAttributeAppender,
                                        AsmVisitorWrapper asmVisitorWrapper,
                                        ClassFileVersion classFileVersion,
@@ -155,6 +158,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -177,6 +181,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
     protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 RecordComponentRegistry recordComponentRegistry,
                                                  TypeAttributeAppender typeAttributeAppender,
                                                  AsmVisitorWrapper asmVisitorWrapper,
                                                  ClassFileVersion classFileVersion,
@@ -193,6 +198,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         return new RebaseDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                recordComponentRegistry,
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
@@ -230,6 +236,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         return TypeWriter.Default.<T>forRebasing(methodRegistry,
                 auxiliaryTypes,
                 fieldRegistry.compile(methodRegistry.getInstrumentedType()),
+                recordComponentRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,

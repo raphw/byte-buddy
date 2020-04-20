@@ -95,12 +95,10 @@ public interface TypeWriter<T> {
     interface FieldPool {
 
         /**
-         * Returns the field attribute appender that matches a given field description or a default field
-         * attribute appender if no appender was registered for the given field.
+         * Looks up a handler entry for a given field.
          *
-         * @param fieldDescription The field description of interest.
-         * @return The registered field attribute appender for the given field or the default appender if no such
-         * appender was found.
+         * @param fieldDescription The field being processed.
+         * @return A handler entry for the given field.
          */
         Record target(FieldDescription fieldDescription);
 
@@ -331,7 +329,7 @@ public interface TypeWriter<T> {
              * {@inheritDoc}
              */
             public Record target(FieldDescription fieldDescription) {
-                throw new IllegalStateException("Cannot look up field from disabld pool");
+                throw new IllegalStateException("Cannot look up field from disabled pool");
             }
         }
     }
@@ -1512,6 +1510,216 @@ public interface TypeWriter<T> {
     }
 
     /**
+     * An record component pool that allows a lookup for how to implement a record component.
+     */
+    interface RecordComponentPool {
+
+        /**
+         * Looks up a handler entry for a given record component.
+         *
+         * @param recordComponentDescription The record component being processed.
+         * @return A handler entry for the given record component.
+         */
+        Record target(RecordComponentDescription recordComponentDescription);
+
+        /**
+         * An entry of a record component pool that describes how a record component is implemented.
+         *
+         * @see RecordComponentPool
+         */
+        interface Record {
+
+            /**
+             * Determines if this record is implicit, i.e is not defined by a {@link RecordComponentPool}.
+             *
+             * @return {@code true} if this record is implicit.
+             */
+            boolean isImplicit();
+
+            /**
+             * Returns the record component that this record represents.
+             *
+             * @return The record component that this record represents.
+             */
+            RecordComponentDescription getRecordComponent();
+
+            /**
+             * Returns the record component attribute appender for a given record component.
+             *
+             * @return The record component appender to be applied on the given field.
+             */
+            RecordComponentAttributeAppender getRecordComponentAppender();
+
+            /**
+             * Writes this record to a given class visitor.
+             *
+             * @param classVisitor                 The class visitor to which this record is to be written to.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotations.
+             */
+            void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
+
+            /**
+             * Applies this record to a record component visitor. This is not possible for implicit records.
+             *
+             * @param recordComponentVisitor       The record component visitor onto which this record is to be applied.
+             * @param annotationValueFilterFactory The annotation value filter factory to use for annotations.
+             */
+            void apply(RecordComponentVisitor recordComponentVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
+
+            /**
+             * A record for a simple field without a default value where all of the record component's declared annotations are appended.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForImplicitRecordComponent implements Record {
+
+                /**
+                 * The implemented record component.
+                 */
+                private final RecordComponentDescription recordComponentDescription;
+
+                /**
+                 * Creates a new record for a simple record component.
+                 *
+                 * @param recordComponentDescription The described record component.
+                 */
+                public ForImplicitRecordComponent(RecordComponentDescription recordComponentDescription) {
+                    this.recordComponentDescription = recordComponentDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isImplicit() {
+                    return true;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDescription getRecordComponent() {
+                    return recordComponentDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentAttributeAppender getRecordComponentAppender() {
+                    throw new IllegalStateException("An implicit field record does not expose a field appender: " + this);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    RecordComponentVisitor recordComponentVisitor = classVisitor.visitRecordComponent(recordComponentDescription.getActualName(),
+                            recordComponentDescription.getDescriptor(),
+                            recordComponentDescription.getGenericSignature());
+                    if (recordComponentVisitor != null) {
+                        RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE.apply(recordComponentVisitor,
+                                recordComponentDescription,
+                                annotationValueFilterFactory.on(recordComponentDescription));
+                        recordComponentVisitor.visitEnd();
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(RecordComponentVisitor recordComponentVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    throw new IllegalStateException("An implicit field record is not intended for partial application: " + this);
+                }
+            }
+
+            /**
+             * A record for a rich record component with attributes.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class ForExplicitRecordComponent implements Record {
+
+                /**
+                 * The attribute appender for the record component.
+                 */
+                private final RecordComponentAttributeAppender attributeAppender;
+
+                /**
+                 * The implemented record component.
+                 */
+                private final RecordComponentDescription recordComponentDescription;
+
+                /**
+                 * Creates a record for a rich record component.
+                 *
+                 * @param attributeAppender           The attribute appender for the record component.
+                 * @param recordComponentDescription  The implemented record component.
+                 */
+                public ForExplicitRecordComponent(RecordComponentAttributeAppender attributeAppender, RecordComponentDescription recordComponentDescription) {
+                    this.attributeAppender = attributeAppender;
+                    this.recordComponentDescription = recordComponentDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isImplicit() {
+                    return false;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDescription getRecordComponent() {
+                    return recordComponentDescription;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentAttributeAppender getRecordComponentAppender() {
+                    return attributeAppender;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    RecordComponentVisitor recordComponentVisitor = classVisitor.visitRecordComponent(recordComponentDescription.getActualName(),
+                            recordComponentDescription.getDescriptor(),
+                            recordComponentDescription.getGenericSignature());
+                    if (recordComponentVisitor != null) {
+                        attributeAppender.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilterFactory.on(recordComponentDescription));
+                        recordComponentVisitor.visitEnd();
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public void apply(RecordComponentVisitor recordComponentVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    attributeAppender.apply(recordComponentVisitor, recordComponentDescription, annotationValueFilterFactory.on(recordComponentDescription));
+                }
+            }
+        }
+
+        /**
+         * A record component pool that does not allow any look ups.
+         */
+        enum Disabled implements RecordComponentPool {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * {@inheritDoc}
+             */
+            public Record target(RecordComponentDescription recordComponentDescription) {
+                throw new IllegalStateException("Cannot look up record component from disabled pool");
+            }
+        }
+    }
+
+    /**
      * A default implementation of a {@link net.bytebuddy.dynamic.scaffold.TypeWriter}.
      *
      * @param <S> The best known loaded type for the dynamically created type.
@@ -1556,6 +1764,11 @@ public interface TypeWriter<T> {
          * The field pool to use.
          */
         protected final FieldPool fieldPool;
+
+        /**
+         * The record component pool to use.
+         */
+        protected final RecordComponentPool recordComponentPool;
 
         /**
          * The explicit auxiliary types to add to the created type.
@@ -1643,6 +1856,7 @@ public interface TypeWriter<T> {
          * @param instrumentedType             The instrumented type to be created.
          * @param classFileVersion             The class file specified by the user.
          * @param fieldPool                    The field pool to use.
+         * @param recordComponentPool          The record component pool to use.
          * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
          * @param fields                       The instrumented type's declared fields.
          * @param methods                      The instrumented type's declared and virtually inherited methods.
@@ -1663,6 +1877,7 @@ public interface TypeWriter<T> {
         protected Default(TypeDescription instrumentedType,
                           ClassFileVersion classFileVersion,
                           FieldPool fieldPool,
+                          RecordComponentPool recordComponentPool,
                           List<? extends DynamicType> auxiliaryTypes,
                           FieldList<FieldDescription.InDefinedShape> fields,
                           MethodList<?> methods,
@@ -1682,6 +1897,7 @@ public interface TypeWriter<T> {
             this.instrumentedType = instrumentedType;
             this.classFileVersion = classFileVersion;
             this.fieldPool = fieldPool;
+            this.recordComponentPool = recordComponentPool;
             this.auxiliaryTypes = auxiliaryTypes;
             this.fields = fields;
             this.methods = methods;
@@ -1706,6 +1922,7 @@ public interface TypeWriter<T> {
          * @param methodRegistry               The compiled method registry to use.
          * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
+         * @param recordComponentPool          The record component pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
          * @param classFileVersion             The class file version to use when no explicit class file version is applied.
@@ -1722,6 +1939,7 @@ public interface TypeWriter<T> {
         public static <U> TypeWriter<U> forCreation(MethodRegistry.Compiled methodRegistry,
                                                     List<? extends DynamicType> auxiliaryTypes,
                                                     FieldPool fieldPool,
+                                                    RecordComponentPool recordComponentPool,
                                                     TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
                                                     ClassFileVersion classFileVersion,
@@ -1736,6 +1954,7 @@ public interface TypeWriter<T> {
                     classFileVersion,
                     fieldPool,
                     methodRegistry,
+                    recordComponentPool,
                     auxiliaryTypes,
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
@@ -1760,6 +1979,7 @@ public interface TypeWriter<T> {
          * @param methodRegistry               The compiled method registry to use.
          * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
+         * @param recordComponentPool          The record component pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
          * @param classFileVersion             The class file version to use when no explicit class file version is applied.
@@ -1778,6 +1998,7 @@ public interface TypeWriter<T> {
         public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Prepared methodRegistry,
                                                         List<? extends DynamicType> auxiliaryTypes,
                                                         FieldPool fieldPool,
+                                                        RecordComponentPool recordComponentPool,
                                                         TypeAttributeAppender typeAttributeAppender,
                                                         AsmVisitorWrapper asmVisitorWrapper,
                                                         ClassFileVersion classFileVersion,
@@ -1793,6 +2014,7 @@ public interface TypeWriter<T> {
             return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
+                    recordComponentPool,
                     auxiliaryTypes,
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
@@ -1822,6 +2044,7 @@ public interface TypeWriter<T> {
          * @param methodRegistry               The compiled method registry to use.
          * @param auxiliaryTypes               A list of explicitly required auxiliary types.
          * @param fieldPool                    The field pool to use.
+         * @param recordComponentPool          The record component pool to use.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
          * @param classFileVersion             The class file version to use when no explicit class file version is applied.
@@ -1841,6 +2064,7 @@ public interface TypeWriter<T> {
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Prepared methodRegistry,
                                                     List<? extends DynamicType> auxiliaryTypes,
                                                     FieldPool fieldPool,
+                                                    RecordComponentPool recordComponentPool,
                                                     TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
                                                     ClassFileVersion classFileVersion,
@@ -1857,6 +2081,7 @@ public interface TypeWriter<T> {
             return new ForInlining.WithFullProcessing<U>(methodRegistry.getInstrumentedType(),
                     classFileVersion,
                     fieldPool,
+                    recordComponentPool,
                     CompoundList.of(auxiliaryTypes, methodRebaseResolver.getAuxiliaryTypes()),
                     methodRegistry.getInstrumentedType().getDeclaredFields(),
                     methodRegistry.getMethods(),
@@ -3498,6 +3723,11 @@ public interface TypeWriter<T> {
             private static final MethodVisitor IGNORE_METHOD = null;
 
             /**
+             * Indicates that a record component should be ignored.
+             */
+            private static final RecordComponentVisitor IGNORE_RECORD_COMPONENT = null;
+
+            /**
              * Indicates that an annotation should be ignored.
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
@@ -3518,6 +3748,7 @@ public interface TypeWriter<T> {
              * @param instrumentedType             The instrumented type to be created.
              * @param classFileVersion             The class file specified by the user.
              * @param fieldPool                    The field pool to use.
+             * @param recordComponentPool          The record component pool to use.
              * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
              * @param fields                       The instrumented type's declared fields.
              * @param methods                      The instrumented type's declared and virtually inherited methods.
@@ -3540,6 +3771,7 @@ public interface TypeWriter<T> {
             protected ForInlining(TypeDescription instrumentedType,
                                   ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
+                                  RecordComponentPool recordComponentPool,
                                   List<? extends DynamicType> auxiliaryTypes,
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
@@ -3561,6 +3793,7 @@ public interface TypeWriter<T> {
                 super(instrumentedType,
                         classFileVersion,
                         fieldPool,
+                        recordComponentPool,
                         auxiliaryTypes,
                         fields,
                         methods,
@@ -3678,6 +3911,7 @@ public interface TypeWriter<T> {
                  * @param instrumentedType             The instrumented type to be created.
                  * @param classFileVersion             The class file specified by the user.
                  * @param fieldPool                    The field pool to use.
+                 * @param recordComponentPool          The record component pool to use.
                  * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
                  * @param fields                       The instrumented type's declared fields.
                  * @param methods                      The instrumented type's declared and virtually inherited methods.
@@ -3703,6 +3937,7 @@ public interface TypeWriter<T> {
                 protected WithFullProcessing(TypeDescription instrumentedType,
                                              ClassFileVersion classFileVersion,
                                              FieldPool fieldPool,
+                                             RecordComponentPool recordComponentPool,
                                              List<? extends DynamicType> auxiliaryTypes,
                                              FieldList<FieldDescription.InDefinedShape> fields,
                                              MethodList<?> methods, MethodList<?> instrumentedMethods,
@@ -3726,6 +3961,7 @@ public interface TypeWriter<T> {
                     super(instrumentedType,
                             classFileVersion,
                             fieldPool,
+                            recordComponentPool,
                             auxiliaryTypes,
                             fields,
                             methods,
@@ -4593,15 +4829,40 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String signature) {
-                        declarableRecordComponents.remove(name);
-                        return cv.visitRecordComponent(name, descriptor, signature);
+                    protected RecordComponentVisitor onVisitRecordComponent(String name, String descriptor, String genericSignature) {
+                        RecordComponentDescription recordComponentDescription = declarableRecordComponents.remove(name);
+                        if (recordComponentDescription != null) {
+                            RecordComponentPool.Record record = recordComponentPool.target(recordComponentDescription);
+                            if (!record.isImplicit()) {
+                                return redefine(record, genericSignature);
+                            }
+                        }
+                        return cv.visitRecordComponent(name, descriptor, genericSignature);
+                    }
+
+                    /**
+                     * Redefines a record component using the given explicit record component pool record.
+                     *
+                     * @param record           The record component pool record to apply during visitation of the existing record.
+                     * @param genericSignature The record component's original generic signature which can be {@code null}.
+                     * @return A record component visitor for visiting the existing record component definition.
+                     */
+                    protected RecordComponentVisitor redefine(RecordComponentPool.Record record, String genericSignature) {
+                        RecordComponentDescription recordComponentDescription = record.getRecordComponent();
+                        RecordComponentVisitor recordComponentVisitor = cv.visitRecordComponent(recordComponentDescription.getActualName(),
+                                recordComponentDescription.getDescriptor(),
+                                TypeDescription.AbstractBase.RAW_TYPES
+                                        ? genericSignature
+                                        : recordComponentDescription.getGenericSignature());
+                        return recordComponentVisitor == null
+                                ? IGNORE_RECORD_COMPONENT
+                                : new AttributeObtainingRecordComponentVisitor(recordComponentVisitor, record);
                     }
 
                     @Override
                     protected void onAfterRecordComponents() {
                         for (RecordComponentDescription recordComponent : declarableRecordComponents.values()) {
-                            cv.visitRecordComponent(recordComponent.getActualName(), recordComponent.getDescriptor(), recordComponent.getGenericSignature()).visitEnd();
+                            recordComponentPool.target(recordComponent).apply(cv, annotationValueFilterFactory);
                         }
                     }
 
@@ -4849,6 +5110,49 @@ public interface TypeWriter<T> {
                     }
 
                     /**
+                     * A record component visitor that obtains all attributes and annotations of a record component that is found
+                     * in the class file but discards all code.
+                     */
+                    protected class AttributeObtainingRecordComponentVisitor extends RecordComponentVisitor {
+
+                        /**
+                         * The record component pool record to apply onto the record component visitor.
+                         */
+                        private final RecordComponentPool.Record record;
+
+                        /**
+                         * Creates a new attribute obtaining record component visitor.
+                         *
+                         * @param recordComponentVisitor The record component visitor to delegate to.
+                         * @param record                 The record component pool record to apply onto the record component visitor.
+                         */
+                        protected AttributeObtainingRecordComponentVisitor(RecordComponentVisitor recordComponentVisitor, RecordComponentPool.Record record) {
+                            super(OpenedClassReader.ASM_API, recordComponentVisitor);
+                            this.record = record;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            return annotationRetention.isEnabled()
+                                    ? super.visitAnnotation(descriptor, visible)
+                                    : IGNORE_ANNOTATION;
+                        }
+
+                        @Override
+                        public void visitEnd() {
+                            record.apply(getDelegate(), annotationValueFilterFactory);
+                            super.visitEnd();
+                        }
+                    }
+
+                    /**
                      * A method visitor that preserves the code of a method in the class file by copying it into a rebased
                      * method while copying all attributes and annotations to the actual method.
                      */
@@ -5057,6 +5361,7 @@ public interface TypeWriter<T> {
                     super(instrumentedType,
                             classFileVersion,
                             FieldPool.Disabled.INSTANCE,
+                            RecordComponentPool.Disabled.INSTANCE,
                             auxiliaryTypes,
                             new LazyFieldList(instrumentedType),
                             methods,
@@ -5246,6 +5551,7 @@ public interface TypeWriter<T> {
              * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
              * @param fieldPool                    The field pool to use.
              * @param methodPool                   The method pool to use.
+             * @param recordComponentPool          The record component pool to use.
              * @param auxiliaryTypes               A list of auxiliary types to add to the created type.
              * @param fields                       The instrumented type's declared fields.
              * @param methods                      The instrumented type's declared and virtually inherited methods.
@@ -5267,6 +5573,7 @@ public interface TypeWriter<T> {
                                   ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
+                                  RecordComponentPool recordComponentPool,
                                   List<? extends DynamicType> auxiliaryTypes,
                                   FieldList<FieldDescription.InDefinedShape> fields,
                                   MethodList<?> methods,
@@ -5286,6 +5593,7 @@ public interface TypeWriter<T> {
                 super(instrumentedType,
                         classFileVersion,
                         fieldPool,
+                        recordComponentPool,
                         auxiliaryTypes,
                         fields,
                         methods,
@@ -5343,9 +5651,7 @@ public interface TypeWriter<T> {
                 }
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (RecordComponentDescription recordComponentDescription : recordComponents) {
-                    classVisitor.visitRecordComponent(recordComponentDescription.getActualName(),
-                            recordComponentDescription.getDescriptor(),
-                            recordComponentDescription.getGenericSignature()).visitEnd();
+                    recordComponentPool.target(recordComponentDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
                 for (FieldDescription fieldDescription : fields) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);

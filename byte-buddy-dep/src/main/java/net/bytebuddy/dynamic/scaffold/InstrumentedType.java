@@ -1333,7 +1333,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
             return new RecordComponentList.ForTokens(this, recordComponentTokens);
         }
 

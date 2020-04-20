@@ -3775,6 +3775,11 @@ public interface DynamicType {
                 protected final MethodRegistry methodRegistry;
 
                 /**
+                 * The current record component registry.
+                 */
+                protected final RecordComponentRegistry recordComponentRegistry;
+
+                /**
                  * The type attribute appender to apply onto the instrumented type.
                  */
                 protected final TypeAttributeAppender typeAttributeAppender;
@@ -3845,6 +3850,7 @@ public interface DynamicType {
                  * @param instrumentedType             The instrumented type to be created.
                  * @param fieldRegistry                The current field registry.
                  * @param methodRegistry               The current method registry.
+                 * @param recordComponentRegistry      The record component pool to use.
                  * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
                  * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
                  * @param classFileVersion             The class file version to define auxiliary types in.
@@ -3862,6 +3868,7 @@ public interface DynamicType {
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                                   FieldRegistry fieldRegistry,
                                   MethodRegistry methodRegistry,
+                                  RecordComponentRegistry recordComponentRegistry,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
                                   ClassFileVersion classFileVersion,
@@ -3878,6 +3885,7 @@ public interface DynamicType {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
                     this.methodRegistry = methodRegistry;
+                    this.recordComponentRegistry = recordComponentRegistry;
                     this.typeAttributeAppender = typeAttributeAppender;
                     this.asmVisitorWrapper = asmVisitorWrapper;
                     this.classFileVersion = classFileVersion;
@@ -3892,7 +3900,6 @@ public interface DynamicType {
                     this.ignoredMethods = ignoredMethods;
                     this.auxiliaryTypes = auxiliaryTypes;
                 }
-
 
                 /**
                  * {@inheritDoc}
@@ -3952,6 +3959,7 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -3974,6 +3982,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withInitializer(byteCodeAppender),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -3996,6 +4005,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withInitializer(loadedTypeInitializer),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4018,6 +4028,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withName(name),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4047,6 +4058,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withModifiers(modifiers),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4069,6 +4081,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withModifiers(ModifierContributor.Resolver.of(modifierContributors).resolve(instrumentedType.getModifiers())),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4094,6 +4107,7 @@ public interface DynamicType {
                                     .withLocalClass(false),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4132,6 +4146,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withDeclaredTypes(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4154,6 +4169,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withNestHost(type),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4176,6 +4192,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withNestMembers(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4205,6 +4222,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withTypeVariables(matcher, transformer),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4227,6 +4245,7 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4249,6 +4268,7 @@ public interface DynamicType {
                     return materialize(instrumentedType.withAnnotations(new ArrayList<AnnotationDescription>(annotations)),
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4271,6 +4291,7 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             new AsmVisitorWrapper.Compound(this.asmVisitorWrapper, asmVisitorWrapper),
                             classFileVersion,
@@ -4293,6 +4314,7 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
+                            recordComponentRegistry,
                             typeAttributeAppender,
                             asmVisitorWrapper,
                             classFileVersion,
@@ -4321,6 +4343,7 @@ public interface DynamicType {
                  * @param instrumentedType             The instrumented type.
                  * @param fieldRegistry                The current field registry.
                  * @param methodRegistry               The current method registry.
+                 * @param recordComponentRegistry      The record component pool to use.
                  * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
                  * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
                  * @param classFileVersion             The class file version to define auxiliary types in.
@@ -4339,6 +4362,7 @@ public interface DynamicType {
                 protected abstract Builder<U> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                           FieldRegistry fieldRegistry,
                                                           MethodRegistry methodRegistry,
+                                                          RecordComponentRegistry recordComponentRegistry,
                                                           TypeAttributeAppender typeAttributeAppender,
                                                           AsmVisitorWrapper asmVisitorWrapper,
                                                           ClassFileVersion classFileVersion,
@@ -4383,6 +4407,7 @@ public interface DynamicType {
                                         .withAnonymousClass(true),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4409,6 +4434,7 @@ public interface DynamicType {
                                         .withLocalClass(false),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4432,6 +4458,7 @@ public interface DynamicType {
                                         .withLocalClass(true),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4478,6 +4505,7 @@ public interface DynamicType {
                                         .withAnonymousClass(true),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4501,6 +4529,7 @@ public interface DynamicType {
                                         .withLocalClass(true),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4551,6 +4580,7 @@ public interface DynamicType {
                         return Adapter.this.materialize(instrumentedType.withTypeVariable(token),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4621,6 +4651,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
                                 fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, transformer),
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -4695,6 +4726,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
                                 fieldRegistry.prepend(matcher, fieldAttributeAppenderFactory, defaultValue, transformer),
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -5049,6 +5081,7 @@ public interface DynamicType {
                                             handler,
                                             methodAttributeAppenderFactory,
                                             transformer),
+                                    recordComponentRegistry,
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,
@@ -5184,6 +5217,7 @@ public interface DynamicType {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
                                     fieldRegistry,
                                     methodRegistry.prepend(matcher, handler, methodAttributeAppenderFactory, transformer),
+                                    recordComponentRegistry,
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,
@@ -5226,6 +5260,7 @@ public interface DynamicType {
                         return Adapter.this.materialize(instrumentedType.withInterfaces(interfaces),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
@@ -5332,6 +5367,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withRecordComponent(token),
                                 fieldRegistry,
                                 methodRegistry,
+                                recordComponentRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,
