@@ -2696,7 +2696,7 @@ public interface TypePool {
             /**
              * {@inheritDoc}
              */
-            public RecordComponentList getRecordComponents() {
+            public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
                 return new RecordComponentTokenList();
             }
 
@@ -2750,12 +2750,12 @@ public interface TypePool {
             /**
              * A list of record component tokens representing each record component as a description.
              */
-            protected class RecordComponentTokenList extends RecordComponentList.AbstractBase {
+            protected class RecordComponentTokenList extends RecordComponentList.AbstractBase<RecordComponentDescription.InDefinedShape> {
 
                 /**
                  * {@inheritDoc}
                  */
-                public RecordComponentDescription get(int index) {
+                public RecordComponentDescription.InDefinedShape get(int index) {
                     return recordComponentTokens.get(index).toRecordComponentDescription(LazyTypeDescription.this);
                 }
 
@@ -5821,7 +5821,7 @@ public interface TypePool {
                  * @param lazyTypeDescription The lazy type description to attach this record component description to.
                  * @return A record component description representing this record component token.
                  */
-                private RecordComponentDescription toRecordComponentDescription(LazyTypeDescription lazyTypeDescription) {
+                private RecordComponentDescription.InDefinedShape toRecordComponentDescription(LazyTypeDescription lazyTypeDescription) {
                     return lazyTypeDescription.new LazyRecordComponentDescription(name,
                             descriptor,
                             genericSignature,

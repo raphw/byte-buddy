@@ -987,24 +987,6 @@ public interface DynamicType {
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
         /**
-         * Defines a new record component.
-         *
-         * @param name The record component's name.
-         * @param type The record component's type.
-         * @return A new builder that is equal to this builder but also defines the supplied record component.
-         */
-        RecordComponentDefinition<T> defineRecordComponent(String name, Type type);
-
-        /**
-         * Defines a new record component.
-         *
-         * @param name The record component's name.
-         * @param type The record component's type.
-         * @return A new builder that is equal to this builder but also defines the supplied record component.
-         */
-        RecordComponentDefinition<T> defineRecordComponent(String name, TypeDefinition type);
-
-        /**
          * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
@@ -1296,6 +1278,77 @@ public interface DynamicType {
          * @return A new type builder that defines {@link Object#toString()} method accordingly.
          */
         Builder<T> withToString();
+
+        /**
+         * Defines a new record component. Note that this does not add or change implementations for a field, an accessor
+         * to this field or a constructor unless {@link net.bytebuddy.ByteBuddy#makeRecord()} is used.
+         *
+         * @param name The record component's name.
+         * @param type The record component's type.
+         * @return A new builder that is equal to this builder but also defines the supplied record component.
+         */
+        RecordComponentDefinition.Optional<T> defineRecordComponent(String name, Type type);
+
+        /**
+         * Defines a new record component. Note that this does not add or change implementations for a field, an accessor
+         * to this field or a constructor unless {@link net.bytebuddy.ByteBuddy#makeRecord()} is used.
+         *
+         * @param name The record component's name.
+         * @param type The record component's type.
+         * @return A new builder that is equal to this builder but also defines the supplied record component.
+         */
+        RecordComponentDefinition.Optional<T> defineRecordComponent(String name, TypeDefinition type);
+
+        /**
+         * Defines a new record component. Note that this does not add or change implementations for a field, an accessor
+         * to this field or a constructor unless {@link net.bytebuddy.ByteBuddy#makeRecord()} is used.
+         *
+         * @param recordComponentDescription A description of the record component to immitate.
+         * @return A new builder that is equal to this builder but also defines the supplied record component.
+         */
+        RecordComponentDefinition.Optional<T> define(RecordComponentDescription recordComponentDescription);
+
+        /**
+         * <p>
+         * Matches a record component that is already declared by the instrumented type. This gives opportunity to change that
+         * record component's annotations or custom attributes.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the field declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         * <p>
+         * If a record component is already matched by a previously specified record component matcher, the new record component
+         * definition gets precedence over the previous definition, i.e. the previous record component definition is no longer applied.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared record components are affected by the subsequent specification.
+         * @return A builder that allows for changing a record component's definition.
+         */
+        RecordComponentDefinition<T> recordComponent(ElementMatcher<? super RecordComponentDescription> matcher);
+
+        /**
+         * <p>
+         * Matches a record component that is already declared by the instrumented type. This gives opportunity to change that
+         * record component's annotations or custom attributes.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the field declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         * <p>
+         * If a record component is already matched by a previously specified record component matcher, the new record component
+         * definition gets precedence over the previous definition, i.e. the previous record component definition is no longer applied.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared record components are affected by the subsequent specification.
+         * @return A builder that allows for changing a record component's definition.
+         */
+        RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher);
 
         /**
          * <p>
@@ -2976,7 +3029,7 @@ public interface DynamicType {
          *
          * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
          */
-        interface RecordComponentDefinition<S> extends Builder<S> {
+        interface RecordComponentDefinition<S> {
 
             /**
              * Annotates the record component with the supplied annotations.
@@ -2984,7 +3037,7 @@ public interface DynamicType {
              * @param annotation The annotations to declare.
              * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
              */
-            RecordComponentDefinition<S> annotateRecordComponent(Annotation... annotation);
+            Optional<S> annotateRecordComponent(Annotation... annotation);
 
             /**
              * Annotates the record component with the supplied annotations.
@@ -2992,7 +3045,7 @@ public interface DynamicType {
              * @param annotations The annotations to declare.
              * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
              */
-            RecordComponentDefinition<S> annotateRecordComponent(List<? extends Annotation> annotations);
+            Optional<S> annotateRecordComponent(List<? extends Annotation> annotations);
 
             /**
              * Annotates the record component with the supplied annotations.
@@ -3000,7 +3053,7 @@ public interface DynamicType {
              * @param annotation The annotations to declare.
              * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
              */
-            RecordComponentDefinition<S> annotateRecordComponent(AnnotationDescription... annotation);
+            Optional<S> annotateRecordComponent(AnnotationDescription... annotation);
 
             /**
              * Annotates the record component with the supplied annotations.
@@ -3008,7 +3061,7 @@ public interface DynamicType {
              * @param annotations The annotations to declare.
              * @return A new builder that is equal to this builder but where the defined component declares the supplied annotations.
              */
-            RecordComponentDefinition<S> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations);
+            Optional<S> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations);
 
             /**
              * Applies the supplied record component attribute appender factory onto the previously defined record component.
@@ -3018,34 +3071,50 @@ public interface DynamicType {
              * @return A new builder that is equal to this builder but with the supplied record component attribute appender factory
              * applied to the previously defined record component.
              */
-            RecordComponentDefinition<S> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory);
+            Optional<S> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory);
 
             /**
-             * An abstract base implementation of a record definition.
+             * Transforms a record component description before writing.
+             *
+             * @param transformer The transformer to apply.
+             * @return new builder that is equal to this builder but with the supplied transformer being applied.
+             */
+            Optional<S> transform(Transformer<RecordComponentDescription> transformer);
+
+            /**
+             * A {@link RecordComponentDefinition} as an optional build step.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
-            abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements RecordComponentDefinition<U> {
+            interface Optional<U> extends RecordComponentDefinition<U>, Builder<U> {
 
                 /**
-                 * {@inheritDoc}
+                 * An abstract base implementation of a record definition.
+                 *
+                 * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                public RecordComponentDefinition<U> annotateRecordComponent(Annotation... annotation) {
-                    return annotateRecordComponent(Arrays.asList(annotation));
-                }
+                abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements RecordComponentDefinition.Optional<U> {
 
-                /**
-                 * {@inheritDoc}
-                 */
-                public RecordComponentDefinition<U> annotateRecordComponent(List<? extends Annotation> annotations) {
-                    return annotateRecordComponent(new AnnotationList.ForLoadedAnnotations(annotations));
-                }
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Optional<U> annotateRecordComponent(Annotation... annotation) {
+                        return annotateRecordComponent(Arrays.asList(annotation));
+                    }
 
-                /**
-                 * {@inheritDoc}
-                 */
-                public RecordComponentDefinition<U> annotateRecordComponent(AnnotationDescription... annotation) {
-                    return annotateRecordComponent(Arrays.asList(annotation));
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Optional<U> annotateRecordComponent(List<? extends Annotation> annotations) {
+                        return annotateRecordComponent(new AnnotationList.ForLoadedAnnotations(annotations));
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Optional<U> annotateRecordComponent(AnnotationDescription... annotation) {
+                        return annotateRecordComponent(Arrays.asList(annotation));
+                    }
                 }
             }
         }
@@ -3228,8 +3297,22 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
-            public RecordComponentDefinition<S> defineRecordComponent(String name, Type type) {
+            public RecordComponentDefinition.Optional<S> defineRecordComponent(String name, Type type) {
                 return defineRecordComponent(name, TypeDefinition.Sort.describe(type));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public RecordComponentDefinition.Optional<S> define(RecordComponentDescription recordComponentDescription) {
+                return defineRecordComponent(recordComponentDescription.getActualName(), recordComponentDescription.getType());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public RecordComponentDefinition<S> recordComponent(ElementMatcher<? super RecordComponentDescription> matcher) {
+                return recordComponent(new LatentMatcher.Resolved<RecordComponentDescription>(matcher));
             }
 
             /**
@@ -3697,15 +3780,36 @@ public interface DynamicType {
                 /**
                  * {@inheritDoc}
                  */
-                public RecordComponentDefinition<U> defineRecordComponent(String name, TypeDefinition type) {
+                public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
+                    return materialize().require(auxiliaryTypes);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition.Optional<U> defineRecordComponent(String name, TypeDefinition type) {
                     return materialize().defineRecordComponent(name, type);
                 }
 
                 /**
                  * {@inheritDoc}
                  */
-                public Builder<U> require(Collection<DynamicType> auxiliaryTypes) {
-                    return materialize().require(auxiliaryTypes);
+                public RecordComponentDefinition.Optional<U> define(RecordComponentDescription recordComponentDescription) {
+                    return materialize().define(recordComponentDescription);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> recordComponent(ElementMatcher<? super RecordComponentDescription> matcher) {
+                    return materialize().recordComponent(matcher);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
+                    return materialize().recordComponent(matcher);
                 }
 
                 /**
@@ -3946,14 +4050,6 @@ public interface DynamicType {
                 /**
                  * {@inheritDoc}
                  */
-                public RecordComponentDefinition<U> defineRecordComponent(String name, TypeDefinition type) {
-                    return new RecordComponentDefinitionAdapter(RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE,
-                            new RecordComponentDescription.Token(name, type.asGenericType()));
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
                 @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                 public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
@@ -3973,6 +4069,20 @@ public interface DynamicType {
                             classWriterStrategy,
                             new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
                             auxiliaryTypes);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition.Optional<U> defineRecordComponent(String name, TypeDefinition type) {
+                    return new RecordComponentDefinitionAdapter(new RecordComponentDescription.Token(name, type.asGenericType()));
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public RecordComponentDefinition<U> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
+                    return new RecordComponentMatchAdapter(matcher);
                 }
 
                 /**
@@ -5322,7 +5432,7 @@ public interface DynamicType {
                  * An adapter for defining a record component.
                  */
                 @HashCodeAndEqualsPlugin.Enhance(includeSyntheticFields = true)
-                protected class RecordComponentDefinitionAdapter extends RecordComponentDefinition.AbstractBase<U> {
+                protected class RecordComponentDefinitionAdapter extends RecordComponentDefinition.Optional.AbstractBase<U> {
 
                     /**
                      * The record component attribute appender factory to apply.
@@ -5335,21 +5445,41 @@ public interface DynamicType {
                     private final RecordComponentDescription.Token token;
 
                     /**
+                     * A transformer to apply on matched record component descriptions.
+                     */
+                    private final Transformer<RecordComponentDescription> transformer;
+
+                    /**
+                     * Creates a new record component definition adapter.
+                     *
+                     * @param token A token representing the defined record component.
+                     */
+                    protected RecordComponentDefinitionAdapter(RecordComponentDescription.Token token) {
+                        this(RecordComponentAttributeAppender.ForInstrumentedRecordComponent.INSTANCE,
+                                Transformer.NoOp.<RecordComponentDescription>make(),
+                                token);
+                    }
+
+                    /**
                      * Creates a new record component definition adapter.
                      *
                      * @param recordComponentAttributeAppenderFactory The record component attribute appender factory to apply.
+                     * @param transformer                             A transformer to apply on matched record component descriptions.
                      * @param token                                   A token representing the defined record component.
                      */
-                    protected RecordComponentDefinitionAdapter(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory, RecordComponentDescription.Token token) {
+                    protected RecordComponentDefinitionAdapter(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory,
+                                                               Transformer<RecordComponentDescription> transformer,
+                                                               RecordComponentDescription.Token token) {
                         this.recordComponentAttributeAppenderFactory = recordComponentAttributeAppenderFactory;
+                        this.transformer = transformer;
                         this.token = token;
                     }
 
                     /**
                      * {@inheritDoc}
                      */
-                    public RecordComponentDefinition<U> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations) {
-                        return new RecordComponentDefinitionAdapter(recordComponentAttributeAppenderFactory, new RecordComponentDescription.Token(token.getName(),
+                    public Optional<U> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations) {
+                        return new RecordComponentDefinitionAdapter(recordComponentAttributeAppenderFactory, transformer, new RecordComponentDescription.Token(token.getName(),
                                 token.getType(),
                                 CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
                     }
@@ -5357,9 +5487,19 @@ public interface DynamicType {
                     /**
                      * {@inheritDoc}
                      */
-                    public RecordComponentDefinition<U> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory) {
+                    public Optional<U> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory) {
                         return new RecordComponentDefinitionAdapter(new RecordComponentAttributeAppender.Factory.Compound(this.recordComponentAttributeAppenderFactory,
-                                recordComponentAttributeAppenderFactory), token);
+                                recordComponentAttributeAppenderFactory), transformer, token);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs
+                    public Optional<U> transform(Transformer<RecordComponentDescription> transformer) {
+                        return new RecordComponentDefinitionAdapter(recordComponentAttributeAppenderFactory,
+                                new Transformer.Compound<RecordComponentDescription>(this.transformer, transformer),
+                                token);
                     }
 
                     @Override
@@ -5367,7 +5507,100 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withRecordComponent(token),
                                 fieldRegistry,
                                 methodRegistry,
-                                recordComponentRegistry,
+                                recordComponentRegistry.prepend(new LatentMatcher.ForRecordComponentToken(token),
+                                        recordComponentAttributeAppenderFactory,
+                                        transformer),
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                visibilityBridgeStrategy,
+                                classWriterStrategy,
+                                ignoredMethods,
+                                auxiliaryTypes);
+                    }
+                }
+
+                /**
+                 * An adapter for matching record components.
+                 */
+                protected class RecordComponentMatchAdapter extends RecordComponentDefinition.Optional.AbstractBase<U> {
+
+                    /**
+                     * The matcher for identifying record components to match.
+                     */
+                    private final LatentMatcher<? super RecordComponentDescription> matcher;
+
+                    /**
+                     * The record component attribute appender factory to apply.
+                     */
+                    private final RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory;
+
+                    /**
+                     * A transformer to apply on matched record component descriptions.
+                     */
+                    private final Transformer<RecordComponentDescription> transformer;
+
+                    /**
+                     * Creates a new record component match adapter.
+                     *
+                     * @param matcher The matcher for identifying record components to match.
+                     */
+                    protected RecordComponentMatchAdapter(LatentMatcher<? super RecordComponentDescription> matcher) {
+                        this(matcher, RecordComponentAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<RecordComponentDescription>make());
+                    }
+
+                    /**
+                     * Creates a new record component match adapter.
+                     *
+                     * @param matcher                                 The matcher for identifying record components to match.
+                     * @param recordComponentAttributeAppenderFactory The record component attribute appender factory to apply.
+                     * @param transformer                             A transformer to apply on matched record component descriptions.
+                     */
+                    protected RecordComponentMatchAdapter(LatentMatcher<? super RecordComponentDescription> matcher,
+                                                          RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory,
+                                                          Transformer<RecordComponentDescription> transformer) {
+                        this.matcher = matcher;
+                        this.recordComponentAttributeAppenderFactory = recordComponentAttributeAppenderFactory;
+                        this.transformer = transformer;
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Optional<U> annotateRecordComponent(Collection<? extends AnnotationDescription> annotations) {
+                        return attribute(new RecordComponentAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public Optional<U> attribute(RecordComponentAttributeAppender.Factory recordComponentAttributeAppenderFactory) {
+                        return new RecordComponentMatchAdapter(matcher, new RecordComponentAttributeAppender.Factory.Compound(this.recordComponentAttributeAppenderFactory,
+                                recordComponentAttributeAppenderFactory), transformer);
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    @SuppressWarnings("unchecked")  // In absence of @SafeVarargs
+                    public Optional<U> transform(Transformer<RecordComponentDescription> transformer) {
+                        return new RecordComponentMatchAdapter(matcher,
+                                recordComponentAttributeAppenderFactory,
+                                new Transformer.Compound<RecordComponentDescription>(this.transformer, transformer));
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
+                                fieldRegistry,
+                                methodRegistry,
+                                recordComponentRegistry.prepend(matcher, recordComponentAttributeAppenderFactory, transformer),
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
                                 classFileVersion,

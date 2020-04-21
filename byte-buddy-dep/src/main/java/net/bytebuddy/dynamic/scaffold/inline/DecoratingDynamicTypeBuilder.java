@@ -22,6 +22,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
@@ -434,8 +435,13 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
-    public RecordComponentDefinition<T> defineRecordComponent(String name, TypeDefinition type) {
+    public RecordComponentDefinition.Optional<T> defineRecordComponent(String name, TypeDefinition type) {
         throw new UnsupportedOperationException("Cannot define record component for decorated type: " + instrumentedType);
+    }
+
+    @Override
+    public RecordComponentDefinition<T> recordComponent(LatentMatcher<? super RecordComponentDescription> matcher) {
+        throw new UnsupportedOperationException("Cannot change record component for decorated type: " + instrumentedType);
     }
 
     /**

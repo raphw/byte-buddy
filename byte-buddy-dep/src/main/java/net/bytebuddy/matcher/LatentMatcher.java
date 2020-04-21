@@ -18,6 +18,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.Arrays;
@@ -220,6 +221,34 @@ public interface LatentMatcher<T> {
             public boolean matches(MethodDescription target) {
                 return target.asSignatureToken().equals(signatureToken);
             }
+        }
+    }
+
+    /**
+     * A latent matcher for a record component token.
+     */
+    @HashCodeAndEqualsPlugin.Enhance
+    class ForRecordComponentToken implements LatentMatcher<RecordComponentDescription> {
+
+        /**
+         * The token being matched.
+         */
+        private final RecordComponentDescription.Token token;
+
+        /**
+         * Creates a latent matcher for a record component token.
+         *
+         * @param token The token being matched.
+         */
+        public ForRecordComponentToken(RecordComponentDescription.Token token) {
+            this.token = token;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public ElementMatcher<? super RecordComponentDescription> resolve(TypeDescription typeDescription) {
+            return named(token.getName());
         }
     }
 

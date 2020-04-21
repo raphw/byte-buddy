@@ -8360,7 +8360,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * {@inheritDoc}
                  */
-                public RecordComponentList getRecordComponents() {
+                public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
                     return delegate().getRecordComponents();
                 }
 
@@ -8787,10 +8787,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
             Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
             return recordComponent == null
-                ? new RecordComponentList.Empty()
+                ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
                 : new RecordComponentList.ForLoadedRecordComponents();
         }
 
@@ -9236,8 +9236,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
-            return new RecordComponentList.Empty();
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
+            return new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>();
         }
 
         /**
@@ -9432,7 +9432,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
             throw new IllegalStateException("Cannot resolve record components of a latent type description: " + this);
         }
 
@@ -9585,8 +9585,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
-            return new RecordComponentList.Empty();
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
+            return new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>();
         }
 
         /**
@@ -9814,7 +9814,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
-        public RecordComponentList getRecordComponents() {
+        public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
             return delegate.getRecordComponents();
         }
 
