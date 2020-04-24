@@ -248,7 +248,7 @@ public interface LatentMatcher<T> {
          * {@inheritDoc}
          */
         public ElementMatcher<? super RecordComponentDescription> resolve(TypeDescription typeDescription) {
-            return named(token.getName());
+            return ElementMatchers.<RecordComponentDescription>named(token.getName());
         }
     }
 
