@@ -6199,7 +6199,7 @@ public interface TypePool {
                         } else if (resolution.resolve().represents(String.class)) {
                             return new AnnotationValue.ForDescriptionArray<Object, Object>(String.class, resolution.resolve(), values);
                         } else {
-                            throw new IllegalStateException("Unexpected complex component type: " + resolution.resolve());
+                            return new ForIncompatibleType<Object[], Object[]>(resolution.resolve());
                         }
                     }
                 }
