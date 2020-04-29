@@ -890,8 +890,8 @@ public interface RecordComponentDescription extends DeclaredByType,
          *
          * @return The token's annotations.
          */
-        public List<? extends AnnotationDescription> getAnnotations() {
-            return annotations;
+        public AnnotationList getAnnotations() {
+            return new AnnotationList.Explicit(annotations);
         }
 
         /**
