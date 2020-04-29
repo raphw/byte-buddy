@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. April 2020: version 1.10.10
+
+- Update ASM to 8.0.1
+- Close Dex files in Android class loader.
+- Add abstraction for advice dispatcher to allow for use of invokedynamic.
+- Properly handle incompatible type changes in parsed annotations.
+- Add support for Java records.
+
 ### 29. March 2020: version 1.10.9
 
 - Add validation for interface method modifiers.
