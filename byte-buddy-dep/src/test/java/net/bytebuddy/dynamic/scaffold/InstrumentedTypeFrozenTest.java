@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.RecordComponentDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
@@ -40,6 +41,16 @@ public class InstrumentedTypeFrozenTest {
     @Test(expected = IllegalStateException.class)
     public void testMethodToken() throws Exception {
         new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withMethod(mock(MethodDescription.Token.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRecordComponentToken() throws Exception {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withRecordComponent(mock(RecordComponentDescription.Token.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRecord() throws Exception {
+        new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE).withRecord(false);
     }
 
     @Test(expected = IllegalStateException.class)

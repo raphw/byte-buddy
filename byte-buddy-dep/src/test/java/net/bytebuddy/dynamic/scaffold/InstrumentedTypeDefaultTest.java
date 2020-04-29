@@ -267,6 +267,52 @@ public class InstrumentedTypeDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void testWithRecordComponent() throws Exception {
+        TypeDescription.Generic type = mock(TypeDescription.Generic.class);
+        when(type.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(type);
+        TypeDescription rawType = mock(TypeDescription.class);
+        when(type.asErasure()).thenReturn(rawType);
+        when(rawType.getName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getRecordComponents().size(), is(0));
+        instrumentedType = instrumentedType.withRecordComponent(new RecordComponentDescription.Token(BAR,
+                type));
+        assertThat(instrumentedType.getRecordComponents().size(), is(1));
+        RecordComponentDescription.InDefinedShape recordComponentDescription = instrumentedType.getRecordComponents().get(0);
+        assertThat(recordComponentDescription.getType(), is(type));
+        assertThat(recordComponentDescription.getActualName(), is(BAR));
+        assertThat(recordComponentDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    public void testWithRecordOfInstrumentedType() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getRecordComponents().size(), is(0));
+        instrumentedType = instrumentedType.withRecordComponent(new RecordComponentDescription.Token(BAR,
+                TargetType.DESCRIPTION.asGenericType()));
+        assertThat(instrumentedType.getRecordComponents().size(), is(1));
+        RecordComponentDescription.InDefinedShape recordComponentDescription = instrumentedType.getRecordComponents().get(0);
+        assertThat(recordComponentDescription.getType().asErasure(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(recordComponentDescription.getActualName(), is(BAR));
+        assertThat(recordComponentDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    public void testWithRecordComponentOfInstrumentedTypeAsArray() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getRecordComponents().size(), is(0));
+        instrumentedType = instrumentedType.withRecordComponent(new RecordComponentDescription.Token(BAR,
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), new AnnotationSource.Explicit(annotationDescription))));
+        assertThat(instrumentedType.getRecordComponents().size(), is(1));
+        RecordComponentDescription.InDefinedShape recordComponentDescription = instrumentedType.getRecordComponents().get(0);
+        assertThat(recordComponentDescription.getType().asErasure().isArray(), is(true));
+        assertThat(recordComponentDescription.getType().getComponentType().asErasure(), sameInstance((TypeDescription) instrumentedType));
+        assertThat(recordComponentDescription.getActualName(), is(BAR));
+        assertThat(recordComponentDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void testWithInterface() throws Exception {
         TypeDescription.Generic interfaceType = mock(TypeDescription.Generic.class);
         when(interfaceType.asGenericType()).thenReturn(interfaceType);
