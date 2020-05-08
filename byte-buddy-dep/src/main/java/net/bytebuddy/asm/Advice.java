@@ -5289,7 +5289,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             initialTypes,
                             preMethodTypes,
                             postMethodTypes,
-                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+                            (readerFlags & ClassReader.EXPAND_FRAMES) != 0,
+                            !exitAdvice || !instrumentedMethod.isConstructor());
                 }
             }
 
@@ -5674,22 +5675,46 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract static class WithPreservedArguments extends Default {
 
                 /**
+                 * {@code true} if a completion frame for the method bust be a full frame to reflect an initialization change.
+                 */
+                protected boolean allowCompactCompletionFrame;
+
+                /**
                  * Creates a new stack map frame handler that requires the stack map frames of the original arguments to be preserved.
                  *
-                 * @param instrumentedType   The instrumented type.
-                 * @param instrumentedMethod The instrumented method.
-                 * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
-                 * @param preMethodTypes     A list of virtual method arguments that are available before the instrumented method is executed.
-                 * @param postMethodTypes    A list of virtual method arguments that are available after the instrumented method has completed.
-                 * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
+                 * @param instrumentedType            The instrumented type.
+                 * @param instrumentedMethod          The instrumented method.
+                 * @param initialTypes                A list of virtual method arguments that are explicitly added before any code execution.
+                 * @param preMethodTypes              A list of virtual method arguments that are available before the instrumented method is executed.
+                 * @param postMethodTypes             A list of virtual method arguments that are available after the instrumented method has completed.
+                 * @param expandFrames                {@code true} if the meta data handler is expected to expand its frames.
+                 * @param allowCompactCompletionFrame {@code true} if a completion frame for the method bust be a full frame to reflect an initialization change.
                  */
                 protected WithPreservedArguments(TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  List<? extends TypeDescription> initialTypes,
                                                  List<? extends TypeDescription> preMethodTypes,
                                                  List<? extends TypeDescription> postMethodTypes,
-                                                 boolean expandFrames) {
+                                                 boolean expandFrames,
+                                                 boolean allowCompactCompletionFrame) {
                     super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames);
+                    this.allowCompactCompletionFrame = allowCompactCompletionFrame;
+                }
+
+                @Override
+                protected void translateFrame(MethodVisitor methodVisitor,
+                                              TranslationMode translationMode,
+                                              MethodDescription methodDescription,
+                                              List<? extends TypeDescription> additionalTypes,
+                                              int type,
+                                              int localVariableLength,
+                                              Object[] localVariable,
+                                              int stackSize,
+                                              Object[] stack) {
+                    if (type == Opcodes.F_FULL && localVariableLength > 0 && localVariable[0] != Opcodes.UNINITIALIZED_THIS) {
+                        allowCompactCompletionFrame = true;
+                    }
+                    super.translateFrame(methodVisitor, translationMode, methodDescription, additionalTypes, type, localVariableLength, localVariable, stackSize, stack);
                 }
 
                 /**
@@ -5739,13 +5764,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * {@inheritDoc}
                  */
                 public void injectCompletionFrame(MethodVisitor methodVisitor) {
-                    if (!expandFrames && currentFrameDivergence == 0) {
-                        Object[] local = new Object[postMethodTypes.size()];
-                        int index = 0;
-                        for (TypeDescription typeDescription : postMethodTypes) {
-                            local[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                    if (allowCompactCompletionFrame && !expandFrames && currentFrameDivergence == 0 && postMethodTypes.size() < 4) {
+                        if (postMethodTypes.isEmpty()) {
+                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                        } else {
+                            Object[] local = new Object[postMethodTypes.size()];
+                            int index = 0;
+                            for (TypeDescription typeDescription : postMethodTypes) {
+                                local[index++] = Initialization.INITIALIZED.toFrame(typeDescription);
+                            }
+                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
-                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                     } else {
                         injectFullFrame(methodVisitor, Initialization.INITIALIZED, CompoundList.of(initialTypes, preMethodTypes, postMethodTypes), Collections.<TypeDescription>emptyList());
                     }
@@ -5803,20 +5832,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new stack map frame handler that expects the original frames to be preserved.
                      *
-                     * @param instrumentedType   The instrumented type.
-                     * @param instrumentedMethod The instrumented method.
-                     * @param initialTypes       A list of virtual method arguments that are explicitly added before any code execution.
-                     * @param preMethodTypes     A list of virtual method arguments that are available before the instrumented method is executed.
-                     * @param postMethodTypes    A list of virtual method arguments that are available after the instrumented method has completed.
-                     * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
+                     * @param instrumentedType            The instrumented type.
+                     * @param instrumentedMethod          The instrumented method.
+                     * @param initialTypes                A list of virtual method arguments that are explicitly added before any code execution.
+                     * @param preMethodTypes              A list of virtual method arguments that are available before the instrumented method is executed.
+                     * @param postMethodTypes             A list of virtual method arguments that are available after the instrumented method has completed.
+                     * @param expandFrames                {@code true} if the meta data handler is expected to expand its frames.
+                     * @param allowCompactCompletionFrame {@code true} if a completion frame for the method bust be a full frame to reflect an initialization change.
                      */
                     protected RequiringConsistentShape(TypeDescription instrumentedType,
                                                        MethodDescription instrumentedMethod,
                                                        List<? extends TypeDescription> initialTypes,
                                                        List<? extends TypeDescription> preMethodTypes,
                                                        List<? extends TypeDescription> postMethodTypes,
-                                                       boolean expandFrames) {
-                        super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames);
+                                                       boolean expandFrames,
+                                                       boolean allowCompactCompletionFrame) {
+                        super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames, allowCompactCompletionFrame);
                     }
 
                     /**
@@ -5868,7 +5899,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 List<? extends TypeDescription> preMethodTypes,
                                                 List<? extends TypeDescription> postMethodTypes,
                                                 boolean expandFrames) {
-                        super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames);
+                        super(instrumentedType, instrumentedMethod, initialTypes, preMethodTypes, postMethodTypes, expandFrames, true);
                     }
 
                     /**

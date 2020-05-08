@@ -1394,6 +1394,28 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO, String.class).getParameterAnnotations()[0][0], instanceOf(ParameterAnnotationSample.SampleParameter.class));
     }
 
+    @Test
+    public void testConstructorNoArgumentBackupAndNoFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+            .redefine(NoBackupArguments.class)
+            .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(0))))
+            .make()
+            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+            .getLoaded();
+        assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
+    }
+
+    @Test
+    public void testConstructorNoArgumentBackupAndFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+            .redefine(NoBackupArguments.class)
+            .visit(Advice.to(NoBackupArguments.class).on(isConstructor().and(takesArguments(boolean.class))))
+            .make()
+            .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+            .getLoaded();
+        assertThat(type.getDeclaredConstructor(boolean.class).newInstance(false), notNullValue(Object.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
@@ -3351,6 +3373,24 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         public static void advice(@Advice.Local("foo") Void argument) {
+            /* empty */
+        }
+    }
+
+    public static class NoBackupArguments {
+
+        public NoBackupArguments() {
+            /* empty */
+        }
+
+        public NoBackupArguments(boolean value) {
+            if (value) {
+                throw new IllegalStateException();
+            }
+        }
+
+        @Advice.OnMethodExit(backupArguments = false)
+        public static void advice() {
             /* empty */
         }
     }
