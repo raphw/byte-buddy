@@ -1416,6 +1416,17 @@ public class AdviceTest {
         assertThat(type.getDeclaredConstructor(boolean.class).newInstance(false), notNullValue(Object.class));
     }
 
+    @Test
+    public void testPopsValueAfterArrayWrite() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(AllArgumentsConstructor.class)
+                .visit(Advice.to(AllArgumentsConstructor.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
@@ -3392,6 +3403,17 @@ public class AdviceTest {
         @Advice.OnMethodExit(backupArguments = false)
         public static void advice() {
             /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AllArgumentsConstructor {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        public static void advice(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] args) {
+            args = new Object[0];
+            String ignored = "" + args;
         }
     }
 }

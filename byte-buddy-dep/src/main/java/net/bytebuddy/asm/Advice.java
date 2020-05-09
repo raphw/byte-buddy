@@ -1040,7 +1040,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * {@inheritDoc}
                      */
                     public StackManipulation resolveWrite() {
-                        return ArrayAccess.of(target).forEach(valueWrites);
+                        return new StackManipulation.Compound(ArrayAccess.of(target).forEach(valueWrites), Removal.SINGLE);
                     }
                 }
             }
