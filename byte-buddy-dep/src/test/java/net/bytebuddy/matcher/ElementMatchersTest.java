@@ -805,6 +805,14 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testTakesNoArguments() throws Exception {
+        assertThat(ElementMatchers.takesNoArguments()
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(QUX))), is(true));
+        assertThat(ElementMatchers.takesNoArguments()
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+    }
+
+    @Test
     public void testDeclaresException() throws Exception {
         assertThat(ElementMatchers.declaresException(IOException.class)
                 .matches(new MethodDescription.ForLoadedMethod(CanThrow.class.getDeclaredMethod(FOO))), is(true));
@@ -1339,9 +1347,12 @@ public class ElementMatchersTest {
     @SuppressWarnings("unused")
     private abstract static class TakesArguments {
 
+        abstract void qux();
+
         abstract void foo(Void a);
 
         abstract void bar(String a, int b);
+
     }
 
     private abstract static class CanThrow {

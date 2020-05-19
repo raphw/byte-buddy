@@ -1327,6 +1327,16 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a {@link MethodDescription} with no parameters.
+     *
+     * @param <T>    The type of the matched object.
+     * @return A matcher that matches a method description by the number of its parameters.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesNoArguments() {
+        return takesArguments(0);
+    }
+
+    /**
      * Matches a {@link MethodDescription} by validating that its parameters
      * fulfill a given constraint.
      *
@@ -1575,7 +1585,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a default constructor.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isDefaultConstructor() {
-        return isConstructor().and(takesArguments(0));
+        return isConstructor().and(takesNoArguments());
     }
 
     /**
@@ -1595,7 +1605,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#finalize()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isFinalizer() {
-        return named("finalize").and(takesArguments(0)).and(returns(TypeDescription.VOID));
+        return named("finalize").and(takesNoArguments()).and(returns(TypeDescription.VOID));
     }
 
     /**
@@ -1605,7 +1615,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#toString()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isHashCode() {
-        return named("hashCode").and(takesArguments(0)).and(returns(int.class));
+        return named("hashCode").and(takesNoArguments()).and(returns(int.class));
     }
 
     /**
@@ -1625,7 +1635,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#clone()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isClone() {
-        return named("clone").and(takesArguments(0));
+        return named("clone").and(takesNoArguments());
     }
 
     /**
@@ -1635,7 +1645,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the {@link Object#toString()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isToString() {
-        return named("toString").and(takesArguments(0)).and(returns(TypeDescription.STRING));
+        return named("toString").and(takesNoArguments()).and(returns(TypeDescription.STRING));
     }
 
     /**
@@ -1735,7 +1745,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any getter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
-        return takesArguments(0).and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get").or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
+        return takesNoArguments().and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get").or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
     }
 
     /**
