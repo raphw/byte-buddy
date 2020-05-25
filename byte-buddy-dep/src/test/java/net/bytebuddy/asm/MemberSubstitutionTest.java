@@ -711,10 +711,26 @@ public class MemberSubstitutionTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testMethodNotCompatible() throws Exception {
+    public void testMethodNotCompatibleReturn() throws Exception {
         new ByteBuddy()
                 .redefine(StaticFieldAccessSample.class)
                 .visit(MemberSubstitution.strict().field(named(BAR)).replaceWith(ValidationTarget.class.getDeclaredMethod(QUX)).on(named(RUN)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodNotCompatibleParameter() throws Exception {
+        new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(BAR)).replaceWith(ValidationTarget.class.getDeclaredMethod(BAR, Void.class)).on(named(RUN)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIncorrectParameterCount() throws Exception {
+        new ByteBuddy()
+                .redefine(StaticFieldAccessSample.class)
+                .visit(MemberSubstitution.strict().field(named(BAR)).replaceWith(ValidationTarget.class.getDeclaredMethod(BAR, Void.class, Void.class)).on(named(RUN)))
                 .make();
     }
 
@@ -1011,6 +1027,10 @@ public class MemberSubstitutionTest {
         }
 
         public static void bar(Void bar) {
+            /* empty */
+        }
+
+        public static void bar(Void bar, Void ignored) {
             /* empty */
         }
 

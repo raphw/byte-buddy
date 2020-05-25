@@ -1127,11 +1127,11 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                 if (!methodDescription.getReturnType().asErasure().isAssignableTo(result.asErasure())) {
                     throw new IllegalStateException("Cannot assign return value of " + methodDescription + " to " + result);
                 } else if (mapped.size() != parameters.size()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + parameters);
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + parameters.size() + " parameters");
                 }
                 for (int index = 0; index < mapped.size(); index++) {
-                    if (!mapped.get(index).asErasure().isAssignableTo(parameters.get(index).asErasure())) {
-                        throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + parameters);
+                    if (!parameters.get(index).asErasure().isAssignableTo(mapped.get(index).asErasure())) {
+                        throw new IllegalStateException("Cannot invoke " + methodDescription + " on parameter " + index + " of type " + parameters.get(index));
                     }
                 }
                 return methodDescription.isVirtual()
