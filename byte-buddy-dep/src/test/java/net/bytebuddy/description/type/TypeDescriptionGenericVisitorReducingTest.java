@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -44,10 +45,33 @@ public class TypeDescriptionGenericVisitorReducingTest {
     }
 
     @Test
-    public void testGenericArray() throws Exception {
+    public void testGenericArrayOfNonVariable() throws Exception {
+        when(typeDescription.getComponentType()).thenReturn(typeDescription);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
         assertThat(visitor.onGenericArray(typeDescription), is(rawTypeDescription));
         verify(typeDescription).asErasure();
+        verify(typeDescription).getComponentType();
+        verify(typeDescription).isArray();
+        verify(typeDescription).getSort();
+        verifyNoMoreInteractions(typeDescription);
+    }
+
+    @Test
+    public void testGenericArrayOfVariable() throws Exception {
+        when(typeDescription.getComponentType()).thenReturn(typeDescription);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(typeDescription.getSymbol()).thenReturn(FOO);
+        when(declaringType.findVariable(FOO)).thenReturn(typeDescription);
+        when(rawTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(rawTypeDescription.getDescriptor()).thenReturn(BAR);
+        assertThat(visitor.onGenericArray(typeDescription), not(rawTypeDescription));
+        verify(typeDescription).asErasure();
+        verify(typeDescription).getComponentType();
+        verify(typeDescription).isArray();
+        verify(typeDescription).getSort();
+        verify(typeDescription).getSymbol();
         verifyNoMoreInteractions(typeDescription);
     }
 
@@ -98,7 +122,7 @@ public class TypeDescriptionGenericVisitorReducingTest {
 
     @Test
     public void testTargetTypeResolution() throws Exception {
-        assertThat(visitor.onGenericArray(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
+        assertThat(visitor.onGenericArray(TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION).asGenericType()).getComponentType(), is(declaringType));
         assertThat(visitor.onParameterizedType(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
         assertThat(visitor.onNonGenericType(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
         when(typeDescription.getSymbol()).thenReturn(BAR);

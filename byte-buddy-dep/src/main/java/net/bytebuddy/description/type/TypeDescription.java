@@ -2293,7 +2293,15 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * {@inheritDoc}
                  */
                 public TypeDescription onGenericArray(Generic genericArray) {
-                    return TargetType.resolve(genericArray.asErasure(), declaringType);
+                    Generic targetType = genericArray;
+                    int arity = 0;
+                    do {
+                        targetType = targetType.getComponentType();
+                        arity++;
+                    } while (targetType.isArray());
+                    return TargetType.resolve(targetType.getSort().isTypeVariable()
+                            ? TypeDescription.ArrayProjection.of(declaringType.findVariable(targetType.getSymbol()).asErasure(), arity)
+                            : genericArray.asErasure(), declaringType);
                 }
 
                 /**
