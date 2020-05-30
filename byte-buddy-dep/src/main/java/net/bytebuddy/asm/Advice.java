@@ -48,6 +48,7 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.OpenedClassReader;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
+import net.bytebuddy.utility.visitor.FramePaddingMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
@@ -525,9 +526,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                    Implementation.Context implementationContext,
                                    int writerFlags,
                                    int readerFlags) {
-        methodVisitor = methodEnter.isPrependLineNumber()
+        methodVisitor = new FramePaddingMethodVisitor(methodEnter.isPrependLineNumber()
                 ? new LineNumberPrependingMethodVisitor(methodVisitor)
-                : methodVisitor;
+                : methodVisitor);
         if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     implementationContext,
@@ -9693,7 +9694,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+        public void onVisitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
             stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
         }
 

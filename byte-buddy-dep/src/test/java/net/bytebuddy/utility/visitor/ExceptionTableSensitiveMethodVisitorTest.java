@@ -25,6 +25,7 @@ public class ExceptionTableSensitiveMethodVisitorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Opcodes.ASM6, "visitLabel", new Class<?>[]{Label.class}, new Object[]{new Label()}},
+                {Opcodes.ASM6, "visitFrame", new Class<?>[]{int.class, int.class, Object[].class, int.class, Object[].class}, new Object[]{0, 0, new Object[0], 0, new Object[0]}},
                 {Opcodes.ASM6, "visitIntInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
                 {Opcodes.ASM6, "visitVarInsn", new Class<?>[]{int.class, int.class}, new Object[]{0, 0}},
                 {Opcodes.ASM6, "visitTypeInsn", new Class<?>[]{int.class, String.class}, new Object[]{0, ""}},

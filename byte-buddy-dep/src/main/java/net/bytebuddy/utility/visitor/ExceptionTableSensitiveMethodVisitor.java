@@ -58,6 +58,25 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     protected abstract void onAfterExceptionTable();
 
     @Override
+    public final void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+        considerEndOfExceptionTable();
+        onVisitFrame(type, localVariableLength, localVariable, stackSize, stack);
+    }
+
+    /**
+     * Visits a stack map frame.
+     *
+     * @param type                The type of stack map frame.
+     * @param localVariableLength The length of the local variable array.
+     * @param localVariable       An array containing type symbols for all values in the local variable array.
+     * @param stackSize           The size of the operand stack.
+     * @param stack               An array containing type symbols for all values on the operand stack.
+     */
+    protected void onVisitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+        super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+    }
+
+    @Override
     public final void visitLabel(Label label) {
         considerEndOfExceptionTable();
         onVisitLabel(label);
@@ -170,11 +189,11 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     /**
      * Visits a method instruction.
      *
-     * @param opcode     The visited opcode.
-     * @param owner      The method's owner.
-     * @param name       The method's internal name.
-     * @param descriptor The method's descriptor.
-     * @param isInterface      {@code true} if the method belongs to an interface.
+     * @param opcode      The visited opcode.
+     * @param owner       The method's owner.
+     * @param name        The method's internal name.
+     * @param descriptor  The method's descriptor.
+     * @param isInterface {@code true} if the method belongs to an interface.
      */
     protected void onVisitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
@@ -254,8 +273,8 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     /**
      * Visits a table switch instruction.
      *
-     * @param minimum           The minimum index.
-     * @param maximum           The maximum index.
+     * @param minimum       The minimum index.
+     * @param maximum       The maximum index.
      * @param defaultTarget A label indicating the default value.
      * @param label         Labels indicating the jump targets.
      */
@@ -273,8 +292,8 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
      * Visits a lookup switch instruction.
      *
      * @param defaultTarget The default option.
-     * @param key          The key values.
-     * @param label           The targets for each key.
+     * @param key           The key values.
+     * @param label         The targets for each key.
      */
     protected void onVisitLookupSwitchInsn(Label defaultTarget, int[] key, Label[] label) {
         super.visitLookupSwitchInsn(defaultTarget, key, label);
