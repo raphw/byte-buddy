@@ -61,7 +61,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -319,20 +320,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-        return to(advice, AdvicePostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
+        return to(advice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
     }
 
     /**
      * Creates a new advice.
      *
-     * @param advice           A description of the type declaring the advice.
-     * @param classFileLocator The class file locator for locating the advisory class's class file.
-     * @param userFactories    A list of custom factories for user generated offset mappings.
-     * @param delegator        The delegator to use.
+     * @param advice               A description of the type declaring the advice.
+     * @param postProcessorFactory The post processor factory to use.
+     * @param classFileLocator     The class file locator for locating the advisory class's class file.
+     * @param userFactories        A list of custom factories for user generated offset mappings.
+     * @param delegator            The delegator to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription advice,
-                               AdvicePostProcessor.Factory postProcessorFactory,
+                               PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                Delegator delegator) {
@@ -403,22 +405,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-        return to(enterAdvice, exitAdvice, AdvicePostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
+        return to(enterAdvice, exitAdvice, PostProcessor.NoOp.INSTANCE, classFileLocator, Collections.<OffsetMapping.Factory<?>>emptyList(), Delegator.ForStaticInvocation.INSTANCE);
     }
 
     /**
      * Creates a new advice.
      *
-     * @param enterAdvice      The type declaring the enter advice.
-     * @param exitAdvice       The type declaring the exit advice.
-     * @param classFileLocator The class file locator for locating the advisory class's class file.
-     * @param userFactories    A list of custom factories for user generated offset mappings.
-     * @param delegator        The delegator to use.
+     * @param enterAdvice          The type declaring the enter advice.
+     * @param exitAdvice           The type declaring the exit advice.
+     * @param postProcessorFactory The post processor factory to use.
+     * @param classFileLocator     The class file locator for locating the advisory class's class file.
+     * @param userFactories        A list of custom factories for user generated offset mappings.
+     * @param delegator            The delegator to use.
      * @return A method visitor wrapper representing the supplied advice.
      */
     protected static Advice to(TypeDescription enterAdvice,
                                TypeDescription exitAdvice,
-                               AdvicePostProcessor.Factory postProcessorFactory,
+                               PostProcessor.Factory postProcessorFactory,
                                ClassFileLocator classFileLocator,
                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                Delegator delegator) {
@@ -4449,29 +4452,143 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
     }
 
-    public interface AdvicePostProcessor {
+    /**
+     * A post processor for advice methods that is invoked after advice is executed.
+     */
+    public interface PostProcessor {
 
+        /**
+         * Indicates that an advice method has no return value stored at a given offset.
+         */
         int NO_RETURN = -1;
 
+        /**
+         * Resolves this post processor for a given instrumented method.
+         *
+         * @param instrumentedMethod The instrumented method.
+         * @param offset             The offset that stores the advice method's return value or {@link PostProcessor#NO_RETURN}
+         *                           if the advice method does not return a value.
+         * @return The stack manipulation to apply.
+         */
         StackManipulation resolve(MethodDescription instrumentedMethod, int offset);
 
+        /**
+         * A factory for creating a {@link PostProcessor}.
+         */
         interface Factory {
 
-            AdvicePostProcessor bind(MethodDescription.InDefinedShape advice, boolean exit);
+            /**
+             * Creates a post processor for a given advice method.
+             *
+             * @param advice The advice method to create the post processor for.
+             * @param exit   {@code true} if the advice is exit advice.
+             * @return The created post processor.
+             */
+            PostProcessor make(MethodDescription.InDefinedShape advice, boolean exit);
+
+            /**
+             * A compound factory for a post processor.
+             */
+            @HashCodeAndEqualsPlugin.Enhance
+            class Compound implements Factory {
+
+                /**
+                 * The represented post processor factories.
+                 */
+                private final List<Factory> factories;
+
+                /**
+                 * Creates a compound post processor factory.
+                 *
+                 * @param factory The represented post processor factories.
+                 */
+                public Compound(Factory... factory) {
+                    this(Arrays.asList(factory));
+                }
+
+                /**
+                 * Creates a compound post processor factory.
+                 *
+                 * @param factories The represented post processor factories.
+                 */
+                public Compound(List<? extends Factory> factories) {
+                    this.factories = new ArrayList<Factory>();
+                    for (Factory factory : factories) {
+                        if (factory instanceof Compound) {
+                            this.factories.addAll(((Compound) factory).factories);
+                        } else if (!(factory instanceof NoOp)) {
+                            this.factories.add(factory);
+                        }
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public PostProcessor make(MethodDescription.InDefinedShape advice, boolean exit) {
+                    List<PostProcessor> postProcessors = new ArrayList<PostProcessor>(factories.size());
+                    for (Factory factory : factories) {
+                        postProcessors.add(factory.make(advice, exit));
+                    }
+                    return new PostProcessor.Compound(postProcessors);
+                }
+            }
         }
 
-        enum NoOp implements AdvicePostProcessor, Factory {
+        /**
+         * A non-operational advice post processor.
+         */
+        enum NoOp implements PostProcessor, Factory {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
-            @Override
+            /**
+             * {@inheritDoc}
+             */
             public StackManipulation resolve(MethodDescription instrumentedMethod, int offset) {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
-            @Override
-            public AdvicePostProcessor bind(MethodDescription.InDefinedShape advice, boolean exit) {
+            /**
+             * {@inheritDoc}
+             */
+            public PostProcessor make(MethodDescription.InDefinedShape advice, boolean exit) {
                 return this;
+            }
+        }
+
+        /**
+         * A compound post processor.
+         */
+        @HashCodeAndEqualsPlugin.Enhance
+        class Compound implements PostProcessor {
+
+            /**
+             * The represented post processors.
+             */
+            private final List<PostProcessor> postProcessors;
+
+            /**
+             * Creates a new compound post processor.
+             *
+             * @param postProcessors The represented post processors.
+             */
+            protected Compound(List<PostProcessor> postProcessors) {
+                this.postProcessors = postProcessors;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public StackManipulation resolve(MethodDescription instrumentedMethod, int offset) {
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
+                for (PostProcessor postProcessor : postProcessors) {
+                    stackManipulations.add(postProcessor.resolve(instrumentedMethod, offset));
+                }
+                return new StackManipulation.Compound(stackManipulations);
             }
         }
     }
@@ -6300,28 +6417,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
-             * @param userFactories A list of custom factories for binding parameters of an advice method.
-             * @param classReader   A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
-             * @param methodExit    The unresolved dispatcher for the method exit advice.
+             * @param userFactories        A list of custom factories for binding parameters of an advice method.
+             * @param classReader          A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
+             * @param methodExit           The unresolved dispatcher for the method exit advice.
+             * @param postProcessorFactory The post processor factory to use.
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                   ClassReader classReader,
                                                   Unresolved methodExit,
-                                                  AdvicePostProcessor.Factory postProcessorFactory);
+                                                  PostProcessor.Factory postProcessorFactory);
 
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
              *
-             * @param userFactories A list of custom factories for binding parameters of an advice method.
-             * @param classReader   A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
-             * @param methodEnter   The unresolved dispatcher for the method enter advice.
+             * @param userFactories        A list of custom factories for binding parameters of an advice method.
+             * @param classReader          A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
+             * @param methodEnter          The unresolved dispatcher for the method enter advice.
+             * @param postProcessorFactory The post processor factory to use.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                 ClassReader classReader,
                                                 Unresolved methodEnter,
-                                                AdvicePostProcessor.Factory postProcessorFactory);
+                                                PostProcessor.Factory postProcessorFactory);
         }
 
         /**
@@ -7056,7 +7175,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
-                private final AdvicePostProcessor postProcessor;
+                /**
+                 * The post processor to apply.
+                 */
+                private final PostProcessor postProcessor;
 
                 /**
                  * A mapping from offset to a mapping for this offset with retained iteration order of the method's parameters.
@@ -7077,13 +7199,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new resolved version of a dispatcher.
                  *
                  * @param adviceMethod    The represented advice method.
+                 * @param postProcessor   The post processor to use.
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
                  * @param adviceType      The applied advice type.
                  */
                 protected AbstractBase(MethodDescription.InDefinedShape adviceMethod,
-                                       AdvicePostProcessor postProcessor,
+                                       PostProcessor postProcessor,
                                        List<? extends OffsetMapping.Factory<?>> factories,
                                        TypeDescription throwableType,
                                        TypeDescription relocatableType,
@@ -7214,7 +7337,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          ClassReader classReader,
                                                          Unresolved methodExit,
-                                                         AdvicePostProcessor.Factory postProcessorFactory) {
+                                                         PostProcessor.Factory postProcessorFactory) {
                 return this;
             }
 
@@ -7224,7 +7347,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        ClassReader classReader,
                                                        Unresolved methodEnter,
-                                                       AdvicePostProcessor.Factory postProcessorFactory) {
+                                                       PostProcessor.Factory postProcessorFactory) {
                 return this;
             }
 
@@ -7333,9 +7456,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit,
-                                                                    AdvicePostProcessor.Factory postProcessorFactory) {
+                                                                    PostProcessor.Factory postProcessorFactory) {
                 return Resolved.ForMethodEnter.of(adviceMethod,
-                        postProcessorFactory.bind(adviceMethod, false),
+                        postProcessorFactory.make(adviceMethod, false),
                         namedTypes,
                         userFactories,
                         methodExit.getAdviceType(),
@@ -7349,7 +7472,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                   ClassReader classReader,
                                                                   Unresolved methodEnter,
-                                                                  AdvicePostProcessor.Factory postProcessorFactory) {
+                                                                  PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
                 for (Map.Entry<String, TypeDefinition> entry : this.namedTypes.entrySet()) {
                     TypeDefinition typeDefinition = this.namedTypes.get(entry.getKey());
@@ -7359,7 +7482,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(adviceMethod + " does not read variable " + entry.getKey() + " as " + typeDefinition);
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.bind(adviceMethod, true), namedTypes, userFactories, classReader, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), namedTypes, userFactories, classReader, methodEnter.getAdviceType());
             }
 
             /**
@@ -7376,13 +7499,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new resolved version of a dispatcher.
                  *
                  * @param adviceMethod    The represented advice method.
+                 * @param postProcessor   The post processor to apply.
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
                  * @param classReader     A class reader to query for the class file of the advice method.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
-                                   AdvicePostProcessor postProcessor,
+                                   PostProcessor postProcessor,
                                    List<? extends OffsetMapping.Factory<?>> factories,
                                    TypeDescription throwableType,
                                    TypeDescription relocatableType,
@@ -7756,6 +7880,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
@@ -7763,7 +7888,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
-                                             AdvicePostProcessor postProcessor,
+                                             PostProcessor postProcessor,
                                              Map<String, TypeDefinition> namedTypes,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
@@ -7794,6 +7919,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves enter advice that only exposes the enter type if this is necessary.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
@@ -7802,7 +7928,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate enter handler.
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
-                                                                AdvicePostProcessor postProcessor,
+                                                                PostProcessor postProcessor,
                                                                 Map<String, TypeDefinition> namedTypes,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
@@ -7940,13 +8066,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                        AdvicePostProcessor postProcessor,
+                                                        PostProcessor postProcessor,
                                                         Map<String, TypeDefinition> namedTypes,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
                                                         TypeDefinition exitType,
@@ -7971,13 +8098,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does not expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param classReader   A class reader to query for the class file of the advice method.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                         AdvicePostProcessor postProcessor,
+                                                         PostProcessor postProcessor,
                                                          Map<String, TypeDefinition> namedTypes,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          TypeDefinition exitType,
@@ -8035,6 +8163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
@@ -8042,7 +8171,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            AdvicePostProcessor postProcessor,
+                                            PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
@@ -8072,6 +8201,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   The class reader for parsing the advice method's class file.
@@ -8079,7 +8209,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
-                                                               AdvicePostProcessor postProcessor,
+                                                               PostProcessor postProcessor,
                                                                Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                ClassReader classReader,
@@ -8224,6 +8354,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param classReader   The class reader for parsing the advice method's class file.
@@ -8232,7 +8363,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                       AdvicePostProcessor postProcessor,
+                                                       PostProcessor postProcessor,
                                                        Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        ClassReader classReader,
@@ -8259,6 +8390,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param classReader   A class reader to query for the class file of the advice method.
@@ -8266,7 +8398,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                          AdvicePostProcessor postProcessor,
+                                                          PostProcessor postProcessor,
                                                           Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           ClassReader classReader,
@@ -8702,8 +8834,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Unresolved methodExit,
-                                                                    AdvicePostProcessor.Factory postProcessorFactory) {
-                return Resolved.ForMethodEnter.of(adviceMethod, postProcessorFactory.bind(adviceMethod, false), delegator, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
+                                                                    PostProcessor.Factory postProcessorFactory) {
+                return Resolved.ForMethodEnter.of(adviceMethod, postProcessorFactory.make(adviceMethod, false), delegator, userFactories, methodExit.getAdviceType(), methodExit.isAlive());
             }
 
             /**
@@ -8712,7 +8844,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Dispatcher.Resolved.ForMethodExit asMethodExit(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                   ClassReader classReader,
                                                                   Unresolved methodEnter,
-                                                                  AdvicePostProcessor.Factory postProcessorFactory) {
+                                                                  PostProcessor.Factory postProcessorFactory) {
                 Map<String, TypeDefinition> namedTypes = methodEnter.getNamedTypes();
                 for (ParameterDescription parameterDescription : adviceMethod.getParameters().filter(isAnnotatedWith(Local.class))) {
                     String name = parameterDescription.getDeclaredAnnotations().ofType(Local.class).load().value();
@@ -8723,7 +8855,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(adviceMethod + " does not read variable " + name + " as " + typeDefinition);
                     }
                 }
-                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.bind(adviceMethod, true), delegator, namedTypes, userFactories, methodEnter.getAdviceType());
+                return Resolved.ForMethodExit.of(adviceMethod, postProcessorFactory.make(adviceMethod, true), delegator, namedTypes, userFactories, methodEnter.getAdviceType());
             }
 
             /**
@@ -8740,13 +8872,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new resolved version of a dispatcher.
                  *
                  * @param adviceMethod    The represented advice method.
+                 * @param postProcessor   The post processor to apply.
                  * @param factories       A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType   The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  * @param relocatableType The type to trigger a relocation of the method's control flow or {@code void} if no relocation should be executed.
                  * @param delegator       The delegator to use.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
-                                   AdvicePostProcessor postProcessor,
+                                   PostProcessor postProcessor,
                                    List<? extends OffsetMapping.Factory<?>> factories,
                                    TypeDescription throwableType,
                                    TypeDescription relocatableType,
@@ -9148,13 +9281,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
                      * @param delegator     The delegator to use.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
-                                             AdvicePostProcessor postProcessor,
+                                             PostProcessor postProcessor,
                                              List<? extends OffsetMapping.Factory<?>> userFactories,
                                              TypeDefinition exitType,
                                              Delegator delegator) {
@@ -9182,6 +9316,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves enter advice that only exposes the enter type if this is necessary.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param delegator     The delegator to use.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param exitType      The exit type or {@code void} if no exit type is defined.
@@ -9189,7 +9324,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate enter handler.
                      */
                     protected static Resolved.ForMethodEnter of(MethodDescription.InDefinedShape adviceMethod,
-                                                                AdvicePostProcessor postProcessor,
+                                                                PostProcessor postProcessor,
                                                                 Delegator delegator,
                                                                 List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                 TypeDefinition exitType,
@@ -9293,12 +9428,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param delegator     The delegator to use.
                          */
                         protected WithRetainedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                        AdvicePostProcessor postProcessor,
+                                                        PostProcessor postProcessor,
                                                         List<? extends OffsetMapping.Factory<?>> userFactories,
                                                         TypeDefinition exitType,
                                                         Delegator delegator) {
@@ -9322,12 +9458,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method enter advice that does not expose the enter type.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor to apply.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param exitType      The exit type or {@code void} if no exit type is defined.
                          * @param delegator     The delegator to use.
                          */
                         protected WithDiscardedEnterType(MethodDescription.InDefinedShape adviceMethod,
-                                                         AdvicePostProcessor postProcessor,
+                                                         PostProcessor postProcessor,
                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          TypeDefinition exitType,
                                                          Delegator delegator) {
@@ -9384,6 +9521,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
                      * @param adviceMethod  The represented advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param enterType     The type of the value supplied by the enter advice method or {@code void} if no such value exists.
@@ -9391,7 +9529,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked")
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            AdvicePostProcessor postProcessor,
+                                            PostProcessor postProcessor,
                                             Map<String, TypeDefinition> namedTypes,
                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                             TypeDefinition enterType,
@@ -9421,6 +9559,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
                      * @param adviceMethod  The advice method.
+                     * @param postProcessor The post processor to apply.
                      * @param delegator     The delegator to use.
                      * @param namedTypes    A mapping of all available local variables by their name to their type.
                      * @param userFactories A list of user-defined factories for offset mappings.
@@ -9428,7 +9567,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
-                                                               AdvicePostProcessor postProcessor,
+                                                               PostProcessor postProcessor,
                                                                Delegator delegator,
                                                                Map<String, TypeDefinition> namedTypes,
                                                                List<? extends OffsetMapping.Factory<?>> userFactories,
@@ -9543,6 +9682,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor factory to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param enterType     The type of the value supplied by the enter advice method or
@@ -9551,7 +9691,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param delegator     The delegator to use.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                       AdvicePostProcessor postProcessor,
+                                                       PostProcessor postProcessor,
                                                        Map<String, TypeDefinition> namedTypes,
                                                        List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        TypeDefinition enterType,
@@ -9578,6 +9718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
                          * @param adviceMethod  The represented advice method.
+                         * @param postProcessor The post processor factory to apply.
                          * @param namedTypes    A mapping of all available local variables by their name to their type.
                          * @param userFactories A list of user-defined factories for offset mappings.
                          * @param enterType     The type of the value supplied by the enter advice method or
@@ -9585,7 +9726,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param delegator     The delegator to use.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                          AdvicePostProcessor postProcessor,
+                                                          PostProcessor postProcessor,
                                                           Map<String, TypeDefinition> namedTypes,
                                                           List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           TypeDefinition enterType,
@@ -10975,7 +11116,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @HashCodeAndEqualsPlugin.Enhance
     public static class WithCustomMapping {
 
-        private final AdvicePostProcessor.Factory postProcessorFactory;
+        /**
+         * The post processor factory to apply.
+         */
+        private final PostProcessor.Factory postProcessorFactory;
 
         /**
          * The delegator to use.
@@ -10991,16 +11135,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Creates a new custom mapping builder step without including any custom mappings.
          */
         protected WithCustomMapping() {
-            this(AdvicePostProcessor.NoOp.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(), Delegator.ForStaticInvocation.INSTANCE);
+            this(PostProcessor.NoOp.INSTANCE, Collections.<Class<? extends Annotation>, OffsetMapping.Factory<?>>emptyMap(), Delegator.ForStaticInvocation.INSTANCE);
         }
 
         /**
          * Creates a new custom mapping builder step with the given custom mappings.
          *
-         * @param offsetMappings A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
-         * @param delegator      The delegator to use.
+         * @param postProcessorFactory The post processor factory to apply.
+         * @param offsetMappings       A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
+         * @param delegator            The delegator to use.
          */
-        protected WithCustomMapping(AdvicePostProcessor.Factory postProcessorFactory,
+        protected WithCustomMapping(PostProcessor.Factory postProcessorFactory,
                                     Map<Class<? extends Annotation>, OffsetMapping.Factory<?>> offsetMappings,
                                     Delegator delegator) {
             this.postProcessorFactory = postProcessorFactory;
@@ -11300,6 +11445,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         public WithCustomMapping bootstrap(MethodDescription.InDefinedShape methodDescription) {
             return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(methodDescription));
+        }
+
+        /**
+         * Adds the supplied post processor factory for advice method post processing.
+         *
+         * @param postProcessorFactory The post processor factory to add.
+         * @return A new builder for an advice that applies the supplied post processor factory.
+         */
+        public WithCustomMapping with(PostProcessor.Factory postProcessorFactory) {
+            return new WithCustomMapping(new PostProcessor.Factory.Compound(this.postProcessorFactory, postProcessorFactory), offsetMappings, delegator);
         }
 
         /**
