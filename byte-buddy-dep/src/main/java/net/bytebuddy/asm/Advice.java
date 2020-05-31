@@ -8424,6 +8424,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract static class CodeTranslationVisitor extends MethodVisitor {
 
                 /**
+                 * Indicates an empty operand stack.
+                 */
+                private static final int EMPTY = 0;
+
+                /**
                  * The original method visitor to which all instructions are eventually written to.
                  */
                 protected final MethodVisitor methodVisitor;
@@ -8448,6 +8453,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
+                /**
+                 * The instrumented method.
+                 */
                 private final MethodDescription instrumentedMethod;
 
                 /**
@@ -8470,6 +8478,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final RelocationHandler.Bound relocationHandler;
 
+                /**
+                 * The post processor to apply.
+                 */
                 private final PostProcessor postProcessor;
 
                 /**
@@ -8490,6 +8501,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
                  * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                  * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                 * @param postProcessor         The post processor to apply.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -8673,7 +8685,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                     methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
                             ? PostProcessor.NO_RETURN
-                            : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), 0);
+                            : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                 }
 
                 @Override
@@ -8707,6 +8719,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                     * @param postProcessor         The post processor to apply.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
                                              Context implementationContext,
@@ -8756,6 +8769,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                     * @param postProcessor         The post processor to apply.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
                                             Implementation.Context implementationContext,
@@ -9024,6 +9038,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final RelocationHandler.Bound relocationHandler;
 
+                    /**
+                     * The post processor to apply.
+                     */
                     private final PostProcessor postProcessor;
 
                     /**
@@ -9045,6 +9062,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                      * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                      * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                     * @param postProcessor         The post processor to apply.
                      * @param delegator             The delegator to use.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
@@ -9157,6 +9175,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
                          * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                          * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
+                         * @param postProcessor         The post processor to apply.
                          * @param delegator             The delegator to use.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
@@ -9216,6 +9235,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param adviceMethod          The advice method.
                          * @param instrumentedType      The instrumented type.
                          * @param instrumentedMethod    The instrumented method.
+                         * @param postProcessor         The post processor to apply.
                          * @param offsetMappings        The offset mappings available to this advice.
                          * @param methodVisitor         The method visitor for writing the instrumented method.
                          * @param implementationContext The implementation context to use.
