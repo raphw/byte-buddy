@@ -4465,12 +4465,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Resolves this post processor for a given instrumented method.
          *
+         * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
          * @param offset             The offset that stores the advice method's return value or {@link PostProcessor#NO_RETURN}
          *                           if the advice method does not return a value.
          * @return The stack manipulation to apply.
          */
-        StackManipulation resolve(MethodDescription instrumentedMethod, int offset);
+        StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, int offset);
 
         /**
          * A factory for creating a {@link PostProcessor}.
@@ -4548,7 +4549,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(MethodDescription instrumentedMethod, int offset) {
+            public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, int offset) {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
@@ -4583,10 +4584,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(MethodDescription instrumentedMethod, int offset) {
+            public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, int offset) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
                 for (PostProcessor postProcessor : postProcessors) {
-                    stackManipulations.add(postProcessor.resolve(instrumentedMethod, offset));
+                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, offset));
                 }
                 return new StackManipulation.Compound(stackManipulations);
             }
@@ -8049,6 +8050,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 argumentHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
+                                instrumentedType,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
@@ -8291,6 +8293,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 argumentHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
+                                instrumentedType,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
@@ -8454,6 +8457,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
                 /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
                  * The instrumented method.
                  */
                 private final MethodDescription instrumentedMethod;
@@ -8496,6 +8504,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param argumentHandler       A handler for accessing values on the local variable array.
                  * @param methodSizeHandler     A handler for computing the method size requirements.
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param instrumentedType      The instrumented type.
                  * @param instrumentedMethod    The instrumented method.
                  * @param adviceMethod          The advice method.
                  * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
@@ -8508,6 +8517,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  ArgumentHandler.ForAdvice argumentHandler,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                                 TypeDescription instrumentedType,
                                                  MethodDescription instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, OffsetMapping.Target> offsetMappings,
@@ -8520,6 +8530,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.argumentHandler = argumentHandler;
                     this.methodSizeHandler = methodSizeHandler;
                     this.stackMapFrameHandler = stackMapFrameHandler;
+                    this.instrumentedType = instrumentedType;
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.offsetMappings = offsetMappings;
@@ -8683,7 +8694,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
-                    methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
+                    methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedType, instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
                             ? PostProcessor.NO_RETURN
                             : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                 }
@@ -8714,6 +8725,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param argumentHandler       A handler for accessing values on the local variable array.
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param instrumentedType      The instrumented type.
                      * @param instrumentedMethod    The instrumented method.
                      * @param adviceMethod          The advice method.
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
@@ -8726,6 +8738,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              ArgumentHandler.ForAdvice argumentHandler,
                                              MethodSizeHandler.ForAdvice methodSizeHandler,
                                              StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                             TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, OffsetMapping.Target> offsetMappings,
@@ -8737,6 +8750,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 argumentHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
+                                instrumentedType,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
@@ -8764,6 +8778,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param argumentHandler       A handler for accessing values on the local variable array.
                      * @param methodSizeHandler     A handler for computing the method size requirements.
                      * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param instrumentedType      The instrumented type.
                      * @param instrumentedMethod    The instrumented method.
                      * @param adviceMethod          The advice method.
                      * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
@@ -8776,6 +8791,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             ArgumentHandler.ForAdvice argumentHandler,
                                             MethodSizeHandler.ForAdvice methodSizeHandler,
                                             StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                            TypeDescription instrumentedType,
                                             MethodDescription instrumentedMethod,
                                             MethodDescription.InDefinedShape adviceMethod,
                                             Map<Integer, OffsetMapping.Target> offsetMappings,
@@ -8787,6 +8803,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 argumentHandler,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
+                                instrumentedType,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
@@ -9136,7 +9153,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
-                        methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
+                        methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedType, instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
                                 ? PostProcessor.NO_RETURN
                                 : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                     }
