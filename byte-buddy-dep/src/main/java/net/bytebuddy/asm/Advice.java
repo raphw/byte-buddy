@@ -7178,7 +7178,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The post processor to apply.
                  */
-                private final PostProcessor postProcessor;
+                protected final PostProcessor postProcessor;
 
                 /**
                  * A mapping from offset to a mapping for this offset with retained iteration order of the method's parameters.
@@ -8053,7 +8053,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod,
                                 offsetMappings,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                postProcessor);
                     }
 
                     /**
@@ -8294,7 +8295,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod,
                                 offsetMappings,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                postProcessor);
                     }
 
                     /**
@@ -8446,6 +8448,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
+                private final MethodDescription instrumentedMethod;
+
                 /**
                  * The advice method.
                  */
@@ -8465,6 +8469,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound relocation handler that is responsible for considering a non-standard control flow.
                  */
                 private final RelocationHandler.Bound relocationHandler;
+
+                private final PostProcessor postProcessor;
 
                 /**
                  * A label indicating the end of the advice byte code.
@@ -8494,17 +8500,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, OffsetMapping.Target> offsetMappings,
                                                  SuppressionHandler.Bound suppressionHandler,
-                                                 RelocationHandler.Bound relocationHandler) {
+                                                 RelocationHandler.Bound relocationHandler,
+                                                 PostProcessor postProcessor) {
                     super(OpenedClassReader.ASM_API, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
                     this.methodVisitor = methodVisitor;
                     this.implementationContext = implementationContext;
                     this.argumentHandler = argumentHandler;
                     this.methodSizeHandler = methodSizeHandler;
                     this.stackMapFrameHandler = stackMapFrameHandler;
+                    this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.offsetMappings = offsetMappings;
                     this.suppressionHandler = suppressionHandler;
                     this.relocationHandler = relocationHandler;
+                    this.postProcessor = postProcessor;
                     endOfMethod = new Label();
                 }
 
@@ -8662,6 +8671,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
+                    methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
+                            ? PostProcessor.NO_RETURN
+                            : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), 0);
                 }
 
                 @Override
@@ -8705,7 +8717,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, OffsetMapping.Target> offsetMappings,
                                              SuppressionHandler.Bound suppressionHandler,
-                                             RelocationHandler.Bound relocationHandler) {
+                                             RelocationHandler.Bound relocationHandler,
+                                             PostProcessor postProcessor) {
                         super(methodVisitor,
                                 implementationContext,
                                 argumentHandler,
@@ -8715,7 +8728,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod,
                                 offsetMappings,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                postProcessor);
                     }
 
                     @Override
@@ -8752,7 +8766,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape adviceMethod,
                                             Map<Integer, OffsetMapping.Target> offsetMappings,
                                             SuppressionHandler.Bound suppressionHandler,
-                                            RelocationHandler.Bound relocationHandler) {
+                                            RelocationHandler.Bound relocationHandler,
+                                            PostProcessor postProcessor) {
                         super(methodVisitor,
                                 implementationContext,
                                 argumentHandler,
@@ -8762,7 +8777,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod,
                                 offsetMappings,
                                 suppressionHandler,
-                                relocationHandler);
+                                relocationHandler,
+                                postProcessor);
                     }
 
                     @Override
@@ -9008,6 +9024,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final RelocationHandler.Bound relocationHandler;
 
+                    private final PostProcessor postProcessor;
+
                     /**
                      * The delegator to use.
                      */
@@ -9040,6 +9058,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler,
+                                                 PostProcessor postProcessor,
                                                  Delegator delegator) {
                         this.adviceMethod = adviceMethod;
                         this.instrumentedType = instrumentedType;
@@ -9052,6 +9071,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.stackMapFrameHandler = stackMapFrameHandler;
                         this.suppressionHandler = suppressionHandler;
                         this.relocationHandler = relocationHandler;
+                        this.postProcessor = postProcessor;
                         this.delegator = delegator;
                     }
 
@@ -9098,6 +9118,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
+                        methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedMethod, adviceMethod.getReturnType().represents(void.class)
+                                ? PostProcessor.NO_RETURN
+                                : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                     }
 
                     /**
@@ -9147,6 +9170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler,
+                                                 PostProcessor postProcessor,
                                                  Delegator delegator) {
                             super(adviceMethod,
                                     instrumentedType,
@@ -9159,6 +9183,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     stackMapFrameHandler,
                                     suppressionHandler,
                                     relocationHandler,
+                                    postProcessor,
                                     delegator);
                         }
 
@@ -9204,6 +9229,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod,
+                                                PostProcessor postProcessor,
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -9224,6 +9250,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     stackMapFrameHandler,
                                     suppressionHandler,
                                     relocationHandler,
+                                    postProcessor,
                                     delegator);
                         }
 
@@ -9415,6 +9442,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 stackMapFrameHandler,
                                 suppressionHandler,
                                 relocationHandler,
+                                postProcessor,
                                 delegator);
                     }
 
@@ -9640,6 +9668,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new AdviceMethodWriter.ForMethodExit(adviceMethod,
                                 instrumentedType,
                                 instrumentedMethod,
+                                postProcessor,
                                 offsetMappings,
                                 methodVisitor,
                                 implementationContext,
