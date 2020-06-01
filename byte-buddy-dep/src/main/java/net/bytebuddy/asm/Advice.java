@@ -8049,7 +8049,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler,
                                     OffsetMapping.Sort.ENTER));
                         }
-                        return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
+                        return new CodeTranslationVisitor(methodVisitor,
                                 implementationContext,
                                 argumentHandler,
                                 methodSizeHandler,
@@ -8061,7 +8061,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 suppressionHandler,
                                 relocationHandler,
-                                postProcessor);
+                                postProcessor,
+                                false);
                     }
 
                     /**
@@ -8293,7 +8294,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     argumentHandler,
                                     OffsetMapping.Sort.EXIT));
                         }
-                        return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
+                        return new CodeTranslationVisitor(methodVisitor,
                                 implementationContext,
                                 argumentHandler,
                                 methodSizeHandler,
@@ -8305,7 +8306,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 suppressionHandler,
                                 relocationHandler,
-                                postProcessor);
+                                postProcessor,
+                                true);
                     }
 
                     /**
@@ -8430,7 +8432,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
-            protected abstract static class CodeTranslationVisitor extends MethodVisitor {
+            protected static class CodeTranslationVisitor extends MethodVisitor {
 
                 /**
                  * Indicates an empty operand stack.
@@ -8503,6 +8505,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final PostProcessor postProcessor;
 
                 /**
+                 * {@code true} if this visitor is for exit advice.
+                 */
+                private final boolean exit;
+
+                /**
                  * A label indicating the end of the advice byte code.
                  */
                 protected final Label endOfMethod;
@@ -8523,6 +8530,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                  * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
                  * @param postProcessor         The post processor to apply.
+                 * @param exit                  {@code true} if this visitor is for exit advice.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  Context implementationContext,
@@ -8536,7 +8544,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  Map<Integer, OffsetMapping.Target> offsetMappings,
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  RelocationHandler.Bound relocationHandler,
-                                                 PostProcessor postProcessor) {
+                                                 PostProcessor postProcessor,
+                                                 boolean exit) {
                     super(OpenedClassReader.ASM_API, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
                     this.methodVisitor = methodVisitor;
                     this.implementationContext = implementationContext;
@@ -8551,6 +8560,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.suppressionHandler = suppressionHandler;
                     this.relocationHandler = relocationHandler;
                     this.postProcessor = postProcessor;
+                    this.exit = exit;
                     endOfMethod = new Label();
                 }
 
@@ -8692,21 +8702,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             || adviceMethod.getReturnType().represents(char.class)
                             || adviceMethod.getReturnType().represents(int.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.ISTORE, getReturnValueOffset());
+                        methodVisitor.visitVarInsn(Opcodes.ISTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     } else if (adviceMethod.getReturnType().represents(long.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.LSTORE, getReturnValueOffset());
+                        methodVisitor.visitVarInsn(Opcodes.LSTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     } else if (adviceMethod.getReturnType().represents(float.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.FSTORE, getReturnValueOffset());
+                        methodVisitor.visitVarInsn(Opcodes.FSTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     } else if (adviceMethod.getReturnType().represents(double.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.DSTORE, getReturnValueOffset());
+                        methodVisitor.visitVarInsn(Opcodes.DSTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     } else if (!adviceMethod.getReturnType().represents(void.class)) {
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
-                        methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
+                        methodVisitor.visitVarInsn(Opcodes.ASTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     }
-                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
+                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                     methodSizeHandler.recordMaxima(postProcessor
                             .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
@@ -8716,126 +8726,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitMaxs(int stackSize, int localVariableLength) {
                     methodSizeHandler.recordMaxima(stackSize, localVariableLength);
-                }
-
-                /**
-                 * Resolves the offset of the advice method's local variable. The returned value is only valid if
-                 * this advice method does not return {@code void}.
-                 *
-                 * @return The offset of the represented advice method.
-                 */
-                protected abstract int getReturnValueOffset();
-
-                /**
-                 * A code translation visitor that retains the return value of the represented advice method.
-                 */
-                protected static class ForMethodEnter extends CodeTranslationVisitor {
-
-                    /**
-                     * Creates a code translation visitor for translating exit advice.
-                     *
-                     * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
-                     * @param implementationContext The implementation context to use.
-                     * @param argumentHandler       A handler for accessing values on the local variable array.
-                     * @param methodSizeHandler     A handler for computing the method size requirements.
-                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
-                     * @param instrumentedType      The instrumented type.
-                     * @param instrumentedMethod    The instrumented method.
-                     * @param assigner              The assigner to use.
-                     * @param adviceMethod          The advice method.
-                     * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
-                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
-                     * @param postProcessor         The post processor to apply.
-                     */
-                    protected ForMethodEnter(MethodVisitor methodVisitor,
-                                             Context implementationContext,
-                                             ArgumentHandler.ForAdvice argumentHandler,
-                                             MethodSizeHandler.ForAdvice methodSizeHandler,
-                                             StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                             TypeDescription instrumentedType,
-                                             MethodDescription instrumentedMethod,
-                                             Assigner assigner,
-                                             MethodDescription.InDefinedShape adviceMethod,
-                                             Map<Integer, OffsetMapping.Target> offsetMappings,
-                                             SuppressionHandler.Bound suppressionHandler,
-                                             RelocationHandler.Bound relocationHandler,
-                                             PostProcessor postProcessor) {
-                        super(methodVisitor,
-                                implementationContext,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                instrumentedType,
-                                instrumentedMethod,
-                                assigner,
-                                adviceMethod,
-                                offsetMappings,
-                                suppressionHandler,
-                                relocationHandler,
-                                postProcessor);
-                    }
-
-                    @Override
-                    protected int getReturnValueOffset() {
-                        return argumentHandler.enter();
-                    }
-                }
-
-                /**
-                 * A code translation visitor that discards the return value of the represented advice method.
-                 */
-                protected static class ForMethodExit extends CodeTranslationVisitor {
-
-                    /**
-                     * Creates a code translation visitor for translating exit advice.
-                     *
-                     * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
-                     * @param implementationContext The implementation context to use.
-                     * @param argumentHandler       A handler for accessing values on the local variable array.
-                     * @param methodSizeHandler     A handler for computing the method size requirements.
-                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
-                     * @param instrumentedType      The instrumented type.
-                     * @param instrumentedMethod    The instrumented method.
-                     * @param assigner              The assigner to use.
-                     * @param adviceMethod          The advice method.
-                     * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
-                     * @param relocationHandler     A bound relocation handler that is responsible for considering a non-standard control flow.
-                     * @param postProcessor         The post processor to apply.
-                     */
-                    protected ForMethodExit(MethodVisitor methodVisitor,
-                                            Implementation.Context implementationContext,
-                                            ArgumentHandler.ForAdvice argumentHandler,
-                                            MethodSizeHandler.ForAdvice methodSizeHandler,
-                                            StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                                            TypeDescription instrumentedType,
-                                            MethodDescription instrumentedMethod,
-                                            Assigner assigner,
-                                            MethodDescription.InDefinedShape adviceMethod,
-                                            Map<Integer, OffsetMapping.Target> offsetMappings,
-                                            SuppressionHandler.Bound suppressionHandler,
-                                            RelocationHandler.Bound relocationHandler,
-                                            PostProcessor postProcessor) {
-                        super(methodVisitor,
-                                implementationContext,
-                                argumentHandler,
-                                methodSizeHandler,
-                                stackMapFrameHandler,
-                                instrumentedType,
-                                instrumentedMethod,
-                                assigner,
-                                adviceMethod,
-                                offsetMappings,
-                                suppressionHandler,
-                                relocationHandler,
-                                postProcessor);
-                    }
-
-                    @Override
-                    protected int getReturnValueOffset() {
-                        return argumentHandler.exit();
-                    }
                 }
             }
         }
@@ -9168,31 +9058,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 || adviceMethod.getReturnType().represents(short.class)
                                 || adviceMethod.getReturnType().represents(char.class)
                                 || adviceMethod.getReturnType().represents(int.class)) {
-                            methodVisitor.visitVarInsn(Opcodes.ISTORE, getReturnValueOffset());
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (adviceMethod.getReturnType().represents(long.class)) {
-                            methodVisitor.visitVarInsn(Opcodes.LSTORE, getReturnValueOffset());
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (adviceMethod.getReturnType().represents(float.class)) {
-                            methodVisitor.visitVarInsn(Opcodes.FSTORE, getReturnValueOffset());
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (adviceMethod.getReturnType().represents(double.class)) {
-                            methodVisitor.visitVarInsn(Opcodes.DSTORE, getReturnValueOffset());
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                            methodVisitor.visitVarInsn(Opcodes.ASTORE, getReturnValueOffset());
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
-                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
+                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                         methodSizeHandler.recordMaxima(postProcessor
                                 .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
                                 .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                     }
-
-                    /**
-                     * Resolves the offset of the advice method's local variable. The returned value is only valid if
-                     * this advice method does not return {@code void}.
-                     *
-                     * @return The offset of the represented advice method.
-                     */
-                    protected abstract int getReturnValueOffset();
 
                     /**
                      * Returns {@code true} if this writer represents exit advice.
@@ -9262,13 +9144,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected int getReturnValueOffset() {
-                            return argumentHandler.enter();
-                        }
-
-                        @Override
                         protected boolean isExitAdvice() {
-                            return true;
+                            return false;
                         }
                     }
 
@@ -9353,13 +9230,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected int getReturnValueOffset() {
-                            return argumentHandler.exit();
-                        }
-
-                        @Override
                         protected boolean isExitAdvice() {
-                            return false;
+                            return true;
                         }
                     }
                 }
