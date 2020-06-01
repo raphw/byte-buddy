@@ -4458,21 +4458,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public interface PostProcessor {
 
         /**
-         * Indicates that an advice method has no return value stored at a given offset.
-         */
-        int NO_RETURN = -1;
-
-        /**
          * Resolves this post processor for a given instrumented method.
          *
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method.
          * @param assigner           The assigner to use.
-         * @param offset             The offset that stores the advice method's return value or {@link PostProcessor#NO_RETURN}
-         *                           if the advice method does not return a value.
+         * @param argumentHandler    The argument handler for the instrumented method.
          * @return The stack manipulation to apply.
          */
-        StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, int offset);
+        StackManipulation resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  Assigner assigner,
+                                  ArgumentHandler argumentHandler);
 
         /**
          * A factory for creating a {@link PostProcessor}.
@@ -4550,7 +4547,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, int offset) {
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             Assigner assigner,
+                                             ArgumentHandler argumentHandler) {
                 return StackManipulation.Trivial.INSTANCE;
             }
 
@@ -4585,10 +4585,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * {@inheritDoc}
              */
-            public StackManipulation resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, int offset) {
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             Assigner assigner,
+                                             ArgumentHandler argumentHandler) {
                 List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(postProcessors.size());
                 for (PostProcessor postProcessor : postProcessors) {
-                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, offset));
+                    stackManipulations.add(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler));
                 }
                 return new StackManipulation.Compound(stackManipulations);
             }
@@ -8705,9 +8708,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
-                    methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, adviceMethod.getReturnType().represents(void.class)
-                            ? PostProcessor.NO_RETURN
-                            : getReturnValueOffset()).apply(mv, implementationContext).getMaximalSize(), EMPTY);
+                    methodSizeHandler.recordMaxima(postProcessor
+                            .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
+                            .apply(mv, implementationContext).getMaximalSize(), EMPTY);
                 }
 
                 @Override
@@ -9178,9 +9181,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, getReturnValueOffset()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
-                        methodSizeHandler.recordMaxima(postProcessor.resolve(instrumentedType, instrumentedMethod, assigner, adviceMethod.getReturnType().represents(void.class)
-                                ? PostProcessor.NO_RETURN
-                                : getReturnValueOffset()).apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
+                        methodSizeHandler.recordMaxima(postProcessor
+                                .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
+                                .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                     }
 
                     /**
