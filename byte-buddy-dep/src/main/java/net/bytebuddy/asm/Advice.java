@@ -8718,7 +8718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     methodSizeHandler.recordMaxima(postProcessor
                             .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
-                            .apply(mv, implementationContext).getMaximalSize(), EMPTY);
+                            .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 }
