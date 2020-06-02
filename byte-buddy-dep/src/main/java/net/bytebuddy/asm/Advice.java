@@ -8716,11 +8716,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     }
-                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
-                    stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                     methodSizeHandler.recordMaxima(postProcessor
                             .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
                             .apply(mv, implementationContext).getMaximalSize(), EMPTY);
+                    methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
+                    stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 }
 
                 @Override
@@ -9068,12 +9068,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
-                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
-                        stackMapFrameHandler.injectCompletionFrame(methodVisitor);
-                        methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                         methodSizeHandler.recordMaxima(postProcessor
                                 .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
                                 .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
+                        methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
+                        stackMapFrameHandler.injectCompletionFrame(methodVisitor);
+                        methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
                     /**
