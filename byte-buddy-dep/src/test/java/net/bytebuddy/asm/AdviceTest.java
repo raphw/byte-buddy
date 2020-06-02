@@ -1,20 +1,16 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
-import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -1480,7 +1476,7 @@ public class AdviceTest {
     @Test
     public void testThrowingAssigningEnterPostProcessorInline() throws Exception {
         Class<?> type = new ByteBuddy()
-                .redefine(ThrowingPostProcessorDelegateTest.class)
+                .redefine(ThrowingPostProcessorInlineTest.class)
                 .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
                     @Override
                     public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
@@ -1497,7 +1493,7 @@ public class AdviceTest {
                             }
                         };
                     }
-                }).to(ThrowingPostProcessorDelegateTest.class).on(named(FOO)))
+                }).to(ThrowingPostProcessorInlineTest.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -3556,7 +3552,7 @@ public class AdviceTest {
         }
     }
 
-    public static class ThrowingPostProcessorDelegateTest {
+    public static class ThrowingPostProcessorInlineTest {
 
         @Advice.OnMethodEnter(suppress = Throwable.class)
         static String enter() {
