@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -11,7 +12,9 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -1468,6 +1471,60 @@ public class AdviceTest {
                         };
                     }
                 }).to(PostProcessorDelegateTest.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), BAR), is((Object) FOO));
+    }
+
+    @Test
+    public void testThrowingAssigningEnterPostProcessorInline() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ThrowingPostProcessorDelegateTest.class)
+                .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
+                    @Override
+                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                        return new Advice.PostProcessor() {
+                            @Override
+                            public StackManipulation resolve(TypeDescription instrumentedType,
+                                                             MethodDescription instrumentedMethod,
+                                                             Assigner assigner,
+                                                             Advice.ArgumentHandler argumentHandler) {
+                                return new StackManipulation.Compound(
+                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
+                                );
+                            }
+                        };
+                    }
+                }).to(ThrowingPostProcessorDelegateTest.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testFieldAssigningEnterPostProcessorDelegate() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(PostProcessorFieldAccessDelegateTest.class)
+                .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
+                    @Override
+                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                        return new Advice.PostProcessor() {
+                            @Override
+                            public StackManipulation resolve(TypeDescription instrumentedType,
+                                                             MethodDescription instrumentedMethod,
+                                                             Assigner assigner,
+                                                             Advice.ArgumentHandler argumentHandler) {
+                                return new StackManipulation.Compound(
+                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(FOO)).getOnly()).write()
+                                );
+                            }
+                        };
+                    }
+                }).to(PostProcessorFieldAccessDelegateTest.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -3496,6 +3553,32 @@ public class AdviceTest {
 
         public String foo(String x) {
             return x;
+        }
+    }
+
+    public static class ThrowingPostProcessorDelegateTest {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        static String enter() {
+            throw null;
+        }
+
+        public String foo(String x) {
+            return x;
+        }
+    }
+
+    public static class PostProcessorFieldAccessDelegateTest {
+
+        private String foo;
+
+        @Advice.OnMethodEnter(inline = false)
+        static String enter() {
+            return "foo";
+        }
+
+        public String foo(String x) {
+            return foo;
         }
     }
 }
