@@ -6,8 +6,12 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.Removal;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.AdviceTestHelper;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -1414,6 +1418,60 @@ public class AdviceTest {
             .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
             .getLoaded();
         assertThat(type.getDeclaredConstructor(boolean.class).newInstance(false), notNullValue(Object.class));
+    }
+
+    @Test
+    public void testAssigningEnterPostProcessorInline() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(PostProcessorInlineTest.class)
+                .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
+                    @Override
+                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                        return new Advice.PostProcessor() {
+                            @Override
+                            public StackManipulation resolve(TypeDescription instrumentedType,
+                                                             MethodDescription instrumentedMethod,
+                                                             Assigner assigner,
+                                                             Advice.ArgumentHandler argumentHandler) {
+                                return new StackManipulation.Compound(
+                                    MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                    MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
+                                );
+                            }
+                        };
+                    }
+                }).to(PostProcessorInlineTest.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), "bar"), is((Object) "foo"));
+    }
+
+    @Test
+    public void testAssigningEnterPostProcessorDelegate() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(PostProcessorDelegateTest.class)
+                .visit(Advice.withCustomMapping().with(new Advice.PostProcessor.Factory() {
+                    @Override
+                    public Advice.PostProcessor make(final MethodDescription.InDefinedShape advice, boolean exit) {
+                        return new Advice.PostProcessor() {
+                            @Override
+                            public StackManipulation resolve(TypeDescription instrumentedType,
+                                                             MethodDescription instrumentedMethod,
+                                                             Assigner assigner,
+                                                             Advice.ArgumentHandler argumentHandler) {
+                                return new StackManipulation.Compound(
+                                        MethodVariableAccess.of(advice.getReturnType()).loadFrom(argumentHandler.enter()),
+                                        MethodVariableAccess.store(instrumentedMethod.getParameters().get(0))
+                                );
+                            }
+                        };
+                    }
+                }).to(PostProcessorDelegateTest.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), "bar"), is((Object) "foo"));
     }
 
     @Test
@@ -3414,6 +3472,30 @@ public class AdviceTest {
         public static void advice(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] args) {
             args = new Object[0];
             String ignored = "" + args;
+        }
+    }
+
+    public static class PostProcessorInlineTest {
+
+        @Advice.OnMethodEnter
+        static String enter() {
+            return "foo";
+        }
+
+        public String foo(String x) {
+            return x;
+        }
+    }
+
+    public static class PostProcessorDelegateTest {
+
+        @Advice.OnMethodEnter(inline = false)
+        static String enter() {
+            return "foo";
+        }
+
+        public String foo(String x) {
+            return x;
         }
     }
 }
