@@ -8435,11 +8435,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class CodeTranslationVisitor extends MethodVisitor {
 
                 /**
-                 * Indicates an empty operand stack.
-                 */
-                private static final int EMPTY = 0;
-
-                /**
                  * The original method visitor to which all instructions are eventually written to.
                  */
                 protected final MethodVisitor methodVisitor;
@@ -8716,9 +8711,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stackMapFrameHandler.injectReturnFrame(methodVisitor);
                         methodVisitor.visitVarInsn(Opcodes.ASTORE, exit ? argumentHandler.exit() : argumentHandler.enter());
                     }
-                    methodSizeHandler.recordMaxima(postProcessor
+                    methodSizeHandler.requireStackSize(postProcessor
                             .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
-                            .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
+                            .apply(methodVisitor, implementationContext).getMaximalSize());
                     methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, exit ? argumentHandler.exit() : argumentHandler.enter()));
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor);
                 }
@@ -8906,11 +8901,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class AdviceMethodWriter implements Bound {
 
                     /**
-                     * Indicates an empty local variable array which is not required for calling a method.
-                     */
-                    private static final int EMPTY = 0;
-
-                    /**
                      * The advice method.
                      */
                     protected final MethodDescription.InDefinedShape adviceMethod;
@@ -9068,12 +9058,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitVarInsn(Opcodes.ASTORE, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter());
                         }
-                        methodSizeHandler.recordMaxima(postProcessor
+                        methodSizeHandler.requireStackSize(postProcessor
                                 .resolve(instrumentedType, instrumentedMethod, assigner, argumentHandler)
-                                .apply(methodVisitor, implementationContext).getMaximalSize(), EMPTY);
+                                .apply(methodVisitor, implementationContext).getMaximalSize());
                         methodSizeHandler.requireStackSize(relocationHandler.apply(methodVisitor, isExitAdvice() ? argumentHandler.exit() : argumentHandler.enter()));
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor);
-                        methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
+                        methodSizeHandler.requireStackSize(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()));
+                        methodSizeHandler.requireLocalVariableLength(instrumentedMethod.getStackSize() + adviceMethod.getReturnType().getStackSize().getSize());
                     }
 
                     /**
