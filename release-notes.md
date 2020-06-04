@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. June 2020: version 1.10.11
+
+- Emit full frame after super or auxiliary constructor call in constructors if no full frame was already issued within this constructor.
+- Support methods that start with a stack map frame before any code.
+- Pop array after `@AllArguments` parameter.
+- Fix source inclusion for ASM commons.
+- Avoid resolution of detached types when replacing target types in generic arrays on members of instrumented types.
+- Fix validation of member substitution.
+- Include post processor for `Advice`.
+
 ### 29. April 2020: version 1.10.10
 
 - Update ASM to 8.0.1
