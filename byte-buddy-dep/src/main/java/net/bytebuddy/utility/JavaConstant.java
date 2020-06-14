@@ -1303,10 +1303,10 @@ public interface JavaConstant {
             protected static HandleType of(MethodDescription.InDefinedShape methodDescription) {
                 if (methodDescription.isStatic()) {
                     return INVOKE_STATIC;
+                } else if (methodDescription.isConstructor()) { // Private constructors must use this handle type.
+                    return INVOKE_SPECIAL_CONSTRUCTOR;
                 } else if (methodDescription.isPrivate()) {
                     return INVOKE_SPECIAL;
-                } else if (methodDescription.isConstructor()) {
-                    return INVOKE_SPECIAL_CONSTRUCTOR;
                 } else if (methodDescription.getDeclaringType().isInterface()) {
                     return INVOKE_INTERFACE;
                 } else {
