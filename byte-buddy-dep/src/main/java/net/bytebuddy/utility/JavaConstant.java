@@ -1803,6 +1803,7 @@ public interface JavaConstant {
                     arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
                     types.add(TypeDescription.CLASS);
                 } else {
+                    arguments.add(constant);
                     types.add(TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed());
                 }
             }
@@ -1818,7 +1819,7 @@ public interface JavaConstant {
                             bootstrap.getInternalName(),
                             bootstrap.getDescriptor(),
                             false),
-                    arguments),
+                    arguments.toArray()),
                     bootstrap.isConstructor()
                             ? bootstrap.getDeclaringType()
                             : bootstrap.getReturnType().asErasure());
