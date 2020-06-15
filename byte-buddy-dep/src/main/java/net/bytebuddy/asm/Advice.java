@@ -4692,12 +4692,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Object[] argument;
                 if (instrumentedMethod.isTypeInitializer()) {
                     argument = new Object[]{
+                            adviceMethod.getDeclaringType().getName(),
                             Type.getType(instrumentedType.getDescriptor()),
                             instrumentedMethod.getInternalName(),
                             exit
                     };
                 } else {
                     argument = new Object[]{
+                            adviceMethod.getDeclaringType().getName(),
                             Type.getType(instrumentedType.getDescriptor()),
                             JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
                             instrumentedMethod.getInternalName(),
@@ -4707,7 +4709,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),
                         handle,
-                        adviceMethod.getDeclaringType().getName(),
                         argument);
             }
         }
