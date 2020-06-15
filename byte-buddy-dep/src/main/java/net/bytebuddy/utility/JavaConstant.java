@@ -1301,7 +1301,9 @@ public interface JavaConstant {
              * @return The handle type for the given method.
              */
             protected static HandleType of(MethodDescription.InDefinedShape methodDescription) {
-                if (methodDescription.isStatic()) {
+                if (methodDescription.isTypeInitializer()) {
+                    throw new IllegalArgumentException("Cannot create handle of type initializer " + methodDescription);
+                } else if (methodDescription.isStatic()) {
                     return INVOKE_STATIC;
                 } else if (methodDescription.isConstructor()) { // Private constructors must use this handle type.
                     return INVOKE_SPECIAL_CONSTRUCTOR;

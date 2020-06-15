@@ -4667,17 +4667,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new dynamic invocation delegator.
              *
-             * @param methodDescription The bootstrap method or constructor.
+             * @param bootstrapMethod The bootstrap method or constructor.
              * @return An appropriate delegator.
              */
-            protected static Delegator of(MethodDescription.InDefinedShape methodDescription) {
-                if (!methodDescription.isInvokeBootstrap()) {
-                    throw new IllegalArgumentException("Not a suitable bootstrap target: " + methodDescription);
+            protected static Delegator of(MethodDescription.InDefinedShape bootstrapMethod) {
+                if (!bootstrapMethod.isInvokeBootstrap()) {
+                    throw new IllegalArgumentException("Not a suitable bootstrap target: " + bootstrapMethod);
                 }
-                return new ForDynamicInvocation(new Handle(methodDescription.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
-                        methodDescription.getDeclaringType().getInternalName(),
-                        methodDescription.getInternalName(),
-                        methodDescription.getDescriptor(),
+                return new ForDynamicInvocation(new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
+                        bootstrapMethod.getDeclaringType().getInternalName(),
+                        bootstrapMethod.getInternalName(),
+                        bootstrapMethod.getDescriptor(),
                         false));
             }
 
@@ -4689,14 +4689,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
                               boolean exit) {
+                Object[] argument;
+                if (instrumentedMethod.isTypeInitializer()) {
+                    argument = new Object[]{
+                            Type.getType(instrumentedType.getDescriptor()),
+                            instrumentedMethod.getInternalName(),
+                            exit
+                    };
+                } else {
+                    argument = new Object[]{
+                            Type.getType(instrumentedType.getDescriptor()),
+                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
+                            instrumentedMethod.getInternalName(),
+                            exit
+                    };
+                }
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),
                         handle,
                         adviceMethod.getDeclaringType().getName(),
-                        Type.getType(instrumentedType.getDescriptor()),
-                        JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
-                        instrumentedMethod.getInternalName(),
-                        exit);
+                        argument);
             }
         }
     }
