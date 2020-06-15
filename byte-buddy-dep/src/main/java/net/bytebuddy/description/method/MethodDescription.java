@@ -32,7 +32,6 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -236,11 +235,10 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Checks if this method is a valid bootstrap method for an invokedynamic call.
      *
-     * @param arguments The arguments to the bootstrap method represented by instances of primitive wrapper types,
-     *                  {@link String}, {@link TypeDescription} and {@link JavaConstant} values.
-     * @return {@code true} if this method is a valid bootstrap method for an invokedynamic call.
+     * @param arguments The types of the explicit arguments that are supplied to the bootstrap method.
+     * @return {@code true} if this method is a valid bootstrap method for an <i>invokedynamic</i> call.
      */
-    boolean isInvokeBootstrap(List<?> arguments);
+    boolean isInvokeBootstrap(List<? extends TypeDefinition> arguments);
 
     /**
      * Checks if this method is a valid bootstrap method for an constantdynamic call.
@@ -252,11 +250,10 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Checks if this method is a valid bootstrap method for an constantdynamic call.
      *
-     * @param arguments The arguments to the bootstrap method represented by instances of primitive wrapper types,
-     *                  {@link String}, {@link TypeDescription} and {@link JavaConstant} values.
-     * @return {@code true} if this method is a valid bootstrap method for an constantdynamic call.
+     * @param arguments The types of the explicit arguments that are supplied to the bootstrap method.
+     * @return {@code true} if this method is a valid bootstrap method for an <i>constantdynamic</i> call.
      */
-    boolean isConstantBootstrap(List<?> arguments);
+    boolean isConstantBootstrap(List<? extends TypeDefinition> arguments);
 
     /**
      * Checks if this method is capable of defining a default annotation value.
@@ -595,10 +592,10 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Checks if this method is a bootstrap method while expecting the supplied type as a type representation.
          *
-         * @param typeType The type of the bootstrap method's type representation.
+         * @param selfType The type of the bootstrap method's type representation.
          * @return {@code true} if this method is a bootstrap method assuming the supplied type representation.
          */
-        private boolean isBootstrap(TypeDescription typeType) {
+        private boolean isBootstrap(TypeDescription selfType) {
             TypeList parameterTypes = getParameters().asTypeList().asErasures();
             switch (parameterTypes.size()) {
                 case 0:
@@ -611,11 +608,26 @@ public interface MethodDescription extends TypeVariableSource,
                 case 3:
                     return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(typeType));
+                            && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(selfType));
                 default:
-                    return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
-                            && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            && parameterTypes.get(2).isAssignableFrom(typeType);
+                    if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                            || !(parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
+                            || !parameterTypes.get(2).isAssignableFrom(selfType)) {
+                        return false;
+                    }
+                    for (int index = 3; index < parameterTypes.size(); index++) {
+                        if (!parameterTypes.get(index).represents(int.class)
+                            && !parameterTypes.get(index).represents(long.class)
+                            && !parameterTypes.get(index).represents(float.class)
+                            && !parameterTypes.get(index).represents(double.class)
+                            && !parameterTypes.get(index).represents(String.class)
+                            && !parameterTypes.get(index).asErasure().represents(Class.class)
+                            && !parameterTypes.get(index).equals(JavaType.METHOD_HANDLE.getTypeStub())
+                            && !parameterTypes.get(index).equals(JavaType.METHOD_TYPE.getTypeStub())) {
+                            return index == parameterTypes.size() - 1 && parameterTypes.get(index).represents(Object[].class);
+                        }
+                    }
+                    return true;
             }
         }
 
@@ -623,49 +635,31 @@ public interface MethodDescription extends TypeVariableSource,
          * Checks if this method is a bootstrap method given the supplied arguments. This method does not implement a full check but assumes that
          * {@link MethodDescription.AbstractBase#isBootstrap(TypeDescription)} is invoked, as well.
          *
-         * @param arguments The arguments to the bootstrap method.
-         * @return {@code true} if this method is a bootstrap method for the supplied arguments..
+         * @param types The types of the explicit arguments that are supplied to the bootstrap method.
+         * @return {@code true} if this method is a bootstrap method for the supplied arguments.
          */
-        private boolean isBootstrap(List<?> arguments) {
-            for (Object argument : arguments) {
-                if (argument == null) {
-                    throw new IllegalArgumentException("The null value is not a bootstrap constant");
-                }
-                Class<?> argumentType = argument.getClass();
-                if (!(argumentType == String.class
-                        || argumentType == Integer.class
-                        || argumentType == Long.class
-                        || argumentType == Float.class
-                        || argumentType == Double.class
-                        || TypeDescription.class.isAssignableFrom(argumentType)
-                        || JavaConstant.class.isAssignableFrom(argumentType))) {
-                    throw new IllegalArgumentException("Not a Java constant representation: " + argument);
-                }
-            }
-            TypeList parameterTypes = getParameters().asTypeList().asErasures();
-            if (parameterTypes.size() < 4) {
-                return arguments.isEmpty() || parameterTypes.get(parameterTypes.size() - 1).represents(Object[].class);
+        private boolean isBootstrap(List<? extends TypeDefinition> types) {
+            TypeList targets = getParameters().asTypeList().asErasures();
+            if (targets.size() < 4) {
+                return types.isEmpty() || targets.get(targets.size() - 1).represents(Object[].class);
             } else {
-                int index = 4;
-                Iterator<?> argumentIterator = arguments.iterator();
-                for (TypeDescription parameterType : parameterTypes.subList(3, parameterTypes.size())) {
-                    boolean finalParameterCheck = !argumentIterator.hasNext();
-                    if (!finalParameterCheck) {
-                        Object argument = argumentIterator.next();
-                        finalParameterCheck = !((argument instanceof JavaConstant) && ((JavaConstant) argument).getType().isAssignableTo(parameterType))
-                                && !(parameterType.represents(Class.class) && argument instanceof TypeDescription && !((TypeDescription) argument).isPrimitive())
-                                && !(parameterType.represents(String.class) && argument.getClass() == String.class)
-                                && !(parameterType.represents(int.class) && argument.getClass() == Integer.class)
-                                && !(parameterType.represents(long.class) && argument.getClass() == Long.class)
-                                && !(parameterType.represents(float.class) && argument.getClass() == Float.class)
-                                && !(parameterType.represents(double.class) && argument.getClass() == Double.class);
+                Iterator<TypeDescription> iterator = targets.subList(3, targets.size()).iterator();
+                for (TypeDefinition type : types) {
+                    if (!iterator.hasNext()) {
+                        return false;
                     }
-                    if (finalParameterCheck) {
-                        return index == parameterTypes.size() && parameterType.represents(Object[].class);
+                    TypeDescription target = iterator.next();
+                    if (!iterator.hasNext() && target.represents(Object[].class)) {
+                        return true;
+                    } else if (!type.asErasure().equals(target)) {
+                        return false;
                     }
-                    index++;
                 }
-                return true;
+                if (iterator.hasNext()) {
+                    return iterator.next().represents(Object[].class) && !iterator.hasNext();
+                } else {
+                    return true;
+                }
             }
         }
 
@@ -685,7 +679,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        public boolean isInvokeBootstrap(List<?> arguments) {
+        public boolean isInvokeBootstrap(List<? extends TypeDefinition> arguments) {
             return isInvokeBootstrap() && isBootstrap(arguments);
         }
 
@@ -702,7 +696,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * {@inheritDoc}
          */
-        public boolean isConstantBootstrap(List<?> arguments) {
+        public boolean isConstantBootstrap(List<? extends TypeDefinition> arguments) {
             return isConstantBootstrap() && isBootstrap(arguments);
         }
 

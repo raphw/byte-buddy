@@ -254,10 +254,10 @@ public class AdviceTest {
                         String.class,
                         JavaType.METHOD_TYPE.load(),
                         String.class,
+                        int.class,
                         Class.class,
-                        JavaType.METHOD_HANDLE.load(),
                         String.class,
-                        int.class)).to(TrivialAdviceDelegation.class).on(named(FOO)))
+                        JavaType.METHOD_HANDLE.load())).to(TrivialAdviceDelegation.class).on(named(FOO)))
                 .make()
                 .load(bootstrap.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();

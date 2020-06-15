@@ -4651,17 +4651,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         class ForDynamicInvocation implements Delegator {
 
             /**
-             * The handle of the referred bootstrap method.
+             * The bootstrap method.
              */
-            private final Handle handle;
+            private final MethodDescription.InDefinedShape bootstrapMethod;
 
             /**
              * Creates a delegator for a dynamic method invocation.
              *
-             * @param handle The handle of the referred bootstrap method.
+             * @param bootstrapMethod The bootstrap method.
              */
-            protected ForDynamicInvocation(Handle handle) {
-                this.handle = handle;
+            protected ForDynamicInvocation(MethodDescription.InDefinedShape bootstrapMethod) {
+                this.bootstrapMethod = bootstrapMethod;
             }
 
             /**
@@ -4674,11 +4674,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!bootstrapMethod.isInvokeBootstrap()) {
                     throw new IllegalArgumentException("Not a suitable bootstrap target: " + bootstrapMethod);
                 }
-                return new ForDynamicInvocation(new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
-                        bootstrapMethod.getDeclaringType().getInternalName(),
-                        bootstrapMethod.getInternalName(),
-                        bootstrapMethod.getDescriptor(),
-                        false));
+                return new ForDynamicInvocation(bootstrapMethod);
             }
 
             /**
@@ -4691,23 +4687,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               boolean exit) {
                 Object[] argument;
                 if (instrumentedMethod.isTypeInitializer()) {
-                    argument = new Object[]{
+                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.STRING,
+                            TypeDescription.ForLoadedType.of(int.class),
+                            TypeDescription.CLASS,
+                            TypeDescription.STRING))) {
+                        throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
+                    }
+                    argument = new Object[]{adviceMethod.getDeclaringType().getName(),
+                            exit ? 1 : 0,
                             Type.getType(instrumentedType.getDescriptor()),
-                            instrumentedMethod.getInternalName(),
-                            exit
-                    };
+                            instrumentedMethod.getInternalName()};
                 } else {
-                    argument = new Object[]{
+                    if (!bootstrapMethod.isInvokeBootstrap(Arrays.asList(TypeDescription.STRING,
+                            TypeDescription.ForLoadedType.of(int.class),
+                            TypeDescription.CLASS,
+                            TypeDescription.STRING,
+                            JavaType.METHOD_HANDLE.getTypeStub()))) {
+                        throw new IllegalArgumentException(bootstrapMethod + " is not accepting advice bootstrap arguments");
+                    }
+                    argument = new Object[]{adviceMethod.getDeclaringType().getName(),
+                            exit ? 1 : 0,
                             Type.getType(instrumentedType.getDescriptor()),
-                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue(),
                             instrumentedMethod.getInternalName(),
-                            exit
-                    };
+                            JavaConstant.MethodHandle.of(instrumentedMethod.asDefined()).asConstantPoolValue()};
                 }
                 methodVisitor.visitInvokeDynamicInsn(adviceMethod.getInternalName(),
                         adviceMethod.getDescriptor(),
-                        handle,
-                        adviceMethod.getDeclaringType().getName(),
+                        new Handle(bootstrapMethod.isConstructor() ? Opcodes.H_NEWINVOKESPECIAL : Opcodes.H_INVOKESTATIC,
+                                bootstrapMethod.getDeclaringType().getInternalName(),
+                                bootstrapMethod.getInternalName(),
+                                bootstrapMethod.getDescriptor(),
+                                false),
                         argument);
             }
         }
@@ -11365,14 +11375,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Defines the supplied constructor as an dynamic invocation bootstrap target for delegating advice methods. The bootstrap
          * method arguments are:
          * <ul>
-         *     <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
-         *     <li>A {@link String} representing the constructor internal name.</li>
-         *     <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
-         *     <li>A {@link String} of the binary target class name.</li>
-         *     <li>A {@link Class} representing the class implementing the instrumented method.</li>
-         *     <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
+         * <li>A {@link String} representing the constructor's internal name {@code <init>}.</li>
+         * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
+         * <li>A {@link String} of the binary target class name.</li>
+         * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
          * <li>A {@link String} with the name of the instrumented method.</li>
-         *     <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method unless the target is the type's static initializer.</li>
          * </ul>
          *
          * @param constructor The bootstrap constructor.
@@ -11387,13 +11397,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * method arguments are:
          * <ul>
          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
-         * <li>A {@link String} representing the constructor internal name.</li>
+         * <li>A {@link String} representing the method's name.</li>
          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
          * <li>A {@link String} of the binary target class name.</li>
-         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
-         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
-         * <li>A {@link String} with the name of the instrumented method.</li>
          * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method unless the target is the type's static initializer.</li>
          * </ul>
          *
          * @param method The bootstrap method.
@@ -11408,20 +11418,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * method arguments are:
          * <ul>
          * <li>A {@code java.lang.invoke.MethodHandles.Lookup} representing the source method.</li>
-         * <li>A {@link String} representing the constructor internal name.</li>
+         * <li>A {@link String} representing the method's name or constructor's internal name {@code <init>}.</li>
          * <li>A {@code java.lang.invoke.MethodType} representing the type that is requested for binding.</li>
          * <li>A {@link String} of the binary target class name.</li>
-         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
-         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method.</li>
-         * <li>A {@link String} with the name of the instrumented method.</li>
          * <li>A {@code int} with value {@code 0} for an enter advice and {code 1} for an exist advice.</li>
+         * <li>A {@link Class} representing the class implementing the instrumented method.</li>
+         * <li>A {@link String} with the name of the instrumented method.</li>
+         * <li>A {@code java.lang.invoke.MethodHandle} representing the instrumented method unless the target is the type's static initializer.</li>
          * </ul>
          *
-         * @param methodDescription The bootstrap method or constructor.
+         * @param bootstrap The bootstrap method or constructor.
          * @return A new builder for an advice that uses the supplied method or constructor for bootstrapping.
          */
-        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape methodDescription) {
-            return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(methodDescription));
+        public WithCustomMapping bootstrap(MethodDescription.InDefinedShape bootstrap) {
+            return new WithCustomMapping(postProcessorFactory, offsetMappings, Delegator.ForDynamicInvocation.of(bootstrap));
         }
 
         /**
