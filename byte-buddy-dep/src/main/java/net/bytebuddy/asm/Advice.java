@@ -3537,10 +3537,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * Creates a binding for a fixed {@link String} or primitive value.
+                 * Creates a binding for a fixed {@link String}, a primitive value or a method handle or type.
                  *
                  * @param annotationType The annotation type.
-                 * @param value          The primitive (wrapper) value or {@link String} value to bind.
+                 * @param value          The primitive (wrapper) value, {@link String} value, method handle or type to bind.
                  * @param <S>            The annotation type.
                  * @return A factory for creating an offset mapping that binds the supplied value.
                  */
@@ -3576,6 +3576,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (value instanceof String) {
                         stackManipulation = new TextConstant((String) value);
                         typeDescription = TypeDescription.STRING;
+                    } else if (JavaType.METHOD_HANDLE.isInstance(value)) {
+                        JavaConstant constant = JavaConstant.MethodHandle.ofLoaded(value);
+                        stackManipulation = new JavaConstantValue(constant);
+                        typeDescription = constant.getType();
+                    } else if (JavaType.METHOD_TYPE.isInstance(value)) {
+                        JavaConstant constant = JavaConstant.MethodType.ofLoaded(value);
+                        stackManipulation = new JavaConstantValue(constant);
+                        typeDescription = constant.getType();
                     } else {
                         throw new IllegalStateException("Not a constant value: " + value);
                     }
