@@ -220,6 +220,8 @@ public class InvokeDynamic implements Implementation.Composable {
                 types.add(typeDescription);
                 if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
                     throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
+                } else if (constant instanceof Class<?>) {
+                    throw new IllegalArgumentException("Must be represented as a TypeDescription instance: " + constant);
                 } else if (!typeDescription.isCompileTimeConstant()) {
                     throw new IllegalArgumentException("Not a compile-time constant: " + constant);
                 }

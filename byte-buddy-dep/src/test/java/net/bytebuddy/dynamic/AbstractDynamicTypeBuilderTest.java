@@ -33,7 +33,6 @@ import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.utility.OpenedClassReader;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -954,9 +953,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(8)
+    @JavaVersionRule.Enforce(15)
     @SuppressWarnings("unchecked")
-    @Ignore("The OpenJDK reflection API does not currently support nested generic types")
     public void testAnnotationTypeOnNestedParameterizedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = TypeDescription.ForLoadedType.of(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
