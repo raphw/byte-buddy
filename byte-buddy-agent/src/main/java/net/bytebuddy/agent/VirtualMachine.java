@@ -1674,7 +1674,7 @@ public interface VirtualMachine {
                     if (target == null) {
                         throw new IllegalStateException("Could not locate target process info in " + directory);
                     }
-                    ServerSocket serverSocket = new ServerSocket(0, 1, InetAddress.getLocalHost());
+                    ServerSocket serverSocket = new ServerSocket(0, 50, InetAddress.getLocalHost());
                     try {
                         serverSocket.setSoTimeout(timeout);
                         File receiver = new File(directory, target.getProperty("vmId"));
