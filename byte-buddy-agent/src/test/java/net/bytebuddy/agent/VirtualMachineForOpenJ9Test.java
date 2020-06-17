@@ -8,6 +8,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Arrays;
@@ -89,7 +90,7 @@ public class VirtualMachineForOpenJ9Test {
                                         }
                                         Socket socket = new Socket();
                                         try {
-                                            socket.connect(new InetSocketAddress(port), 5000);
+                                            socket.connect(new InetSocketAddress(InetAddress.getLocalHost(), port), 5000);
                                             socket.getOutputStream().write((' ' + key + ' ').getBytes("UTF-8"));
                                             socket.getOutputStream().write(0);
                                             socket.getOutputStream().flush();
