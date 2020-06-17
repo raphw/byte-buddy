@@ -23,7 +23,6 @@ import com.sun.jna.win32.W32APIOptions;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -1674,7 +1673,7 @@ public interface VirtualMachine {
                     if (target == null) {
                         throw new IllegalStateException("Could not locate target process info in " + directory);
                     }
-                    ServerSocket serverSocket = new ServerSocket(0, 50, InetAddress.getLocalHost());
+                    ServerSocket serverSocket = new ServerSocket(0);
                     try {
                         serverSocket.setSoTimeout(timeout);
                         File receiver = new File(directory, target.getProperty("vmId"));
