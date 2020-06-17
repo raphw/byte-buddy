@@ -56,14 +56,14 @@ public class InvokeDynamicTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    private static Object makeMethodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
+    private static Object methodType(Class<?> returnType, Class<?>... parameterType) throws Exception {
         return JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class).invoke(null, returnType, parameterType);
     }
 
-    private static Object makeMethodHandle() throws Exception {
+    private static Object methodHandle() throws Exception {
         Object lookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup").invoke(null);
         return JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("findVirtual", Class.class, String.class, JavaType.METHOD_TYPE.load())
-                .invoke(lookup, Simple.class, FOO, makeMethodType(String.class));
+                .invoke(lookup, Simple.class, FOO, methodType(String.class));
     }
 
     @Test
@@ -127,7 +127,9 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapArrayArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS,
+                        JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
+                        JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
@@ -140,8 +142,8 @@ public class InvokeDynamicTest {
         assertThat(arguments[3], is((Object) DOUBLE));
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
-        assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(arguments[6], is(methodType(CLASS)));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(methodHandle())));
     }
 
     @Test
@@ -155,7 +157,9 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapExplicitArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS,
+                        JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
+                        JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
@@ -168,8 +172,8 @@ public class InvokeDynamicTest {
         assertThat(arguments[3], is((Object) DOUBLE));
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
-        assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(arguments[6], is(methodType(CLASS)));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(methodHandle())));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -199,13 +203,13 @@ public class InvokeDynamicTest {
                         .withDoubleValue(DOUBLE)
                         .withType(TypeDescription.ForLoadedType.of(CLASS))
                         .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
-                        .withInstance(JavaConstant.MethodType.ofLoaded(makeMethodType(CLASS)), JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()))
-                        .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value))
+                        .withInstance(JavaConstant.MethodType.ofLoaded(methodType(CLASS)), JavaConstant.MethodHandle.ofLoaded(methodHandle()))
+                        .withValue(FOO, CLASS, makeEnum(), methodType(CLASS), methodHandle(), value))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
-                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeEnum() + makeMethodType(CLASS)
-                        + makeMethodHandle() + FOO + CLASS + makeEnum() + makeMethodType(CLASS) + makeMethodHandle() + value));
+                is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeEnum() + methodType(CLASS)
+                        + methodHandle() + FOO + CLASS + makeEnum() + methodType(CLASS) + methodHandle() + value));
     }
 
     @Test
@@ -219,13 +223,13 @@ public class InvokeDynamicTest {
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapSimple")).getOnly())
                         .invoke(BAR, String.class)
                         .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO,
-                                CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value))
+                                CLASS, makeEnum(), methodType(CLASS), methodHandle(), value))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
-                        + makeMethodType(CLASS) + makeMethodHandle() + value));
+                        + methodType(CLASS) + methodHandle() + value));
     }
 
     @Test
@@ -238,15 +242,15 @@ public class InvokeDynamicTest {
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapSimple")).getOnly())
                         .invoke(BAR, String.class)
-                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeEnum(), makeMethodType(CLASS))
-                        .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
+                        .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeEnum(), methodType(CLASS))
+                        .withReference(methodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
                         .withReference(value))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(14));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
-                        + makeMethodType(CLASS) + makeMethodHandle() + value));
+                        + methodType(CLASS) + methodHandle() + value));
     }
 
     @Test
