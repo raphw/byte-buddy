@@ -127,7 +127,8 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapArrayArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS,
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO,
+                        TypeDescription.ForLoadedType.of(CLASS),
                         JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
                         JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
@@ -157,7 +158,8 @@ public class InvokeDynamicTest {
                 .subclass(Simple.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named("bootstrapExplicitArguments")).getOnly(),
-                        INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS,
+                        INTEGER, LONG, FLOAT, DOUBLE, FOO,
+                        TypeDescription.ForLoadedType.of(CLASS),
                         JavaConstant.MethodType.ofLoaded(methodType(CLASS)),
                         JavaConstant.MethodHandle.ofLoaded(methodHandle()))
                         .withoutArguments())
