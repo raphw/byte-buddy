@@ -7,6 +7,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Arrays;
@@ -126,6 +127,18 @@ public class VirtualMachineForOpenJ9Test {
                     try {
                         VirtualMachine.ForOpenJ9.attach(Integer.toString(PROCESS_ID), 5000, dispatcher).detach();
                         attachmentThread.join(5000);
+                    } catch (RuntimeException exception) {
+                        Throwable throwable = error.get();
+                        if (throwable == null) {
+                            throw exception;
+                        } else {
+                            try {
+                                Throwable.class.getMethod("addSuppressed", Throwable.class).invoke(throwable, exception);
+                                throw throwable;
+                            } catch (NoSuchMethodException ignored) {
+                                throw throwable;
+                            }
+                        }
                     } finally {
                         attachmentThread.interrupt();
                     }
