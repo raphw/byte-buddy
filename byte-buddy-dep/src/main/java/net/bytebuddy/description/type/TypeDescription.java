@@ -35,6 +35,7 @@ import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -399,6 +400,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * @return {@code true} if this type and the supplied type are members of the same nest group.
      */
     boolean isNestMateOf(TypeDescription typeDescription);
+
+    /**
+     * Indicates if this type represents a compile-time constant, i.e. {@code int}, {@code long}, {@code float}, {@code double},
+     * {@link String}, {@link Class} or {@code java.lang.invoke.MethodHandle} or {@code java.lang.invoke.MethodType}.
+     *
+     * @return {@code true} if this type represents a compile-time constant.
+     */
+    boolean isCompileTimeConstant();
 
     /**
      * <p>
@@ -8120,6 +8129,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public boolean isMemberType() {
             return !isLocalType() && !isAnonymousType() && getDeclaringType() != null;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public boolean isCompileTimeConstant() {
+            return represents(int.class)
+                    || represents(long.class)
+                    || represents(float.class)
+                    || represents(double.class)
+                    || represents(String.class)
+                    || represents(Class.class)
+                    || equals(JavaType.METHOD_TYPE.getTypeStub())
+                    || equals(JavaType.METHOD_HANDLE.getTypeStub());
         }
 
         /**

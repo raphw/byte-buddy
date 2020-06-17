@@ -135,18 +135,23 @@ public class JavaConstantDynamicTest {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getMethod("bootstrap",
-                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                        String.class,
-                        Class.class,
-                        int.class,
-                        long.class,
-                        float.class,
-                        double.class,
-                        String.class,
-                        Class.class,
-                        Class.forName("java.lang.invoke.MethodHandle"),
-                        Class.forName("java.lang.invoke.MethodType")), 42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
+                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO,
+                        bootstrap.getMethod("bootstrap",
+                                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                                String.class,
+                                Class.class,
+                                int.class,
+                                long.class,
+                                float.class,
+                                double.class,
+                                String.class,
+                                Class.class,
+                                Class.forName("java.lang.invoke.MethodHandle"),
+                                Class.forName("java.lang.invoke.MethodType")),
+                        42, 42L, 42f, 42d, FOO,
+                        TypeDescription.ForLoadedType.of(Object.class),
+                        JavaConstant.MethodHandle.ofLoaded(methodHandle()),
+                        JavaConstant.MethodType.ofLoaded(methodType()))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -272,18 +277,24 @@ public class JavaConstantDynamicTest {
         Class<? extends Foo> baz = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO, bootstrap.getConstructor(
-                        Class.forName("java.lang.invoke.MethodHandles$Lookup"),
-                        String.class,
-                        Class.class,
-                        int.class,
-                        long.class,
-                        float.class,
-                        double.class,
-                        String.class,
-                        Class.class,
-                        Class.forName("java.lang.invoke.MethodHandle"),
-                        Class.forName("java.lang.invoke.MethodType")), 42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
+                .intercept(FixedValue.value(JavaConstant.Dynamic.bootstrap(FOO,
+                        bootstrap.getConstructor(
+                                Class.forName("java.lang.invoke.MethodHandles$Lookup"),
+                                String.class,
+                                Class.class,
+                                int.class,
+                                long.class,
+                                float.class,
+                                double.class,
+                                String.class,
+                                Class.class,
+                                Class.forName("java.lang.invoke.MethodHandle"),
+                                Class.forName("java.lang.invoke.MethodType")),
+                        42, 42L, 42f, 42d, FOO,
+                        TypeDescription.ForLoadedType.of(Object.class),
+                        JavaConstant.MethodHandle.ofLoaded(methodHandle()),
+                        JavaConstant.MethodType.ofLoaded(methodType())
+                )))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -389,7 +400,8 @@ public class JavaConstantDynamicTest {
                         String.class,
                         Class.class,
                         Class.forName("java.lang.invoke.MethodHandle"),
-                        Class.forName("java.lang.invoke.MethodType")), 42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
+                        Class.forName("java.lang.invoke.MethodType")),
+                        42, 42L, 42f, 42d, FOO, Object.class, methodHandle(), methodType())))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

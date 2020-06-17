@@ -610,24 +610,9 @@ public interface MethodDescription extends TypeVariableSource,
                             && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
                             && (parameterTypes.get(2).represents(Object[].class) || parameterTypes.get(2).isAssignableFrom(selfType));
                 default:
-                    if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
-                            || !(parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
-                            || !parameterTypes.get(2).isAssignableFrom(selfType)) {
-                        return false;
-                    }
-                    for (int index = 3; index < parameterTypes.size(); index++) {
-                        if (!parameterTypes.get(index).represents(int.class)
-                            && !parameterTypes.get(index).represents(long.class)
-                            && !parameterTypes.get(index).represents(float.class)
-                            && !parameterTypes.get(index).represents(double.class)
-                            && !parameterTypes.get(index).represents(String.class)
-                            && !parameterTypes.get(index).asErasure().represents(Class.class)
-                            && !parameterTypes.get(index).equals(JavaType.METHOD_HANDLE.getTypeStub())
-                            && !parameterTypes.get(index).equals(JavaType.METHOD_TYPE.getTypeStub())) {
-                            return index == parameterTypes.size() - 1 && parameterTypes.get(index).represents(Object[].class);
-                        }
-                    }
-                    return true;
+                    return JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isAssignableTo(parameterTypes.get(0))
+                            && (parameterTypes.get(1).represents(Object.class) || parameterTypes.get(1).represents(String.class))
+                            && parameterTypes.get(2).isAssignableFrom(selfType);
             }
         }
 
@@ -651,7 +636,7 @@ public interface MethodDescription extends TypeVariableSource,
                     TypeDescription target = iterator.next();
                     if (!iterator.hasNext() && target.represents(Object[].class)) {
                         return true;
-                    } else if (!type.asErasure().equals(target)) {
+                    } else if (!type.asErasure().isAssignableTo(target)) {
                         return false;
                     }
                 }
@@ -687,10 +672,7 @@ public interface MethodDescription extends TypeVariableSource,
          * {@inheritDoc}
          */
         public boolean isConstantBootstrap() {
-            ParameterList<?> parameters = getParameters();
-            return !parameters.isEmpty()
-                    && getParameters().get(0).getType().asErasure().equals(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub())
-                    && isBootstrap(TypeDescription.CLASS);
+            return isBootstrap(TypeDescription.CLASS);
         }
 
         /**

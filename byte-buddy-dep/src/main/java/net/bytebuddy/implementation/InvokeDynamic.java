@@ -216,7 +216,13 @@ public class InvokeDynamic implements Implementation.Composable {
                 arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
                 types.add(TypeDescription.CLASS);
             } else {
-                types.add(TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed());
+                TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
+                types.add(typeDescription);
+                if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
+                    throw new IllegalArgumentException("Must be represented as a JavaConstant instance: " + constant);
+                } else if (!typeDescription.isCompileTimeConstant()) {
+                    throw new IllegalArgumentException("Not a compile-time constant: " + constant);
+                }
             }
         }
         if (!bootstrap.isInvokeBootstrap(types)) {
