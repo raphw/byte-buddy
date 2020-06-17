@@ -1730,6 +1730,7 @@ public interface VirtualMachine {
                                     if (answer.contains(' ' + key + ' ')) {
                                         return new ForOpenJ9(socket);
                                     } else {
+                                        socket.close();
                                         throw new IllegalStateException("Unexpected answered to attachment: " + answer);
                                     }
                                 } finally {

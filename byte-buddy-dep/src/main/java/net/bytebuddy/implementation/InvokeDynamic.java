@@ -216,6 +216,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 arguments.add(Type.getType(((TypeDescription) constant).getDescriptor()));
                 types.add(TypeDescription.CLASS);
             } else {
+                arguments.add(constant);
                 TypeDescription typeDescription = TypeDescription.ForLoadedType.of(constant.getClass()).asUnboxed();
                 types.add(typeDescription);
                 if (JavaType.METHOD_TYPE.isInstance(constant) || JavaType.METHOD_HANDLE.isInstance(constant)) {
