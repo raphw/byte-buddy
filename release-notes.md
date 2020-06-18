@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. June 2020: version 1.10.12
+
+- Experimental support for Java 16.
+- Support all constant pool constant types in all APIs.
+- Adjust methods for bootstrap arguments to allow types of *constantdynamic* constants.
+- Correctly resolve handle type for method handles on private constructors.
+- Fix stack size computation for minimal methods in `Advice`.
+
 ### 4. June 2020: version 1.10.11
 
 - Emit full frame after super or auxiliary constructor call in constructors if no full frame was already issued within this constructor.
