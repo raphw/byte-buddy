@@ -7,7 +7,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -28,6 +27,8 @@ public class VirtualMachineForOpenJ9Test {
 
     private File temporaryFolder, attachFolder;
 
+    private InetAddress loopback;
+
     @Before
     public void setUp() throws Exception {
         temporaryFolder = File.createTempFile("ibm", "temporary");
@@ -35,6 +36,11 @@ public class VirtualMachineForOpenJ9Test {
         assertThat(temporaryFolder.mkdir(), is(true));
         attachFolder = new File(temporaryFolder, ".com_ibm_tools_attach");
         assertThat(attachFolder.mkdir(), is(true));
+        try {
+            loopback = (InetAddress) InetAddress.class.getMethod("getLoopbackAddress").invoke(null);
+        } catch (Exception ignored) {
+            /* do nothing */
+        }
     }
 
     @After
@@ -90,7 +96,7 @@ public class VirtualMachineForOpenJ9Test {
                                         }
                                         Socket socket = new Socket();
                                         try {
-                                            socket.connect(new InetSocketAddress(InetAddress.getLocalHost(), port), 5000);
+                                            socket.connect(new InetSocketAddress(loopback, port), 5000);
                                             socket.getOutputStream().write((' ' + key + ' ').getBytes("UTF-8"));
                                             socket.getOutputStream().write(0);
                                             socket.getOutputStream().flush();
