@@ -657,6 +657,17 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a {@link NamedElement} for its membership of a set.
+     *
+     * @param names The set of expected names.
+     * @param <T>  The type of the matched object.
+     * @return An element matcher which matches if the element's name is found in the set.
+     */
+    public static <T extends NamedElement> ElementMatcher.Junction<T> namedOneOf(String... names) {
+        return new NameMatcher<T>(new StringSetMatcher(names));
+    }
+
+    /**
      * Matches a {@link NamedElement} for its name. The name's
      * capitalization is ignored.
      *
