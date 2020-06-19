@@ -46,6 +46,16 @@ public class StringSetMatcher extends ElementMatcher.Junction.AbstractBase<Strin
 
     @Override
     public String toString() {
-        return "in(" + values + ")";
+        StringBuilder stringBuilder = new StringBuilder().append("in(");
+        boolean first = true;
+        for (String value : values) {
+            if (first) {
+                first = false;
+            } else {
+                stringBuilder.append(", ");
+            }
+            stringBuilder.append(value);
+        }
+        return stringBuilder.append(")").toString();
     }
 }
