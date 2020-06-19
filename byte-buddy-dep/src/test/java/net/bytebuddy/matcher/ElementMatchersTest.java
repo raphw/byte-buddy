@@ -446,6 +446,16 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testNamedOneOf() throws Exception {
+        ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
+        assertThat(namedOneOf(FOO, BAR).matches(byteCodeElement), is(true));
+        assertThat(namedOneOf(FOO.toUpperCase(), BAR).matches(byteCodeElement), is(false));
+        assertThat(namedOneOf(FOO.toUpperCase()).matches(byteCodeElement), is(false));
+        assertThat(namedOneOf(BAR).matches(byteCodeElement), is(false));
+    }
+
+    @Test
     public void testNamedIgnoreCase() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
         when(byteCodeElement.getActualName()).thenReturn(FOO);
