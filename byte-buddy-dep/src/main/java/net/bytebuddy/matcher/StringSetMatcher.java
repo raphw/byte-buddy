@@ -17,7 +17,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,23 +25,27 @@ import java.util.Set;
 @HashCodeAndEqualsPlugin.Enhance
 public class StringSetMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
-  private final Set<String> set;
+    /**
+     * The values to check against.
+     */
+    private final Set<String> values;
 
-  public StringSetMatcher(String... values) {
-    this.set = new HashSet<String>(values.length * 4 / 3);
-    // do it manually to avoid allocations or rehashing
-    for (String value : values) {
-      set.add(value);
+    /**
+     * Creates a new string set matcher.
+     *
+     * @param values The values to check against.
+     */
+    public StringSetMatcher(Set<String> values) {
+        this.values = values;
     }
-  }
 
-  @Override
-  public boolean matches(String target) {
-    return set.contains(target);
-  }
+    @Override
+    public boolean matches(String target) {
+        return values.contains(target);
+    }
 
-  @Override
-  public String toString() {
-    return "in(" + set + ")";
-  }
+    @Override
+    public String toString() {
+        return "in(" + values + ")";
+    }
 }

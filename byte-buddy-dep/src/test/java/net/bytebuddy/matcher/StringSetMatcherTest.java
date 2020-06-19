@@ -6,6 +6,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -13,17 +15,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
 public class StringSetMatcherTest extends AbstractElementMatcherTest<StringSetMatcher> {
-
-  private final String[] names;
-
-  private final String matching, nonMatching;
-
-  public StringSetMatcherTest(String[] names, String matching, String nonMatching) {
-    super(StringSetMatcher.class, Arrays.toString(names));
-    this.names = names;
-    this.matching = matching;
-    this.nonMatching = nonMatching;
-  }
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
@@ -34,18 +25,29 @@ public class StringSetMatcherTest extends AbstractElementMatcherTest<StringSetMa
     });
   }
 
+  private final Set<String> values;
+
+  private final String matching, nonMatching;
+
+  public StringSetMatcherTest(String[] values, String matching, String nonMatching) {
+    super(StringSetMatcher.class, Arrays.toString(values));
+    this.values = new HashSet<>(Arrays.asList(values));
+    this.matching = matching;
+    this.nonMatching = nonMatching;
+  }
+
   @Test
   public void testMatch() throws Exception {
-    assertThat(new StringSetMatcher(names).matches(matching), is(true));
+    assertThat(new StringSetMatcher(values).matches(matching), is(true));
   }
 
   @Test
   public void testNoMatch() throws Exception {
-    assertThat(new StringSetMatcher(names).matches(nonMatching), is(false));
+    assertThat(new StringSetMatcher(values).matches(nonMatching), is(false));
   }
 
   @Test
   public void testStringRepresentation() {
-    assertThat(new StringSetMatcher(names).toString(), startsWith("in("));
+    assertThat(new StringSetMatcher(values).toString(), startsWith("in("));
   }
 }

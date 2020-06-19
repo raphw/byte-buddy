@@ -38,10 +38,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -664,7 +661,7 @@ public final class ElementMatchers {
      * @return An element matcher which matches if the element's name is found in the set.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> namedOneOf(String... names) {
-        return new NameMatcher<T>(new StringSetMatcher(names));
+        return new NameMatcher<T>(new StringSetMatcher(new HashSet<String>(Arrays.asList(names))));
     }
 
     /**
