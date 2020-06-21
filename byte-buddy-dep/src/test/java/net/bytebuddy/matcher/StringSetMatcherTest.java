@@ -31,7 +31,7 @@ public class StringSetMatcherTest extends AbstractElementMatcherTest<StringSetMa
 
   public StringSetMatcherTest(String[] values, String matching, String nonMatching) {
     super(StringSetMatcher.class, Arrays.toString(values));
-    this.values = new HashSet<>(Arrays.asList(values));
+    this.values = new HashSet<String>(Arrays.asList(values));
     this.matching = matching;
     this.nonMatching = nonMatching;
   }
