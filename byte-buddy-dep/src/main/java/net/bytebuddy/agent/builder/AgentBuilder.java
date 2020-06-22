@@ -883,6 +883,19 @@ public interface AgentBuilder {
         AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher);
 
         /**
+         * Enables resubmission of failed transformations by applying a retransformation of the loaded type. This can be meaningful if
+         * class files cannot be located from the class loader as a resource where the loaded type becomes available.
+         *
+         * @param resubmissionScheduler A scheduler which is responsible for scheduling the resubmission job.
+         * @param matcher               A matcher that filters throwable instances where non-matched throwables are not triggering a resubmission.
+         * @param classLoaderFilter     A filter to exclude class loader instances from resubmission before applying it.
+         * @return A new instance of this agent builder that applies resubmission.
+         */
+        AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler,
+                                      ElementMatcher<? super Throwable> matcher,
+                                      ElementMatcher<? super ClassLoader> classLoaderFilter);
+
+        /**
          * An agent builder configuration strategy that allows the definition of a discovery strategy.
          */
         interface WithImplicitDiscoveryStrategy extends RedefinitionListenable {
@@ -6252,14 +6265,23 @@ public interface AgentBuilder {
                 private final ElementMatcher<? super Throwable> matcher;
 
                 /**
+                 * A filter to suppress class loaders, for example after they become inactive.
+                 */
+                private final ElementMatcher<? super ClassLoader> classLoaderFilter;
+
+                /**
                  * Creates a new enabled resubmission strategy.
                  *
                  * @param resubmissionScheduler A scheduler that is responsible for resubmission of types.
                  * @param matcher               The matcher for filtering error causes.
+                 * @param classLoaderFilter     A filter to suppress class loaders, for example after they become inactive.
                  */
-                protected Enabled(ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
+                protected Enabled(ResubmissionScheduler resubmissionScheduler,
+                                  ElementMatcher<? super Throwable> matcher,
+                                  ElementMatcher<? super ClassLoader> classLoaderFilter) {
                     this.resubmissionScheduler = resubmissionScheduler;
                     this.matcher = matcher;
+                    this.classLoaderFilter = classLoaderFilter;
                 }
 
                 /**
@@ -6283,6 +6305,7 @@ public interface AgentBuilder {
                                         listener,
                                         circularityLock,
                                         matcher,
+                                        classLoaderFilter,
                                         redefinitionStrategy,
                                         redefinitionBatchAllocator,
                                         redefinitionBatchListener,
@@ -6415,6 +6438,11 @@ public interface AgentBuilder {
                     private final RawMatcher matcher;
 
                     /**
+                     * A filter to suppress class loaders, for example after they become inactive.
+                     */
+                    private final ElementMatcher<? super ClassLoader> classLoaderFilter;
+
+                    /**
                      * The redefinition strategy to use.
                      */
                     private final RedefinitionStrategy redefinitionStrategy;
@@ -6448,6 +6476,7 @@ public interface AgentBuilder {
                      * @param listener                   The listener to use.
                      * @param circularityLock            The circularity lock to use.
                      * @param matcher                    The matcher to apply for analyzing if a type is to be resubmitted.
+                     * @param classLoaderFilter          A filter to suppress class loaders, for example after they become inactive.
                      * @param redefinitionStrategy       The redefinition strategy to use.
                      * @param redefinitionBatchAllocator The batch allocator to use.
                      * @param redefinitionBatchListener  The batch listener to notify.
@@ -6459,6 +6488,7 @@ public interface AgentBuilder {
                                                                AgentBuilder.Listener listener,
                                                                CircularityLock circularityLock,
                                                                RawMatcher matcher,
+                                                               ElementMatcher<? super ClassLoader> classLoaderFilter,
                                                                RedefinitionStrategy redefinitionStrategy,
                                                                BatchAllocator redefinitionBatchAllocator,
                                                                Listener redefinitionBatchListener,
@@ -6472,6 +6502,7 @@ public interface AgentBuilder {
                         this.redefinitionStrategy = redefinitionStrategy;
                         this.redefinitionBatchAllocator = redefinitionBatchAllocator;
                         this.redefinitionBatchListener = redefinitionBatchListener;
+                        this.classLoaderFilter = classLoaderFilter;
                         this.types = types;
                     }
 
@@ -6504,6 +6535,14 @@ public interface AgentBuilder {
                                 Map.Entry<StorageKey, Set<String>> entry = entries.next();
                                 ClassLoader classLoader = entry.getKey().get();
                                 if (classLoader != null || entry.getKey().isBootstrapLoader()) {
+                                    try {
+                                        if (classLoaderFilter.matches(classLoader)) {
+                                            entries.remove();
+                                            continue;
+                                        }
+                                    } catch (Throwable ignored) {
+                                        /* do nothing */
+                                    }
                                     Iterator<String> iterator = entry.getValue().iterator();
                                     while (iterator.hasNext()) {
                                         if (Thread.interrupted()) {
@@ -11258,6 +11297,15 @@ public interface AgentBuilder {
              * {@inheritDoc}
              */
             public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
+                return withResubmission(resubmissionScheduler, any(), none());
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler,
+                                                 ElementMatcher<? super Throwable> matcher,
+                                                 ElementMatcher<? super ClassLoader> classLoaderFilter) {
                 if (!redefinitionStrategy.isEnabled()) {
                     throw new IllegalStateException("Cannot enable redefinition resubmission when redefinition is disabled");
                 }
@@ -11274,7 +11322,7 @@ public interface AgentBuilder {
                         redefinitionDiscoveryStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
-                        new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher),
+                        new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher, classLoaderFilter),
                         injectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
