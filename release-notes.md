@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. June 2020: version 1.10.13
+
+- Add possibility to filter class loaders before attempting to load a class using the `AgentBuilder`'s resubmission feature.
+- Add `nameOf` matcher for more efficient string matching based on a hash set.
+
 ### 18. June 2020: version 1.10.12
 
 - Experimental support for Java 16.
