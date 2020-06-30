@@ -1617,10 +1617,10 @@ public final class ElementMatchers {
     }
 
     /**
-     * Only matches the {@link Object#toString()} method, also if it was overridden.
+     * Only matches the {@link Object#hashCode()} method, also if it was overridden.
      *
      * @param <T> The type of the matched object.
-     * @return A matcher that only matches the {@link Object#toString()} method.
+     * @return A matcher that only matches the {@link Object#hashCode()} method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isHashCode() {
         return named("hashCode").and(takesNoArguments()).and(returns(int.class));
