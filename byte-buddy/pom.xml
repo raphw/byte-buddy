@@ -113,8 +113,15 @@
                             </relocations>
                             <filters>
                                 <filter>
+                                    <artifact>net.bytebuddy:byte-buddy-dep:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
                                     <artifact>org.ow2.asm:*</artifact>
                                     <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
                                         <exclude>**/module-info.class</exclude>
                                         <exclude>**/LICENSE</exclude>
                                         <exclude>**/NOTICE</exclude>

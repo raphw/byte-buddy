@@ -70,7 +70,7 @@
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.4</version.plugin.javadoc>
         <version.plugin.source>3.0.1</version.plugin.source>
-        <version.plugin.shade>3.2.1</version.plugin.shade>
+        <version.plugin.shade>3.3.0-SNAPSHOT</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.buildhelp>1.12</version.plugin.buildhelp>
