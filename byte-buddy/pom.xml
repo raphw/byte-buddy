@@ -189,7 +189,7 @@
                     </archive>
                 </configuration>
             </plugin>
-            <!--&lt;!&ndash; Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. &ndash;&gt;-->
+            <!-- Configure OSGi bundle. Due to interaction with the shade plugin, IDEs might identify the following configuration as illegal. -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
