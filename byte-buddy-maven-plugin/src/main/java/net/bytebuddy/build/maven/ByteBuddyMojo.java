@@ -151,6 +151,12 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
     public boolean warnOnMissingOutputDirectory;
 
     /**
+     * When set to {@code true}, this mojo warns of not having transformed any types.
+     */
+    @Parameter(defaultValue = "true", required = true)
+    public boolean warnOnEmptyTypeSet;
+
+    /**
      * When set to {@code true}, this mojo fails immediately if a plugin cannot be applied.
      */
     @Parameter(defaultValue = "true", required = true)
@@ -312,7 +318,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             }
             if (!summary.getFailed().isEmpty()) {
                 throw new MojoExecutionException(summary.getFailed() + " type transformations have failed");
-            } else if (summary.getTransformed().isEmpty()) {
+            } else if (warnOnEmptyTypeSet && summary.getTransformed().isEmpty()) {
                 getLog().warn("No types were transformed during plugin execution");
             } else {
                 getLog().info("Transformed " + summary.getTransformed().size() + " types");

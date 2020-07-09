@@ -160,7 +160,7 @@ public class TransformationAction implements Action<Task> {
             }
             if (!summary.getFailed().isEmpty()) {
                 throw new GradleException(summary.getFailed() + " type transformations have failed");
-            } else if (summary.getTransformed().isEmpty()) {
+            } else if (byteBuddyExtension.isWarnOnEmptyTypeSet() && summary.getTransformed().isEmpty()) {
                 project.getLogger().warn("No types were transformed during plugin execution");
             } else {
                 project.getLogger().info("Transformed {} types", summary.getTransformed().size());

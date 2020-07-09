@@ -56,6 +56,11 @@ public class ByteBuddyExtension {
     private boolean failOnLiveInitializer;
 
     /**
+     * {@code true} if the plugin should log a warning if not having transformed any types.
+     */
+    private boolean warnOnEmptyTypeSet;
+
+    /**
      * {@code true} if this plugin should fail fast upon a plugin's failure.
      */
     private boolean failFast;
@@ -84,6 +89,7 @@ public class ByteBuddyExtension {
         this.project = project;
         transformations = new ArrayList<Transformation>();
         failOnLiveInitializer = true;
+        warnOnEmptyTypeSet = true;
         failFast = true;
     }
 
@@ -164,6 +170,24 @@ public class ByteBuddyExtension {
      */
     public void setFailOnLiveInitializer(boolean failOnLiveInitializer) {
         this.failOnLiveInitializer = failOnLiveInitializer;
+    }
+
+    /**
+     * Returns {@code true} iif the plugin should log a warning if not having transformed any types.
+     *
+     * @return {@code true} if the plugin should log a warning if not having transformed any types.
+     */
+    public boolean isWarnOnEmptyTypeSet() {
+        return warnOnEmptyTypeSet;
+    }
+
+    /**
+     * Determines if the build should log a warning if not having transformed any types.
+     *
+     * @param warnOnEmptyTypeSet {@code true} if the build should log a warning if not having transformed any types.
+     */
+    public void setWarnOnEmptyTypeSet(boolean warnOnEmptyTypeSet) {
+        this.warnOnEmptyTypeSet = warnOnEmptyTypeSet;
     }
 
     /**
