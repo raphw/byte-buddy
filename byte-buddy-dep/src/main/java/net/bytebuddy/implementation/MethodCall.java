@@ -2313,7 +2313,9 @@ public class MethodCall implements Implementation.Composable {
              * {@inheritDoc}
              */
             public StackManipulation toStackManipulation(MethodDescription invokedMethod, Assigner assigner, Assigner.Typing typing) {
-                if (!invokedMethod.isInvokableOn(fieldDescription.getType().asErasure())) {
+                if (!invokedMethod.isMethod()
+                        || !invokedMethod.isVirtual()
+                        || !invokedMethod.isVisibleTo(fieldDescription.getType().asErasure())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + fieldDescription);
                 }
                 StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
