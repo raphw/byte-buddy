@@ -2404,9 +2404,6 @@ public class MethodCall implements Implementation.Composable {
                      * {@inheritDoc}
                      */
                     public FieldDescription resolve(TypeDescription instrumentedType) {
-                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getType().asErasure())) {
-                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
-                        }
                         return fieldDescription;
                     }
                 }
