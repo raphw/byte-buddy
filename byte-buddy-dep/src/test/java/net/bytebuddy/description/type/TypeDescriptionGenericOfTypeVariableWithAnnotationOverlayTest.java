@@ -13,7 +13,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

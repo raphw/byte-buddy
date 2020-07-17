@@ -15,7 +15,7 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.sameInstance;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {

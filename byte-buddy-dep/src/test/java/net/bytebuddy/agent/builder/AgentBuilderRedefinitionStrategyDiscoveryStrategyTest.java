@@ -11,7 +11,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.when;
 
 public class AgentBuilderRedefinitionStrategyDiscoveryStrategyTest {

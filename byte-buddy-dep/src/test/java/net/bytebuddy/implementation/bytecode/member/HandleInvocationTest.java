@@ -12,7 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.*;
 
 public class HandleInvocationTest {

@@ -19,7 +19,7 @@ import org.objectweb.asm.Type;
 import java.lang.reflect.Field;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.*;
 
 public class FieldConstantTest {

@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.*;
 
 public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {

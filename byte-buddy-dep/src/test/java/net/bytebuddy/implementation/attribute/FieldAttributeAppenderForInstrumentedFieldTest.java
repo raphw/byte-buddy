@@ -7,7 +7,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 import static org.mockito.Mockito.*;
 
 public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFieldAttributeAppenderTest {

@@ -12,14 +12,13 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.MemberSubstitutionTestHelper;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 
 public class MemberSubstitutionTest {
 
