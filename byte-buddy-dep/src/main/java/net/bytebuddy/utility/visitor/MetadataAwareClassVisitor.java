@@ -28,6 +28,11 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     private boolean triggerNestHost;
 
     /**
+     * {@code true} if the permitted subclass visitation is not yet completed.
+     */
+    private boolean triggerPermittedSubclasses;
+
+    /**
      * {@code true} if the outer class was not yet visited.
      */
     private boolean triggerOuterClass;
@@ -51,6 +56,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     protected MetadataAwareClassVisitor(int api, ClassVisitor classVisitor) {
         super(api, classVisitor);
         triggerNestHost = true;
+        triggerPermittedSubclasses = true;
         triggerOuterClass = true;
         triggerAttributes = true;
         triggerRecordComponents = true;
@@ -60,6 +66,13 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
      * Invoked if the nest host was not visited.
      */
     protected void onNestHost() {
+        /* do nothing */
+    }
+
+    /**
+     * Invoked if the permitted subclass visitation is about to complete.
+     */
+    protected void onAfterPermittedSubclasses() {
         /* do nothing */
     }
 
@@ -105,6 +118,16 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     /**
+     * Considers triggering the after permitted subclass visitation.
+     */
+    private void considerTriggerAfterPermittedSubclasses() {
+        if (triggerPermittedSubclasses) {
+            triggerPermittedSubclasses = false;
+            onAfterPermittedSubclasses();
+        }
+    }
+
+    /**
      * Considers triggering the after attribute visitation.
      */
     private void considerTriggerAfterAttributes() {
@@ -140,8 +163,23 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     }
 
     @Override
+    public final void visitPermittedSubclass(String permittedSubclass) {
+        onVisitPermittedSubclass(permittedSubclass);
+    }
+
+    /**
+     * An order-sensitive invocation of {@code ClassVisitor#visitPermittedSubclass}.
+     *
+     * @param permittedSubclass The internal name of the permitted subclass.
+     */
+    protected void onVisitPermittedSubclass(String permittedSubclass) {
+        super.visitPermittedSubclass(permittedSubclass);
+    }
+
+    @Override
     public final void visitOuterClass(String owner, String name, String descriptor) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         triggerOuterClass = false;
         onVisitOuterClass(owner, name, descriptor);
     }
@@ -160,6 +198,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         return onVisitRecordComponent(name, descriptor, signature);
@@ -180,6 +219,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         return onVisitAnnotation(descriptor, visible);
     }
@@ -198,6 +238,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         return onVisitTypeAnnotation(typeReference, typePath, descriptor, visible);
     }
@@ -218,6 +259,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final void visitAttribute(Attribute attribute) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         onVisitAttribute(attribute);
     }
@@ -234,6 +276,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final void visitNestMember(String nestMember) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         onVisitNestMember(nestMember);
@@ -251,6 +294,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         onVisitInnerClass(name, outerName, innerName, modifiers);
@@ -271,6 +315,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         considerTriggerAfterRecordComponents();
@@ -294,6 +339,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         considerTriggerAfterRecordComponents();
@@ -317,6 +363,7 @@ public abstract class MetadataAwareClassVisitor extends ClassVisitor {
     @Override
     public final void visitEnd() {
         considerTriggerNestHost();
+        considerTriggerAfterPermittedSubclasses();
         considerTriggerOuterClass();
         considerTriggerAfterAttributes();
         considerTriggerAfterRecordComponents();

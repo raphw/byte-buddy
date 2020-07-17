@@ -323,14 +323,29 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationPreJava5TypeAssertion() throws Exception {
+    public void testNestHostPreJava11() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V10)
+                .subclass(Object.class)
+                .nestMembers(Object.class)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRecordPreJava14() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V13)
+                .makeRecord()
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationPreJava5() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .makeAnnotation()
                 .make();
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnTypePreJava5TypeAssertion() throws Exception {
+    public void testAnnotationOnTypePreJava5() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .annotateType(AnnotationDescription.Builder.ofType(Foo.class).build())
@@ -338,7 +353,7 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnFieldPreJava5TypeAssertion() throws Exception {
+    public void testAnnotationOnFieldPreJava5() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .defineField(FOO, Void.class)
@@ -347,7 +362,7 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAnnotationOnMethodPreJava5TypeAssertion() throws Exception {
+    public void testAnnotationOnMethodPreJava5() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .defineMethod(FOO, void.class)

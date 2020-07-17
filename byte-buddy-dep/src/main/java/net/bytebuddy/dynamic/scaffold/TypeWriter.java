@@ -2308,18 +2308,25 @@ public interface TypeWriter<T> {
                 } else {
                     constraints.add(Constraint.ForClass.MANIFEST);
                 }
+                boolean record;
                 if ((modifiers & Opcodes.ACC_RECORD) != 0) {
                     constraints.add(Constraint.ForRecord.INSTANCE);
+                    record = true;
+                } else {
+                    record = false;
                 }
                 constraint = new Constraint.Compound(constraints);
                 constraint.assertType(modifiers, interfaces != null, signature != null);
+                if (record) {
+                    constraint.assertRecord();
+                }
                 super.visit(version, modifiers, name, signature, superName, interfaces);
             }
 
             @Override
-            public RecordComponentVisitor visitRecordComponent(String name, String descriptor, String signature) {
-                constraint.assertRecord();
-                return super.visitRecordComponent(name, descriptor, signature);
+            public void visitPermittedSubclass(String permittedSubclass) {
+                constraint.assertPermittedSubclass();
+                super.visitPermittedSubclass(permittedSubclass);
             }
 
             @Override
@@ -2545,6 +2552,11 @@ public interface TypeWriter<T> {
                 void assertRecord();
 
                 /**
+                 * Asserts the presence of a permitted subclass.
+                 */
+                void assertPermittedSubclass();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -2687,6 +2699,13 @@ public interface TypeWriter<T> {
                     public void assertRecord() {
                         /* do nothing */
                     }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -2813,6 +2832,13 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertRecord() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
                         /* do nothing */
                     }
                 }
@@ -2970,6 +2996,13 @@ public interface TypeWriter<T> {
                     public void assertRecord() {
                         /* do nothing */
                     }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
+                        /* do nothing */
+                    }
                 }
 
                 /**
@@ -3094,6 +3127,13 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertRecord() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
                         /* do nothing */
                     }
                 }
@@ -3249,6 +3289,13 @@ public interface TypeWriter<T> {
                      * {@inheritDoc}
                      */
                     public void assertRecord() {
+                        /* do nothing */
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
                         /* do nothing */
                     }
                 }
@@ -3415,6 +3462,15 @@ public interface TypeWriter<T> {
                     public void assertRecord() {
                         if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V14)) {
                             throw new IllegalStateException("Cannot define record for class file version " + classFileVersion);
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V15)) {
+                            throw new IllegalStateException("Cannot define permitted subclasses for class file version " + classFileVersion);
                         }
                     }
                 }
@@ -3594,6 +3650,15 @@ public interface TypeWriter<T> {
                     public void assertRecord() {
                         for (Constraint constraint : constraints) {
                             constraint.assertRecord();
+                        }
+                    }
+
+                    /**
+                     * {@inheritDoc}
+                     */
+                    public void assertPermittedSubclass() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertPermittedSubclass();
                         }
                     }
                 }
@@ -4672,6 +4737,11 @@ public interface TypeWriter<T> {
                     private final LinkedHashMap<String, TypeDescription> declaredTypes;
 
                     /**
+                     * A list of internal names of permitted subclasses to include.
+                     */
+                    private final List<String> permittedSubclasses;
+
+                    /**
                      * The method pool to use or {@code null} if the pool was not yet initialized.
                      */
                     private MethodPool methodPool;
@@ -4734,6 +4804,10 @@ public interface TypeWriter<T> {
                         for (TypeDescription typeDescription : instrumentedType.getDeclaredTypes()) {
                             declaredTypes.put(typeDescription.getInternalName(), typeDescription);
                         }
+                        permittedSubclasses = new ArrayList<String>(instrumentedType.getPermittedSubclasses().size());
+                        for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
+                            permittedSubclasses.add(typeDescription.getInternalName());
+                        }
                     }
 
                     @Override
@@ -4785,6 +4859,20 @@ public interface TypeWriter<T> {
                     protected void onNestHost() {
                         if (!instrumentedType.isNestHost()) {
                             cv.visitNestHost(instrumentedType.getNestHost().getInternalName());
+                        }
+                    }
+
+                    @Override
+                    protected void onVisitPermittedSubclass(String permittedSubclass) {
+                        if (permittedSubclasses.remove(permittedSubclass)) {
+                            cv.visitPermittedSubclass(permittedSubclass);
+                        }
+                    }
+
+                    @Override
+                    protected void onAfterPermittedSubclasses() {
+                        for (String permittedSubclass : permittedSubclasses) {
+                            cv.visitPermittedSubclass(permittedSubclass);
                         }
                     }
 
@@ -5640,6 +5728,9 @@ public interface TypeWriter<T> {
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 if (!instrumentedType.isNestHost()) {
                     classVisitor.visitNestHost(instrumentedType.getNestHost().getInternalName());
+                }
+                for (TypeDescription typeDescription : instrumentedType.getPermittedSubclasses()) {
+                    classVisitor.visitPermittedSubclass(typeDescription.getInternalName());
                 }
                 MethodDescription.InDefinedShape enclosingMethod = instrumentedType.getEnclosingMethod();
                 if (enclosingMethod != null) {

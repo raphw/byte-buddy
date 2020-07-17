@@ -410,6 +410,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isCompileTimeConstant();
 
     /**
+     * Returns the list of permitted subclasses if this class is a sealed class or an empty list if this class is not sealed.
+     *
+     * @return The list of permitted subclasses if this class is a sealed class or an empty list if this class is not sealed.
+     */
+    TypeList getPermittedSubclasses();
+
+    /**
+     * Returns {@code true} if this class is a sealed class that only permitts a specified range of subclasses.
+     *
+     * @return {@code true} if this class is a sealed class that only permitts a specified range of subclasses.
+     */
+    boolean isSealed();
+
+    /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
@@ -8148,6 +8162,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         /**
          * {@inheritDoc}
          */
+        public boolean isSealed() {
+            return !isPrimitive() && !isArray() && !getPermittedSubclasses().isEmpty();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public Iterator<TypeDefinition> iterator() {
             return new SuperClassIterator(this);
         }
@@ -8400,6 +8421,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public boolean isRecord() {
                     return delegate().isRecord();
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public TypeList getPermittedSubclasses() {
+                    return delegate().getPermittedSubclasses();
                 }
             }
         }
@@ -8821,13 +8849,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public RecordComponentList<RecordComponentDescription.InDefinedShape> getRecordComponents() {
             Object[] recordComponent = RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.getRecordComponents(type);
             return recordComponent == null
-                ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
-                : new RecordComponentList.ForLoadedRecordComponents();
+                    ? new RecordComponentList.Empty<RecordComponentDescription.InDefinedShape>()
+                    : new RecordComponentList.ForLoadedRecordComponents();
         }
 
-        @Override
+        /**
+         * {@inheritDoc}
+         */
         public boolean isRecord() {
             return RecordComponentDescription.ForLoadedRecordComponent.DISPATCHER.isRecord(type);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList getPermittedSubclasses() {
+            return new ClassDescriptionTypeList(type.getClassLoader(), DISPATCHER.getPermittedSubclasses(type));
         }
 
         /**
@@ -8861,6 +8898,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             boolean isNestmateOf(Class<?> type, Class<?> candidate);
 
             /**
+             * Returns the permitted subclasses of the supplied type.
+             *
+             * @param type The type for which to check the permitted subclasses.
+             * @return An array of descriptors of permitted subclasses.
+             */
+            Object[] getPermittedSubclasses(Class<?> type);
+
+            /**
+             * Returns the internal name of a permitted subclass.
+             *
+             * @param permittedSubclass The permitted subclass descriptor.
+             * @return The permitted subclasses internal name.
+             */
+            String getInternalName(Object permittedSubclass);
+
+            /**
              * An action to resolve the dispatcher for invoking methods of {@link Class} reflectively.
              */
             enum CreationAction implements PrivilegedAction<Dispatcher> {
@@ -8875,9 +8928,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public Dispatcher run() {
                     try {
-                        return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
-                                Class.class.getMethod("getNestMembers"),
-                                Class.class.getMethod("isNestmateOf", Class.class));
+                        try {
+                            return new ForJava16CapableVm(Class.class.getMethod("getNestHost"),
+                                    Class.class.getMethod("getNestMembers"),
+                                    Class.class.getMethod("isNestmateOf", Class.class),
+                                    Class.class.getMethod("permittedSubclasses"),
+                                    Class.forName("java.lang.constant.ClassDesc").getMethod("descriptorString"));
+                        } catch (Exception ignored) {
+                            return new ForJava11CapableVm(Class.class.getMethod("getNestHost"),
+                                    Class.class.getMethod("getNestMembers"),
+                                    Class.class.getMethod("isNestmateOf", Class.class));
+                        }
                     } catch (NoSuchMethodException ignored) {
                         return ForLegacyVm.INSTANCE;
                     }
@@ -8913,6 +8974,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
                     return type == candidate;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object[] getPermittedSubclasses(Class<?> type) {
+                    return new Object[0];
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getInternalName(Object permittedSubclass) {
+                    throw new IllegalStateException("Not supported on the current VM");
                 }
             }
 
@@ -8958,7 +9033,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::getNestHost", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class:getNestHost", exception.getCause());
+                        throw new IllegalStateException("Could not invoke Class::getNestHost", exception.getCause());
                     }
                 }
 
@@ -8971,7 +9046,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::getNestMembers", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class:getNestMembers", exception.getCause());
+                        throw new IllegalStateException("Could not invoke Class::getNestMembers", exception.getCause());
                     }
                 }
 
@@ -8984,8 +9059,220 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Could not invoke Class:isNestmateOf", exception.getCause());
+                        throw new IllegalStateException("Could not invoke Class::isNestmateOf", exception.getCause());
                     }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object[] getPermittedSubclasses(Class<?> type) {
+                    return new Object[0];
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getInternalName(Object permittedSubclass) {
+                    throw new IllegalStateException("Not supported on the current VM");
+                }
+            }
+
+            /**
+             * A dispatcher for a Java 16-capable VM.
+             */
+            class ForJava16CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code java.lang.Class#getNestHost} method.
+                 */
+                private final Method getNestHost;
+
+                /**
+                 * The {@code java.lang.Class#getNestMembers} method.
+                 */
+                private final Method getNestMembers;
+
+                /**
+                 * The {@code java.lang.Class#isNestmateOf} method.
+                 */
+                private final Method isNestmateOf;
+
+                /**
+                 * The {@code java.lang.Class#permittedSubclasses} method.
+                 */
+                private final Method permittedSubclasses;
+
+                /**
+                 * The {@code java.lang.constant.ClassDesc#descriptorString} method.
+                 */
+                private final Method descriptorString;
+
+                /**
+                 * Creates a dispatcher for a Java 11-capable VM.
+                 *
+                 * @param getNestHost         The {@code java.lang.Class#getNestHost} method.
+                 * @param getNestMembers      The {@code java.lang.Class#getNestMembers} method.
+                 * @param isNestmateOf        The {@code java.lang.Class#isNestmateOf} method.
+                 * @param permittedSubclasses The {@code java.lang.Class#permittedSubclasses} method.
+                 * @param descriptorString    The {@code java.lang.constant.ClassDesc#descriptorString} method.
+                 */
+                protected ForJava16CapableVm(Method getNestHost, Method getNestMembers, Method isNestmateOf, Method permittedSubclasses, Method descriptorString) {
+                    this.getNestHost = getNestHost;
+                    this.getNestMembers = getNestMembers;
+                    this.isNestmateOf = isNestmateOf;
+                    this.permittedSubclasses = permittedSubclasses;
+                    this.descriptorString = descriptorString;
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<?> getNestHost(Class<?> type) {
+                    try {
+                        return (Class<?>) getNestHost.invoke(type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::getNestHost", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class::getNestHost", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Class<?>[] getNestMembers(Class<?> type) {
+                    try {
+                        return (Class<?>[]) getNestMembers.invoke(type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::getNestMembers", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class::getNestMembers", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public boolean isNestmateOf(Class<?> type, Class<?> candidate) {
+                    try {
+                        return (Boolean) isNestmateOf.invoke(type, candidate);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::isNestmateOf", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class::isNestmateOf", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Object[] getPermittedSubclasses(Class<?> type) {
+                    try {
+                        return (Object[]) permittedSubclasses.invoke(type);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access Class::permittedSubclasses", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke Class::permittedSubclasses", exception.getCause());
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getInternalName(Object permittedSubclass) {
+                    try {
+                        return (String) descriptorString.invoke(permittedSubclass);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Could not access ClassDesc::descriptorString", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Could not invoke ClassDesc::descriptorString", exception.getCause());
+                    }
+                }
+            }
+        }
+
+        /**
+         * A list of type descriptions represented by class descriptions.
+         */
+        protected static class ClassDescriptionTypeList extends TypeList.AbstractBase {
+
+            /**
+             * The represented class loader.
+             */
+            private final ClassLoader classLoader;
+
+            /**
+             * An array of represented permitted subclasses.
+             */
+            private final Object[] permittedSubclass;
+
+            /**
+             * Creates a new list of type descriptions.
+             *
+             * @param classLoader       The represented class loader.
+             * @param permittedSubclass An array of represented permitted subclasses.
+             */
+            protected ClassDescriptionTypeList(ClassLoader classLoader, Object[] permittedSubclass) {
+                this.classLoader = classLoader;
+                this.permittedSubclass = permittedSubclass;
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeDescription get(int index) {
+                return new InternalNameLazyType(classLoader, DISPATCHER.getInternalName(permittedSubclass[index]));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public int size() {
+                return permittedSubclass.length;
+            }
+
+            /**
+             * A lazy representation of an internal name for a given class loader.
+             */
+            protected static class InternalNameLazyType extends OfSimpleType.WithDelegation {
+
+                /**
+                 * The represented class loader.
+                 */
+                private final ClassLoader classLoader;
+
+                /**
+                 * The represented internal name.
+                 */
+                private final String internalName;
+
+                /**
+                 * Creates a new lazy representation of an internal name.
+                 *
+                 * @param classLoader  The represented class loader.
+                 * @param internalName The represented internal name.
+                 */
+                protected InternalNameLazyType(ClassLoader classLoader, String internalName) {
+                    this.classLoader = classLoader;
+                    this.internalName = internalName;
+                }
+
+                @Override
+                @CachedReturnPlugin.Enhance
+                protected TypeDescription delegate() {
+                    try {
+                        return ForLoadedType.of(Class.forName(getName(), false, classLoader));
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException(exception);
+                    }
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public String getName() {
+                    return internalName.replace('/', '.');
                 }
             }
         }
@@ -9277,6 +9564,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public boolean isRecord() {
             return false;
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList getPermittedSubclasses() {
+            return new TypeList.Empty();
+        }
     }
 
     /**
@@ -9473,6 +9767,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public boolean isRecord() {
             throw new IllegalStateException("Cannot resolve record attribute of a latent type description: " + this);
         }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList getPermittedSubclasses() {
+            throw new IllegalStateException("Cannot resolve permitted subclasses of a latent type description: " + this);
+        }
     }
 
     /**
@@ -9625,6 +9926,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         public boolean isRecord() {
             return false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList getPermittedSubclasses() {
+            return new TypeList.Empty();
         }
     }
 
@@ -9853,7 +10161,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          * {@inheritDoc}
          */
         public boolean isRecord() {
-            return false;
+            return delegate.isRecord();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public TypeList getPermittedSubclasses() {
+            return delegate.getPermittedSubclasses();
         }
 
         /**
