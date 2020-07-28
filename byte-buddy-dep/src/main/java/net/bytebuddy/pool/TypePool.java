@@ -8595,7 +8595,7 @@ public interface TypePool {
          * @return An class loading type pool.
          */
         public static TypePool of(ClassLoader classLoader, TypePool parent) {
-            return new ClassLoading(CacheProvider.NoOp.INSTANCE, parent, classLoader);
+            return new ClassLoading(new CacheProvider.Simple(), parent, classLoader);
         }
 
         /**

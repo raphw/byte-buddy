@@ -3276,7 +3276,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
             /**
              * Accepts a new work assignment.
              *
-             * @param work The work to handle prefixed by a preprocessing step.
+             * @param work  The work to handle prefixed by a preprocessing step.
              * @param eager {@code true} if the processing does not need to be deferred until all preprocessing is complete.
              * @throws IOException If an I/O exception occurs.
              */
