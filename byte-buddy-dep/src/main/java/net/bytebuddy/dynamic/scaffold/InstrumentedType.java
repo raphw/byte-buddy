@@ -1493,8 +1493,6 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate method signature for " + methodDescription);
                 } else if ((methodDescription.getModifiers() & ~ModifierContributor.ForMethod.MASK) != 0) {
                     throw new IllegalStateException("Illegal modifiers " + methodDescription.getModifiers() + " for " + methodDescription);
-                } else if (!isAbstract() && methodDescription.isAbstract()) {
-                    throw new IllegalStateException("Non-abstract type cannot declare abstract method " + methodDescription);
                 } else if (isInterface() && !methodDescription.isPublic() && !methodDescription.isPrivate()) {
                     throw new IllegalStateException("Methods declared by an interface must be public or private " + methodDescription);
                 }

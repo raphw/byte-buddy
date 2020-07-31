@@ -1031,7 +1031,7 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OBJECT)).validated();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test // Must not throw exception as methods might become implemented by interception - requires delayed validation
     public void testMethodAbstractNonAbstractType() throws Exception {
         makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_ABSTRACT, TypeDescription.Generic.OBJECT)).validated();
     }
