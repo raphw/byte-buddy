@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 31. July 2020: version 1.10.14
+
+- Fix build config to include Eclipse e2e file.
+- Allow for not printing a warning if no file is transformed in build plugin.
+- Fix invokability check in `MethodCall` validation.
+- Avoid premature validation of `InstrumentType`'s method modifiers.
+- Use type cache by default when using loaded type class pool since class lookup showed to be rather expensive.
+
 ### 27. June 2020: version 1.10.13
 
 - Add possibility to filter class loaders before attempting to load a class using the `AgentBuilder`'s resubmission feature.
