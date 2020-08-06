@@ -587,6 +587,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + modifiers;
@@ -655,6 +656,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + type.hashCode();

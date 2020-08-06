@@ -16,6 +16,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;
@@ -423,6 +424,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return types.hashCode();
         }

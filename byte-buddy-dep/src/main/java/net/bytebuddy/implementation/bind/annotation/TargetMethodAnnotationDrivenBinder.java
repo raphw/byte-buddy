@@ -643,8 +643,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
 
                     @Override
                     public int hashCode() {
-                        return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode())
-                                + ((127 * VALUE.hashCode()) ^ parameterIndex);
+                        return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode()) + ((127 * VALUE.hashCode()) ^ parameterIndex);
                     }
 
                     @Override

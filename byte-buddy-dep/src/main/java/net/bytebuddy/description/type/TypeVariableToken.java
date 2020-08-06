@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -114,6 +115,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     }
 
     @Override
+    @CachedReturnPlugin.Enhance
     public int hashCode() {
         int result = symbol.hashCode();
         result = 31 * result + bounds.hashCode();

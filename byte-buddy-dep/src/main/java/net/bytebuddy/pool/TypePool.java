@@ -6010,6 +6010,7 @@ public interface TypePool {
                 }
 
                 @Override
+                @CachedReturnPlugin.Enhance
                 public int hashCode() {
                     return doResolve().hashCode();
                 }

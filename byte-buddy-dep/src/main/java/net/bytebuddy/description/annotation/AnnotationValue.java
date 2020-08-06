@@ -16,6 +16,7 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -869,6 +870,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return propertyDelegate.hashCode(value);
         }
@@ -1357,6 +1359,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return propertyDelegate.hashCode(value);
             }
@@ -2140,6 +2143,7 @@ public interface AnnotationValue<T, S> {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = 1;
             for (AnnotationValue<?, ?> value : values) {
@@ -2251,6 +2255,7 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 int result = 1;
                 for (AnnotationValue.Loaded<?> value : values) {

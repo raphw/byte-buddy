@@ -16,6 +16,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.DeclaredByType;
@@ -902,6 +903,7 @@ public interface RecordComponentDescription extends DeclaredByType,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + type.hashCode();

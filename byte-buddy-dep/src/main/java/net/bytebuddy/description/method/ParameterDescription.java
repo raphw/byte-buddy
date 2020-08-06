@@ -1254,6 +1254,7 @@ public interface ParameterDescription extends AnnotationSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = type.hashCode();
             result = 31 * result + annotations.hashCode();

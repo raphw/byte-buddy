@@ -15,6 +15,7 @@
  */
 package net.bytebuddy.description.enumeration;
 
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -63,6 +64,7 @@ public interface EnumerationDescription extends NamedElement {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             return getValue().hashCode() + 31 * getEnumerationType().hashCode();
         }

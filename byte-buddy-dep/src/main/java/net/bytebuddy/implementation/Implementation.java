@@ -16,6 +16,7 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -190,6 +191,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
+            @CachedReturnPlugin.Enhance
             public int hashCode() {
                 return 31 * getMethodDescription().asSignatureToken().hashCode() + getTypeDescription().hashCode();
             }

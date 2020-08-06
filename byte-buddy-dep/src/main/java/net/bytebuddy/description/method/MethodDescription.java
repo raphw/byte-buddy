@@ -1918,6 +1918,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + modifiers;
@@ -2037,6 +2038,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + returnType.hashCode();
@@ -2119,6 +2121,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();

@@ -17,6 +17,7 @@ package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.build.CachedReturnPlugin;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -354,6 +355,7 @@ public interface AnnotationDescription {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int result = annotationType.hashCode();
             result = 31 * result + values.hashCode();
@@ -431,6 +433,7 @@ public interface AnnotationDescription {
         }
 
         @Override
+        @CachedReturnPlugin.Enhance
         public int hashCode() {
             int hashCode = 0;
             for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
