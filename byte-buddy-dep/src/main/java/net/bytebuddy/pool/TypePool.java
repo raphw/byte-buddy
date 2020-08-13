@@ -154,7 +154,7 @@ public interface TypePool {
              * {@inheritDoc}
              */
             public TypeDescription resolve() {
-                throw new IllegalStateException("Cannot resolve type description for " + name);
+                throw new ResolutionIllegalStateException("Cannot resolve type description for " + name);
             }
         }
     }

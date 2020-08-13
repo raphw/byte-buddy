@@ -18,6 +18,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.build.HashCodeAndEqualsPlugin;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.ResolutionIllegalStateException;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -63,7 +64,11 @@ public class HasSuperTypeMatcher<T extends TypeDescription> extends ElementMatch
                     if (matcher.matches(interfaceType.asGenericType())) {
                         return true;
                     } else {
-                        interfaceTypes.addAll(interfaceType.getInterfaces());
+                        try {
+                            interfaceTypes.addAll(interfaceType.getInterfaces());
+                        } catch (ResolutionIllegalStateException ex) {
+                            continue;
+                        }
                     }
                 }
             }
