@@ -233,7 +233,7 @@ Sponsorship via GitHub is easy to set up and is available for different plans. F
 
 #### Tidelift ####
 
-Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-net-bytebuddy-byte-buddy?utm_source=byte-buddy&utm_medium=referral). If you are not using Byte Buddy to an extend where you want to purchase explicit support and want to support the open source community in general, please consider a subscription.
+Byte Buddy is [listed on Tidelift](https://tidelift.com/subscription/pkg/maven-net-bytebuddy-byte-buddy?utm_source=byte-buddy&utm_medium=referral). If you are not using Byte Buddy to an extent where you want to purchase explicit support and want to support the open source community in general, please consider a subscription.
 
 #### Free ####
 
