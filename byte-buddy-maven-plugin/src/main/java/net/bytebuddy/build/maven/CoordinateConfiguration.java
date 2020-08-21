@@ -18,10 +18,10 @@ package net.bytebuddy.build.maven;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * An abstract base class for a user configuration implying a Maven coordinate.
+ * An configuration of a Maven coordinate.
  */
 @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven")
-public class AbstractUserConfiguration {
+public class CoordinateConfiguration {
 
     /**
      * The group id of the project containing the plugin type or {@code null} if the current project's group id should be used.
@@ -66,7 +66,6 @@ public class AbstractUserConfiguration {
                 ? artifactId
                 : this.artifactId;
     }
-
 
     /**
      * Returns the version to use.
