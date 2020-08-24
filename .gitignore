@@ -17,10 +17,11 @@ target/
 site/
 
 # Gradle
-byte-buddy-gradle-plugin/build/
-byte-buddy-gradle-plugin/buildSrc
-byte-buddy-gradle-plugin/gradle/build
 .gradle/
+byte-buddy-gradle-plugin/build/
+byte-buddy-gradle-plugin/buildSrc/build/
+byte-buddy-gradle-plugin/gradle/build/
+byte-buddy-gradle-plugin/gradle/wrapper/
 
 # Shade plugin
 dependency-reduced-pom.xml

@@ -273,7 +273,7 @@ public abstract class AbstractByteBuddyTask extends DefaultTask {
      */
     protected void doApply(Plugin.Engine.Source source, Plugin.Engine.Target target) throws IOException {
         if (source().equals(target())) {
-            throw new IllegalStateException("Source and target folder cannot be equal: " + source());
+            throw new IllegalStateException("Source and target cannot be equal: " + source());
         }
         List<Plugin.Factory> factories = new ArrayList<Plugin.Factory>(getTransformations().size());
         for (Transformation transformation : getTransformations()) {
