@@ -11,7 +11,7 @@ version = pom.parent.version.text().toString()
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
     dependencies {
         compile gradleApi()
-        compile "net.bytebuddy:byte-buddy:${version}"
+        compile group: 'net.bytebuddy', name: 'byte-buddy', version: version
         testCompile gradleTestKit()
         testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
         testCompile(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {
@@ -21,7 +21,7 @@ if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
 } else {
     dependencies {
         implementation gradleApi()
-        implementation "net.bytebuddy:byte-buddy:${version}"
+        implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version
         testImplementation gradleTestKit()
         testImplementation group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
         testImplementation(group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito') {

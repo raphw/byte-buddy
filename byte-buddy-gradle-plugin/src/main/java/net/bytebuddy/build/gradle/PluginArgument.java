@@ -16,6 +16,7 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import org.gradle.api.tasks.Input;
 
 /**
  * Describes an argument to a {@link Plugin} constuctor.
@@ -51,6 +52,16 @@ public class PluginArgument {
     }
 
     /**
+     * Returns the argument index.
+     *
+     * @return The argument index.
+     */
+    @Input
+    public int getIndex() {
+        return index;
+    }
+
+    /**
      * Sets the argument index.
      *
      * @param index The argument index.
@@ -60,11 +71,21 @@ public class PluginArgument {
     }
 
     /**
+     * Returns the argument value.
+     *
+     * @return The argument value.
+     */
+    @Input
+    public Object getValue() {
+        return value;
+    }
+
+    /**
      * Sets the argument value.
      *
      * @param value The argument value.
      */
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
@@ -73,7 +94,7 @@ public class PluginArgument {
      *
      * @return An argument resolver that represents this plugin argument.
      */
-    public Plugin.Factory.UsingReflection.ArgumentResolver toArgumentResolver() {
+    protected Plugin.Factory.UsingReflection.ArgumentResolver toArgumentResolver() {
         return new Plugin.Factory.UsingReflection.ArgumentResolver.ForIndex(index, value);
     }
 }
