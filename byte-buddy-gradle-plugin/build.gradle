@@ -9,6 +9,11 @@ apply from: './main.gradle'
 version = pom.parent.version.text().toString()
 
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    repositories {
+        maven {
+            url 'http://insecure.repo1.maven.org/maven2/'
+        }
+    }
     dependencies {
         compile gradleApi()
         compile group: 'net.bytebuddy', name: 'byte-buddy', version: version
@@ -19,6 +24,9 @@ if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
         }
     }
 } else {
+    repositories {
+        mavenCentral()
+    }
     dependencies {
         implementation gradleApi()
         implementation group: 'net.bytebuddy', name: 'byte-buddy', version: version

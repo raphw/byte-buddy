@@ -40,11 +40,6 @@ if (targetVersion != null) {
 
 logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
 // Without the extras property, creating a javadoc artifact is not necessary.
 if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
@@ -99,10 +94,17 @@ task copyLicense(type: Copy) {
 
 jar.dependsOn copyLicense
 
-jar.doLast {
-    new GradleTypeTransformer().transform(jar.archivePath)
-}
 
-validatePlugins {
-    enabled = false
+def transformer = new GradleTypeTransformer();
+if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    jar.doLast {
+        transformer.transform(jar.archivePath)
+    }
+} else {
+    validatePlugins {
+        enabled = false
+    }
+    jar.doLast {
+        transformer.transform(jar.archiveFile.get().asFile)
+    }
 }
