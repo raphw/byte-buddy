@@ -44,12 +44,12 @@ logger.info("Compiling class files from version ${sourceCompatibility} to ${targ
 if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
         task javadocJar(type: Jar, dependsOn: javadoc) {
-            archiveClassifier.set('javadoc')
+            classifier = 'javadoc'
             from javadoc.destinationDir
         }
     } else {
         task javadocJar(type: Jar, dependsOn: javadoc) {
-            classifier = 'javadoc'
+            archiveClassifier.set('javadoc')
             from javadoc.destinationDir
         }
     }

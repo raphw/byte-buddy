@@ -31,7 +31,7 @@ public class ByteBuddyTaskExtensionTest {
     @Test
     public void testDefaultProperties() {
         assertThat(extension.getTransformations().size(), is(0));
-        assertThat(extension.getEntryPoint(), is(EntryPoint.Default.REBASE));
+        assertThat(extension.getEntryPoint(), is((EntryPoint) EntryPoint.Default.REBASE));
         assertThat(extension.getSuffix(), is(""));
         assertThat(extension.getThreads(), is(0));
         assertThat(extension.isExtendedParsing(), is(false));

@@ -2,7 +2,7 @@ package net.bytebuddy.build.gradle.transform;
 
 import net.bytebuddy.build.gradle.transform.api.Sample;
 import net.bytebuddy.build.gradle.transform.api.Substitution;
-import net.bytebuddy.build.gradle.transform.target.Target;
+import net.bytebuddy.build.gradle.transform.content.Target;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
