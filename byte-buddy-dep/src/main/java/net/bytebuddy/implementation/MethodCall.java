@@ -1417,7 +1417,7 @@ public class MethodCall implements Implementation.Composable {
                     }
                     List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(invokedMethod.getParameters().size());
                     for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
-                        argumentLoaders.add(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(this.index), index++));
+                        argumentLoaders.add(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(this.index), index));
                     }
                     return argumentLoaders;
                 }
