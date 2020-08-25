@@ -1,58 +1,40 @@
 # Byte Buddy Gradle Plugin
 
-The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. To activate this process, add the following sections to your project Gradle build file:
+The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. If the *java* plugin 
+is registered, the plugin registers an intermediate task for every source set for which at least one transformation is defined.
+For the *main* source set, the task is named *byteBuddy*. For each other source set, the source set name is suffixed.  
+
+To apply a transformation, consider the following Gradle build file:
 
 ###### build.gradle
 ```groovy
 plugins {
+  id 'java'
   id 'net.bytebuddy.byte-buddy-gradle-plugin' version 'LATEST'
 }
 
-configurations {
-  examplePlugin "foo:bar:1.0"
-}
-
-byteBuddy {
-  transformation {
-    plugin = "com.example.junit.HookInstallingPlugin"
-    classPath = configurations.examplePlugin
-  }
-}
-```
-
-This configuration informs Gradle to transform all classes by the goal using the transformation specified by **HookInstallingPlugin** within the `foo:bar:1.0` artifact.
-
-###### HookInstallingPlugin.java
-```java
-package com.example.junit;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import net.bytebuddy.build.Plugin;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType.Builder;
-import net.bytebuddy.implementation.MethodDelegation;
-
-public class HookInstallingPlugin implements Plugin {
+class HookInstallingPlugin implements Plugin {
 
     @Override
-    public boolean matches(TypeDescription target) {
+    boolean matches(TypeDescription target) {
         return target.getName().endsWith("Test");
     }
 
     @Override
-    public Builder<?> apply(Builder<?> builder, TypeDescription typeDescription) {
+    Builder<?> apply(Builder<?> builder, TypeDescription typeDescription) {
         return builder.method(isAnnotatedWith(anyOf(Test.class, Before.class, After.class))
                 .or(isStatic().and(isAnnotatedWith(anyOf(BeforeClass.class, AfterClass.class)))))
                 .intercept(MethodDelegation.to(SampleInterceptor.class))
                 .implement(Hooked.class);
     }
+    
+    @Override void close() { }
+}
+
+testByteBuddy {
+  transformation {
+    plugin = com.example.junit.HookInstallingPlugin.class
+  }
 }
 ```
 

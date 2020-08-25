@@ -76,15 +76,15 @@ public class ByteBuddyPluginTest {
                 "import net.bytebuddy.dynamic.DynamicType;",
                 "",
                 "class SamplePlugin implements Plugin {",
-                "  @Override public boolean matches(TypeDescription target) {",
+                "  @Override boolean matches(TypeDescription target) {",
                 "    return target.getSimpleName().equals(\"SampleClass\");",
                 "  }",
-                "  @Override public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, " +
+                "  @Override DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, " +
                         "TypeDescription typeDescription, " +
                         "ClassFileLocator classFileLocator) {",
                 "    return builder.defineField(\"" + FOO + "\", Void.class);",
                 "  }",
-                "  @Override public void close() { }",
+                "  @Override void close() { }",
                 "}",
                 "",
                 "byteBuddy {",
@@ -121,16 +121,16 @@ public class ByteBuddyPluginTest {
                 "",
                 "class SamplePlugin implements Plugin {",
                 "  private final String value;",
-                "  public SamplePlugin(String value) { this.value = value; }",
-                "  @Override public boolean matches(TypeDescription target) {",
+                "  SamplePlugin(String value) { this.value = value; }",
+                "  @Override boolean matches(TypeDescription target) {",
                 "    return target.getSimpleName().equals(\"SampleClass\");",
                 "  }",
-                "  @Override public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, " +
+                "  @Override DynamicType.Builder<?> apply(DynamicType.Builder<?> builder, " +
                         "TypeDescription typeDescription, " +
                         "ClassFileLocator classFileLocator) {",
                 "    return builder.defineField(value, Void.class);",
                 "  }",
-                "  @Override public void close() { }",
+                "  @Override void close() { }",
                 "}",
                 "",
                 "byteBuddy {",
