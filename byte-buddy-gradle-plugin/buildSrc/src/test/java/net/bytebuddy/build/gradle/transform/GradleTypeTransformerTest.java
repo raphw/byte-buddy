@@ -60,10 +60,21 @@ public class GradleTypeTransformerTest {
             assertNotNull(entry);
             assertEquals(Target.class.getName().replace('.', '/') + ".class", entry.getName());
             new ClassReader(jarInputStream).accept(new ClassVisitor(Opcodes.ASM8) {
+
+                private boolean found;
+
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
                     assertEquals("Lfoo/Bar;", descriptor);
+                    found = true;
                     return null;
+                }
+
+                @Override
+                public void visitEnd() {
+                    if (!found) {
+                        throw new AssertionError("Did not find expected field");
+                    }
                 }
             }, ClassReader.SKIP_CODE);
             jarInputStream.closeEntry();

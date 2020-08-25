@@ -53,7 +53,7 @@ public class ByteBuddyPluginTest {
     }
 
     @Test
-    public void testPluginExection() throws Exception {
+    public void testPluginExecution() throws Exception {
         write("build.gradle",
                 "plugins {",
                 "  id 'java'",
@@ -91,37 +91,7 @@ public class ByteBuddyPluginTest {
         BuildTask task = result.task(":byteBuddy");
         assertNotNull(task);
         assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
-        File jar = new File(folder, "build/libs/" + folder.getName() + ".jar");
-        assertTrue(jar.isFile());
-        JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
-        try {
-            JarEntry entry = jarInputStream.getNextJarEntry();
-            assertNotNull(entry);
-            new ClassReader(jarInputStream).accept(new ClassVisitor(OpenedClassReader.ASM_API) {
-
-                private boolean found;
-
-                @Override
-                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                    if (!name.equals(FOO)) {
-                        throw new AssertionError("Unexpected field name: " + name);
-                    }
-                    found  = true;
-                    return null;
-                }
-
-                @Override
-                public void visitEnd() {
-                    if (!found) {
-                        throw new AssertionError("Field missing");
-                    }
-                }
-            }, ClassReader.SKIP_CODE);
-            jarInputStream.closeEntry();
-            assertNull(jarInputStream.getNextEntry());
-        } finally {
-            jarInputStream.close();
-        }
+        assertResult(FOO);
     }
 
     private File create(List<String> segments) {
@@ -142,6 +112,38 @@ public class ByteBuddyPluginTest {
             writer.println();
         } finally {
             writer.close();
+        }
+    }
+
+    private void assertResult(final String expectation) throws IOException {
+        File jar = new File(folder, "build/libs/" + folder.getName() + ".jar");
+        assertTrue(jar.isFile());
+        JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
+        try {
+            JarEntry entry = jarInputStream.getNextJarEntry();
+            assertNotNull(entry);
+            new ClassReader(jarInputStream).accept(new ClassVisitor(OpenedClassReader.ASM_API) {
+
+                private boolean found;
+
+                @Override
+                public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+                    assertEquals(expectation, name);
+                    found  = true;
+                    return null;
+                }
+
+                @Override
+                public void visitEnd() {
+                    if (!found) {
+                        throw new AssertionError("Field missing");
+                    }
+                }
+            }, ClassReader.SKIP_CODE);
+            jarInputStream.closeEntry();
+            assertNull(jarInputStream.getNextEntry());
+        } finally {
+            jarInputStream.close();
         }
     }
 }
