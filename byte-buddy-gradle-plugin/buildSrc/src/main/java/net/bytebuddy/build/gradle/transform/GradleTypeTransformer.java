@@ -30,16 +30,53 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 
 /**
- * A transformer that removes classes in the {@code net.bytebuddy.build.gradle.api} package and substitutes them
- * with the type that they represent according to their {@code net.bytebuddy.build.gradle.api.GradleType}
- * type name.
+ * A transformer that removes classes in a package and substitutes all type names with the value of an annotation that
+ * is expected on these classes.
  */
 public class GradleTypeTransformer {
 
     /**
-     * The API package path.
+     * The class file extension.
+     */
+    private static final String CLASS_FILE = ".class";
+
+    /**
+     * The default API package path.
      */
     private static final String API = "net/bytebuddy/build/gradle/api";
+
+    /**
+     * The default type name for a substitution annotation.
+     */
+    private static final String TYPE = API + "/GradleType";
+
+    /**
+     * The internal package name for API being used.
+     */
+    private final String api;
+
+    /**
+     * The internal type name for a substitution annotation being used.
+     */
+    private final String type;
+
+    /**
+     * Creates a new Gradle type transformer using default values.
+     */
+    public GradleTypeTransformer() {
+        this(API, TYPE);
+    }
+
+    /**
+     * Creates a new Gradle type transformer.
+     *
+     * @param api  The internal package name for API being used.
+     * @param type The internal type name for a substitution annotation being used.
+     */
+    protected GradleTypeTransformer(String api, String type) {
+        this.api = api;
+        this.type = type;
+    }
 
     /**
      * Transforms the supplied jar file.
@@ -48,7 +85,7 @@ public class GradleTypeTransformer {
      * @throws IOException If an I/O exception occurs.
      */
     public void transform(File jar) throws IOException {
-        Map<String, String> names = GradlePackageVisitor.toGradleTypeNames(jar);
+        Map<String, String> names = GradlePackageVisitor.toGradleTypeNames(api, type, jar);
         File temporary = File.createTempFile("gradle-byte-buddy-plugin", ".jar");
         JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
         try {
@@ -56,8 +93,8 @@ public class GradleTypeTransformer {
             try {
                 JarEntry entry;
                 while ((entry = jarInputStream.getNextJarEntry()) != null) {
-                    if (!entry.getName().startsWith(API)) {
-                        if (entry.getName().endsWith(".class")) {
+                    if (!entry.getName().startsWith(api)) {
+                        if (entry.getName().endsWith(CLASS_FILE)) {
                             ClassReader reader = new ClassReader(jarInputStream);
                             ClassWriter writer = new ClassWriter(0);
                             reader.accept(new ClassRemapper(writer, new SimpleRemapper(names)), 0);
@@ -89,10 +126,15 @@ public class GradleTypeTransformer {
     }
 
     /**
-     * A visitor that locates the {@code net.bytebuddy.build.gradle.api.GradleType} annotation to extract
-     * a placeholder type's actual name.
+     * A visitor that locates the substitution annotation's {@code value} property to
+     * extract a placeholder type's actual name.
      */
     protected static class GradlePackageVisitor extends ClassVisitor {
+
+        /**
+         * The internal type name for a substitution annotation being used.
+         */
+        private final String type;
 
         /**
          * The names being discovered.
@@ -112,30 +154,34 @@ public class GradleTypeTransformer {
         /**
          * Creates a new Gradle package visitor.
          *
+         * @param type  The internal type name for a substitution annotation being used.
          * @param names The names being discovered.
          */
-        protected GradlePackageVisitor(Map<String, String> names) {
+        protected GradlePackageVisitor(String type, Map<String, String> names) {
             super(Opcodes.ASM8);
+            this.type = type;
             this.names = names;
         }
 
         /**
          * Extracts a mapping of internal names to actual internal names of the Gradle API.
          *
-         * @param jar The jar file to scan.
+         * @param api  The internal package name for API being used.
+         * @param type The internal package name for API being used.
+         * @param jar  The jar file to scan.
          * @return A mapping of internal names to actual internal names of the Gradle API.
          * @throws IOException If an I/O exception occurs.
          */
-        protected static Map<String, String> toGradleTypeNames(File jar) throws IOException {
+        protected static Map<String, String> toGradleTypeNames(String api, String type, File jar) throws IOException {
             Map<String, String> names = new HashMap<>();
             JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
             try {
                 JarEntry entry;
                 while ((entry = jarInputStream.getNextJarEntry()) != null) {
-                    if (entry.getName().startsWith(API)
-                            && entry.getName().endsWith(".class")
-                            && !entry.getName().equals(API + "/GradleType.class")) {
-                        new ClassReader(jarInputStream).accept(new GradlePackageVisitor(names), ClassReader.SKIP_CODE);
+                    if (entry.getName().startsWith(api)
+                            && entry.getName().endsWith(CLASS_FILE)
+                            && !entry.getName().equals(type + CLASS_FILE)) {
+                        new ClassReader(jarInputStream).accept(new GradlePackageVisitor(type, names), ClassReader.SKIP_CODE);
                     }
                     jarInputStream.closeEntry();
                 }
@@ -152,7 +198,7 @@ public class GradleTypeTransformer {
 
         @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-            return descriptor.equals("L" + API + "/GradleType;")
+            return descriptor.equals("L" + type + ";")
                     ? new GradleTypeAnnotationVisitor()
                     : null;
         }
@@ -167,7 +213,7 @@ public class GradleTypeTransformer {
         }
 
         /**
-         * An annotation visitor to extract the {@code net.bytebuddy.build.gradle.api.GradleType#value} property.
+         * An annotation visitor to extract the substitution annotation's {@code value} property.
          */
         protected class GradleTypeAnnotationVisitor extends AnnotationVisitor {
 
