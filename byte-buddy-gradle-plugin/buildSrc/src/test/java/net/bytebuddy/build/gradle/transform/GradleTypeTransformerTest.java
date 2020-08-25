@@ -2,7 +2,7 @@ package net.bytebuddy.build.gradle.transform;
 
 import net.bytebuddy.build.gradle.transform.api.Sample;
 import net.bytebuddy.build.gradle.transform.api.Substitution;
-import net.bytebuddy.build.gradle.transform.content.Target;
+import net.bytebuddy.build.gradle.transform.target.Target;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +20,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 
-import static junit.framework.TestCase.*;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class GradleTypeTransformerTest {
 
@@ -33,7 +34,7 @@ public class GradleTypeTransformerTest {
 
     @After
     public void tearDown() throws Exception {
-        assertTrue(file.delete());
+        assertThat(file.delete(), is(true));
     }
 
     @Test
@@ -57,28 +58,26 @@ public class GradleTypeTransformerTest {
         JarInputStream jarInputStream = new JarInputStream(new FileInputStream(file));
         try {
             JarEntry entry = jarInputStream.getNextJarEntry();
-            assertNotNull(entry);
-            assertEquals(Target.class.getName().replace('.', '/') + ".class", entry.getName());
+            assertThat(entry, notNullValue(JarEntry.class));
+            assertThat(entry.getName(), is(Target.class.getName().replace('.', '/') + ".class"));
             new ClassReader(jarInputStream).accept(new ClassVisitor(Opcodes.ASM8) {
 
                 private boolean found;
 
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                    assertEquals("Lfoo/Bar;", descriptor);
+                    assertThat(descriptor, is("Lfoo/Bar;"));
                     found = true;
                     return null;
                 }
 
                 @Override
                 public void visitEnd() {
-                    if (!found) {
-                        throw new AssertionError("Did not find expected field");
-                    }
+                    assertThat(found, is(true));
                 }
             }, ClassReader.SKIP_CODE);
             jarInputStream.closeEntry();
-            assertNull(jarInputStream.getNextEntry());
+            assertThat(jarInputStream.getNextJarEntry(), nullValue(JarEntry.class));
         } finally {
             jarInputStream.close();
         }

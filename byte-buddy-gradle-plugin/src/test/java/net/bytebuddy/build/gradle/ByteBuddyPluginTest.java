@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-import static junit.framework.TestCase.*;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class ByteBuddyPluginTest {
 
@@ -29,8 +32,8 @@ public class ByteBuddyPluginTest {
     @Before
     public void setUp() throws Exception {
         folder = File.createTempFile("byte-buddy-gradle-plugin", "");
-        assertTrue(folder.delete());
-        assertTrue(folder.mkdir());
+        assertThat(folder.delete(), is(true));
+        assertThat(folder.mkdir(), is(true));
     }
 
     @After
@@ -45,11 +48,11 @@ public class ByteBuddyPluginTest {
                 if (aFile.isDirectory()) {
                     delete(aFile);
                 } else {
-                    assertTrue(aFile.delete());
+                    assertThat(aFile.delete(), is(true));
                 }
             }
         }
-        assertTrue(folder.delete());
+        assertThat(folder.delete(), is(true));
     }
 
     @Test
@@ -89,8 +92,8 @@ public class ByteBuddyPluginTest {
                 .withPluginClasspath()
                 .build();
         BuildTask task = result.task(":byteBuddy");
-        assertNotNull(task);
-        assertEquals(TaskOutcome.SUCCESS, task.getOutcome());
+        assertThat(task, notNullValue(BuildTask.class));
+        assertThat(task.getOutcome(), is(TaskOutcome.SUCCESS));
         assertResult(FOO);
     }
 
@@ -98,7 +101,7 @@ public class ByteBuddyPluginTest {
         File folder = this.folder;
         for (String segment : segments.subList(0, segments.size() - 1)) {
             folder = new File(folder, segment);
-            assertTrue(folder.mkdir() || folder.isDirectory());
+            assertThat(folder.mkdir() || folder.isDirectory(), is(true));
         }
         return new File(folder, segments.get(segments.size() - 1));
     }
@@ -117,31 +120,29 @@ public class ByteBuddyPluginTest {
 
     private void assertResult(final String expectation) throws IOException {
         File jar = new File(folder, "build/libs/" + folder.getName() + ".jar");
-        assertTrue(jar.isFile());
+        assertThat(jar.isFile(), is(true));
         JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
         try {
             JarEntry entry = jarInputStream.getNextJarEntry();
-            assertNotNull(entry);
+            assertThat(entry, notNullValue(JarEntry.class));
             new ClassReader(jarInputStream).accept(new ClassVisitor(OpenedClassReader.ASM_API) {
 
                 private boolean found;
 
                 @Override
                 public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-                    assertEquals(expectation, name);
+                    assertThat(name, is(expectation));
                     found  = true;
                     return null;
                 }
 
                 @Override
                 public void visitEnd() {
-                    if (!found) {
-                        throw new AssertionError("Field missing");
-                    }
+                    assertThat(found, is(true));
                 }
             }, ClassReader.SKIP_CODE);
             jarInputStream.closeEntry();
-            assertNull(jarInputStream.getNextEntry());
+            assertThat(jarInputStream.getNextJarEntry(), nullValue(JarEntry.class));
         } finally {
             jarInputStream.close();
         }

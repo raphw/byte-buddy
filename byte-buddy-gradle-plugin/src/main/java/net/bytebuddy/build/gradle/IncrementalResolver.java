@@ -55,12 +55,13 @@ public interface IncrementalResolver {
         public List<File> apply(Project project, Iterable<FileChange> changes, File sourceRoot, File targetRoot) {
             List<File> files = new ArrayList<File>();
             for (FileChange change : changes) {
-                files.add(change.getFile());
-                if (!change.getFile().isDirectory() && change.getChangeType() == ChangeType.REMOVED) {
+                if (change.getChangeType() == ChangeType.REMOVED) {
                     File target = new File(targetRoot, sourceRoot.toURI().relativize(change.getFile().toURI()).getPath());
                     if (project.delete(target)) {
                         project.getLogger().debug("Deleted removed file {} to prepare incremental build", target);
                     }
+                } else {
+                    files.add(change.getFile());
                 }
             }
             return files;
