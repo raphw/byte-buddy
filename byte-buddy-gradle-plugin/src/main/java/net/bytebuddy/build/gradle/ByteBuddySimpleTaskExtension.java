@@ -16,12 +16,12 @@
 package net.bytebuddy.build.gradle;
 
 /**
- * A Byte Buddy legacy task extension.
+ * A Byte Buddy simple task extension.
  */
-public class ByteBuddyLegacyTaskExtension extends AbstractByteBuddyTaskExtension<ByteBuddyLegacyTask> {
+public class ByteBuddySimpleTaskExtension extends AbstractByteBuddyTaskExtension<ByteBuddySimpleTask> {
 
     @Override
-    protected void doConfigure(ByteBuddyLegacyTask task) {
+    protected void doConfigure(ByteBuddySimpleTask task) {
         /* do nothing */
     }
 }

@@ -28,7 +28,7 @@ import java.io.IOException;
 /**
  * A Byte Buddy task implementation that does not use modern Gradle APIs.
  */
-public class ByteBuddyLegacyTask extends AbstractByteBuddyTask {
+public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
 
     /**
      * The source file or folder.

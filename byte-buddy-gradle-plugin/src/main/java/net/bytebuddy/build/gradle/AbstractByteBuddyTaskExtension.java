@@ -74,6 +74,10 @@ public abstract class AbstractByteBuddyTaskExtension<T extends AbstractByteBuddy
      */
     protected AbstractByteBuddyTaskExtension() {
         transformations = new ArrayList<Transformation>();
+        entryPoint = EntryPoint.Default.REBASE;
+        suffix = "";
+        failOnLiveInitializer = true;
+        warnOnEmptyTypeSet = true;
     }
 
     /**

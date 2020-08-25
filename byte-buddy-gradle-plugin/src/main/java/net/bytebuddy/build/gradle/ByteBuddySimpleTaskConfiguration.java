@@ -24,22 +24,22 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Implements a configuration of a Byte Buddy legacy task.
+ * Implements a configuration of a simple Byte Buddy task.
  */
-public class ByteBuddyLegacyTaskConfiguration extends AbstractByteBuddyTaskConfiguration<ByteBuddyLegacyTask, ByteBuddyLegacyTaskExtension> {
+public class ByteBuddySimpleTaskConfiguration extends AbstractByteBuddyTaskConfiguration<ByteBuddySimpleTask, ByteBuddySimpleTaskExtension> {
 
     /**
-     * Creates a new Byte Buddy legacy task configuration.
+     * Creates a new simple Byte Buddy task configuration.
      *
      * @param name      The name of the task.
      * @param sourceSet The source set for which the task chain is being configured.
      */
-    public ByteBuddyLegacyTaskConfiguration(String name, SourceSet sourceSet) {
-        super(name, sourceSet, ByteBuddyLegacyTask.class);
+    public ByteBuddySimpleTaskConfiguration(String name, SourceSet sourceSet) {
+        super(name, sourceSet, ByteBuddySimpleTask.class);
     }
 
     @Override
-    protected void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, ByteBuddyLegacyTask byteBuddyTask) {
+    protected void configureDirectories(SourceDirectorySet source, JavaCompile compileTask, ByteBuddySimpleTask byteBuddyTask) {
         try {
             File raw = new File(compileTask.getDestinationDir(), RAW_FOLDER).getCanonicalFile(), processed = compileTask.getDestinationDir();
             compileTask.setDestinationDir(raw);

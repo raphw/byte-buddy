@@ -30,6 +30,11 @@ import java.lang.reflect.Method;
 public class ByteBuddyPlugin implements Plugin<Project> {
 
     /**
+     * If set to {@code true}, the Byte Buddy plugin will be configured as if running on a legacy version of Gradle.
+     */
+    public static final String LEGACY = "net.bytebuddy.build.gradle.legacy";
+
+    /**
      * The dispatcher to use.
      */
     private static final Dispatcher<?, ?> DISPATCHER;
@@ -39,12 +44,16 @@ public class ByteBuddyPlugin implements Plugin<Project> {
      */
     static {
         Dispatcher<?, ?> dispatcher;
-        try {
-            Class.forName("org.gradle.work.InputChanges"); // Make sure Gradle 6 is available.
-            dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
-                    AbstractCompile.class.getMethod("setDestinationDir", Class.forName("net.bytebuddy.build.gradle.api.Provider")));
-        } catch (Exception ignored) {
+        if (Boolean.getBoolean(LEGACY)) {
             dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
+        } else {
+            try {
+                Class.forName("org.gradle.work.InputChanges"); // Make sure Gradle 6 is available.
+                dispatcher = new Dispatcher.ForApi6CapableGradle(SourceDirectorySet.class.getMethod("getDestinationDirectory"),
+                        AbstractCompile.class.getMethod("setDestinationDir", Class.forName("org.gradle.api.provider.Provider")));
+            } catch (Exception ignored) {
+                dispatcher = Dispatcher.ForLegacyGradle.INSTANCE;
+            }
         }
         DISPATCHER = dispatcher;
     }
@@ -92,7 +101,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
         /**
          * A dispatcher for a legacy version of Gradle.
          */
-        enum ForLegacyGradle implements Dispatcher<ByteBuddyLegacyTask, ByteBuddyLegacyTaskExtension> {
+        enum ForLegacyGradle implements Dispatcher<ByteBuddySimpleTask, ByteBuddySimpleTaskExtension> {
 
             /**
              * The singleton instance.
@@ -102,15 +111,15 @@ public class ByteBuddyPlugin implements Plugin<Project> {
             /**
              * {@inheritDoc}
              */
-            public ByteBuddyLegacyTaskExtension toExtension() {
-                return new ByteBuddyLegacyTaskExtension();
+            public ByteBuddySimpleTaskExtension toExtension() {
+                return new ByteBuddySimpleTaskExtension();
             }
 
             /**
              * {@inheritDoc}
              */
-            public ByteBuddyLegacyTaskConfiguration toAction(String name, SourceSet sourceSet) {
-                return new ByteBuddyLegacyTaskConfiguration(name, sourceSet);
+            public ByteBuddySimpleTaskConfiguration toAction(String name, SourceSet sourceSet) {
+                return new ByteBuddySimpleTaskConfiguration(name, sourceSet);
             }
         }
 
