@@ -108,3 +108,14 @@ if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
         transformer.transform(jar.archiveFile.get().asFile)
     }
 }
+
+gradlePlugin {
+    plugins {
+        byteBuddyPlugin {
+            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+            displayName = pom.name.text().toString()
+            description = pom.description.text().toString()
+            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+        }
+    }
+}

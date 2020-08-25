@@ -50,13 +50,3 @@ pluginBundle {
     tags = ['Byte Buddy', 'bytecode', 'enhancement']
 }
 
-gradlePlugin {
-    plugins {
-        byteBuddyPlugin {
-            id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
-            displayName = pom.name.text().toString()
-            description = pom.description.text().toString()
-            implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
-        }
-    }
-}
