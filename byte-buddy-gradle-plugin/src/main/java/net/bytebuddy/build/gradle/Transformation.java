@@ -61,7 +61,7 @@ public class Transformation {
      * @param closure The closure for configuring the argument.
      */
     public void argument(Closure<?> closure) {
-        getArguments().add(ConfigureUtil.configure(closure, new PluginArgument()));
+        getArguments().add(ConfigureUtil.configure(closure, new PluginArgument(getArguments().size())));
     }
 
     /**

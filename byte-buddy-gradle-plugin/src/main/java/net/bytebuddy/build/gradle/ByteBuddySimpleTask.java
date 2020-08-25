@@ -22,6 +22,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 
@@ -44,6 +45,14 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      * The class path to supply to the plugin engine.
      */
     private Iterable<File> classPath;
+
+    /**
+     * Creates a new simple Byte Buddy task.
+     */
+    @Inject
+    public ByteBuddySimpleTask() {
+        new ByteBuddySimpleTaskExtension().configure(this);
+    }
 
     /**
      * Returns the task's source file or folder.

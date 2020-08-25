@@ -35,6 +35,19 @@ import java.util.List;
 public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
 
     /**
+     * The incremental builder to apply or {@code null} if no incremental build should be applied.
+     */
+    private IncrementalResolver incrementalResolver;
+
+    /**
+     * Creates a new Byte Buddy task.
+     */
+    @Inject
+    public ByteBuddyTask() {
+        new ByteBuddyTaskExtension().configure(this);
+    }
+
+    /**
      * Returns the source directory.
      *
      * @return The source directory.
@@ -59,19 +72,6 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     @InputFiles
     @CompileClasspath
     public abstract ConfigurableFileCollection getClassPath();
-
-    /**
-     * The incremental builder to apply or {@code null} if no incremental build should be applied.
-     */
-    private IncrementalResolver incrementalResolver;
-
-    /**
-     * Creates a new Byte Buddy task.
-     */
-    @Inject
-    public ByteBuddyTask() {
-        incrementalResolver = IncrementalResolver.ForChangedFiles.INSTANCE;
-    }
 
     /**
      * Returns the incremental builder to apply or {@code null} if no incremental build should be applied.

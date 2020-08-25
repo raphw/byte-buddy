@@ -633,7 +633,7 @@ public interface MethodDelegationBinder {
                                 return right;
                             case AMBIGUOUS:
                             case UNKNOWN:
-                                throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
+                                throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left.getTarget() + " or " + right.getTarget());
                             default:
                                 throw new AssertionError();
                         }
@@ -659,12 +659,12 @@ public interface MethodDelegationBinder {
                                     case LEFT:
                                     case AMBIGUOUS:
                                     case UNKNOWN:
-                                        throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left + " or " + right);
+                                        throw new IllegalArgumentException("Cannot resolve ambiguous delegation of " + source + " to " + left.getTarget() + " or " + right.getTarget());
                                     default:
                                         throw new AssertionError();
                                 }
                             default:
-                                throw new IllegalStateException("Unexpected amount of targets: " + targets);
+                                throw new IllegalStateException("Unexpected amount of targets: " + targets.size());
                         }
                     }
                 }

@@ -18,10 +18,17 @@ package net.bytebuddy.build.gradle;
 import net.bytebuddy.build.Plugin;
 import org.gradle.api.tasks.Input;
 
+import java.io.Serializable;
+
 /**
  * Describes an argument to a {@link Plugin} constuctor.
  */
-public class PluginArgument {
+public class PluginArgument implements Serializable {
+
+    /**
+     * The serial version UID.
+     */
+    private static final long serialVersionUID = 1L;
 
     /**
      * The argument index.
@@ -44,9 +51,18 @@ public class PluginArgument {
      * Creates a new plugin argument assignment.
      *
      * @param index The argument index.
+     */
+    protected PluginArgument(int index) {
+        this.index = index;
+    }
+
+    /**
+     * Creates a new plugin argument assignment.
+     *
+     * @param index The argument index.
      * @param value The argument value.
      */
-    public PluginArgument(int index, Object value) {
+    protected PluginArgument(int index, Object value) {
         this.index = index;
         this.value = value;
     }
