@@ -1415,7 +1415,7 @@ public class MethodCall implements Implementation.Composable {
                     } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
                         throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
                     }
-                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(invokedMethod.getParameters().size());
                     for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
                         argumentLoaders.add(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(this.index), index++));
                     }
