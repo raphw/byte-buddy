@@ -33,7 +33,7 @@ class HookInstallingPlugin implements Plugin {
 
 testByteBuddy {
   transformation {
-    plugin = com.example.junit.HookInstallingPlugin.class
+    plugin = HookInstallingPlugin.class
   }
 }
 ```
