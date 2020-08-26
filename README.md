@@ -8,6 +8,7 @@ Byte Buddy
 runtime code generation for the Java virtual machine
 
 [![Actions Status](https://github.com/raphw/byte-buddy/workflows/CI/badge.svg)](https://github.com/raphw/byte-buddy/actions)
+[![Security Score](https://snyk-widget.herokuapp.com/badge/mvn/net.bytebuddy/byte-buddy/badge.svg)](https://snyk.io/test/github/raphw/byte-buddy)
 [![Coverage Status](https://img.shields.io/coveralls/raphw/byte-buddy/master.svg)](https://coveralls.io/r/raphw/byte-buddy?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg#)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 [![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg)](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
