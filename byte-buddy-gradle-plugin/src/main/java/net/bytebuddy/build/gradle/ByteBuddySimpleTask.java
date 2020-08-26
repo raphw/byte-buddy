@@ -133,6 +133,9 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      */
     @TaskAction
     public void apply() throws IOException {
+        if (getProject().delete(getProject().fileTree(getTarget()))) {
+            getLogger().debug("Deleted all target files in {}", getTarget());
+        }
         doApply(getSource().isDirectory()
                 ? new Plugin.Engine.Source.ForFolder(getSource())
                 : new Plugin.Engine.Source.ForJarFile(getSource()), getTarget().isDirectory()

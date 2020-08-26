@@ -116,16 +116,16 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
     @TaskAction
     public void apply(InputChanges inputChanges) throws IOException {
         Plugin.Engine.Source source;
-        if (inputChanges.isIncremental() && incrementalResolver != null) {
+        if (inputChanges.isIncremental() && getIncrementalResolver() != null) {
             getLogger().debug("Applying incremental build");
-            source = new IncrementalSource(source(), incrementalResolver.apply(getProject(),
+            source = new IncrementalSource(source(), getIncrementalResolver().apply(getProject(),
                     inputChanges.getFileChanges(getSource()),
                     source(),
                     target()));
         } else {
             getLogger().debug("Applying non-incremental build");
             if (getProject().delete(getTarget().getAsFileTree())) {
-                getLogger().debug("Deleted all target files");
+                getLogger().debug("Deleted all target files in {}", getTarget());
             }
             source = new Plugin.Engine.Source.ForFolder(getSource().getAsFile().get());
         }

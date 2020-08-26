@@ -16,7 +16,9 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -101,7 +103,7 @@ public class ByteBuddyPluginTest {
         BuildTask task = result.task(":byteBuddy");
         assertThat(task, notNullValue(BuildTask.class));
         assertThat(task.getOutcome(), is(TaskOutcome.SUCCESS));
-        assertResult(FOO);
+        assertResult("SampleClass.class", FOO);
         assertThat(result.task(":byteBuddyTest"), nullValue(BuildTask.class));
     }
 
@@ -150,7 +152,7 @@ public class ByteBuddyPluginTest {
         BuildTask task = result.task(":byteBuddy");
         assertThat(task, notNullValue(BuildTask.class));
         assertThat(task.getOutcome(), is(TaskOutcome.SUCCESS));
-        assertResult(FOO);
+        assertResult("SampleClass.class", FOO);
         assertThat(result.task(":byteBuddyTest"), nullValue(BuildTask.class));
     }
 
@@ -175,13 +177,14 @@ public class ByteBuddyPluginTest {
         }
     }
 
-    private void assertResult(final String expectation) throws IOException {
+    private void assertResult(String name, final String expectation) throws IOException {
         File jar = new File(folder, "build/libs/" + folder.getName() + ".jar");
         assertThat(jar.isFile(), is(true));
         JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
         try {
             JarEntry entry = jarInputStream.getNextJarEntry();
             assertThat(entry, notNullValue(JarEntry.class));
+            assertThat(entry.getName(), is(name));
             new ClassReader(jarInputStream).accept(new ClassVisitor(OpenedClassReader.ASM_API) {
 
                 private boolean found;
