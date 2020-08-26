@@ -10,7 +10,7 @@ To apply a transformation, consider the following Gradle build file:
 ```groovy
 plugins {
   id 'java'
-  id 'net.bytebuddy.byte-buddy-gradle-plugin' version 'LATEST'
+  id 'net.bytebuddy.byte-buddy-gradle-plugin' version byteBuddyVersion
 }
 
 class HookInstallingPlugin implements Plugin {
