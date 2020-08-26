@@ -2,7 +2,7 @@
 
 The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. If the *java* plugin 
 is registered, the plugin registers an intermediate task for every source set for which at least one transformation is defined.
-For the *main* source set, the task is named *byteBuddy*. For each other source set, the source set name is prefixed as in *<source set>ByteBuddy*.  
+For the *main* source set, the task is named *byteBuddy*. For each other source set, the source set name is prefixed as in *[source set]ByteBuddy*.  
 
 To apply a transformation, consider the following Gradle build file:
 
