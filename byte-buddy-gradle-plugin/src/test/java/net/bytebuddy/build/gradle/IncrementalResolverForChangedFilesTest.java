@@ -34,7 +34,8 @@ public class IncrementalResolverForChangedFilesTest {
         assertThat(IncrementalResolver.ForChangedFiles.INSTANCE.apply(project,
                 Collections.singleton(fileChange),
                 new File("/foo/bar"),
-                new File("/qux/baz")), is(Collections.singletonList(new File("/foo/bar/Sample.class"))));
+                new File("/qux/baz"),
+                Collections.<File>emptyList()), is(Collections.singletonList(new File("/foo/bar/Sample.class"))));
     }
 
     @Test
@@ -44,7 +45,8 @@ public class IncrementalResolverForChangedFilesTest {
         assertThat(IncrementalResolver.ForChangedFiles.INSTANCE.apply(project,
                 Collections.singleton(fileChange),
                 new File("/foo/bar"),
-                new File("/qux/baz")), is(Collections.<File>emptyList()));
+                new File("/qux/baz"),
+                Collections.<File>emptyList()), is(Collections.<File>emptyList()));
         verify(project).delete(new File("/qux/baz/Sample.class"));
     }
 }

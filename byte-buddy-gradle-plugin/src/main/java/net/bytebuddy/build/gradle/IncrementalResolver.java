@@ -17,6 +17,7 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.gradle.api.ChangeType;
 import net.bytebuddy.build.gradle.api.FileChange;
+import net.bytebuddy.pool.TypePool;
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -35,9 +36,10 @@ public interface IncrementalResolver {
      * @param changes    An iterable of all changes that were found.
      * @param sourceRoot The source directory.
      * @param targetRoot The target directory.
+     * @param classPath  The class path available.
      * @return A list of files to include in the transformation.
      */
-    List<File> apply(Project project, Iterable<FileChange> changes, File sourceRoot, File targetRoot);
+    List<File> apply(Project project, Iterable<FileChange> changes, File sourceRoot, File targetRoot, Iterable<File> classPath);
 
     /**
      * An incremental resolver that retransforms any file that has changed but no other files.
@@ -52,7 +54,7 @@ public interface IncrementalResolver {
         /**
          * {@inheritDoc}
          */
-        public List<File> apply(Project project, Iterable<FileChange> changes, File sourceRoot, File targetRoot) {
+        public List<File> apply(Project project, Iterable<FileChange> changes, File sourceRoot, File targetRoot, Iterable<File> classPath) {
             List<File> files = new ArrayList<File>();
             for (FileChange change : changes) {
                 if (change.getChangeType() == ChangeType.REMOVED) {

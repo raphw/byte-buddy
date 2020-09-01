@@ -121,7 +121,8 @@ public abstract class ByteBuddyTask extends AbstractByteBuddyTask {
             source = new IncrementalSource(source(), getIncrementalResolver().apply(getProject(),
                     inputChanges.getFileChanges(getSource()),
                     source(),
-                    target()));
+                    target(),
+                    classPath()));
         } else {
             getLogger().debug("Applying non-incremental build");
             if (getProject().delete(getTarget().getAsFileTree())) {
