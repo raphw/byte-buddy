@@ -98,6 +98,8 @@ public class TransformationActionTest {
         });
         when(byteBuddyExtension.getMethodNameTransformer()).thenReturn(MethodNameTransformer.Suffixing.withRandomSuffix());
         when(transformation.makeArgumentResolvers()).thenReturn(Collections.<Plugin.Factory.UsingReflection.ArgumentResolver>emptyList());
+        when(task.getName()).thenReturn("compileJava");
+        when(byteBuddyExtension.implies(any(Task.class))).thenReturn(true);
         transformationAction = new TransformationAction(project, byteBuddyExtension, parent);
     }
 

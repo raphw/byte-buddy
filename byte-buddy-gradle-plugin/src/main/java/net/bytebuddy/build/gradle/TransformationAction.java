@@ -28,6 +28,7 @@ import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.api.tasks.compile.JavaCompile;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,6 +89,20 @@ public class TransformationAction implements Action<Task> {
      */
     @SuppressWarnings("unchecked")
     private void apply(File root, Iterable<? extends File> classPath) throws IOException {
+        if (!byteBuddyExtension.implies(task)) {
+            project.getLogger().info("Skipping byte-buddy transformation for task {} in root {}", task.getName(), root);
+            return;
+        }
+
+        if (task instanceof JavaCompile) {
+            try {
+                Object options = JavaCompile.class.getMethod("getOptions").invoke(task);
+                options.getClass().getMethod("setIncremental", boolean.class).invoke(options, false);
+            } catch (Throwable throwable) {
+                project.getLogger().debug("Incremental build option not available for {}", task.getName(), throwable);
+            }
+        }
+
         if (!root.isDirectory()) {
             throw new GradleException("Not a directory: " + root);
         }

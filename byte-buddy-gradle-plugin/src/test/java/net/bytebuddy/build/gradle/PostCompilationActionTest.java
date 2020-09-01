@@ -41,12 +41,4 @@ public class PostCompilationActionTest {
         new PostCompilationAction(project, byteBuddyExtension).execute(task);
         verify(task).doLast(any(TransformationAction.class));
     }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testNoApplication() throws Exception {
-        when(byteBuddyExtension.implies(task)).thenReturn(false);
-        new PostCompilationAction(project, byteBuddyExtension).execute(task);
-        verify(task, never()).doLast(any(Action.class));
-    }
 }

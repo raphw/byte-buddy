@@ -18,9 +18,6 @@ package net.bytebuddy.build.gradle;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.compile.AbstractCompile;
-import org.gradle.api.tasks.compile.JavaCompile;
-
-import java.lang.reflect.Method;
 
 /**
  * A compilation action that applies a class file transformation after a compilation task.
@@ -62,18 +59,6 @@ public class PostCompilationAction implements Action<AbstractCompile> {
      * {@inheritDoc}
      */
     public void execute(AbstractCompile task) {
-        if (byteBuddyExtension.implies(task)) {
-            if (task instanceof JavaCompile) {
-                try {
-                    Object options = JavaCompile.class.getMethod("getOptions").invoke(task);
-                    options.getClass().getMethod("setIncremental", boolean.class).invoke(options, false);
-                } catch (Throwable throwable) {
-                    project.getLogger().debug("Incremental build option not available for {}", task.getName(), throwable);
-                }
-            }
-            task.doLast(new TransformationAction(project, byteBuddyExtension, task));
-        } else {
-            project.getLogger().info("Skipping non-specified task {}", task.getName());
-        }
+        task.doLast(new TransformationAction(project, byteBuddyExtension, task));
     }
 }
