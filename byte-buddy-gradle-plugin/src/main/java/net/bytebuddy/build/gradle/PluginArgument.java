@@ -41,8 +41,9 @@ public class PluginArgument implements Serializable {
     private Object value;
 
     /**
-     * Creats a new plugin argument with default initialization.
+     * Creates a new plugin argument with default initialization.
      */
+    @SuppressWarnings("unused")
     public PluginArgument() {
         /* empty */
     }

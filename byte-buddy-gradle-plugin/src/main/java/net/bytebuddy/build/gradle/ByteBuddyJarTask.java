@@ -17,7 +17,10 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.CompileClasspath;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.TaskAction;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -26,15 +29,15 @@ import java.io.IOException;
 /**
  * A Byte Buddy task implementation that does not use modern Gradle APIs.
  */
-public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
+public class ByteBuddyJarTask extends AbstractByteBuddyTask {
 
     /**
-     * The source folder.
+     * The source jar.
      */
     private File source;
 
     /**
-     * The target folder.
+     * The target jar.
      */
     private File target;
 
@@ -47,43 +50,43 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      * Creates a new simple Byte Buddy task.
      */
     @Inject
-    public ByteBuddySimpleTask() {
-        new ByteBuddySimpleTaskExtension().configure(this);
+    public ByteBuddyJarTask() {
+        new ByteBuddyJarTaskExtension().configure(this);
     }
 
     /**
-     * Returns the task's source folder.
+     * Returns the task's source jar.
      *
-     * @return The task's source folder.
+     * @return The task's source jar.
      */
-    @InputFile
+    @InputDirectory
     public File getSource() {
         return source;
     }
 
     /**
-     * Sets the task's source folder.
+     * Sets the task's source jar.
      *
-     * @param source The task's source folder.
+     * @param source The task's source jar.
      */
     public void setSource(File source) {
         this.source = source;
     }
 
     /**
-     * Returns the task's target folder.
+     * Returns the task's target jar.
      *
-     * @return The task's target folder.
+     * @return The task's target jar.
      */
-    @OutputFile
+    @OutputDirectory
     public File getTarget() {
         return target;
     }
 
     /**
-     * Sets the task's target folder.
+     * Sets the task's target jar.
      *
-     * @param target The task's target folder.
+     * @param target The task's target jar.
      */
     public void setTarget(File target) {
         this.target = target;
@@ -130,9 +133,9 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      */
     @TaskAction
     public void apply() throws IOException {
-        if (!getSource().equals(getTarget()) && getProject().delete(getProject().fileTree(getTarget()))) {
-            getLogger().debug("Deleted all target files in {}", getTarget());
+        if (!getSource().equals(getTarget()) && getProject().delete(getTarget())) {
+            getLogger().debug("Deleted target jar {}", getTarget());
         }
-        doApply(new Plugin.Engine.Source.ForFolder(getSource()), new Plugin.Engine.Target.ForFolder(getTarget()));
+        doApply(new Plugin.Engine.Source.ForJarFile(getSource()), new Plugin.Engine.Target.ForJarFile(getTarget()));
     }
 }
