@@ -56,7 +56,7 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      *
      * @return The task's source folder.
      */
-    @InputFile
+    @InputDirectory
     public File getSource() {
         return source;
     }
@@ -75,7 +75,7 @@ public class ByteBuddySimpleTask extends AbstractByteBuddyTask {
      *
      * @return The task's target folder.
      */
-    @OutputFile
+    @OutputDirectory
     public File getTarget() {
         return target;
     }

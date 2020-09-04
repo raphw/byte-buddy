@@ -17,10 +17,7 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
 import net.bytebuddy.build.gradle.api.CompileClasspath;
-import org.gradle.api.tasks.InputDirectory;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -59,7 +56,7 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      *
      * @return The task's source jar.
      */
-    @InputDirectory
+    @InputFile
     public File getSource() {
         return source;
     }
@@ -78,7 +75,7 @@ public class ByteBuddyJarTask extends AbstractByteBuddyTask {
      *
      * @return The task's target jar.
      */
-    @OutputDirectory
+    @OutputFile
     public File getTarget() {
         return target;
     }
