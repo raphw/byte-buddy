@@ -312,8 +312,8 @@ public interface MethodRebaseResolver {
                 public int getModifiers() {
                     return Opcodes.ACC_SYNTHETIC
                             | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : EMPTY_MASK)
-                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : EMPTY_MASK)
-                            | (instrumentedType.isInterface() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
+                            | (methodDescription.isNative() ? Opcodes.ACC_NATIVE | Opcodes.ACC_FINAL : EMPTY_MASK)
+                            | (instrumentedType.isInterface() && !methodDescription.isNative() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
                 }
 
                 /**

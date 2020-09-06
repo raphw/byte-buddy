@@ -1,31 +1,22 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.build.HashCodeAndEqualsPlugin;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.c.NativeSample;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.IntegrationRule;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.NativeSampleRule;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -49,6 +40,9 @@ public class AgentBuilderDefaultNativeApplicationTest {
     @Rule
     public MethodRule nativeSampleRule = new NativeSampleRule();
 
+    @Rule
+    private MethodRule javaVersionRule = new JavaVersionRule();
+
     private ClassLoader classLoader;
 
     @Before
@@ -60,8 +54,8 @@ public class AgentBuilderDefaultNativeApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     @NativeSampleRule.Enforce
-    //@IntegrationRule.Enforce
     public void testNativeMethodPrefix() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -80,8 +74,9 @@ public class AgentBuilderDefaultNativeApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     @NativeSampleRule.Enforce
-    //@IntegrationRule.Enforce
+    @JavaVersionRule.Enforce(atMost = 12)
     public void testNativeMethodPrefixRetransformation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Class<?> type = classLoader.loadClass(NativeSample.class.getName());
@@ -106,7 +101,7 @@ public class AgentBuilderDefaultNativeApplicationTest {
                                                 TypeDescription typeDescription,
                                                 ClassLoader classLoader,
                                                 JavaModule module) {
-            return builder.method(named(FOO)).intercept(MethodCall.invokeSuper().withArgument(0).with(2)).visit(DebuggingWrapper.makeDefault());
+            return builder.method(named(FOO)).intercept(MethodCall.invokeSuper().withArgument(0).with(2));
         }
     }
 }
