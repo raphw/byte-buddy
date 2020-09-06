@@ -173,7 +173,7 @@ public class GradleTypeTransformer {
          * @throws IOException If an I/O exception occurs.
          */
         protected static Map<String, String> toGradleTypeNames(String api, String type, File jar) throws IOException {
-            Map<String, String> names = new HashMap<>();
+            Map<String, String> names = new HashMap<String, String>();
             JarInputStream jarInputStream = new JarInputStream(new FileInputStream(jar));
             try {
                 JarEntry entry;
