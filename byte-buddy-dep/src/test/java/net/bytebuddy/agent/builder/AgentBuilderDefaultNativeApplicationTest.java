@@ -76,7 +76,7 @@ public class AgentBuilderDefaultNativeApplicationTest {
     @AgentAttachmentRule.Enforce
     @IntegrationRule.Enforce
     @NativeSampleRule.Enforce
-    @JavaVersionRule.Enforce(atMost = 12)
+    @JavaVersionRule.Enforce(atMost = 12, j9 = false)
     public void testNativeMethodPrefixRetransformation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Class<?> type = classLoader.loadClass(NativeSample.class.getName());
