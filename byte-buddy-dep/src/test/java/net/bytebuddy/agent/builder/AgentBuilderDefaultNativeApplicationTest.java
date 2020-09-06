@@ -41,7 +41,7 @@ public class AgentBuilderDefaultNativeApplicationTest {
     public MethodRule nativeSampleRule = new NativeSampleRule();
 
     @Rule
-    private MethodRule javaVersionRule = new JavaVersionRule();
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
