@@ -2465,6 +2465,11 @@ public interface TypePool {
             private final List<RecordComponentToken> recordComponentTokens;
 
             /**
+             * A list of internal names of permitted subclasses.
+             */
+            private final List<String> permittedSubclasses;
+
+            /**
              * Creates a new lazy type description.
              *
              * @param typePool                           The type pool to be used for looking up linked types.
@@ -2488,6 +2493,7 @@ public interface TypePool {
              * @param fieldTokens                        A list of field tokens describing the field's of this type.
              * @param methodTokens                       A list of method tokens describing the method's of this type.
              * @param recordComponentTokens              A list of record component tokens describing the record components of this type.
+             * @param permittedSubclasses                A list of internal names of permitted subclasses.
              */
             protected LazyTypeDescription(TypePool typePool,
                                           int actualModifiers,
@@ -2508,7 +2514,8 @@ public interface TypePool {
                                           List<AnnotationToken> annotationTokens,
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens,
-                                          List<RecordComponentToken> recordComponentTokens) {
+                                          List<RecordComponentToken> recordComponentTokens,
+                                          List<String> permittedSubclasses) {
                 this.typePool = typePool;
                 this.actualModifiers = actualModifiers & ~Opcodes.ACC_SUPER;
                 this.modifiers = modifiers & ~(Opcodes.ACC_SUPER | Opcodes.ACC_DEPRECATED);
@@ -2548,6 +2555,10 @@ public interface TypePool {
                 this.fieldTokens = fieldTokens;
                 this.methodTokens = methodTokens;
                 this.recordComponentTokens = recordComponentTokens;
+                this.permittedSubclasses = new ArrayList<String>(permittedSubclasses.size());
+                for (String internalName : permittedSubclasses) {
+                    this.permittedSubclasses.add(Type.getObjectType(internalName).getDescriptor());
+                }
             }
 
             /**
@@ -2705,6 +2716,13 @@ public interface TypePool {
              */
             public boolean isRecord() {
                 return (actualModifiers & Opcodes.ACC_RECORD) != 0 && JavaType.RECORD.getTypeStub().getDescriptor().equals(superClassDescriptor);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public TypeList getPermittedSubclasses() {
+                return new LazyTypeList(typePool, permittedSubclasses);
             }
 
             /**
@@ -7667,6 +7685,11 @@ public interface TypePool {
             private final List<String> declaredTypes;
 
             /**
+             * A list of internal names of permitted subclasses.
+             */
+            private final List<String> permittedSubclasses;
+
+            /**
              * Creates a new type extractor.
              */
             protected TypeExtractor() {
@@ -7682,6 +7705,7 @@ public interface TypePool {
                 typeContainment = LazyTypeDescription.TypeContainment.SelfContained.INSTANCE;
                 nestMembers = new ArrayList<String>();
                 declaredTypes = new ArrayList<String>();
+                permittedSubclasses = new ArrayList<String>();
             }
 
             @Override
@@ -7789,6 +7813,11 @@ public interface TypePool {
                 return new RecordComponentExtractor(name, descriptor, signature);
             }
 
+            @Override
+            public void visitPermittedSubclass(String permittedSubclass) {
+                permittedSubclasses.add(permittedSubclass);
+            }
+
             /**
              * Creates a type description from all data that is currently collected. This method should only be invoked
              * after a class file was parsed fully.
@@ -7815,7 +7844,8 @@ public interface TypePool {
                         annotationTokens,
                         fieldTokens,
                         methodTokens,
-                        recordComponentTokens);
+                        recordComponentTokens,
+                        permittedSubclasses);
             }
 
             /**

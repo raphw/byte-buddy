@@ -153,6 +153,14 @@ public interface InstrumentedType extends TypeDescription {
     InstrumentedType withDeclaredTypes(TypeList declaredTypes);
 
     /**
+     * Creates a new instrumented type that includes the supplied permitted subclasses.
+     *
+     * @param permittedSubclasses A list of permitted subclasses to include.
+     * @return A new instrumented type that includes the supplied permitted subclasses.
+     */
+    InstrumentedType withPermittedSubclasses(TypeList permittedSubclasses);
+
+    /**
      * Creates a new instrumented type that indicates that is defined as a local class. Setting this property
      * resets the anonymous class property.
      *
@@ -178,6 +186,14 @@ public interface InstrumentedType extends TypeDescription {
      * @return A new instrumented type that is defined as a record.
      */
     InstrumentedType withRecord(boolean record);
+
+    /**
+     * Creates a new instrumented type that indicates that it defined as a sealed type.
+     *
+     * @param sealed {@code true} if the instrumented type is supposed to be sealed.
+     * @return A new instrumented type that is defined as a sealed type if any permitted subclasses are set.
+     */
+    InstrumentedType withSealed(boolean sealed);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -282,6 +298,11 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses);
+
+        /**
+         * {@inheritDoc}
+         */
         WithFlexibleName withLocalClass(boolean localClass);
 
         /**
@@ -293,6 +314,11 @@ public interface InstrumentedType extends TypeDescription {
          * {@inheritDoc}
          */
         WithFlexibleName withRecord(boolean record);
+
+        /**
+         * {@inheritDoc}
+         */
+        WithFlexibleName withSealed(boolean sealed);
 
         /**
          * {@inheritDoc}
@@ -396,6 +422,7 @@ public interface InstrumentedType extends TypeDescription {
                             typeDescription.getEnclosingMethod(),
                             typeDescription.getEnclosingType(),
                             typeDescription.getDeclaredTypes(),
+                            typeDescription.getPermittedSubclasses(),
                             typeDescription.isAnonymousType(),
                             typeDescription.isLocalType(),
                             typeDescription.isRecord(),
@@ -436,6 +463,7 @@ public interface InstrumentedType extends TypeDescription {
                         TypeDescription.UNDEFINED,
                         MethodDescription.UNDEFINED,
                         TypeDescription.UNDEFINED,
+                        Collections.<TypeDescription>emptyList(),
                         Collections.<TypeDescription>emptyList(),
                         false,
                         false,
@@ -538,6 +566,11 @@ public interface InstrumentedType extends TypeDescription {
         private final List<? extends TypeDescription> declaredTypes;
 
         /**
+         * A list of permitted subclasses.
+         */
+        private final List<? extends TypeDescription> permittedSubclasses;
+
+        /**
          * {@code true} if this type is a anonymous class.
          */
         private final boolean anonymousClass;
@@ -580,6 +613,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param enclosingMethod        The enclosing method of the instrumented type or {@code null} if no such type exists.
          * @param enclosingType          The enclosing type of the instrumented type or {@code null} if no such type exists.
          * @param declaredTypes          A list of types that are declared by this type.
+         * @param permittedSubclasses    A list of permitted subclasses.
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
          * @param record                 {@code true} if this type is a record class.
@@ -601,6 +635,7 @@ public interface InstrumentedType extends TypeDescription {
                           MethodDescription.InDefinedShape enclosingMethod,
                           TypeDescription enclosingType,
                           List<? extends TypeDescription> declaredTypes,
+                          List<? extends TypeDescription> permittedSubclasses,
                           boolean anonymousClass,
                           boolean localClass,
                           boolean record,
@@ -621,6 +656,7 @@ public interface InstrumentedType extends TypeDescription {
             this.enclosingMethod = enclosingMethod;
             this.enclosingType = enclosingType;
             this.declaredTypes = declaredTypes;
+            this.permittedSubclasses = permittedSubclasses;
             this.anonymousClass = anonymousClass;
             this.localClass = localClass;
             this.record = record;
@@ -671,6 +707,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -697,6 +734,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -723,6 +761,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -749,6 +788,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     true,
@@ -775,6 +815,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -801,6 +842,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -827,6 +869,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -855,6 +898,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -881,6 +925,7 @@ public interface InstrumentedType extends TypeDescription {
                     MethodDescription.UNDEFINED,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -907,6 +952,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingMethod.getDeclaringType(),
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -933,6 +979,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -959,6 +1006,34 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     CompoundList.of(this.declaredTypes, declaredTypes),
+                    permittedSubclasses,
+                    anonymousClass,
+                    localClass,
+                    record,
+                    nestHost,
+                    nestMembers);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    recordComponentTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    CompoundList.of(this.permittedSubclasses, permittedSubclasses),
                     anonymousClass,
                     localClass,
                     record,
@@ -985,6 +1060,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -1011,6 +1087,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -1044,6 +1121,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -1070,6 +1148,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     false,
                     localClass,
                     record,
@@ -1096,6 +1175,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     false,
                     record,
@@ -1124,6 +1204,36 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
+                    anonymousClass,
+                    localClass,
+                    record,
+                    nestHost,
+                    nestMembers);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withSealed(boolean sealed) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    recordComponentTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    sealed
+                        ? permittedSubclasses
+                        : Collections.<TypeDescription>emptyList(),
                     anonymousClass,
                     localClass,
                     record,
@@ -1150,6 +1260,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -1176,6 +1287,7 @@ public interface InstrumentedType extends TypeDescription {
                     enclosingMethod,
                     enclosingType,
                     declaredTypes,
+                    permittedSubclasses,
                     anonymousClass,
                     localClass,
                     record,
@@ -1347,6 +1459,13 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public TypeList getPermittedSubclasses() {
+            return new TypeList.Explicit(permittedSubclasses);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public TypeDescription validated() {
             if (!isValidIdentifier(getName().split("\\."))) {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
@@ -1449,6 +1568,11 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Cannot define array type or primitive type " + nestHost + " + as nest host for " + this);
             } else if (!nestHost.isSamePackage(this)) {
                 throw new IllegalStateException("Cannot define nest host " + nestHost + " + within different package then " + this);
+            }
+            for (TypeDescription permittedSubclass : getPermittedSubclasses()) {
+                if (!permittedSubclass.isAssignableTo(this) || permittedSubclass.equals(this)) {
+                    throw new IllegalStateException("Cannot assign permitted subclass " + permittedSubclass + " to " + this);
+                }
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
@@ -1828,6 +1952,13 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public TypeList getPermittedSubclasses() {
+            return typeDescription.getPermittedSubclasses();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withField(FieldDescription.Token token) {
             throw new IllegalStateException("Cannot define field for frozen type: " + typeDescription);
         }
@@ -1919,22 +2050,36 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * {@inheritDoc}
          */
+        public WithFlexibleName withPermittedSubclasses(TypeList permittedSubclasses) {
+            throw new IllegalStateException("Cannot add permitted subclasses to frozen type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
         public WithFlexibleName withLocalClass(boolean localClass) {
-            throw new IllegalStateException("Cannot define local class state to frozen type: " + typeDescription);
+            throw new IllegalStateException("Cannot define local class state for frozen type: " + typeDescription);
         }
 
         /**
          * {@inheritDoc}
          */
         public WithFlexibleName withAnonymousClass(boolean anonymousClass) {
-            throw new IllegalStateException("Cannot define anonymous class state to frozen type: " + typeDescription);
+            throw new IllegalStateException("Cannot define anonymous class state for frozen type: " + typeDescription);
         }
 
         /**
          * {@inheritDoc}
          */
         public WithFlexibleName withRecord(boolean record) {
-            throw new IllegalStateException("Cannot define record state to frozen type: " + typeDescription);
+            throw new IllegalStateException("Cannot define record state for frozen type: " + typeDescription);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public WithFlexibleName withSealed(boolean sealed) {
+            throw new IllegalStateException("Cannot define seal state for frozen type: " + typeDescription);
         }
 
         /**

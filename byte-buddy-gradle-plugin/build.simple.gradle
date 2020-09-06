@@ -12,6 +12,11 @@ def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte
 logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
 
 if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    repositories {
+        maven {
+            url 'http://insecure.repo1.maven.org/maven2/'
+        }
+    }
     dependencies {
         compile gradleApi()
         if (location.exists()) {
@@ -26,6 +31,9 @@ if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
         }
     }
 } else {
+    repositories {
+        mavenCentral()
+    }
     dependencies {
         implementation gradleApi()
         if (location.exists()) {

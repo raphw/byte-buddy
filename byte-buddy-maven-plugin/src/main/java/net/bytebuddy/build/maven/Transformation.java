@@ -27,7 +27,7 @@ import java.util.List;
  * A transformation specification to apply during the plugin's execution.
  */
 @SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven")
-public class Transformation extends AbstractUserConfiguration {
+public class Transformation extends CoordinateConfiguration {
 
     /**
      * The fully-qualified name of the plugin type.

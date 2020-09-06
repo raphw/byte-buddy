@@ -73,6 +73,7 @@ public class InstrumentedTypeDefaultTest {
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
                 Collections.<TypeDescription>emptyList(),
+                Collections.<TypeDescription>emptyList(),
                 false,
                 false,
                 false,
@@ -613,6 +614,19 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
+    public void testPermittedSubclass() throws Exception {
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(typeDescription.asErasure()).thenReturn(typeDescription);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getPermittedSubclasses().size(), is(0));
+        InstrumentedType transformed = instrumentedType.withPermittedSubclasses(new TypeList.Explicit(typeDescription));
+        assertThat(transformed.getPermittedSubclasses().size(), is(1));
+        assertThat(transformed.getPermittedSubclasses(), hasItems(typeDescription));
+        assertThat(transformed.withSealed(false).getPermittedSubclasses().size(), is(0));
+    }
+
+    @Test
     public void testLocalClass() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.isLocalType(), is(false));
@@ -860,6 +874,13 @@ public class InstrumentedTypeDefaultTest {
     public void testNestMemberForeignPackage() throws Exception {
         makePlainInstrumentedType()
                 .withNestMembers(new TypeList.Explicit(TypeDescription.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPermittedSubclassNoSubclass() throws Exception {
+        makePlainInstrumentedType()
+                .withPermittedSubclasses(new TypeList.Explicit(TypeDescription.OBJECT))
                 .validated();
     }
 
@@ -1513,6 +1534,7 @@ public class InstrumentedTypeDefaultTest {
                 TypeDescription.UNDEFINED,
                 MethodDescription.UNDEFINED,
                 TypeDescription.UNDEFINED,
+                Collections.<TypeDescription>emptyList(),
                 Collections.<TypeDescription>emptyList(),
                 false,
                 false,

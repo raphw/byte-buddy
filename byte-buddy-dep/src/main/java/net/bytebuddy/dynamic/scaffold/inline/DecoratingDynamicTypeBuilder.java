@@ -317,6 +317,20 @@ public class DecoratingDynamicTypeBuilder<T> extends DynamicType.Builder.Abstrac
     /**
      * {@inheritDoc}
      */
+    public DynamicType.Builder<T> permittedSubclass(Collection<? extends TypeDescription> types) {
+        throw new UnsupportedOperationException("Cannot change permitted subclasses of decorated type: " + instrumentedType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public DynamicType.Builder<T> unsealed() {
+        throw new UnsupportedOperationException("Cannot unseal decorated type: " + instrumentedType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public DynamicType.Builder<T> attribute(TypeAttributeAppender typeAttributeAppender) {
         return new DecoratingDynamicTypeBuilder<T>(instrumentedType,
                 new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),

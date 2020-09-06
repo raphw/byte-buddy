@@ -586,6 +586,49 @@ public interface DynamicType {
         Builder<T> nestMembers(Collection<? extends TypeDescription> types);
 
         /**
+         * Defines this type to allow the supplied permitted subclasses additionally to any prior permitted subclasses. If
+         * this type was not previously sealed, only the supplied subclasses are permitted.
+         *
+         * @param type The permitted subclasses.
+         * @return A new builder that is equal to this builder but where the built type permits the supplied subclasses.
+         */
+        Builder<T> permittedSubclass(Class<?>... type);
+
+        /**
+         * Defines this type to allow the supplied permitted subclasses additionally to any prior permitted subclasses. If
+         * this type was not previously sealed, only the supplied subclasses are permitted.
+         *
+         * @param type The permitted subclasses.
+         * @return A new builder that is equal to this builder but where the built type permits the supplied subclasses.
+         */
+        Builder<T> permittedSubclass(TypeDescription... type);
+
+        /**
+         * Defines this type to allow the supplied permitted subclasses additionally to any prior permitted subclasses. If
+         * this type was not previously sealed, only the supplied subclasses are permitted.
+         *
+         * @param types The permitted subclasses.
+         * @return A new builder that is equal to this builder but where the built type permits the supplied subclasses.
+         */
+        Builder<T> permittedSubclass(List<? extends Class<?>> types);
+
+        /**
+         * Defines this type to allow the supplied permitted subclasses additionally to any prior permitted subclasses. If
+         * this type was not previously sealed, only the supplied subclasses are permitted.
+         *
+         * @param types The permitted subclasses.
+         * @return A new builder that is equal to this builder but where the built type permits the supplied subclasses.
+         */
+        Builder<T> permittedSubclass(Collection<? extends TypeDescription> types);
+
+        /**
+         * Unseales this type.
+         *
+         * @return A new builder that is equal to this builder but where the built type does not restrain its permitted subclasses.
+         */
+        Builder<T> unsealed();
+
+        /**
          * Applies the given type attribute appender onto the instrumented type. Using a type attribute appender, it is possible to append
          * any type of meta data to a type, not only Java {@link Annotation}s.
          *
@@ -3206,6 +3249,27 @@ public interface DynamicType {
             /**
              * {@inheritDoc}
              */
+            public Builder<S> permittedSubclass(Class<?>... type) {
+                return permittedSubclass(Arrays.asList(type));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Builder<S> permittedSubclass(TypeDescription... type) {
+                return permittedSubclass(Arrays.asList(type));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            public Builder<S> permittedSubclass(List<? extends Class<?>> types) {
+                return permittedSubclass(new TypeList.ForLoadedTypes(types));
+            }
+
+            /**
+             * {@inheritDoc}
+             */
             public Builder<S> annotateType(Annotation... annotation) {
                 return annotateType(Arrays.asList(annotation));
             }
@@ -3698,6 +3762,20 @@ public interface DynamicType {
                  */
                 public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
                     return materialize().nestMembers(types);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder<U> permittedSubclass(Collection<? extends TypeDescription> types) {
+                    return materialize().permittedSubclass(types);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder<U> unsealed() {
+                    return materialize().unsealed();
                 }
 
                 /**
@@ -4300,6 +4378,52 @@ public interface DynamicType {
                  */
                 public Builder<U> nestMembers(Collection<? extends TypeDescription> types) {
                     return materialize(instrumentedType.withNestMembers(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
+                            fieldRegistry,
+                            methodRegistry,
+                            recordComponentRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            visibilityBridgeStrategy,
+                            classWriterStrategy,
+                            ignoredMethods,
+                            auxiliaryTypes);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder<U> permittedSubclass(Collection<? extends TypeDescription> types) {
+                    return materialize(instrumentedType.withPermittedSubclasses(new TypeList.Explicit(new ArrayList<TypeDescription>(types))),
+                            fieldRegistry,
+                            methodRegistry,
+                            recordComponentRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            visibilityBridgeStrategy,
+                            classWriterStrategy,
+                            ignoredMethods,
+                            auxiliaryTypes);
+                }
+
+                /**
+                 * {@inheritDoc}
+                 */
+                public Builder<U> unsealed() {
+                    return materialize(instrumentedType.withSealed(false),
                             fieldRegistry,
                             methodRegistry,
                             recordComponentRegistry,

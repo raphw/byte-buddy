@@ -1,5 +1,8 @@
 package net.bytebuddy;
 
+import java.lang.reflect.Field;
+import java.util.regex.Pattern;
+
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
@@ -11,7 +14,17 @@ public class ClassFileVersionTest {
 
     @Test
     public void testExplicitConstructionOfUnknownVersion() throws Exception {
-        assertThat(ClassFileVersion.ofMinorMajor(Opcodes.V13 + 1).getMinorMajorVersion(), is(Opcodes.V13 + 1));
+        double version = 0d;
+        int value = 0;
+        Pattern pattern = Pattern.compile("V[0-9]+(_[0-9]+)?");
+        for (Field field : Opcodes.class.getFields()) {
+            if (pattern.matcher(field.getName()).matches()) {
+                if (version < Double.parseDouble(field.getName().substring(1).replace('_', '.'))) {
+                    value = field.getInt(null);
+                }
+            }
+        }
+        assertThat(ClassFileVersion.ofMinorMajor(value + 1).getMinorMajorVersion(), is(value + 1));
     }
 
     @Test(expected = IllegalArgumentException.class)

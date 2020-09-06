@@ -3306,7 +3306,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                 void materialize(Target.Sink sink,
                                  List<TypeDescription> transformed,
                                  Map<TypeDescription,
-                                         List<Throwable>> failed,
+                                 List<Throwable>> failed,
                                  List<String> unresolved) throws IOException;
 
                 /**
@@ -3661,7 +3661,7 @@ public interface Plugin extends ElementMatcher<TypeDescription>, Closeable {
                                                     Target.Sink sink,
                                                     List<TypeDescription> transformed,
                                                     Map<TypeDescription,
-                                                            List<Throwable>> failed,
+                                                    List<Throwable>> failed,
                                                     List<String> unresolved) {
                     this.sink = sink;
                     this.transformed = transformed;

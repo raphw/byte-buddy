@@ -1,3 +1,6 @@
+import java.util.regex.Pattern
+import net.bytebuddy.build.gradle.transform.GradleTypeTransformer
+
 ext.pom = new XmlSlurper().parse(file('./pom.xml'))
 ext.outerPom = new XmlSlurper().parse(file('../pom.xml'))
 
@@ -37,16 +40,18 @@ if (targetVersion != null) {
 
 logger.info("Compiling class files from version ${sourceCompatibility} to ${targetCompatibility}.")
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
 // Without the extras property, creating a javadoc artifact is not necessary.
 if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
+    if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from javadoc.destinationDir
+        }
+    } else {
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            archiveClassifier.set('javadoc')
+            from javadoc.destinationDir
+        }
     }
 } else {
     task javadocJar {
@@ -63,7 +68,7 @@ task copyLicense(type: Copy) {
     from '..'
     include 'LICENSE', 'NOTICE'
     into "$buildDir/resources/main/META-INF"
-    def pattern = java.util.regex.Pattern.compile('\\$\\{([a-zA-Z0-9\\-._]+)}')
+    def pattern = Pattern.compile('\\$\\{([a-zA-Z0-9\\-._]+)}')
     filter { String line ->
         def matcher = pattern.matcher(line)
         def buffer = new StringBuffer()
@@ -88,3 +93,41 @@ task copyLicense(type: Copy) {
 }
 
 jar.dependsOn copyLicense
+
+
+def transformer = new GradleTypeTransformer();
+if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    jar.doLast {
+        transformer.transform(jar.archivePath)
+    }
+} else {
+    validatePlugins {
+        enabled = false
+    }
+    jar.doLast {
+        transformer.transform(jar.archiveFile.get().asFile)
+    }
+}
+
+if (gradle.gradleVersion.startsWith("2.")) { // support legacy version
+    gradlePlugin {
+        plugins {
+            byteBuddyPlugin {
+                id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+                description = pom.description.text().toString()
+                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+            }
+        }
+    }
+} else {
+    gradlePlugin {
+        plugins {
+            byteBuddyPlugin {
+                id = pom.parent.groupId.text().toString() + '.' + pom.artifactId.text().toString()
+                displayName = pom.name.text().toString()
+                description = pom.description.text().toString()
+                implementationClass = 'net.bytebuddy.build.gradle.ByteBuddyPlugin'
+            }
+        }
+    }
+}

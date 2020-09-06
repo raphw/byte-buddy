@@ -16,11 +16,19 @@
 package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.Plugin;
+import org.gradle.api.tasks.Input;
+
+import java.io.Serializable;
 
 /**
  * Describes an argument to a {@link Plugin} constuctor.
  */
-public class PluginArgument {
+public class PluginArgument implements Serializable {
+
+    /**
+     * The serial version UID.
+     */
+    private static final long serialVersionUID = 1L;
 
     /**
      * The argument index.
@@ -33,8 +41,9 @@ public class PluginArgument {
     private Object value;
 
     /**
-     * Creats a new plugin argument with default initialization.
+     * Creates a new plugin argument with default initialization.
      */
+    @SuppressWarnings("unused")
     public PluginArgument() {
         /* empty */
     }
@@ -43,11 +52,30 @@ public class PluginArgument {
      * Creates a new plugin argument assignment.
      *
      * @param index The argument index.
+     */
+    protected PluginArgument(int index) {
+        this.index = index;
+    }
+
+    /**
+     * Creates a new plugin argument assignment.
+     *
+     * @param index The argument index.
      * @param value The argument value.
      */
-    public PluginArgument(int index, Object value) {
+    protected PluginArgument(int index, Object value) {
         this.index = index;
         this.value = value;
+    }
+
+    /**
+     * Returns the argument index.
+     *
+     * @return The argument index.
+     */
+    @Input
+    public int getIndex() {
+        return index;
     }
 
     /**
@@ -60,11 +88,21 @@ public class PluginArgument {
     }
 
     /**
+     * Returns the argument value.
+     *
+     * @return The argument value.
+     */
+    @Input
+    public Object getValue() {
+        return value;
+    }
+
+    /**
      * Sets the argument value.
      *
      * @param value The argument value.
      */
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
@@ -73,7 +111,7 @@ public class PluginArgument {
      *
      * @return An argument resolver that represents this plugin argument.
      */
-    public Plugin.Factory.UsingReflection.ArgumentResolver toArgumentResolver() {
+    protected Plugin.Factory.UsingReflection.ArgumentResolver toArgumentResolver() {
         return new Plugin.Factory.UsingReflection.ArgumentResolver.ForIndex(index, value);
     }
 }

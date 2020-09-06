@@ -1,58 +1,40 @@
 # Byte Buddy Gradle Plugin
 
-The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. To activate this process, add the following sections to your project Gradle build file:
+The **Byte Buddy Gradle Plugin** enables you to apply bytecode enhancements during the build process. If the *java* plugin 
+is registered, the plugin registers an intermediate task for every source set for which at least one transformation is defined.
+For the *main* source set, the task is named *byteBuddy*. For each other source set, the source set name is prefixed as in *[source set]ByteBuddy*.  
+
+To apply a transformation, consider the following Gradle build file:
 
 ###### build.gradle
 ```groovy
 plugins {
-  id 'net.bytebuddy.byte-buddy-gradle-plugin' version 'LATEST'
+  id 'java'
+  id 'net.bytebuddy.byte-buddy-gradle-plugin' version byteBuddyVersion
 }
 
-configurations {
-  examplePlugin "foo:bar:1.0"
-}
-
-byteBuddy {
-  transformation {
-    plugin = "com.example.junit.HookInstallingPlugin"
-    classPath = configurations.examplePlugin
-  }
-}
-```
-
-This configuration informs Gradle to transform all classes by the goal using the transformation specified by **HookInstallingPlugin** within the `foo:bar:1.0` artifact.
-
-###### HookInstallingPlugin.java
-```java
-package com.example.junit;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import net.bytebuddy.build.Plugin;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType.Builder;
-import net.bytebuddy.implementation.MethodDelegation;
-
-public class HookInstallingPlugin implements Plugin {
+class HookInstallingPlugin implements Plugin {
 
     @Override
-    public boolean matches(TypeDescription target) {
+    boolean matches(TypeDescription target) {
         return target.getName().endsWith("Test");
     }
 
     @Override
-    public Builder<?> apply(Builder<?> builder, TypeDescription typeDescription) {
+    Builder<?> apply(Builder<?> builder, TypeDescription typeDescription) {
         return builder.method(isAnnotatedWith(anyOf(Test.class, Before.class, After.class))
                 .or(isStatic().and(isAnnotatedWith(anyOf(BeforeClass.class, AfterClass.class)))))
                 .intercept(MethodDelegation.to(SampleInterceptor.class))
                 .implement(Hooked.class);
     }
+    
+    @Override void close() { }
+}
+
+testByteBuddy {
+  transformation {
+    plugin = HookInstallingPlugin.class
+  }
 }
 ```
 
@@ -60,4 +42,4 @@ This example transformation specifies that Byte Buddy should install a method in
 
 A plugin can declare a constructor that can take arguments of type `File`, `BuildLogger` or a Gradle-specific `Logger` where the class file root directory or an appropriate logger is provided. It is also possible to supply an argument explicitly by specifying an argument in the plugin configuration.
 
-Note that the Byte Buddy plugin does **not support Gradle's incremental builds**. If a Java compile task is discovered, incremental builds are implicitly disabled. If you want to compile Java classes incrementally, you can use the `Plugin.Engine` directly from your Gradle build to specify its scope. With incremental builds, it is illegal to change class files after compilation and it is required to write the instrumented classes to a new folder. This implies that all consumers of Java compilation tasks must be informed about using this folder.
+The plugin offers the implementation of custom tasks, the `ByteBuddyTask` transforms classes within a folder and writes it to another folder while using Gradle's incremental build feature what requires Gradle 6 or later. The `ByteBuddySimpleTask` does not support incremental build but works from Gradle 2 on up whereas the `ByteBuddyJarTask` allows the transformation of a bundled jar file.
