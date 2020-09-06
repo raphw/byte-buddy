@@ -7024,14 +7024,14 @@ public interface AgentBuilder {
                                 Listener redefinitionListener,
                                 int batch) {
                 Map<List<Class<?>>, Throwable> failures = new HashMap<List<Class<?>>, Throwable>();
-                PrependableIterator prepanedableIterator = new PrependableIterator(redefinitionBatchAllocator.batch(this.types));
-                while (prepanedableIterator.hasNext()) {
-                    List<Class<?>> types = prepanedableIterator.next();
+                PrependableIterator prependableIterator = new PrependableIterator(redefinitionBatchAllocator.batch(this.types));
+                while (prependableIterator.hasNext()) {
+                    List<Class<?>> types = prependableIterator.next();
                     redefinitionListener.onBatch(batch, types, this.types);
                     try {
                         doApply(instrumentation, circularityLock, types, locationStrategy, listener);
                     } catch (Throwable throwable) {
-                        prepanedableIterator.prepend(redefinitionListener.onError(batch, types, throwable, this.types));
+                        prependableIterator.prepend(redefinitionListener.onError(batch, types, throwable, this.types));
                         failures.put(types, throwable);
                     }
                     batch += 1;
